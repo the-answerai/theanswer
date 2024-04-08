@@ -2,7 +2,7 @@ const contentful = require('contentful-management')
 const { richTextFromMarkdown } = require('@contentful/rich-text-from-markdown')
 
 // const accessToken = $vars.CONTENTFUL_MANAGEMENT_API
-const accessToken = 'CFPAT-Tte_7MkEKgnKVFvjez73MHaSOiRxYCL-vo17tiJg0mI'
+const accessToken = ''
 const spaceId = 'e4vn8tcbbhts' // Replace with your Space ID
 const environmentId = 'master' // Replace with your Environment ID if different
 const contentTypeId = 'block' // The ID of the 'block' content type
