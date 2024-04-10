@@ -16,6 +16,7 @@ import { AddSpeechToText1706364937060 } from './1706364937060-AddSpeechToText'
 import { AddFeedback1707213601923 } from './1707213601923-AddFeedback'
 import { FieldTypes1710497452584 } from './1710497452584-FieldTypes'
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
+import { AddUserId1712195091200 } from './1712195091200-AddUserId'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -35,5 +36,6 @@ export const postgresMigrations = [
     AddSpeechToText1706364937060,
     AddFeedback1707213601923,
     FieldTypes1710497452584,
-    AddAnswersConfig1714692854264
+    AddAnswersConfig1714692854264,
+    AddUserId1712195091200
 ]

@@ -15,6 +15,7 @@ import { AddVariableEntity1699325775451 } from './1702200925471-AddVariableEntit
 import { AddSpeechToText1706364937060 } from './1706364937060-AddSpeechToText'
 import { AddFeedback1707213619308 } from './1707213619308-AddFeedback'
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
+import { AddUserId1712195113887 } from './1712195113887-AddUserId'
 
 export const sqliteMigrations = [
     Init1693835579790,
@@ -33,5 +34,6 @@ export const sqliteMigrations = [
     AddVariableEntity1699325775451,
     AddSpeechToText1706364937060,
     AddFeedback1707213619308,
-    AddAnswersConfig1714692854264
+    AddAnswersConfig1714692854264,
+    AddUserId1712195113887
 ]
