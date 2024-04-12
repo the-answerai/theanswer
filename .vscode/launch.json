@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Entire App with Yarn Dev",
+            "name": "Debug Entire App with PNPM Dev",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "pnpm",
@@ -15,6 +15,30 @@
             "internalConsoleOptions": "neverOpen",
             "skipFiles": ["<node_internals>/**"],
             "smartStep": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Toolbox",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "start"
+            ],
+            "cwd": "${workspaceFolder}/packages/flowise-configs",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Journey",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "journey"
+            ],
+            "cwd": "${workspaceFolder}/packages/flowise-configs",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }
