@@ -19,7 +19,7 @@ import useNotifyParentOfNavigation from './utils/useNotifyParentOfNavigation'
 
 const App = () => {
     const customization = useSelector((state) => state.customization)
-    const { getAccessTokenSilently } = useAuth0()
+    const { getAccessTokenSilently, error } = useAuth0()
     useNotifyParentOfNavigation()
     React.useEffect(() => {
         ;(async () => {
