@@ -211,19 +211,6 @@ export class App {
 
         // // enforce on all endpoints
         this.app.use((req, res, next) => {
-            const {
-                headers: { cookie }
-            } = req
-            if (cookie) {
-                const values = cookie.split(';').reduce((res, item) => {
-                    const data = item.trim().split('=')
-                    return { ...res, [data[0]]: data[1] }
-                }, {})
-                res.locals.cookie = values
-            } else res.locals.cookie = {}
-            next()
-        })
-        this.app.use((req, res, next) => {
             /// ADD Authorization cookie
             if (req.url.includes('/api/v1/') && !whitelistURLs.some((url) => req.url.includes(url))) {
                 // if (res.locals?.cookie?.Authorization && !req.headers.authorization) {
@@ -239,18 +226,8 @@ export class App {
                     if (req.auth?.token) {
                         // TODO: Confirm if sub for auth0 is enough (it includes the provider as prefix)
                         req.auth.payload.id = req.auth.payload.sub
-                        res.cookie('Authorization', req.auth?.token, {
-                            // name:
-                            //   process.env.NODE_ENV === 'production'
-                            //     ? `__Secure-next-auth.session-token`
-                            //     : `next-auth.session-token`,
-                            httpOnly: true,
-                            sameSite: 'none',
-                            // path: '/',
-                            secure: true
-                        })
                     }
-
+                    // TODO: Update to enable multiple organizations per flowise instance
                     const isInvalidOrg =
                         (!!process.env.AUTH0_ORGANIZATION_ID || !!req?.auth?.payload?.org_id) &&
                         process.env.AUTH0_ORGANIZATION_ID !== req?.auth?.payload?.org_id

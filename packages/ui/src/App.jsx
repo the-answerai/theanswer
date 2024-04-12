@@ -26,15 +26,10 @@ const App = () => {
             try {
                 const newToken = await getAccessTokenSilently({
                     authorizationParams: {
-                        // organization:
-                        //     import.meta.env.VITE_AUTH_ORGANIZATION_ID !== '' ? import.meta.env.VITE_AUTH_ORGANIZATION_ID : undefined,
-                        // redirect_uri: window.location.origin,
-                        // audience: import.meta.env.VITE_AUTH_AUDIENCE,
                         scope: 'write:admin'
                     }
                 })
-                console.log(newToken)
-                localStorage.setItem('access_token', newToken)
+                sessionStorage.setItem('access_token', newToken)
             } catch (err) {
                 console.log(err)
             }
