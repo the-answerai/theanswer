@@ -13,39 +13,36 @@ import themes from '@/themes'
 // project imports
 import NavigationScroll from '@/layout/NavigationScroll'
 import { useAuth0 } from '@auth0/auth0-react'
+import useNotifyParentOfNavigation from './utils/useNotifyParentOfNavigation'
 
 // ==============================|| APP ||============================== //
 
 const App = () => {
     const customization = useSelector((state) => state.customization)
-    const { user, error, isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0()
-    const [token, setToken] = React.useState(null)
-
+    const { getAccessTokenSilently, error } = useAuth0()
+    useNotifyParentOfNavigation()
     React.useEffect(() => {
         ;(async () => {
             try {
                 const newToken = await getAccessTokenSilently({
-                    scope: 'openid profile email write:sidekicks',
-                    authorizationParams: {}
+                    authorizationParams: {
+                        scope: 'write:admin'
+                    }
                 })
-                localStorage.setItem('access_token', newToken)
-                setToken(newToken)
+                sessionStorage.setItem('access_token', newToken)
             } catch (err) {
                 console.log(err)
             }
         })()
     }, [getAccessTokenSilently])
-    React.useEffect(() => {
-        if (!isLoading && !isAuthenticated && !error) {
-            loginWithRedirect()
-        }
-    }, [user, error, isLoading, isAuthenticated, loginWithRedirect])
 
     return (
         <StyledEngineProvider injectFirst>
             <ThemeProvider theme={themes(customization)}>
                 <CssBaseline />
-                <NavigationScroll>{isAuthenticated && <Routes />}</NavigationScroll>
+                <NavigationScroll>
+                    <Routes />
+                </NavigationScroll>
                 {error && (
                     <>
                         <h1>{error.message}</h1>

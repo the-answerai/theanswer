@@ -70,8 +70,8 @@ const MaterialUISwitch = styled(Switch)(({ theme }) => ({
 
 const Header = ({ handleLeftDrawerToggle }) => {
     const theme = useTheme()
-    const navigate = useNavigate()
-    const { logout } = useAuth0()
+
+    const { user, logout } = useAuth0()
 
     const customization = useSelector((state) => state.customization)
 
@@ -85,9 +85,10 @@ const Header = ({ handleLeftDrawerToggle }) => {
     }
 
     const signOutClicked = () => {
-        logout()
-        // navigate('/', { replace: true })
-        // navigate(0)
+        sessionStorage.removeItem('access_token')
+        logout({
+            logoutParams: { returnTo: user.answersDomain }
+        })
     }
 
     return (

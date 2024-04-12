@@ -122,6 +122,17 @@ export default class Start extends Command {
         if (flags.DATABASE_SSL) process.env.DATABASE_SSL = flags.DATABASE_SSL
         if (flags.DATABASE_SSL_KEY_BASE64) process.env.DATABASE_SSL_KEY_BASE64 = flags.DATABASE_SSL_KEY_BASE64
 
+        // Copilot database secret
+
+        if (process.env.DATABASE_SECRET) {
+            const { host, port, dbname, username, password } = JSON.parse(process.env.DATABASE_SECRET)
+            process.env.DATABASE_HOST = host
+            process.env.DATABASE_PORT = port
+            process.env.DATABASE_NAME = dbname
+            process.env.DATABASE_USER = username
+            process.env.DATABASE_PASSWORD = password
+        }
+
         // Langsmith tracing
         if (flags.LANGCHAIN_TRACING_V2) process.env.LANGCHAIN_TRACING_V2 = flags.LANGCHAIN_TRACING_V2
         if (flags.LANGCHAIN_ENDPOINT) process.env.LANGCHAIN_ENDPOINT = flags.LANGCHAIN_ENDPOINT
