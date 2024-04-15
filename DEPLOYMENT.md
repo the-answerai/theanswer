@@ -51,7 +51,10 @@ copilot env init --name <env-name> --profile default
 3. **Deploy the service**. This will build your Docker image, push it to Amazon ECR, and deploy it to Amazon ECS.
 ```
 
-```bash
+````bash
 copilot svc deploy  --env <env-name>
 
-```
+4. **Access the service**. You can see the URL of your service by running:
+```bash
+copilot svc show
+````
