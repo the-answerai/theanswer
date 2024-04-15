@@ -50,3 +50,7 @@ daisy
 
 # sst
 .sst
+
+copilot/environments/**
+!copilot/environments/staging
+!copilot/environments/addons

@@ -2,11 +2,11 @@
 
 Before you start, make sure you have the following prerequisites:
 
-- AWS account
-- AWS CLI installed and configured with the new customer's AWS account
-- Docker installed
-- Copilot CLI installed
-- Environment variables for the application
+-   AWS account
+-   AWS CLI installed and configured with the new customer's AWS account
+-   Docker installed
+-   Copilot CLI installed
+-   Environment variables for the application
 
 Here are the environment variables required:
 
@@ -51,10 +51,7 @@ copilot env init --name <env-name> --profile default
 3. **Deploy the service**. This will build your Docker image, push it to Amazon ECR, and deploy it to Amazon ECS.
 ```
 
-````bash
+```bash
 copilot svc deploy  --env <env-name>
 
-4. **Access the service**. You can see the URL of your service by running:
-```bash
-copilot svc show
-````
+```
