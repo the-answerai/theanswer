@@ -70,9 +70,9 @@ WORKDIR /app/packages/server
 # Expose the port that the application listens on.
 EXPOSE 4000
 
-COPY env.sh /docker-entrypoint.d/env.sh
-RUN chmod +x /docker-entrypoint.d/env.sh
+COPY update_ui_env.sh /docker-entrypoint.d/update_ui_env.sh
+RUN chmod +x /docker-entrypoint.d/update_ui_env.sh
 
 # Run the application.
-ENTRYPOINT ["/docker-entrypoint.d/env.sh"]
+ENTRYPOINT ["/docker-entrypoint.d/update_ui_env.sh"]
 CMD ["npm", "start"]

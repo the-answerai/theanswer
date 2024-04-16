@@ -173,8 +173,8 @@ export class App {
             // '/api/v1/chatflows/apikey/',
             '/api/v1/public-chatflows',
             '/api/v1/public-chatbotConfig',
-            '/api/v1/public-prediction/',
-            // '/api/v1/prediction/',
+            // '/api/v1/public-prediction/',
+            '/api/v1/prediction/',
             // '/api/v1/vector/upsert/',
             '/api/v1/node-icon/',
             '/api/v1/components-credentials-icon/',
@@ -203,6 +203,14 @@ export class App {
         // ----------------------------------------
 
         const jwtCheck = auth({
+            authRequired: false,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
+        })
+        const jwtCheckPublic = auth({
+            authRequired: false,
             secret: process.env.AUTH0_SECRET,
             audience: process.env.AUTH0_AUDIENCE,
             issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
@@ -217,7 +225,7 @@ export class App {
                 //     req.headers.authorization = `Bearer ${res.locals.cookie.Authorization}`
                 // }
                 return jwtCheck(req, res, next)
-            } else next()
+            } else return jwtCheckPublic(req, res, next)
         })
 
         this.app.use((req, res, next) => {
@@ -1510,21 +1518,18 @@ export class App {
         // Prediction
         // ----------------------------------------
 
-        const handlePrediction =
-            ({ isPublic }: { isPublic: boolean }) =>
+        this.app.post(
+            '/api/v1/prediction/:id',
+            upload.array('files'),
+            (req: Request, res: Response, next: NextFunction) => getRateLimiter(req, res, next),
             async (req: Request, res: Response) => {
                 let chatflowQuery = this.AppDataSource.getRepository(ChatFlow)
                     .createQueryBuilder('chatflow')
                     .where('chatflow.id = :id', { id: req.params.id })
 
-                if (isPublic) {
-                    chatflowQuery = chatflowQuery.andWhere(
-                        new Brackets((qb) => {
-                            qb.where('chatflow.isPublic = :isPublic', { isPublic: true })
-                        })
-                    )
+                if (!req.auth) {
+                    chatflowQuery = chatflowQuery.andWhere('chatflow.isPublic = :isPublic', { isPublic: true })
                 }
-
                 const chatflow = await chatflowQuery.getOne()
                 if (!chatflow) return res.status(404).send(`Chatflow ${req.params.id} not found`)
 
@@ -1553,19 +1558,6 @@ export class App {
                     return res.status(401).send(`This site is not allowed to access this chatbot`)
                 }
             }
-
-        this.app.post(
-            '/api/v1/public-prediction/:id',
-            upload.array('files'),
-            (req: Request, res: Response, next: NextFunction) => getRateLimiter(req, res, next),
-            handlePrediction({ isPublic: true })
-        )
-
-        this.app.post(
-            '/api/v1/prediction/:id',
-            upload.array('files'),
-            (req: Request, res: Response, next: NextFunction) => getRateLimiter(req, res, next),
-            handlePrediction({ isPublic: false })
         )
 
         // Send input message and get prediction result (Internal)

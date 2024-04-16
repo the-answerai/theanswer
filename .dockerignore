@@ -7,6 +7,8 @@
 **/.classpath
 **/.dockerignore
 **/.env
+**/*.env
+env.*
 **/.git
 **/.gitignore
 **/.project
@@ -34,6 +36,7 @@
 **/.sst
 **/copilot
 copilot
+
 docker
 node_modules
 

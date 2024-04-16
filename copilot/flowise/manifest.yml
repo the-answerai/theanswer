@@ -33,7 +33,7 @@ network:
     connect: true # Enable Service Connect for intra-environment traffic between services.
     vpc:
         security_groups:
-            - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterSecurityGroup
+            - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-answersclusterSecurityGroup
 
 storage:
     volumes:
@@ -48,9 +48,9 @@ storage:
 #variables:                    # Pass environment variables as key value pairs.
 #  LOG_LEVEL: info
 
-secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
+secrets:
     DATABASE_SECRET:
-        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
+        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-answersclusterAuroraSecret
 
 # You can override any of the values defined above by environment.
 environments:
