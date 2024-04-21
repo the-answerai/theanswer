@@ -6,6 +6,7 @@
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "pnpm",
+            "runtimeVersion": "21",
             "runtimeArgs": ["dev"],
             "timeout": 30000,
             "stopOnEntry": false,
@@ -21,9 +22,7 @@
             "request": "launch",
             "name": "Debug Toolbox",
             "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "start"
-            ],
+            "runtimeArgs": ["start"],
             "cwd": "${workspaceFolder}/packages/flowise-configs",
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -33,9 +32,7 @@
             "request": "launch",
             "name": "Debug Journey",
             "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "journey"
-            ],
+            "runtimeArgs": ["journey"],
             "cwd": "${workspaceFolder}/packages/flowise-configs",
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
