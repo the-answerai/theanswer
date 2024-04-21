@@ -48,14 +48,14 @@ storage:
 #variables:                    # Pass environment variables as key value pairs.
 #  LOG_LEVEL: info
 
+env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
 secrets:
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-answersclusterAuroraSecret
-
 # You can override any of the values defined above by environment.
 environments:
-    staging:
-        env_file: /${COPILOT_ENVIRONMENT_NAME}.env
+    ${COPILOT_ENVIRONMENT_NAME}:
+        env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
 #    count: 2               # Number of tasks to run for the "test" environment.
 #    deployment:            # The deployment strategy for the "test" environment.
 #       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.

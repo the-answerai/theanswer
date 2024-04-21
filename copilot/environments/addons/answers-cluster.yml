@@ -20,6 +20,10 @@ Parameters:
         Type: String
         Description: The IDs of the public subnets in which to create the Aurora Serverless v2 cluster.
         Default: ''
+    PrivateSubnets:
+        Type: String
+        Description: The IDs of the private subnets in which to create the Aurora Serverless v2 cluster.
+        Default: ''
 
 Mappings:
     answersclusterEnvScalingConfigurationMap:
@@ -39,9 +43,8 @@ Resources:
     answersclusterDBSubnetGroup:
         Type: 'AWS::RDS::DBSubnetGroup'
         Properties:
-            DBSubnetGroupDescription: Group of public subnets for Aurora Serverless v2 cluster.
-            SubnetIds: !Split [',', !Ref PublicSubnets]
-
+            DBSubnetGroupDescription: Group of public and private subnets for Aurora Serverless v2 cluster.
+            SubnetIds: !Split [',', !Sub '${PublicSubnets},${PrivateSubnets}']
     answersclusterWorkloadSecurityGroup:
         Metadata:
             'aws:copilot:description': 'A security group for one or more workloads to access the Aurora Serverless v2 cluster answerscluster'
