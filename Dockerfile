@@ -23,7 +23,7 @@ RUN apk add --no-cache build-base cairo-dev pango-dev
 RUN apk add --no-cache chromium
 
 #install PNPM globaly
-RUN npm install -g pnpm turbo
+RUN npm install -g pnpm@8 turbo
 RUN pnpm config set store-dir ~/.pnpm-store
 
 ENV PUPPETEER_SKIP_DOWNLOAD=true
