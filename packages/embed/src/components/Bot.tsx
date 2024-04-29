@@ -844,14 +844,21 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                       <div style={{ display: 'flex', 'flex-direction': 'row', width: '100%' }}>
                         <For each={[...removeDuplicateURL(message)]}>
                           {(src) => {
-                            const URL = isValidURL(src.metadata.source);
+                            const URL = isValidURL(src.metadata.url?.includes('http') ? src.metadata.url : src.url);
                             return (
                               <SourceBubble
-                                pageContent={src.metadata.title ?? src.metadata.label ?? URL ? URL.pathname : src.pageContent}
+                                pageContent={
+                                  src.title ??
+                                  src.url ??
+                                  src.metadata?.title ??
+                                  src.metadata?.url ??
+                                  (src.metadata?.filePath && src.metadata?.repo ? `${src.metadata?.repo}/${src.metadata?.filePath}` : null) ??
+                                  src.metadata?.source
+                                }
                                 metadata={src.metadata}
                                 onSourceClick={() => {
                                   if (URL) {
-                                    window.open(src.metadata.source, '_blank');
+                                    window.open(src.metadata.url?.includes('http') ? src.metadata.url : src.url, '_blank');
                                   } else {
                                     setSourcePopupSrc(src);
                                     setSourcePopupOpen(true);

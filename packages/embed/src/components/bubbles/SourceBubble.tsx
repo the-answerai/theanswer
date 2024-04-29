@@ -16,7 +16,7 @@ export const SourceBubble = (props: Props) => (
         data-testid="host-bubble"
         style={{
           width: 'max-content',
-          'max-width': '80px',
+          'max-width': '160px',
           'font-size': '13px',
           'border-radius': '15px',
           cursor: 'pointer',

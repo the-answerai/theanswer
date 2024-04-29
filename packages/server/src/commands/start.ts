@@ -14,7 +14,7 @@ enum EXIT_CODE {
 let processExitCode = EXIT_CODE.SUCCESS
 
 export default class Start extends Command {
-    static args = []
+    static args: any = []
     static flags = {
         FLOWISE_USERNAME: Flags.string(),
         FLOWISE_PASSWORD: Flags.string(),

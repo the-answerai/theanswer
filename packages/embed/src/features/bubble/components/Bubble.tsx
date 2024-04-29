@@ -31,7 +31,6 @@ export const Bubble = (props: BubbleProps) => {
   onCleanup(() => {
     setIsBotStarted(false);
   });
-
   return (
     <>
       <style>{styles}</style>

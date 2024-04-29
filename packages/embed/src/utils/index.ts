@@ -17,7 +17,6 @@ export const sendRequest = async <ResponseData>(
     | string,
 ): Promise<{ data?: ResponseData; error?: Error }> => {
   try {
-    console.log('HELL YEAH');
     const url = typeof params === 'string' ? params : params.url;
     const response = await fetch(url, {
       method: typeof params === 'string' ? 'GET' : params.method,

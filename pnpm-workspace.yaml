@@ -3,3 +3,4 @@ packages:
     - 'packages/server'
     - 'packages/ui'
     - 'packages/embed'
+    - 'packages/embed-react'
