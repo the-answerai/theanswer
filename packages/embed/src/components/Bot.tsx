@@ -525,13 +525,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     const newSourceDocuments: any = [];
 
     message.sourceDocuments.forEach((source: any) => {
-      if (isValidURL(source.metadata.source) && !visitedURLs.includes(source.metadata.source)) {
-        visitedURLs.push(source.metadata.source);
+      const url = source.metadata.url?.includes('http') ? source.metadata.url : source.url ?? source.metadata.source;
+      if (isValidURL(url) && !visitedURLs.includes(url)) {
+        visitedURLs.push(url);
         newSourceDocuments.push(source);
-      } else if (!isValidURL(source.metadata.source)) {
+      } else if (!isValidURL(url)) {
         newSourceDocuments.push(source);
       }
     });
+    console.log({ newSourceDocuments });
     return newSourceDocuments;
   };
 
