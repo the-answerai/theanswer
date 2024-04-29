@@ -243,10 +243,17 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setMessages((data) => {
       const updated = data.map((item, i) => {
         if (i === data.length - 1) {
-          return { ...item, message: item.message + text, messageId, sourceDocuments, fileAnnotations };
+          return {
+            ...item,
+            message: item.message + text,
+            messageId,
+            sourceDocuments: sourceDocuments ?? item?.sourceDocuments,
+            fileAnnotations: fileAnnotations ?? item?.fileAnnotations,
+          };
         }
         return item;
       });
+
       addChatMessage(updated);
       return [...updated];
     });
@@ -260,6 +267,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
         return item;
       });
+
       addChatMessage(updated);
       return [...updated];
     });
@@ -318,6 +326,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     setMessages((prevMessages) => {
       const messages: MessageType[] = [...prevMessages, { message: value, type: 'userMessage', fileUploads: urls }];
+
       addChatMessage(messages);
       return messages;
     });
@@ -444,6 +453,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         if (message.fileUploads) chatHistory.fileUploads = message.fileUploads;
         return chatHistory;
       });
+
       setMessages([...loadedMessages]);
     }
 
@@ -484,7 +494,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     const socket = socketIOClient(props.apiHost as string);
 
     socket.on('connect', () => {
-      setSocketIOClientId(socket.id);
+      setSocketIOClientId(socket.id!);
     });
 
     socket.on('start', () => {
@@ -533,7 +543,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         newSourceDocuments.push(source);
       }
     });
-    console.log({ newSourceDocuments });
+
     return newSourceDocuments;
   };
 
@@ -842,21 +852,14 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     )}
                     {message.type === 'userMessage' && loading() && index() === messages().length - 1 && <LoadingBubble />}
                     {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && <LoadingBubble />}
-                    {message.sourceDocuments && message.sourceDocuments.length && (
-                      <div style={{ display: 'flex', 'flex-direction': 'row', width: '100%' }}>
+                    {message.sourceDocuments && message.sourceDocuments.length ? (
+                      <div id="Messages" style={{ display: 'flex', 'flex-direction': 'row', width: '100%' }}>
                         <For each={[...removeDuplicateURL(message)]}>
                           {(src) => {
                             const URL = isValidURL(src.metadata.url?.includes('http') ? src.metadata.url : src.url);
                             return (
                               <SourceBubble
-                                pageContent={
-                                  src.title ??
-                                  src.url ??
-                                  src.metadata?.title ??
-                                  src.metadata?.url ??
-                                  (src.metadata?.filePath && src.metadata?.repo ? `${src.metadata?.repo}/${src.metadata?.filePath}` : null) ??
-                                  src.metadata?.source
-                                }
+                                pageContent={src.title ?? src.url ?? src.metadata?.title ?? src.metadata?.source}
                                 metadata={src.metadata}
                                 onSourceClick={() => {
                                   if (URL) {
@@ -871,6 +874,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           }}
                         </For>
                       </div>
+                    ) : (
+                      <pre>{JSON.stringify(message.sourceDocuments, null, 2)}</pre>
                     )}
                   </>
                 );
