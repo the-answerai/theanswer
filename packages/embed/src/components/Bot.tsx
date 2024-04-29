@@ -853,7 +853,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     {message.type === 'userMessage' && loading() && index() === messages().length - 1 && <LoadingBubble />}
                     {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && <LoadingBubble />}
                     {message.sourceDocuments && message.sourceDocuments.length ? (
-                      <div id="Messages" style={{ display: 'flex', 'flex-direction': 'row', width: '100%' }}>
+                      <div style={{ display: 'flex', 'flex-direction': 'row', width: '100%', 'flex-wrap': 'wrap' }}>
                         <For each={[...removeDuplicateURL(message)]}>
                           {(src) => {
                             const URL = isValidURL(src.metadata.url?.includes('http') ? src.metadata.url : src.url);
