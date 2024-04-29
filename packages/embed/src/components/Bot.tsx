@@ -859,7 +859,14 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                             const URL = isValidURL(src.metadata.url?.includes('http') ? src.metadata.url : src.url);
                             return (
                               <SourceBubble
-                                pageContent={src.title ?? src.url ?? src.metadata?.title ?? src.metadata?.source}
+                                pageContent={
+                                  src.title ??
+                                  src.url ??
+                                  src.metadata?.title ??
+                                  src.metadata?.url ??
+                                  (src.metadata?.filePath && src.metadata?.repo ? `${src.metadata?.repo}/${src.metadata?.filePath}` : null) ??
+                                  src.metadata?.source
+                                }
                                 metadata={src.metadata}
                                 onSourceClick={() => {
                                   if (URL) {
