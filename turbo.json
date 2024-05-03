@@ -17,6 +17,9 @@
         },
         "typeorm:migration-generate": {
             "cache": false
+        },
+        "typeorm:migration-show": {
+            "cache": false
         }
     }
 }
