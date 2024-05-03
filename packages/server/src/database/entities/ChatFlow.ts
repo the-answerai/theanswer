@@ -26,6 +26,9 @@ export class ChatFlow implements IChatFlow {
     chatbotConfig?: string
 
     @Column({ nullable: true, type: 'text' })
+    answersConfig?: string
+
+    @Column({ nullable: true, type: 'text' })
     apiConfig?: string
 
     @Column({ nullable: true, type: 'text' })
