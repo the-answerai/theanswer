@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flowise: Dev",
+            "name": "Flowise: dev",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "pnpm",
