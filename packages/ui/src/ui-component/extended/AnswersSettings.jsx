@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction, SET_CHATFLOW } from '@/store/actions'
 
 // material-ui
-import { Button, Box, Typography } from '@mui/material'
+import { Button, Box, Typography, FormGroup, FormLabel, FormControl, FormControlLabel, Checkbox } from '@mui/material'
 import { IconX } from '@tabler/icons'
 
 // Project import
@@ -17,6 +17,7 @@ import useNotifier from '@/utils/useNotifier'
 import chatflowsApi from '@/api/chatflows'
 import { SwitchInput } from '../switch/Switch'
 import { TooltipWithParser } from '../tooltip/TooltipWithParser'
+import merge from 'lodash/merge'
 
 const AnswersSettings = ({ dialogProps }) => {
     const dispatch = useDispatch()
@@ -27,12 +28,32 @@ const AnswersSettings = ({ dialogProps }) => {
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
-    const [answersConfig, setAnswersConfig] = useState(chatflow.answersConfig ? JSON.parse(chatflow.answersConfig) : {})
+    const [answersConfig, setAnswersConfig] = useState(
+        merge(
+            {
+                workflowVisibility: ['Private']
+            },
+            chatflow.answersConfig ? JSON.parse(chatflow.answersConfig) : {}
+        )
+    )
 
-    const handleChange = (value, fieldName) => {
-        console.log('Change', { fieldName, value })
-        setAnswersConfig({ ...answersConfig, [fieldName]: value })
-    }
+    const handleChange = useCallback(
+        (event, fieldName, option) => {
+            const updatedOptions = answersConfig[fieldName] || []
+            if (event.target.checked) {
+                if (!updatedOptions.includes(option)) {
+                    updatedOptions.push(option)
+                }
+            } else {
+                const index = updatedOptions.indexOf(option)
+                if (index > -1) {
+                    updatedOptions.splice(index, 1)
+                }
+            }
+            setAnswersConfig({ ...answersConfig, [fieldName]: updatedOptions })
+        },
+        [answersConfig]
+    )
 
     const onSave = async () => {
         try {
@@ -74,7 +95,13 @@ const AnswersSettings = ({ dialogProps }) => {
 
     useEffect(() => {
         if (dialogProps.chatflow && dialogProps.chatflow.answersConfig) {
-            let answersConfig = JSON.parse(dialogProps.chatflow.answersConfig)
+            let answersConfig = merge(
+                {
+                    workflowVisibility: ['Private']
+                },
+                dialogProps.chatflow.answersConfig ? JSON.parse(dialogProps.chatflow.answersConfig) : {}
+            )
+
             setAnswersConfig(answersConfig || {})
         }
 
@@ -84,27 +111,69 @@ const AnswersSettings = ({ dialogProps }) => {
     return (
         <>
             <Typography variant='h4' sx={{ mb: 1 }}>
-                Answers
-                <TooltipWithParser style={{ mb: 1, mt: 2, marginLeft: 10 }} title={'Control visibility and organization permissons'} />
+                Workflow visibility
+                <TooltipWithParser style={{ mb: 1, mt: 2, marginLeft: 10 }} title={'Control visibility and organization permissions'} />
             </Typography>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <SwitchInput
-                    label='Visible (not displayed in Sidekick selector)'
-                    onChange={(value) => {
-                        handleChange(value, 'isVisible')
-                    }}
-                    value={answersConfig?.isVisible}
-                />
-            </Box>
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <SwitchInput
-                    label='Shared with organization'
-                    onChange={(value) => {
-                        handleChange(value, 'isSharedWithOrganization')
-                    }}
-                    value={answersConfig?.isSharedWithOrganization}
-                />
-            </Box>
+            <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
+                <FormGroup>
+                    <FormControlLabel
+                        disabled
+                        sx={{ '.MuiFormControlLabel-label.Mui-disabled': { color: 'rgba(255, 255, 255, 0.38)' } }}
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('Private') ?? true}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Private')}
+                            />
+                        }
+                        label='Private'
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('Organzation')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Organzation')}
+                            />
+                        }
+                        label='Organzation'
+                    />
+                    {/* <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('API')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'API')}
+                            />
+                        }
+                        label='API'
+                    /> */}
+                    {/* <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('Embedded')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Embedded')}
+                            />
+                        }
+                        label='Embedded'
+                    /> */}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('AnswerAI')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'AnswerAI')}
+                            />
+                        }
+                        label='AnswerAI'
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={answersConfig?.workflowVisibility?.includes('Browser Extension')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Browser Extension')}
+                            />
+                        }
+                        label='Browser Extension'
+                    />
+                </FormGroup>
+            </FormControl>
             <StyledButton variant='contained' onClick={onSave}>
                 Save
             </StyledButton>
