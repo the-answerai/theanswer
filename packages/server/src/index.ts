@@ -642,7 +642,7 @@ export class App {
         // ----------------------------------------
 
         // Get all chatmessages from chatflowid
-        this.app.get('/api/v1/chatmessage', async (req: Request, res: Response) => {
+        const handleChatMessageRequest = async (req: Request, res: Response) => {
             const sortOrder = req.query?.order as string | undefined
             const chatflowId = (req.query?.chatflowId ?? req.query?.id) as string
             const chatId = req.query?.chatId as string | undefined
@@ -682,6 +682,12 @@ export class App {
                 feedback
             )
             return res.json(chatmessages)
+        }
+
+        this.app.get('/api/v1/chatmessage', handleChatMessageRequest)
+        this.app.get('/api/v1/chatmessage/:id', (req: Request, res: Response) => {
+            req.query.id = req.params.id
+            return handleChatMessageRequest(req, res)
         })
 
         // Get internal chatmessages from chatflowid

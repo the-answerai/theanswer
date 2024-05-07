@@ -284,6 +284,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
         const loadedMessages = []
         for (let i = 0; i < chatmessages.length; i += 1) {
             const chatmsg = chatmessages[i]
+            if (!chatmsg.createdDate) continue
             if (!prevDate) {
                 prevDate = chatmsg.createdDate.split('T')[0]
                 loadedMessages.push({
