@@ -221,6 +221,16 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
         if (!options.analytic) return []
 
         const analytic = JSON.parse(options.analytic)
+        if (process.env.LANGFUSE_SECRET_KEY && !analytic.langFuse) {
+            analytic.langFuse = {
+                status: true,
+                release: process.env.LANGFUSE_RELEASE ?? process.env.GIT_COMMIT_HASH,
+                secretKey: process.env.LANGFUSE_SECRET_KEY,
+                publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+                baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
+                sdkIntegration: 'Flowise'
+            }
+        }
         const callbacks: any = []
 
         for (const provider in analytic) {
@@ -254,15 +264,19 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                 } else if (provider === 'langFuse') {
                     const release = analytic[provider].release as string
 
-                    const langFuseSecretKey = getCredentialParam('langFuseSecretKey', credentialData, nodeData)
-                    const langFusePublicKey = getCredentialParam('langFusePublicKey', credentialData, nodeData)
-                    const langFuseEndpoint = getCredentialParam('langFuseEndpoint', credentialData, nodeData)
+                    const langFuseSecretKey =
+                        analytic[provider]?.secretKey ?? getCredentialParam('langFuseSecretKey', credentialData, nodeData)
+                    const langFusePublicKey =
+                        analytic[provider]?.publicKey ?? getCredentialParam('langFusePublicKey', credentialData, nodeData)
+                    const langFuseEndpoint =
+                        analytic[provider]?.endpoint ?? getCredentialParam('langFuseEndpoint', credentialData, nodeData)
 
-                    let langFuseOptions: any = {
+                    let langFuseOptions = {
                         secretKey: langFuseSecretKey,
                         publicKey: langFusePublicKey,
                         baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com',
-                        sdkIntegration: 'Flowise'
+                        sdkIntegration: 'Flowise',
+                        version: options.chatflowid
                     }
                     if (release) langFuseOptions.release = release
                     if (options.chatId) langFuseOptions.sessionId = options.chatId
