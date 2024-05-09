@@ -130,11 +130,11 @@ const AnswersSettings = ({ dialogProps }) => {
                     <FormControlLabel
                         control={
                             <Checkbox
-                                checked={answersConfig?.workflowVisibility?.includes('Organzation')}
-                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Organzation')}
+                                checked={answersConfig?.workflowVisibility?.includes('Organization')}
+                                onChange={(event) => handleChange(event, 'workflowVisibility', 'Organization')}
                             />
                         }
-                        label='Organzation'
+                        label='Organization'
                     />
                     {/* <FormControlLabel
                         control={
