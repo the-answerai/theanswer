@@ -1496,6 +1496,7 @@ export class App {
         this.app.get('/api/v1/fetch-links', async (req: Request, res: Response) => {
             try {
                 const url = decodeURIComponent(req.query.url as string)
+                const regex = decodeURIComponent(req.query.relativeLinksRegex as string)
                 const relativeLinksMethod = req.query.relativeLinksMethod as string
                 if (!relativeLinksMethod) {
                     return res.status(500).send('Please choose a Relative Links Method in Additional Parameters.')
@@ -1503,7 +1504,7 @@ export class App {
 
                 const limit = parseInt(req.query.limit as string)
                 if (process.env.DEBUG === 'true') console.info(`Start ${relativeLinksMethod}`)
-                const links: string[] = relativeLinksMethod === 'webCrawl' ? await webCrawl(url, limit) : await xmlScrape(url, limit)
+                const links: string[] = relativeLinksMethod === 'webCrawl' ? await webCrawl(url, limit, regex) : await xmlScrape(url, limit)
                 if (process.env.DEBUG === 'true') console.info(`Finish ${relativeLinksMethod}`)
 
                 res.json({ status: 'OK', links })

@@ -417,7 +417,10 @@ const AddNodes = ({ nodesData, node }) => {
                                                                                 sx={{
                                                                                     p: 0,
                                                                                     borderRadius: `${customization.borderRadius}px`,
-                                                                                    cursor: 'move'
+                                                                                    cursor: 'move',
+                                                                                    '&:hover': {
+                                                                                        background: '#00695c'
+                                                                                    }
                                                                                 }}
                                                                             >
                                                                                 <ListItem alignItems='center'>
