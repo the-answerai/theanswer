@@ -41,7 +41,7 @@ async function entryListFieldReport(processor) {
     csv.stringify(csvData, { header: true, columns: reportDataFields }, (err, output) => {
         if (err) throw err
         // Write CSV output to a file
-        fs.writeFileSync(path.join(__dirname, 'ias-report.csv'), output)
+        fs.writeFileSync(path.join(__dirname, 'report.csv'), output)
     })
 }
 
