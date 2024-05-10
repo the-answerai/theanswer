@@ -44,10 +44,10 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Debug Question Extraction",
+            "name": "Debug bulkProcessRunner Flowise Configs",
             "runtimeExecutable": "pnpm",
             "runtimeArgs": [
-                "questionExtraction"
+                "bulkProcessRunner"
             ],
             "cwd": "${workspaceFolder}/packages/flowise-configs",
             "console": "integratedTerminal",
@@ -60,6 +60,18 @@
             "runtimeExecutable": "pnpm",
             "runtimeArgs": [
                 "localFileImporter"
+            ],
+            "cwd": "${workspaceFolder}/packages/flowise-configs",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug migrationRunner",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "migration"
             ],
             "cwd": "${workspaceFolder}/packages/flowise-configs",
             "console": "integratedTerminal",
