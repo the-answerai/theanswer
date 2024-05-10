@@ -82,7 +82,7 @@ class Contentful_DocumentLoaders implements INode {
     constructor() {
         this.label = 'Contentful'
         this.name = 'contentful'
-        this.version = 1.0
+        this.version = 1.1
         this.type = 'Document'
         this.icon = 'contentful.png'
         this.category = 'Document Loaders'
@@ -105,14 +105,16 @@ class Contentful_DocumentLoaders implements INode {
                 label: 'Config Utility',
                 name: 'configUtility',
                 type: 'json',
+                default:
+                    '{"fieldsToParse":["fields.title","fields.body"],"richTextParsingRules":{"embedded-asset-block":true,"embedded-entry-block":true,"embedded-entry-inline":true,"embeddedContentTypes":{"table":["fields.table","fields.internalTitle"]}},"fieldsForCitation":{"titleField":"fields.title","slugField":"fields.slug","urlPrefix":"https://mywebsite.com/"}}',
                 acceptVariable: true
             },
             {
                 label: ' Content Type',
                 name: 'contentType',
                 type: 'string',
-                placeholder: 'pageBlog',
-                default: 'pageBlog',
+                placeholder: 'article',
+                default: 'article',
                 description: 'The content type to query'
             },
             {
@@ -266,8 +268,8 @@ interface ContentfulLoaderResponse {
 }
 
 interface ContentfulEntry {
-    sys: ICommonObject
-    fields: ICommonObject
+    fields: any
+    sys: any
 }
 
 interface IField {
@@ -342,7 +344,8 @@ class ContentfulLoader extends BaseDocumentLoader {
 
         if (typeof configUtility === 'string') {
             try {
-                this.configUtility = JSON.parse(configUtility)?.config
+                const parsedConfigUtility = JSON.parse(configUtility)
+                this.configUtility = parsedConfigUtility
                 if (typeof JSON.parse(configUtility)?.queryOveride !== 'undefined') {
                     this.queryOveride = JSON.parse(configUtility)?.queryOveride
                 }
@@ -351,8 +354,8 @@ class ContentfulLoader extends BaseDocumentLoader {
                 this.configUtility = {
                     fieldsToParse: [],
                     fieldsForCitation: {
-                        titleField: 'title',
-                        slugField: 'slug',
+                        titleField: 'fields.title',
+                        slugField: 'fields.slug',
                         urlPrefix: 'https://www.example.com/'
                     },
                     richTextParsingRules: {
@@ -400,12 +403,22 @@ class ContentfulLoader extends BaseDocumentLoader {
             .join('')
     }
 
+    private getNestedProperty(obj: any, path: string): any {
+        return path.split('.').reduce((prev, curr) => {
+            return prev ? prev[curr] : undefined
+        }, obj)
+    }
+
     private createDocumentFromEntry(entry: ContentfulEntry): Document {
         const textContent = this.processContentObject(entry)
         const entryUrl = `https://app.contentful.com/spaces/${this.spaceId}/environments/${this.environmentId}/entries/${entry.sys.id}`
-        // console.log('Entry', entry)
-        const title = entry.fields[this.configUtility.fieldsForCitation.titleField] || entry.sys.id
-        const slug = entry.fields[this.configUtility.fieldsForCitation.slugField] || entry.sys.id
+
+        const titlePath = this.configUtility.fieldsForCitation.titleField as string
+        const slugPath = this.configUtility.fieldsForCitation.slugField as string
+
+        // Use the utility function to safely fetch title and slug
+        const title = this.getNestedProperty(entry, titlePath) || entry.sys.id
+        const slug = this.getNestedProperty(entry, slugPath) || entry.sys.id
         const url = `${this.configUtility.fieldsForCitation.urlPrefix}${slug}`
 
         // Return a langchain document
