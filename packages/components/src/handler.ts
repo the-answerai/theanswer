@@ -270,16 +270,22 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         analytic[provider]?.publicKey ?? getCredentialParam('langFusePublicKey', credentialData, nodeData)
                     const langFuseEndpoint =
                         analytic[provider]?.endpoint ?? getCredentialParam('langFuseEndpoint', credentialData, nodeData)
+                    const langfuse = new Langfuse()
+
+                    const trace = langfuse.trace({
+                        metadata: { chatId: options.chatId }
+                    })
 
                     let langFuseOptions = {
+                        root: trace,
                         secretKey: langFuseSecretKey,
                         publicKey: langFusePublicKey,
                         baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com',
                         sdkIntegration: 'Flowise',
                         version: options.chatflowid
                     }
-                    if (release) langFuseOptions.release = release
-                    if (options.chatId) langFuseOptions.sessionId = options.chatId
+                    // if (release) langFuseOptions.release = release
+                    // if (options.chatId) langFuseOptions.sessionId = options.chatId
 
                     if (nodeData?.inputs?.analytics?.langFuse) {
                         langFuseOptions = { ...langFuseOptions, ...nodeData?.inputs?.analytics?.langFuse }

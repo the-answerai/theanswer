@@ -531,8 +531,7 @@ export class App {
             })
 
             return res.json(results)
-        
-})
+        })
 
         // Update chatflow
         this.app.put('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
@@ -1616,6 +1615,7 @@ export class App {
 
         // Get all templates for marketplaces
         this.app.get('/api/v1/marketplaces/templates', async (req: Request, res: Response) => {
+            // TODO: Fetch all tools and chatflows from the DB that don't have a userId and return them for the marketplaces
             let marketplaceDir = path.join(__dirname, '..', 'marketplaces', 'chatflows')
             let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
             let templates: any[] = []
