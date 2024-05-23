@@ -85,6 +85,7 @@ import { parsePrompt } from './utils/hub'
 import { Telemetry } from './utils/telemetry'
 import { Variable } from './database/entities/Variable'
 import { auth } from 'express-oauth2-jwt-bearer'
+import { auth0Sync } from './middlewares/auth0Sync'
 
 export class App {
     app: express.Application
@@ -227,14 +228,14 @@ export class App {
                 return jwtCheck(req, res, next)
             } else return jwtCheckPublic(req, res, next)
         })
+        // ----------------------------------------
+        // Configure Auth0 Sync
+        // ----------------------------------------
+        this.app.use(auth0Sync({ AppDataSource: this.AppDataSource }))
 
         this.app.use((req, res, next) => {
             if (req.url.includes('/api/v1/')) {
                 if (!whitelistURLs.some((url) => req.url.includes(url))) {
-                    if (req.auth?.token) {
-                        // TODO: Confirm if sub for auth0 is enough (it includes the provider as prefix)
-                        req.auth.payload.id = req.auth.payload.sub
-                    }
                     // TODO: Update to enable multiple organizations per flowise instance
                     const isInvalidOrg =
                         (!!process.env.AUTH0_ORGANIZATION_ID || !!req?.auth?.payload?.org_id) &&
@@ -418,7 +419,7 @@ export class App {
 
         // Get all chatflows
         this.app.get('/api/v1/chatflows', async (req: Request, res: Response) => {
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
 
             if (!userId) {
                 return res.status(401).send('Unauthorized')
@@ -449,7 +450,7 @@ export class App {
         // Get specific chatflow via id
         this.app.get('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
             if (!req.auth) return res.status(401).send('Unauthorized')
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             const chatflow = await this.AppDataSource.getRepository(ChatFlow)
                 .createQueryBuilder('chatFlow')
                 .where('chatFlow.id = :id', { id: req.params.id })
@@ -500,7 +501,7 @@ export class App {
             if (!req.auth) return res.status(401).send('Unauthorized')
             // Create the chatflow
             const newChatFlow = new ChatFlow()
-            Object.assign(newChatFlow, { ...body, userId: req.auth?.payload?.id as string })
+            Object.assign(newChatFlow, { ...body, userId: (req as any).user?.id })
             const chatflow = this.AppDataSource.getRepository(ChatFlow).create(newChatFlow)
             const results = await this.AppDataSource.getRepository(ChatFlow).save(chatflow)
             const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
@@ -530,13 +531,14 @@ export class App {
             })
 
             return res.json(results)
-        })
+        
+})
 
         // Update chatflow
         this.app.put('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
-            const hasWriteAdminPermission = req.auth?.payload?.permissions?.includes('write:admin')
+            const hasWriteAdminPermission = (req.auth?.payload?.permissions as any)?.includes('write:admin')
             const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy(
-                hasWriteAdminPermission ? { id: req.params.id } : { id: req.params.id, userId: req.auth?.payload?.id as string }
+                hasWriteAdminPermission ? { id: req.params.id } : { id: req.params.id, userId: (req as any).user?.id }
             )
 
             if (!chatflow) {
@@ -583,7 +585,7 @@ export class App {
         this.app.delete('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
             const results = await this.AppDataSource.getRepository(ChatFlow).delete({
                 id: req.params.id,
-                userId: req.auth?.payload?.id as string
+                userId: (req as any).user?.id
             })
 
             try {
@@ -697,7 +699,7 @@ export class App {
                 endDate,
                 messageId,
                 feedback,
-                req.auth?.payload?.id as string
+                (req as any).user?.id
             )
             return res.json(chatmessages)
         }
@@ -741,7 +743,7 @@ export class App {
             const body = req.body
             const results = await this.addChatMessage({
                 ...body,
-                userId: req.auth?.payload?.id as string
+                userId: (req as any).user?.id
             })
             return res.json(results)
         })
@@ -749,7 +751,7 @@ export class App {
         // Delete all chatmessages from chatId
         this.app.delete('/api/v1/chatmessage/:id', async (req: Request, res: Response) => {
             const chatflowid = req.params.id
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
                 id: chatflowid,
                 userId
@@ -817,7 +819,7 @@ export class App {
             const sortOrder = req.query?.order as string | undefined
             const startDate = req.query?.startDate as string | undefined
             const endDate = req.query?.endDate as string | undefined
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
 
             const feedback = await this.getChatMessageFeedback(chatflowid, chatId, sortOrder, startDate, endDate, userId)
 
@@ -827,7 +829,7 @@ export class App {
         // Add chatmessage feedback for chatflowid
         this.app.post('/api/v1/feedback/:id', async (req: Request, res: Response) => {
             const body = req.body
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
 
             const results = await this.addChatMessageFeedback({ ...body, userId })
             return res.json(results)
@@ -837,7 +839,7 @@ export class App {
         this.app.put('/api/v1/feedback/:id', async (req: Request, res: Response) => {
             const id = req.params.id
             const body = req.body
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             await this.updateChatMessageFeedback(id, { ...body, userId })
             return res.json({ status: 'OK' })
         })
@@ -852,7 +854,7 @@ export class App {
             let chatTypeFilter = req.query?.chatType as chatType | undefined
             const startDate = req.query?.startDate as string | undefined
             const endDate = req.query?.endDate as string | undefined
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
 
             if (chatTypeFilter) {
                 try {
@@ -903,7 +905,7 @@ export class App {
         // Create new credential
         this.app.post('/api/v1/credentials', async (req: Request, res: Response) => {
             const body = req.body
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             const newCredential = await transformToCredentialEntity({ ...body, userId })
             const credential = this.AppDataSource.getRepository(Credential).create(newCredential)
             const results = await this.AppDataSource.getRepository(Credential).save(credential)
@@ -912,7 +914,7 @@ export class App {
 
         // Get all credentials
         this.app.get('/api/v1/credentials', async (req: Request, res: Response) => {
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             if (req.query.credentialName) {
                 let returnCredentials = []
                 if (Array.isArray(req.query.credentialName)) {
@@ -964,7 +966,7 @@ export class App {
 
         // Update credential
         this.app.put('/api/v1/credentials/:id', async (req: Request, res: Response) => {
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             const credential = await this.AppDataSource.getRepository(Credential).findOneBy({
                 id: req.params.id,
                 userId
@@ -982,7 +984,7 @@ export class App {
 
         // Delete all credentials from chatflowid
         this.app.delete('/api/v1/credentials/:id', async (req: Request, res: Response) => {
-            const userId = req.auth?.payload?.id as string
+            const userId = (req as any).user?.id
             const results = await this.AppDataSource.getRepository(Credential).delete({ id: req.params.id, userId })
             return res.json(results)
         })

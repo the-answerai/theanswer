@@ -29,6 +29,7 @@ export class ChatMessageFeedback implements IChatMessageFeedback {
     @CreateDateColumn()
     createdDate: Date
 
+    @Index()
     @Column({ type: 'uuid', nullable: true })
-    userId: string
+    userId?: string
 }

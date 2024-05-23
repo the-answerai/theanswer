@@ -24,6 +24,7 @@ export class Credential implements ICredential {
     @UpdateDateColumn()
     updatedDate: Date
 
+    @Index()
     @Column({ type: 'uuid', nullable: true })
     userId?: string
 }

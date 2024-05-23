@@ -41,11 +41,11 @@ export class ChatMessage implements IChatMessage {
     @Column({ type: 'varchar', nullable: true })
     sessionId?: string
 
-    @Column({type:'timestamp'})
+    @Column({ type: 'timestamp' })
     @CreateDateColumn()
     createdDate: Date
 
-    @Column({ nullable: true, type: 'uuid' })
+    @Index()
+    @Column({ type: 'uuid', nullable: true })
     userId?: string
-
 }

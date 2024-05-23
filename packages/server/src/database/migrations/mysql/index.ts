@@ -15,6 +15,7 @@ import { AddVariableEntity1699325775451 } from './1702200925471-AddVariableEntit
 import { AddSpeechToText1706364937060 } from './1706364937060-AddSpeechToText'
 import { AddFeedback1707213626553 } from './1707213626553-AddFeedback'
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
+import { AddUser1716422641414 } from './1716422641414-AddUser'
 
 export const mysqlMigrations = [
     Init1693840429259,
@@ -33,5 +34,6 @@ export const mysqlMigrations = [
     AddVariableEntity1699325775451,
     AddSpeechToText1706364937060,
     AddFeedback1707213626553,
-    AddAnswersConfig1714692854264
+    AddAnswersConfig1714692854264,
+    AddUser1716422641414
 ]
