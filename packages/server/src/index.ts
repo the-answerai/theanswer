@@ -218,7 +218,7 @@ export class App {
             tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
         })
 
-        // // enforce on all endpoints
+        // enforce on all endpoints
         this.app.use((req, res, next) => {
             /// ADD Authorization cookie
             if (req.url.includes('/api/v1/') && !whitelistURLs.some((url) => req.url.includes(url))) {
@@ -2452,7 +2452,9 @@ export class App {
                       analytic: chatflow.analytic,
                       uploads: incomingInput.uploads,
                       socketIO,
-                      socketIOClientId: incomingInput.socketIOClientId
+                      socketIOClientId: incomingInput.socketIOClientId,
+                      user: req.user,
+sessionId
                   })
                 : await nodeInstance.run(nodeToExecuteData, incomingInput.question, {
                       chatId,
@@ -2462,7 +2464,8 @@ export class App {
                       appDataSource: this.AppDataSource,
                       databaseEntities,
                       analytic: chatflow.analytic,
-                      uploads: incomingInput.uploads
+                      uploads: incomingInput.uploads,
+                      user: req.user,sessionId
                   })
 
             result = typeof result === 'string' ? { text: result } : result
@@ -2546,7 +2549,7 @@ export const getAllChatFlow = async ({ userId }: { userId?: string }): Promise<I
     getDataSource()
         .getRepository(ChatFlow)
         .createQueryBuilder('chatFlow')
-        .where(userId ? 'chatFlow.userId = :userId OR chatFlow.userId IS NULL' : 'chatFlow.userId IS NULL', { userId })
+        .where(userId ? 'chatFlow.userId = :userId' : 'chatFlow.userId IS NULL', { userId })
         .getMany()
 
 export async function start(): Promise<void> {

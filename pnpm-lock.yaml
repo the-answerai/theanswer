@@ -250,11 +250,11 @@ importers:
         specifier: ^0.1.26
         version: 0.1.26(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/client-bedrock-runtime@3.422.0)(@aws-sdk/client-dynamodb@3.529.1)(@aws-sdk/client-s3@3.529.1)(@aws-sdk/credential-provider-node@3.529.1)(@datastax/astra-db-ts@0.1.4)(@elastic/elasticsearch@8.12.2)(@getzep/zep-js@0.9.0)(@gomomento/sdk-core@1.68.1)(@gomomento/sdk@1.68.1)(@google-ai/generativelanguage@0.2.1)(@huggingface/inference@2.6.4)(@notionhq/client@2.2.14)(@opensearch-project/opensearch@1.2.0)(@pinecone-database/pinecone@2.1.0)(@qdrant/js-client-rest@1.8.1)(@supabase/supabase-js@2.39.8)(@upstash/redis@1.22.1)(@zilliz/milvus2-sdk-node@2.3.5)(apify-client@2.9.3)(assemblyai@4.3.2)(axios@1.6.2)(cheerio@1.0.0-rc.12)(chromadb@1.8.1)(cohere-ai@6.2.2)(d3-dsv@2.0.0)(faiss-node@0.2.3)(google-auth-library@9.6.3)(html-to-text@9.0.5)(ioredis@5.3.2)(jsdom@22.1.0)(lodash@4.17.21)(lunary@0.6.16)(mammoth@1.7.0)(mongodb@6.2.0)(mysql2@3.9.2)(notion-to-md@3.1.1)(pdf-parse@1.1.1)(pg@8.11.3)(playwright@1.42.1)(puppeteer@20.9.0)(pyodide@0.25.0)(redis@4.6.13)(replicate@0.12.3)(srt-parser-2@1.2.3)(typeorm@0.3.20)(weaviate-ts-client@1.6.0)(ws@8.16.0)(youtube-transcript@1.1.0)
       langfuse:
-        specifier: 3.3.1
-        version: 3.3.1
+        specifier: 3.11.1
+        version: 3.11.1
       langfuse-langchain:
-        specifier: ^3.3.1
-        version: 3.3.1(langchain@0.1.26)
+        specifier: ^3.11.1
+        version: 3.11.1(langchain@0.1.26)
       langsmith:
         specifier: 0.1.6
         version: 0.1.6
@@ -19901,29 +19901,29 @@ packages:
     resolution: {integrity: sha512-Woyb8YDHgqqTOZvWIbm2CaFDGfZ4NTSyXV687AG4vXEfoNo7cGQp7nhl7wL3ehenKWmNEmcxCLgOZzW8jE6lOQ==}
     dev: false
 
-  /langfuse-core@3.3.1:
-    resolution: {integrity: sha512-MNy/LCf4/AjZ1tqUADaLTwWsQUWQYbH9D9sljZoAJ1Kpc/h5hN+Yl9r2BtfbMGNS4j76FvsTi0gmh1KV4ZWERw==}
+  /langfuse-core@3.11.1:
+    resolution: {integrity: sha512-wRXgzSVpZtjsPCBe/qavE14rDwsjGH/fWZzcRLbjyIGizLG7ilQJ3nMNlVlc5OE/9HU47aCpwQlyC5vRIQT5YA==}
     engines: {node: '>=18'}
     dependencies:
       mustache: 4.2.0
     dev: false
 
-  /langfuse-langchain@3.3.1(langchain@0.1.26):
-    resolution: {integrity: sha512-opcu9Pi3rd7JITDzYXx4wuUheln8HXvn74XHk9h9NSWp3NUuax++7BOlqugmzNyC/3m2DIGIFCy71L+5MQTniw==}
+  /langfuse-langchain@3.11.1(langchain@0.1.26):
+    resolution: {integrity: sha512-uEewNeplYC+o34pjU3y4JSwPjkTJI7fXuJWN3xPMd/K5WZgBTTtxK9RgyV0qPm7pW/xLORcZrZOQ3oKhyRftuA==}
     engines: {node: '>=18'}
     peerDependencies:
       langchain: '>=0.0.157 <0.2.0'
     dependencies:
       langchain: 0.1.26(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/client-bedrock-runtime@3.422.0)(@aws-sdk/client-dynamodb@3.529.1)(@aws-sdk/client-s3@3.529.1)(@aws-sdk/credential-provider-node@3.529.1)(@datastax/astra-db-ts@0.1.4)(@elastic/elasticsearch@8.12.2)(@getzep/zep-js@0.9.0)(@gomomento/sdk-core@1.68.1)(@gomomento/sdk@1.68.1)(@google-ai/generativelanguage@0.2.1)(@huggingface/inference@2.6.4)(@notionhq/client@2.2.14)(@opensearch-project/opensearch@1.2.0)(@pinecone-database/pinecone@2.1.0)(@qdrant/js-client-rest@1.8.1)(@supabase/supabase-js@2.39.8)(@upstash/redis@1.22.1)(@zilliz/milvus2-sdk-node@2.3.5)(apify-client@2.9.3)(assemblyai@4.3.2)(axios@1.6.2)(cheerio@1.0.0-rc.12)(chromadb@1.8.1)(cohere-ai@6.2.2)(d3-dsv@2.0.0)(faiss-node@0.2.3)(google-auth-library@9.6.3)(html-to-text@9.0.5)(ioredis@5.3.2)(jsdom@22.1.0)(lodash@4.17.21)(lunary@0.6.16)(mammoth@1.7.0)(mongodb@6.2.0)(mysql2@3.9.2)(notion-to-md@3.1.1)(pdf-parse@1.1.1)(pg@8.11.3)(playwright@1.42.1)(puppeteer@20.9.0)(pyodide@0.25.0)(redis@4.6.13)(replicate@0.12.3)(srt-parser-2@1.2.3)(typeorm@0.3.20)(weaviate-ts-client@1.6.0)(ws@8.16.0)(youtube-transcript@1.1.0)
-      langfuse: 3.3.1
-      langfuse-core: 3.3.1
+      langfuse: 3.11.1
+      langfuse-core: 3.11.1
     dev: false
 
-  /langfuse@3.3.1:
-    resolution: {integrity: sha512-OLpfN8zb+o68qw/usRcJ4NVFvLywHZkbiHwfpYMsQYh0IcHF03D3oweVv/Ws2y2Ekt4w2sVRvxyNs6eVoUP9ew==}
+  /langfuse@3.11.1:
+    resolution: {integrity: sha512-TPMlUMRG/SfvUh+Ovfi0N1i/rOSXKtKU+D1POCMuSXtjsY99yTiALJOm1+wy0DejJyJ/FsY+nijZwQk7/unANg==}
     engines: {node: '>=18'}
     dependencies:
-      langfuse-core: 3.3.1
+      langfuse-core: 3.11.1
     dev: false
 
   /langsmith@0.1.13:
