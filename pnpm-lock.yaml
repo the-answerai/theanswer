@@ -558,12 +558,12 @@ importers:
       '@types/react':
         specifier: 18.0.32
         version: 18.0.32
+      aai-embed:
+        specifier: workspace:*
+        version: link:../embed
       eslint:
         specifier: 8.37.0
         version: 8.37.0
-      flowise-embed:
-        specifier: workspace:*
-        version: link:../embed
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -772,6 +772,12 @@ importers:
       '@uiw/react-codemirror':
         specifier: ^4.21.21
         version: 4.21.24(@babel/runtime@7.24.0)(@codemirror/autocomplete@6.14.0)(@codemirror/language@6.10.1)(@codemirror/lint@6.5.0)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.25.1)(codemirror@6.0.1)(react-dom@18.2.0)(react@18.2.0)
+      aai-embed:
+        specifier: workspace:*
+        version: link:../embed
+      aai-embed-react:
+        specifier: workspace:*
+        version: link:../embed-react
       axios:
         specifier: ^0.27.2
         version: 0.27.2
@@ -781,12 +787,6 @@ importers:
       dotenv:
         specifier: ^16.0.0
         version: 16.4.5
-      flowise-embed:
-        specifier: workspace:*
-        version: link:../embed
-      flowise-embed-react:
-        specifier: workspace:*
-        version: link:../embed-react
       flowise-react-json-view:
         specifier: '*'
         version: 1.21.7(@types/react@18.0.32)(react-dom@18.2.0)(react@18.2.0)

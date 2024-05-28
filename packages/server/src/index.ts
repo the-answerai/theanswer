@@ -2549,7 +2549,7 @@ export const getAllChatFlow = async ({ userId }: { userId?: string }): Promise<I
     getDataSource()
         .getRepository(ChatFlow)
         .createQueryBuilder('chatFlow')
-        .where(userId ? 'chatFlow.userId = :userId' : 'chatFlow.userId IS NULL', { userId })
+        .where(userId ? 'chatFlow.userId = :userId OR chatFlow.userId IS NULL' : 'chatFlow.userId IS NULL', { userId })
         .getMany()
 
 export async function start(): Promise<void> {
