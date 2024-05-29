@@ -31,6 +31,6 @@ export const auth0Sync =
             await AppDataSource.getRepository(User).save(user)
         }
 
-        ;(req as any).user = user // Attach user entity to request for downstream use
-        next()
+        req.user = user // Attach user entity to request for downstream use
+        return next()
     }

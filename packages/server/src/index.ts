@@ -218,7 +218,7 @@ export class App {
             tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
         })
 
-        // // enforce on all endpoints
+        // enforce on all endpoints
         this.app.use((req, res, next) => {
             /// ADD Authorization cookie
             if (req.url.includes('/api/v1/') && !whitelistURLs.some((url) => req.url.includes(url))) {
@@ -531,8 +531,7 @@ export class App {
             })
 
             return res.json(results)
-        
-})
+        })
 
         // Update chatflow
         this.app.put('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
@@ -1616,6 +1615,7 @@ export class App {
 
         // Get all templates for marketplaces
         this.app.get('/api/v1/marketplaces/templates', async (req: Request, res: Response) => {
+            // TODO: Fetch all tools and chatflows from the DB that don't have a userId and return them for the marketplaces
             let marketplaceDir = path.join(__dirname, '..', 'marketplaces', 'chatflows')
             let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
             let templates: any[] = []
@@ -2452,7 +2452,9 @@ export class App {
                       analytic: chatflow.analytic,
                       uploads: incomingInput.uploads,
                       socketIO,
-                      socketIOClientId: incomingInput.socketIOClientId
+                      socketIOClientId: incomingInput.socketIOClientId,
+                      user: req.user,
+sessionId
                   })
                 : await nodeInstance.run(nodeToExecuteData, incomingInput.question, {
                       chatId,
@@ -2462,7 +2464,8 @@ export class App {
                       appDataSource: this.AppDataSource,
                       databaseEntities,
                       analytic: chatflow.analytic,
-                      uploads: incomingInput.uploads
+                      uploads: incomingInput.uploads,
+                      user: req.user,sessionId
                   })
 
             result = typeof result === 'string' ? { text: result } : result

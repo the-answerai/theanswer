@@ -18,18 +18,23 @@ export const sendRequest = async <ResponseData>(
 ): Promise<{ data?: ResponseData; error?: Error }> => {
   try {
     const url = typeof params === 'string' ? params : params.url;
+    const token = sessionStorage.getItem('access_token');
+
     const response = await fetch(url, {
       method: typeof params === 'string' ? 'GET' : params.method,
       mode: 'cors',
       credentials: 'include',
-      headers:
-        typeof params !== 'string' && isDefined(params.body)
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(typeof params !== 'string' && isDefined(params.body)
           ? {
               'Content-Type': 'application/json',
             }
-          : undefined,
+          : undefined),
+      },
       body: typeof params !== 'string' && isDefined(params.body) ? JSON.stringify(params.body) : undefined,
     });
+
     let data: any;
     const contentType = response.headers.get('Content-Type');
     if (contentType && contentType.includes('application/json')) {

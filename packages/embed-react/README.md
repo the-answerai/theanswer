@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD030 -->
 
-# Flowise Embed React
+# Answer AI Embed React
 
 React library to display flowise chatbot on your website
 
@@ -9,13 +9,13 @@ React library to display flowise chatbot on your website
 ## Install
 
 ```bash
-npm install flowise-embed flowise-embed-react
+npm install aai-embed aai-embed-react
 ```
 
 or
 
 ```bash
-yarn add flowise-embed flowise-embed-react
+yarn add aai-embed aai-embed-react
 ```
 
 ## Import
@@ -23,26 +23,19 @@ yarn add flowise-embed flowise-embed-react
 Full Page Chat
 
 ```tsx
-import { FullPageChat } from "flowise-embed-react";
+import { FullPageChat } from 'aai-embed-react'
 
 const App = () => {
-  return (
-    <FullPageChat
-      chatflowid="your-chatflow-id"
-      apiHost="http://localhost:3000"
-    />
-  );
-};
+    return <FullPageChat chatflowid='your-chatflow-id' apiHost='http://localhost:3000' />
+}
 ```
 
 Popup Chat
 
 ```tsx
-import { BubbleChat } from "flowise-embed-react";
+import { BubbleChat } from 'aai-embed-react'
 
 const App = () => {
-  return (
-    <BubbleChat chatflowid="your-chatflow-id" apiHost="http://localhost:3000" />
-  );
-};
+    return <BubbleChat chatflowid='your-chatflow-id' apiHost='http://localhost:3000' />
+}
 ```
