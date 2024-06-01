@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { createPortal } from 'react-dom'
 import { useDispatch } from 'react-redux'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import {
     Box,
@@ -16,7 +16,7 @@ import {
     Stack,
     Typography
 } from '@mui/material'
-import { IconEraser, IconTrash, IconX } from '@tabler/icons'
+import { IconEraser, IconTrash, IconX, IconPlus } from '@tabler/icons'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 
 import { BackdropLoader } from '@/ui-component/loading/BackdropLoader'
@@ -40,10 +40,20 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
+    const newUrlInputRef = useRef(null)
 
     const [loading, setLoading] = useState(false)
     const [selectedLinks, setSelectedLinks] = useState([])
     const [url, setUrl] = useState('')
+    const [newUrl, setNewUrl] = useState('')
+
+    // Function to handle adding a new URL to the top of the list
+    const handleAddUrl = () => {
+        if (newUrl.trim() !== '') {
+            setSelectedLinks([newUrl, ...selectedLinks])
+            setNewUrl('') // Clear the input after adding
+        }
+    }
 
     useEffect(() => {
         if (dialogProps.url) setUrl(dialogProps.url)
@@ -162,19 +172,41 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Typography sx={{ fontWeight: 500 }}>Scraped Links</Typography>
                     {selectedLinks.length > 0 ? (
-                        <StyledButton
-                            sx={{ height: 'max-content', width: 'max-content' }}
-                            variant='outlined'
-                            color='error'
-                            title='Clear All Links'
-                            onClick={handleRemoveAllLinks}
-                            startIcon={<IconEraser />}
-                        >
-                            Clear All
-                        </StyledButton>
+                        <Stack direction='row' spacing={1}>
+                            <StyledButton
+                                sx={{ height: 'max-content', width: 'max-content' }}
+                                variant='outlined'
+                                color='error'
+                                title='Clear All Links'
+                                onClick={handleRemoveAllLinks}
+                                startIcon={<IconEraser />}
+                            >
+                                Clear All
+                            </StyledButton>
+                        </Stack>
                     ) : null}
                 </Box>
                 <>
+                    <OutlinedInput
+                        sx={{ mb: 2 }}
+                        fullWidth
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                        placeholder='Enter new URL'
+                        inputRef={newUrlInputRef}
+                        onFocus={() => newUrlInputRef.current.select()}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newUrl.trim() !== '') {
+                                handleAddUrl()
+                                e.preventDefault() // Prevent form submission if this input is part of a form
+                            }
+                        }}
+                        endAdornment={
+                            <IconButton onClick={handleAddUrl}>
+                                <IconPlus />
+                            </IconButton>
+                        }
+                    />
                     {loading && <BackdropLoader open={loading} />}
                     {selectedLinks.length > 0 ? (
                         <PerfectScrollbar

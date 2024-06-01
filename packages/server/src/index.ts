@@ -11,7 +11,7 @@ import logger from './utils/logger'
 import { expressRequestLogger } from './utils/logger'
 import { v4 as uuidv4 } from 'uuid'
 import OpenAI from 'openai'
-import { DataSource, FindOptionsWhere, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm'
+import { DataSource, FindOptionsWhere, MoreThanOrEqual, LessThanOrEqual, Between, Brackets } from 'typeorm'
 import {
     IChatFlow,
     IncomingInput,
@@ -84,6 +84,8 @@ import { Client } from 'langchainhub'
 import { parsePrompt } from './utils/hub'
 import { Telemetry } from './utils/telemetry'
 import { Variable } from './database/entities/Variable'
+import { auth } from 'express-oauth2-jwt-bearer'
+import { auth0Sync } from './middlewares/auth0Sync'
 
 export class App {
     app: express.Application
@@ -120,7 +122,7 @@ export class App {
                 await getEncryptionKey()
 
                 // Initialize Rate Limit
-                const AllChatFlow: IChatFlow[] = await getAllChatFlow()
+                const AllChatFlow: IChatFlow[] = await getAllChatFlow({})
                 await initializeRateLimiter(AllChatFlow)
 
                 // Initialize cache pool
@@ -167,35 +169,90 @@ export class App {
 
         // Add the sanitizeMiddleware to guard against XSS
         this.app.use(sanitizeMiddleware)
-
+        const whitelistURLs = [
+            // '/api/v1/verify/apikey/',
+            // '/api/v1/chatflows/apikey/',
+            '/api/v1/public-chatflows',
+            '/api/v1/public-chatbotConfig',
+            // '/api/v1/public-prediction/',
+            '/api/v1/prediction/',
+            // '/api/v1/vector/upsert/',
+            '/api/v1/node-icon/',
+            '/api/v1/components-credentials-icon/',
+            '/api/v1/chatflows-streaming',
+            '/api/v1/chatflows-uploads',
+            // '/api/v1/openai-assistants-file',
+            // '/api/v1/feedback',
+            // '/api/v1/get-upload-file',
+            '/api/v1/ip'
+        ]
         if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
             const username = process.env.FLOWISE_USERNAME
             const password = process.env.FLOWISE_PASSWORD
             const basicAuthMiddleware = basicAuth({
                 users: { [username]: password }
             })
-            const whitelistURLs = [
-                '/api/v1/verify/apikey/',
-                '/api/v1/chatflows/apikey/',
-                '/api/v1/public-chatflows',
-                '/api/v1/public-chatbotConfig',
-                '/api/v1/prediction/',
-                '/api/v1/vector/upsert/',
-                '/api/v1/node-icon/',
-                '/api/v1/components-credentials-icon/',
-                '/api/v1/chatflows-streaming',
-                '/api/v1/chatflows-uploads',
-                '/api/v1/openai-assistants-file',
-                '/api/v1/feedback',
-                '/api/v1/get-upload-file',
-                '/api/v1/ip'
-            ]
+
             this.app.use((req, res, next) => {
                 if (req.url.includes('/api/v1/')) {
                     whitelistURLs.some((url) => req.url.includes(url)) ? next() : basicAuthMiddleware(req, res, next)
                 } else next()
             })
         }
+        // ----------------------------------------
+        // Configure Auth0
+        // ----------------------------------------
+
+        const jwtCheck = auth({
+            authRequired: false,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
+        })
+        const jwtCheckPublic = auth({
+            authRequired: false,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
+        })
+
+        // enforce on all endpoints
+        this.app.use((req, res, next) => {
+            /// ADD Authorization cookie
+            if (req.url.includes('/api/v1/') && !whitelistURLs.some((url) => req.url.includes(url))) {
+                // if (res.locals?.cookie?.Authorization && !req.headers.authorization) {
+                //     req.headers.authorization = `Bearer ${res.locals.cookie.Authorization}`
+                // }
+                return jwtCheck(req, res, next)
+            } else return jwtCheckPublic(req, res, next)
+        })
+        // ----------------------------------------
+        // Configure Auth0 Sync
+        // ----------------------------------------
+        this.app.use(auth0Sync({ AppDataSource: this.AppDataSource }))
+
+        this.app.use((req, res, next) => {
+            if (req.url.includes('/api/v1/')) {
+                if (!whitelistURLs.some((url) => req.url.includes(url))) {
+                    // TODO: Update to enable multiple organizations per flowise instance
+                    const isInvalidOrg =
+                        (!!process.env.AUTH0_ORGANIZATION_ID || !!req?.auth?.payload?.org_id) &&
+                        process.env.AUTH0_ORGANIZATION_ID !== req?.auth?.payload?.org_id
+                    if (isInvalidOrg) {
+                        console.log('Invalid org', process.env.AUTH0_ORGANIZATION_ID, '!==', req?.auth?.payload?.org_id)
+                        res.status(401).send("Unauthorized: Organization doesn't match")
+                    } else {
+                        next()
+                    }
+                } else {
+                    next()
+                }
+            } else {
+                next()
+            }
+        })
 
         const upload = multer({ dest: `${path.join(__dirname, '..', 'uploads')}/` })
 
@@ -362,7 +419,12 @@ export class App {
 
         // Get all chatflows
         this.app.get('/api/v1/chatflows', async (req: Request, res: Response) => {
-            const chatflows: IChatFlow[] = await getAllChatFlow()
+            const userId = (req as any).user?.id
+
+            if (!userId) {
+                return res.status(401).send('Unauthorized')
+            }
+            const chatflows: IChatFlow[] = await getAllChatFlow({ userId })
             return res.json(chatflows)
         })
 
@@ -387,9 +449,17 @@ export class App {
 
         // Get specific chatflow via id
         this.app.get('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
-            const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
-                id: req.params.id
-            })
+            if (!req.auth) return res.status(401).send('Unauthorized')
+            const userId = (req as any).user?.id
+            const chatflow = await this.AppDataSource.getRepository(ChatFlow)
+                .createQueryBuilder('chatFlow')
+                .where('chatFlow.id = :id', { id: req.params.id })
+                .andWhere(
+                    new Brackets((qb) => {
+                        qb.where('chatFlow.userId = :userId', { userId }).orWhere('chatFlow.userId IS NULL')
+                    })
+                )
+                .getOne()
             if (chatflow) return res.json(chatflow)
             return res.status(404).send(`Chatflow ${req.params.id} not found`)
         })
@@ -428,11 +498,31 @@ export class App {
         // Save chatflow
         this.app.post('/api/v1/chatflows', async (req: Request, res: Response) => {
             const body = req.body
+            if (!req.auth) return res.status(401).send('Unauthorized')
+            // Create the chatflow
             const newChatFlow = new ChatFlow()
-            Object.assign(newChatFlow, body)
-
+            Object.assign(newChatFlow, { ...body, userId: (req as any).user?.id })
             const chatflow = this.AppDataSource.getRepository(ChatFlow).create(newChatFlow)
             const results = await this.AppDataSource.getRepository(ChatFlow).save(chatflow)
+            const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
+            try {
+                await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + req.auth?.token!,
+                        cookie: req.headers.cookie!
+                    },
+                    body: JSON.stringify({
+                        chatflow: {
+                            ...results
+                        },
+                        chatflowDomain: req.auth?.payload?.chatflowDomain
+                    })
+                })
+            } catch (err) {
+                return res.status(500).send('Error saving to Answers')
+            }
 
             await this.telemetry.sendTelemetry('chatflow_created', {
                 version: await getAppVersion(),
@@ -445,9 +535,10 @@ export class App {
 
         // Update chatflow
         this.app.put('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
-            const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
-                id: req.params.id
-            })
+            const hasWriteAdminPermission = (req.auth?.payload?.permissions as any)?.includes('write:admin')
+            const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy(
+                hasWriteAdminPermission ? { id: req.params.id } : { id: req.params.id, userId: (req as any).user?.id }
+            )
 
             if (!chatflow) {
                 res.status(404).send(`Chatflow ${req.params.id} not found`)
@@ -470,13 +561,31 @@ export class App {
                 // Update chatflowpool inSync to false, to build flow from scratch again because data has been changed
                 this.chatflowPool.updateInSync(chatflow.id, false)
             }
-
+            try {
+                const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
+                await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + req.auth?.token!
+                    },
+                    body: JSON.stringify({
+                        chatflow: result,
+                        chatflowDomain: req.auth?.payload?.chatflowDomain
+                    })
+                })
+            } catch (err) {
+                return res.status(500).send('Error saving to Answers')
+            }
             return res.json(result)
         })
 
         // Delete chatflow via id
         this.app.delete('/api/v1/chatflows/:id', async (req: Request, res: Response) => {
-            const results = await this.AppDataSource.getRepository(ChatFlow).delete({ id: req.params.id })
+            const results = await this.AppDataSource.getRepository(ChatFlow).delete({
+                id: req.params.id,
+                userId: (req as any).user?.id
+            })
 
             try {
                 // Delete all  uploads corresponding to this chatflow
@@ -551,8 +660,9 @@ export class App {
         // ----------------------------------------
 
         // Get all chatmessages from chatflowid
-        this.app.get('/api/v1/chatmessage/:id', async (req: Request, res: Response) => {
+        const handleChatMessageRequest = async (req: Request, res: Response) => {
             const sortOrder = req.query?.order as string | undefined
+            const chatflowId = (req.query?.chatflowId ?? req.query?.id) as string
             const chatId = req.query?.chatId as string | undefined
             const memoryType = req.query?.memoryType as string | undefined
             const sessionId = req.query?.sessionId as string | undefined
@@ -578,7 +688,7 @@ export class App {
             }
 
             const chatmessages = await this.getChatMessage(
-                req.params.id,
+                chatflowId,
                 chatTypeFilter,
                 sortOrder,
                 chatId,
@@ -587,9 +697,16 @@ export class App {
                 startDate,
                 endDate,
                 messageId,
-                feedback
+                feedback,
+                (req as any).user?.id
             )
             return res.json(chatmessages)
+        }
+
+        this.app.get('/api/v1/chatmessage', handleChatMessageRequest)
+        this.app.get('/api/v1/chatmessage/:id', (req: Request, res: Response) => {
+            req.query.id = req.params.id
+            return handleChatMessageRequest(req, res)
         })
 
         // Get internal chatmessages from chatflowid
@@ -598,6 +715,7 @@ export class App {
             const chatId = req.query?.chatId as string | undefined
             const memoryType = req.query?.memoryType as string | undefined
             const sessionId = req.query?.sessionId as string | undefined
+            const userId = req.query?.userId as string | undefined
             const messageId = req.query?.messageId as string | undefined
             const startDate = req.query?.startDate as string | undefined
             const endDate = req.query?.endDate as string | undefined
@@ -613,7 +731,8 @@ export class App {
                 startDate,
                 endDate,
                 messageId,
-                feedback
+                feedback,
+                userId
             )
             return res.json(chatmessages)
         })
@@ -621,15 +740,20 @@ export class App {
         // Add chatmessages for chatflowid
         this.app.post('/api/v1/chatmessage/:id', async (req: Request, res: Response) => {
             const body = req.body
-            const results = await this.addChatMessage(body)
+            const results = await this.addChatMessage({
+                ...body,
+                userId: (req as any).user?.id
+            })
             return res.json(results)
         })
 
         // Delete all chatmessages from chatId
         this.app.delete('/api/v1/chatmessage/:id', async (req: Request, res: Response) => {
             const chatflowid = req.params.id
+            const userId = (req as any).user?.id
             const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
-                id: chatflowid
+                id: chatflowid,
+                userId
             })
             if (!chatflow) {
                 res.status(404).send(`Chatflow ${chatflowid} not found`)
@@ -666,7 +790,7 @@ export class App {
             if (chatType) deleteOptions.chatType = chatType
 
             // remove all related feedback records
-            const feedbackDeleteOptions: FindOptionsWhere<ChatMessageFeedback> = { chatId }
+            const feedbackDeleteOptions: FindOptionsWhere<ChatMessageFeedback> = { chatId, userId }
             await this.AppDataSource.getRepository(ChatMessageFeedback).delete(feedbackDeleteOptions)
 
             // Delete all uploads corresponding to this chatflow/chatId
@@ -694,8 +818,9 @@ export class App {
             const sortOrder = req.query?.order as string | undefined
             const startDate = req.query?.startDate as string | undefined
             const endDate = req.query?.endDate as string | undefined
+            const userId = (req as any).user?.id
 
-            const feedback = await this.getChatMessageFeedback(chatflowid, chatId, sortOrder, startDate, endDate)
+            const feedback = await this.getChatMessageFeedback(chatflowid, chatId, sortOrder, startDate, endDate, userId)
 
             return res.json(feedback)
         })
@@ -703,7 +828,9 @@ export class App {
         // Add chatmessage feedback for chatflowid
         this.app.post('/api/v1/feedback/:id', async (req: Request, res: Response) => {
             const body = req.body
-            const results = await this.addChatMessageFeedback(body)
+            const userId = (req as any).user?.id
+
+            const results = await this.addChatMessageFeedback({ ...body, userId })
             return res.json(results)
         })
 
@@ -711,7 +838,8 @@ export class App {
         this.app.put('/api/v1/feedback/:id', async (req: Request, res: Response) => {
             const id = req.params.id
             const body = req.body
-            await this.updateChatMessageFeedback(id, body)
+            const userId = (req as any).user?.id
+            await this.updateChatMessageFeedback(id, { ...body, userId })
             return res.json({ status: 'OK' })
         })
 
@@ -725,6 +853,7 @@ export class App {
             let chatTypeFilter = req.query?.chatType as chatType | undefined
             const startDate = req.query?.startDate as string | undefined
             const endDate = req.query?.endDate as string | undefined
+            const userId = (req as any).user?.id
 
             if (chatTypeFilter) {
                 try {
@@ -751,7 +880,8 @@ export class App {
                 startDate,
                 endDate,
                 '',
-                true
+                true,
+                userId
             )) as Array<ChatMessage & { feedback?: ChatMessageFeedback }>
             const totalMessages = chatmessages.length
 
@@ -774,7 +904,8 @@ export class App {
         // Create new credential
         this.app.post('/api/v1/credentials', async (req: Request, res: Response) => {
             const body = req.body
-            const newCredential = await transformToCredentialEntity(body)
+            const userId = (req as any).user?.id
+            const newCredential = await transformToCredentialEntity({ ...body, userId })
             const credential = this.AppDataSource.getRepository(Credential).create(newCredential)
             const results = await this.AppDataSource.getRepository(Credential).save(credential)
             return res.json(results)
@@ -782,13 +913,15 @@ export class App {
 
         // Get all credentials
         this.app.get('/api/v1/credentials', async (req: Request, res: Response) => {
+            const userId = (req as any).user?.id
             if (req.query.credentialName) {
                 let returnCredentials = []
                 if (Array.isArray(req.query.credentialName)) {
                     for (let i = 0; i < req.query.credentialName.length; i += 1) {
                         const name = req.query.credentialName[i] as string
                         const credentials = await this.AppDataSource.getRepository(Credential).findBy({
-                            credentialName: name
+                            credentialName: name,
+                            userId
                         })
                         returnCredentials.push(...credentials)
                     }
@@ -800,7 +933,7 @@ export class App {
                 }
                 return res.json(returnCredentials)
             } else {
-                const credentials = await this.AppDataSource.getRepository(Credential).find()
+                const credentials = await this.AppDataSource.getRepository(Credential).find({ where: { userId } })
                 const returnCredentials = []
                 for (const credential of credentials) {
                     returnCredentials.push(omit(credential, ['encryptedData']))
@@ -832,8 +965,10 @@ export class App {
 
         // Update credential
         this.app.put('/api/v1/credentials/:id', async (req: Request, res: Response) => {
+            const userId = (req as any).user?.id
             const credential = await this.AppDataSource.getRepository(Credential).findOneBy({
-                id: req.params.id
+                id: req.params.id,
+                userId
             })
 
             if (!credential) return res.status(404).send(`Credential ${req.params.id} not found`)
@@ -848,7 +983,8 @@ export class App {
 
         // Delete all credentials from chatflowid
         this.app.delete('/api/v1/credentials/:id', async (req: Request, res: Response) => {
-            const results = await this.AppDataSource.getRepository(Credential).delete({ id: req.params.id })
+            const userId = (req as any).user?.id
+            const results = await this.AppDataSource.getRepository(Credential).delete({ id: req.params.id, userId })
             return res.json(results)
         })
 
@@ -1426,34 +1562,37 @@ export class App {
         // Prediction
         // ----------------------------------------
 
-        // Send input message and get prediction result (External)
         this.app.post(
             '/api/v1/prediction/:id',
             upload.array('files'),
             (req: Request, res: Response, next: NextFunction) => getRateLimiter(req, res, next),
             async (req: Request, res: Response) => {
-                const chatflow = await this.AppDataSource.getRepository(ChatFlow).findOneBy({
-                    id: req.params.id
-                })
+                let chatflowQuery = this.AppDataSource.getRepository(ChatFlow)
+                    .createQueryBuilder('chatflow')
+                    .where('chatflow.id = :id', { id: req.params.id })
+
+                if (!req.auth) {
+                    chatflowQuery = chatflowQuery.andWhere('chatflow.isPublic = :isPublic', { isPublic: true })
+                }
+                const chatflow = await chatflowQuery.getOne()
                 if (!chatflow) return res.status(404).send(`Chatflow ${req.params.id} not found`)
+
                 let isDomainAllowed = true
                 logger.info(`[server]: Request originated from ${req.headers.origin}`)
                 if (chatflow.chatbotConfig) {
                     const parsedConfig = JSON.parse(chatflow.chatbotConfig)
-                    // check whether the first one is not empty. if it is empty that means the user set a value and then removed it.
                     const isValidAllowedOrigins = parsedConfig.allowedOrigins?.length && parsedConfig.allowedOrigins[0] !== ''
                     if (isValidAllowedOrigins) {
                         const originHeader = req.headers.origin as string
                         const origin = new URL(originHeader).host
-                        isDomainAllowed =
-                            parsedConfig.allowedOrigins.filter((domain: string) => {
-                                try {
-                                    const allowedOrigin = new URL(domain).host
-                                    return origin === allowedOrigin
-                                } catch (e) {
-                                    return false
-                                }
-                            }).length > 0
+                        isDomainAllowed = parsedConfig.allowedOrigins.filter((domain: string) => {
+                            try {
+                                const allowedOrigin = new URL(domain).host
+                                return origin === allowedOrigin
+                            } catch (e) {
+                                return false
+                            }
+                        })
                     }
                 }
 
@@ -1476,6 +1615,7 @@ export class App {
 
         // Get all templates for marketplaces
         this.app.get('/api/v1/marketplaces/templates', async (req: Request, res: Response) => {
+            // TODO: Fetch all tools and chatflows from the DB that don't have a userId and return them for the marketplaces
             let marketplaceDir = path.join(__dirname, '..', 'marketplaces', 'chatflows')
             let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
             let templates: any[] = []
@@ -1754,7 +1894,8 @@ export class App {
         startDate?: string,
         endDate?: string,
         messageId?: string,
-        feedback?: boolean
+        feedback?: boolean,
+        userId?: string
     ): Promise<ChatMessage[]> {
         const setDateToStartOrEndOfDay = (dateTimeStr: string, setHours: 'start' | 'end') => {
             const date = new Date(dateTimeStr)
@@ -1798,6 +1939,9 @@ export class App {
             if (sessionId) {
                 query.andWhere('chat_message.sessionId = :sessionId', { sessionId })
             }
+            if (userId) {
+                query.andWhere('chat_message.userId = :userId', { userId })
+            }
 
             // set date range
             query.andWhere('chat_message.createdDate BETWEEN :fromDate AND :toDate', {
@@ -1818,6 +1962,7 @@ export class App {
                 chatId,
                 memoryType: memoryType ?? undefined,
                 sessionId: sessionId ?? undefined,
+                userId: userId ?? undefined,
                 ...(fromDate && { createdDate: MoreThanOrEqual(fromDate) }),
                 ...(toDate && { createdDate: LessThanOrEqual(toDate) }),
                 id: messageId ?? undefined
@@ -1855,7 +2000,8 @@ export class App {
         chatId?: string,
         sortOrder: string = 'ASC',
         startDate?: string,
-        endDate?: string
+        endDate?: string,
+        userId?: string
     ): Promise<ChatMessageFeedback[]> {
         let fromDate
         if (startDate) fromDate = new Date(startDate)
@@ -1864,6 +2010,7 @@ export class App {
         if (endDate) toDate = new Date(endDate)
         return await this.AppDataSource.getRepository(ChatMessageFeedback).find({
             where: {
+                userId,
                 chatflowid,
                 chatId,
                 createdDate: toDate && fromDate ? Between(fromDate, toDate) : undefined
@@ -2305,7 +2452,9 @@ export class App {
                       analytic: chatflow.analytic,
                       uploads: incomingInput.uploads,
                       socketIO,
-                      socketIOClientId: incomingInput.socketIOClientId
+                      socketIOClientId: incomingInput.socketIOClientId,
+                      user: req.user,
+sessionId
                   })
                 : await nodeInstance.run(nodeToExecuteData, incomingInput.question, {
                       chatId,
@@ -2315,7 +2464,8 @@ export class App {
                       appDataSource: this.AppDataSource,
                       databaseEntities,
                       analytic: chatflow.analytic,
-                      uploads: incomingInput.uploads
+                      uploads: incomingInput.uploads,
+                      user: req.user,sessionId
                   })
 
             result = typeof result === 'string' ? { text: result } : result
@@ -2395,9 +2545,12 @@ export class App {
 
 let serverApp: App | undefined
 
-export async function getAllChatFlow(): Promise<IChatFlow[]> {
-    return await getDataSource().getRepository(ChatFlow).find()
-}
+export const getAllChatFlow = async ({ userId }: { userId?: string }): Promise<IChatFlow[]> =>
+    getDataSource()
+        .getRepository(ChatFlow)
+        .createQueryBuilder('chatFlow')
+        .where(userId ? 'chatFlow.userId = :userId OR chatFlow.userId IS NULL' : 'chatFlow.userId IS NULL', { userId })
+        .getMany()
 
 export async function start(): Promise<void> {
     serverApp = new App()

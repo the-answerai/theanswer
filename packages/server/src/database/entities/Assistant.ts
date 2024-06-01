@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from 'typeorm'
+import { Entity, Column, Index, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from 'typeorm'
 import { IAssistant } from '../../Interface'
 
 @Entity()
@@ -10,7 +10,7 @@ export class Assistant implements IAssistant {
     @Column({ type: 'text' })
     details: string
 
-    @Column({ type: 'uuid'})
+    @Column({ type: 'uuid' })
     credential: string
 
     @Column({ nullable: true })
@@ -23,4 +23,8 @@ export class Assistant implements IAssistant {
     @Column({ type: 'timestamp' })
     @UpdateDateColumn()
     updatedDate: Date
+
+    @Index()
+    @Column({ type: 'uuid', nullable: true })
+    userId?: string
 }
