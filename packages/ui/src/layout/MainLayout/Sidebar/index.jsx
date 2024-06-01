@@ -15,7 +15,7 @@ import { drawerWidth, headerHeight } from '@/store/constant'
 
 // ==============================|| SIDEBAR DRAWER ||============================== //
 
-const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
+const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
     const theme = useTheme()
     const matchUpMd = useMediaQuery(theme.breakpoints.up('md'))
 
@@ -73,9 +73,13 @@ const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
                         width: drawerWidth,
                         background: theme.palette.background.default,
                         color: theme.palette.text.primary,
-                        [theme.breakpoints.up('md')]: {
-                            top: `${headerHeight}px`
-                        },
+                        ...(!isInIframe
+                            ? {
+                                  [theme.breakpoints.up('md')]: {
+                                      top: `${headerHeight}px`
+                                  }
+                              }
+                            : null),
                         borderRight: drawerOpen ? '1px solid' : 'none',
                         borderColor: drawerOpen ? theme.palette.primary[200] + 75 : 'transparent'
                     }
@@ -90,6 +94,7 @@ const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
 }
 
 Sidebar.propTypes = {
+    isInIframe: PropTypes.bool,
     drawerOpen: PropTypes.bool,
     drawerToggle: PropTypes.func,
     window: PropTypes.object

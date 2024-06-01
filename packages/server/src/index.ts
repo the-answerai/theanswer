@@ -21,13 +21,8 @@ import { Telemetry } from './utils/telemetry'
 import flowiseApiV1Router from './routes'
 import errorHandlerMiddleware from './middlewares/errors'
 
-declare global {
-    namespace Express {
-        interface Request {
-            io?: Server
-        }
-    }
-}
+import { auth } from 'express-oauth2-jwt-bearer'
+import { auth0Sync } from './middlewares/auth0Sync'
 
 export class App {
     app: express.Application
@@ -64,7 +59,7 @@ export class App {
             await getEncryptionKey()
 
             // Initialize Rate Limit
-            const AllChatFlow: IChatFlow[] = await getAllChatFlow()
+            const AllChatFlow: IChatFlow[] = await getAllChatFlow({})
             await initializeRateLimiter(AllChatFlow)
 
             // Initialize cache pool
@@ -115,36 +110,90 @@ export class App {
             req.io = socketIO
             next()
         })
-
+        const whitelistURLs = [
+            '/api/v1/verify/apikey/',
+            '/api/v1/chatflows/apikey/',
+            '/api/v1/public-chatflows',
+            '/api/v1/public-chatbotConfig',
+            '/api/v1/prediction/',
+            '/api/v1/vector/upsert/',
+            '/api/v1/node-icon/',
+            '/api/v1/components-credentials-icon/',
+            '/api/v1/chatflows-streaming',
+            '/api/v1/chatflows-uploads',
+            '/api/v1/openai-assistants-file/download',
+            '/api/v1/feedback',
+            '/api/v1/leads',
+            '/api/v1/get-upload-file',
+            '/api/v1/ip'
+        ]
         if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
             const username = process.env.FLOWISE_USERNAME
             const password = process.env.FLOWISE_PASSWORD
             const basicAuthMiddleware = basicAuth({
                 users: { [username]: password }
             })
-            const whitelistURLs = [
-                '/api/v1/verify/apikey/',
-                '/api/v1/chatflows/apikey/',
-                '/api/v1/public-chatflows',
-                '/api/v1/public-chatbotConfig',
-                '/api/v1/prediction/',
-                '/api/v1/vector/upsert/',
-                '/api/v1/node-icon/',
-                '/api/v1/components-credentials-icon/',
-                '/api/v1/chatflows-streaming',
-                '/api/v1/chatflows-uploads',
-                '/api/v1/openai-assistants-file/download',
-                '/api/v1/feedback',
-                '/api/v1/leads',
-                '/api/v1/get-upload-file',
-                '/api/v1/ip'
-            ]
             this.app.use((req, res, next) => {
                 if (/\/api\/v1\//i.test(req.url)) {
                     whitelistURLs.some((url) => new RegExp(url, 'i').test(req.url)) ? next() : basicAuthMiddleware(req, res, next)
                 } else next()
             })
         }
+
+        // ----------------------------------------
+        // Configure Auth0
+        // ----------------------------------------
+
+        const jwtCheck = auth({
+            authRequired: false,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
+        })
+        const jwtCheckPublic = auth({
+            authRequired: false,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG
+        })
+
+        // enforce on all endpoints
+        this.app.use((req, res, next) => {
+            /// ADD Authorization cookie
+            if (req.url.includes('/api/v1/') && !whitelistURLs.some((url) => req.url.includes(url))) {
+                // if (res.locals?.cookie?.Authorization && !req.headers.authorization) {
+                //     req.headers.authorization = `Bearer ${res.locals.cookie.Authorization}`
+                // }
+                return jwtCheck(req, res, next)
+            } else return jwtCheckPublic(req, res, next)
+        })
+        // ----------------------------------------
+        // Configure Auth0 Sync
+        // ----------------------------------------
+        this.app.use(auth0Sync({ AppDataSource: this.AppDataSource }))
+
+        this.app.use((req, res, next) => {
+            if (req.url.includes('/api/v1/')) {
+                if (!whitelistURLs.some((url) => req.url.includes(url))) {
+                    // TODO: Update to enable multiple organizations per flowise instance
+                    const isInvalidOrg =
+                        (!!process.env.AUTH0_ORGANIZATION_ID || !!req?.auth?.payload?.org_id) &&
+                        process.env.AUTH0_ORGANIZATION_ID !== req?.auth?.payload?.org_id
+                    if (isInvalidOrg) {
+                        console.log('Invalid org', process.env.AUTH0_ORGANIZATION_ID, '!==', req?.auth?.payload?.org_id)
+                        res.status(401).send("Unauthorized: Organization doesn't match")
+                    } else {
+                        next()
+                    }
+                } else {
+                    next()
+                }
+            } else {
+                next()
+            }
+        })
 
         this.app.use('/api/v1', flowiseApiV1Router)
 
@@ -190,9 +239,12 @@ export class App {
 
 let serverApp: App | undefined
 
-export async function getAllChatFlow(): Promise<IChatFlow[]> {
-    return await getDataSource().getRepository(ChatFlow).find()
-}
+export const getAllChatFlow = async ({ userId }: { userId?: string }): Promise<IChatFlow[]> =>
+    getDataSource()
+        .getRepository(ChatFlow)
+        .createQueryBuilder('chatFlow')
+        .where(userId ? 'chatFlow.userId = :userId OR chatFlow.userId IS NULL' : 'chatFlow.userId IS NULL', { userId })
+        .getMany()
 
 export async function start(): Promise<void> {
     serverApp = new App()
