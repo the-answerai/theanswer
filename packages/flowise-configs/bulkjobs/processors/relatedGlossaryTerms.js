@@ -3,7 +3,7 @@ const relatedGlossaryTerms = {
     name: 'relatedGlossaryTerms',
     description: 'Analyzes the content of a document and tags it based on the content.',
     // chatflowId: '6b5da243-c3b8-4ddf-9076-22178f0d5c65', // Production
-    chatflowId: 'cf0dd90a-ac34-4835-aa72-6f5bac5bb82a', // Localhost
+    chatflowId: '41718e35-b8e7-4ac4-8fca-7a84a380d2ba', // Localhost
     sourceContentTypeId: 'article',
     filters: {
         'sys.id[nin]': [

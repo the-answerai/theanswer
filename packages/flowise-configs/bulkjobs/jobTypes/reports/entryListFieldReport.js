@@ -15,15 +15,20 @@ async function entryListFieldReport(processor) {
 
     // Generate CSV data where each row corresponds to an entry
     const csvData = allEntries.map((entry) => {
-        const entryData = entry.fields
         // Create a row for each entry, mapping field names to field values or URLs if it is an asset
         const row = {}
         row['sys.id'] = entry.sys.id
         reportDataFields.forEach((field) => {
-            const fieldValue = _.get(entryData, field)
+            const fieldValue = _.get(entry, field)
             if (Array.isArray(fieldValue) && fieldValue.every((item) => typeof item === 'string')) {
                 // Check if it's an array of strings and join them with a dash
                 row[field] = fieldValue.join('-')
+            } else if (Array.isArray(fieldValue) && fieldValue.every((item) => item.sys && item.sys.type === 'Asset')) {
+                // Check if it's an array of assets and include the URLs with 'https:' prefix
+                row[field] = fieldValue.map((item) => `https:${item.fields.file.url}`).join('-')
+            } else if (Array.isArray(fieldValue) && fieldValue.every((item) => item.sys && item.sys.type === 'Entry')) {
+                // Check if it's an array of entries and include the URLs with 'https:' prefix
+                row[field] = fieldValue.map((item) => item.fields.term).join('\n') // need to change this to the field you want to display 
             } else if (fieldValue && fieldValue.sys && fieldValue.sys.type === 'Asset') {
                 // Check if it's an asset and include the URL with 'https:' prefix
                 const url = fieldValue.fields.file.url
