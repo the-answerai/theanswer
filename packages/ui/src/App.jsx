@@ -24,9 +24,9 @@ const App = () => {
     const flagsmith = useFlagsmith()
     useNotifyParentOfNavigation()
     React.useEffect(() => {
-        if (user)
-            flagsmith.identify(
-                `user_${
+        if (user) {
+            console.log(
+                `user_${user?.org_id}_${
                     user.email
                         ? user.email.split('').reduce((a, b) => {
                               a = (a << 5) - a + b.charCodeAt(0)
@@ -35,6 +35,17 @@ const App = () => {
                         : ''
                 }`
             )
+            flagsmith.identify(
+                `user_${user.organizationId}_${
+                    user.email
+                        ? user.email.split('').reduce((a, b) => {
+                              a = (a << 5) - a + b.charCodeAt(0)
+                              return a & a
+                          }, 0)
+                        : ''
+                }`
+            )
+        }
     }, [user, flagsmith])
     React.useEffect(() => {
         ;(async () => {

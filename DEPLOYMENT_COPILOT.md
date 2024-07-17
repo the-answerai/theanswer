@@ -5,7 +5,8 @@ Before you start, make sure you have the following prerequisites:
 -   AWS account
 -   AWS CLI installed and configured with the new customer's AWS account
 -   Docker installed
--   AWS Copilot CLI installed or ran via `npx`
+-   AWS Copilot CLI installed: https://aws.github.io/copilot-cli/docs/getting-started/install/
+-   Route53 Hosted zone configured with `${env}.flowise.theanswer.ai` (make sure the NS records are shared with the AnswerAI team)
 -   Environment variables for the application saved into a `${env}.env` file
 
 Here are the environment variables required:
