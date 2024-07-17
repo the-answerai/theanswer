@@ -28,6 +28,7 @@ import { UpdateDefaultVisibility1717684633931 } from './1717684633931-UpdateDefa
 import { AddUserId1717773329048 } from './1717773329048-AddUserId'
 import { UpdateChatflowToHaveParentId1717796909629 } from './1717796909629-UpdateChatflowToHaveParentId'
 import { UpdateVisibilityType1719248473069 } from './1719248473069-UpdateVisibilityType'
+import { CredentialsVisibility1721247848452 } from './1721247848452-CredentialsVisibility'
 
 export const sqliteMigrations = [
     Init1693835579790,
@@ -59,5 +60,6 @@ export const sqliteMigrations = [
     UpdateDefaultVisibility1717684633931,
     AddUserId1717773329048,
     UpdateChatflowToHaveParentId1717796909629,
-    UpdateVisibilityType1719248473069
+    UpdateVisibilityType1719248473069,
+    CredentialsVisibility1721247848452
 ]

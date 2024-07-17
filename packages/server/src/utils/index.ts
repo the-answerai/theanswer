@@ -1228,7 +1228,9 @@ export const transformToCredentialEntity = async (body: ICredentialReqBody): Pro
     const credentialBody: ICommonObject = {
         name: body.name,
         credentialName: body.credentialName,
-        userId: body.userId
+        userId: body.userId,
+        visibility: body.visibility,
+        organizationId: body.organizationId
     }
 
     if (body.plainDataObj) {

@@ -6,13 +6,14 @@ import { transformToCredentialEntity, decryptCredentialData } from '../../utils'
 import { ICredentialReturnResponse } from '../../Interface'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
-import { IsNull } from 'typeorm'
+import { IsNull, Like } from 'typeorm'
 
-const createCredential = async (requestBody: any, userId?: string) => {
+const createCredential = async (requestBody: any, userId?: string, organizationId?: string) => {
     try {
         const appServer = getRunningExpressApp()
         const newCredential = await transformToCredentialEntity(requestBody)
         newCredential.userId = userId
+        newCredential.organizationId = organizationId
         const credential = await appServer.AppDataSource.getRepository(Credential).create(newCredential)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
         return dbResponse
@@ -41,7 +42,7 @@ const deleteCredentials = async (credentialId: string, userId?: string): Promise
     }
 }
 
-const getAllCredentials = async (paramCredentialName: any, userId?: string) => {
+const getAllCredentials = async (paramCredentialName: any, userId?: string, organizationId?: string) => {
     try {
         const appServer = getRunningExpressApp()
         let dbResponse = []
@@ -61,6 +62,17 @@ const getAllCredentials = async (paramCredentialName: any, userId?: string) => {
                             }
                         ]
                     })
+
+                    const orgCondition = `
+                        Credential.organizationId = :organizationId AND
+                        Credential.credentialName = :name AND
+                        Credential.visibility LIKE '%Organization%'
+                    `
+                    const orgCredentials = await appServer.AppDataSource.getRepository(Credential)
+                        .createQueryBuilder('Credential')
+                        .where(orgCondition, { organizationId, name })
+                        .getMany()
+                    credentials.push(...orgCredentials)
                     dbResponse.push(...credentials)
                 }
             } else {
@@ -76,6 +88,16 @@ const getAllCredentials = async (paramCredentialName: any, userId?: string) => {
                         }
                     ]
                 })
+                const orgCondition = `
+                        Credential.organizationId = :organizationId AND
+                        Credential.credentialName = :name AND
+                        Credential.visibility LIKE '%Organization%'
+                    `
+                const orgCredentials = await appServer.AppDataSource.getRepository(Credential)
+                    .createQueryBuilder('Credential')
+                    .where(orgCondition, { organizationId, name: paramCredentialName as string })
+                    .getMany()
+                credentials.push(...orgCredentials)
                 dbResponse = [...credentials]
             }
         } else {
@@ -89,12 +111,30 @@ const getAllCredentials = async (paramCredentialName: any, userId?: string) => {
                     }
                 ]
             })
+            const orgCondition = `
+                        Credential.organizationId = :organizationId AND
+                        Credential.visibility LIKE '%Organization%'
+            `
+            const orgCredentials = await appServer.AppDataSource.getRepository(Credential)
+                .createQueryBuilder('Credential')
+                .where(orgCondition, { organizationId })
+                .getMany()
+
+            dbResponse.push(...orgCredentials)
+
             for (const credential of credentials) {
                 dbResponse.push(omit(credential, ['encryptedData']))
             }
         }
-        dbResponse = dbResponse.map((credential) => ({ ...credential, editable: credential.userId === userId }))
-        return dbResponse
+        // Deduplicate credentials based on id
+        const uniqueCredentials = Array.from(new Map(dbResponse.map((item) => [item.id, item])).values())
+
+        // Add editable property
+        const finalResponse = uniqueCredentials.map((credential) => ({
+            ...credential,
+            editable: credential.userId === userId
+        }))
+        return finalResponse
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -134,7 +174,7 @@ const getCredentialById = async (credentialId: string, userId?: string): Promise
     }
 }
 
-const updateCredential = async (credentialId: string, requestBody: any, userId?: string): Promise<any> => {
+const updateCredential = async (credentialId: string, requestBody: any, userId?: string, organizationId?: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
@@ -146,6 +186,7 @@ const updateCredential = async (credentialId: string, requestBody: any, userId?:
         }
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
         requestBody.plainDataObj = { ...decryptedCredentialData, ...requestBody.plainDataObj }
+        requestBody.organizationId = organizationId
         const updateCredential = await transformToCredentialEntity(requestBody)
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredential)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)

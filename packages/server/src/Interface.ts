@@ -1,4 +1,5 @@
 import { ICommonObject, IFileUpload, INode, INodeData as INodeDataFromComponent, INodeParams } from 'flowise-components'
+import { ChatflowVisibility } from './database/entities/ChatFlow'
 
 export type MessageType = 'apiMessage' | 'userMessage'
 
@@ -268,6 +269,8 @@ export interface ICredentialReqBody {
     credentialName: string
     plainDataObj: ICredentialDataDecrypted
     userId?: string
+    organizationId?: string
+    visibility?: ChatflowVisibility[]
 }
 
 // Decrypted credential object sent back to client
