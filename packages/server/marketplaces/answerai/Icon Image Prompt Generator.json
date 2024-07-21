@@ -296,7 +296,7 @@
       "id": "promptTemplate_0",
       "position": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 955.4416854000958
       },
       "type": "customNode",
       "data": {
@@ -334,8 +334,8 @@
         ],
         "inputAnchors": [],
         "inputs": {
-          "template": "You are an AI assistant tasked with generating related search intent topics for SEO purposes. Your goal is to provide a list of relevant topics based on the given input topic. These topics should be closely related to the original topic and reflect potential search intents of users interested in that subject.\n\nHere's the topic you'll be working with:\n{Topic}\n\nTo generate related search intent topics, follow these steps:\n\n1. Analyze the given topic:\n   - Identify the main subject or theme\n   - Consider different aspects or subtopics related to the main topic\n   - Think about potential questions users might have about this topic\n\n2. Generate related search intent topics:\n   - Create a list of at least 10 related topics\n   - Ensure each topic is relevant to the original subject\n   - Include a mix of:\n     a) Broader topics that encompass the original topic\n     b) More specific subtopics or aspects of the original topic\n     c) Related questions users might ask\n     d) Complementary or adjacent topics that users interested in the original topic might also search for\n\n3. Refine your list:\n   - Remove any duplicate or overly similar topics\n   - Ensure each topic is distinct and adds value\n   - Check that the topics cover a range of search intents (informational, navigational, transactional)\n\n4. Format your output:\n   - Present your list of related search intent topics in a numbered list\n   - Keep each topic concise, ideally no more than 5-7 words\n   - Use title case for each topic\n\nProvide your final list of related search intent topics within <related_topics> tags. Before the list, include a brief explanation of how these topics relate to the original subject and how they can be useful for SEO purposes.",
-          "promptValues": "{\"Topic\":\"{{question}}\"}"
+          "template": "You are an AI assistant specialized in generating detailed prompts for creating icon images. Your task is to take a user's description of a concept or purpose for an icon and transform it into a comprehensive prompt that can guide designers or image generation AI in creating a visually appealing and conceptually accurate icon.\n\nHere are the guidelines to follow when generating icon image prompts:\n1. Be specific about the visual elements to include\n2. Describe the style (e.g., flat, 3D, outline, etc.)\n3. Specify colors or color schemes\n4. Mention any symbolic representations if applicable\n5. Consider the context or industry the icon will be used in\n6. Keep the design simple and easily recognizable at small sizes\n\nWhen creating the prompt, follow these steps:\n1. Analyze the given concept or purpose\n2. Identify key visual elements that represent the concept\n3. Determine an appropriate style for the icon\n4. Choose a color scheme that fits the concept and intended use\n5. Incorporate any relevant symbolism\n6. Ensure the description will result in a simple, scalable design\n\nYour output should be formatted as follows:\n1. A brief (1-2 sentences) interpretation of the concept\n2. A detailed prompt for creating the icon image (3-5 sentences)\n3. A list of key elements to include (3-5 bullet points)\n\nHere's an example of a good output:\n\n<example>\nConcept: A productivity app for managing daily tasks\n\nInterpretation: This icon should represent efficiency and organization in completing daily tasks.\n\nPrompt: Create a minimalist, flat design icon featuring a stylized checkmark as the central element. The checkmark should be bold and slightly angled, giving a sense of dynamism. Incorporate a subtle clock face or timer element to represent time management. Use a vibrant blue as the primary color, with white for the checkmark and clock elements.\n\nKey elements:\n• Bold, angled checkmark as the main focus\n• Subtle clock face or timer element\n• Flat design style\n• Vibrant blue and white color scheme\n• Simple, scalable shapes\n</example>\n\nNow, generate an icon image prompt based on the following concept:\n\n{icon_concept}\n\nPlease provide your output inside <icon_prompt> tags.",
+          "promptValues": "{\"icon_concept\":\"{{question}}\"}"
         },
         "outputAnchors": [
           {
@@ -353,10 +353,64 @@
       "height": 511,
       "positionAbsolute": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 955.4416854000958
       },
       "selected": false,
       "dragging": false
+    },
+    {
+      "id": "stickyNote_0",
+      "position": {
+        "x": 1476.3561339568541,
+        "y": 153.64632075002544
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Instructions for Best Results:\n\n1. Click the green chat box and type in your idea for the icon. e.g. \"A sustainable energy app that helps users track and reduce their carbon footprint\"\n2. Sit back and relax while we work our magic.\n3. Enjoy! You'll receive a detailed, well-structured, optimized prompt with inforamation about the designs, style, concept etc."
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 264,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 1476.3561339568541,
+        "y": 153.64632075002544
+      }
     }
   ],
   "edges": [

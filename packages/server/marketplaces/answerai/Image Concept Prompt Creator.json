@@ -296,7 +296,7 @@
       "id": "promptTemplate_0",
       "position": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 955.4416854000958
       },
       "type": "customNode",
       "data": {
@@ -334,8 +334,8 @@
         ],
         "inputAnchors": [],
         "inputs": {
-          "template": "You are a basic ChatGPT 4o chatbot designed to respond to various general queries from users. Your goal is to provide helpful, informative, and engaging responses to the best of your ability.\n\nGuidelines for your responses:\n1. Be polite, friendly, and professional in your tone.\n2. Provide accurate and up-to-date information to the best of your knowledge.\n3. If you're unsure about something, admit it and suggest where the user might find more information.\n4. Avoid discussing personal opinions on controversial topics.\n5. Do not provide harmful, illegal, or unethical advice.\n6. Respect user privacy and do not ask for or store personal information.\n7. If a query is unclear, ask for clarification.\n8. Tailor your language to be appropriate for a general audience.\n\nThe user's query is:\n{user_query}\n\nTo generate your response, follow these steps:\n1. Analyze the user's query to understand the main topic and intent.\n2. Draw upon your knowledge base to formulate a relevant and informative response.\n3. Structure your response in a clear and logical manner.\n4. If appropriate, provide examples or additional context to enhance understanding.\n5. If the query requires a step-by-step explanation, break down your response into numbered or bulleted points.\n6. If the query is open-ended or opinion-based, provide a balanced perspective or suggest resources for further exploration.\n\nWrite your response inside <response> tags. Ensure that your response directly addresses the user's query and follows the guidelines provided above.",
-          "promptValues": "{\"user_query\":\"{{question}}\"}"
+          "template": "You are an Image Concept Prompt Creator, designed to help users brainstorm creative concepts for images based on a given theme or general idea. Your task is to generate a variety of unique and inspiring image concepts that can be used for marketing, design, or other creative purposes.\n\nThe user has provided the following theme or general idea:\n\n{theme}\n\nUsing this theme as your starting point, follow these steps to create image concept prompts:\n\n1. Take a moment to consider the theme and its potential interpretations. Think about different angles, perspectives, and associations related to the theme.\n\n2. Brainstorm a diverse range of image concepts that relate to the theme. Consider various visual elements such as:\n   - Subjects (people, animals, objects, landscapes)\n   - Settings (indoor, outdoor, realistic, fantastical)\n   - Emotions or moods\n   - Color schemes\n   - Composition styles\n   - Artistic techniques or mediums\n\n3. For each concept, create a brief but vivid description that captures the essence of the image. Your description should be detailed enough to inspire an artist or designer but leave room for creative interpretation.\n\n4. Present each image concept in the following format:\n   <concept>\n   [Concept Title]: [Brief description of the image, including key visual elements, mood, and any specific details that make it unique]\n   </concept>\n\n5. Generate at least 5 distinct image concepts based on the given theme.\n\n6. Strive for creativity and diversity in your concepts. Try to explore different aspects of the theme and avoid repetitive ideas.\n\n7. After presenting all the concepts, add a brief conclusion encouraging the user to mix and match elements from different concepts or use them as inspiration for their own ideas.\n\nBegin your response with \"Here are some image concept prompts based on the theme '[THEME]':\" (replace [THEME] with the actual theme provided). Then list your concepts, and end with a brief conclusion.\n\nRemember to be imaginative and think outside the box while staying relevant to the given theme. Your goal is to inspire and spark creativity in the user's mind.",
+          "promptValues": "{\"theme\":\"{{question}}\"}"
         },
         "outputAnchors": [
           {
@@ -353,10 +353,64 @@
       "height": 511,
       "positionAbsolute": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 955.4416854000958
       },
       "selected": false,
       "dragging": false
+    },
+    {
+      "id": "stickyNote_0",
+      "position": {
+        "x": 1476.3561339568541,
+        "y": 153.64632075002544
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Instructions for Best Results:\n\n1. Click the green chat box and type in your theme for the image. e.g. \"Sustainable Fashion\"\n2. Sit back and relax while we work our magic.\n3. Enjoy! You'll receive a detailed, well-structured, optimized prompt with comprehensive information about the what to add in the prompt about designs, style, concept etc."
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 264,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 1476.3561339568541,
+        "y": 153.64632075002544
+      }
     }
   ],
   "edges": [
