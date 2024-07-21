@@ -4,7 +4,7 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/go/dockerfile-reference/
 
-FROM node:20-alpine as base
+FROM --platform=linux/amd64 node:20-alpine as base
 
 WORKDIR /app
 
