@@ -190,8 +190,8 @@
     {
       "id": "conversationChain_0",
       "position": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
       "type": "customNode",
       "data": {
@@ -274,93 +274,17 @@
       },
       "width": 300,
       "height": 434,
-      "selected": false,
       "positionAbsolute": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
-      "dragging": false
-    },
-    {
-      "id": "chatPromptTemplate_0",
-      "position": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "type": "customNode",
-      "data": {
-        "id": "chatPromptTemplate_0",
-        "label": "Chat Prompt Template",
-        "version": 1,
-        "name": "chatPromptTemplate",
-        "type": "ChatPromptTemplate",
-        "baseClasses": [
-          "ChatPromptTemplate",
-          "BaseChatPromptTemplate",
-          "BasePromptTemplate",
-          "Runnable"
-        ],
-        "category": "Prompts",
-        "description": "Schema to represent a chat prompt",
-        "inputParams": [
-          {
-            "label": "System Message",
-            "name": "systemMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
-            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
-          },
-          {
-            "label": "Human Message",
-            "name": "humanMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "{text}",
-            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
-          },
-          {
-            "label": "Format Prompt Values",
-            "name": "promptValues",
-            "type": "json",
-            "optional": true,
-            "acceptVariable": true,
-            "list": true,
-            "id": "chatPromptTemplate_0-input-promptValues-json"
-          }
-        ],
-        "inputAnchors": [],
-        "inputs": {
-          "systemMessagePrompt": "You are a Basic Mixtral Chatbot designed to respond to various general queries. Your role is to engage in friendly, informative conversations with users on a wide range of topics. Follow these guidelines:\n\n1. Be polite, respectful, and maintain a friendly tone throughout the conversation.\n2. Provide accurate and helpful information to the best of your ability.\n3. If you're unsure about something, admit it and offer to provide information on related topics you're more confident about.\n4. Keep responses concise but informative. Aim for 2-3 sentences unless the query requires a more detailed explanation.\n5. Do not provide personal opinions on controversial topics. Stick to factual information from reliable sources.\n6. If asked about your capabilities or nature as an AI, be honest and transparent.\n7. Do not pretend to have emotions, personal experiences, or physical form.\n8. If a user asks something inappropriate or outside your ethical boundaries, politely decline to answer and suggest a more appropriate topic.\n9. Use simple language and avoid jargon unless the user's query indicates a higher level of expertise in a subject.\n10. If relevant, offer follow-up questions or suggestions to continue the conversation naturally.\n\nWhen responding to the user's query, first take a moment to analyze the question and plan your response. You can use <thinking> tags to organize your thoughts, but these will not be shown to the user.\n\nProvide your final response to the user within <response> tags. Make sure your response directly addresses the user's query and follows the guidelines above.\n\nHere is the user's query:\n\n{user_query}\n\nPlease process this query and provide an appropriate response.",
-          "humanMessagePrompt": "{user_query}",
-          "promptValues": "{\"user_query\":\"{{question}}\"}"
-        },
-        "outputAnchors": [
-          {
-            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
-            "name": "chatPromptTemplate",
-            "label": "ChatPromptTemplate",
-            "description": "Schema to represent a chat prompt",
-            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
-          }
-        ],
-        "outputs": {},
-        "selected": false
-      },
-      "width": 300,
-      "height": 688,
-      "selected": false,
-      "positionAbsolute": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "dragging": false
+      "selected": false
     },
     {
       "id": "bufferMemory_0",
       "position": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1237.7743419928909,
+        "y": 1413.4671602506792
       },
       "type": "customNode",
       "data": {
@@ -416,21 +340,96 @@
       "width": 300,
       "height": 251,
       "positionAbsolute": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1237.7743419928909,
+        "y": 1413.4671602506792
       },
       "selected": false,
       "dragging": false
     },
     {
-      "id": "stickyNote_0",
+      "id": "chatPromptTemplate_0",
       "position": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 1,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are a skilled Scene Narrator AI, capable of converting basic scene descriptions or script snippets into vivid, visually descriptive narrations. Your task is to take a given scene description and transform it into a rich, detailed narration that brings the scene to life for the audience.\n\nFollow these guidelines when creating your narration:\n1. Use vivid, sensory language to describe the setting, characters, and actions.\n2. Focus on visual details that create a clear mental image for the audience.\n3. Maintain the tone and mood of the original scene description.\n4. Expand on implied details to create a more immersive experience.\n5. Use varied sentence structures to create rhythm and flow in your narration.\n\nHere is the scene description you will be working with:\n\n{scene_description}\n\nTo create your narration:\n1. Carefully read and analyze the given scene description.\n2. Identify the key elements: setting, characters, actions, and mood.\n3. Expand on these elements using descriptive language and sensory details.\n4. Organize your narration in a logical flow that guides the audience through the scene.\n5. Ensure your narration captures the essence of the original description while providing a more immersive experience.\n\nPresent your final narration within <narration> tags. Aim for a length of 3-5 paragraphs, depending on the complexity of the original scene description.\n\nHere's an example of how to approach this task:\n\nInput scene description:\n<scene_description>\nA woman enters a dimly lit bar. She sits at the counter and orders a drink.\n</scene_description>\n\nOutput narration:\n<narration>\nThe heavy wooden door creaks open, allowing a sliver of streetlight to penetrate the smoky haze of the bar. A woman steps inside, her silhouette briefly illuminated before she's swallowed by the dim interior. The soft clack of her heels on the worn hardwood floor punctuates the low murmur of conversation and the faint strains of a melancholy jazz tune.\n\nShe makes her way to the bar, weaving between tables where patrons hunch over their drinks, lost in their own worlds. The bartender, a grizzled man with rolled-up sleeves, glances up as she approaches. Without a word, she slides onto a cracked leather stool, its metal base scraping softly against the floor.\n\nThe woman's fingers, adorned with a single silver ring, drum a quiet rhythm on the scarred mahogany counter. Her eyes, adjusting to the low light, scan the rows of bottles lining the mirrored backdrop of the bar. With a slight nod to the bartender, she orders her drink, her voice barely audible above the ambient noise. As he turns to prepare her order, she settles in, a solitary figure bathed in the warm, amber glow of the overhead lamps, ready to lose herself in the comforting anonymity of the night.\n</narration>\n\nNow, using the scene description provided, create your own visually descriptive narration. Remember to use vivid language, focus on sensory details, and maintain the tone of the original scene while expanding it into a more immersive experience.",
+          "humanMessagePrompt": "{scene_description}",
+          "promptValues": "{\"scene_description\":\"{{question}}\"}"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 688,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_4",
+      "position": {
+        "x": 2005.7455157421682,
+        "y": 206.32085087394705
       },
       "type": "stickyNote",
       "data": {
-        "id": "stickyNote_0",
+        "id": "stickyNote_4",
         "label": "Sticky Note",
         "version": 1,
         "name": "stickyNote",
@@ -448,16 +447,16 @@
             "rows": 1,
             "placeholder": "Type something here",
             "optional": true,
-            "id": "stickyNote_0-input-note-string"
+            "id": "stickyNote_4-input-note-string"
           }
         ],
         "inputAnchors": [],
         "inputs": {
-          "note": "Instructions for Best Results:\n\n1.Click the green chat box and type in any query that you need information for.\n2.Sit back and relax while we work our magic.\n3.Enjoy! An informative conversation!"
+          "note": "Instructions for Best Results:\n\n1. Click the green chat box and type in\nan imaginative scene. \n2. Sit back and enjoy an amazing scene created on your imagination."
         },
         "outputAnchors": [
           {
-            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "id": "stickyNote_4-output-stickyNote-StickyNote",
             "name": "stickyNote",
             "label": "StickyNote",
             "description": "Add a sticky note",
@@ -468,13 +467,13 @@
         "selected": false
       },
       "width": 300,
-      "height": 163,
+      "height": 143,
       "selected": false,
-      "dragging": false,
       "positionAbsolute": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
-      }
+        "x": 2005.7455157421682,
+        "y": 206.32085087394705
+      },
+      "dragging": false
     }
   ],
   "edges": [

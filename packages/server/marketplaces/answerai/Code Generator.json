@@ -190,8 +190,8 @@
     {
       "id": "conversationChain_0",
       "position": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
       "type": "customNode",
       "data": {
@@ -274,93 +274,17 @@
       },
       "width": 300,
       "height": 434,
-      "selected": false,
       "positionAbsolute": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
-      "dragging": false
-    },
-    {
-      "id": "chatPromptTemplate_0",
-      "position": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "type": "customNode",
-      "data": {
-        "id": "chatPromptTemplate_0",
-        "label": "Chat Prompt Template",
-        "version": 1,
-        "name": "chatPromptTemplate",
-        "type": "ChatPromptTemplate",
-        "baseClasses": [
-          "ChatPromptTemplate",
-          "BaseChatPromptTemplate",
-          "BasePromptTemplate",
-          "Runnable"
-        ],
-        "category": "Prompts",
-        "description": "Schema to represent a chat prompt",
-        "inputParams": [
-          {
-            "label": "System Message",
-            "name": "systemMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
-            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
-          },
-          {
-            "label": "Human Message",
-            "name": "humanMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "{text}",
-            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
-          },
-          {
-            "label": "Format Prompt Values",
-            "name": "promptValues",
-            "type": "json",
-            "optional": true,
-            "acceptVariable": true,
-            "list": true,
-            "id": "chatPromptTemplate_0-input-promptValues-json"
-          }
-        ],
-        "inputAnchors": [],
-        "inputs": {
-          "systemMessagePrompt": "You are a Basic Mixtral Chatbot designed to respond to various general queries. Your role is to engage in friendly, informative conversations with users on a wide range of topics. Follow these guidelines:\n\n1. Be polite, respectful, and maintain a friendly tone throughout the conversation.\n2. Provide accurate and helpful information to the best of your ability.\n3. If you're unsure about something, admit it and offer to provide information on related topics you're more confident about.\n4. Keep responses concise but informative. Aim for 2-3 sentences unless the query requires a more detailed explanation.\n5. Do not provide personal opinions on controversial topics. Stick to factual information from reliable sources.\n6. If asked about your capabilities or nature as an AI, be honest and transparent.\n7. Do not pretend to have emotions, personal experiences, or physical form.\n8. If a user asks something inappropriate or outside your ethical boundaries, politely decline to answer and suggest a more appropriate topic.\n9. Use simple language and avoid jargon unless the user's query indicates a higher level of expertise in a subject.\n10. If relevant, offer follow-up questions or suggestions to continue the conversation naturally.\n\nWhen responding to the user's query, first take a moment to analyze the question and plan your response. You can use <thinking> tags to organize your thoughts, but these will not be shown to the user.\n\nProvide your final response to the user within <response> tags. Make sure your response directly addresses the user's query and follows the guidelines above.\n\nHere is the user's query:\n\n{user_query}\n\nPlease process this query and provide an appropriate response.",
-          "humanMessagePrompt": "{user_query}",
-          "promptValues": "{\"user_query\":\"{{question}}\"}"
-        },
-        "outputAnchors": [
-          {
-            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
-            "name": "chatPromptTemplate",
-            "label": "ChatPromptTemplate",
-            "description": "Schema to represent a chat prompt",
-            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
-          }
-        ],
-        "outputs": {},
-        "selected": false
-      },
-      "width": 300,
-      "height": 688,
-      "selected": false,
-      "positionAbsolute": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "dragging": false
+      "selected": false
     },
     {
       "id": "bufferMemory_0",
       "position": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1328.8348392220717,
+        "y": 1010.5244600115544
       },
       "type": "customNode",
       "data": {
@@ -416,17 +340,193 @@
       "width": 300,
       "height": 251,
       "positionAbsolute": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1328.8348392220717,
+        "y": 1010.5244600115544
       },
+      "selected": false
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 1,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are an advanced AI code generator assistant. Your primary task is to generate high-quality, functional code based on user requirements or queries. You should always strive to produce code that is efficient, readable, and follows best practices for the specified programming language and context.\n\nFirst, you will be provided with important context about the project. This may include information about the programming language, coding style, project requirements, and any relevant background information. Pay close attention to this context as it will guide your code generation:\n\n{project_context}\n\nWhen generating code, follow these guidelines:\n1. Adhere to the specified programming language and coding style mentioned in the project context.\n2. Write clean, well-commented code that is easy to understand and maintain.\n3. Consider efficiency and performance in your implementations.\n4. Use appropriate error handling and input validation where necessary.\n5. Follow security best practices to prevent common vulnerabilities.\n6. If the project context mentions specific libraries or frameworks, utilize them appropriately.\n\nYou will receive a user query or requirement. Your task is to generate code that fulfills this request while taking into account the project context. Here's how to approach the user query:\n\n1. Carefully read and analyze the user's request.\n2. If any part of the query is unclear, ask for clarification before proceeding.\n3. Break down complex requests into smaller, manageable parts if necessary.\n4. Consider edge cases and potential issues that may arise from the user's request.\n\nWhen you're ready to provide your response, use the following format:\n\n1. Begin with a brief explanation of your approach inside <explanation> tags.\n2. Provide the generated code inside <code> tags.\n3. If relevant, include brief comments about key parts of the code or any assumptions you made inside <comments> tags.\n\nHere's an example of a good response:\n\n<explanation>\nTo fulfill your request for a function that calculates the factorial of a number, I've implemented a recursive solution in Python. This approach is concise and easy to understand, though it may not be the most efficient for very large numbers due to the risk of stack overflow.\n</explanation>\n\n<code>\ndef factorial(n):\n    \"\"\"\n    Calculate the factorial of a non-negative integer.\n    \n    Args:\n    n (int): The number to calculate the factorial of.\n    \n    Returns:\n    int: The factorial of n.\n    \n    Raises:\n    ValueError: If n is negative.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"Factorial is not defined for negative numbers.\")\n    if n == 0 or n == 1:\n        return 1\n    return n * factorial(n - 1)\n</code>\n\n<comments>\nThis implementation includes input validation to handle negative numbers. For very large inputs, an iterative approach or using Python's math.factorial() function might be more appropriate to avoid recursion depth issues.\n</comments>\n\nRemember:\n- Always prioritize the specific requirements mentioned in the project context.\n- If you're unsure about any aspect of the request, ask for clarification.\n- Provide explanations that are clear and concise, avoiding unnecessary jargon.\n- Test your code mentally to ensure it works as expected before providing it as a solution.\n\nNow, please generate code based on the following user query:\n\n{user_query}",
+          "humanMessagePrompt": "{user_query}",
+          "promptValues": "{\"user_query\":\"{{question}}\",\"project_context\":\"{{plainText_0.data.instance}}\"}"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 688,
       "selected": false,
+      "positionAbsolute": {
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
       "dragging": false
+    },
+    {
+      "id": "plainText_0",
+      "position": {
+        "x": 213.34047568368794,
+        "y": 358.6257120683014
+      },
+      "type": "customNode",
+      "data": {
+        "id": "plainText_0",
+        "label": "Plain Text",
+        "version": 2,
+        "name": "plainText",
+        "type": "Document",
+        "baseClasses": [
+          "Document"
+        ],
+        "category": "Document Loaders",
+        "description": "Load data from plain text",
+        "inputParams": [
+          {
+            "label": "Text",
+            "name": "text",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
+            "id": "plainText_0-input-text-string"
+          },
+          {
+            "label": "Additional Metadata",
+            "name": "metadata",
+            "type": "json",
+            "description": "Additional metadata to be added to the extracted documents",
+            "optional": true,
+            "additionalParams": true,
+            "id": "plainText_0-input-metadata-json"
+          },
+          {
+            "label": "Omit Metadata Keys",
+            "name": "omitMetadataKeys",
+            "type": "string",
+            "rows": 4,
+            "description": "Each document loader comes with a default set of metadata keys that are extracted from the document. You can use this field to omit some of the default metadata keys. The value should be a list of keys, seperated by comma. Use * to omit all metadata keys execept the ones you specify in the Additional Metadata field",
+            "placeholder": "key1, key2, key3.nestedKey1",
+            "optional": true,
+            "additionalParams": true,
+            "id": "plainText_0-input-omitMetadataKeys-string"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Text Splitter",
+            "name": "textSplitter",
+            "type": "TextSplitter",
+            "optional": true,
+            "id": "plainText_0-input-textSplitter-TextSplitter"
+          }
+        ],
+        "inputs": {
+          "text": "<project_context>\n//add details about your project here.\n</project_context?",
+          "textSplitter": "",
+          "metadata": "",
+          "omitMetadataKeys": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "Array of document objects containing metadata and pageContent",
+            "options": [
+              {
+                "id": "plainText_0-output-document-Document|json",
+                "name": "document",
+                "label": "Document",
+                "description": "Array of document objects containing metadata and pageContent",
+                "type": "Document | json"
+              },
+              {
+                "id": "plainText_0-output-text-string|json",
+                "name": "text",
+                "label": "Text",
+                "description": "Concatenated string from pageContent of documents",
+                "type": "string | json"
+              }
+            ],
+            "default": "document"
+          }
+        ],
+        "outputs": {
+          "output": "text"
+        },
+        "selected": false
+      },
+      "width": 300,
+      "height": 485,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 213.34047568368794,
+        "y": 358.6257120683014
+      }
     },
     {
       "id": "stickyNote_0",
       "position": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
+        "x": -67.84095392043733,
+        "y": 647.5122734424588
       },
       "type": "stickyNote",
       "data": {
@@ -453,7 +553,7 @@
         ],
         "inputAnchors": [],
         "inputs": {
-          "note": "Instructions for Best Results:\n\n1.Click the green chat box and type in any query that you need information for.\n2.Sit back and relax while we work our magic.\n3.Enjoy! An informative conversation!"
+          "note": "Here, you can add details about your project for better context. \nE.g. Add details like:\n-Project Overview\n-Technologies Used:\n-Coding Guidelines\ne.g.PEP 8 for Python Code\nDatabase and API\nDatabase Interactions: Django's ORM\nAPI Endpoints: RESTful\nSecurity\nInput Validation\n-Django's Built-in Security Features\n-System Requirements\nPerformance\ne.g. Capacity: Handle up to 10,000 products and 1,000 daily transactions\n"
         },
         "outputAnchors": [
           {
@@ -468,13 +568,121 @@
         "selected": false
       },
       "width": 300,
-      "height": 163,
+      "height": 384,
       "selected": false,
-      "dragging": false,
       "positionAbsolute": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
-      }
+        "x": -67.84095392043733,
+        "y": 647.5122734424588
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_1",
+      "position": {
+        "x": 213.84063157462367,
+        "y": 314.27676554981167
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_1",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_1-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "A"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_1-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 42,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 213.84063157462367,
+        "y": 314.27676554981167
+      },
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_2",
+      "position": {
+        "x": 1887.181909448775,
+        "y": 83.68772003734517
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_2",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_2-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Instructions for Best Results:\n\n1. Start with Your Code Generation: Enter your project context with the details mentioned  in Instance A.\n2. Save the Chatflow: Once you're all set, save the chatflow.\n3. Enter Your Query: Click the green chat box and type in your query, such as \"Create a Python function that does XYZ,\" etc.\n4. Enjoy Your Code: Sit back and enjoy the code that's generated for you.\n"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_2-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 284,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1887.181909448775,
+        "y": 83.68772003734517
+      },
+      "dragging": false
     }
   ],
   "edges": [
@@ -501,6 +709,14 @@
       "targetHandle": "conversationChain_0-input-chatPromptTemplate-ChatPromptTemplate",
       "type": "buttonedge",
       "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-conversationChain_0-conversationChain_0-input-chatPromptTemplate-ChatPromptTemplate"
+    },
+    {
+      "source": "plainText_0",
+      "sourceHandle": "plainText_0-output-text-string|json",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "type": "buttonedge",
+      "id": "plainText_0-plainText_0-output-text-string|json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
     }
   ]
 }

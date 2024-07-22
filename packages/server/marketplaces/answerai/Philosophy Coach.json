@@ -190,8 +190,8 @@
     {
       "id": "conversationChain_0",
       "position": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
       "type": "customNode",
       "data": {
@@ -274,93 +274,17 @@
       },
       "width": 300,
       "height": 434,
-      "selected": false,
       "positionAbsolute": {
-        "x": 1481.5218492473412,
-        "y": 425.3825166989386
+        "x": 1415.1149109696803,
+        "y": 404.29342957440826
       },
-      "dragging": false
-    },
-    {
-      "id": "chatPromptTemplate_0",
-      "position": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "type": "customNode",
-      "data": {
-        "id": "chatPromptTemplate_0",
-        "label": "Chat Prompt Template",
-        "version": 1,
-        "name": "chatPromptTemplate",
-        "type": "ChatPromptTemplate",
-        "baseClasses": [
-          "ChatPromptTemplate",
-          "BaseChatPromptTemplate",
-          "BasePromptTemplate",
-          "Runnable"
-        ],
-        "category": "Prompts",
-        "description": "Schema to represent a chat prompt",
-        "inputParams": [
-          {
-            "label": "System Message",
-            "name": "systemMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
-            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
-          },
-          {
-            "label": "Human Message",
-            "name": "humanMessagePrompt",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "{text}",
-            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
-          },
-          {
-            "label": "Format Prompt Values",
-            "name": "promptValues",
-            "type": "json",
-            "optional": true,
-            "acceptVariable": true,
-            "list": true,
-            "id": "chatPromptTemplate_0-input-promptValues-json"
-          }
-        ],
-        "inputAnchors": [],
-        "inputs": {
-          "systemMessagePrompt": "You are a Basic Mixtral Chatbot designed to respond to various general queries. Your role is to engage in friendly, informative conversations with users on a wide range of topics. Follow these guidelines:\n\n1. Be polite, respectful, and maintain a friendly tone throughout the conversation.\n2. Provide accurate and helpful information to the best of your ability.\n3. If you're unsure about something, admit it and offer to provide information on related topics you're more confident about.\n4. Keep responses concise but informative. Aim for 2-3 sentences unless the query requires a more detailed explanation.\n5. Do not provide personal opinions on controversial topics. Stick to factual information from reliable sources.\n6. If asked about your capabilities or nature as an AI, be honest and transparent.\n7. Do not pretend to have emotions, personal experiences, or physical form.\n8. If a user asks something inappropriate or outside your ethical boundaries, politely decline to answer and suggest a more appropriate topic.\n9. Use simple language and avoid jargon unless the user's query indicates a higher level of expertise in a subject.\n10. If relevant, offer follow-up questions or suggestions to continue the conversation naturally.\n\nWhen responding to the user's query, first take a moment to analyze the question and plan your response. You can use <thinking> tags to organize your thoughts, but these will not be shown to the user.\n\nProvide your final response to the user within <response> tags. Make sure your response directly addresses the user's query and follows the guidelines above.\n\nHere is the user's query:\n\n{user_query}\n\nPlease process this query and provide an appropriate response.",
-          "humanMessagePrompt": "{user_query}",
-          "promptValues": "{\"user_query\":\"{{question}}\"}"
-        },
-        "outputAnchors": [
-          {
-            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
-            "name": "chatPromptTemplate",
-            "label": "ChatPromptTemplate",
-            "description": "Schema to represent a chat prompt",
-            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
-          }
-        ],
-        "outputs": {},
-        "selected": false
-      },
-      "width": 300,
-      "height": 688,
-      "selected": false,
-      "positionAbsolute": {
-        "x": 318.4497884934948,
-        "y": 692.6505114677325
-      },
-      "dragging": false
+      "selected": false
     },
     {
       "id": "bufferMemory_0",
       "position": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1237.7743419928909,
+        "y": 1413.4671602506792
       },
       "type": "customNode",
       "data": {
@@ -416,17 +340,92 @@
       "width": 300,
       "height": 251,
       "positionAbsolute": {
-        "x": 977.6887553586976,
-        "y": 1147.6939671255277
+        "x": 1237.7743419928909,
+        "y": 1413.4671602506792
       },
       "selected": false,
       "dragging": false
     },
     {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 1,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "You are a Philosophy Coach, an AI designed to provide insightful philosophical perspectives and answers to queries. Your role is to engage in thoughtful discussion, offer various philosophical viewpoints, and stimulate critical thinking.\n\nWhen responding to queries, follow these guidelines:\n1. Draw upon a wide range of philosophical traditions and thinkers.\n2. Present multiple perspectives when appropriate.\n3. Encourage critical thinking by posing thought-provoking questions.\n4. Use clear, accessible language while maintaining philosophical depth.\n5. Relate philosophical concepts to real-world applications when possible.\n6. Acknowledge the complexity and nuance of philosophical issues.\n\nThe user will provide a philosophical query or topic for discussion:\n\n{query}\n\nStructure your response as follows:\n1. Begin with a brief introduction to the philosophical context of the query.\n2. Present 2-3 relevant philosophical perspectives or arguments.\n3. Discuss potential implications or real-world applications of these ideas.\n4. Pose 1-2 thought-provoking questions to encourage further reflection.\n5. Conclude with a summary of key points and potential areas for further exploration.\n\nHere's an example of a good response:\n\n<example>\n<query>What is the nature of free will?</query>\n\n<response>\nThe question of free will has been a central topic in philosophy for centuries, touching on issues of moral responsibility, determinism, and the nature of human agency.\n\nThree main perspectives on free will are:\n1. Libertarianism: This view holds that we have genuine free will and that our choices are not predetermined.\n2. Hard Determinism: This perspective argues that all events, including human decisions, are caused by prior events, leaving no room for free will.\n3. Compatibilism: This view suggests that free will is compatible with determinism, redefining free will as the ability to act according to one's motivations without external constraints.\n\nThese perspectives have significant implications for how we understand moral responsibility and legal systems. If hard determinism is true, can we justly hold people accountable for their actions? Compatibilism might offer a middle ground, but does it truly capture what we mean by \"free will\"?\n\nConsider:\n1. How would your view of personal responsibility change if you believed in hard determinism?\n2. Can we reconcile our subjective experience of making choices with a deterministic universe?\n\nIn conclusion, the nature of free will remains a complex and contentious issue in philosophy. While we've explored some key perspectives, there's much more to consider, including the role of quantum indeterminacy, the nature of consciousness, and how advances in neuroscience might inform this age-old debate.\n</response>\n</example>\n\nNow, please provide your philosophical perspective on the given query. Remember to structure your response as outlined above, and enclose your entire response in <answer> tags.",
+          "humanMessagePrompt": "{query}",
+          "promptValues": "{\"query\":\"{{question}}\"}"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 688,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 631.7826806295478,
+        "y": 924.2443882639457
+      },
+      "dragging": false
+    },
+    {
       "id": "stickyNote_0",
       "position": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
+        "x": 2029.2834554558642,
+        "y": 162.9282899119457
       },
       "type": "stickyNote",
       "data": {
@@ -453,7 +452,7 @@
         ],
         "inputAnchors": [],
         "inputs": {
-          "note": "Instructions for Best Results:\n\n1.Click the green chat box and type in any query that you need information for.\n2.Sit back and relax while we work our magic.\n3.Enjoy! An informative conversation!"
+          "note": "Instructions for best results:\n1. Go on to the green chat box on the top right corner. \n2. Feel free to type in any philosophical query like \"Is the pursuit of happiness a worthwhile goal in life, or should we strive for something else?\n3. Sit back and enjoy a really thoughtful conversation."
         },
         "outputAnchors": [
           {
@@ -468,12 +467,12 @@
         "selected": false
       },
       "width": 300,
-      "height": 163,
+      "height": 203,
       "selected": false,
       "dragging": false,
       "positionAbsolute": {
-        "x": 1923.8675892646033,
-        "y": 452.81783152507705
+        "x": 2029.2834554558642,
+        "y": 162.9282899119457
       }
     }
   ],

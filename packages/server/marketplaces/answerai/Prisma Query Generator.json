@@ -188,210 +188,6 @@
       }
     },
     {
-      "id": "plainText_0",
-      "position": {
-        "x": 158.8455666335655,
-        "y": 675.7688906337446
-      },
-      "type": "customNode",
-      "data": {
-        "id": "plainText_0",
-        "label": "Plain Text",
-        "version": 2,
-        "name": "plainText",
-        "type": "Document",
-        "baseClasses": [
-          "Document"
-        ],
-        "category": "Document Loaders",
-        "description": "Load data from plain text",
-        "inputParams": [
-          {
-            "label": "Text",
-            "name": "text",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
-            "id": "plainText_0-input-text-string"
-          },
-          {
-            "label": "Additional Metadata",
-            "name": "metadata",
-            "type": "json",
-            "description": "Additional metadata to be added to the extracted documents",
-            "optional": true,
-            "additionalParams": true,
-            "id": "plainText_0-input-metadata-json"
-          },
-          {
-            "label": "Omit Metadata Keys",
-            "name": "omitMetadataKeys",
-            "type": "string",
-            "rows": 4,
-            "description": "Each document loader comes with a default set of metadata keys that are extracted from the document. You can use this field to omit some of the default metadata keys. The value should be a list of keys, seperated by comma. Use * to omit all metadata keys execept the ones you specify in the Additional Metadata field",
-            "placeholder": "key1, key2, key3.nestedKey1",
-            "optional": true,
-            "additionalParams": true,
-            "id": "plainText_0-input-omitMetadataKeys-string"
-          }
-        ],
-        "inputAnchors": [
-          {
-            "label": "Text Splitter",
-            "name": "textSplitter",
-            "type": "TextSplitter",
-            "optional": true,
-            "id": "plainText_0-input-textSplitter-TextSplitter"
-          }
-        ],
-        "inputs": {
-          "text": "<brand_voice>\n\n</brand_voice>",
-          "textSplitter": "",
-          "metadata": "",
-          "omitMetadataKeys": ""
-        },
-        "outputAnchors": [
-          {
-            "name": "output",
-            "label": "Output",
-            "type": "options",
-            "description": "Array of document objects containing metadata and pageContent",
-            "options": [
-              {
-                "id": "plainText_0-output-document-Document|json",
-                "name": "document",
-                "label": "Document",
-                "description": "Array of document objects containing metadata and pageContent",
-                "type": "Document | json"
-              },
-              {
-                "id": "plainText_0-output-text-string|json",
-                "name": "text",
-                "label": "Text",
-                "description": "Concatenated string from pageContent of documents",
-                "type": "string | json"
-              }
-            ],
-            "default": "document"
-          }
-        ],
-        "outputs": {
-          "output": "text"
-        },
-        "selected": false
-      },
-      "width": 300,
-      "height": 485,
-      "selected": false,
-      "positionAbsolute": {
-        "x": 158.8455666335655,
-        "y": 675.7688906337446
-      },
-      "dragging": false
-    },
-    {
-      "id": "plainText_1",
-      "position": {
-        "x": -192.87948063895487,
-        "y": 953.1912295081271
-      },
-      "type": "customNode",
-      "data": {
-        "id": "plainText_1",
-        "label": "Plain Text",
-        "version": 2,
-        "name": "plainText",
-        "type": "Document",
-        "baseClasses": [
-          "Document"
-        ],
-        "category": "Document Loaders",
-        "description": "Load data from plain text",
-        "inputParams": [
-          {
-            "label": "Text",
-            "name": "text",
-            "type": "string",
-            "rows": 4,
-            "placeholder": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
-            "id": "plainText_1-input-text-string"
-          },
-          {
-            "label": "Additional Metadata",
-            "name": "metadata",
-            "type": "json",
-            "description": "Additional metadata to be added to the extracted documents",
-            "optional": true,
-            "additionalParams": true,
-            "id": "plainText_1-input-metadata-json"
-          },
-          {
-            "label": "Omit Metadata Keys",
-            "name": "omitMetadataKeys",
-            "type": "string",
-            "rows": 4,
-            "description": "Each document loader comes with a default set of metadata keys that are extracted from the document. You can use this field to omit some of the default metadata keys. The value should be a list of keys, seperated by comma. Use * to omit all metadata keys execept the ones you specify in the Additional Metadata field",
-            "placeholder": "key1, key2, key3.nestedKey1",
-            "optional": true,
-            "additionalParams": true,
-            "id": "plainText_1-input-omitMetadataKeys-string"
-          }
-        ],
-        "inputAnchors": [
-          {
-            "label": "Text Splitter",
-            "name": "textSplitter",
-            "type": "TextSplitter",
-            "optional": true,
-            "id": "plainText_1-input-textSplitter-TextSplitter"
-          }
-        ],
-        "inputs": {
-          "text": "<blog_post>\n\n</blog_post>\n",
-          "textSplitter": "",
-          "metadata": "",
-          "omitMetadataKeys": ""
-        },
-        "outputAnchors": [
-          {
-            "name": "output",
-            "label": "Output",
-            "type": "options",
-            "description": "Array of document objects containing metadata and pageContent",
-            "options": [
-              {
-                "id": "plainText_1-output-document-Document|json",
-                "name": "document",
-                "label": "Document",
-                "description": "Array of document objects containing metadata and pageContent",
-                "type": "Document | json"
-              },
-              {
-                "id": "plainText_1-output-text-string|json",
-                "name": "text",
-                "label": "Text",
-                "description": "Concatenated string from pageContent of documents",
-                "type": "string | json"
-              }
-            ],
-            "default": "document"
-          }
-        ],
-        "outputs": {
-          "output": "text"
-        },
-        "selected": false
-      },
-      "width": 300,
-      "height": 485,
-      "selected": false,
-      "positionAbsolute": {
-        "x": -192.87948063895487,
-        "y": 953.1912295081271
-      },
-      "dragging": false
-    },
-    {
       "id": "llmChain_0",
       "position": {
         "x": 1150.5733832269552,
@@ -500,7 +296,7 @@
       "id": "promptTemplate_0",
       "position": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 1019.0890443806736
       },
       "type": "customNode",
       "data": {
@@ -538,8 +334,8 @@
         ],
         "inputAnchors": [],
         "inputs": {
-          "template": "You are a professional Blog Critic tasked with providing comprehensive feedback and suggestions for improving a blog post. Your analysis will focus on marketing effectiveness, educational value, brand voice alignment, compliance with given rules, and consistency with past content.\n\nYou will be given the following inputs:\n\n{blog_post}\n{brand_voice}\n{compliance_rules}\n{past_items}\n\nAnalyze the blog post thoroughly, considering the following aspects:\n\n1. Content Quality:\n   - Evaluate the overall structure, flow, and readability of the post.\n   - Assess the clarity and effectiveness of the main message or topic.\n   - Check for grammatical errors, typos, or awkward phrasing.\n\n2. Marketing Effectiveness:\n   - Determine how well the post engages the target audience.\n   - Evaluate the use of persuasive language and call-to-actions.\n   - Assess the potential for driving traffic or conversions.\n\n3. Educational Value:\n   - Gauge the depth and accuracy of information provided.\n   - Evaluate how well the post explains complex concepts (if applicable).\n   - Assess the use of examples, analogies, or visual aids to enhance understanding.\n\n4. Brand Voice Alignment:\n   - Compare the post's tone and style with the provided brand voice guidelines.\n   - Identify any inconsistencies or areas where the brand voice could be strengthened.\n\n5. Compliance:\n   - Check the post against the provided compliance rules.\n   - Highlight any potential violations or areas of concern.\n\n6. Consistency with Past Items:\n   - Compare the post with the provided past items for consistency in style, tone, and messaging.\n   - Identify opportunities to link to or reference past content for improved coherence.\n\nAfter your analysis, provide your feedback and suggestions in the following format:\n\n<feedback>\n1. Strengths:\n   [List 3-5 positive aspects of the blog post]\n\n2. Areas for Improvement:\n   [List 3-5 aspects that need improvement, along with specific suggestions for each]\n\n3. Brand Voice Alignment:\n   [Provide feedback on how well the post aligns with the brand voice, with suggestions for improvement]\n\n4. Compliance Check:\n   [Highlight any compliance issues and suggest necessary changes]\n\n5. Consistency with Past Content:\n   [Comment on the post's consistency with past items and suggest ways to improve coherence]\n\n6. Overall Recommendation:\n   [Provide a brief summary of your main recommendations for improving the blog post]\n</feedback>\n\nYour feedback should be constructive, specific, and actionable. Aim to provide a balance of positive reinforcement and areas for improvement. Use examples from the blog post to illustrate your points whenever possible.\n\nRemember to maintain a professional and supportive tone throughout your critique. Your goal is to help improve the blog post while considering all the provided inputs and guidelines.",
-          "promptValues": "{\"blog_post\":\"{{plainText_1.data.instance}}\",\"brand_voice\":\"{{plainText_0.data.instance}}\",\"compliance_rules\":\"{{plainText_2.data.instance}}\",\"past_items\":\"{{plainText_3.data.instance}}\"}"
+          "template": "You are a Prisma Query Generator AI. Your task is to generate Prisma database queries based on user requirements. You will be provided with a Prisma schema and user requirements for a database operation. Your goal is to analyze these inputs and generate an appropriate Prisma query.\n\nFirst, review the Prisma schema:\n\n{prisma_schema}\n\nNow, consider the user's requirements for the database operation:\n\n{user_requirements}\n\nAnalyze the user requirements carefully. Identify the following:\n1. The type of operation (create, read, update, delete)\n2. The model(s) involved\n3. Any specific fields mentioned\n4. Any relationships that need to be considered\n5. Any filtering, sorting, or pagination requirements\n\nBased on your analysis, generate a Prisma query that fulfills the user's requirements. Ensure that your query:\n1. Uses the correct Prisma client method (e.g., findMany, create, update, delete)\n2. Includes all necessary fields and relationships\n3. Applies any required filters, sorting, or pagination\n4. Follows Prisma query syntax and best practices\n\nPresent your generated Prisma query within <prisma_query> tags. After the query, provide a brief explanation of your reasoning within <explanation> tags.\n<example>\nHere's an example of how your output should be structured:\n\nThis query retrieves users who are 18 years or older and have at least one published post. It includes their published posts in the results, selecting only the title and content of each post. The results are ordered by the creation date of the users in descending order and limited to 10 users. This query structure fulfills the requirements for filtering by age, including related posts, and applying pagination.\n\nIf the user requirements are unclear or cannot be fulfilled with the given Prisma schema, explain the issue and ask for clarification within <clarification_needed> tags.\n\nRemember to consider potential edge cases and error handling in your query generation. If necessary, include comments in your Prisma query to explain any complex logic or decisions.\n\nNow, generate the Prisma query based on the provided schema and user requirements.",
+          "promptValues": "{\"prisma_schema\":\"{{plainText_0.data.instance}}\",\"user_requirements\":\"{{plainText_1.data.instance}}\"}"
         },
         "outputAnchors": [
           {
@@ -557,20 +353,74 @@
       "height": 511,
       "positionAbsolute": {
         "x": 717.7027066350117,
-        "y": 960.4416854000958
+        "y": 1019.0890443806736
       },
       "selected": false,
       "dragging": false
     },
     {
-      "id": "plainText_2",
+      "id": "stickyNote_0",
       "position": {
-        "x": 151.02824479143226,
-        "y": 1481.232297008276
+        "x": 1465.584173736184,
+        "y": 156.66403891057325
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Instructions for Best Results:\n\n1. Start with adding prisma schema in Instance A. \n2. Then mention user requirements in instance B. \n3. Hit save and Click the green chat box and type in GO!\n2. Sit back and relax while we work our magic.\n3. Enjoy your prisma query in no time!"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 243,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 1465.584173736184,
+        "y": 156.66403891057325
+      }
+    },
+    {
+      "id": "plainText_0",
+      "position": {
+        "x": 258.4627297067908,
+        "y": 641.942183125382
       },
       "type": "customNode",
       "data": {
-        "id": "plainText_2",
+        "id": "plainText_0",
         "label": "Plain Text",
         "version": 2,
         "name": "plainText",
@@ -587,7 +437,7 @@
             "type": "string",
             "rows": 4,
             "placeholder": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
-            "id": "plainText_2-input-text-string"
+            "id": "plainText_0-input-text-string"
           },
           {
             "label": "Additional Metadata",
@@ -596,7 +446,7 @@
             "description": "Additional metadata to be added to the extracted documents",
             "optional": true,
             "additionalParams": true,
-            "id": "plainText_2-input-metadata-json"
+            "id": "plainText_0-input-metadata-json"
           },
           {
             "label": "Omit Metadata Keys",
@@ -607,7 +457,7 @@
             "placeholder": "key1, key2, key3.nestedKey1",
             "optional": true,
             "additionalParams": true,
-            "id": "plainText_2-input-omitMetadataKeys-string"
+            "id": "plainText_0-input-omitMetadataKeys-string"
           }
         ],
         "inputAnchors": [
@@ -616,11 +466,11 @@
             "name": "textSplitter",
             "type": "TextSplitter",
             "optional": true,
-            "id": "plainText_2-input-textSplitter-TextSplitter"
+            "id": "plainText_0-input-textSplitter-TextSplitter"
           }
         ],
         "inputs": {
-          "text": "<compliance_rules>\n\n</compliance_rules>\n\n",
+          "text": "<prisma_schema>\n//add your schema here\n</prisma_schema>",
           "textSplitter": "",
           "metadata": "",
           "omitMetadataKeys": ""
@@ -633,14 +483,14 @@
             "description": "Array of document objects containing metadata and pageContent",
             "options": [
               {
-                "id": "plainText_2-output-document-Document|json",
+                "id": "plainText_0-output-document-Document|json",
                 "name": "document",
                 "label": "Document",
                 "description": "Array of document objects containing metadata and pageContent",
                 "type": "Document | json"
               },
               {
-                "id": "plainText_2-output-text-string|json",
+                "id": "plainText_0-output-text-string|json",
                 "name": "text",
                 "label": "Text",
                 "description": "Concatenated string from pageContent of documents",
@@ -658,21 +508,21 @@
       "width": 300,
       "height": 485,
       "selected": false,
+      "dragging": false,
       "positionAbsolute": {
-        "x": 151.02824479143226,
-        "y": 1481.232297008276
-      },
-      "dragging": false
+        "x": 258.4627297067908,
+        "y": 641.942183125382
+      }
     },
     {
-      "id": "plainText_3",
+      "id": "plainText_1",
       "position": {
-        "x": 560.6993266137794,
-        "y": 1601.1537116053794
+        "x": 171.81035337569762,
+        "y": 1257.9131168031304
       },
       "type": "customNode",
       "data": {
-        "id": "plainText_3",
+        "id": "plainText_1",
         "label": "Plain Text",
         "version": 2,
         "name": "plainText",
@@ -689,7 +539,7 @@
             "type": "string",
             "rows": 4,
             "placeholder": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
-            "id": "plainText_3-input-text-string"
+            "id": "plainText_1-input-text-string"
           },
           {
             "label": "Additional Metadata",
@@ -698,7 +548,7 @@
             "description": "Additional metadata to be added to the extracted documents",
             "optional": true,
             "additionalParams": true,
-            "id": "plainText_3-input-metadata-json"
+            "id": "plainText_1-input-metadata-json"
           },
           {
             "label": "Omit Metadata Keys",
@@ -709,7 +559,7 @@
             "placeholder": "key1, key2, key3.nestedKey1",
             "optional": true,
             "additionalParams": true,
-            "id": "plainText_3-input-omitMetadataKeys-string"
+            "id": "plainText_1-input-omitMetadataKeys-string"
           }
         ],
         "inputAnchors": [
@@ -718,11 +568,11 @@
             "name": "textSplitter",
             "type": "TextSplitter",
             "optional": true,
-            "id": "plainText_3-input-textSplitter-TextSplitter"
+            "id": "plainText_1-input-textSplitter-TextSplitter"
           }
         ],
         "inputs": {
-          "text": "<past_items>\n\n</past_items>",
+          "text": "<user_requirements>\n//add user requirements here\n</user_requirements>",
           "textSplitter": "",
           "metadata": "",
           "omitMetadataKeys": ""
@@ -735,14 +585,14 @@
             "description": "Array of document objects containing metadata and pageContent",
             "options": [
               {
-                "id": "plainText_3-output-document-Document|json",
+                "id": "plainText_1-output-document-Document|json",
                 "name": "document",
                 "label": "Document",
                 "description": "Array of document objects containing metadata and pageContent",
                 "type": "Document | json"
               },
               {
-                "id": "plainText_3-output-text-string|json",
+                "id": "plainText_1-output-text-string|json",
                 "name": "text",
                 "label": "Text",
                 "description": "Concatenated string from pageContent of documents",
@@ -760,11 +610,173 @@
       "width": 300,
       "height": 485,
       "selected": false,
+      "dragging": false,
       "positionAbsolute": {
-        "x": 560.6993266137794,
-        "y": 1601.1537116053794
+        "x": 171.81035337569762,
+        "y": 1257.9131168031304
+      }
+    },
+    {
+      "id": "stickyNote_1",
+      "position": {
+        "x": 257.0057711375271,
+        "y": 1126.8935959152918
       },
-      "dragging": false
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_1",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_1-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "A"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_1-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 42,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 257.0057711375271,
+        "y": 1126.8935959152918
+      }
+    },
+    {
+      "id": "stickyNote_2",
+      "position": {
+        "x": 165.93021125952694,
+        "y": 1740.7194060286135
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_2",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_2-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "B"
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_2-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 42,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 165.93021125952694,
+        "y": 1740.7194060286135
+      }
+    },
+    {
+      "id": "stickyNote_4",
+      "position": {
+        "x": -133.7564543190436,
+        "y": 1376.2603869627317
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_4",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_4-input-note-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Add your user requriements here like:\n\"I need to fetch all users who are over 18 years old and have at least one published post. Include their profile information and the titles of their published posts. Order the results by the user's name in ascending order and limit the output to 5 users.\""
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_4-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 163,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -133.7564543190436,
+        "y": 1376.2603869627317
+      }
     }
   ],
   "edges": [
@@ -775,6 +787,14 @@
       "targetHandle": "llmChain_0-input-model-BaseLanguageModel",
       "type": "buttonedge",
       "id": "chatOpenAI_0-chatOpenAI_0-output-chatOpenAI-ChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-llmChain_0-llmChain_0-input-model-BaseLanguageModel"
+    },
+    {
+      "source": "promptTemplate_0",
+      "sourceHandle": "promptTemplate_0-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "llmChain_0",
+      "targetHandle": "llmChain_0-input-prompt-BasePromptTemplate",
+      "type": "buttonedge",
+      "id": "promptTemplate_0-promptTemplate_0-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate|Runnable-llmChain_0-llmChain_0-input-prompt-BasePromptTemplate"
     },
     {
       "source": "plainText_0",
@@ -791,30 +811,6 @@
       "targetHandle": "promptTemplate_0-input-promptValues-json",
       "type": "buttonedge",
       "id": "plainText_1-plainText_1-output-text-string|json-promptTemplate_0-promptTemplate_0-input-promptValues-json"
-    },
-    {
-      "source": "plainText_2",
-      "sourceHandle": "plainText_2-output-text-string|json",
-      "target": "promptTemplate_0",
-      "targetHandle": "promptTemplate_0-input-promptValues-json",
-      "type": "buttonedge",
-      "id": "plainText_2-plainText_2-output-text-string|json-promptTemplate_0-promptTemplate_0-input-promptValues-json"
-    },
-    {
-      "source": "plainText_3",
-      "sourceHandle": "plainText_3-output-text-string|json",
-      "target": "promptTemplate_0",
-      "targetHandle": "promptTemplate_0-input-promptValues-json",
-      "type": "buttonedge",
-      "id": "plainText_3-plainText_3-output-text-string|json-promptTemplate_0-promptTemplate_0-input-promptValues-json"
-    },
-    {
-      "source": "promptTemplate_0",
-      "sourceHandle": "promptTemplate_0-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate|Runnable",
-      "target": "llmChain_0",
-      "targetHandle": "llmChain_0-input-prompt-BasePromptTemplate",
-      "type": "buttonedge",
-      "id": "promptTemplate_0-promptTemplate_0-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate|Runnable-llmChain_0-llmChain_0-input-prompt-BasePromptTemplate"
     }
   ]
 }
