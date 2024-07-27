@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction, SET_CHATFLOW } from '@/store/actions'
 
 // material-ui
-import { Button, Box, Typography, FormGroup, FormLabel, FormControl, FormControlLabel, Checkbox, Tooltip } from '@mui/material'
+import { Button, Box, Typography, FormGroup, FormControl, FormControlLabel, Checkbox, Tooltip } from '@mui/material'
 import { IconX } from '@tabler/icons-react'
 
 // Project import
@@ -69,7 +69,6 @@ const VisibilitySettings = ({ dialogProps }) => {
             }
         } catch (error) {
             const errorData = error.response.data || `${error.response.status}: ${error.response.statusText}`
-            console.log(error)
             enqueueSnackbar({
                 message: `Failed to save Workflow Visibility: ${errorData}`,
                 options: {

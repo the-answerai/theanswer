@@ -11,8 +11,13 @@ import AnalyseFlow from '@/ui-component/extended/AnalyseFlow'
 import StarterPrompts from '@/ui-component/extended/StarterPrompts'
 import Leads from '@/ui-component/extended/Leads'
 import VisibilitySettings from '@/ui-component/extended/VisibilitySettings'
+import GeneralSettings from '@/ui-component/extended/GeneralSettings'
 
 const CHATFLOW_CONFIGURATION_TABS = [
+    {
+        label: 'General',
+        id: 'generalSettings'
+    },
     {
         label: 'Visibility',
         id: 'visibilitySettings'
@@ -127,6 +132,7 @@ const ChatflowConfigurationDialog = ({ show, dialogProps, onCancel }) => {
                         {item.id === 'analyseChatflow' ? <AnalyseFlow dialogProps={dialogProps} /> : null}
                         {item.id === 'leads' ? <Leads dialogProps={dialogProps} /> : null}
                         {item.id === 'visibilitySettings' ? <VisibilitySettings dialogProps={dialogProps} /> : null}
+                        {item.id === 'generalSettings' ? <GeneralSettings dialogProps={dialogProps} /> : null}
                     </TabPanel>
                 ))}
             </DialogContent>
