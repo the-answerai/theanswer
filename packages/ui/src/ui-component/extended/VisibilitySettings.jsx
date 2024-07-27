@@ -18,7 +18,15 @@ import { useFlags } from 'flagsmith/react'
 import chatflowsApi from '@/api/chatflows'
 import { TooltipWithParser } from '../tooltip/TooltipWithParser'
 
-const AnswersSettings = ({ dialogProps }) => {
+const visibilityOptions = [
+    { name: 'Private', description: 'Only visible to you' },
+    { name: 'Organization', description: 'Visible to all members of your organization' },
+    { name: 'AnswerAI', description: 'Visible to AnswerAI users' },
+    { name: 'Marketplace', description: 'Available in the public marketplace' },
+    { name: 'Browser Extension', description: 'Accessible via browser extension' }
+]
+
+const VisibilitySettings = ({ dialogProps }) => {
     const flags = useFlags(['chatflow:share:internal', 'org:manage'])
 
     const dispatch = useDispatch()
@@ -95,23 +103,25 @@ const AnswersSettings = ({ dialogProps }) => {
             </Typography>
             <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
                 <FormGroup>
-                    {['Private', 'Organization', 'AnswerAI', 'Marketplace', 'Browser Extension'].map((type) => {
+                    {visibilityOptions.map(({ name, description }) => {
                         const isDisabled =
-                            type === 'Private' ||
-                            (type === 'Browser Extension' && !flags['org:manage']?.enabled) ||
-                            (type === 'Organization' && !flags['org:manage']?.enabled) ||
-                            (type === 'Marketplace' && !flags['chatflow:share:internal']?.enabled)
+                            name === 'Private' ||
+                            (name === 'Browser Extension' && !flags['org:manage']?.enabled) ||
+                            (name === 'Organization' && !flags['org:manage']?.enabled) ||
+                            (name === 'Marketplace' && !flags['chatflow:share:internal']?.enabled)
                         return (
-                            <FormControlLabel
-                                key={type}
-                                control={
-                                    <Tooltip title={isDisabled ? 'Contact your org admin to enable this option' : ''}>
-                                        <Checkbox checked={visibility.includes(type)} onChange={(event) => handleChange(event, type)} />
-                                    </Tooltip>
-                                }
-                                label={type}
-                                disabled={isDisabled}
-                            />
+                            <Box key={name} display='flex' alignItems='center'>
+                                <FormControlLabel
+                                    control={
+                                        <Tooltip title={isDisabled ? 'Contact your org admin to enable this option' : ''}>
+                                            <Checkbox checked={visibility.includes(name)} onChange={(event) => handleChange(event, name)} />
+                                        </Tooltip>
+                                    }
+                                    label={name}
+                                    disabled={isDisabled}
+                                />
+                                <TooltipWithParser title={description} />
+                            </Box>
                         )
                     })}
                 </FormGroup>
@@ -122,11 +132,11 @@ const AnswersSettings = ({ dialogProps }) => {
         </>
     )
 }
-AnswersSettings.propTypes = {
+VisibilitySettings.propTypes = {
     show: PropTypes.bool,
     dialogProps: PropTypes.object,
     onCancel: PropTypes.func,
     onConfirm: PropTypes.func
 }
 
-export default AnswersSettings
+export default VisibilitySettings
