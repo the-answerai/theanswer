@@ -30,7 +30,7 @@ const VisibilitySettings = ({ dialogProps }) => {
     const flags = useFlags(['chatflow:share:internal', 'org:manage'])
 
     const dispatch = useDispatch()
-    const chatflow = useSelector((state) => state.canvas.chatflow)
+    const chatflow = useSelector((state) => state?.canvas?.chatflow) || dialogProps.chatflow
 
     useNotifier()
 

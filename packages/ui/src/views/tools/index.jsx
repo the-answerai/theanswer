@@ -1,38 +1,59 @@
-import { useEffect, useState, useRef } from 'react'
-
-// material-ui
-import { Box, Stack, Button, ButtonGroup, Skeleton } from '@mui/material'
-
-// project imports
+import { useEffect, useState, useRef, useMemo } from 'react'
+import { Box, Stack, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material'
 import MainCard from '@/ui-component/cards/MainCard'
-import ItemCard from '@/ui-component/cards/ItemCard'
-import { gridSpacing } from '@/store/constant'
-import ToolEmptySVG from '@/assets/images/tools_empty.svg'
-import { StyledButton } from '@/ui-component/button/StyledButton'
 import ToolDialog from './ToolDialog'
+import ViewHeader from '@/layout/MainLayout/ViewHeader'
+import ErrorBoundary from '@/ErrorBoundary'
+import FlowListView from '@/ui-component/lists/FlowListView'
+import { StyledButton } from '@/ui-component/button/StyledButton'
 
 // API
 import toolsApi from '@/api/tools'
+import marketplacesApi from '@/api/marketplaces'
 
 // Hooks
 import useApi from '@/hooks/useApi'
 
 // icons
 import { IconPlus, IconFileUpload } from '@tabler/icons-react'
-import ViewHeader from '@/layout/MainLayout/ViewHeader'
-import ErrorBoundary from '@/ErrorBoundary'
 
-// ==============================|| CHATFLOWS ||============================== //
+function TabPanel(props) {
+    const { children, value, index, ...other } = props
+    return (
+        <div role='tabpanel' hidden={value !== index} id={`tool-tabpanel-${index}`} aria-labelledby={`tool-tab-${index}`} {...other}>
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    )
+}
 
 const Tools = () => {
-    const getAllToolsApi = useApi(toolsApi.getAllTools)
-
+    const [tabValue, setTabValue] = useState(0)
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [showDialog, setShowDialog] = useState(false)
     const [dialogProps, setDialogProps] = useState({})
+    const [search, setSearch] = useState('')
+    const [categoryFilter, setCategoryFilter] = useState('All')
+    const [categories, setCategories] = useState(['All'])
+    const [myTools, setMyTools] = useState([])
+    const [marketplaceTools, setMarketplaceTools] = useState([])
 
     const inputRef = useRef(null)
+
+    const getAllToolsApi = useApi(toolsApi.getAllTools)
+    const getMarketplaceToolsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
+
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
+
+    const onSearchChange = (event) => {
+        setSearch(event.target.value)
+    }
+
+    const handleCategoryChange = (event) => {
+        setCategoryFilter(event.target.value)
+    }
 
     const onUploadFile = (file) => {
         try {
@@ -89,26 +110,78 @@ const Tools = () => {
         setShowDialog(true)
     }
 
+    const goToTool = (selectedTool) => {
+        const dialogProp = {
+            title: selectedTool.templateName,
+            type: 'TEMPLATE',
+            data: selectedTool
+        }
+        setDialogProps(dialogProp)
+        setShowDialog(true)
+    }
+
     const onConfirm = () => {
         setShowDialog(false)
         getAllToolsApi.request()
     }
 
+    const onUseTemplate = (selectedTool) => {
+        const dialogProp = {
+            title: 'Add New Tool',
+            type: 'IMPORT',
+            cancelButtonName: 'Cancel',
+            confirmButtonName: 'Add',
+            data: selectedTool
+        }
+        setDialogProps(dialogProp)
+        setShowDialog(true)
+    }
+
     useEffect(() => {
         getAllToolsApi.request()
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        getMarketplaceToolsApi.request()
     }, [])
 
     useEffect(() => {
-        setLoading(getAllToolsApi.loading)
-    }, [getAllToolsApi.loading])
+        setLoading(getAllToolsApi.loading || getMarketplaceToolsApi.loading)
+    }, [getAllToolsApi.loading, getMarketplaceToolsApi.loading])
 
     useEffect(() => {
-        if (getAllToolsApi.error) {
-            setError(getAllToolsApi.error)
+        if (getAllToolsApi.error || getMarketplaceToolsApi.error) {
+            setError(getAllToolsApi.error || getMarketplaceToolsApi.error)
         }
-    }, [getAllToolsApi.error])
+    }, [getAllToolsApi.error, getMarketplaceToolsApi.error])
+
+    useEffect(() => {
+        if (getAllToolsApi.data && getMarketplaceToolsApi.data) {
+            setMyTools(getAllToolsApi.data)
+            setMarketplaceTools(getMarketplaceToolsApi.data.filter((tool) => tool.type === 'Tool'))
+
+            const allTools = [...getAllToolsApi.data, ...getMarketplaceToolsApi.data.filter((tool) => tool.type === 'Tool')]
+            const uniqueCategories = ['All', ...new Set(allTools.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
+            setCategories(uniqueCategories)
+        }
+    }, [getAllToolsApi.data, getMarketplaceToolsApi.data])
+
+    const filteredMyTools = useMemo(() => {
+        return myTools.filter((tool) => {
+            const matchesSearch =
+                tool.name.toLowerCase().includes(search.toLowerCase()) ||
+                (tool.description && tool.description.toLowerCase().includes(search.toLowerCase()))
+            const matchesCategory = categoryFilter === 'All' || (tool.category && tool.category.includes(categoryFilter))
+            return matchesSearch && matchesCategory
+        })
+    }, [myTools, search, categoryFilter])
+
+    const filteredMarketplaceTools = useMemo(() => {
+        return marketplaceTools.filter((tool) => {
+            const matchesSearch =
+                tool.templateName.toLowerCase().includes(search.toLowerCase()) ||
+                (tool.description && tool.description.toLowerCase().includes(search.toLowerCase()))
+            const matchesCategory = categoryFilter === 'All' || (tool.category && tool.category.includes(categoryFilter))
+            return matchesSearch && matchesCategory
+        })
+    }, [marketplaceTools, search, categoryFilter])
 
     return (
         <>
@@ -117,62 +190,74 @@ const Tools = () => {
                     <ErrorBoundary error={error} />
                 ) : (
                     <Stack flexDirection='column' sx={{ gap: 3 }}>
-                        <ViewHeader title='Tools'>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Button
-                                    variant='outlined'
-                                    onClick={() => inputRef.current.click()}
-                                    startIcon={<IconFileUpload />}
-                                    sx={{ borderRadius: 2, height: 40 }}
-                                >
-                                    Load
-                                </Button>
-                                <input
-                                    style={{ display: 'none' }}
-                                    ref={inputRef}
-                                    type='file'
-                                    hidden
-                                    accept='.json'
-                                    onChange={(e) => handleFileUpload(e)}
-                                />
-                            </Box>
-                            <ButtonGroup disableElevation aria-label='outlined primary button group'>
-                                <StyledButton
-                                    variant='contained'
-                                    onClick={addNew}
-                                    startIcon={<IconPlus />}
-                                    sx={{ borderRadius: 2, height: 40 }}
-                                >
-                                    Create
-                                </StyledButton>
-                            </ButtonGroup>
-                        </ViewHeader>
-                        {isLoading ? (
-                            <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
-                                <Skeleton variant='rounded' height={160} />
-                                <Skeleton variant='rounded' height={160} />
-                                <Skeleton variant='rounded' height={160} />
-                            </Box>
-                        ) : (
-                            <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
-                                {getAllToolsApi.data &&
-                                    getAllToolsApi.data.map((data, index) => (
-                                        <ItemCard data={data} key={index} onClick={() => edit(data)} />
+                        <ViewHeader
+                            onSearchChange={onSearchChange}
+                            search={true}
+                            searchPlaceholder='Search Name, Description or Category'
+                            title='Tools'
+                        >
+                            <FormControl sx={{ minWidth: 120, mr: 1 }}>
+                                <InputLabel id='category-filter-label'>Category</InputLabel>
+                                <Select labelId='category-filter-label' value={categoryFilter} onChange={handleCategoryChange} label='Category'>
+                                    {categories.map((category) => (
+                                        <MenuItem key={category} value={category}>
+                                            {category}
+                                        </MenuItem>
                                     ))}
-                            </Box>
-                        )}
-                        {!isLoading && (!getAllToolsApi.data || getAllToolsApi.data.length === 0) && (
-                            <Stack sx={{ alignItems: 'center', justifyContent: 'center' }} flexDirection='column'>
-                                <Box sx={{ p: 2, height: 'auto' }}>
-                                    <img
-                                        style={{ objectFit: 'cover', height: '20vh', width: 'auto' }}
-                                        src={ToolEmptySVG}
-                                        alt='ToolEmptySVG'
-                                    />
-                                </Box>
-                                <div>No Tools Created Yet</div>
-                            </Stack>
-                        )}
+                                </Select>
+                            </FormControl>
+                            <Button
+                                variant='outlined'
+                                onClick={() => inputRef.current.click()}
+                                startIcon={<IconFileUpload />}
+                                sx={{ borderRadius: 2, height: 40, mr: 1 }}
+                            >
+                                Load
+                            </Button>
+                            <input
+                                style={{ display: 'none' }}
+                                ref={inputRef}
+                                type='file'
+                                hidden
+                                accept='.json'
+                                onChange={(e) => handleFileUpload(e)}
+                            />
+                            <StyledButton
+                                variant='contained'
+                                onClick={addNew}
+                                startIcon={<IconPlus />}
+                                sx={{ borderRadius: 2, height: 40 }}
+                            >
+                                Create
+                            </StyledButton>
+                        </ViewHeader>
+
+                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                            <Tabs value={tabValue} onChange={handleTabChange} aria-label='tool tabs'>
+                                <Tab label='My Tools' />
+                                <Tab label='Marketplace Tools' />
+                            </Tabs>
+                        </Box>
+                        <TabPanel value={tabValue} index={0}>
+                            <FlowListView
+                                data={filteredMyTools}
+                                isLoading={isLoading}
+                                updateFlowsApi={getAllToolsApi}
+                                setError={setError}
+                                type='tools'
+                                onItemClick={edit}
+                            />
+                        </TabPanel>
+                        <TabPanel value={tabValue} index={1}>
+                            <FlowListView
+                                data={filteredMarketplaceTools}
+                                isLoading={isLoading}
+                                updateFlowsApi={getMarketplaceToolsApi}
+                                setError={setError}
+                                type='marketplace'
+                                onItemClick={goToTool}
+                            />
+                        </TabPanel>
                     </Stack>
                 )}
             </MainCard>
@@ -181,8 +266,9 @@ const Tools = () => {
                 dialogProps={dialogProps}
                 onCancel={() => setShowDialog(false)}
                 onConfirm={onConfirm}
+                onUseTemplate={onUseTemplate}
                 setError={setError}
-            ></ToolDialog>
+            />
         </>
     )
 }
