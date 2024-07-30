@@ -27,12 +27,14 @@ const TagInput = ({ categories, onChange }) => {
     }
 
     const handleTagChange = (event, newValue) => {
-        console.log('Tag changed:', newValue)
-        onChange(newValue)
+        if (typeof onChange === 'function') {
+            onChange(newValue)
+        } else {
+            console.warn('onChange prop is not a function')
+        }
     }
 
     const handleInputChange = (event, newInputValue) => {
-        console.log('Input changed:', newInputValue)
         setInputValue(newInputValue)
     }
 

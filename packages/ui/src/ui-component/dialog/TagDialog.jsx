@@ -3,14 +3,16 @@ import Dialog from '@mui/material/Dialog'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import PropTypes from 'prop-types'
-import { DialogActions, DialogContent, DialogTitle } from '@mui/material'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import TagInput from '@/ui-component/input/TagInput'
 
 const TagDialog = ({ isOpen, dialogProps, onClose, onSubmit }) => {
     const [categories, setCategories] = useState([])
 
     useEffect(() => {
-        if (dialogProps.category) setCategories(dialogProps.category)
+        if (dialogProps?.category) setCategories(dialogProps.category)
 
         return () => {
             setCategories([])
