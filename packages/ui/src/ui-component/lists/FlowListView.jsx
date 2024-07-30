@@ -3,33 +3,38 @@ import { Box, Grid, Skeleton, Typography } from '@mui/material'
 import ItemCard from '@/ui-component/cards/ItemCard'
 
 const FlowListView = ({ data, images, nodeTypes, isLoading, updateFlowsApi, setError, type, onItemClick }) => {
+    const finalData = data?.filter(Boolean) || []
+
+    const handleItemClick = (item) => {
+        if (typeof onItemClick === 'function') {
+            onItemClick(item)
+        }
+    }
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Grid container spacing={3}>
                 {isLoading ? (
                     Array.from({ length: 6 }).map((_, index) => (
-                        <Grid item xs={4} sm={4} md={4} key={index}>
+                        <Grid item xs={12} sm={6} md={4} key={index}>
                             <Skeleton variant='rectangular' height={200} />
                         </Grid>
                     ))
-                ) : data.length > 0 ? (
-                    data.map(
-                        (item) =>
-                            item && (
-                                <Grid item xs={4} sm={4} md={4} key={item.id || item.templateId}>
-                                    <ItemCard
-                                        key={item.id || item.templateId}
-                                        data={item}
-                                        images={images && images[item.id]}
-                                        nodeTypes={nodeTypes && nodeTypes[item.id]}
-                                        onClick={() => onItemClick(item)}
-                                        type={type}
-                                        updateFlowsApi={updateFlowsApi}
-                                        setError={setError}
-                                    />
-                                </Grid>
-                            )
-                    )
+                ) : finalData.length > 0 ? (
+                    finalData.map((item) => (
+                        <Grid item xs={12} sm={6} md={4} key={item.id || item.templateId}>
+                            <ItemCard
+                                key={item.id || item.templateId}
+                                data={item}
+                                images={images && images[item.id]}
+                                nodeTypes={nodeTypes && nodeTypes[item.id]}
+                                onClick={() => handleItemClick(item)}
+                                type={type}
+                                updateFlowsApi={updateFlowsApi}
+                                setError={setError}
+                            />
+                        </Grid>
+                    ))
                 ) : (
                     <Grid item xs={12}>
                         <Typography variant='body1' align='center'>

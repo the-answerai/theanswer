@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
@@ -30,6 +31,12 @@ function TabPanel(props) {
             {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
         </div>
     )
+}
+
+TabPanel.propTypes = {
+    children: PropTypes.node,
+    index: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired
 }
 
 const Agentflows = () => {
@@ -99,19 +106,25 @@ const Agentflows = () => {
                 const processedNodeTypes = {}
                 flows.forEach((flow) => {
                     if (flow && flow.flowData) {
-                        const flowData = JSON.parse(flow.flowData)
-                        const nodes = flowData.nodes || []
-                        processedImages[flow.id] = []
-                        processedNodeTypes[flow.id] = []
-                        nodes.forEach((node) => {
-                            if (['Multi Agents', 'Chat Models', 'Tools', 'Document Loaders'].includes(node.data.category)) {
-                                const imageSrc = `${baseURL}/api/v1/node-icon/${node.data.name}`
-                                if (!processedImages[flow.id].includes(imageSrc)) {
-                                    processedImages[flow.id].push(imageSrc)
-                                    processedNodeTypes[flow.id].push(node.data.label)
+                        try {
+                            const flowData = JSON.parse(flow.flowData)
+                            const nodes = flowData.nodes || []
+                            processedImages[flow.id] = []
+                            processedNodeTypes[flow.id] = []
+                            nodes.forEach((node) => {
+                                if (node && node.data && node.data.category && node.data.name && node.data.label) {
+                                    if (['Multi Agents', 'Chat Models', 'Tools', 'Document Loaders'].includes(node.data.category)) {
+                                        const imageSrc = `${baseURL}/api/v1/node-icon/${node.data.name}`
+                                        if (!processedImages[flow.id].includes(imageSrc)) {
+                                            processedImages[flow.id].push(imageSrc)
+                                            processedNodeTypes[flow.id].push(node.data.label)
+                                        }
+                                    }
                                 }
-                            }
-                        })
+                            })
+                        } catch (error) {
+                            console.error(`Error processing flow data for flow ${flow.id}:`, error)
+                        }
                     }
                 })
                 return { processedImages, processedNodeTypes }
@@ -140,35 +153,38 @@ const Agentflows = () => {
         }
     }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data])
 
-    const filteredMyAgentflows = useMemo(() => {
-        return myAgentflows.filter((flow) => {
-            const matchesSearch =
-                flow.name.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
-        })
-    }, [myAgentflows, search, categoryFilter])
+    const filterFlows = (flows, search, categoryFilter) => {
+        const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
 
-    const filteredAnswerAIAgentflows = useMemo(() => {
-        return answerAIAgentflows.filter((flow) => {
-            const matchesSearch =
-                flow.templateName.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
-        })
-    }, [answerAIAgentflows, search, categoryFilter])
+        return flows.filter((flow) => {
+            if (!flow) return false
 
-    const filteredCommunityAgentflows = useMemo(() => {
-        return communityAgentflows.filter((flow) => {
-            const matchesSearch =
-                flow.templateName.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
+            // Check category first
+            const category = flow.category || ''
+            if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
+                return false
+            }
+
+            // If category matches, then check search
+            const name = flow.name || flow.templateName || ''
+            const description = flow.description || ''
+            const searchText = `${name} ${description}`
+
+            return searchRegex.test(searchText)
         })
-    }, [communityAgentflows, search, categoryFilter])
+    }
+
+    const filteredMyAgentflows = useMemo(() => filterFlows(myAgentflows, search, categoryFilter), [myAgentflows, search, categoryFilter])
+
+    const filteredAnswerAIAgentflows = useMemo(
+        () => filterFlows(answerAIAgentflows, search, categoryFilter),
+        [answerAIAgentflows, search, categoryFilter]
+    )
+
+    const filteredCommunityAgentflows = useMemo(
+        () => filterFlows(communityAgentflows, search, categoryFilter),
+        [communityAgentflows, search, categoryFilter]
+    )
 
     return (
         <MainCard>

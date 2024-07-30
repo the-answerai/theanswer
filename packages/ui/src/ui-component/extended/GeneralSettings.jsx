@@ -50,28 +50,26 @@ const GeneralSettings = ({ dialogProps }) => {
 
     return (
         <Box sx={{ p: 2 }}>
-            <Typography variant="h4" gutterBottom>General Settings</Typography>
+            <Typography variant='h4' gutterBottom>
+                General Settings
+            </Typography>
+            <TextField fullWidth label='Chatflow Title' value={title} onChange={(e) => setTitle(e.target.value)} margin='normal' />
             <TextField
                 fullWidth
-                label="Chatflow Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                margin="normal"
-            />
-            <TextField
-                fullWidth
-                label="Description"
+                label='Description'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                margin="normal"
+                margin='normal'
                 multiline
                 rows={4}
             />
             <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>Categories</Typography>
+                <Typography variant='subtitle1' gutterBottom>
+                    Categories
+                </Typography>
                 <TagInput categories={categories} onChange={setCategories} />
             </Box>
-            <Button variant="contained" color="primary" onClick={handleSave} sx={{ mt: 2 }}>
+            <Button variant='contained' color='primary' onClick={handleSave} sx={{ mt: 2 }}>
                 Save
             </Button>
         </Box>

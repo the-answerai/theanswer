@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
@@ -30,6 +31,12 @@ function TabPanel(props) {
             {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
         </div>
     )
+}
+
+TabPanel.propTypes = {
+    children: PropTypes.node,
+    index: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired
 }
 
 const Chatflows = () => {
@@ -140,35 +147,38 @@ const Chatflows = () => {
         }
     }, [getAllChatflowsApi.data, getMarketplaceChatflowsApi.data])
 
-    const filteredMyChatflows = useMemo(() => {
-        return myChatflows.filter((flow) => {
-            const matchesSearch =
-                flow.name.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
-        })
-    }, [myChatflows, search, categoryFilter])
+    const filterChatflows = (flows, search, categoryFilter) => {
+        const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
 
-    const filteredAnswerAIChatflows = useMemo(() => {
-        return answerAIChatflows.filter((flow) => {
-            const matchesSearch =
-                flow.templateName.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
-        })
-    }, [answerAIChatflows, search, categoryFilter])
+        return flows.filter((flow) => {
+            if (!flow) return false
 
-    const filteredCommunityChatflows = useMemo(() => {
-        return communityChatflows.filter((flow) => {
-            const matchesSearch =
-                flow.templateName.toLowerCase().includes(search.toLowerCase()) ||
-                (flow.description && flow.description.toLowerCase().includes(search.toLowerCase()))
-            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.includes(categoryFilter))
-            return matchesSearch && matchesCategory
+            // Check category first
+            const category = flow.category || ''
+            if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
+                return false
+            }
+
+            // If category matches, then check search
+            const name = flow.name || flow.templateName || ''
+            const description = flow.description || ''
+            const searchText = `${name} ${description}`
+
+            return searchRegex.test(searchText)
         })
-    }, [communityChatflows, search, categoryFilter])
+    }
+
+    const filteredMyChatflows = useMemo(() => filterChatflows(myChatflows, search, categoryFilter), [myChatflows, search, categoryFilter])
+
+    const filteredAnswerAIChatflows = useMemo(
+        () => filterChatflows(answerAIChatflows, search, categoryFilter),
+        [answerAIChatflows, search, categoryFilter]
+    )
+
+    const filteredCommunityChatflows = useMemo(
+        () => filterChatflows(communityChatflows, search, categoryFilter),
+        [communityChatflows, search, categoryFilter]
+    )
 
     return (
         <MainCard>

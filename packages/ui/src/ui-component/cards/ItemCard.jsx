@@ -189,7 +189,7 @@ const ItemCard = ({ data, images, nodeTypes, onClick, type, updateFlowsApi, setE
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                 {data.category.split(';').map((tag, index) => (
                                     <Chip
-                                        key={index}
+                                        key={`chip-category-${tag}${index}`}
                                         label={tag}
                                         size='small'
                                         sx={{
