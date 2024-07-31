@@ -59,7 +59,6 @@ export function documentToPlainTextString(
                     console.warn('Invalid embeddedContentObject or sys property missing:', node)
                     return acc
                 }
-
                 const embeddedContentType = embeddedContentObject?.sys?.contentType?.sys?.id
                 const embeddedConfig = parsingRules.embeddedContentTypes?.find(
                     (config: ContentfulConfig) => config.mainContentType.contentType === embeddedContentType
@@ -354,7 +353,6 @@ class ContentfulLoader extends BaseDocumentLoader {
     public readonly configUtility: ContentfulConfig
     public readonly host?: string
     public readonly includeFieldNames: boolean
-
     constructor({
         spaceId,
         environmentId,
@@ -426,82 +424,65 @@ class ContentfulLoader extends BaseDocumentLoader {
         return this.runQuery()
     }
 
-    private processContentObject(contentObject: IContentObject, contentTypeConfig: ContentTypeConfig): string {
+    private processContentObject(
+        contentObject: IContentObject,
+        contentTypeConfig: ContentTypeConfig,
+        processedEntryIds: Set<string>
+    ): string {
+        const entryId = contentObject.sys?.id
+        if (entryId && processedEntryIds.has(entryId)) {
+            return ''
+        }
+
+        processedEntryIds.add(entryId)
+
         const fieldsToProcess = contentTypeConfig.fieldsToParse
 
-        return fieldsToProcess
+        const processedContent = fieldsToProcess
             .map((fieldPath: string) => {
                 const fieldValue = this.getNestedProperty(contentObject, fieldPath)
-
                 if (fieldValue === undefined) {
-                    console.warn(`Field value for path ${fieldPath} is undefined in content object:`, contentObject)
                     return ''
                 }
 
                 const fieldName = fieldPath.split('.').pop() || fieldPath
-                let processedValue = ''
+                let processedValue = this.processSingleValue(fieldValue, contentTypeConfig, processedEntryIds)
 
-                if (typeof fieldValue === 'object' && fieldValue.sys && fieldValue.sys.type === 'Asset') {
-                    // Handle Asset type
-                    const assetTitle = fieldValue.fields.title || 'Asset'
-                    const assetUrl = fieldValue.fields.file.url
-                    processedValue = `![${assetTitle}](https:${assetUrl})`
-                } else if (typeof fieldValue === 'object' && fieldValue.nodeType === 'document') {
-                    // Handle rich text
-                    let plainText = documentToPlainTextString(
-                        fieldValue,
-                        '\n',
-                        this.configUtility.richTextParsingRules,
-                        this.processContentObject.bind(this)
-                    )
-                    processedValue = plainText.replaceAll('"', '')
-                } else if (typeof fieldValue === 'string') {
-                    processedValue = fieldValue.replaceAll('"', '')
-                } else if (Array.isArray(fieldValue)) {
-                    processedValue = fieldValue
-                        .map((item) => {
-                            if (typeof item === 'object' && item !== null && item.sys?.contentType?.sys?.id) {
-                                const contentType = item.sys.contentType.sys.id
-                                const embeddedConfig = this.configUtility.embeddedContentTypes.find(
-                                    (config) => config.contentType === contentType
-                                )
-                                if (embeddedConfig) {
-                                    try {
-                                        return this.processContentObject(item, embeddedConfig)
-                                    } catch (error) {
-                                        console.error('Error processing nested content object:', error, item)
-                                        return ''
-                                    }
-                                }
-                            }
-                            return this.processSimpleValue(item)
-                        })
-                        .filter((item) => item !== '')
-                        .join(', ')
-                } else if (typeof fieldValue === 'object' && fieldValue !== null) {
-                    if (fieldValue.sys?.contentType?.sys?.id) {
-                        const contentType = fieldValue.sys.contentType.sys.id
-                        const embeddedConfig = this.configUtility.embeddedContentTypes.find((config) => config.contentType === contentType)
-                        if (embeddedConfig) {
-                            try {
-                                processedValue = this.processContentObject(fieldValue, embeddedConfig)
-                            } catch (error) {
-                                console.error('Error processing embedded object:', error, fieldValue)
-                                processedValue = ''
-                            }
-                        } else {
-                            processedValue = this.processSimpleValue(fieldValue)
-                        }
-                    } else {
-                        processedValue = this.processSimpleValue(fieldValue)
-                    }
-                } else {
-                    processedValue = String(fieldValue)
-                }
-
-                return this.includeFieldNames ? `${fieldName}: ${processedValue}\n\n` : `${processedValue}\n\n`
+                return processedValue ? (this.includeFieldNames ? `${fieldName}: ${processedValue}\n` : `${processedValue}\n`) : ''
             })
+            .filter(Boolean)
             .join('')
+
+        return processedContent
+    }
+
+    private processSingleValue(value: any, contentTypeConfig: ContentTypeConfig, processedEntryIds: Set<string>): string {
+        if (typeof value === 'object' && value !== null) {
+            if (Array.isArray(value)) {
+                return value
+                    .map((item) => this.processSingleValue(item, contentTypeConfig, processedEntryIds))
+                    .filter(Boolean)
+                    .join(', ')
+            }
+
+            if (value.sys && value.sys.type === 'Entry') {
+                const contentType = value.sys.contentType?.sys?.id
+                const embeddedConfig = this.configUtility.embeddedContentTypes.find((config) => config.contentType === contentType)
+                if (embeddedConfig) {
+                    return this.processContentObject(value, embeddedConfig, processedEntryIds)
+                }
+                return ''
+            } else if (value.sys && value.sys.type === 'Asset') {
+                const assetTitle = value.fields.title || 'Asset'
+                const assetUrl = value.fields.file.url
+                return `![${assetTitle}](https:${assetUrl})`
+            } else if (value.nodeType === 'document') {
+                return documentToPlainTextString(value, '\n', this.configUtility.richTextParsingRules, (obj, config) =>
+                    this.processContentObject(obj, config, processedEntryIds)
+                )
+            }
+        }
+        return this.processSimpleValue(value)
     }
 
     private processSimpleValue(value: any): string {
@@ -534,7 +515,7 @@ class ContentfulLoader extends BaseDocumentLoader {
     }
 
     private createDocumentFromEntry(entry: ContentfulEntry): Document {
-        const textContent = this.processContentObject(entry, this.configUtility.mainContentType)
+        const textContent = this.processContentObject(entry, this.configUtility.mainContentType, new Set())
         const entryUrl = `https://app.contentful.com/spaces/${this.spaceId}/environments/${this.environmentId}/entries/${entry.sys.id}`
 
         const titlePath = this.configUtility.fieldsForCitation.titleField as string
@@ -596,6 +577,26 @@ class ContentfulLoader extends BaseDocumentLoader {
             console.error('Error fetching entries from Contentful:', error)
             throw new Error(`Failed to fetch entries from Contentful: ${error.message}`)
         }
+    }
+
+    private hashContent(contentObject: IContentObject, contentTypeConfig: ContentTypeConfig): string {
+        const relevantData = contentTypeConfig.fieldsToParse
+            .map((field) => {
+                const value = this.getNestedProperty(contentObject, field)
+                return typeof value === 'object' ? JSON.stringify(value) : String(value)
+            })
+            .join('|')
+        return this.simpleHash(relevantData)
+    }
+
+    private simpleHash(str: string): string {
+        let hash = 0
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i)
+            hash = (hash << 5) - hash + char
+            hash = hash & hash // Convert to 32bit integer
+        }
+        return hash.toString(36)
     }
 }
 
