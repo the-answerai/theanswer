@@ -4,7 +4,7 @@ import { BaseDocumentLoader } from 'langchain/document_loaders/base'
 import { Block, Inline, Node, helpers } from '@contentful/rich-text-types'
 import { Document } from 'langchain/document'
 import * as contentful from 'contentful'
-import { getCredentialData, getCredentialParam } from '../../../src/utils'
+import { getCredentialData, getCredentialParam, handleEscapeCharacters } from '../../../src/utils'
 
 interface ContentTypeConfig {
     contentType: string
@@ -247,6 +247,7 @@ class Contentful_DocumentLoaders implements INode {
         const limit = nodeData.inputs?.limit as number
         const includeAll = nodeData.inputs?.includeAll as boolean
         const includeFieldNames = nodeData.inputs?.includeFieldNames as boolean
+        const output = nodeData.outputs?.output as string
 
         const deliveryToken = getCredentialParam('deliveryToken', credentialData, nodeData)
         const previewToken = getCredentialParam('previewToken', credentialData, nodeData)
@@ -296,14 +297,14 @@ class Contentful_DocumentLoaders implements INode {
             finaldocs.push(...docs)
         }
 
-        const documentToPlainText = (doc: Document): string => {
-            return doc.pageContent
-        }
-
-        if (nodeData?.outputs?.output === 'stringOutput') {
-            return finaldocs.map((doc) => documentToPlainText(doc))
-        } else {
+        if (output === 'document') {
             return finaldocs
+        } else {
+            let finaltext = ''
+            for (const doc of docs) {
+                finaltext += `${doc.pageContent}\n`
+            }
+            return handleEscapeCharacters(finaltext, false)
         }
     }
 }
@@ -577,26 +578,6 @@ class ContentfulLoader extends BaseDocumentLoader {
             console.error('Error fetching entries from Contentful:', error)
             throw new Error(`Failed to fetch entries from Contentful: ${error.message}`)
         }
-    }
-
-    private hashContent(contentObject: IContentObject, contentTypeConfig: ContentTypeConfig): string {
-        const relevantData = contentTypeConfig.fieldsToParse
-            .map((field) => {
-                const value = this.getNestedProperty(contentObject, field)
-                return typeof value === 'object' ? JSON.stringify(value) : String(value)
-            })
-            .join('|')
-        return this.simpleHash(relevantData)
-    }
-
-    private simpleHash(str: string): string {
-        let hash = 0
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i)
-            hash = (hash << 5) - hash + char
-            hash = hash & hash // Convert to 32bit integer
-        }
-        return hash.toString(36)
     }
 }
 
