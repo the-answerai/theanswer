@@ -8,6 +8,7 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import MainCard from '@/ui-component/cards/MainCard'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { IconPlus } from '@tabler/icons-react'
+import ItemCard from '@/ui-component/cards/ItemCard'
 
 // API
 import chatflowsApi from '@/api/chatflows'
@@ -58,6 +59,18 @@ const Agentflows = () => {
 
     const getAllAgentflowsApi = useApi(chatflowsApi.getAllAgentflows)
     const getMarketplaceAgentflowsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
+
+    const renderItemCard = ({ item, images, nodeTypes, onClick, type, updateFlowsApi, setError }) => (
+        <ItemCard
+            data={item}
+            images={images}
+            nodeTypes={nodeTypes}
+            onClick={onClick}
+            type={type}
+            updateFlowsApi={updateFlowsApi}
+            setError={setError}
+        />
+    )
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue)
@@ -228,6 +241,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='agentflows'
                         onItemClick={goToCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -240,6 +254,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -252,6 +267,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
             </Box>

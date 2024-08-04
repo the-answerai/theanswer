@@ -8,6 +8,7 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
 import FlowListView from '@/ui-component/lists/FlowListView'
 import { StyledButton } from '@/ui-component/button/StyledButton'
+import ItemCard from '@/ui-component/cards/ItemCard'
 
 // API
 import toolsApi from '@/api/tools'
@@ -50,6 +51,18 @@ const Tools = () => {
 
     const getAllToolsApi = useApi(toolsApi.getAllTools)
     const getMarketplaceToolsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
+
+    const renderItemCard = ({ item, images, nodeTypes, onClick, type, updateFlowsApi, setError }) => (
+        <ItemCard
+            data={item}
+            images={images}
+            nodeTypes={nodeTypes}
+            onClick={onClick}
+            type={type}
+            updateFlowsApi={updateFlowsApi}
+            setError={setError}
+        />
+    )
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue)
@@ -266,6 +279,7 @@ const Tools = () => {
                                 setError={setError}
                                 type='tools'
                                 onItemClick={edit}
+                                renderItem={renderItemCard}
                             />
                         </TabPanel>
                         <TabPanel value={tabValue} index={1}>
@@ -276,6 +290,7 @@ const Tools = () => {
                                 setError={setError}
                                 type='marketplace'
                                 onItemClick={goToTool}
+                                renderItem={renderItemCard}
                             />
                         </TabPanel>
                     </Stack>

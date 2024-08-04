@@ -22,6 +22,14 @@ const dashboard = {
     type: 'group',
     children: [
         {
+            id: 'journeys',
+            title: 'Journeys',
+            type: 'item',
+            url: '/journeys',
+            icon: icons.IconMap,
+            breadcrumbs: true
+        },
+        {
             id: 'chatflows',
             title: 'Chatflows',
             type: 'item',

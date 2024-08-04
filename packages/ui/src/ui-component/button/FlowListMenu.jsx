@@ -5,24 +5,25 @@ import PropTypes from 'prop-types'
 import { styled, alpha } from '@mui/material/styles'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import Divider from '@mui/material/Divider'
 import FileCopyIcon from '@mui/icons-material/FileCopy'
 import FileDownloadIcon from '@mui/icons-material/Downloading'
 import FileDeleteIcon from '@mui/icons-material/Delete'
 import SettingsIcon from '@mui/icons-material/Settings'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import Button from '@mui/material/Button'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { IconX } from '@tabler/icons-react'
 
 import chatflowsApi from '@/api/chatflows'
+import journeysApi from '@/api/journeys'
 
 import useApi from '@/hooks/useApi'
 import useConfirm from '@/hooks/useConfirm'
 import { uiBaseURL } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-import SaveChatflowDialog from '@/ui-component/dialog/SaveChatflowDialog'
 import ChatflowConfigurationDialog from '../dialog/ChatflowConfigurationDialog'
 import { generateExportFlowData } from '@/utils/genericHelper'
+import JourneySetupDialog from '../dialog/JourneySetupDialog'
 
 const StyledMenu = styled((props) => (
     <Menu
@@ -60,20 +61,21 @@ const StyledMenu = styled((props) => (
     }
 }))
 
-export default function FlowListMenu({ chatflow, isAgentCanvas, setError, updateFlowsApi }) {
+export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
     const { confirm } = useConfirm()
     const dispatch = useDispatch()
     const updateChatflowApi = useApi(chatflowsApi.updateChatflow)
+    const updateJourneyApi = useApi(journeysApi.updateJourney)
 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
     const [anchorEl, setAnchorEl] = useState(null)
     const open = Boolean(anchorEl)
-    const [chatflowConfigurationDialogOpen, setChatflowConfigurationDialogOpen] = useState(false)
-    const [chatflowConfigurationDialogProps, setChatflowConfigurationDialogProps] = useState({})
+    const [configurationDialogOpen, setConfigurationDialogOpen] = useState(false)
+    const [configurationDialogProps, setConfigurationDialogProps] = useState({})
 
-    const title = isAgentCanvas ? 'Agents' : 'Chatflow'
+    const title = type === 'agentflows' ? 'Agents' : type === 'journeys' ? 'Journey' : 'Chatflow'
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget)
@@ -83,20 +85,20 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
         setAnchorEl(null)
     }
 
-    const handleChatflowConfiguration = () => {
+    const handleConfiguration = () => {
         setAnchorEl(null)
-        setChatflowConfigurationDialogProps({
+        setConfigurationDialogProps({
             title: `${title} Configuration`,
-            chatflow: chatflow
+            chatflow: item
         })
-        setChatflowConfigurationDialogOpen(true)
+        setConfigurationDialogOpen(true)
     }
 
     const handleDelete = async () => {
         setAnchorEl(null)
         const confirmPayload = {
             title: `Delete`,
-            description: `Delete ${title} ${chatflow.name}?`,
+            description: `Delete ${title} ${item.name || item.title}?`,
             confirmButtonName: 'Delete',
             cancelButtonName: 'Cancel'
         }
@@ -104,12 +106,16 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
 
         if (isConfirmed) {
             try {
-                await chatflowsApi.deleteChatflow(chatflow.id)
+                if (type === 'journeys') {
+                    await journeysApi.deleteJourney(item.id)
+                } else {
+                    await chatflowsApi.deleteChatflow(item.id)
+                }
                 await updateFlowsApi.request()
             } catch (error) {
                 setError(error)
                 enqueueSnackbar({
-                    message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
+                    message: error.message,
                     options: {
                         key: new Date().getTime() + Math.random(),
                         variant: 'error',
@@ -128,8 +134,8 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
     const handleDuplicate = () => {
         setAnchorEl(null)
         try {
-            localStorage.setItem('duplicatedFlowData', chatflow.flowData)
-            window.open(`${uiBaseURL}/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`, '_blank')
+            localStorage.setItem('duplicatedFlowData', item.flowData || JSON.stringify(item))
+            window.open(`${uiBaseURL}/${type === 'agentflows' ? 'agentcanvas' : type === 'journeys' ? 'journeys/new' : 'canvas'}`, '_blank')
         } catch (e) {
             console.error(e)
         }
@@ -138,11 +144,11 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
     const handleExport = () => {
         setAnchorEl(null)
         try {
-            const flowData = JSON.parse(chatflow.flowData)
-            let dataStr = JSON.stringify(generateExportFlowData(flowData), null, 2)
+            const flowData = type === 'journeys' ? item : JSON.parse(item.flowData)
+            let dataStr = JSON.stringify(flowData, null, 2)
             let dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
-            let exportFileDefaultName = `${chatflow.name} ${title}.json`
+            let exportFileDefaultName = `${item.name || item.title} ${title}.json`
 
             let linkElement = document.createElement('a')
             linkElement.setAttribute('href', dataUri)
@@ -153,11 +159,44 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
         }
     }
 
+    const handleJourneyCompleteToggle = async () => {
+        setAnchorEl(null)
+        try {
+            const updatedJourney = { ...item }
+            if (updatedJourney.completedAt) {
+                // Reopen the journey
+                updatedJourney.completedAt = null
+            } else {
+                // Complete the journey
+                updatedJourney.completedAt = new Date().toISOString()
+            }
+            await updateJourneyApi.request(item.id, updatedJourney)
+            await updateFlowsApi.request()
+        } catch (error) {
+            setError(error)
+        }
+    }
+
+    const menuItems = [
+        { label: 'Configuration', onClick: handleConfiguration, icon: <SettingsIcon /> },
+        { label: 'Duplicate', onClick: handleDuplicate, icon: <FileCopyIcon /> },
+        { label: 'Export', onClick: handleExport, icon: <FileDownloadIcon /> },
+        { label: 'Delete', onClick: handleDelete, icon: <FileDeleteIcon /> }
+    ]
+
+    if (type === 'journeys') {
+        menuItems.push({
+            label: item.completedAt ? 'Reopen Journey' : 'Complete',
+            onClick: handleJourneyCompleteToggle,
+            icon: <CheckCircleIcon />
+        })
+    }
+
     return (
         <div>
             <Button
-                id='demo-customized-button'
-                aria-controls={open ? 'demo-customized-menu' : undefined}
+                id='flow-list-menu-button'
+                aria-controls={open ? 'flow-list-menu' : undefined}
                 aria-haspopup='true'
                 aria-expanded={open ? 'true' : undefined}
                 disableElevation
@@ -167,44 +206,45 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
                 Options
             </Button>
             <StyledMenu
-                id='demo-customized-menu'
+                id='flow-list-menu'
                 MenuListProps={{
-                    'aria-labelledby': 'demo-customized-button'
+                    'aria-labelledby': 'flow-list-menu-button'
                 }}
                 anchorEl={anchorEl}
                 open={open}
                 onClose={handleClose}
             >
-                <MenuItem onClick={handleChatflowConfiguration} disableRipple>
-                    <SettingsIcon />
-                    Configuration
-                </MenuItem>
-                <MenuItem onClick={handleDuplicate} disableRipple>
-                    <FileCopyIcon />
-                    Duplicate
-                </MenuItem>
-                <MenuItem onClick={handleExport} disableRipple>
-                    <FileDownloadIcon />
-                    Export
-                </MenuItem>
-                <Divider sx={{ my: 0.5 }} />
-                <MenuItem onClick={handleDelete} disableRipple>
-                    <FileDeleteIcon />
-                    Delete
-                </MenuItem>
+                {menuItems.map((menuItem, index) => (
+                    <MenuItem key={index} onClick={menuItem.onClick} disableRipple>
+                        {menuItem.icon}
+                        {menuItem.label}
+                    </MenuItem>
+                ))}
             </StyledMenu>
-            <ChatflowConfigurationDialog
-                show={chatflowConfigurationDialogOpen}
-                dialogProps={chatflowConfigurationDialogProps}
-                onCancel={() => setChatflowConfigurationDialogOpen(false)}
-            />
+            {type === 'journeys' ? (
+                <JourneySetupDialog
+                    open={configurationDialogOpen}
+                    onClose={() => setConfigurationDialogOpen(false)}
+                    onComplete={() => {
+                        setConfigurationDialogOpen(false)
+                        updateFlowsApi.request()
+                    }}
+                    journeyData={item}
+                />
+            ) : (
+                <ChatflowConfigurationDialog
+                    show={configurationDialogOpen}
+                    dialogProps={configurationDialogProps}
+                    onCancel={() => setConfigurationDialogOpen(false)}
+                />
+            )}
         </div>
     )
 }
 
 FlowListMenu.propTypes = {
-    chatflow: PropTypes.object,
-    isAgentCanvas: PropTypes.bool,
+    item: PropTypes.object,
+    type: PropTypes.oneOf(['chatflows', 'agentflows', 'journeys']),
     setError: PropTypes.func,
     updateFlowsApi: PropTypes.object
 }

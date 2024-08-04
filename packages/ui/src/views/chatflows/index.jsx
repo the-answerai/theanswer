@@ -8,6 +8,7 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import MainCard from '@/ui-component/cards/MainCard'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { IconPlus } from '@tabler/icons-react'
+import ItemCard from '@/ui-component/cards/ItemCard'
 
 // API
 import chatflowsApi from '@/api/chatflows'
@@ -57,6 +58,18 @@ const Chatflows = () => {
 
     const getAllChatflowsApi = useApi(chatflowsApi.getAllChatflows)
     const getMarketplaceChatflowsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
+
+    const renderItemCard = ({ item, images, nodeTypes, onClick, type, updateFlowsApi, setError }) => (
+        <ItemCard
+            data={item}
+            images={images}
+            nodeTypes={nodeTypes}
+            onClick={onClick}
+            type={type}
+            updateFlowsApi={updateFlowsApi}
+            setError={setError}
+        />
+    )
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue)
@@ -221,6 +234,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -233,6 +247,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -245,6 +260,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        renderItem={renderItemCard}
                     />
                 </TabPanel>
             </Box>

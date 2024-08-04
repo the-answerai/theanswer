@@ -761,7 +761,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     // Auto scroll chat to bottom
     useEffect(() => {
         scrollToBottom()
-    }, [messages])
+    }, [open, messages])
 
     useEffect(() => {
         if (isDialog && inputRef) {
@@ -840,8 +840,8 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
 
     useEffect(() => {
         // wait for audio recording to load and then send
-        const containsAudio = previews.filter((item) => item.type === 'audio').length > 0
-        if (previews.length >= 1 && containsAudio) {
+        const containsAudio = previews?.filter((item) => item.type === 'audio').length > 0
+        if (previews?.length >= 1 && containsAudio) {
             setIsRecording(false)
             setRecordingNotSupported(false)
             handlePromptClick('')

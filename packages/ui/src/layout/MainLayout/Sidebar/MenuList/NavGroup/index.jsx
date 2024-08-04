@@ -14,8 +14,8 @@ import { useFlags } from 'flagsmith/react'
 const NavGroup = ({ item }) => {
     const theme = useTheme()
     const flags = useFlags(['org:manage', 'chatflow:manage', 'chatflow:use'])
-    const MEMBER_ACTIONS = ['chatflows', 'marketplaces', 'document-stores']
-    const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey']
+    const MEMBER_ACTIONS = ['chatflows', 'marketplaces', 'document-stores', 'journeys']
+    const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'journeys']
     // menu list collapse & items
     const items = item.children
         ?.filter(

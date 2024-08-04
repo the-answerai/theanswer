@@ -36,6 +36,9 @@ const LoaderConfigPreviewChunks = Loadable(lazy(() => import('@/views/docstore/L
 const VectorStoreConfigure = Loadable(lazy(() => import('@/views/docstore/VectorStoreConfigure')))
 const VectorStoreQuery = Loadable(lazy(() => import('@/views/docstore/VectorStoreQuery')))
 
+// jounrey
+const Journeys = Loadable(lazy(() => import('@/views/journeys')))
+const JourneyDetails = Loadable(lazy(() => import('@/views/journeys/JourneyDetails')))
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -101,6 +104,14 @@ const MainRoutes = {
         {
             path: '/document-stores/query/:id',
             element: <VectorStoreQuery />
+        },
+        {
+            path: '/journeys',
+            element: <Journeys />
+        },
+        {
+            path: '/journeys/:id',
+            element: <JourneyDetails />
         }
     ]
 }

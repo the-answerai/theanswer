@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types'
 import { Box, Grid, Skeleton, Typography } from '@mui/material'
-import ItemCard from '@/ui-component/cards/ItemCard'
 
-const FlowListView = ({ data, images = {}, nodeTypes = {}, isLoading, updateFlowsApi, setError, type, onItemClick }) => {
+const FlowListView = ({ data, images = {}, nodeTypes= {}, isLoading, updateFlowsApi, setError, type, onItemClick, renderItem }) => {
     const finalData = data?.filter(Boolean) || []
 
     const handleItemClick = (item) => {
@@ -23,16 +22,15 @@ const FlowListView = ({ data, images = {}, nodeTypes = {}, isLoading, updateFlow
                 ) : finalData.length > 0 ? (
                     finalData.map((item) => (
                         <Grid item xs={12} sm={6} md={4} key={item.id || item.templateId}>
-                            <ItemCard
-                                key={item.id || item.templateId}
-                                data={item}
-                                images={images && images[item.id]}
-                                nodeTypes={nodeTypes && nodeTypes[item.id]}
-                                onClick={() => handleItemClick(item)}
-                                type={type}
-                                updateFlowsApi={updateFlowsApi}
-                                setError={setError}
-                            />
+                            {renderItem({
+                                item,
+                                images: images && images[item.id],
+                                nodeTypes: nodeTypes && nodeTypes[item.id],
+                                onClick: () => handleItemClick(item),
+                                type,
+                                updateFlowsApi,
+                                setError
+                            })}
                         </Grid>
                     ))
                 ) : (
@@ -54,8 +52,9 @@ FlowListView.propTypes = {
     isLoading: PropTypes.bool,
     updateFlowsApi: PropTypes.object,
     setError: PropTypes.func,
-    type: PropTypes.oneOf(['chatflows', 'agentflows', 'marketplace', 'tools']).isRequired,
-    onItemClick: PropTypes.func.isRequired
+    type: PropTypes.oneOf(['chatflows', 'agentflows', 'marketplace', 'tools', 'journeys']).isRequired,
+    onItemClick: PropTypes.func.isRequired,
+    renderItem: PropTypes.func.isRequired
 }
 
 export default FlowListView

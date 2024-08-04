@@ -34,6 +34,8 @@ import { UpdateChatflowToHaveParentId1717796909629 } from './1717796909629-Updat
 import { UpdateVisibilityType1719248473069 } from './1719248473069-UpdateVisibilityType'
 import { CredentialsVisibility1721247848452 } from './1721247848452-CredentialsVisibility'
 import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
+import { AddJourneyTable1766759476234 } from './1766759476234-AddJourneyTable'
+import { UpdateJourneyTable1766759476235 } from './1766759476235-UpdateJourneyTable'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -71,5 +73,7 @@ export const postgresMigrations = [
     UpdateChatflowToHaveParentId1717796909629,
     UpdateVisibilityType1719248473069,
     CredentialsVisibility1721247848452,
-    AddDescriptionToChatFlow1722099922876
+    AddDescriptionToChatFlow1722099922876,
+    AddJourneyTable1766759476234,
+    UpdateJourneyTable1766759476235
 ]

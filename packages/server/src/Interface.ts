@@ -295,6 +295,15 @@ export interface IApiKey {
     apiSecret: string
     updatedDate: Date
 }
+export interface IJourney {
+    id: string
+    title: string
+    goal: string
+    documents: string
+    tools: string
+    chatflows: string
+    userId: string
+}
 
 // DocumentStore related
 export * from './Interface.DocumentStore'

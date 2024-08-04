@@ -27,6 +27,8 @@ import { LongTextColumn1722301395521 } from './1722301395521-LongTextColumn'
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
 import { AddUser1716422641414 } from './1716422641414-AddUser'
 import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
+import { AddJourneyTable1766759476234 } from './1766759476234-AddJourneyTable'
+import { UpdateJourneyTable1766759476235 } from './1766759476235-UpdateJourneyTable'
 
 export const mysqlMigrations = [
     Init1693840429259,
@@ -57,5 +59,7 @@ export const mysqlMigrations = [
     AddApiKey1720230151480,
     AddActionToChatMessage1721078251523,
     LongTextColumn1722301395521,
-    AddDescriptionToChatFlow1722099922876
+    AddDescriptionToChatFlow1722099922876,
+    AddJourneyTable1766759476234,
+    UpdateJourneyTable1766759476235
 ]

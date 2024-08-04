@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogTitle, Button } from '@mui/material'
 import { ChatMessage } from './ChatMessage'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { IconEraser } from '@tabler/icons-react'
+import JourneyDetails from '@/views/journeys/JourneyDetails'
 
-const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel, previews, setPreviews }) => {
+const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel, previews, setPreviews, journeyDetails }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const customization = useSelector((state) => state.customization)
 
@@ -15,7 +16,7 @@ const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel,
         <Dialog
             open={show}
             fullWidth
-            maxWidth='md'
+            maxWidth='lg'
             onClose={onCancel}
             aria-labelledby='alert-dialog-title'
             aria-describedby='alert-dialog-description'
@@ -43,10 +44,7 @@ const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel,
                     )}
                 </div>
             </DialogTitle>
-            <DialogContent
-                className='cloud-dialog-wrapper'
-                sx={{ display: 'flex', justifyContent: 'flex-end', flexDirection: 'column', p: 0 }}
-            >
+            <DialogContent className='cloud-dialog-wrapper' sx={{ display: 'flex', justifyContent: 'space-between', p: 0 }}>
                 <ChatMessage
                     isDialog={true}
                     open={dialogProps.open}
@@ -55,6 +53,7 @@ const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel,
                     previews={previews}
                     setPreviews={setPreviews}
                 />
+                {journeyDetails && <JourneyDetails journeyDetails={journeyDetails} />}
             </DialogContent>
         </Dialog>
     ) : null
@@ -69,7 +68,8 @@ ChatExpandDialog.propTypes = {
     onClear: PropTypes.func,
     onCancel: PropTypes.func,
     previews: PropTypes.array,
-    setPreviews: PropTypes.func
+    setPreviews: PropTypes.func,
+    journeyDetails: PropTypes.object
 }
 
 export default ChatExpandDialog
