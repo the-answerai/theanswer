@@ -8,11 +8,25 @@ import {
     IconLock,
     IconRobot,
     IconVariable,
-    IconFiles
+    IconFiles,
+    IconMap,
+    IconMessageChatbot
 } from '@tabler/icons-react'
 
 // constant
-const icons = { IconUsersGroup, IconHierarchy, IconBuildingStore, IconKey, IconTool, IconLock, IconRobot, IconVariable, IconFiles }
+const icons = {
+    IconUsersGroup,
+    IconHierarchy,
+    IconBuildingStore,
+    IconKey,
+    IconTool,
+    IconLock,
+    IconRobot,
+    IconVariable,
+    IconFiles,
+    IconMap,
+    IconMessageChatbot
+}
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -21,6 +35,14 @@ const dashboard = {
     title: '',
     type: 'group',
     children: [
+        {
+            id: 'quickchat',
+            title: 'Quick Chat',
+            type: 'item',
+            url: '/quickchat',
+            icon: icons.IconMessageChatbot,
+            breadcrumbs: true
+        },
         {
             id: 'journeys',
             title: 'Journeys',

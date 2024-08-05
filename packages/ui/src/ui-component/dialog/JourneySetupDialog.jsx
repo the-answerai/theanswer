@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import { useState, useEffect, useCallback } from 'react'
 import {
+    Avatar,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -301,6 +302,18 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
         }
     }
 
+    const renderChatflowAvatar = (chatflow) => {
+        return <Avatar src={chatflow.iconSrc} alt={chatflow.name} />
+    }
+
+    const renderDocumentStoreAvatar = (documentStore) => {
+        return <Avatar src={documentStore.iconSrc} alt={documentStore.name} />
+    }
+
+    const renderToolAvatar = (tool) => {
+        return <Avatar src={tool.iconSrc} alt={tool.name} />
+    }
+
     const renderStepContent = () => {
         switch (step) {
             case 0:
@@ -338,6 +351,7 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
                         items={getChatflowsApi.data || []}
                         loading={getChatflowsApi.loading}
                         error={getChatflowsApi.error}
+                        renderItemAvatar={renderChatflowAvatar}
                     />
                 )
             case 2:
@@ -357,6 +371,7 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
                         items={getDocumentStoresApi.data || []}
                         loading={getDocumentStoresApi.loading}
                         error={getDocumentStoresApi.error}
+                        renderItemAvatar={renderDocumentStoreAvatar}
                     />
                 )
             case 3:
@@ -373,6 +388,7 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
                         items={getToolsApi.data || []}
                         loading={getToolsApi.loading}
                         error={getToolsApi.error}
+                        renderItemAvatar={renderToolAvatar}
                     />
                 )
             case 4:

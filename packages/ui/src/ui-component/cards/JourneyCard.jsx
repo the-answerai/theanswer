@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 // material-ui
 import { styled } from '@mui/material/styles'
 import { Box, Grid, Typography, useTheme, Chip, Tooltip } from '@mui/material'
-import { Description, Build, SmartToy, AccountCircle } from '@mui/icons-material'
+import { DescriptionOutlined, BuildOutlined, SmartToyOutlined } from '@mui/icons-material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
@@ -41,6 +41,50 @@ const TooltipContent = styled('div')(({ theme }) => ({
     }
 }))
 
+const CustomChip = ({ icon, count, tooltipContent }) => {
+    const theme = useTheme()
+
+    return (
+        <Tooltip title={tooltipContent} arrow>
+            <Chip
+                icon={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {icon}
+                        <Typography component='span' sx={{ color: 'white' }}>
+                            {count}
+                        </Typography>
+                    </Box>
+                }
+                size='small'
+                sx={{
+                    bgcolor: 'transparent',
+                    color: 'white',
+                    borderColor: theme.palette.primary.main,
+                    '& .MuiChip-icon': {
+                        color: theme.palette.primary.main,
+                        marginLeft: '8px',
+                        marginRight: '-4px'
+                    },
+                    '& .MuiSvgIcon-root': {
+                        color: theme.palette.primary.main,
+                        backgroundColor: 'transparent'
+                    },
+                    '& .MuiChip-label': {
+                        color: 'white',
+                        paddingLeft: '0'
+                    }
+                }}
+            />
+        </Tooltip>
+    )
+}
+
+CustomChip.propTypes = {
+    icon: PropTypes.node.isRequired,
+    count: PropTypes.number.isRequired,
+    tooltipContent: PropTypes.node.isRequired
+}
+
 // ===========================|| JOURNEY CARD ||=========================== //
 
 const JourneyCard = ({ data, onClick, updateFlowsApi, setError }) => {
@@ -59,29 +103,28 @@ const JourneyCard = ({ data, onClick, updateFlowsApi, setError }) => {
     const getTooltipContent = (items, type) => {
         if (!items || items.length === 0) return <Typography>None</Typography>
 
-        const getIcon = (type) => {
-            switch (type) {
-                case 'document':
-                    return <Description fontSize='small' />
-                case 'tool':
-                    return <Build fontSize='small' />
-                case 'chatflow':
-                    return <SmartToy fontSize='small' />
-                default:
-                    return <AccountCircle fontSize='small' />
-            }
-        }
-
         return (
             <TooltipContent>
                 {items.map((item, index) => (
                     <div key={index} className='item'>
-                        <span className='icon'>{getIcon(type)}</span>
                         <Typography variant='body2'>{item.name || item}</Typography>
                     </div>
                 ))}
             </TooltipContent>
         )
+    }
+
+    const getIcon = (type) => {
+        switch (type) {
+            case 'document':
+                return <DescriptionOutlined fontSize='small' />
+            case 'tool':
+                return <BuildOutlined fontSize='small' />
+            case 'chatflow':
+                return <SmartToyOutlined fontSize='small' />
+            default:
+                return null
+        }
     }
 
     return (
@@ -153,36 +196,21 @@ const JourneyCard = ({ data, onClick, updateFlowsApi, setError }) => {
                             mt: 1
                         }}
                     >
-                        <Tooltip title={getTooltipContent(data.documents, 'document')} arrow>
-                            <Chip
-                                label={`${data.documents?.length || 0} Docs`}
-                                size='small'
-                                sx={{
-                                    bgcolor: theme.palette.primary.light,
-                                    color: theme.palette.primary.dark
-                                }}
-                            />
-                        </Tooltip>
-                        <Tooltip title={getTooltipContent(data.tools, 'tool')} arrow>
-                            <Chip
-                                label={`${data.tools?.length || 0} Tools`}
-                                size='small'
-                                sx={{
-                                    bgcolor: theme.palette.secondary.light,
-                                    color: theme.palette.secondary.dark
-                                }}
-                            />
-                        </Tooltip>
-                        <Tooltip title={getTooltipContent(data.chatflows, 'chatflow')} arrow>
-                            <Chip
-                                label={`${data.chatflows?.length || 0} Sidekicks`}
-                                size='small'
-                                sx={{
-                                    bgcolor: theme.palette.success.light,
-                                    color: theme.palette.success.dark
-                                }}
-                            />
-                        </Tooltip>
+                        <CustomChip
+                            icon={getIcon('document')}
+                            count={data.documents?.length || 0}
+                            tooltipContent={getTooltipContent(data.documents, 'document')}
+                        />
+                        <CustomChip
+                            icon={getIcon('tool')}
+                            count={data.tools?.length || 0}
+                            tooltipContent={getTooltipContent(data.tools, 'tool')}
+                        />
+                        <CustomChip
+                            icon={getIcon('chatflow')}
+                            count={data.chatflows?.length || 0}
+                            tooltipContent={getTooltipContent(data.chatflows, 'chatflow')}
+                        />
                     </Box>
                 </Grid>
             </Box>

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Typography, Select, MenuItem, List, ListItem, ListItemText, Paper, Box, Grid, Divider, useTheme, Button } from '@mui/material'
+import { Typography, Select, MenuItem, Paper, Box, Grid, Divider, useTheme, Button } from '@mui/material'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { IconEraser, IconX } from '@tabler/icons-react'
@@ -13,7 +12,7 @@ import { getLocalStorageChatflow, removeLocalStorageChatHistory } from '@/utils/
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 // API
-import journeysApi from '@/api/journeys'
+import chatflowsApi from '@/api/chatflows'
 
 // Hooks
 import useApi from '@/hooks/useApi'
@@ -21,21 +20,19 @@ import useApi from '@/hooks/useApi'
 // Components
 import { ChatMessage } from '../chatmessage/ChatMessage'
 
-const JourneyDetails = () => {
+const QuickChatDetails = () => {
     const theme = useTheme()
-    const { id } = useParams()
     const dispatch = useDispatch()
     const { confirm } = useConfirm()
     const customization = useSelector((state) => state.customization)
 
-    const [journeyDetails, setJourneyDetails] = useState(null)
-    const [journeyChatflows, setJourneyChatflows] = useState([])
-    const [selectedChatflow, setSelectedChatflow] = useLocalStorage(`lastSelectedChatflow_${id}`, '')
+    const [allChatflows, setAllChatflows] = useState([])
+    const [selectedChatflow, setSelectedChatflow] = useLocalStorage('lastSelectedChatflow', '')
     const [isChatOpen, setIsChatOpen] = useState(false)
     const chatContainerRef = useRef(null)
     const [previews, setPreviews] = useState([])
 
-    const getJourneyApi = useApi(journeysApi.getSpecificJourney)
+    const getAllChatflowsApi = useApi(chatflowsApi.getAllChatflows)
 
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
@@ -128,44 +125,23 @@ const JourneyDetails = () => {
     }, [selectedChatflow])
 
     useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
-        }
-    }, [selectedChatflow, isChatOpen])
-
-    useEffect(() => {
         scrollToBottom()
     }, [scrollToBottom, selectedChatflow, isChatOpen])
 
-    // Add this new effect to handle initial load and updates
     useEffect(() => {
-        if (getJourneyApi.data) {
-            // Delay the scroll to ensure content is rendered
-            setTimeout(scrollToBottom, 100)
-        }
-    }, [getJourneyApi.data, scrollToBottom])
+        getAllChatflowsApi.request()
+    }, [])
 
     useEffect(() => {
-        if (id) {
-            getJourneyApi.request(id)
-        }
-        if (selectedChatflow) {
-            setIsChatOpen(true)
-        }
-    }, [id, selectedChatflow])
+        if (getAllChatflowsApi.data) {
+            setAllChatflows(getAllChatflowsApi.data)
 
-    useEffect(() => {
-        if (getJourneyApi.data) {
-            setJourneyDetails(getJourneyApi.data)
-            setJourneyChatflows(getJourneyApi.data.chatflows || [])
-
-            // If there's no selected chatflow, select the first one by default
-            if (!selectedChatflow && getJourneyApi.data.chatflows && getJourneyApi.data.chatflows.length > 0) {
-                setSelectedChatflow(getJourneyApi.data.chatflows[0].id)
+            if (!selectedChatflow && getAllChatflowsApi.data.length > 0) {
+                setSelectedChatflow(getAllChatflowsApi.data[0].id)
                 setIsChatOpen(true)
             }
         }
-    }, [getJourneyApi.data, selectedChatflow, setSelectedChatflow])
+    }, [getAllChatflowsApi.data, selectedChatflow, setSelectedChatflow])
 
     const handleChatflowChange = (event) => {
         const selectedId = event.target.value
@@ -173,23 +149,9 @@ const JourneyDetails = () => {
         setIsChatOpen(true)
     }
 
-    if (!journeyDetails) {
-        return <Typography>Loading...</Typography>
-    }
-
-    const { documents = [], tools = [] } = journeyDetails
-
     return (
         <Box sx={{ flexGrow: 1, p: 3, height: 'calc(100vh - 64px)' }}>
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                    <Typography variant='h4' gutterBottom>
-                        {journeyDetails.title}
-                    </Typography>
-                    <Typography variant='body1' gutterBottom>
-                        {journeyDetails.goal}
-                    </Typography>
-                </Box>
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                 {customization.isDarkMode ? (
                     <StyledButton
                         variant='outlined'
@@ -234,43 +196,19 @@ const JourneyDetails = () => {
                                 <MenuItem value=''>
                                     <em>Select a Sidekick</em>
                                 </MenuItem>
-                                {journeyChatflows.map((chatflow) => (
+                                {allChatflows.map((chatflow) => (
                                     <MenuItem key={chatflow.id} value={chatflow.id}>
                                         {chatflow.name}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </Box>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant='subtitle1' gutterBottom>
-                                Document Loaders
-                            </Typography>
-                            <List dense>
-                                {documents.map((doc, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemText primary={doc.name} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-                        <Box>
-                            <Typography variant='subtitle1' gutterBottom>
-                                Tools
-                            </Typography>
-                            <List dense>
-                                {tools.map((tool, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemText primary={tool.name} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-                        <ConfirmDialog />
                     </Paper>
                 </Grid>
             </Grid>
+            <ConfirmDialog />
         </Box>
     )
 }
 
-export default JourneyDetails
+export default QuickChatDetails
