@@ -21,7 +21,6 @@ import chatflowsApi from '@/api/chatflows'
 import documentStoreApi from '@/api/documentstore'
 import journeysApi from '@/api/journeys'
 import { baseURL } from '@/store/constant'
-import ItemCard from '@/ui-component/cards/ItemCard'
 
 const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJourneyData }) => {
     const [step, setStep] = useState(0)
@@ -35,6 +34,9 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
     const getDocumentStoresApi = useApi(documentStoreApi.getAllDocumentStores)
     const createJourneyApi = useApi(journeysApi.createNewJourney)
     const updateJourneyApi = useApi(journeysApi.updateJourney)
+    const [allChatflows, setAllChatflows] = useState([])
+    const [allDocumentStores, setAllDocumentStores] = useState([])
+    const [allTools, setAllTools] = useState([])
 
     const [journeyData, setJourneyData] = useLocalStorage('journeySetupData', {
         title: '',
@@ -60,10 +62,6 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
         })
     }
 
-    const renderItem = ({ item, onClick, type, updateFlowsApi, setError }) => {
-        return <ItemCard data={item} onClick={onClick} type={type} updateFlowsApi={updateFlowsApi} setError={setError} />
-    }
-
     const totalSteps = 5
     const stepTitles = [
         'Define Your Journey',
@@ -81,6 +79,30 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
             getDocumentStoresApi.request()
         }
     }, [open])
+
+    useEffect(() => {
+        if (getToolsApi.data) {
+            console.log('Tools data received:', getToolsApi.data)
+            setAllTools(getToolsApi.data)
+        }
+        // ... existing error handling ...
+    }, [getToolsApi.data, getToolsApi.error])
+
+    useEffect(() => {
+        if (getChatflowsApi.data) {
+            console.log('Chatflows data received:', getChatflowsApi.data)
+            setAllChatflows(getChatflowsApi.data)
+        }
+        // ... existing error handling ...
+    }, [getChatflowsApi.data, getChatflowsApi.error])
+
+    useEffect(() => {
+        if (getDocumentStoresApi.data) {
+            console.log('Document stores data received:', getDocumentStoresApi.data)
+            setAllDocumentStores(getDocumentStoresApi.data)
+        }
+        // ... existing error handling ...
+    }, [getDocumentStoresApi.data, getDocumentStoresApi.error])
 
     useEffect(() => {
         if (createJourneyApi.data) {
@@ -168,46 +190,86 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
             setJourneyData((prev) => ({
                 ...prev,
                 documents: docsArray.map((doc) => ({
+                    id: doc.id,
                     name: doc.name,
+                    description: doc.description,
                     iconSrc: `${baseURL}/api/v1/node-icon/${doc.name}`
                 }))
             }))
         },
-        [setJourneyData]
+        [setJourneyData, baseURL]
     )
 
-    const handleToolToggle = (tool) => {
-        const updatedTools = selectedTools.includes(tool) ? selectedTools.filter((t) => t !== tool) : [...selectedTools, tool]
+    const handleChatflowsSelected = useCallback(
+        (selectedChatflows) => {
+            console.log('Selected chatflows:', selectedChatflows)
+            setSelectedChatflows(selectedChatflows)
 
-        setSelectedTools(updatedTools)
-        setJourneyData((prev) => ({
-            ...prev,
-            tools: updatedTools.map((t) => ({
-                name: t.name,
-                iconSrc: t.iconSrc || `${baseURL}/api/v1/node-icon/${t.name}`
+            // Extract document loader IDs from selected chatflows
+            const newDocumentIds = selectedChatflows.flatMap((chatflow) => {
+                let flowData
+                try {
+                    flowData = JSON.parse(chatflow.flowData)
+                } catch (error) {
+                    console.error('Error parsing flowData:', error)
+                    return []
+                }
+
+                const nodes = flowData.nodes || []
+                const documentStoreNode = nodes.find((node) => node.data?.name === 'documentStore')
+
+                if (documentStoreNode && documentStoreNode.data?.inputs?.selectedStores) {
+                    return documentStoreNode.data.inputs.selectedStores
+                }
+                return []
+            })
+
+            // Update documents with new IDs
+            setDocuments((prevDocuments) => {
+                const existingIds = new Set(prevDocuments.map((doc) => doc.id))
+                const newDocs = newDocumentIds
+                    .filter((id) => !existingIds.has(id))
+                    .map((id) => allDocumentStores.find((doc) => doc.id === id))
+                    .filter(Boolean)
+                const updatedDocuments = [...prevDocuments, ...newDocs]
+
+                setJourneyData((prev) => ({
+                    ...prev,
+                    chatflows: selectedChatflows.map((c) => ({
+                        id: c.id,
+                        name: c.name,
+                        description: c.description,
+                        iconSrc: c.iconSrc || `${baseURL || ''}/api/v1/node-icon/${c.name}`
+                    })),
+                    documents: updatedDocuments.map((doc) => ({
+                        id: doc.id,
+                        name: doc.name,
+                        description: doc.description,
+                        iconSrc: `${baseURL}/api/v1/node-icon/${doc.name}`
+                    }))
+                }))
+
+                return updatedDocuments
+            })
+        },
+        [setJourneyData, baseURL, allDocumentStores]
+    )
+
+    const handleToolsSelected = useCallback(
+        (selectedTools) => {
+            setSelectedTools(selectedTools)
+            setJourneyData((prev) => ({
+                ...prev,
+                tools: selectedTools.map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    description: t.description,
+                    iconSrc: t.iconSrc || `${baseURL || ''}/api/v1/node-icon/${t.name}`
+                }))
             }))
-        }))
-    }
-
-    const handleChatflowToggle = (chatflow) => {
-        const updatedChatflows = selectedChatflows.includes(chatflow)
-            ? selectedChatflows.filter((c) => c !== chatflow)
-            : [...selectedChatflows, chatflow]
-
-        setSelectedChatflows(updatedChatflows)
-        setJourneyData((prev) => ({
-            ...prev,
-            chatflows: updatedChatflows.map((c) => ({
-                // Change this from 'sidekicks' to 'chatflows'
-                name: c.name,
-                iconSrc: c.iconSrc || `${baseURL || ''}/api/v1/node-icon/${c.name}`
-            }))
-        }))
-    }
-
-    const handleFinish = () => {
-        setStep(totalSteps - 1) // Move to the summary step instead of closing
-    }
+        },
+        [setJourneyData, baseURL]
+    )
 
     const handleSubmit = async () => {
         const finalJourneyData = {
@@ -239,8 +301,6 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
         }
     }
 
-    const progress = (step / totalSteps) * 100
-
     const renderStepContent = () => {
         switch (step) {
             case 0:
@@ -270,7 +330,7 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
                         show={true}
                         dialogProps={{ title: 'Select Sidekicks (Chatflows)' }}
                         onCancel={handleBack}
-                        onItemsSelected={(chatflows) => setSelectedChatflows(chatflows)}
+                        onItemsSelected={handleChatflowsSelected}
                         allowMultipleSelection={true}
                         selectedItems={selectedChatflows}
                         isInnerContent={true}
@@ -305,7 +365,7 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
                         show={true}
                         dialogProps={{ title: 'Select Tools' }}
                         onCancel={handleBack}
-                        onItemsSelected={(tools) => setSelectedTools(tools)}
+                        onItemsSelected={handleToolsSelected}
                         allowMultipleSelection={true}
                         selectedItems={selectedTools}
                         isInnerContent={true}
@@ -384,29 +444,29 @@ const JourneySetupDialog = ({ open, onClose, onComplete, journeyData: initialJou
             <DialogTitle>{initialJourneyData ? 'Edit Your Journey' : 'Set Up Your Journey'}</DialogTitle>
             <LinearProgress variant='determinate' value={(step / totalSteps) * 100} />
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', height: '70vh', p: 2 }}>
-                <Box sx={{ flexGrow: 0, mb: 2 }}>
-                    <Typography variant='h6' gutterBottom>
-                        Step {step + 1} of {totalSteps}: {stepTitles[step]}
-                    </Typography>
+                <Box sx={{ flexGrow: 0, mb: 2, textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                        <Button onClick={handleBack} disabled={step === 0}>
+                            Back
+                        </Button>
+                        <Typography variant='h6' gutterBottom>
+                            Step {step + 1} of {totalSteps}: {stepTitles[step]}
+                        </Typography>
+                        {step < totalSteps - 1 ? (
+                            <Button
+                                onClick={step === 0 ? handleTitleGoalSubmit : handleNext}
+                                disabled={(step === 0 && (!title.trim() || !goal.trim())) || (step === 1 && selectedChatflows.length === 0)}
+                            >
+                                Next
+                            </Button>
+                        ) : (
+                            <Button onClick={handleSubmit} color='primary'>
+                                {initialJourneyData ? 'Update Journey' : 'Create Journey'}
+                            </Button>
+                        )}
+                    </Box>
                 </Box>
                 <Box sx={{ flexGrow: 1, overflow: 'auto', mb: 2 }}>{renderStepContent()}</Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                    <Button onClick={handleBack} disabled={step === 0}>
-                        Back
-                    </Button>
-                    {step < totalSteps - 1 ? (
-                        <Button
-                            onClick={step === 0 ? handleTitleGoalSubmit : handleNext}
-                            disabled={(step === 0 && (!title.trim() || !goal.trim())) || (step === 1 && selectedChatflows.length === 0)}
-                        >
-                            Next
-                        </Button>
-                    ) : (
-                        <Button onClick={handleSubmit} color='primary'>
-                            Start Journey
-                        </Button>
-                    )}
-                </Box>
             </DialogContent>
         </Dialog>
     )
