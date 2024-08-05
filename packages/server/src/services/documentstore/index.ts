@@ -52,6 +52,8 @@ const createDocumentStore = async (newDocumentStore: DocumentStore, userId: stri
 const getAllDocumentStores = async (userId: string, organizationId: string) => {
     try {
         const appServer = getRunningExpressApp()
+        console.log('userId', userId)
+        console.log('organizationId', organizationId)
         const entities = await appServer.AppDataSource.getRepository(DocumentStore).find({
             where: { userId, organizationId }
         })

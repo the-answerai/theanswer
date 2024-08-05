@@ -9,7 +9,7 @@ import { Popper, Box, Typography, Tooltip, IconButton, Button, TextField } from 
 import { useGridApiContext } from '@mui/x-data-grid'
 import IconAutoFixHigh from '@mui/icons-material/AutoFixHigh'
 import { tooltipClasses } from '@mui/material/Tooltip'
-import { IconArrowsMaximize, IconEdit, IconAlertTriangle, IconBulb } from '@tabler/icons-react'
+import { IconArrowsMaximize, IconAlertTriangle, IconBulb } from '@tabler/icons-react'
 import { Tabs } from '@mui/base/Tabs'
 import Autocomplete, { autocompleteClasses } from '@mui/material/Autocomplete'
 
@@ -17,6 +17,7 @@ import Autocomplete, { autocompleteClasses } from '@mui/material/Autocomplete'
 import { Dropdown } from '@/ui-component/dropdown/Dropdown'
 import { MultiDropdown } from '@/ui-component/dropdown/MultiDropdown'
 import { AsyncDropdown } from '@/ui-component/dropdown/AsyncDropdown'
+import { AsyncMultiDropdown } from '@/ui-component/dropdown/AsyncMultiDropdown'
 import { Input } from '@/ui-component/input/Input'
 import { DataGrid } from '@/ui-component/grid/DataGrid'
 import { File } from '@/ui-component/file/File'
@@ -752,25 +753,41 @@ const NodeInputHandler = ({
                             <>
                                 {data.inputParams.length === 1 && <div style={{ marginTop: 10 }} />}
                                 <div key={reloadTimestamp} style={{ display: 'flex', flexDirection: 'row' }}>
-                                    <AsyncDropdown
-                                        disabled={disabled}
-                                        name={inputParam.name}
-                                        nodeData={data}
-                                        value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
-                                        isCreateNewOption={EDITABLE_OPTIONS.includes(inputParam.name)}
-                                        onSelect={(newValue) => (data.inputs[inputParam.name] = newValue)}
-                                        onCreateNew={() => addAsyncOption(inputParam.name)}
-                                    />
-                                    {EDITABLE_OPTIONS.includes(inputParam.name) && data.inputs[inputParam.name] && (
-                                        <IconButton
-                                            title='Edit'
-                                            color='primary'
-                                            size='small'
-                                            onClick={() => editAsyncOption(inputParam.name, data.inputs[inputParam.name])}
-                                        >
-                                            <IconEdit />
-                                        </IconButton>
+                                    {console.log(
+                                        'Rendering AsyncDropdown for:',
+                                        inputParam.name,
+                                        'with data:',
+                                        JSON.stringify(data.inputs[inputParam.name], null, 2)
                                     )}
+                                    {inputParam.list ? (
+                                        <AsyncMultiDropdown
+                                            disabled={disabled}
+                                            name={inputParam.name}
+                                            nodeData={data}
+                                            value={Array.isArray(data.inputs[inputParam.name]) ? data.inputs[inputParam.name] : []}
+                                            isCreateNewOption={EDITABLE_OPTIONS.includes(inputParam.name)}
+                                            onSelect={(newValue) => {
+                                                console.log('AsyncMultiDropdown onSelect:', JSON.stringify(newValue, null, 2))
+                                                // Store the full objects of selected stores
+                                                data.inputs[inputParam.name] = newValue
+                                            }}
+                                            onCreateNew={() => addAsyncOption(inputParam.name)}
+                                        />
+                                    ) : (
+                                        <AsyncDropdown
+                                            disabled={disabled}
+                                            name={inputParam.name}
+                                            nodeData={data}
+                                            value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
+                                            isCreateNewOption={EDITABLE_OPTIONS.includes(inputParam.name)}
+                                            onSelect={(newValue) => {
+                                                console.log('AsyncDropdown onSelect:', newValue)
+                                                data.inputs[inputParam.name] = newValue
+                                            }}
+                                            onCreateNew={() => addAsyncOption(inputParam.name)}
+                                        />
+                                    )}
+                                    {/* ... rest of the code */}
                                 </div>
                             </>
                         )}
