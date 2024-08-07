@@ -13,7 +13,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import Button from '@mui/material/Button'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { IconX } from '@tabler/icons-react'
-
+import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import chatflowsApi from '@/api/chatflows'
 import journeysApi from '@/api/journeys'
 
@@ -106,6 +106,7 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
 
         if (isConfirmed) {
             try {
+                // TODO: Add user Id and Org Id to the request
                 if (type === 'journeys') {
                     await journeysApi.deleteJourney(item.id)
                 } else {
@@ -161,19 +162,30 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
 
     const handleJourneyCompleteToggle = async () => {
         setAnchorEl(null)
-        try {
-            const updatedJourney = { ...item }
-            if (updatedJourney.completedAt) {
-                // Reopen the journey
-                updatedJourney.completedAt = null
-            } else {
-                // Complete the journey
-                updatedJourney.completedAt = new Date().toISOString()
+
+        const confirmPayload = {
+            title: `Complete Joureny?`,
+            description: `Complete ${title} ${item.name || item.title}?`,
+            confirmButtonName: 'Complete',
+            cancelButtonName: 'Cancel'
+        }
+        const isConfirmed = await confirm(confirmPayload)
+
+        if (isConfirmed) {
+            try {
+                const updatedJourney = { ...item }
+                if (updatedJourney.completedAt) {
+                    // Reopen the journey
+                    updatedJourney.completedAt = null
+                } else {
+                    // Complete the journey
+                    updatedJourney.completedAt = new Date().toISOString()
+                }
+                await updateJourneyApi.request(item.id, updatedJourney)
+                await updateFlowsApi.request()
+            } catch (error) {
+                setError(error)
             }
-            await updateJourneyApi.request(item.id, updatedJourney)
-            await updateFlowsApi.request()
-        } catch (error) {
-            setError(error)
         }
     }
 
@@ -238,6 +250,7 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
                     onCancel={() => setConfigurationDialogOpen(false)}
                 />
             )}
+            <ConfirmDialog />
         </div>
     )
 }

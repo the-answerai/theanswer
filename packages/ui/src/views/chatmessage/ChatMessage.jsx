@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback, Fragment } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import PropTypes from 'prop-types'
 import socketIOClient from 'socket.io-client'
 import { cloneDeep } from 'lodash'
 import rehypeMathjax from 'rehype-mathjax'
@@ -84,7 +83,7 @@ const messageImageStyle = {
     objectFit: 'cover'
 }
 
-export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setPreviews }) => {
+export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setPreviews, overrideConfig }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
 
@@ -513,12 +512,10 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     // Handle form submission
     const handleSubmit = async (e, selectedInput, action) => {
         if (e) e.preventDefault()
-        console.log('handleSubmit started')
 
         if (!selectedInput && userInput.trim() === '') {
             const containsAudio = previews.filter((item) => item.type === 'audio').length > 0
             if (!(previews.length >= 1 && containsAudio)) {
-                console.log('Exiting early: No input and no audio')
                 return
             }
         }
@@ -527,7 +524,6 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
 
         if (selectedInput !== undefined && selectedInput.trim() !== '') input = selectedInput
 
-        console.log('Setting loading to true')
         setLoading(true)
         const urls =
             previews && previews.length > 0
@@ -538,27 +534,23 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                       mime: item.mime
                   }))
                 : []
-        console.log('Clearing previews')
         clearPreviews()
 
-        console.log('Setting messages')
         try {
             setMessages((prevMessages) => {
-                console.log('Previous messages:', prevMessages)
                 const newMessages = [...prevMessages, { message: input, type: 'userMessage', fileUploads: urls }]
-                console.log('New messages:', newMessages)
                 return newMessages
             })
         } catch (err) {
             console.error('Error in setMessages:', err)
         }
 
-        console.log('Preparing to call prediction API')
         // Send user question to Prediction Internal API
         try {
             const params = {
                 question: input,
-                chatId
+                chatId,
+                overrideConfig: overrideConfig || {}
             }
             if (urls && urls.length > 0) params.uploads = urls
             if (leadEmail) params.leadEmail = leadEmail
@@ -567,7 +559,6 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
 
             console.log('Calling prediction API with params:', params)
             const response = await predictionApi.sendMessageAndGetPrediction(chatflowid, params)
-            console.log('Prediction API response:', response)
 
             if (response.data) {
                 const data = response.data
@@ -781,6 +772,10 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     useEffect(() => {
         scrollToBottom()
     }, [open, messages])
+
+    useEffect(() => {
+        console.log('ChatMessage - Received overrideConfig:', overrideConfig)
+    }, [overrideConfig])
 
     useEffect(() => {
         if (isDialog && inputRef) {
@@ -1795,13 +1790,4 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
             />
         </div>
     )
-}
-
-ChatMessage.propTypes = {
-    open: PropTypes.bool,
-    chatflowid: PropTypes.string,
-    isAgentCanvas: PropTypes.bool,
-    isDialog: PropTypes.bool,
-    previews: PropTypes.array,
-    setPreviews: PropTypes.func
 }

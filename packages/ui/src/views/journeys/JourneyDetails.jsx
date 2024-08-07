@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Typography, Select, MenuItem, List, ListItem, ListItemText, Paper, Box, Grid, Divider, useTheme, Button } from '@mui/material'
+import { Typography, Paper, Box, Grid, Divider, useTheme, Button } from '@mui/material'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import { IconEraser, IconX } from '@tabler/icons-react'
 import useConfirm from '@/hooks/useConfirm'
 import useNotifier from '@/utils/useNotifier'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 import chatmessageApi from '@/api/chatmessage'
 import { getLocalStorageChatflow, removeLocalStorageChatHistory } from '@/utils/genericHelper'
+import { IconEraser, IconX } from '@tabler/icons-react'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 // API
@@ -20,6 +20,7 @@ import useApi from '@/hooks/useApi'
 
 // Components
 import { ChatMessage } from '../chatmessage/ChatMessage'
+import Sidebar from '@/ui-component/extended/Sidebar'
 
 const JourneyDetails = () => {
     const theme = useTheme()
@@ -34,6 +35,8 @@ const JourneyDetails = () => {
     const [isChatOpen, setIsChatOpen] = useState(false)
     const chatContainerRef = useRef(null)
     const [previews, setPreviews] = useState([])
+    const [overrideConfig, setOverrideConfig] = useState({})
+    const [chatKey, setChatKey] = useState(0)
 
     const getJourneyApi = useApi(journeysApi.getSpecificJourney)
 
@@ -48,7 +51,6 @@ const JourneyDetails = () => {
     }, [])
 
     const clearChat = async () => {
-        console.log('Clear chat initiated')
         try {
             const confirmPayload = {
                 title: `Clear Chat History`,
@@ -56,13 +58,10 @@ const JourneyDetails = () => {
                 confirmButtonName: 'Clear',
                 cancelButtonName: 'Cancel'
             }
-            console.log('Showing confirmation dialog')
             const isConfirmed = await confirm(confirmPayload)
-            console.log('Confirmation result:', isConfirmed)
 
             if (isConfirmed) {
                 if (!selectedChatflow) {
-                    console.log('No chatflow selected')
                     enqueueSnackbar({
                         message: 'No chatflow selected',
                         options: {
@@ -79,14 +78,12 @@ const JourneyDetails = () => {
                 }
                 const objChatDetails = getLocalStorageChatflow(selectedChatflow)
                 if (!objChatDetails.chatId) {
-                    console.log('No chat history found')
                     return
                 }
-                console.log('Deleting chat messages')
                 await chatmessageApi.deleteChatmessage(selectedChatflow, { chatId: objChatDetails.chatId, chatType: 'INTERNAL' })
                 removeLocalStorageChatHistory(selectedChatflow)
                 // You might need to implement resetChatDialog() function
-                // resetChatDialog()
+                setChatKey((prevKey) => prevKey + 1)
                 setPreviews([])
                 enqueueSnackbar({
                     message: 'Successfully cleared all chat history',
@@ -100,8 +97,6 @@ const JourneyDetails = () => {
                         )
                     }
                 })
-            } else {
-                console.log('Chat clear cancelled by user')
             }
         } catch (error) {
             console.error('Error in clearChat:', error)
@@ -137,13 +132,18 @@ const JourneyDetails = () => {
         scrollToBottom()
     }, [scrollToBottom, selectedChatflow, isChatOpen])
 
-    // Add this new effect to handle initial load and updates
     useEffect(() => {
         if (getJourneyApi.data) {
-            // Delay the scroll to ensure content is rendered
-            setTimeout(scrollToBottom, 100)
+            setJourneyDetails(getJourneyApi.data)
+            setJourneyChatflows(getJourneyApi.data.chatflows || [])
+
+            // If there's no selected chatflow, select the first one by default
+            if (!selectedChatflow && getJourneyApi.data.chatflows && getJourneyApi.data.chatflows.length > 0) {
+                setSelectedChatflow(getJourneyApi.data.chatflows[0].id)
+                setIsChatOpen(true)
+            }
         }
-    }, [getJourneyApi.data, scrollToBottom])
+    }, [getJourneyApi.data, selectedChatflow, setSelectedChatflow])
 
     useEffect(() => {
         if (id) {
@@ -167,17 +167,52 @@ const JourneyDetails = () => {
         }
     }, [getJourneyApi.data, selectedChatflow, setSelectedChatflow])
 
-    const handleChatflowChange = (event) => {
-        const selectedId = event.target.value
-        setSelectedChatflow(selectedId)
-        setIsChatOpen(true)
-    }
-
     if (!journeyDetails) {
         return <Typography>Loading...</Typography>
     }
 
-    const { documents = [], tools = [] } = journeyDetails
+    const formatOverrideConfig = (config) => {
+        console.log('JourneyDetails - Formatting config:', config)
+        const formattedConfig = {}
+
+        Object.entries(config).forEach(([nodeId, nodeConfig]) => {
+            Object.entries(nodeConfig).forEach(([key, value]) => {
+                if (value !== undefined && value !== '') {
+                    if (!formattedConfig[key]) {
+                        formattedConfig[key] = {}
+                    }
+                    formattedConfig[key][nodeId] = value
+                }
+            })
+        })
+
+        // Remove any direct children that are node IDs
+        Object.keys(formattedConfig).forEach((key) => {
+            if (config.hasOwnProperty(key)) {
+                delete formattedConfig[key]
+            }
+        })
+
+        // Remove any empty objects
+        Object.keys(formattedConfig).forEach((key) => {
+            if (Object.keys(formattedConfig[key]).length === 0) {
+                delete formattedConfig[key]
+            }
+        })
+
+        console.log('JourneyDetails - Formatted config:', formattedConfig)
+        return formattedConfig
+    }
+
+    const handleOverrideConfigChange = (newConfig) => {
+        console.log('JourneyDetails - Received new config:', newConfig)
+        setOverrideConfig((prev) => {
+            const updatedConfig = { ...prev, ...newConfig }
+            const formattedConfig = formatOverrideConfig(updatedConfig)
+            console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
+            return formattedConfig
+        })
+    }
 
     return (
         <Box sx={{ flexGrow: 1, p: 3, height: 'calc(100vh - 64px)' }}>
@@ -213,12 +248,14 @@ const JourneyDetails = () => {
                         {selectedChatflow && (
                             <Box ref={chatContainerRef} sx={{ flexGrow: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
                                 <ChatMessage
+                                    key={`${selectedChatflow}-${chatKey}`}
                                     open={isChatOpen}
                                     chatflowid={selectedChatflow}
                                     isAgentCanvas={false}
                                     isDialog={false}
                                     previews={previews}
                                     setPreviews={setPreviews}
+                                    overrideConfig={overrideConfig}
                                 />
                             </Box>
                         )}
@@ -226,49 +263,16 @@ const JourneyDetails = () => {
                 </Grid>
                 <Grid item xs={12} md={3} sx={{ height: '100%' }}>
                     <Paper elevation={3} sx={{ height: '100%', p: 2, overflow: 'auto' }}>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant='subtitle1' gutterBottom>
-                                Sidekicks
-                            </Typography>
-                            <Select fullWidth value={selectedChatflow} onChange={handleChatflowChange} displayEmpty size='small'>
-                                <MenuItem value=''>
-                                    <em>Select a Sidekick</em>
-                                </MenuItem>
-                                {journeyChatflows.map((chatflow) => (
-                                    <MenuItem key={chatflow.id} value={chatflow.id}>
-                                        {chatflow.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </Box>
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant='subtitle1' gutterBottom>
-                                Document Loaders
-                            </Typography>
-                            <List dense>
-                                {documents.map((doc, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemText primary={doc.name} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-                        <Box>
-                            <Typography variant='subtitle1' gutterBottom>
-                                Tools
-                            </Typography>
-                            <List dense>
-                                {tools.map((tool, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemText primary={tool.name} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-                        <ConfirmDialog />
+                        <Sidebar
+                            chatflows={journeyChatflows}
+                            selectedChatflow={selectedChatflow}
+                            setSelectedChatflow={setSelectedChatflow}
+                            setOverrideConfig={handleOverrideConfigChange}
+                        />
                     </Paper>
                 </Grid>
             </Grid>
+            <ConfirmDialog />
         </Box>
     )
 }

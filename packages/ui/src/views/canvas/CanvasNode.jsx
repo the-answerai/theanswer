@@ -23,7 +23,7 @@ import LlamaindexPNG from '@/assets/images/llamaindex.png'
 
 // ===========================|| CANVAS NODE ||=========================== //
 
-const CanvasNode = ({ data }) => {
+const CanvasNode = ({ data, isSidebar = false }) => {
     const theme = useTheme()
     const canvas = useSelector((state) => state.canvas)
     const { deleteNode, duplicateNode } = useContext(flowContext)
@@ -201,20 +201,13 @@ const CanvasNode = ({ data }) => {
                             <>
                                 <Divider />
                                 <Box sx={{ background: theme.palette.asyncSelect.main, p: 1 }}>
-                                    <Typography
-                                        sx={{
-                                            fontWeight: 500,
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        Inputs
-                                    </Typography>
+                                    <Typography sx={{ fontWeight: 500, textAlign: 'center' }}>Inputs</Typography>
                                 </Box>
                                 <Divider />
                             </>
                         )}
                         {data.inputAnchors.map((inputAnchor, index) => (
-                            <NodeInputHandler key={index} inputAnchor={inputAnchor} data={data} />
+                            <NodeInputHandler key={index} inputAnchor={inputAnchor} data={data} disabled={isSidebar} />
                         ))}
                         {data.inputParams
                             .filter((inputParam) => !inputParam.hidden)
@@ -230,6 +223,7 @@ const CanvasNode = ({ data }) => {
                                             setIsForceCloseNodeInfo(null)
                                         }
                                     }}
+                                    disabled={isSidebar}
                                 />
                             ))}
                         {data.inputParams.find((param) => param.additionalParams) && (
@@ -280,7 +274,8 @@ const CanvasNode = ({ data }) => {
 }
 
 CanvasNode.propTypes = {
-    data: PropTypes.object
+    data: PropTypes.object,
+    isSidebar: PropTypes.bool
 }
 
 export default CanvasNode
