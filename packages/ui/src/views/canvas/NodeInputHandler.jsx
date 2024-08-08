@@ -9,7 +9,7 @@ import { Popper, Box, Typography, Tooltip, IconButton, Button, TextField } from 
 import { useGridApiContext } from '@mui/x-data-grid'
 import IconAutoFixHigh from '@mui/icons-material/AutoFixHigh'
 import { tooltipClasses } from '@mui/material/Tooltip'
-import { IconArrowsMaximize, IconAlertTriangle, IconBulb } from '@tabler/icons-react'
+import { IconArrowsMaximize, IconAlertTriangle, IconBulb, IconEdit } from '@tabler/icons-react'
 import { Tabs } from '@mui/base/Tabs'
 import Autocomplete, { autocompleteClasses } from '@mui/material/Autocomplete'
 
@@ -787,7 +787,16 @@ const NodeInputHandler = ({
                                             onCreateNew={() => addAsyncOption(inputParam.name)}
                                         />
                                     )}
-                                    {/* ... rest of the code */}
+                                    {EDITABLE_OPTIONS.includes(inputParam.name) && data.inputs[inputParam.name] && (
+                                        <IconButton
+                                            title='Edit'
+                                            color='primary'
+                                            size='small'
+                                            onClick={() => editAsyncOption(inputParam.name, data.inputs[inputParam.name])}
+                                        >
+                                            <IconEdit />
+                                        </IconButton>
+                                    )}
                                 </div>
                             </>
                         )}

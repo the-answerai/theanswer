@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Typography, Paper, Box, Grid, Divider, useTheme, Button } from '@mui/material'
+import { Typography, Paper, Box, Divider, useTheme, Button } from '@mui/material'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import useConfirm from '@/hooks/useConfirm'
@@ -176,26 +176,29 @@ const JourneyDetails = () => {
         const formattedConfig = {}
 
         Object.entries(config).forEach(([nodeId, nodeConfig]) => {
-            Object.entries(nodeConfig).forEach(([key, value]) => {
-                if (value !== undefined && value !== '') {
-                    if (!formattedConfig[key]) {
-                        formattedConfig[key] = {}
+            if (nodeId !== 'tools') {
+                // Skip processing the tools array
+                Object.entries(nodeConfig).forEach(([key, value]) => {
+                    if (value !== undefined && value !== '') {
+                        if (!formattedConfig[key]) {
+                            formattedConfig[key] = {}
+                        }
+                        formattedConfig[key][nodeId] = value
                     }
-                    formattedConfig[key][nodeId] = value
-                }
-            })
+                })
+            }
         })
 
         // Remove any direct children that are node IDs
         Object.keys(formattedConfig).forEach((key) => {
-            if (config.hasOwnProperty(key)) {
+            if (config.hasOwnProperty(key) && key !== 'tools') {
                 delete formattedConfig[key]
             }
         })
 
         // Remove any empty objects
         Object.keys(formattedConfig).forEach((key) => {
-            if (Object.keys(formattedConfig[key]).length === 0) {
+            if (key !== 'tools' && Object.keys(formattedConfig[key]).length === 0) {
                 delete formattedConfig[key]
             }
         })
@@ -206,16 +209,27 @@ const JourneyDetails = () => {
 
     const handleOverrideConfigChange = (newConfig) => {
         console.log('JourneyDetails - Received new config:', newConfig)
-        setOverrideConfig((prev) => {
-            const updatedConfig = { ...prev, ...newConfig }
-            const formattedConfig = formatOverrideConfig(updatedConfig)
-            console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
-            return formattedConfig
-        })
+        if (typeof newConfig === 'function') {
+            // If newConfig is a function, call it with the previous state
+            setOverrideConfig((prev) => {
+                const updatedConfig = newConfig(prev)
+                const formattedConfig = formatOverrideConfig(updatedConfig)
+                console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
+                return formattedConfig
+            })
+        } else {
+            // If newConfig is an object, proceed as before
+            setOverrideConfig((prev) => {
+                const updatedConfig = { ...prev, ...newConfig }
+                const formattedConfig = formatOverrideConfig(updatedConfig)
+                console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
+                return formattedConfig
+            })
+        }
     }
 
     return (
-        <Box sx={{ flexGrow: 1, p: 3, height: 'calc(100vh - 64px)' }}>
+        <Box sx={{ flexGrow: 1, p: 3, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
                     <Typography variant='h4' gutterBottom>
@@ -242,8 +256,8 @@ const JourneyDetails = () => {
                 )}
             </Box>
             <Divider sx={{ borderColor: theme.palette.primary.main, borderWidth: 2, my: 2 }} />
-            <Grid container spacing={2} sx={{ height: 'calc(100% - 50px)' }}>
-                <Grid item xs={12} md={9} sx={{ height: '100%' }}>
+            <Box sx={{ display: 'flex', flexGrow: 1, height: 'calc(100% - 100px)' }}>
+                <Box sx={{ width: '66.67%', pr: 2 }}>
                     <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                         {selectedChatflow && (
                             <Box ref={chatContainerRef} sx={{ flexGrow: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -260,8 +274,8 @@ const JourneyDetails = () => {
                             </Box>
                         )}
                     </Paper>
-                </Grid>
-                <Grid item xs={12} md={3} sx={{ height: '100%' }}>
+                </Box>
+                <Box sx={{ width: '33.33%', pl: 2 }}>
                     <Paper elevation={3} sx={{ height: '100%', p: 2, overflow: 'auto' }}>
                         <Sidebar
                             chatflows={journeyChatflows}
@@ -270,8 +284,8 @@ const JourneyDetails = () => {
                             setOverrideConfig={handleOverrideConfigChange}
                         />
                     </Paper>
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
             <ConfirmDialog />
         </Box>
     )

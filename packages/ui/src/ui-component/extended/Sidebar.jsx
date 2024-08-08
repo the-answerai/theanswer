@@ -1,13 +1,67 @@
 import PropTypes from 'prop-types'
 import React, { useState, useEffect } from 'react'
-import { List, ListItem, Collapse, Select, MenuItem } from '@mui/material'
+import { List, ListItem, Collapse, Select, MenuItem, Typography, Button } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import chatflowApi from '@/api/chatflows'
 import SidebarNodeItem from './SidebarNodeItem'
 import nodesApi from '@/api/nodes'
+import SidebarToolModal from './SidebarToolModal'
 
 const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverrideConfig }) => {
     const [chatflowNodes, setChatflowNodes] = useState({})
     const [nodeConfigs, setNodeConfigs] = useState({})
+    const [isToolModalOpen, setIsToolModalOpen] = useState(false)
+    const [availableTools, setAvailableTools] = useState([])
+
+    const allowedCategories = ['Chat Models', 'Prompts', 'Document Loaders', 'Tools']
+
+    const filterNodes = (nodes) => {
+        return nodes.filter((node) => {
+            const nodeConfig = nodeConfigs[node.data.name]
+            return nodeConfig && allowedCategories.includes(nodeConfig.category)
+        })
+    }
+
+    const handleToolSelect = (tool) => {
+        // Create a new node for the selected tool
+        const newNode = {
+            id: `${tool.name}-${Date.now()}`, // Generate a unique ID
+            data: {
+                id: `${tool.name}-${Date.now()}`,
+                name: tool.name,
+                label: tool.label,
+                inputs: {},
+                inputAnchors: [],
+                inputParams: [],
+                outputAnchors: []
+            }
+        }
+
+        // Add the new node to the chatflowNodes
+        setChatflowNodes((prev) => ({
+            ...prev,
+            [selectedChatflow]: [...(prev[selectedChatflow] || []), newNode]
+        }))
+
+        setIsToolModalOpen(false)
+    }
+
+    const groupNodesByCategory = (nodes) => {
+        const groupedNodes = {}
+        allowedCategories.forEach((category) => {
+            groupedNodes[category] = nodes.filter((node) => {
+                const nodeConfig = nodeConfigs[node.data.name]
+                return nodeConfig && nodeConfig.category === category
+            })
+        })
+        return groupedNodes
+    }
+
+    const handleOpenToolModal = () => {
+        const toolNodes = Object.values(nodeConfigs).filter((node) => node.category === 'Tools')
+        setAvailableTools(toolNodes)
+        setIsToolModalOpen(true)
+    }
 
     useEffect(() => {
         const fetchChatflowData = async (chatflowId) => {
@@ -76,17 +130,16 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
         })
 
         if (Object.keys(changedInputs).length > 0) {
-            const newConfig = {
+            setOverrideConfig((prevConfig) => ({
+                ...prevConfig,
                 [updatedNode.id]: changedInputs
-            }
-            console.log('Sidebar - Updated overrideConfig:', newConfig)
-            setOverrideConfig(newConfig)
+            }))
         }
     }
 
     return (
-        <List sx={{ width: 250, bgcolor: 'background.paper' }}>
-            <ListItem>
+        <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+            <ListItem sx={{ width: '100%' }}>
                 <Select value={selectedChatflow} onChange={handleChatflowChange} fullWidth>
                     {chatflows.map((chatflow) => (
                         <MenuItem key={chatflow.id} value={chatflow.id}>
@@ -95,18 +148,47 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
                     ))}
                 </Select>
             </ListItem>
-            <Collapse in={Boolean(selectedChatflow)} timeout='auto' unmountOnExit>
-                <List component='div' disablePadding>
-                    {chatflowNodes[selectedChatflow]?.map((node) => (
-                        <SidebarNodeItem
-                            key={node.id}
-                            node={node}
-                            nodeConfig={nodeConfigs[node.data.name]}
-                            onNodeChange={handleNodeChange}
-                        />
-                    ))}
+            <Collapse in={Boolean(selectedChatflow)} timeout='auto' unmountOnExit sx={{ width: '100%' }}>
+                <List component='div' disablePadding sx={{ width: '100%' }}>
+                    {selectedChatflow &&
+                        Object.entries(groupNodesByCategory(chatflowNodes[selectedChatflow] || [])).map(
+                            ([category, nodes]) =>
+                                nodes.length > 0 && (
+                                    <React.Fragment key={category}>
+                                        <ListItem>
+                                            <Typography variant='h6'>{category}</Typography>
+                                            {category === 'Tools' && (
+                                                <Button startIcon={<AddIcon />} onClick={handleOpenToolModal} sx={{ ml: 2 }}>
+                                                    Add More Tools
+                                                </Button>
+                                            )}
+                                        </ListItem>
+                                        {nodes.map((node) => (
+                                            <SidebarNodeItem
+                                                key={node.id}
+                                                node={node}
+                                                nodeConfig={nodeConfigs[node.data.name]}
+                                                onNodeChange={handleNodeChange}
+                                                allowedCategories={allowedCategories}
+                                            />
+                                        ))}
+                                    </React.Fragment>
+                                )
+                        )}
                 </List>
             </Collapse>
+            {selectedChatflow && filterNodes(chatflowNodes[selectedChatflow] || []).length === 0 && (
+                <Typography variant='body2' sx={{ p: 2, textAlign: 'center' }}>
+                    No nodes of the allowed categories found in this chatflow.
+                </Typography>
+            )}
+
+            <SidebarToolModal
+                open={isToolModalOpen}
+                onClose={() => setIsToolModalOpen(false)}
+                availableTools={availableTools}
+                onToolSelect={handleToolSelect}
+            />
         </List>
     )
 }

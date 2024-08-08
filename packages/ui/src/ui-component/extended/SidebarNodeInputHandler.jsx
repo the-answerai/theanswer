@@ -1,16 +1,40 @@
+import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { Box, Typography } from '@mui/material'
 import { Input } from '@/ui-component/input/Input'
 import { Dropdown } from '@/ui-component/dropdown/Dropdown'
+import { AsyncDropdown } from '@/ui-component/dropdown/AsyncDropdown'
 import { SwitchInput } from '@/ui-component/switch/Switch'
 import { JsonEditorInput } from '@/ui-component/json/JsonEditor'
 import { File } from '@/ui-component/file/File'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 
 const SidebarNodeInputHandler = ({ inputParam, data, onChange }) => {
+    const [asyncOptions, setAsyncOptions] = useState([])
     const handleChange = (newValue) => {
         onChange(inputParam.name, newValue)
     }
+
+    useEffect(() => {
+        if (inputParam.type === 'asyncOptions' && inputParam.loadMethod && data.node) {
+            const loadOptions = async () => {
+                try {
+                    const nodeInstance = data.node
+                    if (nodeInstance.loadMethods && typeof nodeInstance.loadMethods[inputParam.loadMethod] === 'function') {
+                        const options = await nodeInstance.loadMethods[inputParam.loadMethod]()
+                        setAsyncOptions(options)
+                    } else {
+                        console.error(`Load method ${inputParam.loadMethod} is not available on the node`)
+                        setAsyncOptions([])
+                    }
+                } catch (error) {
+                    console.error('Error loading async options:', error)
+                    setAsyncOptions([])
+                }
+            }
+            loadOptions()
+        }
+    }, [inputParam, data.node])
 
     return (
         <Box sx={{ mb: 2 }}>
@@ -42,6 +66,15 @@ const SidebarNodeInputHandler = ({ inputParam, data, onChange }) => {
             )}
             {inputParam.type === 'json' && (
                 <JsonEditorInput onChange={handleChange} value={data.inputs[inputParam.name] || inputParam.default || ''} />
+            )}
+            {inputParam.type === 'asyncOptions' && (
+                <AsyncDropdown
+                    name={inputParam.name}
+                    options={asyncOptions}
+                    onSelect={handleChange}
+                    value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
+                    nodeData={data}
+                />
             )}
             {/* Add more input types as needed */}
         </Box>
