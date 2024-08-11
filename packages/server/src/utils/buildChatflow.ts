@@ -163,7 +163,64 @@ export const utilBuildChatflow = async (req: Request, socketIO?: Server, isInter
 
         /*** Get chatflows and prepare data  ***/
         const flowData = chatflow.flowData
-        const parsedFlowData: IReactFlowObject = JSON.parse(flowData)
+        let parsedFlowData: IReactFlowObject = JSON.parse(flowData)
+        // console.log('Original parsedFlowData:', JSON.stringify(parsedFlowData))
+
+        // New functionality to allow for tools to be added to the flow from the client in the overrideConfig
+
+        // This function checks if the overrideConfig has tools and if it does it will set a flag so it will rebuild the flow below when checking if the flow is reusable
+        const hasToolsInOverrideConfig = (overrideConfig: ICommonObject | undefined): boolean => {
+            return overrideConfig?.tools !== undefined && Object.keys(overrideConfig.tools).length > 0
+        }
+        if (incomingInput.overrideConfig && incomingInput.overrideConfig.tools) {
+            const toolsCopy = JSON.parse(JSON.stringify(incomingInput.overrideConfig.tools))
+            Object.entries(toolsCopy).forEach(([agentId, tools]) => {
+                if (Array.isArray(tools)) {
+                    tools.forEach((tool: any) => {
+                        if (tool.node && tool.edges) {
+                            tool.node.data.inputs = {}
+                            tool.node.data.outputs = {}
+                            tool.node.selected = false
+                            parsedFlowData.nodes.push(tool.node)
+
+                            // Check if tool.edges is an array before spreading
+                            if (Array.isArray(tool.edges)) {
+                                parsedFlowData.edges.push(...tool.edges)
+                            } else if (typeof tool.edges === 'object') {
+                                // If it's an object, push it directly
+                                parsedFlowData.edges.push(tool.edges)
+                            } else {
+                                console.warn(`Unexpected edges format for tool: ${JSON.stringify(tool)}`)
+                            }
+
+                            // Find the agent node and add the new tool to its inputs
+                            const agentNode = parsedFlowData.nodes.find((node) => node.id === agentId)
+                            if (agentNode && agentNode.data && agentNode.data.inputs) {
+                                if (!agentNode.data.inputs.tools) {
+                                    agentNode.data.inputs.tools = []
+                                }
+                                agentNode.data.inputs.tools.push(`{{${tool.node.id}.data.instance}}`)
+                            }
+                        } else {
+                            console.warn(`Invalid tool format: ${JSON.stringify(tool)}`)
+                        }
+                    })
+                } else {
+                    console.warn(`Tools for agent ${agentId} is not an array`)
+                }
+            })
+
+            // console.log('parsedFlowData after adding tools:', JSON.stringify(parsedFlowData))
+
+            // Need to delete tools from overrideConfig because it was causing issues with the flow
+            const overrideConfigWithoutTools = { ...incomingInput.overrideConfig }
+            delete overrideConfigWithoutTools.tools
+            incomingInput.overrideConfig = overrideConfigWithoutTools
+        }
+
+        // console.log('Final parsedFlowData:', JSON.stringify(parsedFlowData))
+        // console.log('Final incomingInput.overrideConfig:', JSON.stringify(incomingInput.overrideConfig))
+
         const nodes = parsedFlowData.nodes
         const edges = parsedFlowData.edges
 
@@ -220,6 +277,8 @@ export const utilBuildChatflow = async (req: Request, socketIO?: Server, isInter
                 !isStartNodeDependOnInput(appServer.chatflowPool.activeChatflows[chatflowid].startingNodes, nodes)
             )
         }
+
+        // TODO: Add a flag to update the flow in the pool if a tool is added to the flow from the client
 
         if (isFlowReusable()) {
             nodeToExecuteData = appServer.chatflowPool.activeChatflows[chatflowid].endingNodeData as INodeData

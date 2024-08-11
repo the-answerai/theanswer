@@ -24,7 +24,7 @@ const SidebarNodeItem = ({ node, nodeConfig, onNodeChange }) => {
     }
 
     const handleInputChange = (paramName, newValue) => {
-        console.log('SidebarNodeItem - Input Change:', node.id, paramName, newValue)
+        console.log('SidebarNodeItem - Input Change:', node.id, paramName, JSON.stringify(newValue, null, 2))
         const updatedNode = {
             ...node,
             data: {
@@ -35,7 +35,7 @@ const SidebarNodeItem = ({ node, nodeConfig, onNodeChange }) => {
                 }
             }
         }
-        console.log('SidebarNodeItem - Calling onNodeChange with:', updatedNode)
+        console.log('SidebarNodeItem - Calling onNodeChange with:', JSON.stringify(updatedNode, null, 2))
         onNodeChange(updatedNode)
     }
 

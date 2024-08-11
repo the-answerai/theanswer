@@ -172,60 +172,33 @@ const JourneyDetails = () => {
     }
 
     const formatOverrideConfig = (config) => {
-        console.log('JourneyDetails - Formatting config:', config)
-        const formattedConfig = {}
+        const formattedConfig = { ...config }
 
-        Object.entries(config).forEach(([nodeId, nodeConfig]) => {
-            if (nodeId !== 'tools') {
-                // Skip processing the tools array
-                Object.entries(nodeConfig).forEach(([key, value]) => {
-                    if (value !== undefined && value !== '') {
-                        if (!formattedConfig[key]) {
-                            formattedConfig[key] = {}
-                        }
-                        formattedConfig[key][nodeId] = value
-                    }
-                })
-            }
-        })
-
-        // Remove any direct children that are node IDs
+        // Preserve existing override configurations
         Object.keys(formattedConfig).forEach((key) => {
-            if (config.hasOwnProperty(key) && key !== 'tools') {
-                delete formattedConfig[key]
+            if (key !== 'tools' && typeof formattedConfig[key] === 'object') {
+                formattedConfig[key] = { ...formattedConfig[key] }
             }
         })
 
-        // Remove any empty objects
-        Object.keys(formattedConfig).forEach((key) => {
-            if (key !== 'tools' && Object.keys(formattedConfig[key]).length === 0) {
-                delete formattedConfig[key]
-            }
-        })
-
-        console.log('JourneyDetails - Formatted config:', formattedConfig)
+        // Format tools configuration
+        if (formattedConfig.tools) {
+            Object.keys(formattedConfig.tools).forEach((agentId) => {
+                formattedConfig.tools[agentId] = formattedConfig.tools[agentId].map((tool) => ({
+                    node: tool.node,
+                    edges: tool.edges
+                }))
+            })
+        }
         return formattedConfig
     }
 
     const handleOverrideConfigChange = (newConfig) => {
-        console.log('JourneyDetails - Received new config:', newConfig)
-        if (typeof newConfig === 'function') {
-            // If newConfig is a function, call it with the previous state
-            setOverrideConfig((prev) => {
-                const updatedConfig = newConfig(prev)
-                const formattedConfig = formatOverrideConfig(updatedConfig)
-                console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
-                return formattedConfig
-            })
-        } else {
-            // If newConfig is an object, proceed as before
-            setOverrideConfig((prev) => {
-                const updatedConfig = { ...prev, ...newConfig }
-                const formattedConfig = formatOverrideConfig(updatedConfig)
-                console.log('JourneyDetails - Setting formatted overrideConfig:', formattedConfig)
-                return formattedConfig
-            })
-        }
+        setOverrideConfig((prev) => {
+            const updatedConfig = typeof newConfig === 'function' ? newConfig(prev) : { ...prev, ...newConfig }
+            const formattedConfig = formatOverrideConfig(updatedConfig)
+            return formattedConfig
+        })
     }
 
     return (

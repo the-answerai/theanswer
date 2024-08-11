@@ -12,8 +12,9 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
     const [nodeConfigs, setNodeConfigs] = useState({})
     const [isToolModalOpen, setIsToolModalOpen] = useState(false)
     const [availableTools, setAvailableTools] = useState([])
+    const [addedTools, setAddedTools] = useState([])
 
-    const allowedCategories = ['Chat Models', 'Prompts', 'Document Loaders', 'Tools']
+    const allowedCategories = ['Agents', 'Chat Models', 'Prompts', 'Document Loaders', 'Tools']
 
     const filterNodes = (nodes) => {
         return nodes.filter((node) => {
@@ -23,25 +24,52 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
     }
 
     const handleToolSelect = (tool) => {
-        // Create a new node for the selected tool
+        const newNodeId = `${tool.name}_0`
         const newNode = {
-            id: `${tool.name}-${Date.now()}`, // Generate a unique ID
+            id: newNodeId,
+            position: { x: 0, y: 0 },
+            type: 'customNode',
             data: {
-                id: `${tool.name}-${Date.now()}`,
-                name: tool.name,
-                label: tool.label,
-                inputs: {},
+                ...tool,
+                id: newNodeId,
                 inputAnchors: [],
-                inputParams: [],
-                outputAnchors: []
+                inputParams: tool.inputs || [],
+                outputAnchors: [
+                    {
+                        id: `${newNodeId}-output-${tool.name}-${tool.baseClasses.join('|')}`,
+                        name: tool.name,
+                        label: tool.label,
+                        type: tool.baseClasses.join(' | ')
+                    }
+                ]
             }
         }
 
-        // Add the new node to the chatflowNodes
-        setChatflowNodes((prev) => ({
-            ...prev,
-            [selectedChatflow]: [...(prev[selectedChatflow] || []), newNode]
-        }))
+        const agentNode = chatflowNodes[selectedChatflow]?.find((node) => nodeConfigs[node.data.name]?.category === 'Agents')
+
+        if (agentNode) {
+            const newEdge = {
+                source: newNodeId,
+                sourceHandle: `${newNodeId}-output-${tool.name}-${tool.baseClasses.join('|')}`,
+                target: agentNode.id,
+                targetHandle: `${agentNode.id}-input-tools-Tool`,
+                type: 'buttonedge',
+                id: `${newNodeId}-${newNodeId}-output-${tool.name}-${tool.baseClasses.join('|')}-${agentNode.id}-${
+                    agentNode.id
+                }-input-tools-Tool`
+            }
+
+            setOverrideConfig((prevConfig) => {
+                const newConfig = { ...prevConfig }
+                if (!newConfig.tools) newConfig.tools = {}
+                if (!newConfig.tools[agentNode.id]) newConfig.tools[agentNode.id] = []
+                newConfig.tools[agentNode.id].push({ node: newNode, edges: newEdge })
+                return newConfig
+            })
+
+            // Add the new tool to the addedTools state
+            setAddedTools((prevTools) => [...prevTools, newNode])
+        }
 
         setIsToolModalOpen(false)
     }
@@ -113,7 +141,7 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
     }
 
     const handleNodeChange = (updatedNode) => {
-        console.log('Sidebar - Received updated node:', updatedNode)
+        console.log('Sidebar - Received updated node:', JSON.stringify(updatedNode, null, 2))
         setChatflowNodes((prev) => ({
             ...prev,
             [selectedChatflow]: prev[selectedChatflow].map((node) => (node.id === updatedNode.id ? updatedNode : node))
@@ -130,10 +158,17 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
         })
 
         if (Object.keys(changedInputs).length > 0) {
-            setOverrideConfig((prevConfig) => ({
-                ...prevConfig,
-                [updatedNode.id]: changedInputs
-            }))
+            setOverrideConfig((prevConfig) => {
+                const newConfig = { ...prevConfig }
+                Object.entries(changedInputs).forEach(([key, value]) => {
+                    if (!newConfig[key]) {
+                        newConfig[key] = {}
+                    }
+                    newConfig[key][updatedNode.id] = value
+                })
+                console.log('Sidebar - Setting new overrideConfig:', JSON.stringify(newConfig, null, 2))
+                return newConfig
+            })
         }
     }
 
@@ -151,7 +186,7 @@ const Sidebar = ({ chatflows, selectedChatflow, setSelectedChatflow, setOverride
             <Collapse in={Boolean(selectedChatflow)} timeout='auto' unmountOnExit sx={{ width: '100%' }}>
                 <List component='div' disablePadding sx={{ width: '100%' }}>
                     {selectedChatflow &&
-                        Object.entries(groupNodesByCategory(chatflowNodes[selectedChatflow] || [])).map(
+                        Object.entries(groupNodesByCategory([...(chatflowNodes[selectedChatflow] || []), ...addedTools])).map(
                             ([category, nodes]) =>
                                 nodes.length > 0 && (
                                     <React.Fragment key={category}>
