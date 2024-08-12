@@ -5,12 +5,15 @@ import { Box, Stack, Button, ButtonGroup, Skeleton, ToggleButtonGroup, ToggleBut
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
+import ItemCard from '@/ui-component/cards/ItemCard'
+import { gridSpacing } from '@/store/constant'
+import ToolEmptySVG from '@/assets/images/tools_empty.svg'
+import { StyledButton } from '@/ui-component/button/StyledButton'
 import ToolDialog from './ToolDialog'
 import { ToolsTable } from '@/ui-component/table/ToolsListTable'
 
 // API
 import toolsApi from '@/api/tools'
-import marketplacesApi from '@/api/marketplaces'
 
 // Hooks
 import useApi from '@/hooks/useApi'
@@ -21,20 +24,7 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
 import { useTheme } from '@mui/material/styles'
 
-function TabPanel(props) {
-    const { children, value, index, ...other } = props
-    return (
-        <div role='tabpanel' hidden={value !== index} id={`tool-tabpanel-${index}`} aria-labelledby={`tool-tab-${index}`} {...other}>
-            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-        </div>
-    )
-}
-
-TabPanel.propTypes = {
-    children: PropTypes.node,
-    index: PropTypes.number.isRequired,
-    value: PropTypes.number.isRequired
-}
+// ==============================|| CHATFLOWS ||============================== //
 
 const Tools = () => {
     const theme = useTheme()
@@ -109,86 +99,27 @@ const Tools = () => {
         setShowDialog(true)
     }
 
-    const goToTool = (selectedTool) => {
-        const dialogProp = {
-            title: selectedTool.templateName,
-            type: 'TEMPLATE',
-            data: selectedTool
-        }
-        setDialogProps(dialogProp)
-        setShowDialog(true)
-    }
-
     const onConfirm = () => {
         setShowDialog(false)
         getAllToolsApi.request()
     }
 
-    const onUseTemplate = (selectedTool) => {
-        const dialogProp = {
-            title: 'Add New Tool',
-            type: 'IMPORT',
-            cancelButtonName: 'Cancel',
-            confirmButtonName: 'Add',
-            data: selectedTool
-        }
-        setDialogProps(dialogProp)
-        setShowDialog(true)
-    }
-
     useEffect(() => {
         getAllToolsApi.request()
-        getMarketplaceToolsApi.request()
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-        setLoading(getAllToolsApi.loading || getMarketplaceToolsApi.loading)
-    }, [getAllToolsApi.loading, getMarketplaceToolsApi.loading])
+        setLoading(getAllToolsApi.loading)
+    }, [getAllToolsApi.loading])
 
     useEffect(() => {
-        if (getAllToolsApi.error || getMarketplaceToolsApi.error) {
-            setError(getAllToolsApi.error || getMarketplaceToolsApi.error)
+        if (getAllToolsApi.error) {
+            setError(getAllToolsApi.error)
         }
-    }, [getAllToolsApi.error, getMarketplaceToolsApi.error])
+    }, [getAllToolsApi.error])
 
-    useEffect(() => {
-        if (getAllToolsApi.data && getMarketplaceToolsApi.data) {
-            setMyTools(getAllToolsApi.data)
-            setMarketplaceTools(getMarketplaceToolsApi.data.filter((tool) => tool.type === 'Tool'))
-
-            const allTools = [...getAllToolsApi.data, ...getMarketplaceToolsApi.data.filter((tool) => tool.type === 'Tool')]
-            const uniqueCategories = ['All', ...new Set(allTools.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
-            setCategories(uniqueCategories)
-        }
-    }, [getAllToolsApi.data, getMarketplaceToolsApi.data])
-
-    const filterTools = (tools, search, categoryFilter) => {
-        const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
-
-        return tools.filter((tool) => {
-            if (!tool) return false
-
-            // Check category first
-            const category = tool.category || ''
-            if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
-                return false
-            }
-
-            // If category matches, then check search
-            const name = tool.name || tool.templateName || ''
-            const description = tool.description || ''
-            const searchText = `${name} ${description}`
-
-            return searchRegex.test(searchText)
-        })
-    }
-
-    const filteredMyTools = useMemo(() => filterTools(myTools, search, categoryFilter), [myTools, search, categoryFilter])
-
-    const filteredMarketplaceTools = useMemo(
-        () => filterTools(marketplaceTools, search, categoryFilter),
-        [marketplaceTools, search, categoryFilter]
-    )
     return (
         <>
             <MainCard>
@@ -298,9 +229,8 @@ const Tools = () => {
                 dialogProps={dialogProps}
                 onCancel={() => setShowDialog(false)}
                 onConfirm={onConfirm}
-                onUseTemplate={onUseTemplate}
                 setError={setError}
-            />
+            ></ToolDialog>
         </>
     )
 }

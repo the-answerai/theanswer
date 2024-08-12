@@ -51,6 +51,13 @@ const settings = {
             icon: icons.IconDatabaseExport
         },
         {
+            id: 'chatflowConfiguration',
+            title: 'Configuration',
+            type: 'item',
+            url: '',
+            icon: icons.IconAdjustmentsHorizontal
+        },
+        {
             id: 'duplicateChatflow',
             title: 'Duplicate Chatflow',
             type: 'item',
