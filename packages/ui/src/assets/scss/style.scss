@@ -4,6 +4,9 @@
 // third-party
 @import 'react-perfect-scrollbar/dist/css/styles.css';
 
+@import url('@radix-ui/colors/tomato-dark.css');
+@import url('@radix-ui/colors/mauve-dark.css');
+
 // ==============================|| LIGHT BOX ||============================== //
 .fullscreen .react-images__blanket {
     z-index: 1200;
@@ -118,5 +121,29 @@
     }
     75% {
         transform: translateX(10px);
+    }
+}
+
+
+
+.mdxeditor {
+    --mdxeditor-bg: rgb(255, 250, 250);
+    --mdxeditor-text: rgb(0, 0, 0);
+
+    background-color: var(--mdxeditor-bg);
+    color: var(--mdxeditor-text);
+
+    .toolbar {
+        background-color: var(--mdxeditor-bg);
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .editor-container {
+        background-color: var(--mdxeditor-bg);
+    }
+
+    .editor {
+        background-color: var(--mdxeditor-bg);
+        color: var(--mdxeditor-text);
     }
 }

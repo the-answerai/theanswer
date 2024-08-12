@@ -48,6 +48,7 @@ import nextAgentGIF from '@/assets/images/next-agent.gif'
 // project import
 import { CodeBlock } from '@/ui-component/markdown/CodeBlock'
 import { MemoizedReactMarkdown } from '@/ui-component/markdown/MemoizedReactMarkdown'
+import MDXEditorMarkdown from '@/ui-component/markdown/MDXEditorMarkdown'
 import SourceDocDialog from '@/ui-component/dialog/SourceDocDialog'
 import ChatFeedbackContentDialog from '@/ui-component/dialog/ChatFeedbackContentDialog'
 import StarterPromptsCard from '@/ui-component/cards/StarterPromptsCard'
@@ -1224,6 +1225,19 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                                                                                         {children}
                                                                                     </code>
                                                                                 )
+                                                                            },
+                                                                            blog_post: MDXEditorMarkdown,
+                                                                            outline({ children }) {
+                                                                                return (
+                                                                                    <ul
+                                                                                        style={{
+                                                                                            listStyleType: 'none',
+                                                                                            paddingLeft: '20px'
+                                                                                        }}
+                                                                                    >
+                                                                                        {children}
+                                                                                    </ul>
+                                                                                )
                                                                             }
                                                                         }}
                                                                     >
@@ -1383,18 +1397,30 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                                                             code({ inline, className, children, ...props }) {
                                                                 const match = /language-(\w+)/.exec(className || '')
                                                                 return !inline ? (
-                                                                    <CodeBlock
-                                                                        key={Math.random()}
-                                                                        chatflowid={chatflowid}
-                                                                        isDialog={isDialog}
-                                                                        language={(match && match[1]) || ''}
-                                                                        value={String(children).replace(/\n$/, '')}
-                                                                        {...props}
+                                                                    <MDXEditorMarkdown
+                                                                        markdown={String(children).replace(/\n$/, '')}
+                                                                        onChange={() => {}}
                                                                     />
                                                                 ) : (
+                                                                    // <CodeBlock
+                                                                    //     key={Math.random()}
+                                                                    //     chatflowid={chatflowid}
+                                                                    //     isDialog={isDialog}
+                                                                    //     language={(match && match[1]) || ''}
+                                                                    //     value={String(children).replace(/\n$/, '')}
+                                                                    //     {...props}
+                                                                    // />
                                                                     <code className={className} {...props}>
                                                                         {children}
                                                                     </code>
+                                                                )
+                                                            },
+                                                            blog_post: MDXEditorMarkdown,
+                                                            outline({ children }) {
+                                                                return (
+                                                                    <ul style={{ listStyleType: 'none', paddingLeft: '20px' }}>
+                                                                        {children}
+                                                                    </ul>
                                                                 )
                                                             }
                                                         }}
