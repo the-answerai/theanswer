@@ -36,4 +36,12 @@ export class DocumentStore implements IDocumentStore {
     @Index()
     @Column({ type: 'uuid', nullable: true })
     organizationId?: string
+    @Column({ nullable: true, type: 'text' })
+    vectorStoreConfig: string | null
+
+    @Column({ nullable: true, type: 'text' })
+    embeddingConfig: string | null
+
+    @Column({ nullable: true, type: 'text' })
+    recordManagerConfig: string | null
 }

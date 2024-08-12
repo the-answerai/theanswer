@@ -16,18 +16,22 @@ import {
     Checkbox,
     ListItemText,
     Skeleton,
-    Tabs,
-    Tab
+    FormControlLabel,
+    ToggleButtonGroup,
+    MenuItem,
+    Button
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { IconLayoutGrid, IconList } from '@tabler/icons-react'
+import { IconLayoutGrid, IconList, IconX } from '@tabler/icons-react'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
 import ItemCard from '@/ui-component/cards/ItemCard'
-import { gridSpacing } from '@/store/constant'
 import WorkflowEmptySVG from '@/assets/images/workflow_empty.svg'
 import ToolDialog from '@/views/tools/ToolDialog'
+import { MarketplaceTable } from '@/ui-component/table/MarketplaceTable'
+import ViewHeader from '@/layout/MainLayout/ViewHeader'
+import ErrorBoundary from '@/ErrorBoundary'
 
 // API
 import marketplacesApi from '@/api/marketplaces'
@@ -37,11 +41,7 @@ import useApi from '@/hooks/useApi'
 
 // const
 import { baseURL } from '@/store/constant'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import { MarketplaceTable } from '@/ui-component/table/MarketplaceTable'
-import MenuItem from '@mui/material/MenuItem'
-import ViewHeader from '@/layout/MainLayout/ViewHeader'
-import ErrorBoundary from '@/ErrorBoundary'
+import { gridSpacing } from '@/store/constant'
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props
@@ -95,6 +95,9 @@ const Marketplace = () => {
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [images, setImages] = useState({})
+    const [usecases, setUsecases] = useState([])
+    const [eligibleUsecases, setEligibleUsecases] = useState([])
+    const [selectedUsecases, setSelectedUsecases] = useState([])
 
     const [showToolDialog, setShowToolDialog] = useState(false)
     const [toolDialogProps, setToolDialogProps] = useState({})
@@ -103,34 +106,44 @@ const Marketplace = () => {
 
     const [view, setView] = React.useState(localStorage.getItem('mpDisplayStyle') || 'card')
     const [search, setSearch] = useState('')
-    const [tabValue, setTabValue] = useState(0)
-
     const [badgeFilter, setBadgeFilter] = useState([])
     const [frameworkFilter, setFrameworkFilter] = useState([])
 
-    const marketplaceCategories = useMemo(() => {
-        const filteredData = getAllTemplatesMarketplacesApi.data?.filter(filterByBadge).filter(filterFlows).filter(filterByFramework) ?? []
-
-        return {
-            Chatflow: filteredData.filter((item) => item.type === 'Chatflow'),
-            Agentflow: filteredData.filter((item) => item.type === 'Agentflow'),
-            Tool: filteredData.filter((item) => item.type === 'Tool'),
-            AnswerAI: filteredData.filter((item) => item.type === 'AnswerAI')
-        }
-    }, [filterByBadge, filterByFramework, filterFlows, getAllTemplatesMarketplacesApi.data])
+    const clearAllUsecases = () => {
+        setSelectedUsecases([])
+    }
 
     const handleBadgeFilterChange = (event) => {
         const {
             target: { value }
         } = event
-        setBadgeFilter(typeof value === 'string' ? value.split(',') : value)
+        setBadgeFilter(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value
+        )
+        getEligibleUsecases({ typeFilter, badgeFilter: typeof value === 'string' ? value.split(',') : value, frameworkFilter, search })
+    }
+
+    const handleTypeFilterChange = (event) => {
+        const {
+            target: { value }
+        } = event
+        setTypeFilter(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value
+        )
+        getEligibleUsecases({ typeFilter: typeof value === 'string' ? value.split(',') : value, badgeFilter, frameworkFilter, search })
     }
 
     const handleFrameworkFilterChange = (event) => {
         const {
             target: { value }
         } = event
-        setFrameworkFilter(typeof value === 'string' ? value.split(',') : value)
+        setFrameworkFilter(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value
+        )
+        getEligibleUsecases({ typeFilter, badgeFilter, frameworkFilter: typeof value === 'string' ? value.split(',') : value, search })
     }
 
     const handleViewChange = (event, nextView) => {
@@ -145,11 +158,12 @@ const Marketplace = () => {
 
     const onSearchChange = (event) => {
         setSearch(event.target.value)
+        getEligibleUsecases({ typeFilter, badgeFilter, frameworkFilter, search: event.target.value })
     }
 
     function filterFlows(data) {
         return (
-            data.categories?.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
+            (data.categories ? data.categories.join(',') : '').toLowerCase().indexOf(search.toLowerCase()) > -1 ||
             data.templateName.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
             (data.description && data.description.toLowerCase().indexOf(search.toLowerCase()) > -1)
         )
@@ -160,7 +174,37 @@ const Marketplace = () => {
     }
 
     function filterByFramework(data) {
-        return frameworkFilter.length > 0 ? frameworkFilter.includes(data.framework) : true
+        return frameworkFilter.length > 0 ? (data.framework || []).some((item) => frameworkFilter.includes(item)) : true
+    }
+
+    function filterByUsecases(data) {
+        return selectedUsecases.length > 0 ? (data.usecases || []).some((item) => selectedUsecases.includes(item)) : true
+    }
+
+    const getEligibleUsecases = (filter) => {
+        if (!getAllTemplatesMarketplacesApi.data) return
+
+        let filteredData = getAllTemplatesMarketplacesApi.data
+        if (filter.badgeFilter.length > 0) filteredData = filteredData.filter((data) => filter.badgeFilter.includes(data.badge))
+        if (filter.typeFilter.length > 0) filteredData = filteredData.filter((data) => filter.typeFilter.includes(data.type))
+        if (filter.frameworkFilter.length > 0)
+            filteredData = filteredData.filter((data) => (data.framework || []).some((item) => filter.frameworkFilter.includes(item)))
+        if (filter.search) {
+            filteredData = filteredData.filter(
+                (data) =>
+                    (data.categories ? data.categories.join(',') : '').toLowerCase().indexOf(filter.search.toLowerCase()) > -1 ||
+                    data.templateName.toLowerCase().indexOf(filter.search.toLowerCase()) > -1 ||
+                    (data.description && data.description.toLowerCase().indexOf(filter.search.toLowerCase()) > -1)
+            )
+        }
+
+        const usecases = []
+        for (let i = 0; i < filteredData.length; i += 1) {
+            if (filteredData[i].flowData) {
+                usecases.push(...filteredData[i].usecases)
+            }
+        }
+        setEligibleUsecases(Array.from(new Set(usecases)).sort())
     }
 
     const onUseTemplate = (selectedTool) => {
@@ -205,12 +249,13 @@ const Marketplace = () => {
         if (getAllTemplatesMarketplacesApi.data) {
             try {
                 const flows = getAllTemplatesMarketplacesApi.data
-
+                const usecases = []
                 const images = {}
                 for (let i = 0; i < flows.length; i += 1) {
                     if (flows[i].flowData) {
                         const flowDataStr = flows[i].flowData
                         const flowData = JSON.parse(flowDataStr)
+                        usecases.push(...flows[i].usecases)
                         const nodes = flowData.nodes || []
                         images[flows[i].id] = []
                         for (let j = 0; j < nodes.length; j += 1) {
@@ -222,6 +267,8 @@ const Marketplace = () => {
                     }
                 }
                 setImages(images)
+                setUsecases(Array.from(new Set(usecases)).sort())
+                setEligibleUsecases(Array.from(new Set(usecases)).sort())
             } catch (e) {
                 console.error(e)
             }
@@ -404,42 +451,114 @@ const Marketplace = () => {
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </ViewHeader>
-
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Tabs value={tabValue} onChange={handleTabChange} aria-label='marketplace tabs'>
-                                <Tab label='AnswerAI' {...a11yProps(0)} />
-                                <Tab label='Templates' {...a11yProps(1)} />
-                                <Tab label='Agentflows' {...a11yProps(2)} />
-                                <Tab label='Tools' {...a11yProps(3)} />
-                            </Tabs>
-                        </Box>
-
+                        <Stack direction='row' sx={{ gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {usecases.map((usecase, index) => (
+                                <FormControlLabel
+                                    key={index}
+                                    size='small'
+                                    control={
+                                        <Checkbox
+                                            disabled={eligibleUsecases.length === 0 ? true : !eligibleUsecases.includes(usecase)}
+                                            color='success'
+                                            checked={selectedUsecases.includes(usecase)}
+                                            onChange={(event) => {
+                                                setSelectedUsecases(
+                                                    event.target.checked
+                                                        ? [...selectedUsecases, usecase]
+                                                        : selectedUsecases.filter((item) => item !== usecase)
+                                                )
+                                            }}
+                                        />
+                                    }
+                                    label={usecase}
+                                />
+                            ))}
+                        </Stack>
+                        {selectedUsecases.length > 0 && (
+                            <Button
+                                sx={{ width: 'max-content', borderRadius: '20px' }}
+                                variant='outlined'
+                                onClick={() => clearAllUsecases()}
+                                startIcon={<IconX />}
+                            >
+                                Clear All
+                            </Button>
+                        )}
                         {!view || view === 'card' ? (
                             <>
-                                <TabPanel value={tabValue} index={0}>
-                                    {renderContent('AnswerAI', marketplaceCategories.AnswerAI)}
-                                </TabPanel>
-                                <TabPanel value={tabValue} index={1}>
-                                    {renderContent('Chatflow', marketplaceCategories.Chatflow)}
-                                </TabPanel>
-                                <TabPanel value={tabValue} index={2}>
-                                    {renderContent('Agentflow', marketplaceCategories.Agentflow)}
-                                </TabPanel>
-                                <TabPanel value={tabValue} index={3}>
-                                    {renderContent('Tool', marketplaceCategories.Tool)}
-                                </TabPanel>
+                                {isLoading ? (
+                                    <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
+                                        <Skeleton variant='rounded' height={160} />
+                                        <Skeleton variant='rounded' height={160} />
+                                        <Skeleton variant='rounded' height={160} />
+                                    </Box>
+                                ) : (
+                                    <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
+                                        {getAllTemplatesMarketplacesApi.data
+                                            ?.filter(filterByBadge)
+                                            .filter(filterByType)
+                                            .filter(filterFlows)
+                                            .filter(filterByFramework)
+                                            .filter(filterByUsecases)
+                                            .map((data, index) => (
+                                                <Box key={index}>
+                                                    {data.badge && (
+                                                        <Badge
+                                                            sx={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                '& .MuiBadge-badge': {
+                                                                    right: 20
+                                                                }
+                                                            }}
+                                                            badgeContent={data.badge}
+                                                            color={data.badge === 'POPULAR' ? 'primary' : 'error'}
+                                                        >
+                                                            {(data.type === 'Chatflow' || data.type === 'Agentflow') && (
+                                                                <ItemCard
+                                                                    onClick={() => goToCanvas(data)}
+                                                                    data={data}
+                                                                    images={images[data.id]}
+                                                                />
+                                                            )}
+                                                            {data.type === 'Tool' && (
+                                                                <ItemCard data={data} onClick={() => goToTool(data)} />
+                                                            )}
+                                                        </Badge>
+                                                    )}
+                                                    {!data.badge && (data.type === 'Chatflow' || data.type === 'Agentflow') && (
+                                                        <ItemCard onClick={() => goToCanvas(data)} data={data} images={images[data.id]} />
+                                                    )}
+                                                    {!data.badge && data.type === 'Tool' && (
+                                                        <ItemCard data={data} onClick={() => goToTool(data)} />
+                                                    )}
+                                                </Box>
+                                            ))}
+                                    </Box>
+                                )}
                             </>
                         ) : (
-                            <>
-                                <TabPanel value={tabValue} index={0}>
-                                    <MarketplaceTable
-                                        data={marketplaceCategories.Tool}
-                                        filterFunction={filterFlows}
-                                        filterByBadge={filterByBadge}
-                                        filterByFramework={filterByFramework}
-                                        goToTool={goToTool}
-                                        isLoading={isLoading}
-                                        setError={setError}
+                            <MarketplaceTable
+                                data={getAllTemplatesMarketplacesApi.data}
+                                filterFunction={filterFlows}
+                                filterByType={filterByType}
+                                filterByBadge={filterByBadge}
+                                filterByFramework={filterByFramework}
+                                filterByUsecases={filterByUsecases}
+                                goToTool={goToTool}
+                                goToCanvas={goToCanvas}
+                                isLoading={isLoading}
+                                setError={setError}
+                            />
+                        )}
+
+                        {!isLoading && (!getAllTemplatesMarketplacesApi.data || getAllTemplatesMarketplacesApi.data.length === 0) && (
+                            <Stack sx={{ alignItems: 'center', justifyContent: 'center' }} flexDirection='column'>
+                                <Box sx={{ p: 2, height: 'auto' }}>
+                                    <img
+                                        style={{ objectFit: 'cover', height: '16vh', width: 'auto' }}
+                                        src={WorkflowEmptySVG}
+                                        alt='WorkflowEmptySVG'
                                     />
                                 </TabPanel>
                                 <TabPanel value={tabValue} index={1}>

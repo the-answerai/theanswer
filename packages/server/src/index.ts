@@ -124,7 +124,8 @@ export class App {
             '/api/v1/feedback',
             '/api/v1/leads',
             '/api/v1/get-upload-file',
-            '/api/v1/ip'
+            '/api/v1/ip',
+            '/api/v1/ping'
         ]
         if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
             const username = process.env.FLOWISE_USERNAME
@@ -139,9 +140,7 @@ export class App {
             })
         }
 
-
         this.app.use(authenticationHandlerMiddleware({ whitelistURLs, AppDataSource: this.AppDataSource }))
-
 
         this.app.use('/api/v1', flowiseApiV1Router)
 
@@ -197,6 +196,7 @@ export const getAllChatFlow = async ({ userId }: { userId?: string }): Promise<I
 export async function start(): Promise<void> {
     serverApp = new App()
 
+    const host = process.env.HOST
     const port = parseInt(process.env.PORT || '', 10) || 3000
     const server = http.createServer(serverApp.app)
 
@@ -207,8 +207,8 @@ export async function start(): Promise<void> {
     await serverApp.initDatabase()
     await serverApp.config(io)
 
-    server.listen(port, () => {
-        logger.info(`⚡️ [server]: Flowise Server is listening at ${port}`)
+    server.listen(port, host, () => {
+        logger.info(`⚡️ [server]: Flowise Server is listening at ${host ? 'http://' + host : ''}:${port}`)
     })
 }
 

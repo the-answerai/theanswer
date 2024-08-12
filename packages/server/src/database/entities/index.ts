@@ -11,6 +11,7 @@ import { Lead } from './Lead'
 import { UpsertHistory } from './UpsertHistory'
 import { User } from './User'
 import { Organization } from './Organization'
+import { ApiKey } from './ApiKey'
 
 export const entities = {
     ChatFlow,
@@ -25,5 +26,6 @@ export const entities = {
     Lead,
     UpsertHistory,
     User,
-    Organization
+    Organization,
+    ApiKey
 }

@@ -88,7 +88,99 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
             title: `${title} Configuration`,
             chatflow: chatflow
         })
-        setChatflowConfigurationDialogOpen(true)
+        setConversationStartersDialogOpen(true)
+    }
+
+    const handleFlowChatFeedback = () => {
+        setAnchorEl(null)
+        setChatFeedbackDialogProps({
+            title: 'Chat Feedback - ' + chatflow.name,
+            chatflow: chatflow
+        })
+        setChatFeedbackDialogOpen(true)
+    }
+
+    const handleAllowedDomains = () => {
+        setAnchorEl(null)
+        setAllowedDomainsDialogProps({
+            title: 'Allowed Domains - ' + chatflow.name,
+            chatflow: chatflow
+        })
+        setAllowedDomainsDialogOpen(true)
+    }
+
+    const handleSpeechToText = () => {
+        setAnchorEl(null)
+        setSpeechToTextDialogProps({
+            title: 'Speech To Text - ' + chatflow.name,
+            chatflow: chatflow
+        })
+        setSpeechToTextDialogOpen(true)
+    }
+
+    const saveFlowRename = async (chatflowName) => {
+        const updateBody = {
+            name: chatflowName,
+            chatflow
+        }
+        try {
+            await updateChatflowApi.request(chatflow.id, updateBody)
+            await updateFlowsApi.request()
+        } catch (error) {
+            if (setError) setError(error)
+            enqueueSnackbar({
+                message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'error',
+                    persist: true,
+                    action: (key) => (
+                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
+        }
+    }
+
+    const handleFlowCategory = () => {
+        setAnchorEl(null)
+        if (chatflow.category) {
+            setCategoryDialogProps({
+                category: chatflow.category.split(';')
+            })
+        }
+        setCategoryDialogOpen(true)
+    }
+
+    const saveFlowCategory = async (categories) => {
+        setCategoryDialogOpen(false)
+        // save categories as string
+        const categoryTags = categories.join(';')
+        const updateBody = {
+            category: categoryTags,
+            chatflow
+        }
+        try {
+            await updateChatflowApi.request(chatflow.id, updateBody)
+            await updateFlowsApi.request()
+        } catch (error) {
+            if (setError) setError(error)
+            enqueueSnackbar({
+                message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'error',
+                    persist: true,
+                    action: (key) => (
+                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
+        }
     }
 
     const handleDelete = async () => {
@@ -106,7 +198,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, update
                 await chatflowsApi.deleteChatflow(chatflow.id)
                 await updateFlowsApi.request()
             } catch (error) {
-                setError(error)
+                if (setError) setError(error)
                 enqueueSnackbar({
                     message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
                     options: {

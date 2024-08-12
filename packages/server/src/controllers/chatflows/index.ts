@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from 'express'
-import chatflowsService from '../../services/chatflows'
+import { NextFunction, Request, Response } from 'express'
+import { StatusCodes } from 'http-status-codes'
+import apiKeyService from '../../services/apikey'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { createRateLimiter } from '../../utils/rateLimit'
-import { getApiKey } from '../../utils/apiKey'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { StatusCodes } from 'http-status-codes'
 import { ChatflowType } from '../../Interface'
 import checkOwnership from '../../utils/checkOwnership'
+import chatflowsService from '../../services/chatflows'
 
 const checkIfChatflowIsValidForStreaming = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -78,11 +78,11 @@ const getChatflowByApiKey = async (req: Request, res: Response, next: NextFuncti
                 `Error: chatflowsRouter.getChatflowByApiKey - apikey not provided!`
             )
         }
-        const apikey = await getApiKey(req.params.apikey)
+        const apikey = await apiKeyService.getApiKey(req.params.apikey)
         if (!apikey) {
             return res.status(401).send('Unauthorized')
         }
-        const apiResponse = await chatflowsService.getChatflowByApiKey(apikey.id)
+        const apiResponse = await chatflowsService.getChatflowByApiKey(apikey.id, req.query.keyonly)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -139,6 +139,16 @@ const saveChatflow = async (req: Request, res: Response, next: NextFunction) => 
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - AnswerAI sync failed!`)
         }
 
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const importChatflows = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const chatflows: Partial<ChatFlow>[] = req.body.Chatflows
+        const apiResponse = await chatflowsService.importChatflows(chatflows)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -230,6 +240,7 @@ export default {
     getChatflowByApiKey,
     getChatflowById,
     saveChatflow,
+    importChatflows,
     updateChatflow,
     getSinglePublicChatflow,
     getSinglePublicChatbotConfig

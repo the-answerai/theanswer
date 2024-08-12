@@ -1,6 +1,6 @@
 import { DeleteResult, FindOptionsWhere } from 'typeorm'
 import { StatusCodes } from 'http-status-codes'
-import { chatType, IChatMessage } from '../../Interface'
+import { ChatMessageRatingType, chatType, IChatMessage } from '../../Interface'
 import { utilGetChatMessage } from '../../utils/getChatMessage'
 import { utilAddChatMessage } from '../../utils/addChatMesage'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
@@ -36,7 +36,8 @@ const getAllChatMessages = async (
     endDate?: string,
     messageId?: string,
     feedback?: boolean,
-    userId?: string
+    userId?: string,
+    feedbackTypes?: ChatMessageRatingType[]
 ): Promise<ChatMessage[]> => {
     try {
         const dbResponse = await utilGetChatMessage(
@@ -50,7 +51,8 @@ const getAllChatMessages = async (
             endDate,
             messageId,
             feedback,
-            userId
+            userId,
+            feedbackTypes
         )
         return dbResponse
     } catch (error) {
@@ -73,7 +75,8 @@ const getAllInternalChatMessages = async (
     endDate?: string,
     messageId?: string,
     feedback?: boolean,
-    userId?: string
+    userId?: string,
+    feedbackTypes?: ChatMessageRatingType[]
 ): Promise<ChatMessage[]> => {
     try {
         const dbResponse = await utilGetChatMessage(
@@ -87,7 +90,8 @@ const getAllInternalChatMessages = async (
             endDate,
             messageId,
             feedback,
-            userId
+            userId,
+            feedbackTypes
         )
         return dbResponse
     } catch (error) {

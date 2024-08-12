@@ -1,12 +1,12 @@
-import PropTypes from 'prop-types'
-import { useEffect, useState, useRef, useMemo } from 'react'
-import { Box, Stack, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material'
+import { useEffect, useState, useRef } from 'react'
+
+// material-ui
+import { Box, Stack, Button, ButtonGroup, Skeleton, ToggleButtonGroup, ToggleButton } from '@mui/material'
+
+// project imports
 import MainCard from '@/ui-component/cards/MainCard'
 import ToolDialog from './ToolDialog'
-import ViewHeader from '@/layout/MainLayout/ViewHeader'
-import ErrorBoundary from '@/ErrorBoundary'
-import FlowListView from '@/ui-component/lists/FlowListView'
-import { StyledButton } from '@/ui-component/button/StyledButton'
+import { ToolsTable } from '@/ui-component/table/ToolsListTable'
 
 // API
 import toolsApi from '@/api/tools'
@@ -16,7 +16,10 @@ import marketplacesApi from '@/api/marketplaces'
 import useApi from '@/hooks/useApi'
 
 // icons
-import { IconPlus, IconFileUpload } from '@tabler/icons-react'
+import { IconPlus, IconFileUpload, IconLayoutGrid, IconList } from '@tabler/icons-react'
+import ViewHeader from '@/layout/MainLayout/ViewHeader'
+import ErrorBoundary from '@/ErrorBoundary'
+import { useTheme } from '@mui/material/styles'
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props
@@ -34,32 +37,21 @@ TabPanel.propTypes = {
 }
 
 const Tools = () => {
-    const [tabValue, setTabValue] = useState(0)
+    const theme = useTheme()
+    const getAllToolsApi = useApi(toolsApi.getAllTools)
+
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [showDialog, setShowDialog] = useState(false)
     const [dialogProps, setDialogProps] = useState({})
-    const [search, setSearch] = useState('')
-    const [categoryFilter, setCategoryFilter] = useState('All')
-    const [categories, setCategories] = useState(['All'])
-    const [myTools, setMyTools] = useState([])
-    const [marketplaceTools, setMarketplaceTools] = useState([])
+    const [view, setView] = useState(localStorage.getItem('toolsDisplayStyle') || 'card')
 
     const inputRef = useRef(null)
 
-    const getAllToolsApi = useApi(toolsApi.getAllTools)
-    const getMarketplaceToolsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
-
-    const handleTabChange = (event, newValue) => {
-        setTabValue(newValue)
-    }
-
-    const onSearchChange = (event) => {
-        setSearch(event.target.value)
-    }
-
-    const handleCategoryChange = (event) => {
-        setCategoryFilter(event.target.value)
+    const handleChange = (event, nextView) => {
+        if (nextView === null) return
+        localStorage.setItem('toolsDisplayStyle', nextView)
+        setView(nextView)
     }
 
     const onUploadFile = (file) => {
@@ -204,79 +196,100 @@ const Tools = () => {
                     <ErrorBoundary error={error} />
                 ) : (
                     <Stack flexDirection='column' sx={{ gap: 3 }}>
-                        <ViewHeader
-                            onSearchChange={onSearchChange}
-                            search={true}
-                            searchPlaceholder='Search Name, Description or Category'
-                            title='Tools'
-                        >
-                            <FormControl sx={{ minWidth: 120, mr: 1 }}>
-                                <InputLabel id='category-filter-label'>Category</InputLabel>
-                                <Select
-                                    labelId='category-filter-label'
-                                    value={categoryFilter}
-                                    onChange={handleCategoryChange}
-                                    label='Category'
+                        <ViewHeader title='Tools'>
+                            <ToggleButtonGroup
+                                sx={{ borderRadius: 2, maxHeight: 40 }}
+                                value={view}
+                                color='primary'
+                                exclusive
+                                onChange={handleChange}
+                            >
+                                <ToggleButton
+                                    sx={{
+                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderRadius: 2,
+                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    }}
+                                    variant='contained'
+                                    value='card'
+                                    title='Card View'
                                 >
-                                    {categories.map((category) => (
-                                        <MenuItem key={category} value={category}>
-                                            {category}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <Button
-                                variant='outlined'
-                                onClick={() => inputRef.current.click()}
-                                startIcon={<IconFileUpload />}
-                                sx={{ borderRadius: 2, height: 40, mr: 1 }}
-                            >
-                                Load
-                            </Button>
-                            <input
-                                style={{ display: 'none' }}
-                                ref={inputRef}
-                                type='file'
-                                hidden
-                                accept='.json'
-                                onChange={(e) => handleFileUpload(e)}
-                            />
-                            <StyledButton
-                                variant='contained'
-                                onClick={addNew}
-                                startIcon={<IconPlus />}
-                                sx={{ borderRadius: 2, height: 40 }}
-                            >
-                                Create
-                            </StyledButton>
+                                    <IconLayoutGrid />
+                                </ToggleButton>
+                                <ToggleButton
+                                    sx={{
+                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderRadius: 2,
+                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    }}
+                                    variant='contained'
+                                    value='list'
+                                    title='List View'
+                                >
+                                    <IconList />
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant='outlined'
+                                    onClick={() => inputRef.current.click()}
+                                    startIcon={<IconFileUpload />}
+                                    sx={{ borderRadius: 2, height: 40 }}
+                                >
+                                    Load
+                                </Button>
+                                <input
+                                    style={{ display: 'none' }}
+                                    ref={inputRef}
+                                    type='file'
+                                    hidden
+                                    accept='.json'
+                                    onChange={(e) => handleFileUpload(e)}
+                                />
+                            </Box>
+                            <ButtonGroup disableElevation aria-label='outlined primary button group'>
+                                <StyledButton
+                                    variant='contained'
+                                    onClick={addNew}
+                                    startIcon={<IconPlus />}
+                                    sx={{ borderRadius: 2, height: 40 }}
+                                >
+                                    Create
+                                </StyledButton>
+                            </ButtonGroup>
                         </ViewHeader>
-
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Tabs value={tabValue} onChange={handleTabChange} aria-label='tool tabs'>
-                                <Tab label='My Tools' />
-                                <Tab label='Marketplace Tools' />
-                            </Tabs>
-                        </Box>
-                        <TabPanel value={tabValue} index={0}>
-                            <FlowListView
-                                data={filteredMyTools}
-                                isLoading={isLoading}
-                                updateFlowsApi={getAllToolsApi}
-                                setError={setError}
-                                type='tools'
-                                onItemClick={edit}
-                            />
-                        </TabPanel>
-                        <TabPanel value={tabValue} index={1}>
-                            <FlowListView
-                                data={filteredMarketplaceTools}
-                                isLoading={isLoading}
-                                updateFlowsApi={getMarketplaceToolsApi}
-                                setError={setError}
-                                type='marketplace'
-                                onItemClick={goToTool}
-                            />
-                        </TabPanel>
+                        {!view || view === 'card' ? (
+                            <>
+                                {isLoading ? (
+                                    <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
+                                        <Skeleton variant='rounded' height={160} />
+                                        <Skeleton variant='rounded' height={160} />
+                                        <Skeleton variant='rounded' height={160} />
+                                    </Box>
+                                ) : (
+                                    <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
+                                        {getAllToolsApi.data &&
+                                            getAllToolsApi.data.map((data, index) => (
+                                                <ItemCard data={data} key={index} onClick={() => edit(data)} />
+                                            ))}
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
+                            <ToolsTable data={getAllToolsApi.data} isLoading={isLoading} onSelect={edit} />
+                        )}
+                        {!isLoading && (!getAllToolsApi.data || getAllToolsApi.data.length === 0) && (
+                            <Stack sx={{ alignItems: 'center', justifyContent: 'center' }} flexDirection='column'>
+                                <Box sx={{ p: 2, height: 'auto' }}>
+                                    <img
+                                        style={{ objectFit: 'cover', height: '20vh', width: 'auto' }}
+                                        src={ToolEmptySVG}
+                                        alt='ToolEmptySVG'
+                                    />
+                                </Box>
+                                <div>No Tools Created Yet</div>
+                            </Stack>
+                        )}
                     </Stack>
                 )}
             </MainCard>

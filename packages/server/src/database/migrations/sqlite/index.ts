@@ -13,13 +13,13 @@ import { AddFileAnnotationsToChatMessage1700271021237 } from './1700271021237-Ad
 import { AddFileUploadsToChatMessage1701788586491 } from './1701788586491-AddFileUploadsToChatMessage'
 import { AddVariableEntity1699325775451 } from './1702200925471-AddVariableEntity'
 import { AddSpeechToText1706364937060 } from './1706364937060-AddSpeechToText'
-import { AddUpsertHistoryEntity1709814301358 } from './1709814301358-AddUpsertHistoryEntity'
 import { AddFeedback1707213619308 } from './1707213619308-AddFeedback'
-import { AddDocumentStore1711637331047 } from './1711637331047-AddDocumentStore'
+import { AddUpsertHistoryEntity1709814301358 } from './1709814301358-AddUpsertHistoryEntity'
 import { AddLead1710832117612 } from './1710832117612-AddLead'
 import { AddLeadToChatMessage1711537986113 } from './1711537986113-AddLeadToChatMessage'
+import { AddVectorStoreConfigToDocStore1715861032479 } from './1715861032479-AddVectorStoreConfigToDocStore'
+import { AddDocumentStore1711637331047 } from './1711637331047-AddDocumentStore'
 import { AddAgentReasoningToChatMessage1714679514451 } from './1714679514451-AddAgentReasoningToChatMessage'
-import { AddTypeToChatFlow1766759476232 } from './1766759476232-AddTypeToChatFlow'
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
 import { AddUser1716422641414 } from './1716422641414-AddUser'
 import { AddOrganizationId1717629010538 } from './1717629010538-AddOrganizationId'
@@ -30,6 +30,9 @@ import { UpdateChatflowToHaveParentId1717796909629 } from './1717796909629-Updat
 import { UpdateVisibilityType1719248473069 } from './1719248473069-UpdateVisibilityType'
 import { CredentialsVisibility1721247848452 } from './1721247848452-CredentialsVisibility'
 import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
+import { AddTypeToChatFlow1716300000000 } from './1716300000000-AddTypeToChatFlow'
+import { AddApiKey1720230151480 } from './1720230151480-AddApiKey'
+import { AddActionToChatMessage1721078251523 } from './1721078251523-AddActionToChatMessage'
 
 export const sqliteMigrations = [
     Init1693835579790,
@@ -55,7 +58,6 @@ export const sqliteMigrations = [
     AddLead1710832117612,
     AddLeadToChatMessage1711537986113,
     AddAgentReasoningToChatMessage1714679514451,
-    AddTypeToChatFlow1766759476232,
     AddOrganizationId1717629010538,
     AddOrganization1717632419096,
     UpdateDefaultVisibility1717684633931,
@@ -63,5 +65,9 @@ export const sqliteMigrations = [
     UpdateChatflowToHaveParentId1717796909629,
     UpdateVisibilityType1719248473069,
     CredentialsVisibility1721247848452,
-    AddDescriptionToChatFlow1722099922876
+    AddDescriptionToChatFlow1722099922876,
+    AddTypeToChatFlow1716300000000,
+    AddVectorStoreConfigToDocStore1715861032479,
+    AddApiKey1720230151480,
+    AddActionToChatMessage1721078251523
 ]

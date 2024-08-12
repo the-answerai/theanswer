@@ -52,4 +52,4 @@ services:
             - ~/.flowise:/root/.flowise
         env_file:
             - .env
-        #command: /bin/sh -c "sleep 3; yarn start"
+        entrypoint: /bin/sh -c "sleep 3; flowise start"

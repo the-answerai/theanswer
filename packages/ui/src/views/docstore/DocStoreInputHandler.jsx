@@ -119,8 +119,9 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false }) => {
                         )}
                         {inputParam.type === 'credential' && (
                             <CredentialInputHandler
+                                key={JSON.stringify(inputParam)}
                                 disabled={disabled}
-                                data={data}
+                                data={data.inputs.credential ? { credential: data.inputs.credential } : {}}
                                 inputParam={inputParam}
                                 onSelect={(newValue) => {
                                     data.credential = newValue
@@ -198,6 +199,7 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false }) => {
                         )}
                         {inputParam.type === 'options' && (
                             <Dropdown
+                                key={JSON.stringify(inputParam)}
                                 disabled={disabled}
                                 name={inputParam.name}
                                 options={inputParam.options}
@@ -207,6 +209,7 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false }) => {
                         )}
                         {inputParam.type === 'multiOptions' && (
                             <MultiDropdown
+                                key={JSON.stringify(inputParam)}
                                 disabled={disabled}
                                 name={inputParam.name}
                                 options={inputParam.options}
@@ -216,9 +219,10 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false }) => {
                         )}
                         {inputParam.type === 'asyncOptions' && (
                             <>
-                                {data.inputParams.length === 1 && <div style={{ marginTop: 10 }} />}
+                                {data.inputParams?.length === 1 && <div style={{ marginTop: 10 }} />}
                                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                                     <AsyncDropdown
+                                        key={JSON.stringify(inputParam)}
                                         disabled={disabled}
                                         name={inputParam.name}
                                         nodeData={data}
