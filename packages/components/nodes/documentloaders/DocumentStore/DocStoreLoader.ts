@@ -17,10 +17,9 @@ class DocStore_DocumentLoaders implements INode {
     badge: string
 
     constructor() {
-        console.log('DocStore_DocumentLoaders constructor called')
         this.label = 'Document Store'
         this.name = 'documentStore'
-        this.version = 1.1
+        this.version = 1.0
         this.type = 'Document'
         this.icon = 'dstore.svg'
         this.category = 'Document Loaders'
@@ -28,11 +27,10 @@ class DocStore_DocumentLoaders implements INode {
         this.baseClasses = [this.type]
         this.inputs = [
             {
-                label: 'Select Stores',
-                name: 'selectedStores',
+                label: 'Select Store',
+                name: 'selectedStore',
                 type: 'asyncOptions',
-                loadMethod: 'listStores',
-                list: true // This allows multiple selections
+                loadMethod: 'listStores'
             }
         ]
         this.outputs = [
@@ -52,70 +50,44 @@ class DocStore_DocumentLoaders implements INode {
     }
 
     //@ts-ignore
-    //@ts-ignore
     loadMethods = {
         async listStores(_: INodeData, options: ICommonObject): Promise<INodeOptionsValue[]> {
-            console.log('listStores method called')
             const returnData: INodeOptionsValue[] = []
 
             const appDataSource = options.appDataSource as DataSource
             const databaseEntities = options.databaseEntities as IDatabaseEntity
-            const userId = options.userId
-            const organizationId = options.organizationId
 
-            try {
-                const stores = await appDataSource
-                    .getRepository(databaseEntities['DocumentStore'])
-                    .find({ where: { userId, organizationId } })
-                console.log(`Found ${stores.length} stores`)
+            if (appDataSource === undefined || !appDataSource) {
+                return returnData
+            }
 
-                for (const store of stores) {
+            const stores = await appDataSource.getRepository(databaseEntities['DocumentStore']).find()
+            for (const store of stores) {
+                if (store.status === 'SYNC') {
                     const obj = {
+                        name: store.id,
                         label: store.name,
-                        name: store.id, // Use id as the name
                         description: store.description
                     }
                     returnData.push(obj)
                 }
-            } catch (error) {
-                console.error('Error fetching stores:', error)
             }
-
-            console.log(`Returning ${returnData.length} stores:`, returnData)
             return returnData
         }
     }
 
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
-        console.log('Init method called')
-        const selectedStores = nodeData.inputs?.selectedStores as Array<{ name: string; label: string }>
-        console.log('Init method called with selectedStores:', JSON.stringify(selectedStores, null, 2))
+        const selectedStore = nodeData.inputs?.selectedStore as string
         const appDataSource = options.appDataSource as DataSource
         const databaseEntities = options.databaseEntities as IDatabaseEntity
+        const chunks = await appDataSource
+            .getRepository(databaseEntities['DocumentStoreFileChunk'])
+            .find({ where: { storeId: selectedStore } })
         const output = nodeData.outputs?.output as string
 
         const finalDocs = []
-
-        if (!Array.isArray(selectedStores)) {
-            console.error('selectedStores is not an array:', selectedStores)
-            return []
-        }
-
-        for (const store of selectedStores) {
-            if (!store || typeof store !== 'object' || !store.name) {
-                console.error('Invalid store object:', store)
-                continue
-            }
-
-            const storeId = store.name // We're using the 'name' field as the ID
-
-            const chunks = await appDataSource
-                .getRepository(databaseEntities['DocumentStoreFileChunk'])
-                .find({ where: { storeId: storeId } })
-
-            for (const chunk of chunks) {
-                finalDocs.push(new Document({ pageContent: chunk.pageContent, metadata: JSON.parse(chunk.metadata) }))
-            }
+        for (const chunk of chunks) {
+            finalDocs.push(new Document({ pageContent: chunk.pageContent, metadata: JSON.parse(chunk.metadata) }))
         }
 
         if (output === 'document') {
