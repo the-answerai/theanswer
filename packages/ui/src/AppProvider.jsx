@@ -15,32 +15,30 @@ import { ReactFlowContext } from '@/store/context/ReactFlowContext'
 
 import { CssBaseline, StyledEngineProvider } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
-
 import themes from '@/themes'
+import { setBaseURL } from './store/constant'
+import { BubbleChat } from 'aai-embed-react'
 
 const AppProvider = ({ children }) => {
-    const { user, getAccessTokenSilently } = useAuth0()
+    const { user, getAccessTokenSilently, isLoading, loginWithRedirect, isAuthenticated } = useAuth0()
 
+    // TODO: Improve setting the baseURL with server state
     React.useEffect(() => {
         if (user) {
-            // TODO: remove replace
-            sessionStorage.setItem('baseURL', user.chatflowDomain?.replace('8080', '4000'))
+            setBaseURL(user.chatflowDomain)
         }
-    }, [user])
+    }, [isLoading, user, isAuthenticated])
     React.useEffect(() => {
         ;(async () => {
             try {
-                const newToken = await getAccessTokenSilently({
-                    authorizationParams: {
-                        // scope: 'write:admin'
-                    }
-                })
+                const newToken = await getAccessTokenSilently()
                 sessionStorage.setItem('access_token', newToken)
             } catch (err) {
+                loginWithRedirect()
                 console.log(err)
             }
         })()
-    }, [getAccessTokenSilently])
+    }, [getAccessTokenSilently, loginWithRedirect])
 
     return (
         // <React.StrictMode>
@@ -51,7 +49,9 @@ const AppProvider = ({ children }) => {
                 <Provider store={store}>
                     <SnackbarProvider>
                         <ConfirmContextProvider>
-                            <ReactFlowContext>{children}</ReactFlowContext>
+                            {/* Improve loading state when there is no user (currently all or nothing due to icons ) */}
+                            <ReactFlowContext>{user ? children : null}</ReactFlowContext>
+                            <BubbleChat apiHost='https://lastrev.flowise.theanswer.ai' chatflowid='e24d5572-a27a-40b9-83fe-19a376535b9d' />
                         </ConfirmContextProvider>
                     </SnackbarProvider>
                 </Provider>

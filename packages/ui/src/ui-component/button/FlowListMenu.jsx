@@ -7,7 +7,6 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import FileCopyIcon from '@mui/icons-material/FileCopy'
 import FileDownloadIcon from '@mui/icons-material/Downloading'
-import FileDeleteIcon from '@mui/icons-material/Delete'
 import SettingsIcon from '@mui/icons-material/Settings'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import Button from '@mui/material/Button'
@@ -119,8 +118,7 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
                     message: error.message,
                     options: {
                         key: new Date().getTime() + Math.random(),
-                        variant: 'error',
-                        persist: true,
+                        variant: 'success',
                         action: (key) => (
                             <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
                                 <IconX />
@@ -129,7 +127,8 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
                     }
                 })
             }
-        }
+        })
+        setChatflowConfigurationDialogOpen(true)
     }
 
     const handleDuplicate = () => {
@@ -146,7 +145,7 @@ export default function FlowListMenu({ item, type, setError, updateFlowsApi }) {
         setAnchorEl(null)
         try {
             const flowData = type === 'journeys' ? item : JSON.parse(item.flowData)
-            let dataStr = JSON.stringify(flowData, null, 2)
+            let dataStr = JSON.stringify(generateExportFlowData(flowData), null, 2)
             let dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
             let exportFileDefaultName = `${item.name || item.title} ${title}.json`
