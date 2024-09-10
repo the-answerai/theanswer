@@ -7,6 +7,7 @@ import { IReactFlowEdge, IReactFlowNode, IUser } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { ChatFlow, ChatflowVisibility } from '../../database/entities/ChatFlow'
 import checkOwnership from '../../utils/checkOwnership'
+import { Like } from 'typeorm'
 
 type ITemplate = {
     badge: string
@@ -35,7 +36,11 @@ const getAllTemplates = async (user: IUser | undefined) => {
         //**
         let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find({
             // TODO: Figure out why this wher condition doesn't work
-            // where: { visibility: Any(['Marketplace']) }
+            //@ts-expect-error
+            where: {
+                visibility: Like('%Marketplace%'),
+                organizationId: user?.organizationId
+            }
         })
 
         chatflows = chatflows.filter((chatflow) => chatflow.visibility?.includes(ChatflowVisibility.MARKETPLACE))
