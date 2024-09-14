@@ -1137,10 +1137,12 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                                                                             style={{
                                                                                 objectFit: 'cover',
                                                                                 height: '25px',
-                                                                                width: 'auto'
+                                                                                width: '25px'
                                                                             }}
                                                                             src={getAgentIcon(agent.nodeName, agent.instructions)}
                                                                             alt='agentPNG'
+                                                                            width={25}
+                                                                            height={25}
                                                                         />
                                                                     </Box>
                                                                     <div>{agent.agentName}</div>
