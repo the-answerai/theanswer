@@ -97,7 +97,7 @@ const config: Config = {
                     className: 'button button--primary button--sm'
                 },
                 {
-                    href: 'https://github.com/the-answerai/',
+                    href: 'https://github.com/the-answerai',
                     label: 'GitHub',
                     position: 'right'
                 }
