@@ -11,6 +11,43 @@ import { postgresMigrations } from './database/migrations/postgres'
 
 let appDataSource: DataSource
 
+const getDatabaseSSLFromEnv = () => {
+    if (process.env.DATABASE_SSL_KEY_BASE64) {
+        return {
+            rejectUnauthorized: false,
+            ca: Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64')
+        }
+    } else if (process.env.DATABASE_SSL === 'true') {
+        return true
+    }
+    return undefined
+}
+
+const postgresOptions: Record<string, any> = {
+    local: {
+        type: 'postgres',
+        host: process.env.DATABASE_HOST,
+        port: parseInt(process.env.DATABASE_PORT || '5432'),
+        username: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_NAME,
+        ssl: getDatabaseSSLFromEnv(),
+        synchronize: false,
+        migrationsRun: false,
+        entities: Object.values(entities),
+        migrations: postgresMigrations
+    },
+    cloud: {
+        type: 'postgres',
+        url: process.env.DATABASE_URL,
+        entities: Object.values(entities),
+        migrations: postgresMigrations,
+        synchronize: false,
+        migrationsRun: false,
+        ssl: getDatabaseSSLFromEnv()
+    }
+}
+
 export const init = async (): Promise<void> => {
     let homePath
     let flowisePath = path.join(getUserHome(), '.flowise')
@@ -61,31 +98,12 @@ export const init = async (): Promise<void> => {
                 ssl: getDatabaseSSLFromEnv()
             })
             break
-        // case 'postgres':
-        //     appDataSource = new DataSource({
-        //         type: 'postgres',
-        //         host: process.env.DATABASE_HOST,
-        //         port: parseInt(process.env.DATABASE_PORT || '5432'),
-        //         username: process.env.DATABASE_USER,
-        //         password: process.env.DATABASE_PASSWORD,
-        //         database: process.env.DATABASE_NAME,
-        //         ssl: getDatabaseSSLFromEnv(),
-        //         synchronize: false,
-        //         migrationsRun: false,
-        //         entities: Object.values(entities),
-        //         migrations: postgresMigrations
-        //     })
-        case 'postgres':
-            appDataSource = new DataSource({
-                type: 'postgres',
-                url: process.env.DATABASE_URL,
-                entities: Object.values(entities),
-                migrations: postgresMigrations,
-                synchronize: false,
-                migrationsRun: false,
-                ssl: getDatabaseSSLFromEnv()
-            })
+
+        case 'postgres': {
+            const options = postgresOptions[process.env.DATABASE_ENVIRONMENT ?? 'local']
+            appDataSource = new DataSource(options)
             break
+        }
         default:
             homePath = process.env.DATABASE_PATH ?? flowisePath
             appDataSource = new DataSource({
@@ -105,16 +123,4 @@ export function getDataSource(): DataSource {
         init()
     }
     return appDataSource
-}
-
-const getDatabaseSSLFromEnv = () => {
-    if (process.env.DATABASE_SSL_KEY_BASE64) {
-        return {
-            rejectUnauthorized: false,
-            ca: Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64')
-        }
-    } else if (process.env.DATABASE_SSL === 'true') {
-        return true
-    }
-    return undefined
 }
