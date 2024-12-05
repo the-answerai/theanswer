@@ -20,6 +20,7 @@ import flowiseApiV1Router from './routes'
 import errorHandlerMiddleware from './middlewares/errors'
 
 import authenticationHandlerMiddleware from './middlewares/authentication'
+import bodyParser from 'body-parser'
 
 export class App {
     app: express.Application
@@ -72,9 +73,9 @@ export class App {
 
     async config(socketIO?: Server) {
         // Limit is needed to allow sending/receiving base64 encoded string
-        const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '100mb'
-        this.app.use(express.json({ limit: flowise_file_size_limit }))
-        this.app.use(express.urlencoded({ limit: flowise_file_size_limit, extended: true }))
+        const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '200mb'
+        this.app.use(bodyParser.json({ limit: flowise_file_size_limit }))
+        this.app.use(bodyParser.urlencoded({ limit: flowise_file_size_limit, extended: true }))
         if (process.env.NUMBER_OF_PROXIES && parseInt(process.env.NUMBER_OF_PROXIES) > 0)
             this.app.set('trust proxy', parseInt(process.env.NUMBER_OF_PROXIES))
 
@@ -197,7 +198,8 @@ export async function start(): Promise<void> {
     const server = http.createServer(serverApp.app)
 
     const io = new Server(server, {
-        cors: getCorsOptions()
+        cors: getCorsOptions(),
+        maxHttpBufferSize: 1e8 // 100MB
     })
 
     await serverApp.initDatabase()
