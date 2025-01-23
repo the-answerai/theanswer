@@ -40,6 +40,7 @@ import { AddPlans1722954481004 } from './1722954481003-AddPlans'
 import { ApiKeysUserAndOrg1727817692110 } from './1727817692110-ApiKeysUserAndOrg'
 import { ToolVisibility1730491825527 } from './1730491825527-ToolVisibility'
 import { AddChat1732145631409 } from './1732145631409-AddChat'
+import { AddStripeCustomerId1734126321905 } from './1734126321905-AddStripeCustomerId'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -83,5 +84,6 @@ export const postgresMigrations = [
     AddPlans1722954481004,
     ApiKeysUserAndOrg1727817692110,
     ToolVisibility1730491825527,
-    AddChat1732145631409
+    AddChat1732145631409,
+    AddStripeCustomerId1734126321905
 ]

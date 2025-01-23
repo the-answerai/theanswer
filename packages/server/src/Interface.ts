@@ -27,6 +27,7 @@ export interface IUser {
     createdDate: Date
     permissions?: string[]
     roles?: string[]
+    stripeCustomerId: string
 }
 export interface IOrganization {
     id: string

@@ -158,7 +158,12 @@ const updateCredential = async (credentialId: string, requestBody: any, userId?:
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
         requestBody.plainDataObj = { ...decryptedCredentialData, ...requestBody.plainDataObj }
         requestBody.organizationId = organizationId
+        console.log('[updateCredential]:requestBody', requestBody)
+        console.log('[updateCredential]:decryptedCredentialData', decryptedCredentialData)
+
         const updateCredential = await transformToCredentialEntity(requestBody)
+        console.log('[updateCredential]:credential', credential)
+        console.log('[updateCredential]:updateCredential', updateCredential)
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredential)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
         return dbResponse

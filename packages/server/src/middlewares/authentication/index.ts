@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
+import { stripe } from '../../aai-utils/billing/stripe/config'
 
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
@@ -53,21 +54,19 @@ export const authenticationHandlerMiddleware =
                 }
             }
             const authUser = req.auth.payload
-            const userOrgName = authUser.org_name
             const auth0Id = authUser.sub
             const email = authUser.email as string
             const name = authUser.name as string
             const roles = (authUser?.['https://theanswer.ai/roles'] || []) as string[]
-
             if (!auth0Id || !email) {
                 return next()
             }
             const orgRepo = AppDataSource.getRepository(Organization)
-            let organization = await orgRepo.findOneBy({ name: userOrgName })
+            let organization = await orgRepo.findOneBy({ name: authUser.org_name })
             if (!organization) {
-                organization = orgRepo.create({ auth0Id: userOrgId, name: userOrgName })
+                organization = orgRepo.create({ auth0Id: userOrgId, name: authUser.org_name })
             } else {
-                organization.name = userOrgName
+                organization.name = authUser.org_name
                 organization.auth0Id = userOrgId
             }
             await orgRepo.save(organization)
@@ -82,9 +81,9 @@ export const authenticationHandlerMiddleware =
                 user.organizationId = organization.id
             }
 
+            req.user = { ...authUser, ...user, roles }
             await userRepo.save(user)
 
-            req.user = { ...authUser, ...user, roles } // Attach user entity to request for downstream use
             return next()
         })
     }

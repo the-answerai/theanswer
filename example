@@ -1,0 +1,7 @@
+curl https://api.stripe.com/v1/prices \
+  -u "sk_test_..." \
+  -d product={{PRODUCT_ID}} \
+  -d currency=usd \
+  -d billing_scheme=tiered \
+  -d "recurring[usage_type]"=metered \
+  -d "recurring[interval]"=month 
