@@ -31,6 +31,7 @@ export interface IUser {
         id: string
         metadata?: IApiKeyMetadata
     }
+    stripeCustomerId: string
 }
 export interface IOrganization {
     id: string

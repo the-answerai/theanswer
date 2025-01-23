@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
+import { stripe } from '../../aai-utils/billing/stripe/config'
+
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
@@ -104,25 +106,21 @@ export const authenticationHandlerMiddleware =
             }
 
             const authUser = req.auth.payload
-            const userOrgName = authUser.org_name
             const auth0Id = authUser.sub
             const email = authUser.email as string
             const name = authUser.name as string
             const roles = (authUser?.['https://theanswer.ai/roles'] || []) as string[]
-
             if (!auth0Id || !email) {
                 console.log('[AuthMiddleware] Missing required auth fields (auth0Id or email)')
                 return next()
             }
 
             const orgRepo = AppDataSource.getRepository(Organization)
-            let organization = await orgRepo.findOneBy({ name: userOrgName })
+            let organization = await orgRepo.findOneBy({ name: authUser.org_name })
             if (!organization) {
-                console.log(`[AuthMiddleware] Creating new organization: ${userOrgName}`)
-                organization = orgRepo.create({ auth0Id: userOrgId, name: userOrgName })
+                organization = orgRepo.create({ auth0Id: userOrgId, name: authUser.org_name })
             } else {
-                console.log(`[AuthMiddleware] Updating existing organization: ${userOrgName}`)
-                organization.name = userOrgName
+                organization.name = authUser.org_name
                 organization.auth0Id = userOrgId
             }
             await orgRepo.save(organization)
@@ -139,10 +137,9 @@ export const authenticationHandlerMiddleware =
                 user.organizationId = organization.id
             }
 
+            req.user = { ...authUser, ...user, roles }
             await userRepo.save(user)
 
-            req.user = { ...authUser, ...user, roles }
-            console.log(`[AuthMiddleware] Successfully authenticated user: ${email} with roles: ${roles.join(', ')}`)
             return next()
         })
     }

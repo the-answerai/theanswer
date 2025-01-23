@@ -46,7 +46,7 @@ There are three different .env files you can set environment variables for Answe
 | LANGFUSE_RELEASE              | Langfuse release identifier                              | Root                   |
 | LANGFUSE_SECRET_KEY           | Langfuse secret key                                      | Root                   |
 | LANGFUSE_PUBLIC_KEY           | Langfuse public key                                      | Root                   |
-| LANGFUSE_HOST                 | Langfuse host URL                                        | Root                   |
+| LANGFUSE_BASEURL              | Langfuse host URL                                        | Root                   |
 | AUTH_AUTH0_CLIENT_ID          | Auth0 client ID for authentication                       | Root                   |
 | AUTH_AUTH0_CLIENT_SECRET      | Auth0 client secret for authentication                   | Root                   |
 | AUTH_AUTH0_ISSUER             | Auth0 issuer URL for authentication                      | Root                   |

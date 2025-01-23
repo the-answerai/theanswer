@@ -60,6 +60,7 @@ import { validateNodeConnections } from './validateNodeConnections'
 export const utilBuildChatflow = async (req: Request, socketIO?: Server, isInternal: boolean = false): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
+        console.log('BuildChatflow--------------------------')
         const chatflowid = req.params.id
 
         const httpProtocol = req.get('x-forwarded-proto') || req.protocol

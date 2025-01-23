@@ -48,7 +48,7 @@ services:
             sync: false
           - key: NODE_VERSION
             sync: false
-          - key: LANGFUSE_HOST
+          - key: LANGFUSE_BASEURL
             sync: false
           - key: LANGFUSE_PUBLIC_KEY
             sync: false
