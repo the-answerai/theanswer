@@ -120,7 +120,7 @@ export interface GetUpcomingInvoiceParams {
 
 export interface SparksData {
     traceId: string
-    customerId: string
+    stripeCustomerId: string
     subscriptionTier: string
     sparks: {
         ai_tokens: number
@@ -183,4 +183,31 @@ export const SPARK_RATES = {
         GB_PER_SPARK: 1 / 500,
         COST_PER_SPARK: 0.001
     }
+}
+
+export interface MeterEvent extends Stripe.Billing.MeterEvent {
+    payload:
+        | {
+              value: string
+              stripe_customer_id: string
+              trace_id: string
+              ai_tokens: string
+              compute: string
+              storage: string
+              original_cost_usd: string
+              margin_multiplier: string
+              models: string
+              total_tokens: string
+              compute_minutes: string
+              storage_gb: string
+          }
+        | any
+}
+
+export interface SyncUsageResponse {
+    processedTraces: string[]
+    failedTraces: Array<{ traceId: string; error: string }>
+    meterEvents?: Stripe.Billing.MeterEvent[]
+    traces?: any[]
+    sparksData?: SparksData[]
 }

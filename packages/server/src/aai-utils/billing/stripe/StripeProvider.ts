@@ -11,9 +11,11 @@ import {
     CheckoutSession,
     BillingPortalSession,
     Subscription,
-    Invoice
+    Invoice,
+    MeterEvent,
+    SparksData
 } from '../core/types'
-import { stripe as stripeClient, log } from '../config'
+import { stripe as stripeClient, log, BILLING_CONFIG } from '../config'
 
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
@@ -229,14 +231,57 @@ export class StripeProvider {
         }
     }
 
-    async syncUsageToStripe(traceId?: string): Promise<void> {
-        // This method now only handles the actual syncing to Stripe meters
-        // The usage data is already processed by LangfuseProvider
+    async syncUsageToStripe(sparksData: SparksData[]): Promise<Stripe.Billing.MeterEvent[]> {
         try {
-            log.info('Syncing usage to Stripe', { traceId })
-            // Implementation for syncing usage data to Stripe meters would go here
+            log.info('Syncing usage to Stripe', { count: sparksData.length })
+
+            const meterEvents: Stripe.Billing.MeterEvent[] = []
+
+            for (const data of sparksData) {
+                try {
+                    // Prepare the meter event payload
+                    const payload: MeterEvent['payload'] = {
+                        value: data.sparks.total.toString(),
+                        stripe_customer_id: data.stripeCustomerId,
+                        trace_id: data.traceId,
+
+                        ai_tokens: data.sparks.ai_tokens.toString(),
+                        compute: data.sparks.compute.toString(),
+                        storage: data.sparks.storage.toString(),
+                        original_cost_usd: data.usage.totalCost.toString(),
+                        margin_multiplier: BILLING_CONFIG.SPARKS.MARGIN_MULTIPLIER.toString(),
+                        // models: data.usage.models.map((m) => m.model).join(','),
+                        total_tokens: data.usage.tokens.toString()
+                        // compute_minutes: data.usage.computeMinutes.toString(),
+                        // storage_gb: data.usage.storageGB.toString()
+                    }
+
+                    // Create meter event for each usage record
+                    const response = await this.stripeClient.billing.meterEvents.create({
+                        identifier: data.traceId,
+                        event_name: BILLING_CONFIG.SPARKS.METER_NAME,
+                        timestamp: Math.floor(Date.now() / 1000),
+                        payload
+                    })
+
+                    meterEvents.push(response)
+                    log.info('Created meter event', {
+                        eventId: response.identifier,
+                        traceId: data.traceId,
+                        sparks: data.sparks.total
+                    })
+                } catch (error: any) {
+                    log.error('Failed to create meter event', {
+                        error: error.message,
+                        traceId: data.traceId
+                    })
+                    throw error
+                }
+            }
+
+            return meterEvents
         } catch (error: any) {
-            log.error('Failed to sync usage to Stripe', { error: error.message, traceId })
+            log.error('Failed to sync usage to Stripe', { error: error.message })
             throw error
         }
     }
