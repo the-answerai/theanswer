@@ -71,19 +71,22 @@ export class BillingService {
         processedTraces: string[]
         failedTraces: Array<{ traceId: string; error: string }>
     }> {
+        let result: any
         try {
             // Get usage data from Langfuse
-            const usageData = await this.usageProvider.syncUsageToStripe(traceId)
+            result = await this.usageProvider.syncUsageToStripe(traceId)
 
             // Sync to Stripe if needed
-            if (usageData.processedTraces.length > 0) {
-                await this.paymentProvider.syncUsageToStripe(traceId)
+            if (result.sparksData && result.sparksData.length > 0) {
+                const meterEvents = await this.paymentProvider.syncUsageToStripe(result.sparksData)
+                result.meterEvents = meterEvents
             }
 
-            return usageData
+            return result
         } catch (error: any) {
             log.error('Failed to sync usage to Stripe', { error, traceId })
             return {
+                ...result,
                 processedTraces: [],
                 failedTraces: [{ traceId: traceId || 'unknown', error: error.message }]
             }

@@ -1,7 +1,10 @@
-import { UsageStats, SparksData, TraceMetadata } from '../core/types'
+import { UsageStats, SparksData, TraceMetadata, MeterEvent, SyncUsageResponse } from '../core/types'
 import { langfuse, log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import type { GetLangfuseTraceResponse, GetLangfuseTracesResponse } from 'langfuse-core'
 import { Console } from 'winston/lib/winston/transports'
+import { StripeProvider } from '../stripe/StripeProvider'
+import { stripe as stripeClient } from '../config'
+import Stripe from 'stripe'
 
 type Trace = GetLangfuseTracesResponse['data'][number]
 
@@ -55,28 +58,37 @@ export class LangfuseProvider {
         }
     }
 
-    async syncUsageToStripe(traceId?: string): Promise<{
-        processedTraces: string[]
-        failedTraces: Array<{ traceId: string; error: string }>
-    }> {
+    async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
         let traces: Trace[] = []
         let sparksData: SparksData[] = []
         let failedTraces: Array<{ traceId: string; error: string }> = []
         let processedTraces: string[] = []
+        let meterEvents: Stripe.Billing.MeterEvent[] = []
 
         try {
             traces = await this.fetchUsageData(traceId)
             sparksData = await this.convertUsageToSparks(traces)
+
+            // Create meter events in Stripe
+            const stripeProvider = new StripeProvider(stripeClient)
+            meterEvents = await stripeProvider.syncUsageToStripe(sparksData)
+
+            processedTraces = sparksData.map((data) => data.traceId)
         } catch (error: any) {
-            console.log('Error fetching usage data from Langfuse:', error)
+            log.error('Error syncing usage data:', error)
             failedTraces = [{ traceId: traceId || 'unknown', error: error.message }]
         }
 
-        processedTraces = sparksData.map((data) => data.traceId)
         return {
-            ...(process.env.NODE_ENV === 'development' ? { traces, sparksData } : {}),
             processedTraces,
-            failedTraces
+            failedTraces,
+            ...(process.env.NODE_ENV === 'development'
+                ? {
+                      traces,
+                      sparksData,
+                      meterEvents
+                  }
+                : {})
         }
     }
 
@@ -156,7 +168,7 @@ export class LangfuseProvider {
 
             const sparksData: SparksData = {
                 traceId: trace.id,
-                customerId: metadata.customerId || DEFAULT_CUSTOMER_ID!,
+                stripeCustomerId: metadata.stripeCustomerId || DEFAULT_CUSTOMER_ID!,
                 subscriptionTier: metadata.subscriptionTier || 'free',
                 sparks: {
                     ai_tokens: finalAiTokensSparks,
