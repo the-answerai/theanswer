@@ -365,6 +365,37 @@ const createBillingPortalSession = async (req: Request, res: Response, next: Nex
     }
 }
 
+const getSubscriptionWithUsage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Check if user is authenticated
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User not authenticated')
+        }
+
+        const customerId = req.user.stripeCustomerId
+        if (!customerId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user')
+        }
+
+        // Get active subscription
+        const subscription = await billingService.getSubscriptionWithUsage(customerId)
+
+        // if (!subscriptions.data.length) {
+        //     return res.json({ subscription: null, usage: [] })
+        // }
+
+        // // Get subscription with usage
+        // const subscription = await billingService.getSubscriptionWithUsage(subscriptions.data[0].id)
+        return res.json(subscription)
+    } catch (error: any) {
+        if (error instanceof InternalFlowiseError) {
+            next(error)
+        } else {
+            next(new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+        }
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -385,5 +416,6 @@ export default {
     updateSubscription,
     cancelSubscription,
     getUpcomingInvoice,
-    createBillingPortalSession
+    createBillingPortalSession,
+    getSubscriptionWithUsage
 }

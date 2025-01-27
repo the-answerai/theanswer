@@ -12,13 +12,26 @@ import {
     BillingPortalSession,
     Subscription,
     Invoice,
-    MeterEvent,
     SparksData
 } from '../core/types'
-import { stripe as stripeClient, log, BILLING_CONFIG } from '../config'
+import { log, BILLING_CONFIG } from '../config'
 
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
+
+    private meterCache: Map<string, string> = new Map()
+    private lastMeterFetch: number = 0
+    private METER_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+    private async getMeterIdFromCache(displayName: string): Promise<string | undefined> {
+        const now = Date.now()
+        if (now - this.lastMeterFetch > this.METER_CACHE_TTL || this.meterCache.size === 0) {
+            const meters = await this.stripeClient.billing.meters.list()
+            this.meterCache = new Map(meters.data.map((meter) => [meter.display_name || meter.id, meter.id]))
+            this.lastMeterFetch = now
+        }
+        return this.meterCache.get(displayName)
+    }
 
     async getInvoices(params: Stripe.InvoiceListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Invoice>>> {
         log.info('Getting invoices', { params })
@@ -236,53 +249,240 @@ export class StripeProvider {
             log.info('Syncing usage to Stripe', { count: sparksData.length })
 
             const meterEvents: Stripe.Billing.MeterEvent[] = []
+            const BATCH_SIZE = 50 // Increased from 25
+            const DELAY_BETWEEN_BATCHES = 500 // Reduced from 1000ms to 500ms
 
-            for (const data of sparksData) {
-                try {
-                    // Prepare the meter event payload
-                    const payload: MeterEvent['payload'] = {
-                        value: data.sparks.total.toString(),
-                        stripe_customer_id: data.stripeCustomerId,
-                        trace_id: data.traceId,
+            // Pre-fetch meter ID once for all events
+            const meterId = await this.getMeterIdFromCache('sparks')
+            if (!meterId) {
+                throw new Error('No meter found for type: sparks')
+            }
 
-                        ai_tokens: data.sparks.ai_tokens.toString(),
-                        compute: data.sparks.compute.toString(),
-                        storage: data.sparks.storage.toString(),
-                        original_cost_usd: data.usage.totalCost.toString(),
-                        margin_multiplier: BILLING_CONFIG.SPARKS.MARGIN_MULTIPLIER.toString(),
-                        // models: data.usage.models.map((m) => m.model).join(','),
-                        total_tokens: data.usage.tokens.toString()
-                        // compute_minutes: data.usage.computeMinutes.toString(),
-                        // storage_gb: data.usage.storageGB.toString()
+            // Process sparksData in optimized batches
+            for (let i = 0; i < sparksData.length; i += BATCH_SIZE) {
+                const batch = sparksData.slice(i, i + BATCH_SIZE)
+                const batchPromises = batch.map(async (data) => {
+                    const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+                    const totalSparks = data.sparks.ai_tokens + data.sparks.compute + data.sparks.storage
+
+                    try {
+                        // Optimize payload construction
+                        const identifier =
+                            process.env.NODE_ENV === 'production' ? `${data.traceId}_sparks` : `${data.traceId}_sparks_${Date.now()}`
+
+                        const response = await this.stripeClient.billing.meterEvents.create({
+                            event_name: 'sparks',
+                            identifier,
+                            timestamp,
+                            payload: {
+                                value: totalSparks.toString(),
+                                stripe_customer_id: data.stripeCustomerId,
+                                trace_id: data.traceId,
+                                ai_tokens_sparks: data.sparks.ai_tokens.toString(),
+                                compute_sparks: data.sparks.compute.toString(),
+                                storage_sparks: data.sparks.storage.toString(),
+                                ai_tokens_cost: data.costs.base.ai.toFixed(6),
+                                compute_cost: data.costs.base.compute.toFixed(6),
+                                storage_cost: data.costs.base.storage.toFixed(6),
+                                margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                            }
+                        })
+
+                        log.debug('Created meter event', {
+                            eventId: response.identifier,
+                            traceId: data.traceId,
+                            totalSparks
+                        })
+
+                        return response
+                    } catch (error: any) {
+                        log.error('Failed to create meter event', {
+                            error: error.message,
+                            traceId: data.traceId
+                        })
+                        return null
                     }
+                })
 
-                    // Create meter event for each usage record
-                    const response = await this.stripeClient.billing.meterEvents.create({
-                        identifier: data.traceId,
-                        event_name: BILLING_CONFIG.SPARKS.METER_NAME,
-                        timestamp: Math.floor(Date.now() / 1000),
-                        payload
-                    })
+                // Process batch concurrently and collect results
+                const batchResults = await Promise.all(batchPromises)
+                const validEvents = batchResults
+                    .filter((event): event is Stripe.Response<Stripe.Billing.MeterEvent> => event !== null)
+                    .map((response) => (response.lastResponse.statusCode === 200 ? response : null))
+                    .filter((event): event is Stripe.Response<Stripe.Billing.MeterEvent> => event !== null)
+                meterEvents.push(...validEvents.map((response) => response.data))
 
-                    meterEvents.push(response)
-                    log.info('Created meter event', {
-                        eventId: response.identifier,
-                        traceId: data.traceId,
-                        sparks: data.sparks.total
-                    })
-                } catch (error: any) {
-                    log.error('Failed to create meter event', {
-                        error: error.message,
-                        traceId: data.traceId
-                    })
-                    throw error
+                // Add optimized delay between batches
+                if (i + BATCH_SIZE < sparksData.length) {
+                    await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
             }
+
+            log.info('Completed syncing usage to Stripe', {
+                totalEvents: meterEvents.length,
+                successRate: `${((meterEvents.length / sparksData.length) * 100).toFixed(2)}%`
+            })
 
             return meterEvents
         } catch (error: any) {
             log.error('Failed to sync usage to Stripe', { error: error.message })
             throw error
+        }
+    }
+
+    async getMeterEventSummaries(
+        customerId: string,
+        startTime?: number,
+        endTime?: number
+    ): Promise<Stripe.Response<Stripe.ApiList<Stripe.Billing.MeterEventSummary & { meter_name: string }>>> {
+        try {
+            log.info('Getting meter event summaries', { customerId, startTime, endTime })
+
+            // If no time range provided, default to current month
+            if (!startTime || !endTime) {
+                const now = new Date()
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+                startTime = Math.floor(startOfMonth.getTime() / 1000)
+                endTime = Math.floor(now.getTime() / 1000)
+            }
+
+            // Align timestamps with daily boundaries (UTC midnight)
+            const alignedStartTime = Math.floor(startTime / 86400) * 86400 // Round down to nearest day
+            const alignedEndTime = Math.ceil(endTime / 86400) * 86400 // Round up to nearest day
+
+            log.info('Aligned timestamps', {
+                originalStart: new Date(startTime * 1000),
+                originalEnd: new Date(endTime * 1000),
+                alignedStart: new Date(alignedStartTime * 1000),
+                alignedEnd: new Date(alignedEndTime * 1000)
+            })
+
+            // Get all meters for this customer
+            const meters = await this.stripeClient.billing.meters.list()
+            const summariesPromises = meters.data.map((meter) =>
+                this.stripeClient.billing.meters.listEventSummaries(meter.id, {
+                    customer: customerId,
+                    start_time: alignedStartTime,
+                    end_time: alignedEndTime,
+                    value_grouping_window: 'day'
+                })
+            )
+
+            const summariesResults = await Promise.all(summariesPromises)
+
+            // Combine all summaries and add meter names
+            const combinedData = summariesResults
+                .flatMap((result) => result.data)
+                .map((summary) => {
+                    // Map meter IDs to their names based on config
+                    let meterName = 'Unknown'
+                    if (summary.meter === BILLING_CONFIG.SPARKS_METER_ID) {
+                        meterName = BILLING_CONFIG.SPARKS_METER_NAME
+                    }
+
+                    return {
+                        ...summary,
+                        meter_name: meterName
+                    }
+                })
+
+            log.info('Retrieved meter event summaries', {
+                count: combinedData.length,
+                startTime: new Date(alignedStartTime * 1000),
+                endTime: new Date(alignedEndTime * 1000)
+            })
+
+            return {
+                lastResponse: {
+                    headers: {},
+                    requestId: '',
+                    statusCode: 200,
+                    apiVersion: '2024-01-01',
+                    idempotencyKey: '',
+                    stripeAccount: ''
+                },
+                object: 'list',
+                data: combinedData,
+                has_more: false,
+                url: '/v1/billing/meter-event-summaries'
+            }
+        } catch (error: any) {
+            log.error('Failed to get meter event summaries', { error: error.message, customerId })
+            throw error
+        }
+    }
+
+    async getSubscriptionWithUsage(subscriptionId?: string): Promise<Subscription & { usage?: any }> {
+        try {
+            log.info('Getting subscription with usage', { subscriptionId })
+            const { data: [subscription] = [] } = await this.stripeClient.subscriptions.list({
+                customer: subscriptionId,
+                status: 'active',
+                limit: 1
+            })
+
+            // If no active subscription found, return a default response
+            if (!subscription) {
+                log.info('No active subscription found', { subscriptionId })
+                return {
+                    id: '',
+                    customerId: subscriptionId || '',
+                    status: 'unpaid',
+                    currentPeriodStart: new Date(),
+                    currentPeriodEnd: new Date(),
+                    cancelAtPeriodEnd: false,
+                    usage: []
+                }
+            }
+
+            // Get usage for current month
+            const now = new Date()
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+            const startTime = Math.floor(startOfMonth.getTime() / 1000)
+            const endTime = Math.floor(now.getTime() / 1000)
+
+            // Align timestamps with daily boundaries
+            const alignedStartTime = Math.floor(startTime / 86400) * 86400
+            const alignedEndTime = Math.ceil(endTime / 86400) * 86400
+
+            let summaries
+            try {
+                summaries = await this.getMeterEventSummaries(subscription.customer as string, alignedStartTime, alignedEndTime)
+            } catch (error) {
+                log.warn('Failed to get meter event summaries, defaulting to empty usage', {
+                    error,
+                    subscriptionId: subscription.id,
+                    customerId: subscription.customer
+                })
+                summaries = { data: [] }
+            }
+
+            return {
+                ...subscription,
+                id: subscription.id,
+                customerId: subscription.customer as string,
+                status: subscription.status as Subscription['status'],
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                usage: summaries.data
+            }
+        } catch (error: any) {
+            log.error('Failed to get subscription with usage', {
+                error: error.message,
+                subscriptionId,
+                stack: error.stack
+            })
+            // Return a default response instead of throwing
+            return {
+                id: '',
+                customerId: subscriptionId || '',
+                status: 'unpaid',
+                currentPeriodStart: new Date(),
+                currentPeriodEnd: new Date(),
+                cancelAtPeriodEnd: false,
+                usage: []
+            }
         }
     }
 }

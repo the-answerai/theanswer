@@ -10,11 +10,12 @@ const createCustomer = (body) => client.post('/billing/customers', body)
 // Payment methods
 const attachPaymentMethod = (body) => client.post('/billing/payment-methods', body)
 
-// Subscription management
+// s management
 const createSubscription = (body) => client.post('/billing/subscriptions', body)
 const updateSubscription = (subscriptionId, body) => client.put(`/subscriptions/${subscriptionId}`, body)
 const cancelSubscription = (subscriptionId) => client.delete(`/subscriptions/${subscriptionId}`)
 const getSubscriptions = () => client.get('/billing/subscriptions')
+const getSubscriptionWithUsage = (subscriptionId) => client.get(`/billing/subscriptions/${subscriptionId}/usage`)
 
 // Invoices
 const getUpcomingInvoice = (body) => client.post('/billing/invoices/upcoming', body)
@@ -31,6 +32,7 @@ export default {
     updateSubscription,
     cancelSubscription,
     getSubscriptions,
+    getSubscriptionWithUsage,
     getUpcomingInvoice,
     createBillingPortalSession
 }

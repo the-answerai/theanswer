@@ -17,6 +17,7 @@ router.post('/customers', billingController.createCustomer)
 router.post('/payment-methods', billingController.attachPaymentMethod)
 
 // Subscriptions
+router.get('/subscriptions', billingController.getSubscriptionWithUsage)
 router.post('/subscriptions', billingController.createCheckoutSession)
 router.put('/subscriptions/:id', billingController.updateSubscription)
 router.delete('/subscriptions/:id', billingController.cancelSubscription)
