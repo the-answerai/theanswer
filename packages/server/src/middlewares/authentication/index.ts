@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
-import { stripe } from '../../aai-utils/billing/stripe/config'
+import Stripe from 'stripe'
 
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
@@ -80,8 +80,32 @@ export const authenticationHandlerMiddleware =
                 user.name = name
                 user.organizationId = organization.id
             }
+            // Upsert customer on Stripe if no customerId is attached
+            let stripeCustomerId = user.stripeCustomerId
+            if (!stripeCustomerId) {
+                try {
+                    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '')
+
+                    const customer = await stripe.customers.create({
+                        email,
+                        name,
+                        metadata: {
+                            userId: user.id,
+                            auth0Id,
+                            orgId: organization.id
+                        }
+                    })
+                    stripeCustomerId = customer.id
+                    // Optionally, update the user profile in your database with the new customerId
+                } catch (error) {
+                    console.error('Error creating/updating Stripe customer:', error)
+                    return res.status(500).send('Internal Server Error')
+                }
+                user.stripeCustomerId = stripeCustomerId
+            }
 
             req.user = { ...authUser, ...user, roles }
+
             await userRepo.save(user)
 
             return next()

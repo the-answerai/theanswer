@@ -25,13 +25,13 @@ const BillingDashboard: React.FC = () => {
         const fetchBillingInfo = async () => {
             try {
                 // Get active subscription info
-                const subscriptions = await billingApi.getSubscriptions()
-                const activeSubscription = subscriptions.data?.find((sub) => sub.status === 'active')
+                const subscription = await billingApi.getSubscriptions()
+                const activeSubscription = subscription.data.data[0]
 
                 if (activeSubscription) {
                     setBillingInfo({
                         currentPlan: {
-                            name: activeSubscription.plan.name,
+                            name: activeSubscription.data.items.data[0].plan.name,
                             sparksIncluded: activeSubscription.plan.metadata.sparks_included
                         },
                         billingPeriod: {

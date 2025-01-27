@@ -126,6 +126,18 @@ async function createBillingPortalSession(params: CreateBillingPortalSessionPara
     }
 }
 
+async function getSubscriptionWithUsage(subscriptionId: string) {
+    try {
+        return await billingService.getSubscriptionWithUsage(subscriptionId)
+    } catch (error) {
+        logger.error('Error getting subscription with usage:', error)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Failed to get subscription with usage: ${error instanceof Error ? error.message : String(error)}`
+        )
+    }
+}
+
 export default {
     getUsageStats,
     syncUsageToStripe,
@@ -135,5 +147,6 @@ export default {
     updateSubscription,
     cancelSubscription,
     getUpcomingInvoice,
-    createBillingPortalSession
+    createBillingPortalSession,
+    getSubscriptionWithUsage
 }

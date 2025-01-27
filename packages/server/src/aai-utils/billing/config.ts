@@ -9,31 +9,32 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 export const log = console as unknown as Logger
 
 // Default customer ID for development
-export const DEFAULT_CUSTOMER_ID = process.env.DEFAULT_STRIPE_CUSTOMER_ID
+export const DEFAULT_CUSTOMER_ID = process.env.DEFAULT_STRIPE_CUSTOMER_ID ?? 'cus_Re7UrYXnBJisB8'
 
 // Billing configuration
 export const BILLING_CONFIG = {
+    // Base rate: $20 for 500,000 sparks = $0.00004 per spark
+    SPARK_TO_USD: 0.00004, // Base cost per spark in USD
+    MARGIN_MULTIPLIER: 1.2, // 20% margin applied to total cost
+    SPARKS_METER_ID: 'mtr_test_61Rgpu5M2KRrOLhJW41FeRAHyP6by5dI',
+    SPARKS_METER_NAME: 'sparks',
+
     AI_TOKENS: {
-        TOKENS_PER_SPARK: 10,
-        COST_PER_SPARK: 0.001,
-        USD_TO_SPARKS: 25000,
-        RETAIL_PRICE_PER_SPARK: 0.00004 * 1.2,
-        MARGIN_MULTIPLIER: 1.2
+        TOKENS_PER_SPARK: 10, // 1,000 tokens = 100 Sparks
+        METER_NAME: 'sparks'
     },
     COMPUTE: {
-        MINUTES_PER_SPARK: 1 / 50,
-        COST_PER_SPARK: 0.001,
-        MARGIN_MULTIPLIER: 1.2
+        MINUTES_PER_SPARK: 1 / 50, // 1 minute = 50 Sparks
+        METER_NAME: 'sparks'
     },
     STORAGE: {
-        GB_PER_SPARK: 1 / 500,
-        COST_PER_SPARK: 0.001,
-        MARGIN_MULTIPLIER: 1.2
+        GB_PER_SPARK: 1 / 500, // 1 GB = 500 Sparks
+        METER_NAME: 'sparks'
     },
-    SPARKS: {
-        METER_ID: process.env.STRIPE_SPARKS_METER_ID || '',
-        METER_NAME: 'sparks',
-        MARGIN_MULTIPLIER: 1.2
+    RATE_DESCRIPTIONS: {
+        AI_TOKENS: 'Usage from AI model token consumption (1,000 tokens = 100 Sparks)',
+        COMPUTE: 'Usage from processing time and compute resources (1 minute = 50 Sparks)',
+        STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Sparks)'
     }
 }
 

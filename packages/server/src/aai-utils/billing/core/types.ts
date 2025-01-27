@@ -24,6 +24,10 @@ export interface Subscription {
     cancelAtPeriodEnd: boolean
 }
 
+export interface SubscriptionWithUsage extends Subscription {
+    usage: Array<Stripe.Billing.MeterEventSummary & { meter_name: string }>
+}
+
 export interface UsageMetric {
     used: number
     total: number
@@ -33,24 +37,15 @@ export interface UsageMetric {
 }
 
 export interface UsageStats {
-    ai_tokens: UsageMetric
-    compute: UsageMetric
-    storage: UsageMetric
     total_sparks: number
-    total_cost: number
-    billing_period: {
-        start: string
-        end: string
+    usageByMeter: Record<string, number>
+    dailyUsageByMeter: Record<string, Array<{ date: Date; value: number }>>
+    billingPeriod?: {
+        start: Date
+        end: Date
     }
-    upcomingInvoice?: Stripe.Response<Stripe.UpcomingInvoice>
-    sparksSummary?: Array<{
-        id: string
-        aggregated_value: number
-        meter: string
-        start_time: number
-        end_time: number
-        payload?: any
-    }>
+    lastUpdated: Date
+    raw?: any // Raw meter event summaries for debugging
 }
 
 export interface BillingPortalSession {
@@ -82,6 +77,8 @@ export interface BillingProvider {
     getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice>
     getUsageStats(customerId: string): Promise<UsageStats>
     syncUsageToStripe(traceId?: string): Promise<{ processedTraces: string[]; failedTraces: Array<{ traceId: string; error: string }> }>
+    listSubscriptions(params: Stripe.SubscriptionListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Subscription>>>
+    getSubscriptionWithUsage(subscriptionId: string): Promise<SubscriptionWithUsage>
 }
 
 export interface CreateCustomerParams {
@@ -122,11 +119,12 @@ export interface SparksData {
     traceId: string
     stripeCustomerId: string
     subscriptionTier: string
+    timestamp: string
+    timestampEpoch: number
     sparks: {
         ai_tokens: number
         compute: number
         storage: number
-        cost: number
         total: number
     }
     metadata: Record<string, any>
@@ -142,6 +140,18 @@ export interface SparksData {
             totalTokens: number
             costUSD: number
         }>
+    }
+    costs: {
+        base: {
+            ai: number
+            compute: number
+            storage: number
+            total: number
+        }
+        withMargin: {
+            total: number
+            marginMultiplier: number
+        }
     }
 }
 
@@ -165,7 +175,7 @@ export interface LangfuseTrace {
 }
 
 export interface TraceMetadata {
-    customerId?: string
+    stripeCustomerId: string
     subscriptionTier?: string
     [key: string]: any
 }
@@ -186,22 +196,21 @@ export const SPARK_RATES = {
 }
 
 export interface MeterEvent extends Stripe.Billing.MeterEvent {
-    payload:
-        | {
-              value: string
-              stripe_customer_id: string
-              trace_id: string
-              ai_tokens: string
-              compute: string
-              storage: string
-              original_cost_usd: string
-              margin_multiplier: string
-              models: string
-              total_tokens: string
-              compute_minutes: string
-              storage_gb: string
-          }
-        | any
+    payload: {
+        // Required fields
+        value: string
+        stripe_customer_id: string
+        trace_id: string
+        // Cost tracking
+        base_cost: string
+        total_cost: string
+        margin: string
+        // Spark breakdown
+        ai_sparks: string
+        compute_sparks: string
+        storage_sparks: string
+        dateTimestamp?: string
+    }
 }
 
 export interface SyncUsageResponse {

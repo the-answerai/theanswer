@@ -12,10 +12,10 @@ const Page = () => {
     return (
         <>
             <BillingDashboard />
-            <PricingOverview />
+            {/* <PricingOverview /> */}
+            <PurchaseSparks />
             <CostCalculator />
             <PurchaseSubscription />
-            <PurchaseSparks />
             {/* <UsageStats /> */}
         </>
     )

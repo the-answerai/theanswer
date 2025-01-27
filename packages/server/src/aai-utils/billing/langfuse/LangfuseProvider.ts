@@ -1,7 +1,6 @@
-import { UsageStats, SparksData, TraceMetadata, MeterEvent, SyncUsageResponse } from '../core/types'
+import { SparksData, TraceMetadata, SyncUsageResponse } from '../core/types'
 import { langfuse, log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
-import type { GetLangfuseTraceResponse, GetLangfuseTracesResponse } from 'langfuse-core'
-import { Console } from 'winston/lib/winston/transports'
+import type { GetLangfuseTracesResponse } from 'langfuse-core'
 import { StripeProvider } from '../stripe/StripeProvider'
 import { stripe as stripeClient } from '../config'
 import Stripe from 'stripe'
@@ -9,54 +8,57 @@ import Stripe from 'stripe'
 type Trace = GetLangfuseTracesResponse['data'][number]
 
 export class LangfuseProvider {
-    async getUsageStats(customerId: string): Promise<UsageStats> {
-        try {
-            const traces = await this.fetchUsageData()
-            const sparksData = await this.convertUsageToSparks(traces)
+    // async getUsageStats(customerId: string): Promise<UsageStats> {
+    //     try {
+    //         const traces = await this.fetchUsageData()
+    //         const sparksData = await this.convertUsageToSparks(traces)
 
-            // Calculate totals
-            const totalSparks = sparksData.reduce((acc, data) => acc + data.sparks.total, 0)
-            const totalCost = sparksData.reduce((acc, data) => acc + data.usage.totalCost, 0)
+    //         // Calculate totals
+    //         const totalSparks = sparksData.reduce((acc, data) => acc + data.sparks.total, 0)
+    //         const totalCost = sparksData.reduce((acc, data) => acc + data.usage.totalCost, 0)
 
-            // Get billing period
-            const now = new Date()
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    //         // Get billing period
+    //         const now = new Date()
+    //         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    //         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-            return {
-                ai_tokens: {
-                    used: Math.round(totalSparks * BILLING_CONFIG.AI_TOKENS.TOKENS_PER_SPARK),
-                    total: 1000000, // Default limit
-                    sparks: totalSparks,
-                    cost: totalSparks * BILLING_CONFIG.AI_TOKENS.COST_PER_SPARK,
-                    rate: BILLING_CONFIG.AI_TOKENS.TOKENS_PER_SPARK
-                },
-                compute: {
-                    used: 0,
-                    total: 10000,
-                    sparks: 0,
-                    cost: 0,
-                    rate: BILLING_CONFIG.COMPUTE.MINUTES_PER_SPARK
-                },
-                storage: {
-                    used: 0,
-                    total: 100,
-                    sparks: 0,
-                    cost: 0,
-                    rate: BILLING_CONFIG.STORAGE.GB_PER_SPARK
-                },
-                total_sparks: totalSparks,
-                total_cost: totalCost,
-                billing_period: {
-                    start: startOfMonth.toISOString(),
-                    end: endOfMonth.toISOString()
-                }
-            }
-        } catch (error: any) {
-            log.error('Failed to get Langfuse usage stats', { error, customerId })
-            throw error
-        }
-    }
+    //         return {
+    //             // ai_tokens: {
+    //             //     used: Math.round(totalSparks * BILLING_CONFIG.AI_TOKENS.TOKENS_PER_SPARK),
+    //             //     total: 1000000, // Default limit
+    //             //     sparks: totalSparks,
+    //             //     cost: totalSparks * BILLING_CONFIG.SPARK_TO_USD,
+    //             //     rate: BILLING_CONFIG.AI_TOKENS.TOKENS_PER_SPARK
+    //             // },
+    //             // compute: {
+    //             //     used: 0,
+    //             //     total: 10000,
+    //             //     sparks: 0,
+    //             //     cost: 0,
+    //             //     rate: BILLING_CONFIG.COMPUTE.MINUTES_PER_SPARK
+    //             // },
+    //             // storage: {
+    //             //     used: 0,
+    //             //     total: 100,
+    //             //     sparks: 0,
+    //             //     cost: 0,
+    //             //     rate: BILLING_CONFIG.STORAGE.GB_PER_SPARK
+    //             // },
+    //             total_sparks: totalSparks,
+    //             dailyUsageByMeter: {},
+    //             usageByMeter: {},
+    //             lastUpdated: new Date(),
+    //             // total_cost: totalCost,
+    //             // billing_period: {
+    //             //     start: startOfMonth.toISOString(),
+    //             //     end: endOfMonth.toISOString()
+    //             // }
+    //         }
+    //     } catch (error: any) {
+    //         log.error('Failed to get Langfuse usage stats', { error, customerId })
+    //         throw error
+    //     }
+    // }
 
     async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
         let traces: Trace[] = []
@@ -82,13 +84,10 @@ export class LangfuseProvider {
         return {
             processedTraces,
             failedTraces,
-            ...(process.env.NODE_ENV === 'development'
-                ? {
-                      traces,
-                      sparksData,
-                      meterEvents
-                  }
-                : {})
+
+            traces,
+            sparksData,
+            meterEvents
         }
     }
 
@@ -98,98 +97,219 @@ export class LangfuseProvider {
             startOfMonth.setDate(1)
             startOfMonth.setHours(0, 0, 0, 0)
 
+            // Get total pages first
+            const initialResponse = await langfuse.fetchTraces({
+                fromTimestamp: startOfMonth,
+                limit: 100,
+                page: 1
+            })
+
+            const totalPages = initialResponse.meta.totalPages
             let allTraces: GetLangfuseTracesResponse['data'] = []
-            let currentPage = 1
-            let hasMore = true
 
-            while (hasMore) {
-                const response = await langfuse.fetchTraces({
-                    fromTimestamp: startOfMonth,
-                    limit: 100,
-                    page: currentPage
+            // Process initial response
+            const validInitialTraces = initialResponse.data.filter((trace) => {
+                const hasTokenCost = trace.totalCost > 0
+                const hasComputeTime = trace.latency > 0
+                return hasTokenCost || hasComputeTime
+            })
+            allTraces = allTraces.concat(validInitialTraces)
+
+            // Fetch remaining pages in parallel with rate limiting
+            const BATCH_SIZE = 15 // Number of concurrent requests
+            const RATE_LIMIT_DELAY = 1000 // 1 second delay between batches
+
+            for (let i = 2; i <= totalPages; i += BATCH_SIZE) {
+                const batch = []
+                for (let j = 0; j < BATCH_SIZE && i + j <= totalPages; j++) {
+                    batch.push(
+                        langfuse.fetchTraces({
+                            fromTimestamp: startOfMonth,
+                            limit: 100,
+                            page: i + j
+                        })
+                    )
+                }
+
+                const responses = await Promise.all(batch)
+
+                responses.forEach((response) => {
+                    const validTraces = response.data.filter((trace) => {
+                        const hasTokenCost = trace.totalCost > 0
+                        const hasComputeTime = trace.latency > 0
+                        return hasTokenCost || hasComputeTime
+                    })
+                    allTraces = allTraces.concat(validTraces)
                 })
 
-                const validTraces = response.data.filter((trace) => {
-                    const hasTokenCost = trace.totalCost > 0
-                    const hasComputeTime = trace.latency > 0
-                    return hasTokenCost || hasComputeTime
-                })
-
-                allTraces = allTraces.concat(validTraces)
-                hasMore = response.meta.totalPages > currentPage
-                currentPage++
+                // Rate limit delay between batches
+                if (i + BATCH_SIZE <= totalPages) {
+                    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY))
+                }
             }
 
             return allTraces
         } catch (error) {
             log.error('Error fetching usage data from Langfuse:', error)
-            throw new Error('Failed to fetch usage data from Langfuse')
+            console.log(error)
+            throw error
         }
     }
 
     private async validateUsageData(trace: Trace): Promise<boolean> {
         return !!(trace.id && typeof trace.totalCost === 'number' && typeof trace.latency === 'number')
     }
-
     private async convertUsageToSparks(usageData: Trace[]): Promise<SparksData[]> {
         const validTraces = await Promise.all(usageData.map((trace) => this.validateUsageData(trace)))
         const filteredData = usageData.filter((_, index) => validTraces[index])
         const processedData: SparksData[] = []
 
-        for (const trace of filteredData) {
-            const metadata = (trace.metadata || {}) as TraceMetadata
-            const computeMinutes = trace.latency / (1000 * 60)
-            const fullTrace = await langfuse.fetchTrace(trace.id)
-            const modelUsage = fullTrace.data.observations
-                .filter((obs) => obs.model && (obs.calculatedTotalCost || obs.calculatedTotalCost === 0))
-                .map((obs) => ({
-                    model: obs.model!,
-                    inputTokens: obs.usage?.input || 0,
-                    outputTokens: obs.usage?.output || 0,
-                    totalTokens: obs.usage?.total || 0,
-                    costUSD: obs.calculatedTotalCost || 0
-                }))
+        // Use UTC timestamp for consistency
+        const nowUtc = new Date()
+        const nowUtcSeconds = Math.floor(nowUtc.getTime() / 1000)
 
-            const aiTokensSparks = modelUsage.reduce((total: number, model) => {
-                const costBasedSparks = Math.ceil(model.costUSD * BILLING_CONFIG.AI_TOKENS.USD_TO_SPARKS)
-                const tokenBasedSparks = Math.max(1, Math.ceil(model.totalTokens / 100))
-                return total + Math.max(costBasedSparks, tokenBasedSparks)
-            }, 0)
+        log.info('Starting trace processing with reference time', {
+            nowUtc: nowUtc.toISOString(),
+            nowUtcSeconds,
+            totalTraces: filteredData.length
+        })
 
-            const finalAiTokensSparks =
-                aiTokensSparks === 0 && trace.totalCost > 0
-                    ? Math.max(1, Math.ceil(trace.totalCost * BILLING_CONFIG.AI_TOKENS.USD_TO_SPARKS))
-                    : Math.max(
-                          aiTokensSparks,
-                          Math.ceil(fullTrace.data.observations.reduce((sum: number, obs) => sum + (obs.usage?.total || 0), 0) / 100)
-                      )
+        // Process traces in batches
+        const BATCH_SIZE = 15
+        const RATE_LIMIT_DELAY = 1000 // 1 second delay between batches
 
-            const computeSparks = Math.max(1, Math.ceil(computeMinutes * 60))
+        for (let i = 0; i < filteredData.length; i += BATCH_SIZE) {
+            const batch = filteredData.slice(i, i + BATCH_SIZE)
+            const batchResults = await Promise.all(batch.map((trace) => this.processTrace(trace, nowUtcSeconds)))
 
-            const sparksData: SparksData = {
-                traceId: trace.id,
-                stripeCustomerId: metadata.stripeCustomerId || DEFAULT_CUSTOMER_ID!,
-                subscriptionTier: metadata.subscriptionTier || 'free',
-                sparks: {
-                    ai_tokens: finalAiTokensSparks,
-                    compute: computeSparks,
-                    storage: 0,
-                    cost: 0,
-                    total: finalAiTokensSparks + computeSparks
-                },
-                metadata,
-                usage: {
-                    tokens: modelUsage.reduce((sum: number, model) => sum + model.totalTokens, 0),
-                    computeMinutes,
-                    storageGB: 0,
-                    totalCost: trace.totalCost,
-                    models: modelUsage
-                }
+            // Filter out failed traces (undefined results)
+            const validResults = batchResults.filter((result): result is SparksData => !!result)
+            processedData.push(...validResults)
+
+            // Apply rate limiting between batches
+            if (i + BATCH_SIZE < filteredData.length) {
+                await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY))
             }
-
-            processedData.push(sparksData)
         }
 
         return processedData
+    }
+
+    private async processTrace(trace: Trace, nowUtcSeconds: number): Promise<SparksData | undefined> {
+        try {
+            const traceDate = new Date(trace.timestamp)
+            const traceTimestampSeconds = Math.floor(traceDate.getTime() / 1000)
+
+            // Skip future timestamps (with 5 min buffer)
+            if (traceTimestampSeconds > nowUtcSeconds + 300) {
+                log.warn('Skipping trace with future timestamp', {
+                    traceId: trace.id,
+                    timestamp: trace.timestamp,
+                    difference: traceTimestampSeconds - nowUtcSeconds
+                })
+                return undefined
+            }
+
+            const metadata = (trace.metadata || {}) as TraceMetadata
+            const costs = await this.calculateCosts(trace)
+            const sparks = this.convertCostsToSparks(costs)
+            const modelUsage = await this.getModelUsage(trace)
+
+            return this.buildSparksData(trace, metadata, costs, sparks, modelUsage, traceTimestampSeconds)
+        } catch (error: any) {
+            log.error('Error processing trace', { traceId: trace.id, error: error.message })
+            return undefined
+        }
+    }
+
+    private async calculateCosts(trace: Trace): Promise<{
+        ai: number
+        compute: number
+        storage: number
+        total: number
+        withMargin: number
+    }> {
+        const computeMinutes = trace.latency / (1000 * 60)
+        const aiCost = trace.totalCost
+        const computeCost = computeMinutes * 0.05
+        const storageCost = 0
+        const totalBase = aiCost + computeCost + storageCost
+        const withMargin = totalBase * BILLING_CONFIG.MARGIN_MULTIPLIER
+
+        return {
+            ai: aiCost,
+            compute: computeCost,
+            storage: storageCost,
+            total: totalBase,
+            withMargin
+        }
+    }
+
+    private convertCostsToSparks(costs: { ai: number; compute: number; storage: number; withMargin: number }) {
+        return {
+            ai_tokens: Math.ceil((costs.ai * BILLING_CONFIG.MARGIN_MULTIPLIER) / BILLING_CONFIG.SPARK_TO_USD),
+            compute: Math.ceil((costs.compute * BILLING_CONFIG.MARGIN_MULTIPLIER) / BILLING_CONFIG.SPARK_TO_USD),
+            storage: Math.ceil((costs.storage * BILLING_CONFIG.MARGIN_MULTIPLIER) / BILLING_CONFIG.SPARK_TO_USD)
+        }
+    }
+
+    private async getModelUsage(trace: Trace) {
+        const fullTrace = await langfuse.fetchTrace(trace.id)
+        return fullTrace.data.observations
+            .filter((obs) => obs.model && (obs.calculatedTotalCost || obs.calculatedTotalCost === 0))
+            .map((obs) => ({
+                model: obs.model!,
+                inputTokens: obs.usage?.input || 0,
+                outputTokens: obs.usage?.output || 0,
+                totalTokens: obs.usage?.total || 0,
+                costUSD: obs.calculatedTotalCost || 0
+            }))
+    }
+
+    private buildSparksData(
+        trace: Trace,
+        metadata: TraceMetadata,
+        costs: { ai: number; compute: number; storage: number; total: number; withMargin: number },
+        sparks: { ai_tokens: number; compute: number; storage: number },
+        modelUsage: Array<any>,
+        timestampSeconds: number
+    ): SparksData {
+        const totalSparks = sparks.ai_tokens + sparks.compute + sparks.storage
+        const computeMinutes = trace.latency / (1000 * 60)
+
+        return {
+            traceId: trace.id,
+            stripeCustomerId: metadata.customerId || DEFAULT_CUSTOMER_ID!,
+            subscriptionTier: metadata.subscriptionTier || 'free',
+            timestamp: trace.timestamp,
+            timestampEpoch: timestampSeconds,
+            sparks: {
+                ...sparks,
+                total: totalSparks
+            },
+            metadata: {
+                ...metadata,
+                timestamp: trace.timestamp
+            },
+            usage: {
+                tokens: modelUsage.reduce((sum, model) => sum + model.totalTokens, 0),
+                computeMinutes,
+                storageGB: 0,
+                totalCost: costs.total,
+                models: modelUsage
+            },
+            costs: {
+                base: {
+                    ai: costs.ai,
+                    compute: costs.compute,
+                    storage: costs.storage,
+                    total: costs.total
+                },
+                withMargin: {
+                    total: costs.withMargin,
+                    marginMultiplier: BILLING_CONFIG.MARGIN_MULTIPLIER
+                }
+            }
+        }
     }
 }
