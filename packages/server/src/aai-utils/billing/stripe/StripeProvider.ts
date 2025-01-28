@@ -259,6 +259,7 @@ export class StripeProvider {
                     batch.map(async (data) => {
                         const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
                         const totalSparks = Object.values(data.sparks).reduce((sum, val) => sum + val, 0)
+                        const totalSparksWithMargin = totalSparks * BILLING_CONFIG.MARGIN_MULTIPLIER
                         const meterId = metersMap.get('sparks')
 
                         if (!meterId) {
@@ -274,16 +275,20 @@ export class StripeProvider {
                                         : `${data.traceId}_sparks_${Date.now()}`,
                                 timestamp,
                                 payload: {
-                                    value: totalSparks.toString(),
+                                    value: totalSparksWithMargin.toString(),
                                     stripe_customer_id: data.stripeCustomerId,
                                     trace_id: data.traceId,
-                                    ai_tokens_sparks: data.sparks.ai_tokens.toString(),
-                                    compute_sparks: data.sparks.compute.toString(),
-                                    storage_sparks: data.sparks.storage.toString(),
-                                    ai_tokens_cost: data.costs.base.ai.toFixed(6),
-                                    compute_cost: data.costs.base.compute.toFixed(6),
-                                    storage_cost: data.costs.base.storage.toFixed(6),
-                                    margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                                    ai_tokens_sparks: (data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                    compute_sparks: (data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                    storage_sparks: (data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                    ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                    compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                    storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                    margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
+                                    total_cost_with_margin: (
+                                        (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
+                                        BILLING_CONFIG.MARGIN_MULTIPLIER
+                                    ).toFixed(6)
                                 }
                             })
 
@@ -295,7 +300,63 @@ export class StripeProvider {
                                 metadata: {
                                     ...data.fullTrace?.metadata,
                                     billing_status: 'processed',
-                                    meter_event_id: result.identifier
+                                    meter_event_id: result.identifier,
+                                    billing_details: {
+                                        total_sparks: totalSparksWithMargin,
+                                        breakdown: {
+                                            ai_tokens: {
+                                                base_sparks: data.sparks.ai_tokens,
+                                                sparks_with_margin: data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                base_cost: data.costs.base.ai,
+                                                cost_with_margin: data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                rate: data.sparks.ai_tokens > 0 ? data.costs.base.ai / data.sparks.ai_tokens : 0,
+                                                percentage: (data.sparks.ai_tokens / totalSparks) * 100
+                                            },
+                                            compute: {
+                                                base_sparks: data.sparks.compute,
+                                                sparks_with_margin: data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                base_cost: data.costs.base.compute,
+                                                cost_with_margin: data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                rate: data.sparks.compute > 0 ? data.costs.base.compute / data.sparks.compute : 0,
+                                                percentage: (data.sparks.compute / totalSparks) * 100
+                                            },
+                                            storage: {
+                                                base_sparks: data.sparks.storage,
+                                                sparks_with_margin: data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                base_cost: data.costs.base.storage,
+                                                cost_with_margin: data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                                rate: data.sparks.storage > 0 ? data.costs.base.storage / data.sparks.storage : 0,
+                                                percentage: (data.sparks.storage / totalSparks) * 100
+                                            }
+                                        },
+                                        costs: {
+                                            total_base_cost: data.costs.base.ai + data.costs.base.compute + data.costs.base.storage,
+                                            total_with_margin:
+                                                (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
+                                                BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                            currency: 'USD'
+                                        },
+                                        billing_config: {
+                                            margin_multiplier: BILLING_CONFIG.MARGIN_MULTIPLIER,
+                                            environment: process.env.NODE_ENV || 'development',
+                                            version: '1.0.0',
+                                            meter_id: meterId
+                                        },
+                                        event: {
+                                            customer_id: data.stripeCustomerId,
+                                            timestamp: timestamp,
+                                            event_name: 'sparks',
+                                            meter_identifier: result.identifier,
+                                            identifier_production: process.env.NODE_ENV === 'production' ? result.identifier : undefined
+                                        },
+                                        processing: {
+                                            started_at: new Date(batchStartTime).toISOString(),
+                                            completed_at: new Date().toISOString(),
+                                            duration_ms: Date.now() - batchStartTime,
+                                            batch_size: batch.length,
+                                            batch_index: Math.floor(i / BATCH_SIZE)
+                                        }
+                                    }
                                 }
                             })
 
@@ -319,16 +380,20 @@ export class StripeProvider {
                                             : `${data.traceId}_sparks_${Date.now()}`,
                                     timestamp,
                                     payload: {
-                                        value: totalSparks.toString(),
+                                        value: totalSparksWithMargin.toString(),
                                         stripe_customer_id: DEFAULT_CUSTOMER_ID,
                                         trace_id: data.traceId,
-                                        ai_tokens_sparks: data.sparks.ai_tokens.toString(),
-                                        compute_sparks: data.sparks.compute.toString(),
-                                        storage_sparks: data.sparks.storage.toString(),
-                                        ai_tokens_cost: data.costs.base.ai.toFixed(6),
-                                        compute_cost: data.costs.base.compute.toFixed(6),
-                                        storage_cost: data.costs.base.storage.toFixed(6),
-                                        margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                                        ai_tokens_sparks: (data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                        compute_sparks: (data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                        storage_sparks: (data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                        ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                        compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                        storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                        margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
+                                        total_cost_with_margin: (
+                                            (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
+                                            BILLING_CONFIG.MARGIN_MULTIPLIER
+                                        ).toFixed(6)
                                     }
                                 })
                                 console.log('Result', data)

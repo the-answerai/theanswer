@@ -89,7 +89,7 @@ export const AppDrawer = ({ session, chatList, flagsmithState }: any) => {
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage'])
-    const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'document-stores']
+    const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'document-stores', 'billing']
     const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'documentstores', 'admin']
 
     const filterMenuItems = (items: MenuConfig[]) => {
@@ -107,9 +107,6 @@ export const AppDrawer = ({ session, chatList, flagsmithState }: any) => {
         {
             ...(flags['chatflow:use'].enabled
                 ? {
-                      //   text: 'Sidekick Studio',
-                      //   link: '/sidekick-studio',
-                      //   icon: <ConstructionOutlinedIcon color='primary' />,
                       subMenu: [
                           {
                               id: 'chatflows',
@@ -158,6 +155,12 @@ export const AppDrawer = ({ session, chatList, flagsmithState }: any) => {
                               text: 'Admin',
                               link: '/sidekick-studio/admin',
                               icon: <AdminOutlinedIcon color='primary' />
+                          },
+                          {
+                              id: 'billing',
+                              text: 'Billing',
+                              link: '/billing',
+                              icon: <StarIcon color='primary' />
                           }
                       ]
                   }

@@ -157,12 +157,14 @@ export class BillingService implements BillingProvider {
     async syncUsageToStripe(traceId?: string): Promise<{
         processedTraces: string[]
         failedTraces: Array<{ traceId: string; error: string }>
+        skippedTraces: Array<{ traceId: string; reason: string }>
         meterEvents: any[]
     }> {
         let result: any = {
             meterEvents: [],
             processedTraces: [],
-            failedTraces: []
+            failedTraces: [],
+            skippedTraces: []
         }
         const startTime = Date.now()
         try {
@@ -195,7 +197,9 @@ export class BillingService implements BillingProvider {
                 traceId,
                 processedCount: result.processedTraces.length,
                 failedCount: result.failedTraces.length,
-                meterEventsCount: result.meterEvents.length
+                skippedCount: result.skippedTraces.length,
+                meterEventsCount: result.meterEvents.length,
+                skippedTraces: result.skippedTraces
             })
             return result
         } catch (error: any) {
@@ -205,6 +209,7 @@ export class BillingService implements BillingProvider {
                 ...result,
                 processedTraces: [],
                 failedTraces: [{ traceId: traceId || 'unknown', error: error.message }],
+                skippedTraces: result.skippedTraces || [],
                 meterEvents: []
             }
         }
