@@ -216,6 +216,7 @@ export interface MeterEvent extends Stripe.Billing.MeterEvent {
 export interface SyncUsageResponse {
     processedTraces: string[]
     failedTraces: Array<{ traceId: string; error: string }>
+    skippedTraces: Array<{ traceId: string; reason: string }>
     meterEvents?: Stripe.Billing.MeterEvent[]
     traces?: any[]
     sparksData?: SparksData[]

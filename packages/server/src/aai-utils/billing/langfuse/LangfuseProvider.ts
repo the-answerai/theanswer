@@ -66,10 +66,25 @@ export class LangfuseProvider {
         let sparksDataWithTraces: Array<{ sparksData: SparksData; fullTrace: any }> = []
         let failedTraces: Array<{ traceId: string; error: string }> = []
         let processedTraces: string[] = []
+        let skippedTraces: Array<{ traceId: string; reason: string }> = []
         let meterEvents: Stripe.Billing.MeterEvent[] = []
 
         try {
             traces = await this.fetchUsageData(traceId)
+            // Track skipped traces from initial filtering
+            const skippedFromInitialFilter = traces.filter((trace) => {
+                const metadata = (trace.metadata as TraceMetadata) || {}
+                if (metadata.billing_status === 'processed') {
+                    skippedTraces.push({ traceId: trace.id, reason: 'Already processed' })
+                    return true
+                }
+                if (!(trace.totalCost > 0 || trace.latency > 0)) {
+                    skippedTraces.push({ traceId: trace.id, reason: 'No billable usage' })
+                    return true
+                }
+                return false
+            })
+
             sparksDataWithTraces = await this.convertUsageToSparks(traces)
 
             // Create meter events in Stripe
@@ -91,6 +106,7 @@ export class LangfuseProvider {
         return {
             processedTraces,
             failedTraces,
+            skippedTraces,
             traces,
             sparksData: sparksDataWithTraces.map((item) => item.sparksData),
             meterEvents
