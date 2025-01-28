@@ -19,20 +19,6 @@ import { log, BILLING_CONFIG } from '../config'
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
 
-    private meterCache: Map<string, string> = new Map()
-    private lastMeterFetch: number = 0
-    private METER_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-    private async getMeterIdFromCache(displayName: string): Promise<string | undefined> {
-        const now = Date.now()
-        if (now - this.lastMeterFetch > this.METER_CACHE_TTL || this.meterCache.size === 0) {
-            const meters = await this.stripeClient.billing.meters.list()
-            this.meterCache = new Map(meters.data.map((meter) => [meter.display_name || meter.id, meter.id]))
-            this.lastMeterFetch = now
-        }
-        return this.meterCache.get(displayName)
-    }
-
     async getInvoices(params: Stripe.InvoiceListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Invoice>>> {
         log.info('Getting invoices', { params })
         const invoices = await this.stripeClient.invoices.list(params)
@@ -244,86 +230,118 @@ export class StripeProvider {
         }
     }
 
-    async syncUsageToStripe(sparksData: SparksData[]): Promise<Stripe.Billing.MeterEvent[]> {
+    async syncUsageToStripe(
+        sparksData: SparksData[]
+    ): Promise<{ meterEvents: Stripe.Billing.MeterEvent[]; failedEvents: { error: string; traceId: string }[] }> {
         try {
             log.info('Syncing usage to Stripe', { count: sparksData.length })
 
+            // Parallel fetch meters and prepare events
+            const [meters] = await Promise.all([this.stripeClient.billing.meters.list()])
+
+            const metersMap = new Map(meters.data.map((meter) => [meter.display_name || meter.id, meter.id]))
+
+            const BATCH_SIZE = 50
+            const DELAY_BETWEEN_BATCHES = 500
             const meterEvents: Stripe.Billing.MeterEvent[] = []
-            const BATCH_SIZE = 50 // Increased from 25
-            const DELAY_BETWEEN_BATCHES = 500 // Reduced from 1000ms to 500ms
+            const failedEvents: { error: string; traceId: string }[] = []
 
-            // Pre-fetch meter ID once for all events
-            const meterId = await this.getMeterIdFromCache('sparks')
-            if (!meterId) {
-                throw new Error('No meter found for type: sparks')
-            }
-
-            // Process sparksData in optimized batches
+            // Process in optimized batches
             for (let i = 0; i < sparksData.length; i += BATCH_SIZE) {
                 const batch = sparksData.slice(i, i + BATCH_SIZE)
-                const batchPromises = batch.map(async (data) => {
-                    const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
-                    const totalSparks = data.sparks.ai_tokens + data.sparks.compute + data.sparks.storage
+                const batchStartTime = Date.now()
 
-                    try {
-                        // Optimize payload construction
-                        const identifier =
-                            process.env.NODE_ENV === 'production' ? `${data.traceId}_sparks` : `${data.traceId}_sparks_${Date.now()}`
+                const batchResults = await Promise.allSettled(
+                    batch.map(async (data) => {
+                        const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+                        const totalSparks = Object.values(data.sparks).reduce((sum, val) => sum + val, 0)
+                        const meterId = metersMap.get('sparks')
 
-                        const response = await this.stripeClient.billing.meterEvents.create({
-                            event_name: 'sparks',
-                            identifier,
-                            timestamp,
-                            payload: {
-                                value: totalSparks.toString(),
-                                stripe_customer_id: data.stripeCustomerId,
-                                trace_id: data.traceId,
-                                ai_tokens_sparks: data.sparks.ai_tokens.toString(),
-                                compute_sparks: data.sparks.compute.toString(),
-                                storage_sparks: data.sparks.storage.toString(),
-                                ai_tokens_cost: data.costs.base.ai.toFixed(6),
-                                compute_cost: data.costs.base.compute.toFixed(6),
-                                storage_cost: data.costs.base.storage.toFixed(6),
-                                margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                        if (!meterId) {
+                            throw new Error('No meter found for type: sparks')
+                        }
+
+                        try {
+                            return await this.stripeClient.billing.meterEvents.create({
+                                event_name: 'sparks',
+                                identifier:
+                                    process.env.NODE_ENV === 'production'
+                                        ? `${data.traceId}_sparks`
+                                        : `${data.traceId}_sparks_${Date.now()}`,
+                                timestamp,
+                                payload: {
+                                    value: totalSparks.toString(),
+                                    stripe_customer_id: data.stripeCustomerId,
+                                    trace_id: data.traceId,
+                                    ai_tokens_sparks: data.sparks.ai_tokens.toString(),
+                                    compute_sparks: data.sparks.compute.toString(),
+                                    storage_sparks: data.sparks.storage.toString(),
+                                    ai_tokens_cost: data.costs.base.ai.toFixed(6),
+                                    compute_cost: data.costs.base.compute.toFixed(6),
+                                    storage_cost: data.costs.base.storage.toFixed(6),
+                                    margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                                }
+                            })
+                        } catch (error: any) {
+                            // If customer not found, retry with default customer ID
+                            if (
+                                error?.code === 'resource_missing' &&
+                                error?.param === 'payload[stripe_customer_id]' &&
+                                process.env.DEFAULT_CUSTOMER_ID
+                            ) {
+                                log.warn('Customer not found, using default customer ID', {
+                                    originalCustomerId: data.stripeCustomerId,
+                                    defaultCustomerId: process.env.DEFAULT_CUSTOMER_ID,
+                                    traceId: data.traceId
+                                })
+                                return await this.stripeClient.billing.meterEvents.create({
+                                    event_name: 'sparks',
+                                    identifier:
+                                        process.env.NODE_ENV === 'production'
+                                            ? `${data.traceId}_sparks`
+                                            : `${data.traceId}_sparks_${Date.now()}`,
+                                    timestamp,
+                                    payload: {
+                                        value: totalSparks.toString(),
+                                        stripe_customer_id: process.env.DEFAULT_CUSTOMER_ID,
+                                        trace_id: data.traceId,
+                                        ai_tokens_sparks: data.sparks.ai_tokens.toString(),
+                                        compute_sparks: data.sparks.compute.toString(),
+                                        storage_sparks: data.sparks.storage.toString(),
+                                        ai_tokens_cost: data.costs.base.ai.toFixed(6),
+                                        compute_cost: data.costs.base.compute.toFixed(6),
+                                        storage_cost: data.costs.base.storage.toFixed(6),
+                                        margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
+                                    }
+                                })
                             }
-                        })
+                            throw error
+                        }
+                    })
+                )
 
-                        log.debug('Created meter event', {
-                            eventId: response.identifier,
-                            traceId: data.traceId,
-                            totalSparks
-                        })
+                // Process batch results
+                const validEvents = batchResults
+                    .filter((result) => result.status === 'fulfilled')
+                    .map((result) => (result as PromiseFulfilledResult<Stripe.Billing.MeterEvent>).value)
 
-                        return response
-                    } catch (error: any) {
-                        log.error('Failed to create meter event', {
-                            error: error.message,
-                            traceId: data.traceId
-                        })
-                        return null
-                    }
+                meterEvents.push(...validEvents)
+
+                const failedCount = batchResults.filter((r) => r.status === 'rejected').length
+                failedEvents.push(...batchResults.filter((r) => r.status === 'rejected').map((r) => (r as PromiseRejectedResult).reason))
+                log.info('Batch processing complete', {
+                    batchSize: batch.length,
+                    successCount: validEvents.length,
+                    failedCount,
+                    durationMs: Date.now() - batchStartTime
                 })
 
-                // Process batch concurrently and collect results
-                const batchResults = await Promise.all(batchPromises)
-                const validEvents = batchResults
-                    .filter((event): event is Stripe.Response<Stripe.Billing.MeterEvent> => event !== null)
-                    .map((response) => (response.lastResponse.statusCode === 200 ? response : null))
-                    .filter((event): event is Stripe.Response<Stripe.Billing.MeterEvent> => event !== null)
-                meterEvents.push(...validEvents.map((response) => response.data))
-
-                // Add optimized delay between batches
                 if (i + BATCH_SIZE < sparksData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
             }
 
-            log.info('Completed syncing usage to Stripe', {
-                totalEvents: meterEvents.length,
-                successRate: `${((meterEvents.length / sparksData.length) * 100).toFixed(2)}%`
-            })
-
-            return meterEvents
+            return { meterEvents, failedEvents }
         } catch (error: any) {
             log.error('Failed to sync usage to Stripe', { error: error.message })
             throw error

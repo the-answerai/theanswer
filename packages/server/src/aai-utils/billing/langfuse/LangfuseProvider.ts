@@ -73,7 +73,9 @@ export class LangfuseProvider {
 
             // Create meter events in Stripe
             const stripeProvider = new StripeProvider(stripeClient)
-            meterEvents = await stripeProvider.syncUsageToStripe(sparksData)
+            const stripeResponse = await stripeProvider.syncUsageToStripe(sparksData)
+            meterEvents = stripeResponse.meterEvents
+            failedTraces = stripeResponse.failedEvents
 
             processedTraces = sparksData.map((data) => data.traceId)
         } catch (error: any) {
