@@ -14,7 +14,8 @@ import {
     Invoice,
     SparksData
 } from '../core/types'
-import { log, BILLING_CONFIG } from '../config'
+import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
+import { langfuse } from '../config'
 
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
@@ -230,9 +231,11 @@ export class StripeProvider {
         }
     }
 
-    async syncUsageToStripe(
-        sparksData: SparksData[]
-    ): Promise<{ meterEvents: Stripe.Billing.MeterEvent[]; failedEvents: { error: string; traceId: string }[] }> {
+    async syncUsageToStripe(sparksData: Array<SparksData & { fullTrace: any }>): Promise<{
+        meterEvents: Stripe.Billing.MeterEvent[]
+        failedEvents: Array<{ traceId: string; error: string }>
+        processedTraces: string[]
+    }> {
         try {
             log.info('Syncing usage to Stripe', { count: sparksData.length })
 
@@ -241,10 +244,11 @@ export class StripeProvider {
 
             const metersMap = new Map(meters.data.map((meter) => [meter.display_name || meter.id, meter.id]))
 
-            const BATCH_SIZE = 50
-            const DELAY_BETWEEN_BATCHES = 500
+            const BATCH_SIZE = 15
+            const DELAY_BETWEEN_BATCHES = 1000
             const meterEvents: Stripe.Billing.MeterEvent[] = []
-            const failedEvents: { error: string; traceId: string }[] = []
+            const failedEvents: Array<{ traceId: string; error: string }> = []
+            const processedTraces: string[] = []
 
             // Process in optimized batches
             for (let i = 0; i < sparksData.length; i += BATCH_SIZE) {
@@ -262,7 +266,7 @@ export class StripeProvider {
                         }
 
                         try {
-                            return await this.stripeClient.billing.meterEvents.create({
+                            const result = await this.stripeClient.billing.meterEvents.create({
                                 event_name: 'sparks',
                                 identifier:
                                     process.env.NODE_ENV === 'production'
@@ -282,19 +286,32 @@ export class StripeProvider {
                                     margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
                                 }
                             })
+
+                            console.log('Data', data)
+                            // Update trace metadata to mark as processed
+                            const updatedTrace = await langfuse.trace({
+                                id: data.traceId,
+                                timestamp: data.fullTrace?.timestamp,
+                                metadata: {
+                                    ...data.fullTrace?.metadata,
+                                    billing_status: 'processed',
+                                    meter_event_id: result.identifier
+                                }
+                            })
+
+                            console.log('Updated trace', updatedTrace)
+
+                            return { result, traceId: data.traceId }
                         } catch (error: any) {
-                            // If customer not found, retry with default customer ID
-                            if (
-                                error?.code === 'resource_missing' &&
-                                error?.param === 'payload[stripe_customer_id]' &&
-                                process.env.DEFAULT_CUSTOMER_ID
-                            ) {
-                                log.warn('Customer not found, using default customer ID', {
+                            // Check if it's a resource_missing error for the customer
+                            if (error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]') {
+                                log.warn('Customer not found, falling back to default customer', {
                                     originalCustomerId: data.stripeCustomerId,
-                                    defaultCustomerId: process.env.DEFAULT_CUSTOMER_ID,
-                                    traceId: data.traceId
+                                    defaultCustomerId: DEFAULT_CUSTOMER_ID
                                 })
-                                return await this.stripeClient.billing.meterEvents.create({
+
+                                // Retry with default customer ID
+                                const result = await this.stripeClient.billing.meterEvents.create({
                                     event_name: 'sparks',
                                     identifier:
                                         process.env.NODE_ENV === 'production'
@@ -303,7 +320,7 @@ export class StripeProvider {
                                     timestamp,
                                     payload: {
                                         value: totalSparks.toString(),
-                                        stripe_customer_id: process.env.DEFAULT_CUSTOMER_ID,
+                                        stripe_customer_id: DEFAULT_CUSTOMER_ID,
                                         trace_id: data.traceId,
                                         ai_tokens_sparks: data.sparks.ai_tokens.toString(),
                                         compute_sparks: data.sparks.compute.toString(),
@@ -314,6 +331,21 @@ export class StripeProvider {
                                         margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString()
                                     }
                                 })
+                                console.log('Result', data)
+
+                                // Update trace metadata to mark as processed
+                                const updatedTrace = await langfuse.trace({
+                                    id: data.traceId,
+                                    timestamp: data.fullTrace?.timestamp,
+                                    metadata: {
+                                        ...data.fullTrace.metadata,
+                                        billing_status: 'processed',
+                                        meter_event_id: result.identifier
+                                    }
+                                })
+                                console.log('Updated trace', updatedTrace)
+
+                                return { result, traceId: data.traceId }
                             }
                             throw error
                         }
@@ -321,18 +353,27 @@ export class StripeProvider {
                 )
 
                 // Process batch results
-                const validEvents = batchResults
-                    .filter((result) => result.status === 'fulfilled')
-                    .map((result) => (result as PromiseFulfilledResult<Stripe.Billing.MeterEvent>).value)
+                batchResults.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        meterEvents.push(result.value.result)
+                        processedTraces.push(result.value.traceId)
+                    } else {
+                        const error = result.reason
+                        // Only add to failedEvents if it's not a resource_missing error that was handled
+                        if (!(error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]')) {
+                            failedEvents.push({
+                                traceId: batch[index].traceId,
+                                error: error?.message || 'Unknown error during meter event creation'
+                            })
+                        }
+                    }
+                })
 
-                meterEvents.push(...validEvents)
-
-                const failedCount = batchResults.filter((r) => r.status === 'rejected').length
-                failedEvents.push(...batchResults.filter((r) => r.status === 'rejected').map((r) => (r as PromiseRejectedResult).reason))
                 log.info('Batch processing complete', {
                     batchSize: batch.length,
-                    successCount: validEvents.length,
-                    failedCount,
+                    successCount: meterEvents.length,
+                    failedCount: failedEvents.length,
+                    processedCount: processedTraces.length,
                     durationMs: Date.now() - batchStartTime
                 })
 
@@ -341,7 +382,7 @@ export class StripeProvider {
                 }
             }
 
-            return { meterEvents, failedEvents }
+            return { meterEvents, failedEvents, processedTraces }
         } catch (error: any) {
             log.error('Failed to sync usage to Stripe', { error: error.message })
             throw error
