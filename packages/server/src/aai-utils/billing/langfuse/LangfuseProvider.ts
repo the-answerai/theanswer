@@ -1,11 +1,12 @@
 import { SparksData, TraceMetadata, SyncUsageResponse } from '../core/types'
 import { langfuse, log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
-import type { GetLangfuseTracesResponse } from 'langfuse-core'
+import type { GetLangfuseTraceResponse, GetLangfuseTracesResponse } from 'langfuse-core'
 import { StripeProvider } from '../stripe/StripeProvider'
 import { stripe as stripeClient } from '../config'
 import Stripe from 'stripe'
 
 type Trace = GetLangfuseTracesResponse['data'][number]
+type FullTrace = GetLangfuseTraceResponse
 
 export class LangfuseProvider {
     // async getUsageStats(customerId: string): Promise<UsageStats> {
@@ -62,22 +63,26 @@ export class LangfuseProvider {
 
     async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
         let traces: Trace[] = []
-        let sparksData: SparksData[] = []
+        let sparksDataWithTraces: Array<{ sparksData: SparksData; fullTrace: any }> = []
         let failedTraces: Array<{ traceId: string; error: string }> = []
         let processedTraces: string[] = []
         let meterEvents: Stripe.Billing.MeterEvent[] = []
 
         try {
             traces = await this.fetchUsageData(traceId)
-            sparksData = await this.convertUsageToSparks(traces)
+            sparksDataWithTraces = await this.convertUsageToSparks(traces)
 
             // Create meter events in Stripe
             const stripeProvider = new StripeProvider(stripeClient)
-            const stripeResponse = await stripeProvider.syncUsageToStripe(sparksData)
+            const stripeResponse = await stripeProvider.syncUsageToStripe(
+                sparksDataWithTraces.map((item) => ({
+                    ...item.sparksData,
+                    fullTrace: item.fullTrace
+                }))
+            )
             meterEvents = stripeResponse.meterEvents
             failedTraces = stripeResponse.failedEvents
-
-            processedTraces = sparksData.map((data) => data.traceId)
+            processedTraces = stripeResponse.processedTraces
         } catch (error: any) {
             log.error('Error syncing usage data:', error)
             failedTraces = [{ traceId: traceId || 'unknown', error: error.message }]
@@ -86,9 +91,8 @@ export class LangfuseProvider {
         return {
             processedTraces,
             failedTraces,
-
             traces,
-            sparksData,
+            sparksData: sparksDataWithTraces.map((item) => item.sparksData),
             meterEvents
         }
     }
@@ -113,7 +117,9 @@ export class LangfuseProvider {
             const validInitialTraces = initialResponse.data.filter((trace) => {
                 const hasTokenCost = trace.totalCost > 0
                 const hasComputeTime = trace.latency > 0
-                return hasTokenCost || hasComputeTime
+                const metadata = (trace.metadata as TraceMetadata) || {}
+                const isNotProcessed = metadata.billing_status !== 'processed'
+                return (hasTokenCost || hasComputeTime) && isNotProcessed
             })
             allTraces = allTraces.concat(validInitialTraces)
 
@@ -139,7 +145,9 @@ export class LangfuseProvider {
                     const validTraces = response.data.filter((trace) => {
                         const hasTokenCost = trace.totalCost > 0
                         const hasComputeTime = trace.latency > 0
-                        return hasTokenCost || hasComputeTime
+                        const metadata = (trace.metadata as TraceMetadata) || {}
+                        const isNotProcessed = metadata.billing_status !== 'processed'
+                        return (hasTokenCost || hasComputeTime) && isNotProcessed
                     })
                     allTraces = allTraces.concat(validTraces)
                 })
@@ -159,12 +167,18 @@ export class LangfuseProvider {
     }
 
     private async validateUsageData(trace: Trace): Promise<boolean> {
-        return !!(trace.id && typeof trace.totalCost === 'number' && typeof trace.latency === 'number')
+        const metadata = (trace.metadata as TraceMetadata) || {}
+        return !!(
+            trace.id &&
+            typeof trace.totalCost === 'number' &&
+            typeof trace.latency === 'number' &&
+            metadata.billing_status !== 'processed'
+        )
     }
-    private async convertUsageToSparks(usageData: Trace[]): Promise<SparksData[]> {
+    private async convertUsageToSparks(usageData: Trace[]): Promise<Array<{ sparksData: SparksData; fullTrace: any }>> {
         const validTraces = await Promise.all(usageData.map((trace) => this.validateUsageData(trace)))
         const filteredData = usageData.filter((_, index) => validTraces[index])
-        const processedData: SparksData[] = []
+        const processedData: Array<{ sparksData: SparksData; fullTrace: any }> = []
 
         // Use UTC timestamp for consistency
         const nowUtc = new Date()
@@ -185,7 +199,7 @@ export class LangfuseProvider {
             const batchResults = await Promise.all(batch.map((trace) => this.processTrace(trace, nowUtcSeconds)))
 
             // Filter out failed traces (undefined results)
-            const validResults = batchResults.filter((result): result is SparksData => !!result)
+            const validResults = batchResults.filter((result): result is { sparksData: SparksData; fullTrace: any } => !!result)
             processedData.push(...validResults)
 
             // Apply rate limiting between batches
@@ -197,7 +211,7 @@ export class LangfuseProvider {
         return processedData
     }
 
-    private async processTrace(trace: Trace, nowUtcSeconds: number): Promise<SparksData | undefined> {
+    private async processTrace(trace: Trace, nowUtcSeconds: number): Promise<{ sparksData: SparksData; fullTrace: any } | undefined> {
         try {
             const traceDate = new Date(trace.timestamp)
             const traceTimestampSeconds = Math.floor(traceDate.getTime() / 1000)
@@ -213,18 +227,20 @@ export class LangfuseProvider {
             }
 
             const metadata = (trace.metadata || {}) as TraceMetadata
-            const costs = await this.calculateCosts(trace)
+            const { data: fullTrace } = await langfuse.fetchTrace(trace.id)
+            const costs = await this.calculateCosts(fullTrace)
             const sparks = this.convertCostsToSparks(costs)
-            const modelUsage = await this.getModelUsage(trace)
+            const modelUsage = await this.getModelUsage(fullTrace as any)
 
-            return this.buildSparksData(trace, metadata, costs, sparks, modelUsage, traceTimestampSeconds)
+            const sparksData = this.buildSparksData(fullTrace, metadata, costs, sparks, modelUsage, traceTimestampSeconds)
+            return { sparksData, fullTrace: fullTrace }
         } catch (error: any) {
             log.error('Error processing trace', { traceId: trace.id, error: error.message })
             return undefined
         }
     }
 
-    private async calculateCosts(trace: Trace): Promise<{
+    private async calculateCosts(trace: FullTrace): Promise<{
         ai: number
         compute: number
         storage: number
@@ -255,9 +271,8 @@ export class LangfuseProvider {
         }
     }
 
-    private async getModelUsage(trace: Trace) {
-        const fullTrace = await langfuse.fetchTrace(trace.id)
-        return fullTrace.data.observations
+    private async getModelUsage(trace: FullTrace) {
+        return trace.observations
             .filter((obs) => obs.model && (obs.calculatedTotalCost || obs.calculatedTotalCost === 0))
             .map((obs) => ({
                 model: obs.model!,
@@ -269,7 +284,7 @@ export class LangfuseProvider {
     }
 
     private buildSparksData(
-        trace: Trace,
+        trace: FullTrace,
         metadata: TraceMetadata,
         costs: { ai: number; compute: number; storage: number; total: number; withMargin: number },
         sparks: { ai_tokens: number; compute: number; storage: number },
@@ -283,7 +298,7 @@ export class LangfuseProvider {
             traceId: trace.id,
             stripeCustomerId: metadata.customerId || DEFAULT_CUSTOMER_ID!,
             subscriptionTier: metadata.subscriptionTier || 'free',
-            timestamp: trace.timestamp,
+            timestamp: trace.timestamp.toString(),
             timestampEpoch: timestampSeconds,
             sparks: {
                 ...sparks,

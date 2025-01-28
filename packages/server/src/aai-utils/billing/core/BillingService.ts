@@ -157,6 +157,7 @@ export class BillingService implements BillingProvider {
     async syncUsageToStripe(traceId?: string): Promise<{
         processedTraces: string[]
         failedTraces: Array<{ traceId: string; error: string }>
+        meterEvents: any[]
     }> {
         let result: any = {
             meterEvents: [],
@@ -174,14 +175,28 @@ export class BillingService implements BillingProvider {
             // Sync to Stripe if needed
             if (result.sparksData && result.sparksData.length > 0) {
                 const stripeStartTime = Date.now()
-                const meterEvents = await this.paymentProvider.syncUsageToStripe(result.sparksData)
+                const stripeResult = await this.paymentProvider.syncUsageToStripe(result.sparksData)
                 const stripeTime = Date.now() - stripeStartTime
                 log.info('Stripe sync completed', { durationMs: stripeTime, traceId })
-                result.meterEvents = meterEvents
+
+                // Update with successful traces and meter events from Stripe
+                result.processedTraces = stripeResult.processedTraces
+                result.meterEvents = stripeResult.meterEvents
+
+                // Add any failed events from Stripe to the failed traces
+                if (stripeResult.failedEvents && stripeResult.failedEvents.length > 0) {
+                    result.failedTraces.push(...stripeResult.failedEvents)
+                }
             }
 
             const totalTime = Date.now() - startTime
-            log.info('Total sync completed', { durationMs: totalTime, traceId })
+            log.info('Total sync completed', {
+                durationMs: totalTime,
+                traceId,
+                processedCount: result.processedTraces.length,
+                failedCount: result.failedTraces.length,
+                meterEventsCount: result.meterEvents.length
+            })
             return result
         } catch (error: any) {
             const totalTime = Date.now() - startTime
@@ -189,7 +204,8 @@ export class BillingService implements BillingProvider {
             return {
                 ...result,
                 processedTraces: [],
-                failedTraces: [{ traceId: traceId || 'unknown', error: error.message }]
+                failedTraces: [{ traceId: traceId || 'unknown', error: error.message }],
+                meterEvents: []
             }
         }
     }
