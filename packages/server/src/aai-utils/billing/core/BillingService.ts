@@ -158,7 +158,11 @@ export class BillingService implements BillingProvider {
         processedTraces: string[]
         failedTraces: Array<{ traceId: string; error: string }>
     }> {
-        let result: any
+        let result: any = {
+            meterEvents: [],
+            processedTraces: [],
+            failedTraces: []
+        }
         const startTime = Date.now()
         try {
             // Get usage data from Langfuse

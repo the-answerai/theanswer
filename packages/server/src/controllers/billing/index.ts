@@ -274,7 +274,6 @@ const usageSyncHandler = async (req: Request, res: Response, next: NextFunction)
         const result = await billingService.syncUsageToStripe(traceId)
         return res.json({
             status: 'success',
-            processed_traces: result.processedTraces,
             ...result
         })
     } catch (error) {
