@@ -259,7 +259,7 @@ export class StripeProvider {
                     batch.map(async (data) => {
                         const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
                         const totalSparks = Object.values(data.sparks).reduce((sum, val) => sum + val, 0)
-                        const totalSparksWithMargin = totalSparks * BILLING_CONFIG.MARGIN_MULTIPLIER
+                        const totalSparksWithMargin = Math.floor(totalSparks * BILLING_CONFIG.MARGIN_MULTIPLIER)
                         const meterId = metersMap.get('sparks')
 
                         if (!meterId) {
@@ -284,7 +284,7 @@ export class StripeProvider {
                                     ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
                                     compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
                                     storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                    margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
+                                    // margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
                                     total_cost_with_margin: (
                                         (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
                                         BILLING_CONFIG.MARGIN_MULTIPLIER
@@ -389,7 +389,7 @@ export class StripeProvider {
                                         ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
                                         compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
                                         storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                        margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
+                                        // margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
                                         total_cost_with_margin: (
                                             (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
                                             BILLING_CONFIG.MARGIN_MULTIPLIER
