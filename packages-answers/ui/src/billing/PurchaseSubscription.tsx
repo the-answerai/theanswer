@@ -33,6 +33,22 @@ const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
         name: 'Plus',
         sparksPerMonth: 500000,
         price: 20,
+        priceId: 'price_1QdEegFeRAHyP6by6yTOvbwj',
+        highlighted: true,
+        features: [
+            '500,000 Sparks per month',
+            'Full API access',
+            'Extended compute and storage limits',
+            'Access to advanced voice and video inputs',
+            'Priority support',
+            'Create and use custom GPTs',
+            'Early access to new features'
+        ]
+    },
+    {
+        name: 'Plus+Overage',
+        sparksPerMonth: 500000,
+        price: 20,
         priceId: 'price_1QhDqdFeRAHyP6byOK161faI',
         highlighted: true,
         features: [

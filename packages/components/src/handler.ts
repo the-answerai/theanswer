@@ -17,6 +17,7 @@ import { LunaryHandler } from '@langchain/community/callbacks/handlers/lunary'
 import { getCredentialData, getCredentialParam, getEnvironmentVariable } from './utils'
 import { ICommonObject, INodeData } from './Interface'
 import { LangWatch, LangWatchSpan, LangWatchTrace, autoconvertTypedValues } from 'langwatch'
+import { BillingCallbackHandler } from './BillingCallbackHandler'
 
 interface AgentRun extends Run {
     actions: AgentAction[]
@@ -99,6 +100,7 @@ export class ConsoleCallbackHandler extends BaseTracer {
         this.logger.verbose(
             `[chain/end] [${crumbs}] [${elapsed(run)}] Exiting Chain run with output: ${tryJsonStringify(run.outputs, '[outputs]')}`
         )
+        console.log('CHAINENDssssssss', run)
     }
 
     onChainError(run: Run) {
@@ -119,6 +121,7 @@ export class ConsoleCallbackHandler extends BaseTracer {
         this.logger.verbose(
             `[llm/end] [${crumbs}] [${elapsed(run)}] Exiting LLM run with output: ${tryJsonStringify(run.outputs, '[response]')}`
         )
+        console.log('END', run)
     }
 
     onLLMError(run: Run) {
@@ -332,6 +335,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         ...langFuseOptions,
                         root: trace
                     })
+
                     console.debug('CallbackHandler created with LangFuse options and trace.')
 
                     callbacks.push(handler)
@@ -365,6 +369,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                 }
             }
         }
+        callbacks.push(new BillingCallbackHandler())
         return callbacks
     } catch (e: any) {
         console.error('Error in additionalCallbacks:', e)
@@ -602,6 +607,7 @@ export class AnalyticHandler {
                         }
                     })
                 }
+                console.log('test', langfuseTraceClient)
                 if (shutdown) {
                     const langfuse: Langfuse = this.handlers['langFuse'].client
                     await langfuse.shutdownAsync()
