@@ -64,19 +64,30 @@ There are two main ways to get started with TheAnswer: local development setup a
     cd theanswer
     ```
 
-2. Install dependencies:
+2. run `git submodule update --init`
+
+3. If this is the first time loading locally, download dBeaver from dbeaver.io, connect to postgres database, create a new database named `flowise`....
+4. Additonal Troubleshooting.....
+
+    1. If you run in to a database prisma issue try...
+        1. `pnpm build --force`
+    2. If that still doesn't work... try
+        1. `pnpm db:migrate`
+    3. Then try `pnpm build --force` again ( `--force` bypasses the turbo build cache)
+
+5. Install dependencies:
 
     ```bash
     pnpm install
     ```
 
-3. Start the development server:
+6. Start the development server:
 
     ```bash
     pnpm dev
     ```
 
-4. Open [http://localhost:8080](http://localhost:8080) in your browser to access TheAnswer.
+7. Open [http://localhost:8080](http://localhost:8080) in your browser to access TheAnswer.
 
 ### Deploy on Render (Recommended for Easy Setup)
 
