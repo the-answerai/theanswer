@@ -29,6 +29,7 @@ import IntegrationInstructionsOutlinedIcon from '@mui/icons-material/Integration
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
 import ContactSupport from '@mui/icons-material/ContactSupport'
 import AdminOutlinedIcon from '@mui/icons-material/AdminPanelSettings'
+import ImportExportOutlinedIcon from '@mui/icons-material/ImportExportOutlined'
 import { useHelpChatContext } from './HelpChatContext' // Import the context
 
 const drawerWidth = 240
@@ -84,7 +85,17 @@ export const AppDrawer = ({ session, chatList, flagsmithState }: any) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage'])
     const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'document-stores']
-    const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'documentstores', 'admin']
+    const BUILDER_ACTIONS = [
+        'agentflows',
+        'assistants',
+        'tools',
+        'credentials',
+        'variables',
+        'apikey',
+        'documentstores',
+        'admin',
+        'csv-transformer'
+    ]
 
     const filterMenuItems = (items: MenuConfig[]) => {
         return items.map((item) => {
@@ -152,6 +163,12 @@ export const AppDrawer = ({ session, chatList, flagsmithState }: any) => {
                               text: 'Admin',
                               link: '/sidekick-studio/admin',
                               icon: <AdminOutlinedIcon color='primary' />
+                          },
+                          {
+                              id: 'csv-transformer',
+                              text: 'CSV Transformer',
+                              link: '/sidekick-studio/csv-transformer',
+                              icon: <ImportExportOutlinedIcon color='primary' />
                           }
                       ]
                   }
