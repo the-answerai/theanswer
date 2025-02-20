@@ -206,8 +206,8 @@ const MarketplaceLanding = forwardRef(function MarketplaceLanding({ templateId, 
             localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
 
             const state = {
-                templateData: JSON.stringify(template),
-                parentChatflowId: template.id
+                templateData: JSON.stringify(template)
+                // parentChatflowId: template.id
             }
 
             if (!user) {
