@@ -1,0 +1,370 @@
+tickets:
+    - id: BILL-001
+      title: 'Implement Unified Credit System with Stripe Meter Integration'
+      priority: High
+      estimated_time: '1 week'
+      description: |
+          Implement a unified credit system using Stripe's metered billing to track and manage 
+          user credits across all platform usage (AI tokens and compute time).
+
+      technical_details: |
+          Credit conversion constants:
+          ```typescript
+          const CREDIT_CONVERSION = {
+              AI_TOKENS: {
+                  RATE: 1000,  // 1000 tokens = 100 credits
+                  COST_PER_CREDIT: 0.00004  // $0.00004 per credit
+              },
+              COMPUTE: {
+                  RATE: 60,    // 1 minute = 50 credits
+                  COST_PER_CREDIT: 0.00004
+              }
+          }
+          ```
+
+      implementation_steps:
+          - step: 'Create Stripe Meter'
+            details: |
+                ```typescript
+                const meter = await stripe.meters.create({
+                  display_name: 'Platform Credits',
+                  name: 'platform_credits',
+                  aggregation_formula: 'sum'
+                });
+                ```
+
+          - step: 'Update Billing Service'
+            details: |
+                - Modify packages/server/src/aai-utils/billing/core/BillingService.ts
+                - Add credit conversion utilities
+                - Implement credit tracking methods
+
+          - step: 'Update Usage Recording'
+            details: |
+                - Modify packages/server/src/aai-utils/billing/stripe/StripeProvider.ts
+                - Implement real-time credit reporting
+
+          - step: 'Database Updates'
+            details: |
+                ```sql
+                ALTER TABLE users ADD COLUMN credit_balance INTEGER DEFAULT 0;
+                CREATE TABLE credit_transactions (
+                    id UUID PRIMARY KEY,
+                    user_id UUID,
+                    amount INTEGER,
+                    type VARCHAR(50),
+                    created_at TIMESTAMP
+                );
+                ```
+
+      acceptance_criteria:
+          - Single Stripe meter created and configured
+          - Credit conversion logic implemented and tested
+          - Real-time credit balance tracking working
+          - Credit transaction history stored and retrievable
+          - Unit tests for credit calculations
+          - Integration tests with Stripe meter
+
+      dependencies:
+          - Stripe API access
+          - Existing billing service
+          - Database migration permissions
+
+    - id: BILL-002
+      title: 'Implement Subscription Tiers and Overage Handling'
+      priority: High
+      estimated_time: '1 week'
+      description: |
+          Implement subscription tiers with base credit allocations and handle overages 
+          through Stripe's metered billing.
+
+      technical_details: |
+          ```typescript
+          const SUBSCRIPTION_TIERS = {
+              FREE_TRIAL: {
+                  credits: 10000,
+                  features: ['basic_chatflows'],
+                  stripe_price_id: 'price_xxx'
+              },
+              PRO: {
+                  base_credits: 500000,
+                  price: 20,
+                  features: ['all_chatflows'],
+                  stripe_price_id: 'price_yyy'
+              }
+          }
+          ```
+
+      implementation_steps:
+          - step: 'Create Subscription Products'
+            details: |
+                ```typescript
+                const product = await stripe.products.create({
+                  name: 'Pro Plan',
+                  description: '500,000 credits/month'
+                });
+                ```
+
+          - step: 'Implement Credit Prevention'
+            details: |
+                - Add middleware for credit checking
+                - Implement usage prevention logic
+
+          - step: 'Update Subscription Management'
+            details: |
+                - Modify packages/server/src/services/billing/plans.ts
+                - Add overage handling
+                - Implement tier management
+
+      acceptance_criteria:
+          - Subscription tiers created in Stripe
+          - Credit prevention middleware implemented
+          - Overage billing working correctly
+          - Subscription upgrade/downgrade handling
+          - Usage prevention when credits exhausted
+          - Integration tests for subscription flows
+
+      dependencies:
+          - BILL-001 completion
+          - Stripe product configuration
+          - User authentication system
+
+    - id: BILL-003
+      title: 'Implement API Key Management and Custom Key Billing'
+      priority: Medium
+      estimated_time: '1 week'
+      description: |
+          Update the API key system to support differential billing for platform vs custom 
+          API keys and implement credit tracking for API usage.
+
+      technical_details: |
+          ```typescript
+          interface APIKeyConfig {
+              type: 'platform' | 'custom';
+              provider: 'openai' | 'anthropic';
+              billing_mode: 'full' | 'compute_only';
+          }
+          ```
+
+      implementation_steps:
+          - step: 'Update API Key System'
+            details: |
+                ```sql
+                ALTER TABLE api_keys
+                ADD COLUMN key_type VARCHAR(20),
+                ADD COLUMN billing_mode VARCHAR(20);
+                ```
+
+          - step: 'Implement Billing Logic'
+            details: |
+                - Create differential billing handler
+                - Add compute-only tracking for custom keys
+
+          - step: 'Update API Endpoints'
+            details: |
+                - Modify key management endpoints
+                - Add billing mode configuration
+
+      acceptance_criteria:
+          - API key system updated with billing modes
+          - Differential credit tracking implemented
+          - Custom key detection working
+          - Credit deduction based on key type
+          - API documentation updated
+          - Integration tests for API billing
+
+      dependencies:
+          - BILL-001 & BILL-002 completion
+          - API key management system
+          - Usage tracking system
+
+    - id: BILL-004
+      title: 'Implement Billing UI and Usage Alerts'
+      priority: Medium
+      estimated_time: '1 week'
+      description: |
+          Create user interface components for credit display, usage alerts, and implement 
+          comprehensive testing.
+
+      technical_details: |
+          ```typescript
+          interface UsageAlert {
+              threshold: number;
+              type: 'percentage' | 'absolute';
+              notification_method: 'email' | 'ui';
+          }
+          ```
+
+      implementation_steps:
+          - step: 'Create UI Components'
+            details: |
+                - Credit balance display
+                - Usage alerts
+                - Subscription management interface
+
+          - step: 'Implement Usage Alerts'
+            details: |
+                ```typescript
+                const ALERT_THRESHOLDS = [
+                    { level: 0.8, type: 'warning' },
+                    { level: 0.95, type: 'critical' }
+                ];
+                ```
+
+          - step: 'Add Testing Suite'
+            details: |
+                - Unit tests for UI components
+                - Integration tests for billing flow
+                - End-to-end testing scenarios
+
+      acceptance_criteria:
+          - Credit balance visible in UI
+          - Usage alerts working at 80% and 95%
+          - Subscription management UI functional
+          - All test suites passing
+          - UI responsive and accessible
+          - Documentation updated
+
+      dependencies:
+          - All previous phases complete
+          - UI framework
+          - Testing infrastructure
+
+      files_to_modify:
+          - packages/ui/src/views/billing/*
+          - packages/server/src/controllers/billing/*
+          - packages/server/src/services/billing/*
+
+    - id: BILL-005
+      title: 'Implement Organization-Level Billing and Usage Tracking'
+      priority: High
+      estimated_time: '1 week'
+      description: |
+          Implement organization-level billing and usage tracking for enterprise customers while 
+          maintaining individual billing for users in the public organization.
+
+      technical_details: |
+          ```typescript
+          interface BillingEntity {
+              type: 'user' | 'organization';
+              id: string;
+              stripeCustomerId: string;
+              credits: {
+                  available: number;
+                  used: number;
+              };
+          }
+
+          interface CreditTransaction {
+              id: string;
+              entityType: 'user' | 'organization';
+              entityId: string;
+              amount: number;
+              type: 'debit' | 'credit';
+              metadata: {
+                  userId?: string;
+                  orgId?: string;
+                  source: string;
+              };
+          }
+          ```
+
+      implementation_steps:
+          - step: 'Update Database Schema'
+            details: |
+                ```sql
+                ALTER TABLE organizations 
+                ADD COLUMN stripe_customer_id VARCHAR(255),
+                ADD COLUMN available_credits INTEGER DEFAULT 0,
+                ADD COLUMN used_credits INTEGER DEFAULT 0;
+
+                ALTER TABLE credit_transactions
+                ADD COLUMN entity_type VARCHAR(20),
+                ADD COLUMN entity_id UUID,
+                ADD COLUMN org_id UUID;
+                ```
+
+          - step: 'Modify Credit Tracking Logic'
+            details: |
+                ```typescript
+                async function trackCredits(usage: Usage, user: User) {
+                    const org = await getOrganization(user.organizationId);
+                    
+                    if (org.auth0Id === PUBLIC_ORG_ID) {
+                        // Track credits for individual user
+                        await deductUserCredits(user.id, usage);
+                    } else {
+                        // Track credits for organization
+                        await deductOrganizationCredits(org.id, usage);
+                    }
+                }
+                ```
+
+          - step: 'Update Stripe Integration'
+            details: |
+                ```typescript
+                class StripeProvider {
+                    async reportUsage(entity: BillingEntity, usage: number) {
+                        const subscriptionItem = await this.getSubscriptionItem(entity);
+                        await stripe.subscriptionItems.createUsageRecord(
+                            subscriptionItem.id,
+                            {
+                                quantity: usage,
+                                timestamp: 'now',
+                                action: 'increment'
+                            }
+                        );
+                    }
+                }
+                ```
+
+          - step: 'Modify Billing Service'
+            details: |
+                ```typescript
+                class BillingService {
+                    async handleUsage(usage: Usage, user: User) {
+                        const org = await this.getOrganization(user.organizationId);
+                        const billingEntity = org.auth0Id === PUBLIC_ORG_ID
+                            ? { type: 'user', id: user.id }
+                            : { type: 'organization', id: org.id };
+                            
+                        await this.trackCredits(usage, billingEntity);
+                        await this.stripeProvider.reportUsage(billingEntity, usage.credits);
+                    }
+                }
+                ```
+
+      acceptance_criteria:
+          - Organization-level credit tracking implemented
+          - Usage correctly aggregated at organization level for enterprise customers
+          - Individual user tracking maintained for public organization
+          - Credit deduction logic properly routes between user/org
+          - Stripe usage reporting reflects organizational hierarchy
+          - Usage history viewable at both user and org levels
+          - Billing portal shows correct entity-level information
+
+      dependencies:
+          - Existing organization management system
+          - Stripe customer management
+          - User authentication system
+          - Billing service infrastructure
+
+      files_to_modify:
+          - packages/server/src/services/billing/plans.ts
+          - packages/server/src/aai-utils/billing/stripe/StripeProvider.ts
+          - packages/server/src/controllers/billing/index.ts
+          - packages/server/src/database/entities/Organization.ts
+
+      impact_on_other_tickets:
+          BILL-001:
+              - Add entity type check in credit tracking
+              - Extend credit conversion to handle org-level aggregation
+          BILL-002:
+              - Add organization subscription tier handling
+              - Maintain separate logic for public vs enterprise customers
+          BILL-003:
+              - Include organization context in API key management
+              - Add org-level API usage tracking
+          BILL-004:
+              - Add organization-level usage views
+              - Include org admin controls for credit management

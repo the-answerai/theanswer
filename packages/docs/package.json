@@ -39,7 +39,7 @@
         "build": "docusaurus build",
         "clear": "docusaurus clear",
         "deploy": "docusaurus deploy",
-        "dev": "docusaurus start --port 4242",
+        "docs": "docusaurus start --port 4242",
         "docusaurus": "docusaurus",
         "serve": "docusaurus serve",
         "start": "docusaurus start --port 4242",

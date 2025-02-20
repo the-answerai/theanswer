@@ -119,7 +119,7 @@ const getCachedSession = cache(
         //Check if user has a subscription make sure no error is thrown
         let subscription = null
         try {
-            console.log('session.user.stripeCustomerId', session.user)
+            // console.log('session.user.stripeCustomerId', session.user)
             subscription = await stripe.subscriptions.list({
                 customer: session.user.stripeCustomerId,
                 status: 'active'
