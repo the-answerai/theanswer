@@ -2,227 +2,246 @@
 
 ## System Architecture
 
-Flowise's usage tracking system leverages the existing Langfuse integration to provide millisecond-precision monitoring. This document details the technical implementation for developers and system architects.
+Flowise's usage tracking system leverages Langfuse integration for precise usage monitoring and Stripe for billing. This document details the technical implementation.
 
 ### Core Components
 
-1. **Trace Collection System**
+1. **Usage Collection System**
 
-    - Built-in Langfuse SDK integration via handler.ts
-    - Automatic event capture for chains, LLMs, and tools
-    - Real-time usage tracking with existing analytics handlers
+    - Langfuse SDK integration for usage tracking
+    - Real-time event capture for all billable operations
+    - Automatic metadata collection
     - Built-in retry and error handling
 
 2. **Usage Processing Pipeline**
 
-    - Automatic trace creation per chatflow
-    - Built-in metadata collection
-    - Existing customer attribution
+    - Batch processing of usage events
+    - Automatic trace creation and metadata collection
+    - Customer attribution
     - Real-time rate application
 
 3. **Billing Integration**
-    - Direct Langfuse to Stripe sync
-    - Automatic meter updates
-    - Usage record creation
+    - Direct Stripe meter integration
+    - Usage-based billing with Sparks
     - Subscription management
-
-### Integration Architecture
-
-#### Existing Langfuse Integration
-
-The system leverages the existing Langfuse integration in handler.ts which provides:
-
-1. **Automatic Trace Creation**
-
-    - One trace per chatflow execution
-    - Automatic user and session tracking
-    - Built-in metadata collection:
-        - Chatflow ID and name
-        - User ID
-        - Session ID
-        - Chat ID
-        - Environment information
-
-2. **Event Tracking**
-    - Chain events (start/end)
-    - LLM interactions
-    - Tool usage
-    - Error handling
-
-#### Required Additional Metadata
-
-To enable usage tracking, the following additional metadata needs to be captured:
-
-1. **Billing Metadata**
-
-    - Customer ID
-    - Subscription tier
-    - Rate information
-    - Usage quotas
-
-2. **Resource Attribution**
-    - Resource type (LLM/Compute/Storage)
-    - Resource-specific metrics
-    - Usage category
-    - Cost center
+    - Automated invoicing
 
 ## Usage Types Implementation
 
-### LLM Usage (ai_tokens_sparks)
+### Resource Types
 
--   Automatically tracked via existing Langfuse integration
--   Requires additional metadata for:
-    -   Token counting
-    -   Model identification
-    -   Rate application
-    -   Customer attribution
+1. **AI Tokens (ai_tokens_sparks)**
 
-### Compute Usage (compute_sparks)
+    - Rate: 100 Sparks per 1,000 tokens
+    - Base cost: $0.001 per Spark
+    - Margin multiplier: 1.2
+    - Automatic token counting
 
--   Leverages existing span tracking
--   Additional metadata needed:
-    -   Resource type classification
-    -   Compute time tracking
-    -   Environment information
-    -   Cost allocation
+2. **Compute Usage (compute_sparks)**
 
-### Storage Usage (storage_sparks)
+    - Rate: 50 Sparks per minute
+    - Base cost: $0.001 per Spark
+    - Margin multiplier: 1.2
+    - Real-time compute tracking
 
--   Requires new tracking implementation
--   Integration points with existing system:
-    -   Storage measurement jobs
-    -   Usage aggregation
-    -   Customer attribution
-    -   Rate application
+3. **Storage Usage (storage_sparks)**
+    - Rate: 500 Sparks per GB/month
+    - Base cost: $0.001 per Spark
+    - Margin multiplier: 1.2
+    - Monthly storage calculation
 
-## Sync Process Details
+## Implementation Details
 
-### Real-time Flow
+### Usage Tracking Flow
 
-1. **Event Capture** (Existing)
+```typescript
+interface TraceMetadata {
+    chatId?: string
+    chatflowid?: string
+    userId?: string
+    customerId?: string
+    subscriptionId?: string
+    subscriptionTier?: string
+    stripeBilled?: boolean
+    stripeProcessing?: boolean
+    stripeProcessingStartedAt?: string
+    stripeBilledAt?: string
+    sparksBilled?: Record<string, number>
+    stripeError?: string
+    stripeBilledTypes?: string[]
+    stripePartialBilled?: boolean
+}
+```
 
-    - Automatic via handler.ts
-    - Built-in error handling
-    - Retry mechanisms
-    - Real-time tracking
+### Stripe Integration
 
-2. **Usage Processing** (To Be Added)
+```typescript
+const STRIPE_CONFIG = {
+    SPARK_TO_USD: 0.0001,
+    SPARKS: {
+        METER_ID: 'mtr_test_61RqbeVr5wxWsemTV41FeRAHyP6byAfw',
+        METER_NAME: 'sparks',
+        BASE_PRICE_USD: 0.0001,
+        MARGIN_MULTIPLIER: 1.3
+    }
+}
+```
 
-    - Rate application
-    - Usage categorization
-    - Customer attribution
-    - Quota tracking
+### Batch Processing
 
-3. **Billing Updates** (To Be Added)
-    - Stripe meter updates
-    - Usage record creation
-    - Invoice preparation
-    - Quota management
+```typescript
+async syncUsageToStripe(sparksData: SparksData[]): Promise<{
+    meterEvents: Stripe.Billing.MeterEvent[]
+    failedEvents: Array<{ traceId: string; error: string }>
+    processedTraces: string[]
+}> {
+    const BATCH_SIZE = 15
+    const DELAY_BETWEEN_BATCHES = 1000
 
-### Required Enhancements
+    for (let i = 0; i < sparksData.length; i += BATCH_SIZE) {
+        const batch = sparksData.slice(i, i + BATCH_SIZE)
+        // Process batch
+        // Update trace metadata
+        // Handle errors
+    }
+}
+```
 
-1. **Metadata Enrichment**
+## Usage Statistics
 
-    - Add billing-specific fields
-    - Enhance resource attribution
-    - Include rate information
-    - Add customer context
+### Data Structure
 
-2. **Rate Management**
-    - Real-time rate application
-    - Rate caching
-    - Version tracking
-    - Audit logging
+```typescript
+interface UsageStats {
+    ai_tokens: UsageMetric
+    compute: UsageMetric
+    storage: UsageMetric
+    total_sparks: number
+    total_cost: number
+    billing_period: {
+        start: string
+        end: string
+    }
+}
+```
 
-## Technical Requirements
+### Meter Event Processing
 
-### Configuration Updates
+```typescript
+interface MeterEvent {
+    payload: {
+        value: string
+        stripe_customer_id: string
+        trace_id: string
+        base_cost: string
+        total_cost: string
+        margin: string
+        ai_sparks: string
+        compute_sparks: string
+        storage_sparks: string
+        dateTimestamp?: string
+    }
+}
+```
 
--   Additional environment variables for billing
--   Rate configuration
--   Customer attribution rules
--   Usage categorization logic
+## Error Handling
 
-### Trace Requirements
+1. **Customer Not Found**
 
-#### Existing Fields
+    - Fallback to default customer
+    - Error logging
+    - Retry mechanism
 
--   LLM Traces: model, token counts, timestamps
--   Compute Traces: name, duration, status
--   Storage Traces: type, size, user_id, timestamp
+2. **Failed Events**
 
-#### Additional Required Fields
+    - Batch retry logic
+    - Error tracking
+    - Manual intervention triggers
 
--   Billing tier
--   Rate information
--   Usage category
--   Cost center
--   Customer ID
--   Quota information
+3. **Usage Sync Failures**
+    - Automatic retries
+    - Error reporting
+    - Data consistency checks
 
-## Implementation Guide
+## Security Considerations
 
-### Setup Checklist
+1. **API Security**
 
-1. Real-time Capture Setup
+    - Secure key management
+    - Request signing
+    - Rate limiting
 
-    - [x] Configure immediate usage event recording
-    - [ ] Implement complete metadata capture
-    - [ ] Set up proper resource attribution
-    - [ ] Enable trace context maintenance
+2. **Data Protection**
 
-2. Resource Attribution
-    - [ ] Configure per-user tracking
-    - [ ] Set up chatflow association
-    - [ ] Implement billing context
-    - [ ] Enable usage analytics
+    - Encryption at rest
+    - Secure transmission
+    - Access control
 
-### Monitoring Configuration
+3. **Audit Trail**
+    - Comprehensive logging
+    - Change tracking
+    - Usage verification
 
-#### System Health Checks
+## Monitoring
 
--   Usage spike detection thresholds
--   Failed trace alert configuration
--   Aggregation delay monitoring
--   Data consistency validation
+### Key Metrics
 
-#### Business Metrics
+1. Usage patterns
+2. Sync success rates
+3. Error frequencies
+4. Processing times
+5. Resource utilization
 
--   Usage threshold notifications
--   Billing cycle alerts
--   Reconciliation monitoring
--   Capacity warning configuration
+### Alerts
 
-### Data Retention
+1. Usage spikes
+2. Sync failures
+3. Error thresholds
+4. Rate limit warnings
+5. Quota notifications
+
+## Configuration
+
+### Environment Variables
+
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+DEFAULT_CUSTOMER_ID=cus_...
+LANGFUSE_PUBLIC_KEY=pk_...
+LANGFUSE_SECRET_KEY=sk_...
+```
+
+### Rate Configuration
+
+```typescript
+const BILLING_CONFIG = {
+    MARGIN_MULTIPLIER: 1.3,
+    BATCH_SIZE: 15,
+    RETRY_ATTEMPTS: 3,
+    SYNC_INTERVAL: 300000 // 5 minutes
+}
+```
+
+## API Endpoints
+
+### Usage Tracking
+
+-   `GET /billing/usage/stats`
+-   `POST /billing/usage/sync`
+-   `GET /billing/usage/report`
+
+### Subscription Management
+
+-   `POST /billing/subscriptions`
+-   `PUT /billing/subscriptions/:id`
+-   `DELETE /billing/subscriptions/:id`
+
+## Data Retention
 
 | Data Type       | Retention Period |
 | --------------- | ---------------- |
 | Raw traces      | 30 days          |
-| Aggregated data | 12 months        |
+| Usage data      | 12 months        |
 | Billing records | 7 years          |
 | Audit logs      | 12 months        |
-
-### Error Handling
-
-1. Collection Errors
-
-    - Local buffering
-    - Retry logic
-    - Circuit breaking
-    - Fallback mechanisms
-
-2. Processing Errors
-    - Data validation
-    - Error recovery
-    - State management
-    - Alert triggering
-
-## Related Documentation
-
-For technical implementation details, please refer to:
-
--   [Usage Billing ](./usage-billing.md)
--   [Usage Tracking MVP](./usage-billing-mvp.md)
--   [Usage Tracking MVP Progress](./usage-billing-mvp-progress.md)
--   [Stripe API Documentation](https://stripe.com/docs/api)
--   [Langfuse Documentation](https://langfuse.com/docs)

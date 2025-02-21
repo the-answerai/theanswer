@@ -2,94 +2,90 @@
 
 ## Overview
 
-The billing system implements a hybrid billing model with both trial and paid plans. It uses Stripe for payment processing and tracks usage through execution counts.
+The billing system implements a usage-based billing model using Stripe for payment processing and Langfuse for usage tracking. The system tracks usage through a virtual currency called "Sparks" and supports both individual and organization-level billing.
 
 ### Key Features
 
--   Trial and Paid Plan Management
--   Usage-based Billing
+-   Usage-based Billing with Sparks
+-   Real-time Usage Tracking
 -   Subscription Management
 -   Self-service Billing Portal
--   Usage Tracking
+-   Organization and Individual Billing Support
 
 ## Architecture
 
 ### Core Components
 
-1. **Billing Service** ([`/packages/server/src/services/billing/index.ts`](/packages/server/src/services/billing/index.ts))
+1. **Billing Service** (`/packages/server/src/aai-utils/billing/core/BillingService.ts`)
 
-    - Handles customer management
-    - Manages payment methods
-    - Creates checkout sessions
-    - Manages subscriptions
+    - Orchestrates billing operations
+    - Manages usage tracking
+    - Handles subscription management
+    - Provides usage statistics
 
-2. **Plans Management** ([`/packages/server/src/services/billing/plans.ts`](/packages/server/src/services/billing/plans.ts))
-    - Manages trial and paid plans
-    - Tracks execution usage
-    - Handles plan transitions
-    - Maintains plan history
+2. **Stripe Provider** (`/packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`)
 
-## Plan Types
+    - Handles all Stripe-related operations
+    - Manages meter events
+    - Processes usage synchronization
+    - Handles subscription updates
 
-### Trial Plan
+3. **Usage Tracking** (`/packages/server/src/aai-utils/billing/core/types.ts`)
+    - Defines usage metrics and types
+    - Manages trace metadata
+    - Handles usage aggregation
 
--   Available for public organizations
--   Fixed number of executions (configurable via `TRIAL_PLAN_EXECUTIONS`)
--   Automatically created for new users
--   Tracks used executions
+## Billing Configuration
 
-### Paid Plan
+### Spark Rates
 
--   Organization-based billing
--   Execution-based usage tracking
--   Automatic plan transitions when executions are depleted
--   Historical tracking of plan usage
+```typescript
+const STRIPE_CONFIG = {
+    SPARK_TO_USD: 0.0001, // Cost per spark in USD
+    SPARKS: {
+        METER_ID: 'mtr_test_61RqbeVr5wxWsemTV41FeRAHyP6byAfw',
+        METER_NAME: 'sparks',
+        BASE_PRICE_USD: 0.0001,
+        MARGIN_MULTIPLIER: 1.3 // 30% margin
+    }
+}
+```
+
+### Resource Rates
+
+| Resource Type | Unit         | Sparks | Base Cost (USD) |
+| ------------- | ------------ | ------ | --------------- |
+| AI Tokens     | 1,000 tokens | 100    | 0.001           |
+| Compute       | 1 minute     | 50     | 0.001           |
+| Storage       | 1 GB/month   | 500    | 0.001           |
 
 ## Usage Tracking
 
-### Execution Tracking
+### Implementation
 
--   Per-user tracking for trial plans
--   Per-organization tracking for paid plans
--   Real-time execution counting
--   Automatic plan updates based on usage
+1. **Real-time Tracking**
 
-### Usage Collection
+    - Usage events captured via Langfuse
+    - Automatic metadata collection
+    - Batch processing with retry mechanisms
 
--   Automatic tracking of executions
--   Usage validation before execution
--   Real-time usage monitoring
--   Daily aggregation for billing
+2. **Usage Synchronization**
 
-## Frontend Implementation
+    - Periodic sync with Stripe meters
+    - Optimized batch processing
+    - Error handling and recovery
 
-### Key Components
-
-1. **BillingDashboard** ([`/packages-answers/ui/src/billing/BillingDashboard.tsx`](/packages-answers/ui/src/billing/BillingDashboard.tsx))
-
-    - Main billing interface
-    - Subscription status display
-    - Usage visualization
-    - Plan management
-
-2. **BillingOverview** ([`/packages-answers/ui/src/billing/BillingOverview.tsx`](/packages-answers/ui/src/billing/BillingOverview.tsx))
-
-    - Current plan details
-    - Billing period information
-    - Subscription status
-
-3. **UsageStats** ([`/packages-answers/ui/src/billing/UsageStats.tsx`](/packages-answers/ui/src/billing/UsageStats.tsx))
-    - Execution usage metrics
-    - Usage history
-    - Remaining executions
+3. **Usage Statistics**
+    - Daily and monthly aggregation
+    - Per-resource type breakdown
+    - Cost calculation with margins
 
 ## API Reference
 
-### Plan Management
+### Usage Tracking
 
--   `GET /billing/plans/current`: Get current plan
--   `GET /billing/plans/history`: Get plan history
--   `POST /billing/plans/check-executions`: Check available executions
+-   `GET /billing/usage/stats`: Get current usage statistics
+-   `POST /billing/usage/sync`: Synchronize usage with Stripe
 
 ### Subscription Management
 
@@ -105,29 +101,66 @@ The billing system implements a hybrid billing model with both trial and paid pl
 
 Common error scenarios handled:
 
-1. Insufficient executions
-2. Plan not found
-3. Organization not found
+1. Customer not found (falls back to default customer)
+2. Failed meter events
+3. Usage sync failures
 4. Payment processing errors
 
 ## Configuration
 
 ### Environment Variables
 
--   `TRIAL_PLAN_EXECUTIONS`: Number of executions for trial plans
--   `PUBLIC_ORG_ID`: ID for public organization
--   Stripe configuration keys
+```bash
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID_STANDARD=price_...
+STRIPE_PRICE_ID_PREMIUM=price_...
+
+# Default Customer
+DEFAULT_STRIPE_CUSTOMER_ID=cus_...
+
+# Trial Configuration
+TRIAL_PLAN_EXECUTIONS=1000
+PUBLIC_ORG_ID=org_...
+```
 
 ## Best Practices
 
 ### Usage Tracking
 
--   Validate available executions before processing
--   Use transactions for execution counting
--   Maintain execution history
+-   Validate usage before processing
+-   Use batch processing for efficiency
+-   Maintain comprehensive metadata
+-   Implement proper error handling
 
 ### Security
 
--   Organization-based access control
+-   Secure API key management
+-   Webhook signature verification
 -   Transaction-based updates
--   Error handling with proper status codes
+-   Proper error status codes
+
+## Monitoring
+
+### Key Metrics
+
+1. Usage patterns per organization
+2. Payment success/failure rates
+3. Meter event processing status
+4. API endpoint performance
+5. Webhook reliability
+
+### Regular Tasks
+
+1. Validate usage calculations
+2. Monitor failed payments
+3. Update pricing configurations
+4. Review security settings
+5. Audit access logs
+
+For technical implementation details, refer to:
+
+-   [Usage Tracking Technical Specification](./docs/pricing/usage-billing-spec.md)
+-   [Usage Tracking MVP](./docs/pricing/usage-billing-mvp.md)
+-   [Usage Tracking MVP Progress](./docs/pricing/usage-billing-mvp-progress.md)
