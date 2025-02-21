@@ -6,7 +6,7 @@
     "sideEffects": false,
     "scripts": {
         "lint": "eslint \"src/**/*.ts*\"",
-        "test": "jest"
+        "not:test": "jest"
     },
     "jest": {
         "preset": "jest-presets/jest/node"
