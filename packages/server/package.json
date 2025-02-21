@@ -43,6 +43,8 @@
         "e2e": "start-server-and-test dev http://localhost:3000 cypress:run",
         "cypress:ci": "START_SERVER_AND_TEST_INSECURE=1 start-server-and-test start https-get://localhost:3000 cypress:run",
         "test": "jest",
+        "test:api": "jest test/api",
+        "test:api:watch": "jest test/api --watch",
         "test:billing": "jest src/services/billing/__tests__/*.test.ts",
         "test:billing:watch": "jest src/services/billing/__tests__/*.test.ts --watch"
     },
@@ -96,7 +98,7 @@
         "posthog-node": "^3.5.0",
         "reflect-metadata": "^0.1.13",
         "sanitize-html": "^2.11.0",
-        "stripe": "^17.5.0",
+        "stripe": "^17.6.0",
         "socket.io": "^4.6.1",
         "sqlite3": "^5.1.6",
         "typeorm": "^0.3.6",
