@@ -1,4 +1,5 @@
-import type Stripe from 'stripe'
+import Stripe from 'stripe'
+
 import {
     CreateCustomerParams,
     AttachPaymentMethodParams,
