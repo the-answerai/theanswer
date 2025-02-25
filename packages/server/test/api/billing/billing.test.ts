@@ -3,21 +3,20 @@ import { BILLING_TEST_CONFIG } from './setup'
 
 describe('Billing API', () => {
     describe('Customer Management', () => {
-        it('should create a new customer', async () => {
+        it('should automatically create customer on first auth', async () => {
             try {
-                const response = await axios.post(
-                    `${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/create`,
-                    { email: 'test@example.com' },
-                    { headers: BILLING_TEST_CONFIG.headers }
-                )
+                // First make any authenticated request to trigger customer creation
+                const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
+                    headers: BILLING_TEST_CONFIG.headers
+                })
                 expect(response.status).toBe(200)
-                expect(response.data).toHaveProperty('customerId')
+                expect(response.data).toHaveProperty('stripeCustomerId')
             } catch (error) {
                 expect(error).toBeNull()
             }
         })
 
-        it('should get customer status', async () => {
+        it('should get existing customer status', async () => {
             try {
                 const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
                     headers: BILLING_TEST_CONFIG.headers
@@ -27,6 +26,21 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('tier')
             } catch (error) {
                 expect(error).toBeNull()
+            }
+        })
+
+        // Optional: Only if manual customer creation should still be supported
+        it('should not allow manual customer creation when already exists', async () => {
+            try {
+                const response = await axios.post(
+                    `${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/create`,
+                    { email: 'test@example.com' },
+                    { headers: BILLING_TEST_CONFIG.headers }
+                )
+                expect(response.status).toBe(400)
+                expect(response.data).toHaveProperty('error', 'Customer already exists')
+            } catch (error: any) {
+                expect(error.response.status).toBe(400)
             }
         })
     })

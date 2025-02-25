@@ -49,8 +49,16 @@ async function syncUsageToStripe(traceId?: string) {
 
 async function createCustomer(params: CreateCustomerParams) {
     try {
+        // Check if customer already exists with this email
+        const existingCustomer = await billingService.getCustomerByEmail(params.email)
+        if (existingCustomer) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Customer already exists')
+        }
         return await billingService.createCustomer(params)
     } catch (error) {
+        if (error instanceof InternalFlowiseError) {
+            throw error
+        }
         logger.error('Error creating customer:', error)
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,

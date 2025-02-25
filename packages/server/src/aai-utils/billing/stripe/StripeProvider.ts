@@ -786,4 +786,29 @@ export class StripeProvider {
     //         await userCreditsRepo.save(userCredits)
     //     }
     // }
+
+    async getCustomerByEmail(email: string): Promise<BillingCustomer | null> {
+        try {
+            log.info('Getting customer by email', { email })
+            const customers = await this.stripeClient.customers.list({
+                email,
+                limit: 1
+            })
+
+            if (customers.data.length === 0) {
+                return null
+            }
+
+            const customer = customers.data[0]
+            return {
+                id: customer.id,
+                email: customer.email || undefined,
+                name: customer.name || undefined,
+                metadata: customer.metadata
+            }
+        } catch (error: any) {
+            log.error('Failed to get customer by email', { error: error.message, email })
+            throw error
+        }
+    }
 }

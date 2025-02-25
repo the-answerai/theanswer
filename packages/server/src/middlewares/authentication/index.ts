@@ -105,6 +105,7 @@ export const authenticationHandlerMiddleware =
                 }
             }
 
+            // Get user from auth payload
             const authUser = req.auth.payload
             const auth0Id = authUser.sub
             const email = authUser.email as string
@@ -115,6 +116,7 @@ export const authenticationHandlerMiddleware =
                 return next()
             }
 
+            // Get organization from auth payload
             const orgRepo = AppDataSource.getRepository(Organization)
             let organization = await orgRepo.findOneBy({ name: authUser.org_name })
             if (!organization) {
