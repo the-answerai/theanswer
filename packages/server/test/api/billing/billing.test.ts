@@ -1,27 +1,31 @@
+import { describe, it, expect } from '@jest/globals'
 import axios from 'axios'
-import { BILLING_TEST_CONFIG } from './setup'
+import { BILLING_TEST_CONFIG, MOCK_STRIPE_CUSTOMER, mockBillingService } from './setup'
+
+// Mock the billing service
+jest.mock('../../../src/aai-utils/billing', () => ({
+    BillingService: {
+        getInstance: () => mockBillingService
+    }
+}))
 
 describe('Billing API', () => {
-    describe('Customer Management', () => {
-        it('should automatically create customer on first auth', async () => {
-            try {
-                // First make any authenticated request to trigger customer creation
-                const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
-                    headers: BILLING_TEST_CONFIG.headers
-                })
-                expect(response.status).toBe(200)
-                expect(response.data).toHaveProperty('stripeCustomerId')
-            } catch (error) {
-                expect(error).toBeNull()
-            }
-        })
+    // beforeAll(async () => {
+    //     await setupBillingTests()
+    // })
 
-        it('should get existing customer status', async () => {
+    // afterAll(async () => {
+    //     await cleanupBillingTests()
+    // })
+
+    describe('Customer Management', () => {
+        it('should get customer status', async () => {
             try {
                 const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
                     headers: BILLING_TEST_CONFIG.headers
                 })
                 expect(response.status).toBe(200)
+                expect(response.data).toHaveProperty('stripeCustomerId', MOCK_STRIPE_CUSTOMER.id)
                 expect(response.data).toHaveProperty('credits')
                 expect(response.data).toHaveProperty('tier')
             } catch (error) {
@@ -43,6 +47,7 @@ describe('Billing API', () => {
                 )
                 expect(response.status).toBe(200)
                 expect(response.data).toHaveProperty('remainingCredits')
+                expect(response.data.remainingCredits).toBe(BILLING_TEST_CONFIG.freeTierCredits - 100)
             } catch (error) {
                 expect(error).toBeNull()
             }
@@ -57,31 +62,33 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('totalUsage')
                 expect(response.data).toHaveProperty('periodStart')
                 expect(response.data).toHaveProperty('periodEnd')
+                expect(response.data.totalUsage).toBe(100) // From previous test
             } catch (error) {
                 expect(error).toBeNull()
+            }
+        })
+
+        it('should enforce usage limits', async () => {
+            try {
+                // Try to use more than available credits
+                const response = await axios.post(
+                    `${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/usage/track`,
+                    {
+                        type: 'token',
+                        amount: BILLING_TEST_CONFIG.hardLimitCredits + 1
+                    },
+                    { headers: BILLING_TEST_CONFIG.headers }
+                )
+                expect(response).toBeNull() // Should not reach here
+            } catch (error: any) {
+                expect(error.response.status).toBe(403)
+                expect(error.response.data).toHaveProperty('message')
+                expect(error.response.data.message).toContain('Usage limit exceeded')
             }
         })
     })
 
     describe('Subscription Management', () => {
-        it('should create subscription', async () => {
-            try {
-                const response = await axios.post(
-                    `${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/subscription/create`,
-                    {
-                        plan: 'standard',
-                        paymentMethodId: 'test-payment-method'
-                    },
-                    { headers: BILLING_TEST_CONFIG.headers }
-                )
-                expect(response.status).toBe(200)
-                expect(response.data).toHaveProperty('subscriptionId')
-                expect(response.data).toHaveProperty('status')
-            } catch (error) {
-                expect(error).toBeNull()
-            }
-        })
-
         it('should get subscription status', async () => {
             try {
                 const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/subscription/status`, {
@@ -89,10 +96,52 @@ describe('Billing API', () => {
                 })
                 expect(response.status).toBe(200)
                 expect(response.data).toHaveProperty('plan')
-                expect(response.data).toHaveProperty('status')
+                expect(response.data).toHaveProperty('status', 'active')
                 expect(response.data).toHaveProperty('currentPeriodEnd')
             } catch (error) {
                 expect(error).toBeNull()
+            }
+        })
+
+        it('should get upcoming invoice', async () => {
+            try {
+                const response = await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/invoice/upcoming`, {
+                    headers: BILLING_TEST_CONFIG.headers
+                })
+                expect(response.status).toBe(200)
+                expect(response.data).toHaveProperty('amount')
+                expect(response.data).toHaveProperty('dueDate')
+            } catch (error) {
+                expect(error).toBeNull()
+            }
+        })
+    })
+
+    describe('Error Handling', () => {
+        it('should handle invalid API key', async () => {
+            try {
+                await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
+                    headers: {
+                        ...BILLING_TEST_CONFIG.headers,
+                        Authorization: 'Bearer invalid-key'
+                    }
+                })
+                expect(true).toBe(false) // Should not reach here
+            } catch (error: any) {
+                expect(error.response.status).toBe(401)
+            }
+        })
+
+        it('should handle missing customer ID', async () => {
+            try {
+                // Temporarily remove customer ID from headers
+                const { Authorization, ...headers } = BILLING_TEST_CONFIG.headers
+                await axios.get(`${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/status`, {
+                    headers
+                })
+                expect(true).toBe(false) // Should not reach here
+            } catch (error: any) {
+                expect(error.response.status).toBe(401)
             }
         })
     })

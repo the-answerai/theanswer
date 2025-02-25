@@ -1,4 +1,3 @@
-import { start } from '../src'
 import axios from 'axios'
 
 const waitForServer = async (port: number, maxAttempts = 10, interval = 1000) => {
@@ -17,14 +16,14 @@ const waitForServer = async (port: number, maxAttempts = 10, interval = 1000) =>
 
 module.exports = async () => {
     // Start the server
-    console.log('Starting server for tests...')
+    // console.log('Starting server for tests...')
     try {
         // Set test port
         process.env.PORT = '4000'
 
         // Start server
         // await start()
-        console.log('Server started, waiting for it to be ready...')
+        // console.log('Server started, waiting for it to be ready...')
 
         // Wait for server to be ready
         await waitForServer(4000)

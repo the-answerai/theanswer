@@ -1,18 +1,13 @@
+import { getInstance } from '../src'
+
 module.exports = async () => {
-    // Stop the server
-    console.log('Stopping server after tests...')
+    console.log('Stopping server...')
     try {
-        // Get the running server instance
-        // const { getRunningExpressApp } = require('../src/utils/getRunningExpressApp')
-        // const app = getRunningExpressApp()
-        // if (app && app.server) {
-        //     await new Promise<void>((resolve) => {
-        //         app.server.close(() => {
-        //             console.log('Server stopped successfully')
-        //             resolve()
-        //         })
-        //     })
-        // }
+        const app = getInstance()
+        if (app) {
+            await app.stopApp()
+            console.log('Server stopped')
+        }
     } catch (error) {
         console.error('Failed to stop server:', error)
         throw error
