@@ -22,7 +22,8 @@ export interface IUser {
     id: string
     name: string
     email: string
-    organizationId: string
+    organizationId?: string
+    stripeCustomerId?: string
     updatedDate: Date
     createdDate: Date
     permissions?: string[]
@@ -36,6 +37,7 @@ export interface IUser {
 export interface IOrganization {
     id: string
     name: string
+    stripeCustomerId?: string
     updatedDate: Date
     createdDate: Date
 }
@@ -327,6 +329,52 @@ export interface IPaidPlan {
     currency: string
     availableExecutions: number
     usedExecutions: number
+    createdDate: Date
+}
+
+export interface ISubscription {
+    id: string
+    entityType: 'user' | 'organization'
+    entityId: string
+    organizationId?: string
+    subscriptionType: 'FREE' | 'PAID' | 'ENTERPRISE'
+    stripeSubscriptionId: string
+    stripeSubscriptionItemId: string
+    status: string
+    creditsLimit: number
+    currentPeriodStart: Date
+    currentPeriodEnd: Date
+    createdDate: Date
+}
+
+export interface IUsageEvent {
+    id: string
+    entityType: 'user' | 'organization'
+    entityId: string
+    organizationId?: string
+    resourceType: 'AI_TOKENS' | 'COMPUTE'
+    quantity: number
+    creditsConsumed: number
+    stripeMeterEventId?: string
+    createdDate: Date
+}
+
+export interface IBlockingStatus {
+    id: string
+    entityType: 'user' | 'organization'
+    entityId: string
+    organizationId?: string
+    isBlocked: boolean
+    reason?: string
+    createdDate: Date
+}
+
+export interface IStripeEvent {
+    id: string
+    stripeEventId: string
+    eventType: string
+    eventData: any
+    processed: boolean
     createdDate: Date
 }
 

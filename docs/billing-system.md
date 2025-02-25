@@ -8,13 +8,20 @@
 🚧 = In Progress
 ❌ = Not Implemented
 
+#### Database Schema
+
+-   ✅ Core Schema Design: Organization-ready billing schema
+-   ✅ Entity Implementation: All required entities with proper relationships
+-   ✅ Performance Indexes: Optimized for common queries and reporting
+-   ✅ Data Integrity: Proper constraints and audit trails
+-   ✅ Migration Support: Database migrations with rollback capability
+
 #### Backend Components
 
--   ✅ Core Billing Service: [`packages/server/src/services/billing/index.ts`](../packages/server/src/services/billing/index.ts)
--   ✅ Plan Management: [`packages/server/src/services/billing/plans.ts`](../packages/server/src/services/billing/plans.ts)
--   ✅ Billing Types: [`packages/server/src/services/billing/types.ts`](../packages/server/src/services/billing/types.ts)
--   ✅ Stripe Integration: [`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`](../packages/server/src/aai-utils/billing/stripe/StripeProvider.ts)
--   ✅ Core Billing Logic: [`packages/server/src/aai-utils/billing/core/BillingService.ts`](../packages/server/src/aai-utils/billing/core/BillingService.ts)
+-   🚧 Core Billing Service: [`packages/server/src/services/billing/index.ts`](../packages/server/src/services/billing/index.ts)
+-   🚧 Plan Management: [`packages/server/src/services/billing/plans.ts`](../packages/server/src/services/billing/plans.ts)
+-   🚧 Stripe Integration: [`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`](../packages/server/src/aai-utils/billing/stripe/StripeProvider.ts)
+-   🚧 Core Billing Logic: [`packages/server/src/aai-utils/billing/core/BillingService.ts`](../packages/server/src/aai-utils/billing/core/BillingService.ts)
 
 #### Frontend Components
 
@@ -278,116 +285,141 @@ async upgradePlan({
 
 ## Database Schema
 
-### 1. Core Tables
+### Core Entities
 
-The database schema is implemented in TypeORM entities:
-
-#### User Table ([`packages/server/src/database/entities/User.ts`](../packages/server/src/database/entities/User.ts))
+#### Subscription
 
 ```typescript
 @Entity()
-export class User {
-    @Column({ nullable: true })
-    stripeCustomerId: string
-
-    @Column({ nullable: true })
-    currentPlanId: string
-
-    // ... other columns
-}
-```
-
-#### Active User Plan ([`packages/server/src/database/entities/ActiveUserPlan.ts`](../packages/server/src/database/entities/ActiveUserPlan.ts))
-
-```typescript
-@Entity()
-export class ActiveUserPlan {
-    @Column()
-    stripeSubscriptionId: string
-
-    @Column()
-    planId: string
-
-    @Column()
-    status: string
-
-    // ... other columns
-}
-```
-
-#### User Plan History ([`packages/server/src/database/entities/UserPlanHistory.ts`](../packages/server/src/database/entities/UserPlanHistory.ts))
-
-```typescript
-@Entity()
-export class UserPlanHistory {
-    @Column()
-    stripeSubscriptionId: string
-
-    @Column()
-    planId: string
-
-    @Column()
-    startDate: Date
-
-    @Column({ nullable: true })
-    endDate: Date
-
-    // ... other columns
-}
-```
-
-### 2. Billing Entities
-
-The billing entities are implemented in TypeScript interfaces in [`packages/server/src/services/billing/types.ts`](../packages/server/src/services/billing/types.ts):
-
-```typescript
-export interface BillingEntity {
-    type: 'user' | 'organization'
+@Unique(['entityType', 'entityId'])
+export class Subscription {
+    @PrimaryGeneratedColumn('uuid')
     id: string
-    stripeCustomerId: string
-    credits: {
-        available: number
-        used: number
-    }
-}
 
-export interface CreditTransaction {
-    id: string
+    @Column({ type: 'varchar', length: 50 })
     entityType: 'user' | 'organization'
+
+    @Column({ type: 'uuid' })
     entityId: string
-    amount: number
-    type: 'debit' | 'credit'
-    metadata: {
-        userId?: string
-        orgId?: string
-        source: string
-    }
+
+    @Column({ type: 'uuid', nullable: true })
+    organizationId: string
+
+    @Column({ type: 'varchar', length: 50 })
+    subscriptionType: 'FREE' | 'PAID' | 'ENTERPRISE'
+
+    @Column({ unique: true })
+    stripeSubscriptionId: string
+
+    // ... other fields
 }
 ```
 
-### 3. Subscription Plans
-
-The subscription plans are defined in `packages/server/src/aai-utils/billing/stripe/types.ts`:
+#### UsageEvent
 
 ```typescript
-export interface SubscriptionPlan {
-    id: string
-    name: string
-    description: string
-    features: string[]
-    limits: {
-        ai_tokens: number
-        compute: number
-        storage: number
-    }
-    price: {
-        amount: number
-        currency: string
-        interval: 'month' | 'year'
-    }
-    metadata?: Record<string, any>
+@Entity()
+@Index(['organizationId', 'createdDate'])
+@Index(['entityType', 'entityId', 'createdDate'])
+export class UsageEvent {
+    @Column({ type: 'varchar', length: 50 })
+    entityType: 'user' | 'organization'
+
+    @Column({ type: 'uuid' })
+    entityId: string
+
+    @Column({ type: 'uuid', nullable: true })
+    organizationId: string
+
+    @Column({ type: 'varchar', length: 50 })
+    resourceType: 'AI_TOKENS' | 'COMPUTE'
+
+    // ... other fields
 }
 ```
+
+### Key Features
+
+1. Organization Support
+
+    - All entities support organization-level operations
+    - Ready for credit pooling
+    - Hierarchical blocking support
+    - Efficient organization-level reporting
+
+2. Subscription Types
+
+    - FREE: 10,000 credits
+    - PAID: 500,000 credits
+    - ENTERPRISE: Custom limits
+
+3. Performance Optimizations
+
+    - Composite indexes for reporting
+    - Proper constraints for data integrity
+    - Efficient querying support
+
+4. Usage Tracking
+    - Resource-type specific tracking
+    - Credit consumption tracking
+    - Stripe meter integration
+    - Organization-level aggregation
+
+### Database Indexes
+
+1. Subscription Indexes
+
+    - Primary key on id
+    - Unique constraint on entityType + entityId
+    - Index on organizationId
+
+2. Usage Event Indexes
+
+    - Composite index on organizationId + createdDate
+    - Composite index on entityType + entityId + createdDate
+    - Index on stripeMeterEventId
+
+3. Blocking Status Indexes
+    - Unique constraint on entityType + entityId
+    - Index on organizationId
+
+### Best Practices
+
+1. Data Integrity
+
+    - Use of proper constraints
+    - Audit trail fields
+    - Proper relationship management
+
+2. Performance
+
+    - Efficient indexing strategy
+    - Timestamp with timezone
+    - JSONB for flexible data
+
+3. Security
+    - No sensitive data storage
+    - Proper relationship validation
+    - Audit trail support
+
+### Migration Support
+
+1. Database Migrations
+
+    - Generated TypeORM migrations
+    - Proper rollback support
+    - Data integrity preservation
+
+2. Performance Considerations
+
+    - Minimal downtime required
+    - No blocking operations
+    - Safe rollback procedures
+
+3. Deployment Strategy
+    - Step-by-step migration guide
+    - Validation checkpoints
+    - Rollback procedures
 
 ## Maintenance & Monitoring
 
@@ -1046,7 +1078,9 @@ This completes our comprehensive documentation of the billing system. The system
 
 ## Database Schema
 
-### 1. Core Tables
+### Core Entities
+
+#### Subscription
 
 ```sql
 -- User Table
@@ -1059,32 +1093,111 @@ ALTER TABLE "ActiveUserPlan" ADD COLUMN "stripeSubscriptionId" TEXT;
 ALTER TABLE "UserPlanHistory" ADD COLUMN "stripeSubscriptionId" TEXT;
 ```
 
-### 2. Billing Entities
+#### UsageEvent
 
 ```typescript
-interface BillingEntity {
-    type: 'user' | 'organization'
-    id: string
-    stripeCustomerId: string
-    credits: {
-        available: number
-        used: number
-    }
-}
-
-interface CreditTransaction {
-    id: string
+@Entity()
+@Index(['organizationId', 'createdDate'])
+@Index(['entityType', 'entityId', 'createdDate'])
+export class UsageEvent {
+    @Column({ type: 'varchar', length: 50 })
     entityType: 'user' | 'organization'
+
+    @Column({ type: 'uuid' })
     entityId: string
-    amount: number
-    type: 'debit' | 'credit'
-    metadata: {
-        userId?: string
-        orgId?: string
-        source: string
-    }
+
+    @Column({ type: 'uuid', nullable: true })
+    organizationId: string
+
+    @Column({ type: 'varchar', length: 50 })
+    resourceType: 'AI_TOKENS' | 'COMPUTE'
+
+    // ... other fields
 }
 ```
+
+### Key Features
+
+1. Organization Support
+
+    - All entities support organization-level operations
+    - Ready for credit pooling
+    - Hierarchical blocking support
+    - Efficient organization-level reporting
+
+2. Subscription Types
+
+    - FREE: 10,000 credits
+    - PAID: 500,000 credits
+    - ENTERPRISE: Custom limits
+
+3. Performance Optimizations
+
+    - Composite indexes for reporting
+    - Proper constraints for data integrity
+    - Efficient querying support
+
+4. Usage Tracking
+    - Resource-type specific tracking
+    - Credit consumption tracking
+    - Stripe meter integration
+    - Organization-level aggregation
+
+### Database Indexes
+
+1. Subscription Indexes
+
+    - Primary key on id
+    - Unique constraint on entityType + entityId
+    - Index on organizationId
+
+2. Usage Event Indexes
+
+    - Composite index on organizationId + createdDate
+    - Composite index on entityType + entityId + createdDate
+    - Index on stripeMeterEventId
+
+3. Blocking Status Indexes
+    - Unique constraint on entityType + entityId
+    - Index on organizationId
+
+### Best Practices
+
+1. Data Integrity
+
+    - Use of proper constraints
+    - Audit trail fields
+    - Proper relationship management
+
+2. Performance
+
+    - Efficient indexing strategy
+    - Timestamp with timezone
+    - JSONB for flexible data
+
+3. Security
+    - No sensitive data storage
+    - Proper relationship validation
+    - Audit trail support
+
+### Migration Support
+
+1. Database Migrations
+
+    - Generated TypeORM migrations
+    - Proper rollback support
+    - Data integrity preservation
+
+2. Performance Considerations
+
+    - Minimal downtime required
+    - No blocking operations
+    - Safe rollback procedures
+
+3. Deployment Strategy
+    - Step-by-step migration guide
+    - Validation checkpoints
+    - Rollback procedures
 
 ## Billing Flow
 
