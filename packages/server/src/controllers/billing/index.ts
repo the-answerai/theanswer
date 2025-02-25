@@ -395,6 +395,20 @@ const getSubscriptionWithUsage = async (req: Request, res: Response, next: NextF
     }
 }
 
+const handleWebhook = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sig = req.headers['stripe-signature']
+        if (!sig || Array.isArray(sig)) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Invalid Stripe signature')
+        }
+
+        const event = await billingService.handleWebhook(req.body, sig)
+        return res.json({ received: true, type: event.type })
+    } catch (error) {
+        next(error)
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -416,5 +430,6 @@ export default {
     cancelSubscription,
     getUpcomingInvoice,
     createBillingPortalSession,
-    getSubscriptionWithUsage
+    getSubscriptionWithUsage,
+    handleWebhook
 }

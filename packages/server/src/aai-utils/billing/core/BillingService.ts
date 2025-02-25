@@ -63,95 +63,79 @@ export class BillingService implements BillingProvider {
     }
 
     // Usage tracking methods using Langfuse
-    async getUsageStats(customerId: string): Promise<UsageStats & any> {
-        try {
-            // Get meter event summaries from Stripe
-            const summaries = await this.paymentProvider.getMeterEventSummaries(customerId)
-
-            // Get active subscription if exists
-            const subscriptions = await this.paymentProvider.listSubscriptions({ customer: customerId, status: 'active', limit: 1 })
-            const subscription = subscriptions.data[0]
-
-            // Group summaries by meter
-            const meterUsage = summaries.data.reduce((acc, summary) => {
-                const meterKey = summary.meter_name || summary.meter
-                if (!acc[meterKey]) {
-                    acc[meterKey] = {
-                        total: 0,
-                        daily: []
-                    }
-                }
-                acc[meterKey].total += summary.aggregated_value || 0
-                acc[meterKey].daily.push({
-                    date: new Date(summary.start_time * 1000),
-                    value: summary.aggregated_value || 0
-                })
-                return acc
-            }, {} as Record<string, { total: number; daily: Array<{ date: Date; value: number }> }>)
-
-            // Calculate total sparks across all meters
-            const total_sparks = Object.values(meterUsage).reduce((acc, meter) => acc + meter.total, 0)
-
-            // Get usage breakdown by meter
-            const usageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
-                acc[meterKey] = data.total
-                return acc
-            }, {} as Record<string, number>)
-
-            // Get daily usage for each meter
-            const dailyUsageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
-                acc[meterKey] = data.daily.sort((a, b) => a.date.getTime() - b.date.getTime())
-                return acc
-            }, {} as Record<string, Array<{ date: Date; value: number }>>)
-
-            return {
-                total_sparks,
-                usageByMeter,
-                dailyUsageByMeter,
-                billingPeriod: subscription
-                    ? {
-                          start: new Date(subscription.current_period_start * 1000),
-                          end: new Date(subscription.current_period_end * 1000)
-                      }
-                    : undefined,
-                lastUpdated: new Date(),
-                raw: {
-                    subscription,
-                    summaries,
-                    meterUsage
-                }
-            }
-        } catch (error) {
-            log.error('Failed to get usage stats', { error, customerId })
-            throw error
-        }
+    async getUsageStats(customerId: string): Promise<UsageStats> {
+        return this.paymentProvider.getUsageStats(customerId)
     }
 
-    async getSubscriptionWithUsage(subscriptionId?: string): Promise<SubscriptionWithUsage> {
+    async getSubscriptionWithUsage(subscriptionId: string): Promise<SubscriptionWithUsage> {
         try {
-            const result = await this.paymentProvider.getSubscriptionWithUsage(subscriptionId)
-            // Ensure usage is always defined, even if empty
+            log.info('Getting subscription with usage', { subscriptionId })
+            const subscriptions = await this.paymentProvider.listSubscriptions({
+                customer: subscriptionId,
+                status: 'active',
+                limit: 1
+            })
+            const subscription = subscriptions.data[0]
+
+            // If no active subscription found, return a default response
+            if (!subscription) {
+                log.info('No active subscription found', { subscriptionId })
+                return {
+                    id: '',
+                    customerId: subscriptionId || '',
+                    status: 'unpaid',
+                    currentPeriodStart: new Date(),
+                    currentPeriodEnd: new Date(),
+                    cancelAtPeriodEnd: false,
+                    usage: [] // Ensure usage is always present
+                }
+            }
+
+            // Get usage for current month
+            const now = new Date()
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+            const startTime = Math.floor(startOfMonth.getTime() / 1000)
+            const endTime = Math.floor(now.getTime() / 1000)
+
+            // Get usage stats which includes meter summaries
+            const usageStats = await this.paymentProvider.getUsageStats(subscription.customer as string)
+
+            // Map summaries to include meter_name
+            const usage = usageStats.raw.summaries.data.map((summary) => ({
+                ...summary,
+                meter_name: summary.meter === process.env.STRIPE_SPARKS_METER_ID ? 'sparks' : 'unknown'
+            }))
+
             return {
-                ...result,
-                usage: result.usage || []
+                id: subscription.id,
+                customerId: subscription.customer as string,
+                status: subscription.status as Subscription['status'],
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                usage // Now properly typed with meter_name
             }
         } catch (error: any) {
-            log.error('Failed to get subscription with usage in BillingService', {
+            log.error('Failed to get subscription with usage', {
                 error: error.message,
                 subscriptionId,
                 stack: error.stack
             })
-            // Return a default response with empty usage
+            // Return a default response with empty usage array
             return {
                 id: '',
                 customerId: subscriptionId || '',
-                status: 'incomplete',
+                status: 'unpaid',
                 currentPeriodStart: new Date(),
                 currentPeriodEnd: new Date(),
                 cancelAtPeriodEnd: false,
-                usage: []
+                usage: [] // Ensure usage is always present
             }
         }
+    }
+
+    async handleWebhook(payload: any, signature: string): Promise<any> {
+        return this.paymentProvider.handleWebhook(payload, signature)
     }
 
     async syncUsageToStripe(traceId?: string): Promise<{

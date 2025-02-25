@@ -13,10 +13,15 @@ import {
     BillingPortalSession,
     Subscription,
     Invoice,
-    SparksData
+    SparksData,
+    UsageStats
 } from '../core/types'
 import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import { langfuse } from '../config'
+import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
+import { StripeEvent } from '../../../database/entities/StripeEvent'
+import { Subscription as SubscriptionEntity } from '../../../database/entities/Subscription'
+// import { UserCredits } from '../../../database/entities/UserCredits'
 
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
@@ -610,4 +615,175 @@ export class StripeProvider {
             }
         }
     }
+
+    async getUsageStats(customerId: string): Promise<UsageStats> {
+        try {
+            // Get meter event summaries from Stripe
+            const summaries = await this.getMeterEventSummaries(customerId)
+
+            // Get active subscription if exists
+            const subscriptions = await this.listSubscriptions({ customer: customerId, status: 'active', limit: 1 })
+            const subscription = subscriptions.data[0]
+
+            // Group summaries by meter
+            const meterUsage = summaries.data.reduce((acc, summary) => {
+                const meterKey = summary.meter_name || summary.meter
+                if (!acc[meterKey]) {
+                    acc[meterKey] = {
+                        total: 0,
+                        daily: []
+                    }
+                }
+                acc[meterKey].total += summary.aggregated_value || 0
+                acc[meterKey].daily.push({
+                    date: new Date(summary.start_time * 1000),
+                    value: summary.aggregated_value || 0
+                })
+                return acc
+            }, {} as Record<string, { total: number; daily: Array<{ date: Date; value: number }> }>)
+
+            // Calculate total sparks across all meters
+            const total_sparks = Object.values(meterUsage).reduce((acc, meter) => acc + meter.total, 0)
+
+            // Get usage breakdown by meter
+            const usageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
+                acc[meterKey] = data.total
+                return acc
+            }, {} as Record<string, number>)
+
+            // Get daily usage for each meter
+            const dailyUsageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
+                acc[meterKey] = data.daily.sort((a, b) => a.date.getTime() - b.date.getTime())
+                return acc
+            }, {} as Record<string, Array<{ date: Date; value: number }>>)
+
+            return {
+                total_sparks,
+                usageByMeter,
+                dailyUsageByMeter,
+                billingPeriod: subscription
+                    ? {
+                          start: new Date(subscription.current_period_start * 1000),
+                          end: new Date(subscription.current_period_end * 1000)
+                      }
+                    : undefined,
+                lastUpdated: new Date(),
+                raw: {
+                    subscription,
+                    summaries,
+                    meterUsage
+                }
+            }
+        } catch (error) {
+            log.error('Failed to get usage stats', { error, customerId })
+            throw error
+        }
+    }
+
+    async handleWebhook(payload: any, signature: string): Promise<any> {
+        try {
+            const event = this.stripeClient.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+
+            const appServer = getRunningExpressApp()
+            const stripeEventRepo = appServer.AppDataSource.getRepository(StripeEvent)
+
+            // Check if event already processed
+            const existingEvent = await stripeEventRepo.findOne({
+                where: { stripeEventId: event.id }
+            })
+            if (existingEvent) {
+                return event
+            }
+
+            // Save event
+            const stripeEvent = stripeEventRepo.create({
+                stripeEventId: event.id,
+                eventType: event.type,
+                eventData: event.data.object,
+                processed: false
+            })
+            await stripeEventRepo.save(stripeEvent)
+
+            // Process event based on type
+            switch (event.type) {
+                case 'customer.subscription.created':
+                case 'customer.subscription.updated':
+                    await this.handleSubscriptionEvent(event.data.object as Stripe.Subscription)
+                    break
+                case 'customer.subscription.deleted':
+                    await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+                    break
+                // case 'invoice.paid':
+                //     await this.handleInvoicePaid(event.data.object as Stripe.Invoice)
+                //     break
+                // case 'invoice.payment_failed':
+                //     await this.handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+                //     break
+            }
+
+            // Mark event as processed
+            stripeEvent.processed = true
+            await stripeEventRepo.save(stripeEvent)
+
+            return event
+        } catch (error) {
+            log.error('Error handling webhook:', error)
+            throw error
+        }
+    }
+
+    private async handleSubscriptionEvent(subscription: Stripe.Subscription) {
+        const appServer = getRunningExpressApp()
+        const subscriptionRepo = appServer.AppDataSource.getRepository(SubscriptionEntity)
+
+        const existingSubscription = await subscriptionRepo.findOne({
+            where: { stripeSubscriptionId: subscription.id }
+        })
+
+        if (existingSubscription) {
+            // Update existing subscription
+            existingSubscription.status = subscription.status
+            existingSubscription.currentPeriodStart = new Date(subscription.current_period_start * 1000)
+            existingSubscription.currentPeriodEnd = new Date(subscription.current_period_end * 1000)
+            await subscriptionRepo.save(existingSubscription)
+        }
+    }
+
+    private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+        const appServer = getRunningExpressApp()
+        const subscriptionRepo = appServer.AppDataSource.getRepository(SubscriptionEntity)
+
+        await subscriptionRepo.update({ stripeSubscriptionId: subscription.id }, { status: 'canceled' })
+    }
+
+    // private async handleInvoicePaid(invoice: Stripe.Invoice) {
+    //     // Update credit balance
+    //     const appServer = getRunningExpressApp()
+    //     const userCreditsRepo = appServer.AppDataSource.getRepository(UserCredits)
+
+    //     const userCredits = await userCreditsRepo.findOne({
+    //         where: { stripeCustomerId: invoice.customer as string }
+    //     })
+
+    //     if (userCredits) {
+    //         userCredits.lastInvoiceAt = new Date()
+    //         await userCreditsRepo.save(userCredits)
+    //     }
+    // }
+
+    // private async handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+    //     // Handle failed payment - maybe send notification or update status
+    //     const appServer = getRunningExpressApp()
+    //     const userCreditsRepo = appServer.AppDataSource.getRepository(UserCredits)
+
+    //     const userCredits = await userCreditsRepo.findOne({
+    //         where: { stripeCustomerId: invoice.customer as string }
+    //     })
+
+    //     if (userCredits) {
+    //         userCredits.isBlocked = true
+    //         userCredits.blockReason = 'Payment failed'
+    //         await userCreditsRepo.save(userCredits)
+    //     }
+    // }
 }

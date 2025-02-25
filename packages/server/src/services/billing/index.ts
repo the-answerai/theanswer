@@ -10,6 +10,11 @@ import type {
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../../utils/logger'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import { StripeEvent } from '../../database/entities/StripeEvent'
+import { Subscription } from '../../database/entities/Subscription'
+// import { UserCredits } from '../../database/entities/UserCredits'
+import Stripe from 'stripe'
 
 // Initialize billing service with Stripe provider
 const billingService = new BillingService(new StripeProvider(stripeClient), new LangfuseProvider())
@@ -138,6 +143,116 @@ async function getSubscriptionWithUsage(subscriptionId: string) {
     }
 }
 
+async function handleWebhook(payload: any, signature: string) {
+    try {
+        const event = stripeClient.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+
+        const appServer = getRunningExpressApp()
+        const stripeEventRepo = appServer.AppDataSource.getRepository(StripeEvent)
+
+        // Check if event already processed
+        const existingEvent = await stripeEventRepo.findOne({
+            where: { stripeEventId: event.id }
+        })
+        if (existingEvent) {
+            return event
+        }
+
+        // Save event
+        const stripeEvent = stripeEventRepo.create({
+            stripeEventId: event.id,
+            eventType: event.type,
+            eventData: event.data.object,
+            processed: false
+        })
+        await stripeEventRepo.save(stripeEvent)
+
+        // Process event based on type
+        switch (event.type) {
+            case 'customer.subscription.created':
+            case 'customer.subscription.updated':
+                await handleSubscriptionEvent(event.data.object as Stripe.Subscription)
+                break
+            case 'customer.subscription.deleted':
+                await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+                break
+            // case 'invoice.paid':
+            //     await handleInvoicePaid(event.data.object as Stripe.Invoice)
+            //     break
+            // case 'invoice.payment_failed':
+            //     await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+            //     break
+        }
+
+        // Mark event as processed
+        stripeEvent.processed = true
+        await stripeEventRepo.save(stripeEvent)
+
+        return event
+    } catch (error) {
+        logger.error('Error handling webhook:', error)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Failed to handle webhook: ${error instanceof Error ? error.message : String(error)}`
+        )
+    }
+}
+
+async function handleSubscriptionEvent(subscription: Stripe.Subscription) {
+    const appServer = getRunningExpressApp()
+    const subscriptionRepo = appServer.AppDataSource.getRepository(Subscription)
+
+    const existingSubscription = await subscriptionRepo.findOne({
+        where: { stripeSubscriptionId: subscription.id }
+    })
+
+    if (existingSubscription) {
+        // Update existing subscription
+        existingSubscription.status = subscription.status
+        existingSubscription.currentPeriodStart = new Date(subscription.current_period_start * 1000)
+        existingSubscription.currentPeriodEnd = new Date(subscription.current_period_end * 1000)
+        await subscriptionRepo.save(existingSubscription)
+    }
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    const appServer = getRunningExpressApp()
+    const subscriptionRepo = appServer.AppDataSource.getRepository(Subscription)
+
+    await subscriptionRepo.update({ stripeSubscriptionId: subscription.id }, { status: 'canceled' })
+}
+
+// async function handleInvoicePaid(invoice: Stripe.Invoice) {
+//     // Update credit balance
+//     const appServer = getRunningExpressApp()
+//     const userCreditsRepo = appServer.AppDataSource.getRepository(UserCredits)
+
+//     const userCredits = await userCreditsRepo.findOne({
+//         where: { stripeCustomerId: invoice.customer as string }
+//     })
+
+//     if (userCredits) {
+//         userCredits.lastInvoiceAt = new Date()
+//         await userCreditsRepo.save(userCredits)
+//     }
+// }
+
+// async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+//     // Handle failed payment - maybe send notification or update status
+//     const appServer = getRunningExpressApp()
+//     const userCreditsRepo = appServer.AppDataSource.getRepository(UserCredits)
+
+//     const userCredits = await userCreditsRepo.findOne({
+//         where: { stripeCustomerId: invoice.customer as string }
+//     })
+
+//     if (userCredits) {
+//         userCredits.isBlocked = true
+//         userCredits.blockReason = 'Payment failed'
+//         await userCreditsRepo.save(userCredits)
+//     }
+// }
+
 export default {
     getUsageStats,
     syncUsageToStripe,
@@ -148,5 +263,6 @@ export default {
     cancelSubscription,
     getUpcomingInvoice,
     createBillingPortalSession,
-    getSubscriptionWithUsage
+    getSubscriptionWithUsage,
+    handleWebhook
 }

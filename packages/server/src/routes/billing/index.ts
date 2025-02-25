@@ -28,4 +28,7 @@ router.post('/invoices/upcoming', billingController.getUpcomingInvoice)
 // Billing Portal
 router.post('/portal-sessions', billingController.createBillingPortalSession)
 
+// Webhooks
+router.post('/webhooks', billingController.handleWebhook)
+
 export default router

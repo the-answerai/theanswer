@@ -94,7 +94,7 @@ const createApiKey = async (keyName: string, user: IUser) => {
             newKey.apiKey = apiKey
             newKey.apiSecret = apiSecret
             newKey.keyName = keyName
-            newKey.organizationId = user.organizationId
+            newKey.organizationId = user.organizationId || ''
             newKey.userId = user.id
             const key = appServer.AppDataSource.getRepository(ApiKey).create(newKey)
             await appServer.AppDataSource.getRepository(ApiKey).save(key)

@@ -45,7 +45,11 @@ export interface UsageStats {
         end: Date
     }
     lastUpdated: Date
-    raw?: any // Raw meter event summaries for debugging
+    raw: {
+        subscription?: Stripe.Subscription
+        summaries: Stripe.Response<Stripe.ApiList<Stripe.Billing.MeterEventSummary>>
+        meterUsage: Record<string, { total: number; daily: Array<{ date: Date; value: number }> }>
+    }
 }
 
 export interface BillingPortalSession {
@@ -79,6 +83,7 @@ export interface BillingProvider {
     syncUsageToStripe(traceId?: string): Promise<{ processedTraces: string[]; failedTraces: Array<{ traceId: string; error: string }> }>
     listSubscriptions(params: Stripe.SubscriptionListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Subscription>>>
     getSubscriptionWithUsage(subscriptionId: string): Promise<SubscriptionWithUsage>
+    handleWebhook(payload: any, signature: string): Promise<any>
 }
 
 export interface CreateCustomerParams {
