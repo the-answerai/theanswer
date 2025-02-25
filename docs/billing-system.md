@@ -1,5 +1,33 @@
 # Flowise Billing System Documentation
 
+## Implementation Status
+
+### Core Components Status
+
+✅ = Implemented
+🚧 = In Progress
+❌ = Not Implemented
+
+#### Backend Components
+
+-   ✅ Core Billing Service: [`packages/server/src/services/billing/index.ts`](../packages/server/src/services/billing/index.ts)
+-   ✅ Plan Management: [`packages/server/src/services/billing/plans.ts`](../packages/server/src/services/billing/plans.ts)
+-   ✅ Billing Types: [`packages/server/src/services/billing/types.ts`](../packages/server/src/services/billing/types.ts)
+-   ✅ Stripe Integration: [`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`](../packages/server/src/aai-utils/billing/stripe/StripeProvider.ts)
+-   ✅ Core Billing Logic: [`packages/server/src/aai-utils/billing/core/BillingService.ts`](../packages/server/src/aai-utils/billing/core/BillingService.ts)
+
+#### Frontend Components
+
+-   ✅ Billing Dashboard: [`packages-answers/ui/src/billing/BillingDashboard.tsx`](../packages-answers/ui/src/billing/BillingDashboard.tsx)
+-   ✅ Billing Overview: [`packages-answers/ui/src/billing/BillingOverview.tsx`](../packages-answers/ui/src/billing/BillingOverview.tsx)
+-   ✅ Purchase Subscription: [`packages-answers/ui/src/billing/PurchaseSubscription.tsx`](../packages-answers/ui/src/billing/PurchaseSubscription.tsx)
+-   ✅ Usage Stats: [`packages-answers/ui/src/billing/UsageStats.tsx`](../packages-answers/ui/src/billing/UsageStats.tsx)
+-   ✅ Cost Calculator: [`packages-answers/ui/src/billing/CostCalculator.tsx`](../packages-answers/ui/src/billing/CostCalculator.tsx)
+-   ✅ Purchase Sparks: [`packages-answers/ui/src/billing/PurchaseSparks.tsx`](../packages-answers/ui/src/billing/PurchaseSparks.tsx)
+-   ✅ Purchase Credits: [`packages-answers/ui/src/billing/PurchaseCredits.tsx`](../packages-answers/ui/src/billing/PurchaseCredits.tsx)
+-   ✅ Pricing Overview: [`packages-answers/ui/src/billing/PricingOverview.tsx`](../packages-answers/ui/src/billing/PricingOverview.tsx)
+-   ✅ Pricing Page: [`packages-answers/ui/src/billing/PricingPage.tsx`](../packages-answers/ui/src/billing/PricingPage.tsx)
+
 ## Overview
 
 The Flowise billing system implements a sophisticated hybrid billing model that combines subscription-based and usage-based billing using Stripe as the payment processor. The system is designed to handle both trial and paid plans, with support for organization-level billing and individual user billing.z
@@ -12,18 +40,18 @@ The billing system is composed of several key components:
 
 #### Backend Components
 
--   `packages/server/src/services/billing/index.ts`: Core billing service
--   `packages/server/src/services/billing/plans.ts`: Plan management
--   `packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`: Stripe integration
--   `packages/server/src/aai-utils/billing/core/BillingService.ts`: Core billing logic
+-   [`packages/server/src/services/billing/index.ts`](../packages/server/src/services/billing/index.ts): Core billing service
+-   [`packages/server/src/services/billing/plans.ts`](../packages/server/src/services/billing/plans.ts): Plan management
+-   [`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`](../packages/server/src/aai-utils/billing/stripe/StripeProvider.ts): Stripe integration
+-   [`packages/server/src/aai-utils/billing/core/BillingService.ts`](../packages/server/src/aai-utils/billing/core/BillingService.ts): Core billing logic
 
 #### Frontend Components
 
--   `packages-answers/ui/src/billing/BillingDashboard.tsx`: Main billing interface
--   `packages-answers/ui/src/billing/PurchaseSubscription.tsx`: Subscription management
--   `packages-answers/ui/src/billing/UsageStats.tsx`: Usage tracking
--   `packages-answers/ui/src/billing/CostCalculator.tsx`: Cost estimation
--   `packages-answers/ui/src/billing/PurchaseSparks.tsx`: Credit purchase interface
+-   [`packages-answers/ui/src/billing/BillingDashboard.tsx`](../packages-answers/ui/src/billing/BillingDashboard.tsx): Main billing interface
+-   [`packages-answers/ui/src/billing/PurchaseSubscription.tsx`](../packages-answers/ui/src/billing/PurchaseSubscription.tsx): Subscription management
+-   [`packages-answers/ui/src/billing/UsageStats.tsx`](../packages-answers/ui/src/billing/UsageStats.tsx): Usage tracking
+-   [`packages-answers/ui/src/billing/CostCalculator.tsx`](../packages-answers/ui/src/billing/CostCalculator.tsx): Cost estimation
+-   [`packages-answers/ui/src/billing/PurchaseSparks.tsx`](../packages-answers/ui/src/billing/PurchaseSparks.tsx): Credit purchase interface
 
 ### 2. Billing Models
 
@@ -105,9 +133,24 @@ Usage is tracked in real-time and aggregated daily for billing purposes. The sys
 
 ### 4. API Endpoints
 
+The billing API endpoints are implemented in `packages/server/src/controllers/billing/index.ts`:
+
 #### Plan Management
 
 -   `GET /billing/plans/current`: Retrieve current plan details
+
+    ```typescript
+    // Implementation in packages/server/src/controllers/billing/index.ts
+    const getCurrentPlan = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const subscription = await billingService.getSubscriptionWithUsage(req.user.stripeCustomerId)
+            return res.json(subscription)
+        } catch (error) {
+            next(error)
+        }
+    }
+    ```
+
 -   `GET /billing/plans/history`: Get plan usage history
 -   `POST /billing/plans/check-executions`: Validate available executions
 
@@ -123,97 +166,227 @@ Usage is tracked in real-time and aggregated daily for billing purposes. The sys
 
 ### 5. Security & Best Practices
 
-#### Security Measures
+#### Security Implementation
 
--   Organization-based access control
--   Secure API key management
--   Transaction-based usage tracking
--   Environment-based configuration
+The security measures are implemented across several files:
 
-#### Best Practices
+-   Organization-based access control: [`packages/server/src/middleware/auth.ts`](../packages/server/src/middleware/auth.ts)
+-   Secure API key management: [`packages/server/src/services/billing/index.ts`](../packages/server/src/services/billing/index.ts)
+-   Transaction-based usage tracking: [`packages/server/src/aai-utils/billing/core/BillingService.ts`](../packages/server/src/aai-utils/billing/core/BillingService.ts)
+-   Environment-based configuration: [`packages/server/src/aai-utils/billing/config.ts`](../packages/server/src/aai-utils/billing/config.ts)
 
--   Usage validation before execution
--   Transactional updates for usage tracking
--   Proper error handling with status codes
--   Secure storage of Stripe keys and sensitive data
+#### Best Practices Implementation
+
+-   Usage validation: [`packages/server/src/services/billing/plans.ts`](../packages/server/src/services/billing/plans.ts)
+-   Transactional updates: [`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`](../packages/server/src/aai-utils/billing/stripe/StripeProvider.ts)
+-   Error handling: [`packages/server/src/controllers/billing/index.ts`](../packages/server/src/controllers/billing/index.ts)
+-   Secure key storage: [`packages/server/src/aai-utils/billing/stripe/config.ts`](../packages/server/src/aai-utils/billing/stripe/config.ts)
 
 ### 6. Configuration
 
 #### Environment Variables
 
-```
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-TRIAL_PLAN_EXECUTIONS=1000
-PUBLIC_ORG_ID=org_...
+The environment configuration is managed in `packages/server/src/aai-utils/billing/config.ts`:
+
+```typescript
+// Required environment variables
+export const STRIPE_CONFIG = {
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+    TRIAL_PLAN_EXECUTIONS: process.env.TRIAL_PLAN_EXECUTIONS || '1000',
+    PUBLIC_ORG_ID: process.env.PUBLIC_ORG_ID!
+}
 ```
 
 ### 7. Error Handling
 
-The system handles various error scenarios:
+Error handling is implemented across multiple files:
 
-1. Insufficient credits/sparks
-2. Invalid plan transitions
-3. Payment processing failures
-4. Organization not found
-5. Subscription validation errors
+1. Billing Service Errors (`packages/server/src/services/billing/index.ts`):
 
-### 5. Webhook Security
+    - Insufficient credits/sparks
+    - Invalid plan transitions
+    - Payment processing failures
+    - Organization not found
+    - Subscription validation errors
 
-```typescript
-// Webhook signature verification
-const sig = req.headers['stripe-signature']
-if (!sig) {
-    throw new Error('No Stripe signature found')
-}
+2. Stripe Provider Errors (`packages/server/src/aai-utils/billing/stripe/StripeProvider.ts`):
 
-// Verify webhook source
-const event = stripe.webhooks.constructEvent(
-    req.rawBody, // Important: need raw body
-    sig,
-    process.env.STRIPE_WEBHOOK_SECRET!
-)
+    - Payment method errors
+    - Subscription update failures
+    - Usage tracking errors
+    - Webhook processing errors
 
-// Idempotency handling
-const idempotencyKey = event.id
-const processed = await checkIfEventProcessed(idempotencyKey)
-if (processed) {
-    return res.json({ received: true })
-}
-```
+3. Controller Error Handling (`packages/server/src/controllers/billing/index.ts`):
+    - Request validation errors
+    - Authentication errors
+    - Authorization errors
+    - Internal server errors
 
 ## Integration Guide
 
 ### 1. Setting Up Stripe Integration
 
-1. Create Stripe account and obtain API keys
-2. Configure webhook endpoints
-3. Set up products and price points
-4. Configure usage meters
+Implementation in `packages/server/src/aai-utils/billing/stripe/config.ts`:
+
+```typescript
+import Stripe from 'stripe'
+
+// Initialize Stripe client with proper configuration
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2023-10-16',
+    typescript: true,
+    maxNetworkRetries: 3
+})
+```
 
 ### 2. Implementing Usage Tracking
 
+Implementation in `packages/server/src/aai-utils/billing/core/BillingService.ts`:
+
 ```typescript
-// Example usage tracking
-await billingService.trackUsage({
-    organizationId: 'org_id',
+async trackUsage(params: {
+    organizationId: string
     usage: {
-        ai_tokens: 1000,
-        compute_minutes: 5,
-        storage_gb: 0.1
+        ai_tokens: number
+        compute_minutes: number
+        storage_gb: number
     }
-})
+}) {
+    // Implementation details in BillingService
+    await this.usageProvider.trackUsage(params)
+}
 ```
 
 ### 3. Handling Plan Transitions
 
+Implementation in `packages/server/src/services/billing/plans.ts`:
+
 ```typescript
-// Example plan upgrade
-await billingService.upgradePlan({
-    organizationId: 'org_id',
-    newPlanId: 'plan_plus',
-    paymentMethodId: 'pm_card_visa'
-})
+async upgradePlan({
+    organizationId,
+    newPlanId,
+    paymentMethodId
+}: {
+    organizationId: string
+    newPlanId: string
+    paymentMethodId: string
+}) {
+    // Implementation details in plans.ts
+}
+```
+
+## Database Schema
+
+### 1. Core Tables
+
+The database schema is implemented in TypeORM entities:
+
+#### User Table ([`packages/server/src/database/entities/User.ts`](../packages/server/src/database/entities/User.ts))
+
+```typescript
+@Entity()
+export class User {
+    @Column({ nullable: true })
+    stripeCustomerId: string
+
+    @Column({ nullable: true })
+    currentPlanId: string
+
+    // ... other columns
+}
+```
+
+#### Active User Plan ([`packages/server/src/database/entities/ActiveUserPlan.ts`](../packages/server/src/database/entities/ActiveUserPlan.ts))
+
+```typescript
+@Entity()
+export class ActiveUserPlan {
+    @Column()
+    stripeSubscriptionId: string
+
+    @Column()
+    planId: string
+
+    @Column()
+    status: string
+
+    // ... other columns
+}
+```
+
+#### User Plan History ([`packages/server/src/database/entities/UserPlanHistory.ts`](../packages/server/src/database/entities/UserPlanHistory.ts))
+
+```typescript
+@Entity()
+export class UserPlanHistory {
+    @Column()
+    stripeSubscriptionId: string
+
+    @Column()
+    planId: string
+
+    @Column()
+    startDate: Date
+
+    @Column({ nullable: true })
+    endDate: Date
+
+    // ... other columns
+}
+```
+
+### 2. Billing Entities
+
+The billing entities are implemented in TypeScript interfaces in [`packages/server/src/services/billing/types.ts`](../packages/server/src/services/billing/types.ts):
+
+```typescript
+export interface BillingEntity {
+    type: 'user' | 'organization'
+    id: string
+    stripeCustomerId: string
+    credits: {
+        available: number
+        used: number
+    }
+}
+
+export interface CreditTransaction {
+    id: string
+    entityType: 'user' | 'organization'
+    entityId: string
+    amount: number
+    type: 'debit' | 'credit'
+    metadata: {
+        userId?: string
+        orgId?: string
+        source: string
+    }
+}
+```
+
+### 3. Subscription Plans
+
+The subscription plans are defined in `packages/server/src/aai-utils/billing/stripe/types.ts`:
+
+```typescript
+export interface SubscriptionPlan {
+    id: string
+    name: string
+    description: string
+    features: string[]
+    limits: {
+        ai_tokens: number
+        compute: number
+        storage: number
+    }
+    price: {
+        amount: number
+        currency: string
+        interval: 'month' | 'year'
+    }
+    metadata?: Record<string, any>
+}
 ```
 
 ## Maintenance & Monitoring
@@ -451,50 +624,13 @@ const requiredEnvVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'TRIAL_PL
 4. Payment success rates
 5. System performance
 
-## Frontend Implementation Details
+## Frontend Components
 
-### 1. Component Structure
+### 1. Billing Dashboard Implementation
 
-#### Core Components
-
-```typescript
-// Main billing page components
-const BillingPage = () => (
-    <>
-        <BillingDashboard />
-        <PurchaseSparks />
-        <CostCalculator />
-        <PurchaseSubscription />
-    </>
-)
-
-// Pricing page components
-const PricingPage = () => (
-    <>
-        <PricingOverview />
-        <PurchaseSubscription />
-        <PurchaseSparks />
-        <CostCalculator />
-        <UsageStats />
-    </>
-)
-```
-
-### 2. Billing Dashboard Implementation
-
-#### BillingDashboard Component
+Located in `packages-answers/ui/src/billing/BillingDashboard.tsx`:
 
 ```typescript
-interface BillingInfo {
-    currentPlan: BillingPlan
-    billingPeriod: {
-        start: string
-        end: string
-    }
-    nextBillingDate: string
-    status: 'active' | 'inactive' | 'past_due'
-}
-
 const BillingDashboard: React.FC = () => {
     const [billingInfo, setBillingInfo] = useState<BillingInfo>()
     const [loading, setLoading] = useState(true)
@@ -504,53 +640,38 @@ const BillingDashboard: React.FC = () => {
             try {
                 const subscription = await billingApi.getSubscriptions()
                 const activeSubscription = subscription.data.data[0]
-                // ... state updates
+                setBillingInfo({
+                    currentPlan: activeSubscription,
+                    billingPeriod: {
+                        start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
+                        end: new Date(activeSubscription.current_period_end * 1000).toISOString()
+                    },
+                    status: activeSubscription.status
+                })
             } catch (error) {
                 console.error('Failed to fetch billing info:', error)
+            } finally {
+                setLoading(false)
             }
         }
         fetchBillingInfo()
     }, [])
+
+    return (
+        <Container>
+            <BillingOverview billingInfo={billingInfo} loading={loading} />
+            <UsageStats currentPlan={billingInfo?.currentPlan} />
+            <CostCalculator />
+        </Container>
+    )
 }
 ```
 
-### 3. Subscription Management UI
+### 2. Usage Stats Implementation
 
-#### Subscription Tiers
-
-```typescript
-const SUBSCRIPTION_TIERS = [
-    {
-        name: 'Free',
-        sparksPerMonth: 10000,
-        price: 0,
-        priceId: 'price_free',
-        features: ['10,000 Sparks', 'Access to GPT-4o mini', 'Standard voice chats', 'Basic compute and storage allocation']
-    },
-    {
-        name: 'Plus',
-        sparksPerMonth: 500000,
-        price: 20,
-        priceId: 'price_1QdEegFeRAHyP6by6yTOvbwj',
-        highlighted: true,
-        features: ['500,000 Sparks per month', 'Full API access', 'Extended compute and storage limits', 'Priority support']
-    }
-]
-```
-
-### 4. Usage Tracking UI
-
-#### Usage Stats Component
+Located in `packages-answers/ui/src/billing/UsageStats.tsx`:
 
 ```typescript
-interface UsageMetrics {
-    ai_tokens: number
-    compute: number
-    storage: number
-    total: number
-    cost: number
-}
-
 const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
     const [usage, setUsage] = useState<UsageMetrics>()
     const [subscription, setSubscription] = useState<Subscription>()
@@ -565,501 +686,58 @@ const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
                 setSubscription(subscriptionResponse.data)
             } catch (error) {
                 setError('Failed to load usage statistics')
+            } finally {
+                setLoading(false)
             }
         }
         fetchData()
     }, [])
-}
-```
 
-### 5. Pricing Overview
-
-#### Rate Display
-
-```typescript
-const PricingOverview = () => (
-    <Container>
-        <Typography>1 Spark = ${BILLING_CONFIG.SPARK_TO_USD} USD</Typography>
-        <Grid>
-            <Card>
-                <Typography>AI Tokens</Typography>
-                <Typography>
-                    1,000 tokens = {BILLING_CONFIG.RATES.AI_TOKENS.SPARKS} Sparks (${BILLING_CONFIG.RATES.AI_TOKENS.COST})
-                </Typography>
-            </Card>
-            {/* Similar cards for Compute and Storage */}
-        </Grid>
-    </Container>
-)
-```
-
-## Webhook Implementation
-
-### 1. Event Processing
-
-```typescript
-// Stripe webhook handler
-const handleStripeWebhook = async (req: Request, res: Response) => {
-    const sig = req.headers['stripe-signature']
-    const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-
-    switch (event.type) {
-        case 'customer.subscription.created':
-        case 'customer.subscription.updated':
-            await handleSubscriptionChange(event.data.object)
-            break
-        case 'invoice.payment_succeeded':
-            await handleSuccessfulPayment(event.data.object)
-            break
-        case 'invoice.payment_failed':
-            await handleFailedPayment(event.data.object)
-            break
-    }
-
-    res.json({ received: true })
-}
-```
-
-### 2. Usage Sync Implementation
-
-```typescript
-const usageSyncHandler = async (req: Request, res: Response) => {
-    try {
-        const traceId = req.body.trace_id
-        const result = await billingService.syncUsageToStripe(traceId)
-        return res.json({
-            status: 'success',
-            ...result
-        })
-    } catch (error) {
-        console.error('Error syncing usage:', error)
-        next(error)
-    }
-}
-```
-
-### 3. Meter Event Processing
-
-```typescript
-async function syncUsageToStripe(sparksData: SparksData[]): Promise<{
-    meterEvents: Stripe.Billing.MeterEvent[]
-    failedEvents: Array<{ traceId: string; error: string }>
-    processedTraces: string[]
-}> {
-    const batchResults = await Promise.allSettled(
-        sparksData.map(async (data) => {
-            const result = await stripeClient.billing.meterEvents.create({
-                event_name: 'sparks',
-                identifier: `${data.traceId}_sparks`,
-                timestamp: data.timestampEpoch,
-                payload: {
-                    value: totalSparksWithMargin.toString(),
-                    stripe_customer_id: data.stripeCustomerId,
-                    trace_id: data.traceId,
-                    ai_tokens_sparks: (data.sparks.ai_tokens * MARGIN_MULTIPLIER).toString(),
-                    compute_sparks: (data.sparks.compute * MARGIN_MULTIPLIER).toString(),
-                    storage_sparks: (data.sparks.storage * MARGIN_MULTIPLIER).toString(),
-                    ai_tokens_cost: (data.costs.base.ai * MARGIN_MULTIPLIER).toFixed(6),
-                    compute_cost: (data.costs.base.compute * MARGIN_MULTIPLIER).toFixed(6),
-                    storage_cost: (data.costs.base.storage * MARGIN_MULTIPLIER).toFixed(6),
-                    total_cost_with_margin: totalCostWithMargin.toFixed(6)
-                }
-            })
-            return { result, traceId: data.traceId }
-        })
+    return (
+        <Box>
+            <UsageMetrics usage={usage} subscription={subscription} loading={loading} error={error} />
+            <UsageHistory usage={usage} />
+            <ResourceBreakdown usage={usage} />
+        </Box>
     )
-    // Process results and handle errors
 }
 ```
 
-### 4. Error Handling
-
-```typescript
-try {
-    const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-} catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`)
-    return
-}
-
-// Handle specific event errors
-try {
-    await handleSubscriptionChange(event.data.object)
-} catch (error) {
-    logger.error('Error processing subscription change', {
-        error,
-        event: event.type,
-        subscription: event.data.object.id
-    })
-    // Don't throw - we want to acknowledge receipt
-}
-
-// Handle customer not found errors
-if (error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]') {
-    log.warn('Customer not found, falling back to default customer')
-    // Retry with default customer
-    await stripeClient.billing.meterEvents.create({
-        ...originalParams,
-        payload: {
-            ...originalParams.payload,
-            stripe_customer_id: DEFAULT_CUSTOMER_ID
-        }
-    })
-}
-```
-
-## Development Tools
-
-### 1. Local Testing
-
-```bash
-# Start webhook forwarding
-stripe listen --forward-to localhost:3000/api/billing/webhook
-
-# Trigger test events
-stripe trigger payment_intent.succeeded
-stripe trigger invoice.payment_succeeded
-stripe trigger customer.subscription.updated
-```
-
-### 2. Development Environment Setup
-
-```bash
-# Required environment variables
-export STRIPE_SECRET_KEY=sk_test_...
-export STRIPE_WEBHOOK_SECRET=whsec_...
-export STRIPE_PRICE_ID_STANDARD=price_...
-export STRIPE_PRICE_ID_PREMIUM=price_...
-
-# Optional development flags
-export STRIPE_AUTO_ADVANCE_INVOICES=true
-export STRIPE_MOCK_WEBHOOKS=true
-```
-
-### 3. Testing Utilities
-
-```typescript
-// Mock Stripe client for testing
-const mockStripeClient = {
-    customers: {
-        create: jest.fn(),
-        update: jest.fn()
-    },
-    subscriptions: {
-        create: jest.fn(),
-        update: jest.fn()
-    },
-    billing: {
-        meterEvents: {
-            create: jest.fn()
-        }
-    }
-}
-
-// Test webhook payload
-const mockWebhookEvent = {
-    id: 'evt_test',
-    type: 'customer.subscription.updated',
-    data: {
-        object: {
-            id: 'sub_test',
-            customer: 'cus_test',
-            status: 'active'
-        }
-    }
-}
-```
-
-## Billing Configuration
-
-### 1. Rate Configuration
-
-```typescript
-// Stripe-specific billing configuration
-export const STRIPE_CONFIG = {
-    SPARK_TO_USD: 0.0001, // Cost per spark in USD
-
-    // Single meter for total sparks
-    SPARKS: {
-        METER_ID: 'mtr_test_61RqbeVr5wxWsemTV41FeRAHyP6byAfw',
-        METER_NAME: 'sparks',
-        BASE_PRICE_USD: 0.0001,
-        MARGIN_MULTIPLIER: 1.3 // 30% margin
-    },
-
-    // Resource-specific rates
-    METERS: {
-        AI_TOKENS: {
-            METER_ID: 'mtr_test_61RqbeVr5wxWsemTV41FeRAHyP6byAfw',
-            TOKENS_PER_SPARK: 10,
-            BASE_PRICE_USD: 0.001,
-            MARGIN_MULTIPLIER: 1.2,
-            METER_NAME: 'AI Token Usage'
-        },
-        COMPUTE: {
-            MINUTES_PER_SPARK: 1 / 50,
-            BASE_PRICE_USD: 0.001,
-            MARGIN_MULTIPLIER: 1.2,
-            METER_NAME: 'Compute Usage'
-        },
-        STORAGE: {
-            GB_PER_SPARK: 1 / 500,
-            BASE_PRICE_USD: 0.001,
-            MARGIN_MULTIPLIER: 1.2,
-            METER_NAME: 'Storage Usage'
-        }
-    }
-}
-```
-
-### 2. Default Subscription Limits
-
-```typescript
-export const DEFAULT_SUBSCRIPTION = {
-    LIMITS: {
-        AI_TOKENS: 1000000, // 1M tokens
-        COMPUTE: 10000, // 10K minutes
-        STORAGE: 100 // 100 GB
-    }
-}
-```
-
-### 3. Rate Descriptions
-
-```typescript
-export const RATE_DESCRIPTIONS = {
-    AI_TOKENS: 'Usage from AI model token consumption (1,000 tokens = 100 Sparks)',
-    COMPUTE: 'Usage from processing time and compute resources (1 minute = 50 Sparks)',
-    STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Sparks)'
-}
-```
-
-### 4. Environment Configuration
-
-Required environment variables:
-
-```bash
-# Stripe Configuration
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_ID_STANDARD=price_...
-STRIPE_PRICE_ID_PREMIUM=price_...
-
-# Default Customer
-DEFAULT_STRIPE_CUSTOMER_ID=cus_...
-
-# Trial Configuration
-TRIAL_PLAN_EXECUTIONS=1000
-PUBLIC_ORG_ID=org_...
-```
-
-### 5. Stripe Product Setup
-
-Example Stripe product creation:
-
-```bash
-curl https://api.stripe.com/v1/prices \
-  -u "sk_test_..." \
-  -d product={{PRODUCT_ID}} \
-  -d currency=usd \
-  -d billing_scheme=tiered \
-  -d "recurring[usage_type]"=metered \
-  -d "recurring[interval]"=month
-```
-
-### 6. Usage Categories & Metadata
-
-Each usage event includes:
-
-```typescript
-interface TraceMetadata {
-    chatId?: string
-    chatflowid?: string
-    userId?: string
-    customerId?: string
-    subscriptionId?: string
-    subscriptionTier?: string
-    stripeBilled?: boolean
-    stripeProcessing?: boolean
-    stripeProcessingStartedAt?: string
-    stripeBilledAt?: string
-    sparksBilled?: Record<string, number>
-    stripeError?: string
-    stripeBilledTypes?: string[]
-    stripePartialBilled?: boolean
-}
-```
-
-### 7. Volume Discounts
-
-Current discount structure:
-
--   Usage > 10,000 Sparks: 5% discount
--   Custom volume discounts can be configured per customer
--   Discounts are applied before margin calculations
-
-### 8. Billing Cycle Management
-
--   Usage is tracked and aggregated daily
--   Bills are generated monthly
--   Prorations are handled automatically for plan changes
--   Overages are billed immediately
--   Failed payments trigger automatic retries
-
-### 9. Rate Updates
-
-Process for updating rates:
-
-1. Update configuration in `billing/config.ts`
-2. Update Stripe product/price configurations
-3. Update customer notifications
-4. Apply changes at next billing cycle
-5. Handle grandfathered rates if applicable
-
-This completes our comprehensive documentation of the billing system. The system is designed to be flexible and scalable, with clear separation of concerns between different components and proper error handling throughout.
-
-## Database Schema
-
-### 1. Core Tables
-
-```sql
--- User Table
-ALTER TABLE "user" ADD "stripeCustomerId" character varying DEFAULT NULL;
-
--- Active User Plan
-ALTER TABLE "ActiveUserPlan" ADD COLUMN "stripeSubscriptionId" TEXT;
-
--- User Plan History
-ALTER TABLE "UserPlanHistory" ADD COLUMN "stripeSubscriptionId" TEXT;
-```
-
-### 2. Billing Entities
-
-```typescript
-interface BillingEntity {
-    type: 'user' | 'organization'
-    id: string
-    stripeCustomerId: string
-    credits: {
-        available: number
-        used: number
-    }
-}
-
-interface CreditTransaction {
-    id: string
-    entityType: 'user' | 'organization'
-    entityId: string
-    amount: number
-    type: 'debit' | 'credit'
-    metadata: {
-        userId?: string
-        orgId?: string
-        source: string
-    }
-}
-```
-
-## Billing Flow
-
-### 1. Usage Tracking Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant BillingService
-    participant LangfuseProvider
-    participant StripeProvider
-    participant Langfuse
-    participant Stripe
-
-    User->>Frontend: Performs billable action
-    Frontend->>BillingService: Record usage
-    BillingService->>LangfuseProvider: Track usage
-    LangfuseProvider->>Langfuse: Log trace
-    Langfuse-->>LangfuseProvider: Confirm trace
-
-    Note over LangfuseProvider: Convert to Sparks
-
-    LangfuseProvider->>StripeProvider: Sync usage
-    StripeProvider->>Stripe: Update meters
-    Stripe-->>StripeProvider: Confirm update
-    StripeProvider-->>BillingService: Return status
-    BillingService-->>Frontend: Return result
-```
-
-### 2. Payment Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant BillingService
-    participant StripeProvider
-    participant Stripe
-
-    User->>Frontend: Initiates payment
-    Frontend->>BillingService: Create checkout
-    BillingService->>StripeProvider: Create session
-    StripeProvider->>Stripe: Create checkout session
-    Stripe-->>StripeProvider: Return session URL
-    StripeProvider-->>BillingService: Return URL
-    BillingService-->>Frontend: Redirect URL
-    Frontend->>User: Redirect to Stripe
-
-    User->>Stripe: Complete payment
-    Stripe->>Frontend: Redirect back
-    Frontend->>BillingService: Verify payment
-    BillingService->>StripeProvider: Check status
-    StripeProvider->>Stripe: Verify payment
-    Stripe-->>StripeProvider: Confirm status
-    StripeProvider-->>BillingService: Return result
-    BillingService-->>Frontend: Show confirmation
-```
-
-## Frontend Components
-
-### 1. Billing Dashboard
-
-Located in `packages-answers/ui/src/billing/BillingDashboard.tsx`:
-
--   Main container component for billing interface
--   Manages subscription and billing period state
--   Integrates BillingOverview and UsageStats components
-
-### 2. Billing Overview
-
-Located in `packages-answers/ui/src/billing/BillingOverview.tsx`:
-
--   Displays current plan details
--   Shows billing period information
--   Handles subscription status visualization
--   Provides plan change functionality
-
-### 3. Usage Stats
-
-Located in `packages-answers/ui/src/billing/UsageStats.tsx`:
-
--   Tracks and displays usage metrics
--   Shows historical usage data
--   Manages subscription status display
--   Handles real-time usage updates
-
-### 4. Cost Calculator
+### 3. Cost Calculator Implementation
 
 Located in `packages-answers/ui/src/billing/CostCalculator.tsx`:
 
--   Interactive cost estimation tool
--   Supports usage templates
--   Calculates costs for AI tokens, compute time, and storage
--   Real-time cost updates based on usage inputs
+```typescript
+const CostCalculator = () => {
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+    const [aiTokens, setAiTokens] = useState<string>('')
+    const [computeSparks, setComputeSparks] = useState<string>('')
+    const [storageSparks, setStorageSparks] = useState<string>('')
+    const [totalSparks, setTotalSparks] = useState<number>(0)
 
-### 5. Purchase Components
+    useEffect(() => {
+        const calculateTotalSparks = () => {
+            const total = (Number(aiTokens) || 0) + (Number(computeSparks) || 0) + (Number(storageSparks) || 0)
+            setTotalSparks(total)
+        }
+        calculateTotalSparks()
+    }, [aiTokens, computeSparks, storageSparks])
 
--   `PurchaseSubscription.tsx`: Handles subscription purchases
--   `PurchaseSparks.tsx`: Manages individual spark purchases
--   `PurchaseCredits.tsx`: Handles credit purchases
+    return (
+        <Container>
+            <ResourceInputs
+                aiTokens={aiTokens}
+                computeSparks={computeSparks}
+                storageSparks={storageSparks}
+                onAiTokensChange={setAiTokens}
+                onComputeSparksChange={setComputeSparks}
+                onStorageSparksChange={setStorageSparks}
+            />
+            <CostSummary totalSparks={totalSparks} />
+        </Container>
+    )
+}
+```
 
 ## Configuration Structure
 
@@ -1076,9 +754,9 @@ export const BILLING_CONFIG = {
         STORAGE: { UNIT: 1, SPARKS: 500, COST: 0.5 }
     },
     RATE_DESCRIPTIONS: {
-        AI_TOKENS: 'Usage from AI model token consumption...',
-        COMPUTE: 'Usage from processing time...',
-        STORAGE: 'Usage from data storage...'
+        AI_TOKENS: 'Usage from AI model token consumption (1,000 tokens = 100 Sparks)',
+        COMPUTE: 'Usage from processing time and compute resources (1 minute = 50 Sparks)',
+        STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Sparks)'
     }
 }
 ```
@@ -1091,7 +769,7 @@ Located in `packages/server/src/aai-utils/billing/config.ts`:
 export const BILLING_CONFIG = {
     SPARK_TO_USD: 0.00004,
     MARGIN_MULTIPLIER: 1.2,
-    SPARKS_METER_ID: 'mtr_test_...',
+    SPARKS_METER_ID: process.env.STRIPE_SPARKS_METER_ID,
     AI_TOKENS: { TOKENS_PER_SPARK: 10 },
     COMPUTE: { MINUTES_PER_SPARK: 1 / 50 },
     STORAGE: { GB_PER_SPARK: 1 / 500 }
@@ -1106,18 +784,30 @@ Located in `packages/server/src/aai-utils/billing/stripe/config.ts`:
 export const STRIPE_CONFIG = {
     SPARK_TO_USD: 0.0001,
     SPARKS: {
-        METER_ID: 'mtr_test_...',
+        METER_ID: process.env.STRIPE_SPARKS_METER_ID,
+        METER_NAME: 'sparks',
+        BASE_PRICE_USD: 0.0001,
         MARGIN_MULTIPLIER: 1.3
     },
     METERS: {
         AI_TOKENS: {
-            /* configuration */
+            METER_ID: process.env.STRIPE_AI_TOKENS_METER_ID,
+            TOKENS_PER_SPARK: 10,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'AI Token Usage'
         },
         COMPUTE: {
-            /* configuration */
+            MINUTES_PER_SPARK: 1 / 50,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'Compute Usage'
         },
         STORAGE: {
-            /* configuration */
+            GB_PER_SPARK: 1 / 500,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'Storage Usage'
         }
     }
 }
@@ -1200,13 +890,30 @@ const BillingDashboard: React.FC = () => {
             try {
                 const subscription = await billingApi.getSubscriptions()
                 const activeSubscription = subscription.data.data[0]
-                // ... state updates
+                setBillingInfo({
+                    currentPlan: activeSubscription,
+                    billingPeriod: {
+                        start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
+                        end: new Date(activeSubscription.current_period_end * 1000).toISOString()
+                    },
+                    status: activeSubscription.status
+                })
             } catch (error) {
                 console.error('Failed to fetch billing info:', error)
+            } finally {
+                setLoading(false)
             }
         }
         fetchBillingInfo()
     }, [])
+
+    return (
+        <Container>
+            <BillingOverview billingInfo={billingInfo} loading={loading} />
+            <UsageStats currentPlan={billingInfo?.currentPlan} />
+            <CostCalculator />
+        </Container>
+    )
 }
 ```
 
@@ -1229,10 +936,20 @@ const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
                 setSubscription(subscriptionResponse.data)
             } catch (error) {
                 setError('Failed to load usage statistics')
+            } finally {
+                setLoading(false)
             }
         }
         fetchData()
     }, [])
+
+    return (
+        <Box>
+            <UsageMetrics usage={usage} subscription={subscription} loading={loading} error={error} />
+            <UsageHistory usage={usage} />
+            <ResourceBreakdown usage={usage} />
+        </Box>
+    )
 }
 ```
 
@@ -1255,6 +972,20 @@ const CostCalculator = () => {
         }
         calculateTotalSparks()
     }, [aiTokens, computeSparks, storageSparks])
+
+    return (
+        <Container>
+            <ResourceInputs
+                aiTokens={aiTokens}
+                computeSparks={computeSparks}
+                storageSparks={storageSparks}
+                onAiTokensChange={setAiTokens}
+                onComputeSparksChange={setComputeSparks}
+                onStorageSparksChange={setStorageSparks}
+            />
+            <CostSummary totalSparks={totalSparks} />
+        </Container>
+    )
 }
 ```
 
@@ -1471,9 +1202,9 @@ export const BILLING_CONFIG = {
         STORAGE: { UNIT: 1, SPARKS: 500, COST: 0.5 }
     },
     RATE_DESCRIPTIONS: {
-        AI_TOKENS: 'Usage from AI model token consumption...',
-        COMPUTE: 'Usage from processing time...',
-        STORAGE: 'Usage from data storage...'
+        AI_TOKENS: 'Usage from AI model token consumption (1,000 tokens = 100 Sparks)',
+        COMPUTE: 'Usage from processing time and compute resources (1 minute = 50 Sparks)',
+        STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Sparks)'
     }
 }
 ```
@@ -1486,7 +1217,7 @@ Located in `packages/server/src/aai-utils/billing/config.ts`:
 export const BILLING_CONFIG = {
     SPARK_TO_USD: 0.00004,
     MARGIN_MULTIPLIER: 1.2,
-    SPARKS_METER_ID: 'mtr_test_...',
+    SPARKS_METER_ID: process.env.STRIPE_SPARKS_METER_ID,
     AI_TOKENS: { TOKENS_PER_SPARK: 10 },
     COMPUTE: { MINUTES_PER_SPARK: 1 / 50 },
     STORAGE: { GB_PER_SPARK: 1 / 500 }
@@ -1501,18 +1232,30 @@ Located in `packages/server/src/aai-utils/billing/stripe/config.ts`:
 export const STRIPE_CONFIG = {
     SPARK_TO_USD: 0.0001,
     SPARKS: {
-        METER_ID: 'mtr_test_...',
+        METER_ID: process.env.STRIPE_SPARKS_METER_ID,
+        METER_NAME: 'sparks',
+        BASE_PRICE_USD: 0.0001,
         MARGIN_MULTIPLIER: 1.3
     },
     METERS: {
         AI_TOKENS: {
-            /* configuration */
+            METER_ID: process.env.STRIPE_AI_TOKENS_METER_ID,
+            TOKENS_PER_SPARK: 10,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'AI Token Usage'
         },
         COMPUTE: {
-            /* configuration */
+            MINUTES_PER_SPARK: 1 / 50,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'Compute Usage'
         },
         STORAGE: {
-            /* configuration */
+            GB_PER_SPARK: 1 / 500,
+            BASE_PRICE_USD: 0.001,
+            MARGIN_MULTIPLIER: 1.2,
+            METER_NAME: 'Storage Usage'
         }
     }
 }
@@ -1777,3 +1520,196 @@ const Admin = () => {
     }
 }
 ```
+
+## Langfuse Integration
+
+### Overview
+
+The Flowise billing system integrates with Langfuse for comprehensive usage tracking and analytics. This integration is implemented through a combination of callback handlers that connect LangChain operations with Langfuse traces.
+
+### Core Components
+
+1. **CallbackHandler** ([`packages/components/src/LangfuseCallbackHandler.ts`](../packages/components/src/LangfuseCallbackHandler.ts)):
+
+    - Extends LangChain's `BaseCallbackHandler`
+    - Maps LangChain events to Langfuse traces, spans, and generations
+    - Handles usage tracking and metadata management
+
+2. **AnalyticHandler** ([`packages/components/src/handler.ts`](../packages/components/src/handler.ts)):
+
+    - Manages multiple analytics providers including Langfuse
+    - Coordinates between LangChain callbacks and Langfuse tracking
+    - Handles trace lifecycle and error states
+
+3. **BillingCallbackHandler** ([`packages/components/src/BillingCallbackHandler.ts`](../packages/components/src/BillingCallbackHandler.ts)):
+    - Handles billing-specific events
+    - Manages usage tracking and cost calculation
+    - Integrates with Stripe for billing updates
+
+### Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant LangChain
+    participant CallbackHandler
+    participant AnalyticHandler
+    participant Langfuse
+
+    LangChain->>CallbackHandler: Chain/LLM/Tool Event
+    CallbackHandler->>AnalyticHandler: Process Event
+    AnalyticHandler->>Langfuse: Create/Update Trace
+    Langfuse-->>AnalyticHandler: Confirm Operation
+    AnalyticHandler-->>CallbackHandler: Return Status
+    CallbackHandler-->>LangChain: Continue Execution
+```
+
+### Configuration Files
+
+1. **Frontend Config** ([`packages-answers/ui/src/config/billing.ts`](../packages-answers/ui/src/config/billing.ts)):
+
+    - Billing rates and conversions
+    - Usage tracking configuration
+    - UI-specific settings
+
+2. **Backend Config** ([`packages/server/src/aai-utils/billing/config.ts`](../packages/server/src/aai-utils/billing/config.ts)):
+
+    - Core billing configuration
+    - Integration settings
+    - Environment variables
+
+3. **Stripe Config** ([`packages/server/src/aai-utils/billing/stripe/config.ts`](../packages/server/src/aai-utils/billing/stripe/config.ts)):
+    - Stripe-specific settings
+    - Meter configurations
+    - Rate multipliers
+
+### Configuration
+
+```typescript
+const langFuseOptions = {
+    release: process.env.LANGFUSE_RELEASE,
+    secretKey: process.env.LANGFUSE_SECRET_KEY,
+    publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+    baseUrl: process.env.LANGFUSE_BASEURL,
+    sdkIntegration: 'Flowise'
+}
+```
+
+### Tracked Metadata
+
+```typescript
+const metadata = {
+    chatId: options.chatId,
+    chatflowid: options.chatflowid,
+    userId: options?.user?.id,
+    customerId: options.user?.stripeCustomerId,
+    subscription_tier: options.subscriptionTier,
+    usage_category: options.usageCategory,
+    cost_center: options.costCenter
+}
+```
+
+### Usage Tracking Implementation
+
+1. **Chain Tracking**:
+
+```typescript
+async onChainStart(name: string, input: string, parentIds?: ICommonObject) {
+    if (this.handlers['langFuse']) {
+        const langfuse: Langfuse = this.handlers['langFuse'].client
+        langfuseTraceClient = langfuse.trace({
+            name,
+            sessionId: this.options.chatId,
+            metadata: { tags: ['openai-assistant'] },
+            ...this.nodeData?.inputs?.analytics?.langFuse
+        })
+    }
+}
+```
+
+2. **LLM Usage Tracking**:
+
+```typescript
+async handleLLMEnd(output, runId, parentRunId) {
+    const usageDetails = {
+        input: llmUsage?.input_tokens,
+        output: llmUsage?.output_tokens,
+        total: llmUsage?.total_tokens
+    }
+
+    this.langfuse._updateGeneration({
+        id: runId,
+        traceId: this.traceId,
+        output: extractedOutput,
+        endTime: new Date(),
+        completionStartTime: this.completionStartTimes[runId],
+        usage: usageDetails,
+        usageDetails: usageDetails
+    })
+}
+```
+
+### Tracked Metrics
+
+1. **Chain Execution**:
+
+    - Start/end times
+    - Input/output
+    - Error states
+    - Parent-child relationships
+
+2. **LLM Operations**:
+
+    - Token usage (input/output/total)
+    - Model information
+    - Completion times
+    - Generation metadata
+
+3. **Tool Usage**:
+
+    - Tool name and type
+    - Input/output
+    - Execution duration
+    - Error states
+
+4. **Cost Tracking**:
+    - Token-based costs
+    - Compute time
+    - Storage usage
+    - Aggregated metrics
+
+### Error Handling
+
+```typescript
+async onLLMError(returnIds: ICommonObject, error: string | object) {
+    if (this.handlers['langFuse']) {
+        const generation = this.handlers['langFuse'].generation[returnIds['langFuse'].generation]
+        if (generation) {
+            generation.end({
+                output: error
+            })
+        }
+    }
+}
+```
+
+### Integration Benefits
+
+1. **Comprehensive Tracking**:
+
+    - Full visibility into LLM operations
+    - Detailed usage metrics
+    - Cost attribution
+    - Performance monitoring
+
+2. **Billing Accuracy**:
+
+    - Precise token counting
+    - Usage-based billing
+    - Cost center attribution
+    - Subscription tier tracking
+
+3. **Debugging & Monitoring**:
+    - Error tracking
+    - Performance metrics
+    - Usage patterns
+    - System health

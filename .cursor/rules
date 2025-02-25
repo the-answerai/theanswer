@@ -1,3 +1,4 @@
 First always create a plan and list out your steps, then execute each step revieweing the progress.
 Keep your changes minimal and before improving codebase ask confirmation from the user.
 When making large code changes, update the documentation.
+Changes to the codebase should be small and incremental. 
