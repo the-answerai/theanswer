@@ -28,21 +28,6 @@ describe('Billing API', () => {
                 expect(error).toBeNull()
             }
         })
-
-        // Optional: Only if manual customer creation should still be supported
-        it('should not allow manual customer creation when already exists', async () => {
-            try {
-                const response = await axios.post(
-                    `${BILLING_TEST_CONFIG.API_URL}/api/v1/billing/customer/create`,
-                    { email: 'test@example.com' },
-                    { headers: BILLING_TEST_CONFIG.headers }
-                )
-                expect(response.status).toBe(400)
-                expect(response.data).toHaveProperty('error', 'Customer already exists')
-            } catch (error: any) {
-                expect(error.response.status).toBe(400)
-            }
-        })
     })
 
     describe('Usage Tracking', () => {

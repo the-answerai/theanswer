@@ -47,25 +47,25 @@ async function syncUsageToStripe(traceId?: string) {
     }
 }
 
-async function createCustomer(params: CreateCustomerParams) {
-    try {
-        // Check if customer already exists with this email
-        const existingCustomer = await billingService.getCustomerByEmail(params.email)
-        if (existingCustomer) {
-            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Customer already exists')
-        }
-        return await billingService.createCustomer(params)
-    } catch (error) {
-        if (error instanceof InternalFlowiseError) {
-            throw error
-        }
-        logger.error('Error creating customer:', error)
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Failed to create customer: ${error instanceof Error ? error.message : String(error)}`
-        )
-    }
-}
+// async function createCustomer(params: CreateCustomerParams) {
+//     try {
+//         // Check if customer already exists with this email
+//         const existingCustomer = await billingService.getCustomerByEmail(params.email)
+//         if (existingCustomer) {
+//             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Customer already exists')
+//         }
+//         return await billingService.createCustomer(params)
+//     } catch (error) {
+//         if (error instanceof InternalFlowiseError) {
+//             throw error
+//         }
+//         logger.error('Error creating customer:', error)
+//         throw new InternalFlowiseError(
+//             StatusCodes.INTERNAL_SERVER_ERROR,
+//             `Failed to create customer: ${error instanceof Error ? error.message : String(error)}`
+//         )
+//     }
+// }
 
 async function attachPaymentMethod(params: AttachPaymentMethodParams) {
     try {
@@ -264,7 +264,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 export default {
     getUsageStats,
     syncUsageToStripe,
-    createCustomer,
+    // createCustomer,
     attachPaymentMethod,
     createCheckoutSession,
     updateSubscription,

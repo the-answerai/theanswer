@@ -10,9 +10,6 @@ router.get('/usage/stats', billingController.getUsageStats)
 router.get('/usage/sync', billingController.usageSyncHandler)
 router.post('/usage/sync', billingController.usageSyncHandler)
 
-// Customer Management
-router.post('/customers', billingController.createCustomer)
-
 // Payment Methods
 router.post('/payment-methods', billingController.attachPaymentMethod)
 

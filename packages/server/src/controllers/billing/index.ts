@@ -282,21 +282,6 @@ const usageSyncHandler = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
-const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (!req.body?.email) {
-            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Email is required')
-        }
-        const customer = await billingService.createCustomer(req.body)
-        return res.json(customer)
-    } catch (error) {
-        if (error instanceof InternalFlowiseError) {
-            return res.status(error.statusCode).json({ error: error.message })
-        }
-        next(error)
-    }
-}
-
 const attachPaymentMethod = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const paymentMethod = await billingService.attachPaymentMethod(req.body)
@@ -429,7 +414,6 @@ export default {
     getSinglePublicChatbotConfig,
     getUsageStats,
     usageSyncHandler,
-    createCustomer,
     attachPaymentMethod,
     createCheckoutSession,
     updateSubscription,
