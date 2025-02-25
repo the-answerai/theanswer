@@ -1,6 +1,5 @@
 import { BillingService, LangfuseProvider, StripeProvider, stripe as stripeClient } from '../../aai-utils/billing'
 import type {
-    CreateCustomerParams,
     AttachPaymentMethodParams,
     CreateCheckoutSessionParams,
     UpdateSubscriptionParams,
@@ -261,6 +260,83 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 //     }
 // }
 
+// async function trackUsage(userId: string, type: string, amount: number) {
+//     try {
+//         logger.info('Tracking usage event', { userId, type, amount })
+//         const appServer = getRunningExpressApp()
+//         const userRepo = appServer.AppDataSource.getRepository('User')
+
+//         // Get user's Stripe customer ID
+//         const user = await userRepo.findOne({ where: { id: userId } })
+//         if (!user?.stripeCustomerId) {
+//             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User has no associated Stripe customer')
+//         }
+
+//         // Create a meter event
+//         const meterEvent = {
+//             customerId: user.stripeCustomerId,
+//             type,
+//             amount,
+//             timestamp: new Date()
+//         }
+
+//         // Get usage stats before the event
+//         const beforeStats = await billingService.getUsageStats(user.stripeCustomerId)
+//         const beforeTotal = beforeStats.total_sparks || 0
+
+//         // Record the event
+//         await billingService.syncUsageToStripe([
+//             {
+//                 traceId: `manual-${Date.now()}`,
+//                 stripeCustomerId: user.stripeCustomerId,
+//                 subscriptionTier: 'free',
+//                 timestamp: new Date().toISOString(),
+//                 timestampEpoch: Math.floor(Date.now() / 1000),
+//                 sparks: {
+//                     ai_tokens: type === 'token' ? amount : 0,
+//                     compute: type === 'compute' ? amount : 0,
+//                     storage: type === 'storage' ? amount : 0,
+//                     total: amount
+//                 },
+//                 metadata: {},
+//                 usage: {
+//                     tokens: type === 'token' ? amount : 0,
+//                     computeMinutes: type === 'compute' ? amount : 0,
+//                     storageGB: type === 'storage' ? amount : 0,
+//                     totalCost: 0,
+//                     models: []
+//                 },
+//                 costs: {
+//                     base: {
+//                         ai: type === 'token' ? amount * 0.001 : 0,
+//                         compute: type === 'compute' ? amount * 0.001 : 0,
+//                         storage: type === 'storage' ? amount * 0.001 : 0,
+//                         total: amount * 0.001
+//                     },
+//                     withMargin: {
+//                         total: amount * 0.001,
+//                         marginMultiplier: 1
+//                     }
+//                 }
+//             }
+//         ])
+
+//         // Get usage stats after the event
+//         const afterStats = await billingService.getUsageStats(user.stripeCustomerId)
+//         const afterTotal = afterStats.total_sparks || 0
+
+//         return {
+//             remainingCredits: Math.max(0, beforeTotal - (afterTotal - beforeTotal))
+//         }
+//     } catch (error) {
+//         logger.error('Error tracking usage:', error)
+//         throw new InternalFlowiseError(
+//             StatusCodes.INTERNAL_SERVER_ERROR,
+//             `Failed to track usage: ${error instanceof Error ? error.message : String(error)}`
+//         )
+//     }
+// }
+
 export default {
     getUsageStats,
     syncUsageToStripe,
@@ -273,4 +349,5 @@ export default {
     createBillingPortalSession,
     getSubscriptionWithUsage,
     handleWebhook
+    // trackUsage
 }

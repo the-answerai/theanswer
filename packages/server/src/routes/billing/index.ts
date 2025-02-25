@@ -3,27 +3,33 @@ import express from 'express'
 import billingController from '../../controllers/billing'
 const router = express.Router()
 
-// Usage stats
-router.get('/usage/stats', billingController.getUsageStats)
+// Customer Management
+router.get('/customer/status', billingController.getUsageStats)
 
-// Usage sync
-router.get('/usage/sync', billingController.usageSyncHandler)
-router.post('/usage/sync', billingController.usageSyncHandler)
+// Usage Tracking
+// TODO: Remove this route
+// router.post('/usage/track', billingController.trackUsage)
+router.get('/usage/summary', billingController.getUsageStats)
 
-// Payment Methods
-router.post('/payment-methods', billingController.attachPaymentMethod)
-
-// Subscriptions
-router.get('/subscriptions', billingController.getSubscriptionWithUsage)
+// Subscription Management
+router.get('/subscription/status', billingController.getSubscriptionWithUsage)
 router.post('/subscriptions', billingController.createCheckoutSession)
 router.put('/subscriptions/:id', billingController.updateSubscription)
 router.delete('/subscriptions/:id', billingController.cancelSubscription)
 
-// Invoices
-router.post('/invoices/upcoming', billingController.getUpcomingInvoice)
+// Payment Methods
+router.post('/payment-methods', billingController.attachPaymentMethod)
 
 // Billing Portal
 router.post('/portal-sessions', billingController.createBillingPortalSession)
+
+// Invoices
+router.get('/invoice/upcoming', billingController.getUpcomingInvoice)
+router.post('/invoices/upcoming', billingController.getUpcomingInvoice)
+
+// Usage Sync (Internal)
+router.get('/usage/sync', billingController.usageSyncHandler)
+router.post('/usage/sync', billingController.usageSyncHandler)
 
 // Webhooks
 router.post('/webhooks', billingController.handleWebhook)

@@ -400,6 +400,25 @@ const handleWebhook = async (req: Request, res: Response, next: NextFunction) =>
     }
 }
 
+// const trackUsage = async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         const { type, amount } = req.body
+//         if (!type || !amount) {
+//             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Missing required parameters: type, amount')
+//         }
+
+//         const userId = req.user?.id
+//         if (!userId) {
+//             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+//         }
+
+//         const result = await billingService.trackUsage(userId, type, amount)
+//         return res.json(result)
+//     } catch (error) {
+//         next(error)
+//     }
+// }
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -422,4 +441,5 @@ export default {
     createBillingPortalSession,
     getSubscriptionWithUsage,
     handleWebhook
+    // trackUsage
 }
