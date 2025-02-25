@@ -13,7 +13,7 @@ describe('Billing API', () => {
                 expect(response.status).toBe(200)
                 expect(response.data).toHaveProperty('customerId')
             } catch (error) {
-                fail('Customer creation failed: ' + error)
+                expect(error).toBeNull()
             }
         })
 
@@ -26,7 +26,7 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('credits')
                 expect(response.data).toHaveProperty('tier')
             } catch (error) {
-                fail('Customer status check failed: ' + error)
+                expect(error).toBeNull()
             }
         })
     })
@@ -45,7 +45,7 @@ describe('Billing API', () => {
                 expect(response.status).toBe(200)
                 expect(response.data).toHaveProperty('remainingCredits')
             } catch (error) {
-                fail('Usage tracking failed: ' + error)
+                expect(error).toBeNull()
             }
         })
 
@@ -59,7 +59,7 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('periodStart')
                 expect(response.data).toHaveProperty('periodEnd')
             } catch (error) {
-                fail('Usage summary check failed: ' + error)
+                expect(error).toBeNull()
             }
         })
     })
@@ -79,7 +79,7 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('subscriptionId')
                 expect(response.data).toHaveProperty('status')
             } catch (error) {
-                fail('Subscription creation failed: ' + error)
+                expect(error).toBeNull()
             }
         })
 
@@ -93,7 +93,7 @@ describe('Billing API', () => {
                 expect(response.data).toHaveProperty('status')
                 expect(response.data).toHaveProperty('currentPeriodEnd')
             } catch (error) {
-                fail('Subscription status check failed: ' + error)
+                expect(error).toBeNull()
             }
         })
     })
