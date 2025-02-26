@@ -1,58 +1,29 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Box, Stack, Typography, Card } from '@mui/material'
+import React from 'react'
+import { Box, Stack, Typography, Card, CircularProgress } from '@mui/material'
 import BillingOverview from './BillingOverview'
 import UsageStats from './UsageStats'
-import { BillingPlan } from '@/config/billing'
-import billingApi from '@/api/billing'
-
-interface BillingInfo {
-    currentPlan: BillingPlan
-    billingPeriod: {
-        start: string
-        end: string
-    }
-    nextBillingDate: string
-    status: 'active' | 'inactive' | 'past_due'
-}
+import TotalCreditsProgress from './TotalCreditsProgress'
+import { useBillingData } from './hooks/useBillingData'
 
 const BillingDashboard: React.FC = () => {
-    const [billingInfo, setBillingInfo] = useState<BillingInfo>()
-    const [loading, setLoading] = useState(true)
+    const { billingData, isLoading, isError } = useBillingData()
 
-    useEffect(() => {
-        const fetchBillingInfo = async () => {
-            try {
-                // Get active subscription info
-                const subscription = await billingApi.getSubscriptions()
-                const activeSubscription = subscription.data.data[0]
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        )
+    }
 
-                if (activeSubscription) {
-                    setBillingInfo({
-                        currentPlan: {
-                            name: activeSubscription.data.items.data[0].plan.name,
-                            sparksIncluded: activeSubscription.plan.metadata.sparks_included
-                        },
-                        billingPeriod: {
-                            start: activeSubscription.current_period_start,
-                            end: activeSubscription.current_period_end
-                        },
-                        nextBillingDate: activeSubscription.current_period_end,
-                        status: activeSubscription.status
-                    })
-                }
-            } catch (error) {
-                console.error('Failed to fetch billing info:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchBillingInfo()
-    }, [])
-
-    if (loading) {
-        return null // Or a loading spinner
+    if (isError) {
+        return (
+            <Box sx={{ p: 3, color: 'error.main' }}>
+                <Typography>Failed to load billing information. Please try again later.</Typography>
+            </Box>
+        )
     }
 
     return (
@@ -67,6 +38,8 @@ const BillingDashboard: React.FC = () => {
                     </Typography>
                 </Box>
 
+                <TotalCreditsProgress usageSummary={billingData} isLoading={isLoading} isError={isError} />
+
                 <Card
                     elevation={0}
                     sx={{
@@ -78,13 +51,8 @@ const BillingDashboard: React.FC = () => {
                     }}
                 >
                     <Stack spacing={0} divider={<Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} />}>
-                        <BillingOverview
-                            currentPlan={billingInfo?.currentPlan}
-                            billingPeriod={billingInfo?.billingPeriod}
-                            nextBillingDate={billingInfo?.nextBillingDate}
-                            status={billingInfo?.status}
-                        />
-                        <UsageStats currentPlan={billingInfo?.currentPlan} />
+                        <BillingOverview currentPlan={billingData?.currentPlan} billingPeriod={billingData?.billingPeriod} />
+                        <UsageStats usageSummary={billingData} />
                     </Stack>
                 </Card>
             </Stack>

@@ -4,61 +4,52 @@ import React, { useEffect, useState } from 'react'
 import { Box, Typography, Grid, LinearProgress, Tooltip, IconButton, Stack, useTheme, Skeleton } from '@mui/material'
 import { Info as InfoIcon, Bolt as SparkIcon, Memory as CpuIcon, Storage as StorageIcon } from '@mui/icons-material'
 import billingApi from '@/api/billing'
+import useSWR from 'swr'
+import { UsageSummary, UsageMetric } from './hooks/useBillingData'
+import TotalCreditsProgress from './TotalCreditsProgress'
 
 const getUsagePercentage = (used: number, total: number) => {
     if (!total) return 0
     return Math.min((used / total) * 100, 100)
 }
 
-interface UsageMetric {
-    used: number
+interface UsageDashboard {
+    aiTokens: UsageMetric
+    compute: UsageMetric
+    storage: UsageMetric
+}
+
+interface CurrentPlan {
+    name: 'Free' | 'Pro'
+    status: 'active' | 'inactive'
+    sparksIncluded: number
+}
+
+interface BillingPeriod {
+    start: string
+    end: string
+    current: string
+}
+
+interface PricingInfo {
+    aiTokensRate: string
+    computeRate: string
+    storageRate: string
+    sparkRate: string
+}
+
+interface DailyUsage {
+    date: string
+    aiTokens: number
+    compute: number
+    storage: number
     total: number
-    sparks: number
-    cost: number
-    rate: number
-}
-
-interface UsageEvent {
-    id: string
-    timestamp: string
-    type: 'ai_tokens' | 'compute' | 'storage'
-    description: string
-    sparks: number
-    cost: number
-    metadata?: {
-        model?: string
-        tokens?: number
-        computeTime?: number
-        storageSize?: number
-        [key: string]: any
-    }
-}
-
-interface UsageMetrics {
-    ai_tokens?: UsageMetric
-    compute?: UsageMetric
-    storage?: UsageMetric
-    total_sparks?: number
-    total_cost?: number
-    billing_period?: {
-        start: string
-        end: string
-    }
-    events?: UsageEvent[]
-    subscription?: {
-        id: string
-        customerId: string
-        status: string
-        currentPeriodStart: string
-        currentPeriodEnd: string
-        cancelAtPeriodEnd: boolean
-    }
 }
 
 interface UsageStatsProps {
-    currentPlan?: {
-        sparksIncluded: number
-    }
+    usageSummary: UsageSummary | undefined
+    isLoading?: boolean
+    isError?: boolean
 }
 
 interface SubscriptionUsage {
@@ -107,11 +98,10 @@ interface Subscription {
 }
 
 const LoadingCard = () => {
-    const theme = useTheme()
     return (
         <Box
             sx={{
-                p: 2.5,
+                p: 3,
                 height: '100%',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '12px',
@@ -119,27 +109,109 @@ const LoadingCard = () => {
                 backdropFilter: 'blur(20px)'
             }}
         >
-            <Stack spacing={2}>
-                <Stack direction='row' alignItems='center' spacing={1}>
-                    <Skeleton variant='circular' width={24} height={24} />
-                    <Skeleton variant='text' width={120} height={24} />
+            <Stack spacing={3}>
+                {/* Header */}
+                <Stack direction='row' alignItems='center' justifyContent='space-between'>
+                    <Stack direction='row' alignItems='center' spacing={1}>
+                        <Skeleton variant='circular' width={24} height={24} />
+                        <Skeleton variant='text' width={120} />
+                    </Stack>
+                    <Skeleton variant='circular' width={16} height={16} />
                 </Stack>
-                <Skeleton variant='text' width='60%' />
+
+                {/* Rate Info Box */}
+                <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
+                    <Skeleton variant='text' width='80%' />
+                </Box>
+
+                {/* Usage Progress */}
                 <Box>
-                    <Skeleton variant='text' width='40%' sx={{ mb: 1 }} />
+                    <Stack direction='row' justifyContent='space-between' sx={{ mb: 1 }}>
+                        <Skeleton variant='text' width={60} />
+                        <Skeleton variant='text' width={100} />
+                    </Stack>
                     <Skeleton variant='rectangular' height={8} sx={{ borderRadius: 4 }} />
                 </Box>
+
+                {/* Stats */}
                 <Grid container spacing={2}>
                     <Grid item xs={6}>
-                        <Skeleton variant='text' width='80%' />
-                        <Skeleton variant='text' width='60%' />
+                        <Box>
+                            <Skeleton variant='text' width={60} sx={{ mb: 0.5 }} />
+                            <Skeleton variant='text' width={80} height={32} />
+                        </Box>
                     </Grid>
                     <Grid item xs={6}>
-                        <Skeleton variant='text' width='80%' />
-                        <Skeleton variant='text' width='60%' />
+                        <Box>
+                            <Skeleton variant='text' width={60} sx={{ mb: 0.5 }} />
+                            <Skeleton variant='text' width={80} height={32} />
+                        </Box>
                     </Grid>
                 </Grid>
             </Stack>
+        </Box>
+    )
+}
+
+const LoadingDailyUsageChart = () => {
+    return (
+        <Box
+            sx={{
+                p: 3,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                bgcolor: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(20px)',
+                mt: 3
+            }}
+        >
+            <Skeleton variant='text' width={200} height={32} sx={{ mb: 2 }} />
+            <Box sx={{ height: 300, width: '100%' }}>
+                <Box sx={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                {['Date', 'AI Tokens', 'Compute', 'Storage', 'Total'].map((header) => (
+                                    <th key={header} style={{ padding: '8px', textAlign: header === 'Date' ? 'left' : 'right' }}>
+                                        <Skeleton variant='text' width={header === 'Date' ? 100 : 80} />
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...Array(5)].map((_, idx) => (
+                                <tr key={idx}>
+                                    {[...Array(5)].map((_, cellIdx) => (
+                                        <td
+                                            key={cellIdx}
+                                            style={{
+                                                padding: '8px',
+                                                textAlign: cellIdx === 0 ? 'left' : 'right',
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            <Skeleton variant='text' width={cellIdx === 0 ? 100 : 80} />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </Box>
+            </Box>
+        </Box>
+    )
+}
+
+const LoadingBillingPeriod = () => {
+    return (
+        <Box sx={{ width: '100%', mt: 2 }}>
+            <Skeleton variant='text' width={200} sx={{ mb: 1 }} />
+            <Skeleton variant='rectangular' height={8} sx={{ borderRadius: 4, mb: 1 }} />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Skeleton variant='text' width={100} />
+                <Skeleton variant='text' width={100} />
+            </Box>
         </Box>
     )
 }
@@ -154,9 +226,33 @@ const BillingPeriodProgress: React.FC<{ start: string; end: string }> = ({ start
     const daysElapsed = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     const progress = Math.min(Math.max((daysElapsed / totalDays) * 100, 0), 100)
 
+    // Calculate days remaining
+    const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+
     return (
-        <Box sx={{ width: '100%', mt: 2 }}>
-            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', mb: 1 }}>Billing Period Progress</Typography>
+        <Box
+            sx={{
+                mt: 3,
+                p: 3,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                bgcolor: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(20px)'
+            }}
+        >
+            <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 2 }}>
+                <Typography sx={{ color: '#fff', fontWeight: 500 }}>Billing Period</Typography>
+                <Typography
+                    sx={{
+                        color: daysRemaining < 5 ? theme.palette.warning.main : 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.875rem',
+                        fontWeight: daysRemaining < 5 ? 600 : 400
+                    }}
+                >
+                    {daysRemaining} days remaining
+                </Typography>
+            </Stack>
+
             <LinearProgress
                 variant='determinate'
                 value={progress}
@@ -167,13 +263,23 @@ const BillingPeriodProgress: React.FC<{ start: string; end: string }> = ({ start
                     '& .MuiLinearProgress-bar': {
                         bgcolor: theme.palette.primary.main,
                         borderRadius: 4
-                    }
+                    },
+                    mb: 1
                 }}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>{startDate.toLocaleDateString()}</Typography>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>{endDate.toLocaleDateString()}</Typography>
-            </Box>
+
+            <Stack direction='row' justifyContent='space-between' sx={{ mt: 1 }}>
+                <Box>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Start Date</Typography>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                        {startDate.toLocaleDateString()}
+                    </Typography>
+                </Box>
+                <Box>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem', textAlign: 'right' }}>End Date</Typography>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>{endDate.toLocaleDateString()}</Typography>
+                </Box>
+            </Stack>
         </Box>
     )
 }
@@ -249,13 +355,13 @@ const SubscriptionStatusCard: React.FC<{ subscription: Subscription }> = ({ subs
                     </Stack>
                     <LinearProgress
                         variant='determinate'
-                        value={Math.min((totalSparks / 500000) * 100, 100)}
+                        value={Math.min((totalSparks / 250_000) * 100, 100)}
                         sx={{
                             height: 8,
                             borderRadius: 4,
                             bgcolor: 'rgba(255, 255, 255, 0.1)',
                             '& .MuiLinearProgress-bar': {
-                                bgcolor: theme.palette.primary.main,
+                                bgcolor: 'primary.main',
                                 borderRadius: 4
                             }
                         }}
@@ -364,39 +470,19 @@ const SubscriptionStatusCard: React.FC<{ subscription: Subscription }> = ({ subs
     )
 }
 
-const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
-    const theme = useTheme()
-    const [usage, setUsage] = useState<UsageMetrics>()
-    const [subscription, setSubscription] = useState<Subscription>()
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string>()
+const UsageMetricCard: React.FC<{
+    title: string
+    icon: React.ReactNode
+    metrics: UsageMetric
+    tooltipText: string
+    rateInfo: string
+}> = ({ title, icon, metrics, tooltipText, rateInfo }) => {
+    // Calculate the percentage of total usage this resource represents
+    const totalUsed = metrics.used
+    const totalCredits = metrics.total * 2 // Total credits for all resources
+    const percentOfTotal = totalUsed > 0 && totalCredits > 0 ? (totalUsed / totalCredits) * 100 : 0
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true)
-                const [usageResponse, subscriptionResponse] = await Promise.all([billingApi.getUsageStats(), billingApi.getSubscriptions()])
-
-                setUsage(usageResponse.data)
-                setSubscription(subscriptionResponse.data)
-                setError(undefined)
-            } catch (error) {
-                console.error('Failed to fetch usage stats:', error)
-                setError('Failed to load usage statistics')
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchData()
-    }, [])
-
-    const UsageMetricCard: React.FC<{
-        title: string
-        icon: React.ReactNode
-        metrics?: UsageMetric
-        tooltipText: string
-        rateInfo: string
-    }> = ({ title, icon, metrics, tooltipText, rateInfo }) => (
+    return (
         <Box
             sx={{
                 p: 3,
@@ -404,181 +490,299 @@ const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '12px',
                 bgcolor: 'rgba(0, 0, 0, 0.2)',
-                backdropFilter: 'blur(20px)',
-                display: 'flex',
-                flexDirection: 'column'
+                backdropFilter: 'blur(20px)'
             }}
         >
-            <Stack spacing={3}>
-                {/* Header */}
+            <Stack spacing={2}>
                 <Stack direction='row' alignItems='center' justifyContent='space-between'>
                     <Stack direction='row' alignItems='center' spacing={1}>
-                        <Box sx={{ color: theme.palette.primary.main, display: 'flex', alignItems: 'center' }}>
-                            {React.cloneElement(icon as React.ReactElement, { sx: { fontSize: '1.5rem' } })}
-                        </Box>
-                        <Typography sx={{ color: '#fff', fontSize: '1.125rem', fontWeight: 500 }}>{title}</Typography>
+                        {icon}
+                        <Typography sx={{ color: '#fff', fontWeight: 500 }}>{title}</Typography>
                     </Stack>
                     <Tooltip title={tooltipText} arrow placement='top'>
                         <IconButton size='small' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                            <InfoIcon sx={{ fontSize: 16 }} />
+                            <InfoIcon fontSize='small' />
                         </IconButton>
                     </Tooltip>
                 </Stack>
 
-                {/* Rate Info */}
                 <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>{rateInfo}</Typography>
                 </Box>
 
-                {/* Usage Progress */}
-                <Box>
-                    <Stack direction='row' justifyContent='space-between' sx={{ mb: 1 }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>Usage</Typography>
-                        <Typography sx={{ color: '#fff', fontSize: '0.875rem' }}>
-                            {metrics?.used?.toLocaleString() ?? '0'} / {metrics?.total?.toLocaleString() ?? '∞'}
-                        </Typography>
-                    </Stack>
-                    <LinearProgress
-                        variant='determinate'
-                        value={getUsagePercentage(metrics?.used ?? 0, metrics?.total ?? 0)}
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                        {metrics.used.toLocaleString()} Sparks
+                    </Typography>
+                    <Typography
                         sx={{
-                            height: 8,
-                            borderRadius: 4,
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontSize: '0.875rem',
                             bgcolor: 'rgba(255, 255, 255, 0.1)',
-                            '& .MuiLinearProgress-bar': {
-                                bgcolor: theme.palette.primary.main,
-                                borderRadius: 4
-                            }
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1
                         }}
-                    />
-                </Box>
+                    >
+                        {percentOfTotal.toFixed(1)}% of total
+                    </Typography>
+                </Stack>
 
-                {/* Stats */}
-                <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                        <Box>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem', mb: 0.5 }}>SPARKS</Typography>
-                            <Typography sx={{ color: '#fff', fontSize: '1.25rem', fontWeight: 600 }}>
-                                {metrics?.sparks?.toLocaleString() ?? '0'}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                        <Box>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem', mb: 0.5 }}>COST</Typography>
-                            <Typography sx={{ color: '#fff', fontSize: '1.25rem', fontWeight: 600 }}>
-                                ${metrics?.cost?.toFixed(2) ?? '0.00'}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                </Grid>
+                <Box>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem', mb: 0.5 }}>Cost</Typography>
+                    <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '1.25rem' }}>${metrics.cost.toFixed(2)}</Typography>
+                </Box>
             </Stack>
         </Box>
     )
+}
 
-    if (error) {
+const DailyUsageTable: React.FC<{ data: UsageSummary['dailyUsage'] }> = ({ data }) => {
+    // Sort data by date in descending order (most recent first)
+    const sortedData = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    // Take only the last 7 days of data
+    const recentData = sortedData.slice(0, 7)
+
+    return (
+        <Box
+            sx={{
+                p: 3,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                bgcolor: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(20px)',
+                mt: 3
+            }}
+        >
+            <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 2 }}>
+                <Typography sx={{ color: '#fff', fontWeight: 500 }}>Recent Daily Usage</Typography>
+                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Last 7 days</Typography>
+            </Stack>
+
+            <Box sx={{ maxHeight: 300, width: '100%', overflowY: 'auto' }}>
+                <Box sx={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                {['Date', 'AI Tokens', 'Compute', 'Storage', 'Total'].map((header) => (
+                                    <th
+                                        key={header}
+                                        style={{
+                                            padding: '8px',
+                                            textAlign: header === 'Date' ? 'left' : 'right',
+                                            color: 'rgba(255, 255, 255, 0.7)',
+                                            fontWeight: 500,
+                                            fontSize: '0.875rem',
+                                            position: 'sticky',
+                                            top: 0,
+                                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                            zIndex: 1
+                                        }}
+                                    >
+                                        {header}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentData.length > 0 ? (
+                                recentData.map((row) => (
+                                    <tr key={row.date}>
+                                        <td
+                                            style={{
+                                                padding: '8px',
+                                                color: 'rgba(255, 255, 255, 0.7)',
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            {new Date(row.date).toLocaleDateString()}
+                                        </td>
+                                        <td
+                                            style={{
+                                                padding: '8px',
+                                                textAlign: 'right',
+                                                color: 'rgba(255, 255, 255, 0.7)',
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            {row.aiTokens.toLocaleString()}
+                                        </td>
+                                        <td
+                                            style={{
+                                                padding: '8px',
+                                                textAlign: 'right',
+                                                color: 'rgba(255, 255, 255, 0.7)',
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            {row.compute.toLocaleString()}
+                                        </td>
+                                        <td
+                                            style={{
+                                                padding: '8px',
+                                                textAlign: 'right',
+                                                color: 'rgba(255, 255, 255, 0.7)',
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            {row.storage.toLocaleString()}
+                                        </td>
+                                        <td
+                                            style={{
+                                                padding: '8px',
+                                                textAlign: 'right',
+                                                color: '#fff',
+                                                fontWeight: 500,
+                                                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
+                                            {row.total.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        style={{
+                                            padding: '16px',
+                                            textAlign: 'center',
+                                            color: 'rgba(255, 255, 255, 0.5)',
+                                            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                                        }}
+                                    >
+                                        No usage data available for the last 7 days
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </Box>
+            </Box>
+        </Box>
+    )
+}
+
+const UsageStats: React.FC<UsageStatsProps> = ({ usageSummary, isLoading = false, isError = false }) => {
+    if (isError) {
         return (
             <Box sx={{ p: 3 }}>
-                <Typography sx={{ color: theme.palette.error.main }}>{error}</Typography>
+                <Typography variant='h5' sx={{ color: '#fff', fontWeight: 600, mb: 3 }}>
+                    Resource Usage Details
+                </Typography>
+                <Box sx={{ p: 3, color: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.1)', borderRadius: '8px' }}>
+                    <Typography>Failed to load usage statistics. Please try again later.</Typography>
+                </Box>
             </Box>
         )
     }
 
-    return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box sx={{ mb: 2 }}>
-                    {loading ? (
-                        <>
-                            <Skeleton variant='text' width='60%' height={32} sx={{ mb: 1 }} />
-                            <Skeleton variant='text' width='40%' />
-                            <Skeleton variant='text' width='30%' sx={{ mt: 1 }} />
-                        </>
-                    ) : (
-                        <>
-                            <Typography variant='h5' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
-                                {subscription ? 'Active Subscription' : 'Simple, Usage-Based Pricing'}
-                            </Typography>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
-                                Pay only for what you use with our Sparks-based billing
-                            </Typography>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mt: 1 }}>
-                                1 Spark = $0.001 USD
-                            </Typography>
-                        </>
-                    )}
-                </Box>
-
-                {loading ? (
-                    <Skeleton variant='rectangular' height={160} sx={{ borderRadius: 2 }} />
-                ) : (
-                    subscription && <SubscriptionStatusCard subscription={subscription} />
-                )}
-
-                <Grid container spacing={3} sx={{ '&': { ml: -3 } }}>
+    if (isLoading) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Typography variant='h5' sx={{ color: '#fff', fontWeight: 600, mb: 3 }}>
+                    Resource Usage Details
+                </Typography>
+                <Grid container spacing={3}>
                     <Grid item xs={12} md={4}>
-                        {loading ? (
-                            <LoadingCard />
-                        ) : (
-                            <UsageMetricCard
-                                title='AI Tokens'
-                                icon={<SparkIcon />}
-                                metrics={usage?.ai_tokens}
-                                tooltipText='Usage from AI model token consumption'
-                                rateInfo='1,000 tokens = 100 Sparks ($0.1)'
-                            />
-                        )}
+                        <LoadingCard />
                     </Grid>
                     <Grid item xs={12} md={4}>
-                        {loading ? (
-                            <LoadingCard />
-                        ) : (
-                            <UsageMetricCard
-                                title='Compute Time'
-                                icon={<CpuIcon />}
-                                metrics={usage?.compute}
-                                tooltipText='Usage from processing time and compute resources'
-                                rateInfo='1 minute = 50 Sparks ($0.05)'
-                            />
-                        )}
+                        <LoadingCard />
                     </Grid>
                     <Grid item xs={12} md={4}>
-                        {loading ? (
-                            <LoadingCard />
-                        ) : (
-                            <UsageMetricCard
-                                title='Storage'
-                                icon={<StorageIcon />}
-                                metrics={usage?.storage}
-                                tooltipText='Usage from data storage and persistence'
-                                rateInfo='1 GB/month = 500 Sparks ($0.5)'
-                            />
-                        )}
+                        <LoadingCard />
                     </Grid>
                 </Grid>
-
-                <Box sx={{ textAlign: 'right', mt: 2 }}>
-                    {loading ? (
-                        <>
-                            <Skeleton variant='text' width='120px' sx={{ ml: 'auto' }} />
-                            <Skeleton variant='text' width='180px' height={48} sx={{ ml: 'auto' }} />
-                            <Skeleton variant='text' width='150px' sx={{ ml: 'auto' }} />
-                        </>
-                    ) : (
-                        usage && (
-                            <>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>Total Cost</Typography>
-                                <Typography variant='h4' sx={{ color: '#fff', fontWeight: 600 }}>
-                                    ${usage.total_cost?.toFixed(2) ?? '0.00'}
-                                </Typography>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
-                                    Total Sparks: {usage.total_sparks?.toLocaleString() ?? '0'}
-                                </Typography>
-                            </>
-                        )
-                    )}
-                </Box>
+                <LoadingBillingPeriod />
+                <LoadingDailyUsageChart />
             </Box>
+        )
+    }
+
+    if (!usageSummary) return null
+
+    const { usageDashboard, billingPeriod, pricing } = usageSummary
+
+    return (
+        <Box sx={{ p: 3 }}>
+            <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 3 }}>
+                <Typography variant='h5' sx={{ color: '#fff', fontWeight: 600 }}>
+                    Resource Usage Details
+                </Typography>
+                <Tooltip
+                    title='This section shows detailed usage information for each resource type. The total credits usage is shown in the progress bar above.'
+                    arrow
+                    placement='top'
+                >
+                    <IconButton size='small' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                        <InfoIcon />
+                    </IconButton>
+                </Tooltip>
+            </Stack>
+
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                    <UsageMetricCard
+                        title='AI Tokens'
+                        icon={<SparkIcon sx={{ color: '#3f51b5' }} />}
+                        metrics={usageDashboard.aiTokens}
+                        tooltipText='AI token usage for language model interactions'
+                        rateInfo={pricing.aiTokensRate}
+                    />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <UsageMetricCard
+                        title='Compute Time'
+                        icon={<CpuIcon sx={{ color: '#4caf50' }} />}
+                        metrics={usageDashboard.compute}
+                        tooltipText='Compute time used for processing'
+                        rateInfo={pricing.computeRate}
+                    />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <UsageMetricCard
+                        title='Storage'
+                        icon={<StorageIcon sx={{ color: '#ff9800' }} />}
+                        metrics={usageDashboard.storage}
+                        tooltipText='Storage usage for files and data'
+                        rateInfo={pricing.storageRate}
+                    />
+                </Grid>
+            </Grid>
+
+            <Grid container spacing={3} sx={{ mt: 0 }}>
+                <Grid item xs={12} md={6}>
+                    <BillingPeriodProgress start={billingPeriod.start} end={billingPeriod.end} />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <Box
+                        sx={{
+                            mt: 3,
+                            p: 3,
+                            height: '100%',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            bgcolor: 'rgba(0, 0, 0, 0.2)',
+                            backdropFilter: 'blur(20px)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <Typography sx={{ color: '#fff', fontWeight: 500, mb: 2 }}>Spark Rate</Typography>
+                        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px', mb: 2 }}>
+                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>{pricing.sparkRate}</Typography>
+                        </Box>
+                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                            All resource usage is converted to Sparks at the rates shown in each resource card.
+                        </Typography>
+                    </Box>
+                </Grid>
+            </Grid>
+
+            <DailyUsageTable data={usageSummary.dailyUsage} />
         </Box>
     )
 }

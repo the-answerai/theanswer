@@ -131,7 +131,7 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({ currentPlan, billingP
                 <Box>
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 1.5 }}>Plan Features</Typography>
                     <Grid container spacing={2}>
-                        {currentPlan?.features.map((feature) => (
+                        {currentPlan?.features?.map((feature) => (
                             <Grid item xs={12} sm={6} key={feature}>
                                 <Typography sx={{ color: '#fff', fontSize: '0.875rem' }}>• {feature}</Typography>
                             </Grid>

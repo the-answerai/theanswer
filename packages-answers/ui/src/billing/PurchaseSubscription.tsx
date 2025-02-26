@@ -31,7 +31,7 @@ const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
     },
     {
         name: 'Plus',
-        sparksPerMonth: 500000,
+        sparksPerMonth: 250_000,
         price: 20,
         priceId: 'price_1QdEegFeRAHyP6by6yTOvbwj',
         highlighted: true,
@@ -47,7 +47,7 @@ const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
     },
     {
         name: 'Plus+Overage',
-        sparksPerMonth: 500000,
+        sparksPerMonth: 250_000,
         price: 20,
         priceId: 'price_1QhDqdFeRAHyP6byOK161faI',
         highlighted: true,
