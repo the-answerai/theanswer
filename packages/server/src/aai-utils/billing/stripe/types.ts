@@ -71,3 +71,12 @@ export interface SubscriptionPlan {
     }
     metadata?: Record<string, any>
 }
+
+export interface MeterEventSummary extends Stripe.Billing.MeterEventSummary {
+    metadata?: string
+    payload?: {
+        spark_type?: string
+        value?: string
+        [key: string]: any
+    }
+}

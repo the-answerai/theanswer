@@ -9,7 +9,7 @@ type Trace = GetLangfuseTracesResponse['data'][number]
 type FullTrace = GetLangfuseTraceResponse
 
 export class LangfuseProvider {
-    // async getUsageStats(customerId: string): Promise<UsageStats> {
+    // async getUsageSummary(customerId: string): Promise<UsageStats> {
     //     try {
     //         const traces = await this.fetchUsageData()
     //         const sparksData = await this.convertUsageToSparks(traces)

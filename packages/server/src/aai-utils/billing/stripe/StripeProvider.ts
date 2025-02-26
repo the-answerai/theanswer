@@ -14,14 +14,17 @@ import {
     Subscription,
     Invoice,
     SparksData,
-    UsageStats
+    UsageStats,
+    UsageSummary
 } from '../core/types'
 import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import { langfuse } from '../config'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
 import { StripeEvent } from '../../../database/entities/StripeEvent'
 import { Subscription as SubscriptionEntity } from '../../../database/entities/Subscription'
+import { session } from 'passport'
 // import { UserCredits } from '../../../database/entities/UserCredits'
+import { MeterEventSummary } from './types'
 
 export class StripeProvider {
     constructor(private stripeClient: Stripe) {}
@@ -99,16 +102,34 @@ export class StripeProvider {
     async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
         try {
             log.info('Creating checkout session', { params })
+
+            // Check for existing active subscription
+            const { data: existingSubscriptions } = await this.stripeClient.subscriptions.list({
+                customer: params.customerId,
+                status: 'active',
+                limit: 1
+            })
+
+            if (existingSubscriptions.length > 0) {
+                log.warn('Customer already has an active subscription', {
+                    customerId: params.customerId,
+                    existingSubscriptionId: existingSubscriptions[0].id
+                })
+                throw new Error(
+                    'Customer already has an active subscription. Please cancel the existing subscription before creating a new one.'
+                )
+            }
+
             const session = await this.stripeClient.checkout.sessions.create({
                 mode: 'subscription',
                 payment_method_types: ['card'],
                 line_items: [
                     {
-                        price: params.priceId
+                        price: BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY
                     }
                 ],
-                success_url: params.successUrl,
-                cancel_url: params.cancelUrl,
+                success_url: process.env.ANSWERAI_DOMAIN + '/billing?status=success',
+                cancel_url: process.env.ANSWERAI_DOMAIN + '/billing?status=cancel',
                 customer: params.customerId
             })
             log.info('Created checkout session', { sessionId: session.id })
@@ -178,8 +199,36 @@ export class StripeProvider {
     async cancelSubscription(subscriptionId: string): Promise<Subscription> {
         try {
             log.info('Canceling subscription', { subscriptionId })
-            const subscription = await this.stripeClient.subscriptions.cancel(subscriptionId)
-            log.info('Canceled subscription', { subscriptionId })
+
+            // First retrieve the subscription to verify it exists and get its details
+            const existingSubscription = await this.stripeClient.subscriptions.retrieve(subscriptionId)
+            if (!existingSubscription) {
+                throw new Error('Subscription not found')
+            }
+
+            // Cancel the subscription immediately
+            const subscription = await this.stripeClient.subscriptions.cancel(subscriptionId, {
+                invoice_now: true, // Generate a final invoice immediately
+                prorate: true // Prorate charges for the unused portion
+            })
+
+            // Update local database
+            const appServer = getRunningExpressApp()
+            const subscriptionRepo = appServer.AppDataSource.getRepository(SubscriptionEntity)
+            await subscriptionRepo.update(
+                { stripeSubscriptionId: subscriptionId },
+                {
+                    status: subscription.status,
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+                }
+            )
+
+            log.info('Successfully canceled subscription', {
+                subscriptionId,
+                status: subscription.status,
+                endDate: new Date(subscription.current_period_end * 1000)
+            })
+
             return {
                 id: subscription.id,
                 customerId: subscription.customer as string,
@@ -189,7 +238,11 @@ export class StripeProvider {
                 cancelAtPeriodEnd: subscription.cancel_at_period_end
             }
         } catch (error: any) {
-            log.error('Failed to cancel subscription', { error: error.message, subscriptionId })
+            log.error('Failed to cancel subscription', {
+                error: error.message,
+                subscriptionId,
+                stack: error.stack
+            })
             throw error
         }
     }
@@ -245,13 +298,17 @@ export class StripeProvider {
         try {
             log.info('Syncing usage to Stripe', { count: sparksData.length })
 
+            // Validate batch size
+            if (sparksData.length > BILLING_CONFIG.VALIDATION.MAX_BATCH_SIZE) {
+                throw new Error(`Batch size ${sparksData.length} exceeds maximum of ${BILLING_CONFIG.VALIDATION.MAX_BATCH_SIZE}`)
+            }
+
             // Parallel fetch meters and prepare events
             const [meters] = await Promise.all([this.stripeClient.billing.meters.list()])
-
             const metersMap = new Map(meters.data.map((meter) => [meter.display_name || meter.id, meter.id]))
 
-            const BATCH_SIZE = 15
-            const DELAY_BETWEEN_BATCHES = 1000
+            const BATCH_SIZE = BILLING_CONFIG.VALIDATION.MAX_BATCH_SIZE
+            const DELAY_BETWEEN_BATCHES = BILLING_CONFIG.VALIDATION.BATCH_DELAY_MS
             const meterEvents: Stripe.Billing.MeterEvent[] = []
             const failedEvents: Array<{ traceId: string; error: string }> = []
             const processedTraces: string[] = []
@@ -264,7 +321,10 @@ export class StripeProvider {
                 const batchResults = await Promise.allSettled(
                     batch.map(async (data) => {
                         const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
-                        const totalSparks = Object.values(data.sparks).reduce((sum, val) => sum + val, 0)
+
+                        // Ensure all unknown spark types are counted as AI tokens
+                        const aiTokens = data.sparks.ai_tokens + (data.sparks.unknown || 0)
+                        const totalSparks = aiTokens + data.sparks.compute + data.sparks.storage
                         const totalSparksWithMargin = Math.floor(totalSparks * BILLING_CONFIG.MARGIN_MULTIPLIER)
                         const meterId = metersMap.get('sparks')
 
@@ -272,112 +332,9 @@ export class StripeProvider {
                             throw new Error('No meter found for type: sparks')
                         }
 
-                        try {
-                            const result = await this.stripeClient.billing.meterEvents.create({
-                                event_name: 'sparks',
-                                identifier:
-                                    process.env.NODE_ENV === 'production'
-                                        ? `${data.traceId}_sparks`
-                                        : `${data.traceId}_sparks_${Date.now()}`,
-                                timestamp,
-                                payload: {
-                                    value: totalSparksWithMargin.toString(),
-                                    stripe_customer_id: data.stripeCustomerId,
-                                    trace_id: data.traceId,
-                                    ai_tokens_sparks: (data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
-                                    compute_sparks: (data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
-                                    storage_sparks: (data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
-                                    ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                    compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                    storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                    // margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
-                                    total_cost_with_margin: (
-                                        (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
-                                        BILLING_CONFIG.MARGIN_MULTIPLIER
-                                    ).toFixed(6)
-                                }
-                            })
-
-                            console.log('Data', data)
-                            // Update trace metadata to mark as processed
-                            const updatedTrace = await langfuse.trace({
-                                id: data.traceId,
-                                timestamp: data.fullTrace?.timestamp,
-                                metadata: {
-                                    ...data.fullTrace?.metadata,
-                                    billing_status: 'processed',
-                                    meter_event_id: result.identifier,
-                                    billing_details: {
-                                        total_sparks: totalSparksWithMargin,
-                                        breakdown: {
-                                            ai_tokens: {
-                                                base_sparks: data.sparks.ai_tokens,
-                                                sparks_with_margin: data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                base_cost: data.costs.base.ai,
-                                                cost_with_margin: data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                rate: data.sparks.ai_tokens > 0 ? data.costs.base.ai / data.sparks.ai_tokens : 0,
-                                                percentage: (data.sparks.ai_tokens / totalSparks) * 100
-                                            },
-                                            compute: {
-                                                base_sparks: data.sparks.compute,
-                                                sparks_with_margin: data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                base_cost: data.costs.base.compute,
-                                                cost_with_margin: data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                rate: data.sparks.compute > 0 ? data.costs.base.compute / data.sparks.compute : 0,
-                                                percentage: (data.sparks.compute / totalSparks) * 100
-                                            },
-                                            storage: {
-                                                base_sparks: data.sparks.storage,
-                                                sparks_with_margin: data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                base_cost: data.costs.base.storage,
-                                                cost_with_margin: data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                                rate: data.sparks.storage > 0 ? data.costs.base.storage / data.sparks.storage : 0,
-                                                percentage: (data.sparks.storage / totalSparks) * 100
-                                            }
-                                        },
-                                        costs: {
-                                            total_base_cost: data.costs.base.ai + data.costs.base.compute + data.costs.base.storage,
-                                            total_with_margin:
-                                                (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
-                                                BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                            currency: 'USD'
-                                        },
-                                        billing_config: {
-                                            margin_multiplier: BILLING_CONFIG.MARGIN_MULTIPLIER,
-                                            environment: process.env.NODE_ENV || 'development',
-                                            version: '1.0.0',
-                                            meter_id: meterId
-                                        },
-                                        event: {
-                                            customer_id: data.stripeCustomerId,
-                                            timestamp: timestamp,
-                                            event_name: 'sparks',
-                                            meter_identifier: result.identifier,
-                                            identifier_production: process.env.NODE_ENV === 'production' ? result.identifier : undefined
-                                        },
-                                        processing: {
-                                            started_at: new Date(batchStartTime).toISOString(),
-                                            completed_at: new Date().toISOString(),
-                                            duration_ms: Date.now() - batchStartTime,
-                                            batch_size: batch.length,
-                                            batch_index: Math.floor(i / BATCH_SIZE)
-                                        }
-                                    }
-                                }
-                            })
-
-                            console.log('Updated trace', updatedTrace)
-
-                            return { result, traceId: data.traceId }
-                        } catch (error: any) {
-                            // Check if it's a resource_missing error for the customer
-                            if (error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]') {
-                                log.warn('Customer not found, falling back to default customer', {
-                                    originalCustomerId: data.stripeCustomerId,
-                                    defaultCustomerId: DEFAULT_CUSTOMER_ID
-                                })
-
-                                // Retry with default customer ID
+                        let retryCount = 0
+                        while (retryCount < BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
+                            try {
                                 const result = await this.stripeClient.billing.meterEvents.create({
                                     event_name: 'sparks',
                                     identifier:
@@ -387,77 +344,191 @@ export class StripeProvider {
                                     timestamp,
                                     payload: {
                                         value: totalSparksWithMargin.toString(),
-                                        stripe_customer_id: DEFAULT_CUSTOMER_ID,
+                                        stripe_customer_id: data.stripeCustomerId,
                                         trace_id: data.traceId,
-                                        ai_tokens_sparks: (data.sparks.ai_tokens * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
+                                        spark_type: 'ai_tokens', // Default all sparks to AI tokens
+                                        ai_tokens_sparks: (aiTokens * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
                                         compute_sparks: (data.sparks.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
                                         storage_sparks: (data.sparks.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toString(),
-                                        ai_tokens_cost: (data.costs.base.ai * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
+                                        ai_tokens_cost: (
+                                            (data.costs.base.ai + (data.costs.base.unknown || 0)) *
+                                            BILLING_CONFIG.MARGIN_MULTIPLIER
+                                        ).toFixed(6),
                                         compute_cost: (data.costs.base.compute * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
                                         storage_cost: (data.costs.base.storage * BILLING_CONFIG.MARGIN_MULTIPLIER).toFixed(6),
-                                        // margin: BILLING_CONFIG.MARGIN_MULTIPLIER.toString(),
                                         total_cost_with_margin: (
-                                            (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) *
+                                            (data.costs.base.ai +
+                                                data.costs.base.compute +
+                                                data.costs.base.storage +
+                                                (data.costs.base.unknown || 0)) *
                                             BILLING_CONFIG.MARGIN_MULTIPLIER
                                         ).toFixed(6)
                                     }
                                 })
-                                console.log('Result', data)
 
-                                // Update trace metadata to mark as processed
-                                const updatedTrace = await langfuse.trace({
-                                    id: data.traceId,
-                                    timestamp: data.fullTrace?.timestamp,
-                                    metadata: {
-                                        ...data.fullTrace.metadata,
-                                        billing_status: 'processed',
-                                        meter_event_id: result.identifier
-                                    }
-                                })
-                                console.log('Updated trace', updatedTrace)
+                                // Update trace metadata with billing info
+                                await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
 
-                                return { result, traceId: data.traceId }
+                                meterEvents.push(result)
+                                processedTraces.push(data.traceId)
+                                break
+                            } catch (error) {
+                                retryCount++
+                                if (retryCount === BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
+                                    failedEvents.push({
+                                        traceId: data.traceId,
+                                        error: error instanceof Error ? error.message : 'Unknown error'
+                                    })
+                                    break
+                                }
+                                await new Promise((resolve) => setTimeout(resolve, BILLING_CONFIG.VALIDATION.RETRY_DELAY_MS))
                             }
-                            throw error
                         }
                     })
                 )
-
-                // Process batch results
-                batchResults.forEach((result, index) => {
-                    if (result.status === 'fulfilled') {
-                        meterEvents.push(result.value.result)
-                        processedTraces.push(result.value.traceId)
-                    } else {
-                        const error = result.reason
-                        // Only add to failedEvents if it's not a resource_missing error that was handled
-                        if (!(error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]')) {
-                            failedEvents.push({
-                                traceId: batch[index].traceId,
-                                error: error?.message || 'Unknown error during meter event creation'
-                            })
-                        }
-                    }
-                })
-
-                log.info('Batch processing complete', {
-                    batchSize: batch.length,
-                    successCount: meterEvents.length,
-                    failedCount: failedEvents.length,
-                    processedCount: processedTraces.length,
-                    durationMs: Date.now() - batchStartTime
-                })
 
                 if (i + BATCH_SIZE < sparksData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
             }
 
-            return { meterEvents, failedEvents, processedTraces }
-        } catch (error: any) {
-            log.error('Failed to sync usage to Stripe', { error: error.message })
+            return {
+                meterEvents,
+                failedEvents,
+                processedTraces
+            }
+        } catch (error) {
+            log.error('Error syncing usage to Stripe', { error })
             throw error
         }
+    }
+
+    private validateUsageEvent(data: SparksData & { fullTrace: any }): string | null {
+        try {
+            // Check required metadata fields
+            for (const field of BILLING_CONFIG.METADATA_FIELDS.REQUIRED) {
+                if (!data.metadata[field]) {
+                    return `Missing required metadata field: ${field}`
+                }
+            }
+
+            // Validate resource amounts
+            if (
+                data.sparks.ai_tokens > 0 &&
+                (data.sparks.ai_tokens < BILLING_CONFIG.AI_TOKENS.MIN_TOKENS ||
+                    data.sparks.ai_tokens > BILLING_CONFIG.AI_TOKENS.MAX_TOKENS_PER_REQUEST)
+            ) {
+                return `Invalid AI tokens amount: ${data.sparks.ai_tokens}`
+            }
+
+            if (
+                data.sparks.compute > 0 &&
+                (data.usage.computeMinutes < BILLING_CONFIG.COMPUTE.MIN_MINUTES ||
+                    data.usage.computeMinutes > BILLING_CONFIG.COMPUTE.MAX_MINUTES_PER_REQUEST)
+            ) {
+                return `Invalid compute minutes: ${data.usage.computeMinutes}`
+            }
+
+            if (
+                data.sparks.storage > 0 &&
+                (data.usage.storageGB < BILLING_CONFIG.STORAGE.MIN_GB || data.usage.storageGB > BILLING_CONFIG.STORAGE.MAX_GB_PER_REQUEST)
+            ) {
+                return `Invalid storage GB: ${data.usage.storageGB}`
+            }
+
+            return null
+        } catch (error: any) {
+            return `Validation error: ${error.message}`
+        }
+    }
+
+    private async updateTraceMetadata(
+        data: SparksData & { fullTrace: any },
+        result: Stripe.Billing.MeterEvent,
+        batchStartTime: number,
+        batchSize: number,
+        batchIndex: number,
+        meterId: string
+    ): Promise<void> {
+        const totalSparks = Object.values(data.sparks).reduce((sum, val) => sum + val, 0)
+        await langfuse.trace({
+            id: data.traceId,
+            timestamp: data.fullTrace?.timestamp,
+            metadata: {
+                ...data.fullTrace?.metadata,
+                billing_status: 'processed',
+                meter_event_id: result.identifier,
+                billing_details: {
+                    total_sparks: Math.floor(totalSparks * BILLING_CONFIG.MARGIN_MULTIPLIER),
+                    breakdown: {
+                        ai_tokens: this.calculateResourceBreakdown(data.sparks.ai_tokens, data.costs.base.ai, totalSparks),
+                        compute: this.calculateResourceBreakdown(data.sparks.compute, data.costs.base.compute, totalSparks),
+                        storage: this.calculateResourceBreakdown(data.sparks.storage, data.costs.base.storage, totalSparks)
+                    },
+                    costs: {
+                        total_base_cost: data.costs.base.ai + data.costs.base.compute + data.costs.base.storage,
+                        total_with_margin:
+                            (data.costs.base.ai + data.costs.base.compute + data.costs.base.storage) * BILLING_CONFIG.MARGIN_MULTIPLIER,
+                        currency: 'USD'
+                    },
+                    billing_config: {
+                        margin_multiplier: BILLING_CONFIG.MARGIN_MULTIPLIER,
+                        environment: process.env.NODE_ENV || 'development',
+                        version: '1.0.0',
+                        meter_id: meterId
+                    },
+                    event: {
+                        customer_id: data.stripeCustomerId,
+                        timestamp: result.timestamp,
+                        event_name: 'sparks',
+                        meter_identifier: result.identifier,
+                        identifier_production: process.env.NODE_ENV === 'production' ? result.identifier : undefined
+                    },
+                    processing: {
+                        started_at: new Date(batchStartTime).toISOString(),
+                        completed_at: new Date().toISOString(),
+                        duration_ms: Date.now() - batchStartTime,
+                        batch_size: batchSize,
+                        batch_index: batchIndex
+                    }
+                }
+            }
+        })
+    }
+
+    private calculateResourceBreakdown(sparks: number, cost: number, totalSparks: number) {
+        return {
+            base_sparks: sparks,
+            sparks_with_margin: sparks * BILLING_CONFIG.MARGIN_MULTIPLIER,
+            base_cost: cost,
+            cost_with_margin: cost * BILLING_CONFIG.MARGIN_MULTIPLIER,
+            rate: sparks > 0 ? cost / sparks : 0,
+            percentage: (sparks / totalSparks) * 100
+        }
+    }
+
+    private processBatchResults(
+        batchResults: PromiseSettledResult<any>[],
+        batch: Array<SparksData & { fullTrace: any }>,
+        meterEvents: Stripe.Billing.MeterEvent[],
+        failedEvents: Array<{ traceId: string; error: string }>,
+        processedTraces: string[]
+    ): void {
+        batchResults.forEach((result, index) => {
+            if (result.status === 'fulfilled') {
+                meterEvents.push(result.value.result)
+                processedTraces.push(result.value.traceId)
+            } else {
+                const error = result.reason
+                // Only add to failedEvents if it's not a resource_missing error that was handled
+                if (!(error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]')) {
+                    failedEvents.push({
+                        traceId: batch[index].traceId,
+                        error: error?.message || 'Unknown error during meter event creation'
+                    })
+                }
+            }
+        })
     }
 
     async getMeterEventSummaries(
@@ -616,67 +687,230 @@ export class StripeProvider {
         }
     }
 
-    async getUsageStats(customerId: string): Promise<UsageStats> {
+    async getUsageSummary(customerId: string): Promise<UsageSummary> {
         try {
-            // Get meter event summaries from Stripe
-            const summaries = await this.getMeterEventSummaries(customerId)
-
-            // Get active subscription if exists
-            const subscriptions = await this.listSubscriptions({ customer: customerId, status: 'active', limit: 1 })
+            // First get the active subscription to determine billing period
+            const subscriptions = await this.stripeClient.subscriptions.list({
+                customer: customerId,
+                status: 'active',
+                limit: 1
+            })
             const subscription = subscriptions.data[0]
 
-            // Group summaries by meter
-            const meterUsage = summaries.data.reduce((acc, summary) => {
-                const meterKey = summary.meter_name || summary.meter
-                if (!acc[meterKey]) {
-                    acc[meterKey] = {
-                        total: 0,
-                        daily: []
-                    }
-                }
-                acc[meterKey].total += summary.aggregated_value || 0
-                acc[meterKey].daily.push({
-                    date: new Date(summary.start_time * 1000),
-                    value: summary.aggregated_value || 0
+            // Get billing period from subscription or default to current month
+            const now = new Date()
+            const billingStart = subscription
+                ? new Date(subscription.current_period_start * 1000)
+                : new Date(now.getFullYear(), now.getMonth(), 1)
+            const billingEnd = subscription
+                ? new Date(subscription.current_period_end * 1000)
+                : new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+            // Get meter events for the billing period
+            const startTime = Math.floor(billingStart.getTime() / 1000)
+            const endTime = Math.floor(billingEnd.getTime() / 1000)
+
+            const meters = await this.stripeClient.billing.meters.list()
+            const summariesPromises = meters.data.map((meter) =>
+                this.stripeClient.billing.meters.listEventSummaries(meter.id, {
+                    customer: customerId,
+                    start_time: startTime,
+                    end_time: endTime
                 })
-                return acc
-            }, {} as Record<string, { total: number; daily: Array<{ date: Date; value: number }> }>)
+            )
 
-            // Calculate total sparks across all meters
-            const total_sparks = Object.values(meterUsage).reduce((acc, meter) => acc + meter.total, 0)
+            // Fetch upcoming invoice data in parallel with usage data
+            const [summaries, upcomingInvoiceData] = await Promise.all([
+                Promise.all(summariesPromises),
+                this.fetchUpcomingInvoiceData(customerId, subscription?.id)
+            ])
 
-            // Get usage breakdown by meter
-            const usageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
-                acc[meterKey] = data.total
-                return acc
-            }, {} as Record<string, number>)
+            // Initialize usage tracking
+            const dailyUsage: Record<
+                string,
+                {
+                    date: string
+                    aiTokens: number
+                    compute: number
+                    storage: number
+                    total: number
+                }
+            > = {}
 
-            // Get daily usage for each meter
-            const dailyUsageByMeter = Object.entries(meterUsage).reduce((acc, [meterKey, data]) => {
-                acc[meterKey] = data.daily.sort((a, b) => a.date.getTime() - b.date.getTime())
-                return acc
-            }, {} as Record<string, Array<{ date: Date; value: number }>>)
+            let totalAiTokens = 0
+            let totalCompute = 0
+            let totalStorage = 0
+
+            // Process all summaries
+            summaries.forEach((summary) => {
+                summary.data.forEach((rawEvent) => {
+                    const event = rawEvent as MeterEventSummary
+                    const value = Number(event.aggregated_value || 0)
+                    const date = new Date(event.start_time * 1000).toISOString().split('T')[0]
+
+                    // Get spark type from metadata or payload
+                    let sparkType = 'ai_tokens' // Default to AI tokens
+                    try {
+                        if (event.metadata) {
+                            const metadata = JSON.parse(event.metadata)
+                            if (metadata.spark_type) {
+                                sparkType = metadata.spark_type
+                            }
+                        }
+                        if (event.payload?.spark_type) {
+                            sparkType = event.payload.spark_type
+                        }
+                    } catch (e) {
+                        log.warn('Failed to parse event metadata', { error: e, event })
+                    }
+
+                    // Initialize daily record if not exists
+                    if (!dailyUsage[date]) {
+                        dailyUsage[date] = {
+                            date,
+                            aiTokens: 0,
+                            compute: 0,
+                            storage: 0,
+                            total: 0
+                        }
+                    }
+
+                    // Update totals and daily usage based on spark type
+                    switch (sparkType) {
+                        case 'compute':
+                            totalCompute += value
+                            dailyUsage[date].compute += value
+                            break
+                        case 'storage':
+                            totalStorage += value
+                            dailyUsage[date].storage += value
+                            break
+                        default:
+                            // Default to AI tokens for unknown types
+                            totalAiTokens += value
+                            dailyUsage[date].aiTokens += value
+                    }
+                    dailyUsage[date].total += value
+                })
+            })
+
+            // Calculate plan limits
+            const planLimits = subscription ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+            const aiTokensLimit = Math.floor(planLimits * 0.5) // 50% allocation for AI tokens
+            const computeLimit = Math.floor(planLimits * 0.3) // 30% allocation for compute
+            const storageLimit = Math.floor(planLimits * 0.2) // 20% allocation for storage
+
+            // Calculate total usage
+            const totalUsage = totalAiTokens + totalCompute + totalStorage
+
+            // Check if over limit
+            const isOverLimit = totalUsage > planLimits
+
+            // Format daily usage array sorted by date
+            const dailyUsageArray = Object.values(dailyUsage).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
             return {
-                total_sparks,
-                usageByMeter,
-                dailyUsageByMeter,
-                billingPeriod: subscription
-                    ? {
-                          start: new Date(subscription.current_period_start * 1000),
-                          end: new Date(subscription.current_period_end * 1000)
-                      }
-                    : undefined,
-                lastUpdated: new Date(),
-                raw: {
-                    subscription,
-                    summaries,
-                    meterUsage
-                }
+                currentPlan: {
+                    name: subscription ? 'Pro' : 'Free',
+                    status: subscription?.status === 'active' ? 'active' : 'inactive',
+                    sparksIncluded: planLimits
+                },
+                usageDashboard: {
+                    aiTokens: {
+                        used: totalAiTokens,
+                        total: aiTokensLimit,
+                        rate: 0.01,
+                        cost: totalAiTokens * 0.01
+                    },
+                    compute: {
+                        used: totalCompute,
+                        total: computeLimit,
+                        rate: 0.02,
+                        cost: totalCompute * 0.02
+                    },
+                    storage: {
+                        used: totalStorage,
+                        total: storageLimit,
+                        rate: 0.001,
+                        cost: totalStorage * 0.001
+                    }
+                },
+                billingPeriod: {
+                    start: billingStart,
+                    end: billingEnd,
+                    current: now
+                },
+                pricing: {
+                    aiTokensRate: '1,000 tokens = 100 Sparks ($0.1)',
+                    computeRate: '1 minute = 50 sparks ($0.05)',
+                    storageRate: '1 GB/month = 500 sparks ($0.5)',
+                    sparkRate: '1 Spark = $0.001 USD'
+                },
+                dailyUsage: dailyUsageArray,
+                isOverLimit,
+                upcomingInvoice: upcomingInvoiceData
             }
         } catch (error) {
-            log.error('Failed to get usage stats', { error, customerId })
+            log.error('Error getting usage summary:', error)
             throw error
+        }
+    }
+
+    /**
+     * Fetches upcoming invoice data for a customer
+     * @param customerId The Stripe customer ID
+     * @param subscriptionId Optional subscription ID
+     * @returns Formatted upcoming invoice data or undefined if not available
+     */
+    private async fetchUpcomingInvoiceData(
+        customerId: string,
+        subscriptionId?: string
+    ): Promise<UsageSummary['upcomingInvoice'] | undefined> {
+        try {
+            const invoiceParams: Stripe.InvoiceRetrieveUpcomingParams = {
+                customer: customerId
+            }
+
+            if (subscriptionId) {
+                invoiceParams.subscription = subscriptionId
+            }
+
+            const invoice = await this.stripeClient.invoices.retrieveUpcoming(invoiceParams)
+
+            if (!invoice) {
+                return undefined
+            }
+
+            // Extract line items for detailed breakdown
+            const lineItems = invoice.lines.data.map((item) => ({
+                description: item.description || 'Usage',
+                amount: item.amount,
+                quantity: item.quantity !== null ? item.quantity : undefined,
+                period: item.period
+                    ? {
+                          start: new Date(item.period.start * 1000),
+                          end: new Date(item.period.end * 1000)
+                      }
+                    : undefined
+            }))
+
+            // Calculate total credits used from line items
+            // This is an approximation based on the invoice amount and the spark rate
+            const totalCreditsUsed = Math.round(invoice.total / (BILLING_CONFIG.SPARK_TO_USD * 100))
+
+            return {
+                amount: invoice.total,
+                currency: invoice.currency,
+                dueDate: invoice.due_date ? new Date(invoice.due_date * 1000) : undefined,
+                periodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : undefined,
+                periodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : undefined,
+                lineItems,
+                totalCreditsUsed
+            }
+        } catch (error) {
+            // Log the error but don't fail the entire request
+            log.warn('Failed to fetch upcoming invoice data', { error, customerId })
+            return undefined
         }
     }
 

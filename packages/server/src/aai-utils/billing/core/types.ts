@@ -43,13 +43,11 @@ export interface UsageStats {
     billingPeriod?: {
         start: Date
         end: Date
+        current: Date
     }
     lastUpdated: Date
-    raw: {
-        subscription?: Stripe.Subscription
-        summaries: Stripe.Response<Stripe.ApiList<Stripe.Billing.MeterEventSummary>>
-        meterUsage: Record<string, { total: number; daily: Array<{ date: Date; value: number }> }>
-    }
+    upcomingInvoice?: UsageSummary['upcomingInvoice']
+    summaries?: any
 }
 
 export interface BillingPortalSession {
@@ -79,7 +77,7 @@ export interface BillingProvider {
     updateSubscription(params: UpdateSubscriptionParams): Promise<Subscription>
     cancelSubscription(subscriptionId: string): Promise<Subscription>
     getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice>
-    getUsageStats(customerId: string): Promise<UsageStats>
+    getUsageSummary(customerId: string): Promise<UsageStats>
     syncUsageToStripe(traceId?: string): Promise<{ processedTraces: string[]; failedTraces: Array<{ traceId: string; error: string }> }>
     listSubscriptions(params: Stripe.SubscriptionListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Subscription>>>
     getSubscriptionWithUsage(subscriptionId: string): Promise<SubscriptionWithUsage>
@@ -99,7 +97,7 @@ export interface AttachPaymentMethodParams {
 
 export interface CreateCheckoutSessionParams {
     customerId: string
-    priceId: string
+    priceId?: string
     successUrl: string
     cancelUrl: string
 }
@@ -130,6 +128,7 @@ export interface SparksData {
         ai_tokens: number
         compute: number
         storage: number
+        unknown?: number
         total: number
     }
     metadata: Record<string, any>
@@ -151,6 +150,7 @@ export interface SparksData {
             ai: number
             compute: number
             storage: number
+            unknown?: number
             total: number
         }
         withMargin: {
@@ -225,4 +225,105 @@ export interface SyncUsageResponse {
     meterEvents?: Stripe.Billing.MeterEvent[]
     traces?: any[]
     sparksData?: SparksData[]
+}
+
+export interface UsageSummary {
+    currentPlan: {
+        name: 'Free' | 'Pro'
+        status: 'active' | 'inactive'
+        sparksIncluded: number
+    }
+    usageDashboard: {
+        aiTokens: {
+            used: number
+            total: number
+            rate: number
+            cost: number
+        }
+        compute: {
+            used: number
+            total: number
+            rate: number
+            cost: number
+        }
+        storage: {
+            used: number
+            total: number
+            rate: number
+            cost: number
+        }
+    }
+    billingPeriod: {
+        start: Date
+        end: Date
+        current: Date
+    }
+    pricing: {
+        aiTokensRate: string // "1,000 tokens = 100 Sparks ($0.1)"
+        computeRate: string // "1 minute = 50 sparks ($0.05)"
+        storageRate: string // "1 GB/month = 500 sparks ($0.5)"
+        sparkRate: string // "1 Spark = $0.001 USD"
+    }
+    dailyUsage: Array<{
+        date: string
+        aiTokens: number
+        compute: number
+        storage: number
+        total: number
+    }>
+    isOverLimit: boolean
+    upcomingInvoice?: {
+        amount: number
+        currency: string
+        dueDate?: Date
+        periodStart?: Date
+        periodEnd?: Date
+        lineItems?: Array<{
+            description: string
+            amount: number
+            quantity?: number
+            period?: {
+                start: Date
+                end: Date
+            }
+        }>
+        totalCreditsUsed?: number
+    }
+}
+
+export interface CustomerStatus {
+    plan: {
+        type: 'Free' | 'Pro'
+        status: 'active' | 'inactive'
+        price: number
+        billingPeriod: 'month' | 'year'
+        features: string[]
+        limits: {
+            sparksPerMonth: number
+            apiAccess: boolean
+            communitySupport: boolean
+            usageAnalytics: boolean
+        }
+    }
+    usage: {
+        current: number
+        limit: number
+        percentageUsed: number
+        breakdown: {
+            aiTokens: number
+            compute: number
+            storage: number
+        }
+    }
+    billingPeriod: {
+        start: Date
+        end: Date
+        daysRemaining: number
+    }
+    accountStatus: {
+        isActive: boolean
+        isTrial: boolean
+        isBlocked: boolean
+        blockReason?: string
+    }
 }

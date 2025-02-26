@@ -13,20 +13,27 @@ import {
     Subscription,
     Invoice,
     UsageStats,
-    SubscriptionWithUsage
+    SubscriptionWithUsage,
+    CustomerStatus,
+    UsageSummary
 } from './types'
 import { LangfuseProvider } from '../langfuse/LangfuseProvider'
 import { StripeProvider } from '../stripe/StripeProvider'
 import { log } from '../config'
-import type Stripe from 'stripe'
+import Stripe from 'stripe'
+import { MeterEventSummary } from '../stripe/types'
 
 export class BillingService implements BillingProvider {
-    private usageProvider: LangfuseProvider
+    private stripeClient: Stripe
     private paymentProvider: StripeProvider
+    private usageProvider: LangfuseProvider
 
     constructor(stripeProvider: StripeProvider, langfuseProvider: LangfuseProvider) {
         this.paymentProvider = stripeProvider
         this.usageProvider = langfuseProvider
+        this.stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+            apiVersion: '2025-01-27.acacia'
+        })
     }
 
     // Payment and subscription methods delegated to Stripe
@@ -63,8 +70,116 @@ export class BillingService implements BillingProvider {
     }
 
     // Usage tracking methods using Langfuse
-    async getUsageStats(customerId: string): Promise<UsageStats> {
-        return this.paymentProvider.getUsageStats(customerId)
+    async getUsageSummary(customerId: string): Promise<UsageStats> {
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const startTime = Math.floor(startOfMonth.getTime() / 1000)
+        const endTime = Math.floor(now.getTime() / 1000)
+
+        const meters = await this.stripeClient.billing.meters.list()
+        const summariesPromises = meters.data.map((meter) =>
+            this.stripeClient.billing.meters.listEventSummaries(meter.id, {
+                customer: customerId,
+                start_time: startTime,
+                end_time: endTime
+            })
+        )
+
+        const summaries = await Promise.all(summariesPromises)
+        const usageByMeter: Record<string, number> = {
+            ai_tokens: 0,
+            compute: 0,
+            storage: 0
+        }
+        const dailyUsageByMeter: Record<string, Array<{ date: Date; value: number }>> = {
+            ai_tokens: [],
+            compute: [],
+            storage: []
+        }
+        let total_sparks = 0
+
+        summaries.forEach((summary) => {
+            summary.data.forEach((rawEvent) => {
+                const event = rawEvent as MeterEventSummary
+                const value = Number(event.aggregated_value || 0)
+                const date = new Date(event.start_time * 1000)
+
+                // Get spark type from metadata or payload
+                let sparkType = 'ai_tokens' // Default to AI tokens
+                try {
+                    if (event.metadata) {
+                        const metadata = JSON.parse(event.metadata as string)
+                        if (metadata.spark_type) {
+                            sparkType = metadata.spark_type
+                        }
+                    }
+                    if (event.payload?.spark_type) {
+                        sparkType = event.payload.spark_type
+                    }
+                } catch (e) {
+                    log.warn('Failed to parse event metadata', { error: e, event })
+                }
+
+                // Add to the appropriate meter
+                if (sparkType === 'compute' || sparkType === 'storage') {
+                    usageByMeter[sparkType] += value
+                } else {
+                    // All other types count as AI tokens
+                    usageByMeter.ai_tokens += value
+                }
+
+                total_sparks += value
+
+                // Add to daily usage
+                if (sparkType === 'compute' || sparkType === 'storage') {
+                    dailyUsageByMeter[sparkType].push({ date, value })
+                } else {
+                    dailyUsageByMeter.ai_tokens.push({ date, value })
+                }
+            })
+        })
+
+        const subscription = await this.getActiveSubscription(customerId)
+
+        // Get upcoming invoice data
+        let upcomingInvoice: UsageSummary['upcomingInvoice'] | undefined = undefined
+        try {
+            if (customerId) {
+                const invoiceParams: GetUpcomingInvoiceParams = {
+                    customerId,
+                    subscriptionId: subscription?.id
+                }
+                const invoice = await this.paymentProvider.getUpcomingInvoice(invoiceParams)
+
+                // Format the invoice data for the UsageSummary
+                upcomingInvoice = {
+                    amount: invoice.amount,
+                    currency: invoice.currency,
+                    dueDate: invoice.dueDate,
+                    // Calculate total credits used based on the invoice amount
+                    totalCreditsUsed: Math.round(invoice.amount / (0.001 * 100)) // Assuming $0.001 per spark
+                }
+            }
+        } catch (error) {
+            log.warn('Failed to get upcoming invoice', { error, customerId })
+            // Don't fail the entire request if we can't get the invoice
+        }
+
+        return {
+            total_sparks,
+            usageByMeter,
+            dailyUsageByMeter,
+            billingPeriod: subscription
+                ? {
+                      start: new Date(subscription.current_period_start * 1000),
+                      end: new Date(subscription.current_period_end * 1000),
+                      current: now
+                  }
+                : undefined,
+            lastUpdated: new Date(),
+            upcomingInvoice,
+            summaries
+        }
     }
 
     async getSubscriptionWithUsage(subscriptionId: string): Promise<SubscriptionWithUsage> {
@@ -87,7 +202,7 @@ export class BillingService implements BillingProvider {
                     currentPeriodStart: new Date(),
                     currentPeriodEnd: new Date(),
                     cancelAtPeriodEnd: false,
-                    usage: [] // Ensure usage is always present
+                    usage: []
                 }
             }
 
@@ -97,11 +212,21 @@ export class BillingService implements BillingProvider {
             const startTime = Math.floor(startOfMonth.getTime() / 1000)
             const endTime = Math.floor(now.getTime() / 1000)
 
-            // Get usage stats which includes meter summaries
-            const usageStats = await this.paymentProvider.getUsageStats(subscription.customer as string)
+            // Get meter events directly from Stripe
+            const meters = await this.stripeClient.billing.meters.list()
+            const summariesPromises = meters.data.map((meter) =>
+                this.stripeClient.billing.meters.listEventSummaries(meter.id, {
+                    customer: subscriptionId,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            )
+
+            const summariesResults = await Promise.all(summariesPromises)
+            const allSummaries = summariesResults.flatMap((result) => result.data)
 
             // Map summaries to include meter_name
-            const usage = usageStats.raw.summaries.data.map((summary) => ({
+            const usage = allSummaries.map((summary) => ({
                 ...summary,
                 meter_name: summary.meter === process.env.STRIPE_SPARKS_METER_ID ? 'sparks' : 'unknown'
             }))
@@ -113,7 +238,7 @@ export class BillingService implements BillingProvider {
                 currentPeriodStart: new Date(subscription.current_period_start * 1000),
                 currentPeriodEnd: new Date(subscription.current_period_end * 1000),
                 cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                usage // Now properly typed with meter_name
+                usage
             }
         } catch (error: any) {
             log.error('Failed to get subscription with usage', {
@@ -197,5 +322,25 @@ export class BillingService implements BillingProvider {
                 meterEvents: []
             }
         }
+    }
+
+    async getCustomer(customerId: string): Promise<Stripe.Customer> {
+        return this.stripeClient.customers.retrieve(customerId) as Promise<Stripe.Customer>
+    }
+
+    async getActiveSubscription(customerId: string): Promise<Stripe.Subscription | null> {
+        const subscriptions = await this.stripeClient.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 1
+        })
+        return subscriptions.data[0] || null
+    }
+
+    async getPaymentMethods(customerId: string): Promise<Stripe.Response<Stripe.ApiList<Stripe.PaymentMethod>>> {
+        return this.stripeClient.paymentMethods.list({
+            customer: customerId,
+            type: 'card'
+        })
     }
 }
