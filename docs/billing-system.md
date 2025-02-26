@@ -82,7 +82,7 @@ const SUBSCRIPTION_TIERS = {
     },
     PLUS: {
         name: 'Plus',
-        sparksPerMonth: 500000,
+        sparksPerMonth: 250_000,
         price: 20,
         priceId: 'price_1QdEegFeRAHyP6by6yTOvbwj',
         features: [
@@ -485,7 +485,7 @@ interface BillingProvider {
     updateSubscription(params: UpdateSubscriptionParams): Promise<Subscription>
     cancelSubscription(subscriptionId: string): Promise<Subscription>
     getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice>
-    getUsageStats(customerId: string): Promise<UsageStats>
+    getUsageSummary(customerId: string): Promise<UsageStats>
     syncUsageToStripe(traceId?: string): Promise<{
         processedTraces: string[]
         failedTraces: Array<{ traceId: string; error: string }>
@@ -713,7 +713,10 @@ const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [usageResponse, subscriptionResponse] = await Promise.all([billingApi.getUsageStats(), billingApi.getSubscriptions()])
+                const [usageResponse, subscriptionResponse] = await Promise.all([
+                    billingApi.getUsageSummary(),
+                    billingApi.getSubscriptions()
+                ])
                 setUsage(usageResponse.data)
                 setSubscription(subscriptionResponse.data)
             } catch (error) {
@@ -853,7 +856,7 @@ Located in `packages-answers/ui/src/api/billing.d.ts`:
 
 ```typescript
 interface BillingApi {
-    getUsageStats(): Promise<{
+    getUsageSummary(): Promise<{
         data: {
             total_sparks: number
             usageByMeter: Record<string, number>
@@ -963,7 +966,10 @@ const UsageStats: React.FC<UsageStatsProps> = ({ currentPlan }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [usageResponse, subscriptionResponse] = await Promise.all([billingApi.getUsageStats(), billingApi.getSubscriptions()])
+                const [usageResponse, subscriptionResponse] = await Promise.all([
+                    billingApi.getUsageSummary(),
+                    billingApi.getSubscriptions()
+                ])
                 setUsage(usageResponse.data)
                 setSubscription(subscriptionResponse.data)
             } catch (error) {
@@ -1382,7 +1388,7 @@ Located in `packages-answers/ui/src/api/billing.d.ts`:
 
 ```typescript
 interface BillingApi {
-    getUsageStats(): Promise<{
+    getUsageSummary(): Promise<{
         data: {
             total_sparks: number
             usageByMeter: Record<string, number>
@@ -1519,7 +1525,7 @@ async syncUsageToStripe(sparksData: Array<SparksData & { fullTrace: any }>): Pro
 Located in `packages/server/src/aai-utils/billing/core/BillingService.ts`:
 
 ```typescript
-async getUsageStats(customerId: string): Promise<UsageStats & any> {
+async getUsageSummary(customerId: string): Promise<UsageStats & any> {
     // Get meter event summaries from Stripe
     const summaries = await this.paymentProvider.getMeterEventSummaries(customerId)
 

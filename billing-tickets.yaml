@@ -87,7 +87,7 @@ tickets:
                   stripe_price_id: 'price_xxx'
               },
               PRO: {
-                  base_credits: 500000,
+                  base_credits: 250_000,
                   price: 20,
                   features: ['all_chatflows'],
                   stripe_price_id: 'price_yyy'

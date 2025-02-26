@@ -163,8 +163,8 @@ enum BlockReason {
 }
 
 interface BlockingConfig {
-    FREE_TIER_LIMIT: 10000
-    HARD_LIMIT: 500000
+    FREE_TIER_LIMIT: 10_000
+    HARD_LIMIT: 250_000
     GRACE_PERIOD_HOURS: 24
     CHECK_FREQUENCY_MINUTES: 5
 }
@@ -225,7 +225,7 @@ const BILLING_CONFIG = {
         PRICE_USD: 5,
         CREDITS: 100000
     },
-    HARD_LIMIT: 500000,
+    HARD_LIMIT: 250_000,
     INVOICE_FREQUENCY: 'weekly',
 
     RATES: {
