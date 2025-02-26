@@ -43,7 +43,7 @@ import multiagent_supervisorPNG from './../../../../packages/ui/src/assets/image
 import multiagent_workerPNG from './../../../../packages/ui/src/assets/images/multiagent_worker.png'
 import { isValidURL, removeDuplicateURL } from '../../../../packages/ui/src/utils/genericHelper.js'
 import dynamic from 'next/dynamic'
-
+import _ from 'lodash'
 const SourceDocDialog = dynamic(() => import('../../../../packages/ui/src/ui-component/dialog/SourceDocDialog'))
 
 interface MessageExtra {
@@ -68,6 +68,7 @@ interface MessageExtra {
 interface MessageCardProps extends Partial<Message>, MessageExtra {
     error?: AxiosError<MessageExtra>
     openLinksInNewTab?: boolean
+    sourceDocuments?: string | Document[]
     role: string
     setPreviewCode?: (
         preview: {
@@ -151,16 +152,17 @@ export const MessageCard = ({
     other = { ...other, role, user } as any
     const { developer_mode } = useFlags(['developer_mode']) // only causes re-render if specified flag values / traits change
     const { user: currentUser, sendMessageFeedback, appSettings, messages } = useAnswers()
+    const sourceDocuments = _.isArray(other.sourceDocuments) ? other.sourceDocuments : JSON.parse(other.sourceDocuments ?? '[]')
     const contextDocumentsBySource: Record<string, Document[]> = React.useMemo(
         () =>
-            contextDocuments?.reduce((uniqueDocuments: Record<string, Document[]>, current) => {
+            sourceDocuments?.reduce((uniqueDocuments: Record<string, Document[]>, current) => {
                 const key = current.metadata.url ?? current.metadata.source
                 return {
                     ...uniqueDocuments,
                     [key]: [...(uniqueDocuments[key] || []), current]
                 }
             }, {}) ?? {},
-        [contextDocuments]
+        [sourceDocuments]
     )
     const [showFeedback, setShowFeedback] = useState(false)
     const [sourceDialogProps, setSourceDialogProps] = useState<{ data: any; title: string } | null>({
@@ -868,16 +870,16 @@ export const MessageCard = ({
 
             {developer_mode?.enabled ? (
                 <Box>
-                    {contextDocuments?.length ? (
+                    {sourceDocuments?.length ? (
                         <Accordion TransitionProps={{ unmountOnExit: true }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
                                 <Typography variant='overline'>
-                                    Context ({countTokens(contextDocuments?.map((d) => d.pageContent)?.join('/n'))} Tokens)
+                                    Source Documents ({countTokens(sourceDocuments?.map((d) => d.pageContent)?.join('/n'))} Tokens)
                                 </Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Typography sx={{ whiteSpace: 'pre-line' }} variant='body1' color='text.secondary' component='div'>
-                                    {contextDocuments?.map((d) => d.pageContent)?.join('/n')}
+                                    {sourceDocuments?.map((d) => d.pageContent)?.join('/n')}
                                 </Typography>
                             </AccordionDetails>
                         </Accordion>
@@ -988,6 +990,60 @@ export const MessageCard = ({
                         </Accordion>
                     ) : null}
                 </Box>
+            ) : null}
+
+            {Object.keys(contextDocumentsBySource)?.length ? (
+                <>
+                    <Divider />
+                    <Box
+                        sx={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: 1
+                        }}
+                    >
+                        <Typography variant='body2'>References:</Typography>
+                        {Object.entries(contextDocumentsBySource)?.map(([source, documents]) => {
+                            const doc = documents?.[0]
+                            return (
+                                <Tooltip key={`references-${doc.metadata.url ?? doc.metadata.source}`} title={'Click to view details'}>
+                                    <Button
+                                        onClick={() => setSelectedDocuments(documents)}
+                                        size='small'
+                                        variant='outlined'
+                                        color='inherit'
+                                        sx={{
+                                            textTransform: 'none',
+                                            borderRadius: 20,
+                                            color: 'text.secondary',
+                                            borderColor: 'text.secondary',
+                                            '&:hover': { textDecoration: 'none' }
+                                        }}
+                                        startIcon={
+                                            services[doc.source ?? doc.metadata?.source]?.imageURL ? (
+                                                <Avatar
+                                                    variant='source'
+                                                    src={services[doc.source ?? doc.metadata?.source]?.imageURL}
+                                                    sx={{ width: 20, height: 20 }}
+                                                />
+                                            ) : (
+                                                <Avatar
+                                                    variant='source'
+                                                    src={services['document']?.imageURL}
+                                                    sx={{ width: 20, height: 20 }}
+                                                />
+                                            )
+                                        }
+                                    >
+                                        {getDocumentLabel(doc)}
+                                    </Button>
+                                </Tooltip>
+                            )
+                        })}
+                    </Box>
+                </>
             ) : null}
         </Box>
     )
