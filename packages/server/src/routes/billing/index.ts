@@ -1,15 +1,15 @@
 import express from 'express'
-
 import billingController from '../../controllers/billing'
+
 const router = express.Router()
 
 // Customer Management
-router.get('/customer/status', billingController.getUsageStats)
+router.get('/customer/status', billingController.getCustomerStatus)
 
 // Usage Tracking
 // TODO: Remove this route
 // router.post('/usage/track', billingController.trackUsage)
-router.get('/usage/summary', billingController.getUsageStats)
+router.get('/usage/summary', billingController.getUsageSummary)
 
 // Subscription Management
 router.get('/subscription/status', billingController.getSubscriptionWithUsage)

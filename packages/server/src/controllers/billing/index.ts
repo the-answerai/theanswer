@@ -7,8 +7,12 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { ChatflowType } from '../../Interface'
 import chatflowsService from '../../services/chatflows'
 import checkOwnership from '../../utils/checkOwnership'
-import billingService from '../../services/billing'
+// import billingService from '../../services/billing'
 import logger from '../../utils/logger'
+import { billingService } from '../../services/billing'
+import { CustomerStatus } from '../../aai-utils/billing/core/types'
+import { BILLING_CONFIG } from '../../aai-utils/billing/config'
+import { UsageSummary } from '../../aai-utils/billing/core/types'
 
 const checkIfChatflowIsValidForStreaming = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -250,15 +254,114 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
 /**
  * Get usage statistics for the current user
  */
-const getUsageStats = async (req: Request, res: Response, next: NextFunction) => {
+const getUsageSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const customerId = req.user?.stripeCustomerId
         if (!customerId) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User has no associated Stripe customer')
         }
 
-        const usageStats = await billingService.getUsageStats(customerId)
-        return res.json(usageStats)
+        const [subscription, usage] = await Promise.all([
+            billingService.getActiveSubscription(customerId),
+            billingService.getUsageSummary(customerId)
+        ])
+
+        // Determine plan type
+        const isPro = subscription?.status === 'active' && subscription.items.data[0]?.price.id === BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY
+        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+
+        // Calculate total usage
+        const totalUsage = (usage.usageByMeter?.ai_tokens || 0) + (usage.usageByMeter?.compute || 0) + (usage.usageByMeter?.storage || 0)
+
+        // Check if over limit
+        const isOverLimit = totalUsage > planLimits
+
+        const usageSummary: UsageSummary = {
+            currentPlan: {
+                name: isPro ? 'Pro' : 'Free',
+                status: subscription?.status === 'active' ? 'active' : 'inactive',
+                sparksIncluded: planLimits
+            },
+            usageDashboard: {
+                aiTokens: {
+                    used: usage.usageByMeter?.ai_tokens || 0,
+                    total: planLimits * 0.5, // 50% allocation for AI tokens
+                    rate: BILLING_CONFIG.SPARK_TO_USD * 100, // Cost per 100 sparks
+                    cost: (usage.usageByMeter?.ai_tokens || 0) * BILLING_CONFIG.SPARK_TO_USD
+                },
+                compute: {
+                    used: usage.usageByMeter?.compute || 0,
+                    total: planLimits * 0.3, // 30% allocation for compute
+                    rate: BILLING_CONFIG.SPARK_TO_USD * 50, // Cost per 50 sparks
+                    cost: (usage.usageByMeter?.compute || 0) * BILLING_CONFIG.SPARK_TO_USD
+                },
+                storage: {
+                    used: usage.usageByMeter?.storage || 0,
+                    total: planLimits * 0.2, // 20% allocation for storage
+                    rate: BILLING_CONFIG.SPARK_TO_USD * 500, // Cost per 500 sparks
+                    cost: (usage.usageByMeter?.storage || 0) * BILLING_CONFIG.SPARK_TO_USD
+                }
+            },
+            billingPeriod: {
+                start: subscription ? new Date(subscription.current_period_start * 1000) : new Date(),
+                end: subscription ? new Date(subscription.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                current: new Date()
+            },
+            pricing: {
+                aiTokensRate: `1,000 tokens = 100 Sparks ($${(BILLING_CONFIG.SPARK_TO_USD * 100).toFixed(3)})`,
+                computeRate: `1 minute = 50 sparks ($${(BILLING_CONFIG.SPARK_TO_USD * 50).toFixed(3)})`,
+                storageRate: `1 GB/month = 500 sparks ($${(BILLING_CONFIG.SPARK_TO_USD * 500).toFixed(3)})`,
+                sparkRate: `1 Spark = $${BILLING_CONFIG.SPARK_TO_USD.toFixed(6)} USD`
+            },
+            dailyUsage: (() => {
+                // Process daily usage data from the dailyUsageByMeter
+                const dailyUsageMap = new Map<string, { aiTokens: number; compute: number; storage: number; total: number }>()
+
+                // Process AI tokens
+                usage.dailyUsageByMeter.ai_tokens?.forEach((item) => {
+                    const dateStr = item.date.toISOString().split('T')[0]
+                    if (!dailyUsageMap.has(dateStr)) {
+                        dailyUsageMap.set(dateStr, { aiTokens: 0, compute: 0, storage: 0, total: 0 })
+                    }
+                    const entry = dailyUsageMap.get(dateStr)!
+                    entry.aiTokens += item.value
+                    entry.total += item.value
+                })
+
+                // Process compute
+                usage.dailyUsageByMeter.compute?.forEach((item) => {
+                    const dateStr = item.date.toISOString().split('T')[0]
+                    if (!dailyUsageMap.has(dateStr)) {
+                        dailyUsageMap.set(dateStr, { aiTokens: 0, compute: 0, storage: 0, total: 0 })
+                    }
+                    const entry = dailyUsageMap.get(dateStr)!
+                    entry.compute += item.value
+                    entry.total += item.value
+                })
+
+                // Process storage
+                usage.dailyUsageByMeter.storage?.forEach((item) => {
+                    const dateStr = item.date.toISOString().split('T')[0]
+                    if (!dailyUsageMap.has(dateStr)) {
+                        dailyUsageMap.set(dateStr, { aiTokens: 0, compute: 0, storage: 0, total: 0 })
+                    }
+                    const entry = dailyUsageMap.get(dateStr)!
+                    entry.storage += item.value
+                    entry.total += item.value
+                })
+
+                return Array.from(dailyUsageMap.entries())
+                    .map(([date, data]) => ({
+                        date,
+                        ...data
+                    }))
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            })(),
+            isOverLimit, // Add the isOverLimit flag
+            upcomingInvoice: usage.upcomingInvoice // Include the upcoming invoice data
+        }
+
+        res.json(usageSummary)
     } catch (error) {
         console.error('Error getting usage stats:', error)
         next(error)
@@ -293,13 +396,8 @@ const attachPaymentMethod = async (req: Request, res: Response, next: NextFuncti
 
 const createCheckoutSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { priceId } = req.body
-        if (!priceId) {
-            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Price ID is required')
-        }
-
         const session = await billingService.createCheckoutSession({
-            priceId,
+            priceId: BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY,
             customerId: req.user?.stripeCustomerId!,
             successUrl: `${req.headers.origin}/billing?status=success`,
             cancelUrl: `${req.headers.origin}/billing?status=cancel`
@@ -327,10 +425,32 @@ const updateSubscription = async (req: Request, res: Response, next: NextFunctio
 
 const cancelSubscription = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const subscription = await billingService.cancelSubscription(req.params.id)
-        return res.json(subscription)
-    } catch (error) {
-        next(error)
+        // Check if user is authenticated
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User not authenticated')
+        }
+
+        const subscriptionId = req.params.id
+        if (!subscriptionId || typeof subscriptionId !== 'string') {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Valid subscription ID is required')
+        }
+
+        // At this point TypeScript knows subscriptionId is a string
+        // Verify subscription belongs to the user
+        const subscription = await billingService.getSubscriptionWithUsage(req.user.stripeCustomerId!)
+        if (!subscription || subscription.id !== subscriptionId) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Subscription not found or does not belong to the user')
+        }
+
+        // Cancel the subscription
+        const canceledSubscription = await billingService.cancelSubscription(subscriptionId as string)
+        return res.json(canceledSubscription)
+    } catch (error: any) {
+        if (error instanceof InternalFlowiseError) {
+            next(error)
+        } else {
+            next(new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to cancel subscription: ${error.message}`))
+        }
     }
 }
 
@@ -419,6 +539,75 @@ const handleWebhook = async (req: Request, res: Response, next: NextFunction) =>
 //     }
 // }
 
+export const getCustomerStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const customerId = req.user?.stripeCustomerId
+
+        if (!customerId) {
+            return res.status(400).json({ error: 'Customer ID not found' })
+        }
+
+        const [customer, subscription, usage] = await Promise.all([
+            billingService.getCustomer(customerId),
+            billingService.getActiveSubscription(customerId),
+            billingService.getUsageSummary(customerId)
+        ])
+
+        // Calculate billing period
+        const now = new Date()
+        const billingPeriodStart = subscription ? new Date(subscription.current_period_start * 1000) : now
+        const billingPeriodEnd = subscription
+            ? new Date(subscription.current_period_end * 1000)
+            : new Date(now.setMonth(now.getMonth() + 1))
+        const daysRemaining = Math.ceil((billingPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+        // Determine plan type and limits
+        const isPro = subscription?.status === 'active' && subscription.items.data[0]?.price.id === BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY
+        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+
+        const customerStatus: CustomerStatus = {
+            plan: {
+                type: isPro ? 'Pro' : 'Free',
+                status: subscription?.status === 'active' ? 'active' : 'inactive',
+                price: isPro ? 20 : 0, // $20 for Pro plan
+                billingPeriod: 'month',
+                features: ['Full API access', 'Community support', 'All features included', 'Usage analytics'],
+                limits: {
+                    sparksPerMonth: planLimits,
+                    apiAccess: true,
+                    communitySupport: true,
+                    usageAnalytics: true
+                }
+            },
+            usage: {
+                current: usage.total_sparks || 0,
+                limit: planLimits,
+                percentageUsed: ((usage.total_sparks || 0) / planLimits) * 100,
+                breakdown: {
+                    aiTokens: usage.usageByMeter?.ai_tokens || 0,
+                    compute: usage.usageByMeter?.compute || 0,
+                    storage: usage.usageByMeter?.storage || 0
+                }
+            },
+            billingPeriod: {
+                start: billingPeriodStart,
+                end: billingPeriodEnd,
+                daysRemaining
+            },
+            accountStatus: {
+                isActive: subscription?.status === 'active' || subscription?.status === 'trialing',
+                isTrial: subscription?.status === 'trialing',
+                isBlocked: customer.metadata.blocked === 'true',
+                blockReason: customer.metadata.blockReason
+            }
+        }
+
+        res.json(customerStatus)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -431,7 +620,7 @@ export default {
     updateChatflow,
     getSinglePublicChatflow,
     getSinglePublicChatbotConfig,
-    getUsageStats,
+    getUsageSummary,
     usageSyncHandler,
     attachPaymentMethod,
     createCheckoutSession,
@@ -440,6 +629,7 @@ export default {
     getUpcomingInvoice,
     createBillingPortalSession,
     getSubscriptionWithUsage,
-    handleWebhook
+    handleWebhook,
+    getCustomerStatus
     // trackUsage
 }

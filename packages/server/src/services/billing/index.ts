@@ -16,15 +16,15 @@ import { Subscription } from '../../database/entities/Subscription'
 import Stripe from 'stripe'
 
 // Initialize billing service with Stripe provider
-const billingService = new BillingService(new StripeProvider(stripeClient), new LangfuseProvider())
+export const billingService = new BillingService(new StripeProvider(stripeClient), new LangfuseProvider())
 
-async function getUsageStats(customerId?: string) {
+async function getUsageSummary(customerId?: string) {
     logger.info('Getting usage stats', { customerId })
     try {
         if (!customerId) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User has no associated Stripe customer')
         }
-        return await billingService.getUsageStats(customerId)
+        return await billingService.getUsageSummary(customerId)
     } catch (error) {
         logger.error('Error getting usage stats:', { error, customerId })
         throw new InternalFlowiseError(
@@ -281,7 +281,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 //         }
 
 //         // Get usage stats before the event
-//         const beforeStats = await billingService.getUsageStats(user.stripeCustomerId)
+//         const beforeStats = await billingService.getUsageSummary(user.stripeCustomerId)
 //         const beforeTotal = beforeStats.total_sparks || 0
 
 //         // Record the event
@@ -322,7 +322,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 //         ])
 
 //         // Get usage stats after the event
-//         const afterStats = await billingService.getUsageStats(user.stripeCustomerId)
+//         const afterStats = await billingService.getUsageSummary(user.stripeCustomerId)
 //         const afterTotal = afterStats.total_sparks || 0
 
 //         return {
@@ -338,7 +338,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 // }
 
 export default {
-    getUsageStats,
+    getUsageSummary,
     syncUsageToStripe,
     // createCustomer,
     attachPaymentMethod,
