@@ -1,5 +1,4 @@
 import { TEST_CONFIG } from '../setup'
-import { BillingService, StripeProvider } from '../../../src/aai-utils/billing'
 import { UsageStats, Subscription, BillingPortalSession, Invoice, SubscriptionWithUsage } from '../../../src/aai-utils/billing/core/types'
 import axios from 'axios'
 
@@ -41,7 +40,7 @@ export const BILLING_TEST_CONFIG: BillingTestConfig = {
     },
     testCustomerId: 'test-customer-123',
     freeTierCredits: 10000,
-    hardLimitCredits: 500000,
+    hardLimitCredits: 250_000,
     resourceRates: RESOURCE_RATES,
     resourceLimits: RESOURCE_LIMITS
 }
@@ -73,87 +72,6 @@ export const MOCK_SUBSCRIPTION: Subscription = {
     currentPeriodEnd: new Date(Date.now() + 2592000000), // 30 days from now
     cancelAtPeriodEnd: false
 }
-
-// Mock Stripe provider for testing
-class MockStripeProvider extends StripeProvider {
-    private usageStats: UsageStats = {
-        total_sparks: 0,
-        usageByMeter: {},
-        dailyUsageByMeter: {},
-        lastUpdated: new Date(),
-        raw: {
-            summaries: {
-                object: 'list',
-                data: [],
-                has_more: false,
-                url: '/v1/billing/meter_event_summaries',
-                lastResponse: {
-                    headers: {},
-                    requestId: 'test-request-123',
-                    statusCode: 200
-                }
-            },
-            meterUsage: {}
-        }
-    }
-
-    async getCustomer(customerId: string) {
-        return MOCK_STRIPE_CUSTOMER
-    }
-
-    async getSubscription(subscriptionId: string) {
-        return MOCK_SUBSCRIPTION
-    }
-
-    async getSubscriptionWithUsage(subscriptionId?: string): Promise<SubscriptionWithUsage> {
-        return {
-            ...MOCK_SUBSCRIPTION,
-            usage: []
-        }
-    }
-
-    async createCheckoutSession(params: any) {
-        return {
-            url: 'https://checkout.stripe.com/test'
-        }
-    }
-
-    async createBillingPortalSession(params: any): Promise<BillingPortalSession> {
-        return {
-            url: 'https://billing.stripe.com/test',
-            returnUrl: params.returnUrl
-        }
-    }
-
-    async getUpcomingInvoice(params: any): Promise<Invoice> {
-        return {
-            id: 'test-invoice-123',
-            customerId: params.customerId,
-            amount: 1000,
-            currency: 'usd',
-            status: 'draft',
-            created: new Date(),
-            dueDate: new Date(Date.now() + 2592000000)
-        }
-    }
-
-    async attachPaymentMethod(params: any) {
-        return {
-            id: 'test-payment-123',
-            type: 'card',
-            last4: '4242',
-            expMonth: 12,
-            expYear: 2025
-        }
-    }
-
-    async getUsageStats(customerId: string): Promise<UsageStats> {
-        return this.usageStats
-    }
-}
-
-// Create mock billing service
-export const mockBillingService = new BillingService(new MockStripeProvider({} as any), {} as any)
 
 // Test chatflow configuration
 export const TEST_CHATFLOW_CONFIG = {

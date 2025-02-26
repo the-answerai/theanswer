@@ -22,8 +22,3 @@ export const TEST_CONFIG = {
 
 // Mock console.error to avoid noise in test output
 console.error = jest.fn()
-
-// Clean up after all tests
-afterAll(async () => {
-    // Add any cleanup needed
-})
