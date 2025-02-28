@@ -96,7 +96,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
         } else if (setting === 'chatflowConfiguration') {
             setChatflowConfigurationDialogProps({
                 title: `${title} Configuration`,
-                chatflow: chatflow
+                chatflow: chatflow,
+                handleSaveFlow
             })
             setChatflowConfigurationDialogOpen(true)
         } else if (setting === 'duplicateChatflow') {
@@ -199,7 +200,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
     const onConfigurationButtonClick = () => {
         setChatflowConfigurationDialogProps({
             title: `${title} Configuration`,
-            chatflow: chatflow
+            chatflow: chatflow,
+            handleSaveFlow
         })
         setChatflowConfigurationDialogOpen(true)
     }
@@ -221,7 +223,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
             if (chatflowConfigurationDialogOpen) {
                 setChatflowConfigurationDialogProps({
                     title: `${title} Configuration`,
-                    chatflow
+                    chatflow,
+                    handleSaveFlow
                 })
             }
         }
