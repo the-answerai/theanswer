@@ -61,13 +61,6 @@ const StarterPrompts = ({ dialogProps }) => {
                 }
             }
             chatbotConfig.starterPrompts = value.starterPrompts
-
-            if (!dialogProps.chatflow.id && dialogProps.handleSaveFlow) {
-                return dialogProps.handleSaveFlow(dialogProps.chatflow.name, {
-                    chatbotConfig: JSON.stringify(chatbotConfig)
-                })
-            }
-
             const saveResp = await chatflowsApi.updateChatflow(dialogProps.chatflow.id, {
                 chatbotConfig: JSON.stringify(chatbotConfig)
             })
