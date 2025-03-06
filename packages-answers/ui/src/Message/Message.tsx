@@ -43,7 +43,7 @@ import multiagent_supervisorPNG from './../../../../packages/ui/src/assets/image
 import multiagent_workerPNG from './../../../../packages/ui/src/assets/images/multiagent_worker.png'
 import { isValidURL, removeDuplicateURL } from '../../../../packages/ui/src/utils/genericHelper.js'
 import dynamic from 'next/dynamic'
-import _ from 'lodash'
+import isArray from 'lodash/isArray'
 const SourceDocDialog = dynamic(() => import('../../../../packages/ui/src/ui-component/dialog/SourceDocDialog'))
 
 interface MessageExtra {
