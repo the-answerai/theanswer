@@ -1,3 +1,4 @@
+'use client'
 import { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { FormControl, Popover } from '@mui/material'
