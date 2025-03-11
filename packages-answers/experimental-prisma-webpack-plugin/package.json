@@ -6,6 +6,9 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
+    "dependencies": {
+        "@answers/logger": "*"
+    },
     "devDependencies": {
         "webpack": "^5.88.2"
     },

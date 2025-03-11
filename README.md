@@ -89,6 +89,44 @@ There are two main ways to get started with TheAnswer: local development setup a
     - Create a new database named `flowise`
     - Configure the database connection in your `.env` files
 
+    **Docker PostgreSQL Configuration:**
+
+    If you're using Docker for your PostgreSQL database, the `docker-compose.dev.yml` file already includes a properly configured PostgreSQL service:
+
+    ```yaml
+    postgres:
+        image: postgres:16.1 # Using a specific version to prevent compatibility issues
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        environment:
+            POSTGRES_PORT: 5432
+            POSTGRES_USER: example_user
+            POSTGRES_PASSWORD: example_password
+            POSTGRES_DB: flowise # Database name must match DATABASE_NAME in your .env file
+    ```
+
+    **Troubleshooting PostgreSQL Issues:**
+
+    If you encounter PostgreSQL connection issues:
+
+    1. Make sure the `DATABASE_NAME` and `POSTGRES_DB` values match in your `.env` and Docker files
+    2. Ensure your `DATABASE_URL` points to the correct database name:
+        ```
+        DATABASE_URL=postgresql://example_user:example_password@localhost:5432/flowise?schema=public
+        ```
+    3. If you get version compatibility errors when recreating containers, remove volumes and restart:
+        ```bash
+        docker-compose -f docker-compose.dev.yml down -v
+        docker-compose -f docker-compose.dev.yml up -d
+        ```
+    4. **Run database migrations**: After creating a new database or if you encounter errors about missing tables (like `relation "apikey" does not exist` or `relation "organization" does not exist`), run the migrations:
+        ```bash
+        pnpm db:migrate
+        ```
+        This creates all the necessary tables in your PostgreSQL database that the application needs.
+
 5. Install dependencies:
 
     ```bash
@@ -221,133 +259,3 @@ This structure allows TheAnswer to build upon Flowise's core functionality while
     ```bash
     pnpm build
     ```
-
-    <details>
-    <summary>Exit code 134 (JavaScript heap out of memory)</summary>  
-      If you get this error when running the above `build` script, try increasing the Node.js heap size and run the script again:
-
-        export NODE_OPTIONS="--max-old-space-size=4096"
-        pnpm build
-
-    </details>
-
-5.  Start the app:
-
-    ```bash
-    pnpm start
-    ```
-
-    You can now access the app on [http://localhost:3000](http://localhost:3000)
-
-6.  For development build:
-
-    -   Create `.env` file and specify the `VITE_PORT` (refer to `.env.example`) in `packages/ui`
-    -   Create `.env` file and specify the `PORT` (refer to `.env.example`) in `packages/server`
-    -   Run
-
-        ```bash
-        pnpm dev
-        ```
-
-    Any code changes will reload the app automatically on [http://localhost:3000](http://localhost:3000)
-
-## 🔒 Authentication
-
-To enable app level authentication, add `FLOWISE_USERNAME` and `FLOWISE_PASSWORD` to the `.env` file in `packages/server`:
-
-```
-FLOWISE_USERNAME=user
-FLOWISE_PASSWORD=1234
-```
-
-## 🌱 Env Variables
-
-TheAnswer supports different environment variables to configure your instance. You can specify the following variables in the `.env` file inside `packages/server` folder. Read [more](https://github.com/the-answerai/theanswer/blob/main/CONTRIBUTING.md#-env-variables)
-
-## 📖 Documentation
-
-[TheAnswer Docs](https://docs.theanswer.ai/)
-
-## 🌐 Self Host
-
-Deploy TheAnswer self-hosted in your existing infrastructure. We support various [deployments](https://docs.theanswer.ai/configuration/deployment)
-
--   [Copilot](./DEPLOYMENT_COPILOT.md)
--   [AWS](https://docs.theanswer.ai/deployment/aws)
--   [Azure](https://docs.theanswer.ai/deployment/azure)
--   [Digital Ocean](https://docs.theanswer.ai/deployment/digital-ocean)
--   [GCP](https://docs.theanswer.ai/deployment/gcp)
--   <details>
-      <summary>Others</summary>
-
-    -   [Railway](https://docs.theanswer.ai/deployment/railway)
-
-        [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/pn4G8S?referralCode=WVNPD9)
-
-    -   [Render](https://docs.theanswer.ai/deployment/render)
-
-        [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://docs.theanswer.ai/deployment/render)
-
-    -   [HuggingFace Spaces](https://docs.theanswer.ai/deployment/hugging-face)
-
-        <a href="https://huggingface.co/spaces/TheAnswer/TheAnswer"><img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="HuggingFace Spaces"></a>
-
-    -   [Elestio](https://elest.io/open-source/theanswer)
-
-        [![Deploy](https://pub-da36157c854648669813f3f76c526c2b.r2.dev/deploy-on-elestio-black.png)](https://elest.io/open-source/theanswer)
-
-    -   [Sealos](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
-
-        [![](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
-
-    -   [RepoCloud](https://repocloud.io/details/?app_id=29)
-
-        [![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploy.png)](https://repocloud.io/details/?app_id=29)
-
-      </details>
-
-## 💻 Cloud Hosted
-
-Visit [https://theanswer.ai/](https://theanswer.ai/) to learn more about our cloud-hosted solution.
-
-## 🙋 Support
-
-Feel free to ask any questions, raise problems, and request new features in [discussion](https://github.com/the-answerai/theanswer/discussions)
-
-## 🙌 Contributing
-
-We welcome contributions to TheAnswer! Whether you're fixing bugs, improving documentation, or proposing new features, your efforts are appreciated. Here's how you can contribute:
-
-1. **Fork the Repository**: Start by forking the TheAnswer repository to your GitHub account.
-
-2. **Create a Branch**: Create a new branch for your contribution.
-
-3. **Make Your Changes**:
-
-    - For bug fixes and minor improvements, feel free to submit a pull request directly.
-    - For new features or significant changes, please open an issue first to discuss the proposed changes.
-    - When extending Flowise functionality, ensure your changes are compatible with both Flowise and TheAnswer.
-
-4. **Test Your Changes**: Ensure your changes don't break existing functionality and add tests if applicable.
-
-5. **Submit a Pull Request**: Once you're satisfied with your changes, submit a pull request to the main TheAnswer repository.
-
-6. **Code Review**: Wait for the maintainers to review your pull request. Be open to feedback and make necessary adjustments.
-
-For detailed contribution guidelines, please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-### Contribution to Flowise Core
-
-If your contribution is related to Flowise core functionality, consider submitting it to the [Flowise repository](https://github.com/FlowiseAI/Flowise) first. Once accepted, we can integrate it into TheAnswer.
-
-Thanks go to these awesome contributors of both TheAnswer and the original Flowise project:
-
-<a href="https://github.com/the-answerai/theanswer/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=the-answerai/theanswer" />
-</a>
-
-Reach out to us on [Discord](https://discord.gg/jbaHfsRVBW) if you have any questions or need assistance with your contribution.
-
-## 📄 License
-
-Source code in this repository is made available under the [Apache License Version 2.0](LICENSE.md).

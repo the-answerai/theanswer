@@ -1,0 +1,26 @@
+# Build output
+dist/
+
+# Node.js dependencies
+node_modules/
+
+# npm/yarn/pnpm logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Coverage directory
+coverage/
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db 
