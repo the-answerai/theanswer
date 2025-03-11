@@ -6,7 +6,9 @@
     "scripts": {
         "build": "turbo run build ",
         "build-force": "pnpm clean && turbo run build --force",
-        "dev": "dotenv -- turbo run dev dev-docker",
+        "dev:original": "dotenv -- turbo run dev dev-docker",
+        "dev": "node packages-answers/logger/dist/scripts/enhanced-dev.js",
+        "dev:enhanced": "node packages-answers/logger/dist/scripts/enhanced-dev.js",
         "dev-docker": "docker-compose  -f \"./docker-compose.dev.yml\" up -d",
         "start": "run-script-os",
         "start:windows": "cd packages/server/bin && run start",

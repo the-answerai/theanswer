@@ -1,0 +1,5 @@
+# Ignore any backup or old versions of scripts
+*-old.js
+*-backup.js
+*.backup
+*.bak 

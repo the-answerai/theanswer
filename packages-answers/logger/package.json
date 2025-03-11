@@ -8,7 +8,7 @@
         "dist/**/*"
     ],
     "scripts": {
-        "build": "tsc",
+        "build": "tsc && mkdir -p dist/scripts && cp src/scripts/enhanced-dev.js dist/scripts/",
         "dev": "tsc --watch",
         "clean": "rimraf dist",
         "lint": "eslint src --ext .ts",
@@ -33,6 +33,7 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "chalk": "^4.1.2"
+        "chalk": "^4.1.2",
+        "dotenv": "^16.4.7"
     }
 }
