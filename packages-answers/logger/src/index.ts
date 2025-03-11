@@ -1,4 +1,16 @@
-export * from './logger'
+/**
+ * Logger package main entry point
+ * @module logger
+ */
+
+// Export types
 export * from './types'
+
+// Export core logger functionality
+export * from './core'
+
+// Export utils
 export * from './utils'
-export * from './dev-logger'
+
+// Export development logger
+export * from './dev'
