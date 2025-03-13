@@ -95,6 +95,7 @@ export interface INodeParams {
     tabIdentifier?: string
     tabs?: Array<INodeParams>
     disabled?: boolean
+    loadOptionsOnOpen?: boolean
 }
 
 export interface INodeExecutionData {
