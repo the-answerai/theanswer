@@ -208,25 +208,19 @@ const HelpChatDrawer = ({ apiHost, chatflowid }) => {
                 }}
             >
                 <Box sx={{ width: helpChatOpen ? drawerWidth : 0, textWrap: 'initial' }}>
-                    <FullPageChat
-                        key='helpchatbot'
-                        apiHost={apiHost}
-                        chatflowid={chatflowid}
-                        // observersConfig={{
-                        //     //   observeUserInput: (userInput: string) => {
-                        //     //     // console.log("User input observed:", userInput);
-                        //     //   },
-                        //     //xw   observeLoading: (loading: boolean) => {
-                        //     //     // console.log("Loading state observed:", loading);
-                        //     //   },
-                        //     observeMessages: (messages) => {
-                        //         console.log('Messages observed again:', messages)
-                        //     },
-                        //     observeStreamEnd: (messages) => {
-                        //         console.log('Stream End:', messages)
-                        //     }
-                        // }}
-                        theme={themeConfig}
+                    <aai-fullchatbot theme={themeConfig} chatflowid={chatflowid} apiHost={apiHost} />
+                    <script
+                        type='module'
+                        dangerouslySetInnerHTML={{
+                            __html: `
+                                import Chatbot from "https://cdn.jsdelivr.net/npm/aai-embed/dist/web.js"
+                                Chatbot.initFull({
+                                    chatflowid: "${chatflowid}",
+                                    apiHost: "${apiHost}",
+                                    theme: ${JSON.stringify(themeConfig)}
+                                })
+                            `
+                        }}
                     />
                 </Box>
             </Drawer>
