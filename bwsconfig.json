@@ -1,0 +1,14 @@
+{
+    "projects": [
+        {
+            "platform": "render",
+            "projectName": "aai-local-only-for-now",
+            "bwsProjectIds": {
+                "prod": "75eccaff-2c75-456b-be07-b2a701316688",
+                "dev": "b3519847-1128-4ca6-b432-b2a701319701",
+                "local": "22e504a6-6131-4fa6-8e79-b28a0113ee1b"
+            },
+            "preserveVars": ["BWS_ACCESS_TOKEN"]
+        }
+    ]
+}
