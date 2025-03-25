@@ -1,20 +1,26 @@
 'use client'
-import React, { SetStateAction, createContext, useCallback, useContext, useRef, useState, useEffect } from 'react'
+import React, { SetStateAction, createContext, useCallback, useContext, useRef, useState, useEffect, ChangeEvent } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { cloneDeep } from 'lodash'
 // @ts-ignore
 import { deepmerge } from '@utils/deepmerge'
 import { clearEmptyValues } from './clearEmptyValues'
+
 import predictionApi from '@/api/prediction'
+import chatflowApi from '@/api/chatflows'
+import attachmentsApi from '@/api/attachments'
+import vectorstoreApi from '@/api/vectorstore'
+
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source'
 
 import { AnswersFilters, AppSettings, Chat, Journey, Message, Prompt, Sidekick, User, MessageFeedback, SidekickListItem } from 'types'
-import { ChatbotConfig } from './types'
-import { FlowData } from './types'
+import { AllowedUploads, ChatbotConfig, FileUpload, FlowData, UploadedFile } from './types'
 
 // import { useUserPlans } from './hooks/useUserPlan';
 import { v4 as uuidv4 } from 'uuid'
+import { prepareFilesForAPI } from './utils/processFile'
+import { isFileAllowedForUpload } from './utils/isFileAllowedForUpload'
 
 interface PredictionParams {
     question: string
@@ -86,7 +92,19 @@ interface AnswersContextType {
     setSocketIOClientId: (id: string) => void
     isChatFlowAvailableToStream: boolean
     handleAbort: () => Promise<void>
+    handleDrag: (e: React.DragEvent) => void
+    handleDrop: (e: React.DragEvent) => Promise<void>
+    handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+    handleUploadClick: () => void
+    clearPreviews: () => void
+    fileUploadRef: React.RefObject<HTMLInputElement> | null
+    handleDeletePreview: (index: number) => void
+    allowedUploads: AllowedUploads
+    previews: FileUpload[]
+    uploadedFiles: UploadedFile[]
+    isDragActive: boolean
 }
+// ====================== Context Initialization ================================
 // @ts-ignore
 const AnswersContext = createContext<AnswersContextType>({
     appSettings: {},
@@ -115,9 +133,28 @@ const AnswersContext = createContext<AnswersContextType>({
     socketIOClientId: '',
     setSocketIOClientId: () => {},
     isChatFlowAvailableToStream: false,
-    handleAbort: async () => {}
+    handleAbort: async () => {},
+    handleDrop: async () => {},
+    handleDrag: () => {},
+    handleFileChange: async () => {},
+    handleUploadClick: () => {},
+    clearPreviews: () => {},
+    fileUploadRef: null,
+
+    handleDeletePreview: () => {},
+    allowedUploads: {
+        fileUploadSizeAndTypes: [],
+        imgUploadSizeAndTypes: [],
+        isImageUploadAllowed: false,
+        isRAGFileUploadAllowed: false,
+        isSpeechToTextEnabled: false
+    },
+    previews: [],
+    uploadedFiles: [],
+    isDragActive: false
 })
 
+// ====================== Context Hook =====================================
 export function useAnswers() {
     const context = useContext(AnswersContext)
 
@@ -126,6 +163,7 @@ export function useAnswers() {
     }
 }
 
+// ====================== Context Provider ===================================
 interface AnswersProviderProps {
     children: React.ReactNode
     user?: User
@@ -151,8 +189,21 @@ export function AnswersProvider({
     apiUrl = '/api'
 }: AnswersProviderProps) {
     const router = useRouter()
-    const [error, setError] = useState(null)
+    const [error, setError] = useState<string | null>(null)
     const [inputValue, setInputValue] = useState('')
+    const [allowedUploads, setAllowedUploads] = useState<AllowedUploads>({
+        fileUploadSizeAndTypes: [],
+        imgUploadSizeAndTypes: [],
+        isImageUploadAllowed: false,
+        isRAGFileUploadAllowed: false,
+        isSpeechToTextEnabled: false
+    })
+
+    const [previews, setPreviews] = useState<FileUpload[]>([])
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+    const [isDragActive, setIsDragActive] = useState(false)
+    const fileUploadRef = useRef<HTMLInputElement>(null)
+
     // const [chat, setChat] = useState<Chat | undefined>(chat);
     const [journey, setJourney] = useState<Journey | undefined>(initialJourney)
     const [isLoading, setIsLoading] = useState(false)
@@ -197,9 +248,20 @@ export function AnswersProvider({
     )
 
     const regenerateAnswer = (retry?: boolean) => {
-        const [message] = messages?.filter((m) => m.role === 'user').slice(-1) ?? []
-        // setMessages(messages.slice(0, -1));
-        sendMessage({ content: message.content, retry, sidekick, gptModel })
+        if (!messages || messages.length === 0) return
+
+        const [message] = messages.filter((m) => m.role === 'user').slice(-1) ?? []
+        if (!message) return
+
+        const fileUploads = message?.fileUploads || []
+
+        sendMessage({
+            content: message.content || '',
+            retry: true,
+            sidekick,
+            gptModel,
+            files: fileUploads
+        })
     }
 
     const clearMessages = () => {
@@ -336,6 +398,238 @@ export function AnswersProvider({
         }
     }
 
+    const handleFileUploads = async (uploads: any[]) => {
+        if (!uploadedFiles.length) return uploads
+
+        if (chatbotConfig?.fullFileUpload?.status) {
+            const filesWithFullUploadType = uploadedFiles.filter((file) => file.type === 'file:full')
+            if (filesWithFullUploadType.length > 0) {
+                const formData = new FormData()
+                for (const file of filesWithFullUploadType) {
+                    formData.append('files', file.file)
+                }
+                formData.append('chatId', chatId || '')
+
+                try {
+                    const response = await attachmentsApi.createAttachment(sidekick?.id!, chatId!, formData)
+                    const data = response.data
+
+                    for (const extractedFileData of data) {
+                        const content = extractedFileData.content
+                        const fileName = extractedFileData.name
+
+                        // matching name in uploads to replace data with content
+                        const uploadIndex = uploads.findIndex((upload) => upload.name === fileName)
+
+                        if (uploadIndex !== -1) {
+                            uploads[uploadIndex] = {
+                                ...uploads[uploadIndex],
+                                data: content,
+                                name: fileName,
+                                type: 'file:full'
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error creating attachment:', error)
+                    throw new Error('Unable to upload documents')
+                }
+            }
+        } else if (allowedUploads.isRAGFileUploadAllowed) {
+            const filesWithRAGUploadType = uploadedFiles.filter((file) => file.type === 'file:rag')
+
+            if (filesWithRAGUploadType.length > 0) {
+                const formData = new FormData()
+                for (const file of filesWithRAGUploadType) {
+                    formData.append('files', file.file)
+                }
+                formData.append('chatId', chatId || '')
+
+                try {
+                    await vectorstoreApi.upsertVectorStoreWithFormData(sidekick?.id!, formData)
+
+                    // Delay for vector store to be updated
+                    await new Promise((resolve) => setTimeout(resolve, 2500))
+
+                    uploads = uploads.map((upload) => {
+                        return {
+                            ...upload,
+                            type: 'file:rag'
+                        }
+                    })
+                } catch (error) {
+                    console.error('Error upserting vector store:', error)
+                    throw new Error('Unable to upload documents')
+                }
+            }
+        }
+        return uploads
+    }
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        if (!allowedUploads.isImageUploadAllowed && !(allowedUploads.isRAGFileUploadAllowed || chatbotConfig?.fullFileUpload?.status)) {
+            return
+        }
+        e.preventDefault()
+        setIsDragActive(false)
+        let files: Promise<FileUpload>[] = []
+        let uploadedFiles: UploadedFile[] = []
+
+        if (e.dataTransfer.files.length > 0) {
+            for (const file of Array.from(e.dataTransfer.files)) {
+                if (isFileAllowedForUpload(file, allowedUploads, chatbotConfig?.fullFileUpload?.status) === false) {
+                    return
+                }
+                // Only add files
+                if (!file.type || !allowedUploads.imgUploadSizeAndTypes.some((allowed) => allowed.fileTypes.includes(file.type))) {
+                    uploadedFiles.push({
+                        file,
+                        type: chatbotConfig?.fullFileUpload?.status ? 'file:full' : 'file:rag'
+                    })
+                }
+
+                const reader = new FileReader()
+                const { name } = file
+                files.push(
+                    new Promise<FileUpload>((resolve) => {
+                        reader.onload = (evt: ProgressEvent<FileReader>) => {
+                            if (!evt?.target?.result) {
+                                return
+                            }
+                            const { result } = evt.target
+                            let previewUrl: string
+                            if (file.type && file.type.startsWith('audio/')) {
+                                previewUrl = ''
+                            } else {
+                                previewUrl = URL.createObjectURL(file)
+                            }
+                            resolve({
+                                data: result as string,
+                                preview: previewUrl,
+                                type: 'file',
+                                name: name,
+                                mime: file.type
+                            })
+                        }
+                        reader.readAsDataURL(file)
+                    })
+                )
+            }
+
+            const newFiles = await Promise.all(files)
+            setUploadedFiles(uploadedFiles)
+            setPreviews((prevPreviews: FileUpload[]) => [...prevPreviews, ...newFiles])
+        }
+
+        if (e.dataTransfer.items) {
+            Array.from(e.dataTransfer.items).forEach((item) => {
+                if (item.kind === 'string' && item.type.match('^text/uri-list')) {
+                    item.getAsString((s: string) => {
+                        const upload: FileUpload = {
+                            data: s,
+                            preview: s,
+                            type: 'url',
+                            name: s ? s.substring(s.lastIndexOf('/') + 1) : '',
+                            mime: 'text/uri-list'
+                        }
+                        setPreviews((prevPreviews) => [...prevPreviews, upload])
+                    })
+                } else if (item.kind === 'string' && item.type.match('^text/html')) {
+                    item.getAsString((s: string) => {
+                        if (s.indexOf('href') === -1) return
+                        const start = s ? s.substring(s.indexOf('href') + 6) : ''
+                        const hrefStr = start.substring(0, start.indexOf('"'))
+
+                        const upload: FileUpload = {
+                            data: hrefStr,
+                            preview: hrefStr,
+                            type: 'url',
+                            name: hrefStr ? hrefStr.substring(hrefStr.lastIndexOf('/') + 1) : '',
+                            mime: 'text/html'
+                        }
+                        setPreviews((prevPreviews) => [...prevPreviews, upload])
+                    })
+                }
+            })
+        }
+    }
+
+    const handleDrag = (e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (e.type === 'dragenter' || e.type === 'dragover') {
+            setIsDragActive(true)
+        } else if (e.type === 'dragleave') {
+            setIsDragActive(false)
+        }
+    }
+
+    const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files || event.target.files.length === 0) {
+            return
+        }
+
+        const files: Promise<FileUpload>[] = []
+        const uploaded: UploadedFile[] = []
+
+        for (const file of Array.from(event.target.files)) {
+            if (isFileAllowedForUpload(file, allowedUploads, chatbotConfig?.fullFileUpload?.status) === false) {
+                return
+            }
+            // Only add files
+            if (!file.type || !allowedUploads.imgUploadSizeAndTypes.some((allowed) => allowed.fileTypes.includes(file.type))) {
+                uploaded.push({
+                    file,
+                    type: chatbotConfig?.fullFileUpload?.status ? 'file:full' : 'file:rag'
+                })
+            }
+
+            const reader = new FileReader()
+            const { name } = file
+            files.push(
+                new Promise<FileUpload>((resolve) => {
+                    reader.onload = (evt: ProgressEvent<FileReader>) => {
+                        if (!evt?.target?.result) {
+                            return
+                        }
+                        const { result } = evt.target
+                        resolve({
+                            data: result as string,
+                            preview: URL.createObjectURL(file),
+                            type: 'file',
+                            name: name,
+                            mime: file.type || ''
+                        })
+                    }
+                    reader.readAsDataURL(file)
+                })
+            )
+        }
+
+        const newFiles = await Promise.all(files)
+        setUploadedFiles(uploaded)
+        setPreviews((prevPreviews: FileUpload[]) => [...prevPreviews, ...newFiles])
+        // Reset file input
+        event.target.value = ''
+    }
+
+    const handleUploadClick = () => {
+        fileUploadRef.current?.click()
+    }
+
+    const clearPreviews = () => {
+        previews.forEach((file) => URL.revokeObjectURL(file.preview))
+        setPreviews([])
+    }
+
+    const handleDeletePreview = (index: number) => {
+        const itemToDelete = previews[index]
+        if (itemToDelete.type === 'file' && itemToDelete.preview) {
+            URL.revokeObjectURL(itemToDelete.preview)
+        }
+        setPreviews(previews.filter((_, i) => i !== index))
+    }
+
     const sendMessage = useCallback(
         async ({
             content,
@@ -352,25 +646,38 @@ export function AnswersProvider({
             files?: string[]
             audio?: File | null
         }) => {
+            let fileUploads = files ?? (previews.length > 0 ? prepareFilesForAPI(previews) : undefined)
+
             if (!retry) {
-                const fileUploads = files
                 addMessage({ role: 'user', content, fileUploads } as Message)
             }
             setError(null)
             setIsLoading(true)
 
             try {
+                if (fileUploads && fileUploads.length > 0) {
+                    try {
+                        fileUploads = await handleFileUploads(fileUploads)
+                    } catch (error: any) {
+                        setError(error.message || 'Error uploading files')
+                        setIsLoading(false)
+                        setMessages((prevMessages) => [
+                            ...prevMessages,
+                            { role: 'assistant', content: error.message || 'Error uploading files' } as Message
+                        ])
+                        return
+                    }
+                }
+
                 const params = {
                     question: content,
                     chatId,
                     journeyId,
-                    // history: messages?.map(({ content, role }) => ({
-                    //     message: content,
-                    //     type: role === 'assistant' ? 'apiMessage' : 'userMessage'
-                    // })),
-                    uploads: files,
+                    uploads: fileUploads,
                     audio,
-                    chatType: 'ANSWERAI'
+                    chatType: 'ANSWERAI',
+                    socketIOClientId: socketIOClientId ?? undefined,
+                    streaming: isChatFlowAvailableToStream
                 }
 
                 if (isChatFlowAvailableToStream) {
@@ -425,6 +732,10 @@ export function AnswersProvider({
 
                 setIsLoading(false)
                 setInputValue('')
+
+                if (fileUploads && fileUploads.length > 0) {
+                    clearPreviews()
+                }
             } catch (err: any) {
                 const errorMessage = err.response?.data?.message || 'Error sending message'
                 setError(errorMessage)
@@ -432,7 +743,18 @@ export function AnswersProvider({
                 setMessages((prevMessages) => [...prevMessages, { role: 'assistant', content: errorMessage } as Message])
             }
         },
-        [addMessage, chatId, journeyId, messages, isChatFlowAvailableToStream, setInputValue, setMessages, setChatId, setJourneyId]
+        [
+            addMessage,
+            chatId,
+            journeyId,
+            messages,
+            isChatFlowAvailableToStream,
+            setInputValue,
+            setMessages,
+            setChatId,
+            setJourneyId,
+            clearPreviews
+        ]
     )
 
     // Add fetchResponseFromEventStream function
@@ -445,99 +767,147 @@ export function AnswersProvider({
         try {
             // Start with empty message that will be updated by streaming
             setMessages((prevMessages) => [...prevMessages, { role: 'assistant', content: '', isLoading: true } as Message])
-            await fetchEventSource(`${baseURL}/api/v1/internal-prediction/${chatflowid}`, {
-                openWhenHidden: true,
-                method: 'POST',
-                body: JSON.stringify(params),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-request-from': 'internal',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {})
-                },
-                async onopen(response) {
-                    if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
-                        setIsChatFlowAvailableToStream(true)
-                        // console.log('Connection established successfully')
-                        // Connection established successfully
-                    } else {
-                        throw new Error('Failed to establish connection')
-                    }
-                },
-                async onmessage(ev) {
-                    const payload = JSON.parse(ev.data)
-                    // console.log('payload', payload)
-                    switch (payload.event) {
-                        case 'start':
-                            // Already created an empty message when starting the stream
-                            break
-                        case 'token':
-                            updateLastMessage(payload.data)
-                            break
-                        case 'sourceDocuments':
-                            updateLastMessageSourceDocuments(payload.data)
-                            break
-                        case 'usedTools':
-                            updateLastMessageUsedTools(payload.data)
-                            break
-                        case 'fileAnnotations':
-                            updateLastMessageFileAnnotations(payload.data)
-                            break
-                        case 'agentReasoning':
-                            updateLastMessageAgentReasoning(payload.data)
-                            break
-                        case 'action':
-                            updateLastMessageAction(payload.data)
-                            break
-                        case 'nextAgent':
-                            updateLastMessageNextAgent(payload.data)
-                            break
-                        case 'metadata':
-                            if (payload.data.chatId) {
-                                setChatId(payload.data.chatId)
+
+            // Add retry logic for better reliability
+            let retries = 0
+            const maxRetries = 3
+
+            const attemptFetch = async () => {
+                try {
+                    await fetchEventSource(`${baseURL}/api/v1/internal-prediction/${chatflowid}`, {
+                        openWhenHidden: true,
+                        method: 'POST',
+                        body: JSON.stringify(params),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-request-from': 'internal',
+                            ...(token ? { Authorization: `Bearer ${token}` } : {})
+                        },
+                        async onopen(response) {
+                            if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
+                                setIsChatFlowAvailableToStream(true)
+                                console.log('Connection established successfully')
+                            } else {
+                                throw new Error(`Failed to establish connection: ${response.status} ${response.statusText}`)
                             }
-                            break
-                        case 'error':
-                            setError(payload.data)
-                            // Update the current assistant message to show the error
-                            setMessages((prevMessages) => {
-                                const allMessages = [...cloneDeep(prevMessages)]
-                                const lastMessage = allMessages[allMessages.length - 1]
-                                if (lastMessage?.role === 'user') return allMessages
-                                lastMessage.content = `Error: ${payload.data}`
-                                lastMessage.isLoading = false
-                                return allMessages
-                            })
-                            break
-                        case 'abort':
-                            abortMessage()
-                            break
-                        case 'end':
-                            setMessages((prevMessages) => {
-                                const allMessages = [...cloneDeep(prevMessages)]
-                                const lastMessage = allMessages[allMessages.length - 1]
-                                if (lastMessage?.role === 'user') return allMessages
-                                lastMessage.isLoading = false
-                                return allMessages
-                            })
+                        },
+                        async onmessage(ev) {
+                            const payload = JSON.parse(ev.data)
+                            console.log('Event stream payload:', payload)
+
+                            switch (payload.event) {
+                                case 'start':
+                                    break
+                                case 'token':
+                                    updateLastMessage(payload.data)
+                                    break
+                                case 'sourceDocuments':
+                                    updateLastMessageSourceDocuments(payload.data)
+                                    break
+                                case 'usedTools':
+                                    updateLastMessageUsedTools(payload.data)
+                                    break
+                                case 'fileAnnotations':
+                                    updateLastMessageFileAnnotations(payload.data)
+                                    break
+                                case 'agentReasoning':
+                                    updateLastMessageAgentReasoning(payload.data)
+                                    break
+                                case 'action':
+                                    updateLastMessageAction(payload.data)
+                                    break
+                                case 'nextAgent':
+                                    updateLastMessageNextAgent(payload.data)
+                                    break
+                                case 'metadata':
+                                    if (payload.data.chatId) {
+                                        setChatId(payload.data.chatId)
+                                    }
+                                    break
+                                case 'error':
+                                    setError(payload.data)
+
+                                    setMessages((prevMessages) => {
+                                        const allMessages = [...cloneDeep(prevMessages)]
+                                        const lastMessage = allMessages[allMessages.length - 1]
+                                        if (lastMessage?.role === 'user') return allMessages
+                                        lastMessage.content = `Error: ${payload.data}`
+                                        lastMessage.isLoading = false
+                                        return allMessages
+                                    })
+                                    break
+                                case 'abort':
+                                    abortMessage()
+                                    break
+                                case 'end':
+                                    setMessages((prevMessages) => {
+                                        const allMessages = [...cloneDeep(prevMessages)]
+                                        const lastMessage = allMessages[allMessages.length - 1]
+                                        if (lastMessage?.role === 'user') return allMessages
+                                        lastMessage.isLoading = false
+                                        return allMessages
+                                    })
+                                    setIsLoading(false)
+                                    break
+                            }
+                        },
+                        async onclose() {
+                            // Clean up on close
                             setIsLoading(false)
-                            break
+                        },
+                        onerror(err) {
+                            console.error('EventSource Error:', err)
+
+                            if (retries < maxRetries) {
+                                console.log(`Retry attempt ${retries + 1} of ${maxRetries}`)
+                                retries++
+                                setTimeout(attemptFetch, 1000 * retries)
+                                return
+                            }
+
+                            setError('Error during streaming - connection failed')
+                            setIsLoading(false)
+
+                            // Update the message to show error
+                            setMessages((prevMessages) => {
+                                const allMessages = [...cloneDeep(prevMessages)]
+                                const lastMessage = allMessages[allMessages.length - 1]
+                                if (lastMessage?.role === 'user') return allMessages
+                                lastMessage.content = `Error: Connection failed after multiple attempts`
+                                lastMessage.isLoading = false
+                                return allMessages
+                            })
+                        }
+                    })
+                } catch (error) {
+                    if (retries < maxRetries) {
+                        console.log(`Retry attempt ${retries + 1} of ${maxRetries} after error`)
+                        retries++
+                        setTimeout(attemptFetch, 1000 * retries)
+                    } else {
+                        throw error // Re-throw if we've exhausted retries
                     }
-                },
-                async onclose() {
-                    // Clean up on close
-                    setIsLoading(false)
-                },
-                async onerror(err) {
-                    console.error('EventSource Error: ', err)
-                    setError('Error during streaming')
-                    setIsLoading(false)
-                    throw err
                 }
-            })
+            }
+
+            await attemptFetch()
         } catch (error: any) {
             console.error('Stream error:', error)
             setError(error.message || 'Error during streaming')
             setIsLoading(false)
+
+            // Update the last message to show the error
+            setMessages((prevMessages) => {
+                const allMessages = [...cloneDeep(prevMessages)]
+                const lastMessage = allMessages[allMessages.length - 1]
+                if (lastMessage?.role === 'user') {
+                    allMessages.push({ role: 'assistant', content: `Error: ${error.message || 'Connection failed'}` } as Message)
+                } else {
+                    lastMessage.content = `Error: ${error.message || 'Connection failed'}`
+                    lastMessage.isLoading = false
+                }
+                return allMessages
+            })
         }
     }
 
@@ -556,6 +926,25 @@ export function AnswersProvider({
                 }
             }
 
+            const checkUploadCapabilities = async () => {
+                try {
+                    const response = await chatflowApi.getAllowChatflowUploads(sidekick.id)
+                    const uploadCapabilities = response.data
+                    console.log('UPLOAD CAPABILITIES =====', uploadCapabilities)
+                    setAllowedUploads(uploadCapabilities)
+                } catch (error) {
+                    console.error('Error checking upload capabilities:', error)
+                    setAllowedUploads({
+                        fileUploadSizeAndTypes: [],
+                        imgUploadSizeAndTypes: [],
+                        isImageUploadAllowed: false,
+                        isRAGFileUploadAllowed: false,
+                        isSpeechToTextEnabled: false
+                    })
+                }
+            }
+
+            checkUploadCapabilities()
             checkStreamingAvailability()
         }
 
@@ -568,112 +957,6 @@ export function AnswersProvider({
         setJourney(initialJourney)
         setFilters(deepmerge({}, initialJourney?.filters, chat?.filters))
     }, [chat, initialJourney, appSettings])
-
-    const [previews, setPreviews] = useState<any[]>([])
-    const [isDragActive, setIsDragActive] = useState(false)
-    const fileUploadRef = useRef<HTMLInputElement>(null)
-
-    const handleDrop = async (e: React.DragEvent) => {
-        e.preventDefault()
-        setIsDragActive(false)
-        let files = []
-        if (e.dataTransfer.files.length > 0) {
-            for (const file of Array.from(e.dataTransfer.files)) {
-                const reader = new FileReader()
-                const { name } = file
-                files.push(
-                    new Promise((resolve) => {
-                        reader.onload = (evt) => {
-                            if (!evt?.target?.result) {
-                                return
-                            }
-                            const { result } = evt.target
-                            let previewUrl
-                            if (file.type.startsWith('audio/')) {
-                                previewUrl = '/audio-upload.svg' // You'll need to add this asset
-                            } else if (file.type.startsWith('image/')) {
-                                previewUrl = URL.createObjectURL(file)
-                            }
-                            resolve({
-                                data: result,
-                                preview: previewUrl,
-                                type: 'file',
-                                name: name,
-                                mime: file.type
-                            })
-                        }
-                        reader.readAsDataURL(file)
-                    })
-                )
-            }
-
-            const newFiles = await Promise.all(files)
-            setPreviews((prevPreviews) => [...prevPreviews, ...newFiles])
-        }
-    }
-
-    const handleDrag = (e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (e.type === 'dragenter' || e.type === 'dragover') {
-            setIsDragActive(true)
-        } else if (e.type === 'dragleave') {
-            setIsDragActive(false)
-        }
-    }
-
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const fileObj = event.target.files && event.target.files[0]
-        if (!fileObj) {
-            return
-        }
-        let files = []
-        if (event.target.files) {
-            for (const file of Array.from(event.target.files)) {
-                const reader = new FileReader()
-                const { name } = file
-                files.push(
-                    new Promise((resolve) => {
-                        reader.onload = (evt) => {
-                            if (!evt?.target?.result) {
-                                return
-                            }
-                            const { result } = evt.target
-                            resolve({
-                                data: result,
-                                preview: URL.createObjectURL(file),
-                                type: 'file',
-                                name: name,
-                                mime: file.type
-                            })
-                        }
-                        reader.readAsDataURL(file)
-                    })
-                )
-            }
-        }
-
-        const newFiles = await Promise.all(files)
-        setPreviews((prevPreviews) => [...prevPreviews, ...newFiles])
-        // Reset file input
-        event.target.value = ''
-    }
-
-    const handleUploadClick = () => {
-        fileUploadRef.current?.click()
-    }
-
-    const clearPreviews = () => {
-        previews.forEach((file) => URL.revokeObjectURL(file.preview))
-        setPreviews([])
-    }
-
-    const handleDeletePreview = (itemToDelete: any) => {
-        if (itemToDelete.type === 'file') {
-            URL.revokeObjectURL(itemToDelete.preview)
-        }
-        setPreviews(previews.filter((item) => item !== itemToDelete))
-    }
 
     const contextValue = {
         user,
@@ -724,7 +1007,18 @@ export function AnswersProvider({
         socketIOClientId,
         setSocketIOClientId,
         isChatFlowAvailableToStream,
-        handleAbort
+        handleAbort,
+        handleDrop,
+        handleDrag,
+        handleFileChange,
+        handleUploadClick,
+        clearPreviews,
+        fileUploadRef,
+        handleDeletePreview,
+        previews,
+        allowedUploads,
+        isDragActive,
+        uploadedFiles
     }
     // @ts-ignore
     return <AnswersContext.Provider value={contextValue}>{children}</AnswersContext.Provider>
