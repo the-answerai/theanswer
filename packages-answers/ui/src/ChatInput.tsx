@@ -14,7 +14,7 @@ import { IconCircleDot, IconPaperclip } from '@tabler/icons-react'
 
 import { useAnswers } from './AnswersContext'
 
-import type { Sidekick } from 'types'
+import type { Sidekick, StarterPrompt } from 'types'
 import { DefaultPrompts } from './DefaultPrompts'
 import { FileUpload } from './types'
 import { getAllowedUploadTypes } from './utils/getAllowedUploadTypes'
@@ -241,6 +241,11 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, setUploadedFiles }: ChatInp
         setIsRecording(false)
         setRecordedAudio(null)
         setIsLoadingRecording(false)
+    }
+
+    const handlePromptSelected = (prompt: StarterPrompt) => {
+        sendMessage({ content: prompt.prompt, sidekick, gptModel })
+        setInputValue('')
     }
 
     return (
