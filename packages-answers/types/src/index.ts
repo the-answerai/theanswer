@@ -320,6 +320,8 @@ export interface Message extends Partial<DB.Message> {
     role: string
     feedbacks?: MessageFeedback[]
     content: string
+    fileUploads?: FileUpload[]
+    isLoading: boolean
 }
 
 export type AlgoliaHit = Hit<{
@@ -702,4 +704,13 @@ export interface TextInputConfig {
     textColor: string
     placeholder: string
     sendButtonColor: string
+}
+
+export interface FileUpload {
+    data: string
+    preview?: string
+    type: string
+    name: string
+    mime: string
+    size?: number
 }

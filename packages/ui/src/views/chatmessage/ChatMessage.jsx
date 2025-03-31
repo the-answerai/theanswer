@@ -1047,7 +1047,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                 }
                 if (message.fileUploads) {
                     obj.fileUploads = message.fileUploads
-                    obj.fileUploads.forEach((file) => {
+                    obj.fileUploads?.forEach((file) => {
                         if (file.type === 'stored-file') {
                             file.data = `${baseURL}/api/v1/get-upload-file?chatflowId=${chatflowid}&chatId=${chatId}&fileName=${file.name}`
                         }
