@@ -10,6 +10,7 @@ import { deepmerge } from '@utils/deepmerge'
 import { useStreamedResponse } from './useStreamedResponse'
 import { clearEmptyValues } from './clearEmptyValues'
 import predictionApi from '@/api/prediction'
+import chatmessagefeedbackApi from '@/api/chatmessagefeedback'
 
 import {
     AnswersFilters,
@@ -23,7 +24,8 @@ import {
     MessageFeedback,
     SidekickListItem,
     ChatbotConfig,
-    FlowData
+    FlowData,
+    FeedbackPayload
 } from 'types'
 // import { useUserPlans } from './hooks/useUserPlan';
 
@@ -91,11 +93,16 @@ interface AnswersContextType {
     flowData?: FlowData
     gptModel: string
     setGptModel: (arg: SetStateAction<string>) => void
-    sendMessageFeedback: (args: Partial<MessageFeedback>) => void
+    sendMessageFeedback: (args: FeedbackPayload) => Promise<any>
     socketIOClientId?: string
     setSocketIOClientId: (id: string) => void
     isChatFlowAvailableToStream: boolean
     handleAbort: () => Promise<void>
+    feedbackId: string
+    setFeedbackId: (id: string) => void
+    showFeedbackContentDialog: boolean
+    setShowFeedbackContentDialog: (show: boolean) => void
+    submitFeedbackContent: (text: string) => Promise<void>
 }
 // @ts-ignore
 const AnswersContext = createContext<AnswersContextType>({
@@ -125,7 +132,12 @@ const AnswersContext = createContext<AnswersContextType>({
     socketIOClientId: '',
     setSocketIOClientId: () => {},
     isChatFlowAvailableToStream: false,
-    handleAbort: async () => {}
+    handleAbort: async () => {},
+    feedbackId: '',
+    setFeedbackId: () => {},
+    showFeedbackContentDialog: false,
+    setShowFeedbackContentDialog: () => {},
+    submitFeedbackContent: async () => {}
 })
 
 export function useAnswers() {
@@ -210,6 +222,8 @@ export function AnswersProvider({
     // const [chat, setChat] = useState<Chat | undefined>(initialChat);
     const [journey, setJourney] = useState<Journey | undefined>(initialJourney)
     const [isLoading, setIsLoading] = useState(false)
+    const [feedbackId, setFeedbackId] = useState('')
+    const [showFeedbackContentDialog, setShowFeedbackContentDialog] = useState(false)
 
     const [showFilters, setShowFilters] = useState(false)
     const [useStreaming, setUseStreaming] = useState(initialUseStreaming)
@@ -331,8 +345,39 @@ export function AnswersProvider({
 
     const deleteChat = async (id: string) => axios.delete(`${apiUrl}/chats?id=${id}`).then(() => router.refresh())
 
-    const sendMessageFeedback = async (data: Partial<MessageFeedback>) =>
-        axios.post(`${apiUrl}/chats/message_feedback`, data).then(() => router.refresh())
+    const sendMessageFeedback = async (data: FeedbackPayload) => {
+        const { chatflowid } = data
+        const response = await chatmessagefeedbackApi.addFeedback(chatflowid, { ...data })
+        if (response.data) {
+            const data = response.data
+            let id = ''
+            if (data && data.id) id = data.id
+            // setMessages((prevMessages) => {
+            //     const allMessages = [...cloneDeep(prevMessages)]
+            //     return allMessages.map((message) => {
+            //         if (message.id === messageId) {
+            //             message.feedback = {
+            //                 rating: 'THUMBS_UP'
+            //             }
+            //         }
+            //         return message
+            //     })
+            // })
+            setFeedbackId(id)
+            setShowFeedbackContentDialog(true)
+        }
+    }
+
+    const submitFeedbackContent = async (text: string) => {
+        const body = {
+            content: text
+        }
+        const result = await chatmessagefeedbackApi.updateFeedback(feedbackId, body)
+        if (result.data) {
+            setFeedbackId('')
+            setShowFeedbackContentDialog(false)
+        }
+    }
 
     const deletePrompt = async (id: string) => axios.delete(`${apiUrl}/prompts?id=${id}`).then(() => router.refresh())
     const deleteJourney = async (id: string) => axios.delete(`${apiUrl}/journeys?id=${id}`).then(() => router.refresh())
@@ -486,7 +531,6 @@ export function AnswersProvider({
                     })),
                     uploads: files,
                     audio,
-                    chatType: 'ANSWERAI',
                     socketIOClientId: isChatFlowAvailableToStream ? socketIOClientId : undefined
                 }
 
@@ -805,7 +849,12 @@ export function AnswersProvider({
         socketIOClientId,
         setSocketIOClientId,
         isChatFlowAvailableToStream,
-        handleAbort
+        handleAbort,
+        feedbackId,
+        setFeedbackId,
+        showFeedbackContentDialog,
+        setShowFeedbackContentDialog,
+        submitFeedbackContent
     }
     // @ts-ignore
     return <AnswersContext.Provider value={contextValue}>{children}</AnswersContext.Provider>
