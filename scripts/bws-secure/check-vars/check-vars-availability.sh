@@ -16,7 +16,7 @@ LOGGER_SCRIPT="$SCRIPT_DIR/check-vars-logger.js"
 # Function to log messages using the JS logger
 log() {
   local level="$1"
-  local message="$234"
+  local message="$2"
   
   # Check if the logger script exists
   if [ -f "$LOGGER_SCRIPT" ] && command -v node >/dev/null 2>&1; then
