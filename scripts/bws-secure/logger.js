@@ -30,7 +30,7 @@ const logger = {
   },
 
   info: function (message) {
-    console.log(`${this.colors.green}[INFO] ${message}${this.colors.reset}`);
+    console.log(`${this.colors.green}[INFO]${this.colors.reset} ${message}`);
   },
 
   debug: function (message) {

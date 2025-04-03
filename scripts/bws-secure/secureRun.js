@@ -179,38 +179,23 @@ function printEnvironmentSummary() {
   const testVariable = process.env.BWS_TEST_VAR || process.env.BWS_SECRET_TEST_VAR || 'not set';
   const projectId = process.env.BWS_PROJECT_ID || 'none';
 
-  // Increased BOX_WIDTH by 10 characters (from 80 to 90)
-  const BOX_WIDTH = 90;
-  const CONTENT_START = 25; // Position where values start
+  // Cyan color code
+  const cyan = '\x1b[36m';
+  const reset = '\x1b[0m';
 
-  // Helper to pad content
-  const padContent = (label, value) => {
-    const padding = ' '.repeat(CONTENT_START - label.length);
-    const available = BOX_WIDTH - CONTENT_START - 4; // -4 for borders and spacing
-    const truncated = value.slice(0, Math.max(0, available));
-    return `║ ${label}${padding}: ${truncated}${' '.repeat(available - truncated.length)} ║`;
-  };
-
-  const lines = [
-    `╔${'═'.repeat(BOX_WIDTH - 0)}╗`,
-    `║${' Environment Summary'.padEnd(BOX_WIDTH - 1)} ║`,
-    `╟${'─'.repeat(BOX_WIDTH - 0)}╢`,
-    padContent('Project', project),
-    `║${' '.repeat(BOX_WIDTH - 0)}║`,
-    padContent('BWS_ENV', environment),
-    `║${' '.repeat(BOX_WIDTH - 0)}║`,
-    padContent('BWS Project ID', projectId),
-    `║${' '.repeat(BOX_WIDTH - 0)}║`,
-    padContent('BWS_TEST_VAR', testVariable),
-    `╚${'═'.repeat(BOX_WIDTH - 0)}╝`
-  ];
-
-  // Add a blank line before and after the box
-  log('info', '');
-  for (const line of lines) {
-    log('info', line);
-  }
-  log('info', '');
+  // Simplified ASCII-only approach with cyan coloring
+  console.log('');
+  console.log(`${cyan}${'='.repeat(85)}${reset}`);
+  console.log(`${cyan}  CURRENT ENVIRONMENT SUMMARY${reset}`);
+  console.log(`${cyan}${'='.repeat(85)}${reset}`);
+  console.log('');
+  console.log(`${cyan}  Project           : ${reset}${project}`);
+  console.log(`${cyan}  BWS_ENV           : ${reset}${environment}`);
+  console.log(`${cyan}  BWS Project ID    : ${reset}${projectId}`);
+  console.log(`${cyan}  BWS_TEST_VAR      : ${reset}${testVariable}`);
+  console.log('');
+  console.log(`${cyan}${'='.repeat(85)}${reset}`);
+  console.log('');
 }
 
 // At the start of execution, store ALL original environment variables
