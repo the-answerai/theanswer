@@ -53,7 +53,7 @@
     "bws-update": "rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md}": ["eslint --fix", "!scripts/bws-secure/**"]
+    "*.{js,jsx,ts,tsx,json,md}": "eslint --fix"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.19.4",
@@ -130,7 +130,8 @@
     "**/dist",
     "**/node_modules",
     "**/build",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "scripts/bws-secure/**"
   ],
   "prettier": {
     "printWidth": 140,
