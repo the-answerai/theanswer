@@ -173,3 +173,8 @@ daisy/preview
 
 **/swagger/yml
 **/swagger/md
+ 
+# BWS Secure
+.env.secure.*
+requiredVars.env
+.env-debug.html
