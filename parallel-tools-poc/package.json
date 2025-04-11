@@ -1,0 +1,22 @@
+{
+    "name": "parallel-tools-poc",
+    "version": "1.0.0",
+    "description": "",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "nodemon src/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@langchain/core": "0.3.37",
+        "@langchain/openai": "0.4.4",
+        "dotenv": "^16.5.0",
+        "express": "^5.1.0",
+        "langchain": "^0.3.21",
+        "zod": "^3.24.2"
+    }
+}
