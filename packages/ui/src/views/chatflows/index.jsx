@@ -311,6 +311,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -323,6 +324,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={3}>
@@ -335,6 +337,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
             </Box>
