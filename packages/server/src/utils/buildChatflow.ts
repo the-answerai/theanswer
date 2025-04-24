@@ -1,6 +1,6 @@
 import { Request } from 'express'
 import * as path from 'path'
-import { DataSource } from 'typeorm'
+import { DataSource, IsNull } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { omit } from 'lodash'
 import {
@@ -64,11 +64,11 @@ import { getErrorMessage } from '../errors/utils'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS, IMetricsProvider } from '../Interface.Metrics'
 import { OMIT_QUEUE_JOB_DATA } from './constants'
 import PlansService from '../services/plans'
-import { billingService } from '../services/billing'
 import { BILLING_CONFIG } from '../aai-utils/billing/config'
 import { Chat } from '../database/entities/Chat'
 import { User } from '../database/entities/User'
 import checkOwnership from './checkOwnership'
+import { BillingService } from '../aai-utils/billing'
 
 /*
  * Initialize the ending node to be executed
@@ -86,7 +86,7 @@ const initEndingNode = async ({
     nodeOverrides,
     variableOverrides
 }: {
-    user: IUser
+    user?: IUser
     endingNodeIds: string[]
     componentNodes: IComponentNodes
     reactFlowNodes: IReactFlowNode[]
@@ -430,7 +430,10 @@ export const executeFlow = async ({
     })
 
     /*** Get API Config ***/
-    const availableVariables = await appDataSource.getRepository(Variable).find({ where: { userId: user.id } })
+    // TODO: Support organization and global variables
+    const availableVariables = await appDataSource
+        .getRepository(Variable)
+        .find({ where: user ? { userId: user.id } : { userId: IsNull() } })
     const { nodeOverrides, variableOverrides, apiOverrideStatus } = getAPIOverrideConfig(chatflow)
 
     const flowConfig: IFlowConfig = {
@@ -511,7 +514,8 @@ export const executeFlow = async ({
                 createdDate: userMessageDateTime,
                 fileUploads: incomingInput.uploads ? JSON.stringify(fileUploads) : undefined,
                 leadEmail: incomingInput.leadEmail,
-                userId: user?.id ?? agentflow.userId ?? ''
+                userId: user?.id ?? agentflow.userId,
+                organizationId: user?.organizationId ?? agentflow.organizationId
             }
             await utilAddChatMessage(userMessage, appDataSource)
 
@@ -524,7 +528,8 @@ export const executeFlow = async ({
                 chatId,
                 memoryType,
                 sessionId,
-                userId: user?.id ?? agentflow.userId ?? ''
+                userId: user?.id ?? agentflow.userId,
+                organizationId: user?.organizationId ?? agentflow.organizationId
             }
 
             if (sourceDocuments?.length) apiMessage.sourceDocuments = JSON.stringify(sourceDocuments)
@@ -646,6 +651,8 @@ export const executeFlow = async ({
             analytic: chatflow.analytic,
             uploads,
             prependMessages,
+            user,
+            sessionId,
             ...(isStreamValid && { sseStreamer, shouldStreamResponse: isStreamValid })
         }
 
@@ -670,7 +677,8 @@ export const executeFlow = async ({
             createdDate: userMessageDateTime,
             fileUploads: incomingInput.uploads ? JSON.stringify(fileUploads) : undefined,
             leadEmail: incomingInput.leadEmail,
-            userId: user.id
+            userId: user?.id,
+            organizationId: user?.organizationId
         }
         await utilAddChatMessage(userMessage, appDataSource)
 
@@ -718,7 +726,8 @@ export const executeFlow = async ({
             chatId,
             memoryType,
             sessionId,
-            userId: user?.id
+            userId: user?.id,
+            organizationId: user?.organizationId
         }
         if (result?.sourceDocuments) apiMessage.sourceDocuments = JSON.stringify(result.sourceDocuments)
         if (result?.usedTools) apiMessage.usedTools = JSON.stringify(result.usedTools)
@@ -926,17 +935,6 @@ const validateAndSaveChat = async (
         }
 
         chat = await chatRepository.save(chatData)
-
-        // if (socketIO && incomingInput.socketIOClientId) {
-        //     socketIO.to(incomingInput.socketIOClientId).emit('newChat', {
-        //         chat: {
-        //             id: chat.id,
-        //             title: chat.title,
-        //             chatflowChatId: chat.chatflowChatId,
-        //             createdDate: chat.createdDate
-        //         }
-        //     })
-        // }
     }
 
     if (!isInternal && !chatflow?.isPublic) {
@@ -960,19 +958,10 @@ const validateAndSaveChat = async (
         where: { id: billedUserId }
     })
 
-    if (!user || !user.stripeCustomerId) {
-        // Fall back to the old plan service if no Stripe customer ID exists
-        const canContinue = await PlansService.hasAvailableExecutions(billedUserId, chatflow.organizationId)
-
-        if (!canContinue) {
-            throw new InternalFlowiseError(
-                StatusCodes.PAYMENT_REQUIRED,
-                'Insufficient executions. Please purchase more to continue using this service.'
-            )
-        }
-    } else {
+    if (user && user.stripeCustomerId) {
         // Use the new BillingService to check usage limits
         // Get usage summary for the customer
+        const billingService = new BillingService()
         const usage = await billingService.getUsageSummary(user.stripeCustomerId)
         const subscription = await billingService.getActiveSubscription(user.stripeCustomerId)
 

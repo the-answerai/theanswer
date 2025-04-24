@@ -40,6 +40,7 @@ export interface TraceMetadata {
 import { DataSource } from 'typeorm'
 import { ChatGenerationChunk } from '@langchain/core/outputs'
 import { AIMessageChunk } from '@langchain/core/messages'
+import { Serialized } from '@langchain/core/load/serializable'
 
 interface AgentRun extends Run {
     actions: AgentAction[]
@@ -535,8 +536,8 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         langFuseOptions = { ...langFuseOptions, ...nodeData?.inputs?.analytics?.langFuse }
                         console.debug('LangFuse Options updated with nodeData inputs:', langFuseOptions)
                     }
-                    // console.log('ChatOptions', options)
                     const metadata: TraceMetadata = {
+                        name: `${chatflow.id}`,
                         chatflowName: chatflow.name,
                         chatId: options.chatId,
                         chatflowid: options.chatflowid,
@@ -545,17 +546,17 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         stripeCustomerId: options.user?.stripeCustomerId,
                         organizationId: options.user?.organizationId,
                         aiCredentialsOwnership: aiCredentialsOwnership,
-                        messageId: options.messageId
+                        messageId: options.messageId,
+                        sessionId: options.sessionId
                     }
-                    console.debug('Creating trace with metadata:', metadata)
-                    // const trace = langfuse.trace({
-                    //     tags: [`Name:${chatflow.name}`],
-                    //     name: `${chatflow.id}`,
-                    //     version: chatflow.updatedDate,
-                    //     userId: options?.user?.id,
-                    //     sessionId: options.sessionId,
-                    //     metadata: metadata
-                    // })
+                    const trace = langfuse.trace({
+                        tags: [`Name:${chatflow.name}`],
+                        name: `${chatflow.id}`,
+                        version: chatflow.updatedDate,
+                        userId: options?.user?.id,
+                        sessionId: options.sessionId,
+                        metadata: metadata
+                    })
 
                     const handler = new CallbackHandler({
                         ...langFuseOptions,
@@ -564,10 +565,12 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         sessionId: options.sessionId,
                         tags: [`Name:${chatflow.name}`],
                         version: chatflow.updatedDate
-                        // root: trace
+                        // TODO: This is still causing an error
+                        // This works to keep the root trace name and have everything else update on the root trace
+                        // BUT Everything gets updatedon the root trace so the attributes and metadata are inconsistent
+                        // root: trace,
+                        // updateRoot: true
                     })
-
-                    console.debug('CallbackHandler created with LangFuse options and trace.')
 
                     callbacks.push(handler)
                     console.debug('Handler added to callbacks.')
@@ -1596,5 +1599,88 @@ export class AnalyticHandler {
                 toolSpan.end()
             }
         }
+    }
+}
+
+/**
+ * Custom callback handler for streaming detailed intermediate information
+ * during agent execution, specifically tool invocation inputs and outputs.
+ */
+export class CustomStreamingHandler extends BaseCallbackHandler {
+    name = 'custom_streaming_handler'
+
+    private sseStreamer: IServerSideEventStreamer
+    private chatId: string
+
+    constructor(sseStreamer: IServerSideEventStreamer, chatId: string) {
+        super()
+        this.sseStreamer = sseStreamer
+        this.chatId = chatId
+    }
+
+    /**
+     * Handle the start of a tool invocation
+     */
+    async handleToolStart(tool: Serialized, input: string, runId: string, parentRunId?: string): Promise<void> {
+        if (!this.sseStreamer) return
+
+        const toolName = typeof tool === 'object' && tool.name ? tool.name : 'unknown-tool'
+        const toolInput = typeof input === 'string' ? input : JSON.stringify(input, null, 2)
+
+        // Stream the tool invocation details using the agent_trace event type for consistency
+        this.sseStreamer.streamCustomEvent(this.chatId, 'agent_trace', {
+            step: 'tool_start',
+            name: toolName,
+            input: toolInput,
+            runId,
+            parentRunId: parentRunId || null
+        })
+    }
+
+    /**
+     * Handle the end of a tool invocation
+     */
+    async handleToolEnd(output: string | object, runId: string, parentRunId?: string): Promise<void> {
+        if (!this.sseStreamer) return
+
+        const toolOutput = typeof output === 'string' ? output : JSON.stringify(output, null, 2)
+
+        // Stream the tool output details using the agent_trace event type for consistency
+        this.sseStreamer.streamCustomEvent(this.chatId, 'agent_trace', {
+            step: 'tool_end',
+            output: toolOutput,
+            runId,
+            parentRunId: parentRunId || null
+        })
+    }
+
+    /**
+     * Handle tool errors
+     */
+    async handleToolError(error: Error, runId: string, parentRunId?: string): Promise<void> {
+        if (!this.sseStreamer) return
+
+        // Stream the tool error details using the agent_trace event type for consistency
+        this.sseStreamer.streamCustomEvent(this.chatId, 'agent_trace', {
+            step: 'tool_error',
+            error: error.message,
+            runId,
+            parentRunId: parentRunId || null
+        })
+    }
+
+    /**
+     * Handle agent actions
+     */
+    async handleAgentAction(action: AgentAction, runId: string, parentRunId?: string): Promise<void> {
+        if (!this.sseStreamer) return
+
+        // Stream the agent action details using the agent_trace event type for consistency
+        this.sseStreamer.streamCustomEvent(this.chatId, 'agent_trace', {
+            step: 'agent_action',
+            action: JSON.stringify(action),
+            runId,
+            parentRunId: parentRunId || null
+        })
     }
 }

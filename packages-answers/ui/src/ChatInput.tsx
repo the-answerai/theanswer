@@ -3,8 +3,6 @@ import React, { useState, useEffect, useRef, ChangeEvent } from 'react'
 
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
 import AttachFileIcon from '@mui/icons-material/PermMedia'
 import AttachIcon from '@mui/icons-material/AttachFile'
 import MicIcon from '@mui/icons-material/Mic'
@@ -14,12 +12,15 @@ import { IconCircleDot, IconPaperclip } from '@tabler/icons-react'
 
 import { useAnswers } from './AnswersContext'
 
-import type { Sidekick, StarterPrompt } from 'types'
-import { DefaultPrompts } from './DefaultPrompts'
-import { FileUpload } from './types'
+import type { Sidekick, StarterPrompt, FileUpload } from 'types'
 import { getAllowedUploadTypes } from './utils/getAllowedUploadTypes'
 import { Card, CardMedia } from '@mui/material'
 import { ImageButton, ImageSrc, ImageBackdrop, ImageMarked } from '@/ui-component/button/ImageButton'
+
+import dynamic from 'next/dynamic'
+const DefaultPrompts = dynamic(() => import('./DefaultPrompts').then((mod) => mod.DefaultPrompts))
+const Tooltip = dynamic(() => import('@mui/material/Tooltip'))
+const TextField = dynamic(() => import('@mui/material/TextField'))
 
 interface ChatInputProps {
     scrollRef?: React.RefObject<HTMLDivElement>
@@ -186,6 +187,17 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, setUploadedFiles }: ChatInp
         }
     }
 
+    const handleAbortMessage = async () => {
+        setIsMessageStopping(true)
+        try {
+            await contextHandleAbort()
+            setIsMessageStopping(false)
+        } catch (error) {
+            setIsMessageStopping(false)
+            console.error('Error stopping message:', error)
+        }
+    }
+
     const handleStopAndSend = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             setIsLoadingRecording(true)
@@ -257,6 +269,15 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, setUploadedFiles }: ChatInp
             onDragOver={handleDrag}
             onDragLeave={handleDrag}
         >
+            {/* Add a stop button when message is loading */}
+            {isLoading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: 2 }}>
+                    <Button variant='outlined' color='secondary' onClick={handleAbortMessage} disabled={isMessageStopping}>
+                        {isMessageStopping ? 'Stopping...' : 'Stop Generating'}
+                    </Button>
+                </Box>
+            )}
+
             {!messages?.length ? (
                 <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', alignItems: 'flex-end' }}>
                     <DefaultPrompts prompts={chatbotConfig?.starterPrompts} onPromptSelected={handlePromptSelected} />

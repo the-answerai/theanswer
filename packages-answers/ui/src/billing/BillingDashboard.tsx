@@ -1,9 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Box, Stack, Typography, Card, CircularProgress } from '@mui/material'
-import BillingOverview from './BillingOverview'
-import UsageStats from './UsageStats'
+import { Box, Stack, Typography, CircularProgress } from '@mui/material'
 import TotalCreditsProgress from './TotalCreditsProgress'
 import { useBillingData } from './hooks/useBillingData'
 
@@ -35,18 +33,18 @@ const BillingDashboard: React.FC = () => {
 
     if (isError) {
         return (
-            <Box sx={{ p: 3, color: 'error.main' }}>
+            <Box sx={{ color: 'error.main' }}>
                 <Typography>Failed to load billing information. Please try again later.</Typography>
             </Box>
         )
     }
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box>
             <Stack spacing={4}>
                 <Box>
                     <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
-                        Billing Overview
+                        Usage Overview
                     </Typography>
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
                         Manage your subscription and monitor your usage

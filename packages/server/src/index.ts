@@ -4,7 +4,7 @@ import http from 'http'
 import basicAuth from 'express-basic-auth'
 import { DataSource } from 'typeorm'
 import { MODE } from './Interface'
-import { getNodeModulesPackagePath, getEncryptionKey } from './utils'
+import { getEncryptionKey } from './utils'
 import logger, { expressRequestLogger } from './utils/logger'
 import { getDataSource } from './DataSource'
 import { NodesPool } from './NodesPool'
@@ -31,7 +31,8 @@ import 'global-agent/bootstrap'
 import authenticationHandlerMiddleware from './middlewares/authentication'
 import passport from 'passport'
 import passportConfig from './config/passport'
-import session from 'cookie-session'
+import session from 'express-session'
+import { createRedisStore } from './AppConfig'
 declare global {
     namespace Express {
         namespace Multer {
@@ -136,12 +137,29 @@ export class App {
         this.app.use(cors(getCorsOptions()))
 
         // Passport Middleware
-        this.app.use(
-            session({
-                secret: process.env.SESSION_SECRET ?? 'theanswerai',
-                secure: process.env.NODE_ENV === 'production'
-            })
-        )
+        let redisStore
+        try {
+            redisStore = createRedisStore()
+        } catch (error) {
+            logger.error('❌ [server]: Error during Redis Store initialization:', error)
+        }
+
+        const sessionConfig: any = {
+            secret: process.env.SESSION_SECRET ?? 'theanswerai',
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 60 * 60 * 1000 // 1 hour to match Google token expiry
+            }
+        }
+
+        // Only use Redis store if it was successfully created
+        if (redisStore) {
+            sessionConfig.store = redisStore
+        }
+
+        this.app.use(session(sessionConfig))
         this.app.use(passport.initialize())
         this.app.use(passport.session())
 
@@ -282,13 +300,14 @@ export class App {
         // Redirect to staging.theanswer.ai
         // ----------------------------------------
 
-        // this.app.use((req: express.Request, res: express.Response) => {
-        //     const path = req.url
-        //     const encodedDomain = Buffer.from(process.env.DOMAIN || '').toString('base64')
-        //     const redirectURL = new URL(`${encodedDomain}${path}`, process.env.ANSWERAI_DOMAIN)
-        //     console.log('Redirecting to', redirectURL.toString())
-        //     res.redirect(301, redirectURL.toString())
-        // })
+        this.app.use((req: express.Request, res: express.Response) => {
+            const path = req.url
+            const currentDomain = req.get('host') || ''
+            const encodedDomain = Buffer.from(currentDomain).toString('base64')
+            const redirectURL = new URL(`${encodedDomain}${path}`, process.env.ANSWERAI_DOMAIN)
+            console.log('Redirecting to', redirectURL.toString())
+            res.redirect(301, redirectURL.toString())
+        })
 
         // Error handling
         this.app.use(errorHandlerMiddleware)

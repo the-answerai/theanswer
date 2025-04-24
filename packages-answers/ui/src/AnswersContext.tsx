@@ -31,6 +31,7 @@ interface PredictionParams {
     audio?: File | null
     socketIOClientId?: string
     streaming?: boolean
+    action?: any
 }
 
 interface AnswersContextType {
@@ -51,6 +52,7 @@ interface AnswersContextType {
         gptModel?: string
         files?: string[]
         audio?: File | null
+        action?: any
     }) => void
     clearMessages: () => void
     regenerateAnswer: () => void
@@ -218,8 +220,6 @@ export function AnswersProvider({
 
     const [chatId, setChatId] = useState<string | undefined>(chat?.id ?? uuidv4())
 
-    // false to disable for now
-
     const [sidekick, setSidekick] = useState<SidekickListItem | undefined>(
         sidekicks?.find((s) => s.id === chat?.messages?.[chat?.messages?.length - 1]?.chatflowid || s.id === chat?.chatflowId)
     )
@@ -367,6 +367,15 @@ export function AnswersProvider({
                 lastAgentReasoning.push({ nextAgent })
             }
             allMessages[allMessages.length - 1].agentReasoning = lastAgentReasoning
+            return allMessages
+        })
+    }
+
+    const updateLastMessageArtifacts = (artifacts: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
+            allMessages[allMessages.length - 1].artifacts = artifacts
             return allMessages
         })
     }
@@ -637,7 +646,8 @@ export function AnswersProvider({
             gptModel,
             retry,
             files,
-            audio
+            audio,
+            action
         }: {
             content: string
             sidekick?: SidekickListItem
@@ -645,6 +655,7 @@ export function AnswersProvider({
             retry?: boolean
             files?: string[]
             audio?: File | null
+            action?: any
         }) => {
             let fileUploads = files ?? (previews.length > 0 ? prepareFilesForAPI(previews) : undefined)
 
@@ -676,8 +687,8 @@ export function AnswersProvider({
                     uploads: fileUploads,
                     audio,
                     chatType: 'ANSWERAI',
-                    socketIOClientId: socketIOClientId ?? undefined,
-                    streaming: isChatFlowAvailableToStream
+                    streaming: isChatFlowAvailableToStream,
+                    action
                 }
 
                 if (isChatFlowAvailableToStream) {

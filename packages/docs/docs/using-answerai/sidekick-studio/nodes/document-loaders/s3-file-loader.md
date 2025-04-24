@@ -29,8 +29,8 @@ The S3 File Loader is a powerful feature that allows you to retrieve files from 
 
 2. Configure S3 File Loader:
    a. Drag and drop the S3 File Loader onto the canvas
-      <!-- TODO: Screenshot of S3 File Loader node on canvas -->
-      <figure><img src="/.gitbook/assets/screenshots/s3loader.png" alt="" /><figcaption><p> S3 File Loader Node &#x26; Drop UI</p></figcaption></figure>
+    <!-- TODO: Screenshot of S3 File Loader node on canvas -->
+    <figure><img src="/.gitbook/assets/screenshots/s3loader.png" alt="" /><figcaption><p> S3 File Loader Node &#x26; Drop UI</p></figcaption></figure>
 
     b. Set up AWS Credentials:
 
