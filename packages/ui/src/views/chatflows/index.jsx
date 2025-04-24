@@ -67,6 +67,7 @@ const Chatflows = () => {
     const [answerAIChatflows, setAnswerAIChatflows] = useState([])
     const [communityChatflows, setCommunityChatflows] = useState([])
     const [organizationChatflows, setOrganizationChatflows] = useState([])
+    const [refreshChatflows, setRefreshChatflows] = useState(false)
 
     const [search, setSearch] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('All')
@@ -194,7 +195,15 @@ const Chatflows = () => {
             const uniqueCategories = ['All', ...new Set(allFlows.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
             setCategories(uniqueCategories)
         }
-    }, [flags, user, getAllChatflowsApi.data, getMarketplaceChatflowsApi.data])
+    }, [flags, user, getAllChatflowsApi.data, getMarketplaceChatflowsApi.data, refreshChatflows])
+
+    useEffect(() => {
+        if (refreshChatflows && user) {
+            getAllChatflowsApi.request()
+            getMarketplaceChatflowsApi.request()
+            setRefreshChatflows(false)
+        }
+    }, [refreshChatflows, user, getAllChatflowsApi, getMarketplaceChatflowsApi])
 
     const filterChatflows = (flows, search, categoryFilter) => {
         const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
@@ -289,6 +298,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
