@@ -687,6 +687,7 @@ export function AnswersProvider({
                     uploads: fileUploads,
                     audio,
                     chatType: 'ANSWERAI',
+                    socketIOClientId: socketIOClientId ?? undefined,
                     streaming: isChatFlowAvailableToStream,
                     action
                 }

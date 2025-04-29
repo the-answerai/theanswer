@@ -1779,12 +1779,18 @@ export const getUploadPath = (): string => {
 }
 
 const getOrgId = () => {
-    const settingsContent = fs.readFileSync(getUserSettingsFilePath(), 'utf8')
+    const settingsPath = getUserSettingsFilePath()
+    if (!settingsPath || !fs.existsSync(settingsPath)) {
+        return 'default-org'
+    }
+
     try {
+        const settingsContent = fs.readFileSync(settingsPath, 'utf8')
         const settings = JSON.parse(settingsContent)
-        return settings.instanceId
+        return settings.instanceId || 'default-org'
     } catch (error) {
-        return ''
+        logger.error(`Error reading organization ID: ${error}`)
+        return 'default-org'
     }
 }
 
