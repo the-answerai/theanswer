@@ -47,13 +47,21 @@ const getMarketplaceTemplate = async (req: Request, res: Response, next: NextFun
 
 const deleteCustomTemplate = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Check if user is authenticated
+        if (!req.user) {
+            throw new InternalFlowiseError(
+                StatusCodes.UNAUTHORIZED,
+                `Error: marketplacesController.deleteCustomTemplate - Unauthorized access!`
+            )
+        }
+
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
                 `Error: marketplacesService.deleteCustomTemplate - id not provided!`
             )
         }
-        const apiResponse = await marketplacesService.deleteCustomTemplate(req.params.id)
+        const apiResponse = await marketplacesService.deleteCustomTemplate(req.params.id, req.user)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -71,13 +79,21 @@ const getAllCustomTemplates = async (req: Request, res: Response, next: NextFunc
 
 const saveCustomTemplate = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.user) {
+            throw new InternalFlowiseError(
+                StatusCodes.UNAUTHORIZED,
+                `Error: marketplacesController.saveCustomTemplate - Unauthorized access!`
+            )
+        }
+
         if ((!req.body && !(req.body.chatflowId || req.body.tool)) || !req.body.name) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
                 `Error: marketplacesService.saveCustomTemplate - body not provided!`
             )
         }
-        const apiResponse = await marketplacesService.saveCustomTemplate(req.body)
+
+        const apiResponse = await marketplacesService.saveCustomTemplate(req.body, req.user)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

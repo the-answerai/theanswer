@@ -283,9 +283,25 @@ const getMarketplaceTemplate = async (templateIdOrName: string, user?: IUser): P
     }
 }
 
-const deleteCustomTemplate = async (templateId: string): Promise<DeleteResult> => {
+const deleteCustomTemplate = async (templateId: string, user?: IUser): Promise<DeleteResult> => {
     try {
         const appServer = getRunningExpressApp()
+
+        const template = await appServer.AppDataSource.getRepository(CustomTemplate).findOneBy({ id: templateId })
+
+        if (!template) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Template ${templateId} not found`)
+        }
+
+        if (
+            user &&
+            template.userId &&
+            template.userId !== user.id &&
+            !(user.permissions?.includes('org:manage') && user.organizationId === template.organizationId)
+        ) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized to delete this template`)
+        }
+
         return await appServer.AppDataSource.getRepository(CustomTemplate).delete({ id: templateId })
     } catch (error) {
         throw new InternalFlowiseError(
@@ -327,16 +343,16 @@ const getAllCustomTemplates = async (): Promise<any> => {
     }
 }
 
-const saveCustomTemplate = async (body: any): Promise<any> => {
+const saveCustomTemplate = async (body: any, user?: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         let flowDataStr = ''
         let derivedFramework = ''
         const customTemplate = new CustomTemplate()
-        Object.assign(customTemplate, body)
+        Object.assign(customTemplate, { ...body, userId: user?.id, organizationId: user?.organizationId })
 
         if (body.chatflowId) {
-            const chatflow = await chatflowsService.getChatflowById(body.chatflowId)
+            const chatflow = await chatflowsService.getChatflowById(body.chatflowId, user)
             const flowData = JSON.parse(chatflow.flowData)
             const { framework, exportJson } = _generateExportFlowData(flowData)
             flowDataStr = JSON.stringify(exportJson)
