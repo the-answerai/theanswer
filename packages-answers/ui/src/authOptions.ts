@@ -46,6 +46,38 @@ const ATLASSIAN_SCOPE = {
     'read:space:confluence': true
 }
 
+// Get the specific hostname to use for cookie domain isolation
+const getCookieDomain = () => {
+    // Use COOKIE_DOMAIN if explicitly provided
+    if (process.env.COOKIE_DOMAIN) {
+        return process.env.COOKIE_DOMAIN
+    }
+
+    // If sharing across subdomains is explicitly enabled, use the root domain
+    if (process.env.SHARE_COOKIES_ACROSS_SUBDOMAINS === 'true') {
+        return undefined // Let the browser use the default behavior (share across subdomains)
+    }
+
+    // Default behavior is now to isolate by subdomain
+    try {
+        // In browser context, use window.location.hostname
+        if (typeof window !== 'undefined') {
+            return window.location.hostname
+        }
+
+        // In server context, check for vercel URL or other env vars
+        const url = process.env.VERCEL_URL || process.env.VERCEL_PREVIEW_URL || process.env.AUTH0_BASE_URL
+        if (url) {
+            return new URL(url.startsWith('http') ? url : `https://${url}`).hostname
+        }
+    } catch (error) {
+        console.warn('Error determining cookie domain', error)
+    }
+
+    // If we can't determine the hostname, use specific domain to prevent sharing
+    return process.env.AUTH0_BASE_URL?.replace('https://', '')?.replace('http://', '')?.split(':')[0]
+}
+
 export const authOptions: AuthOptions = {
     cookies: {
         sessionToken: {
@@ -58,7 +90,8 @@ export const authOptions: AuthOptions = {
                 httpOnly: true,
                 sameSite: 'None',
                 path: '/',
-                secure: true
+                secure: true,
+                domain: getCookieDomain()
             }
         }
     },
