@@ -55,6 +55,7 @@ const Agentflows = () => {
     const [search, setSearch] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('All')
     const [categories, setCategories] = useState(['All'])
+    const [refreshChatflows, setRefreshChatflows] = useState(false)
 
     const getAllAgentflowsApi = useApi(chatflowsApi.getAllAgentflows)
     const getMarketplaceAgentflowsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
@@ -166,6 +167,14 @@ const Agentflows = () => {
         }
     }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data])
 
+    useEffect(() => {
+        if (refreshChatflows) {
+            getAllAgentflowsApi.request()
+            getMarketplaceAgentflowsApi.request()
+            setRefreshChatflows(false)
+        }
+    }, [refreshChatflows, getAllAgentflowsApi, getMarketplaceAgentflowsApi])
+
     const filterFlows = (flows, search, categoryFilter) => {
         const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
 
@@ -246,6 +255,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='agentflows'
                         onItemClick={goToCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -258,6 +268,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -270,6 +281,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
             </Box>

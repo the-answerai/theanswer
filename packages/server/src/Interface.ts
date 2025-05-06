@@ -370,16 +370,18 @@ export interface IPaidPlan {
     createdDate: Date
 }
 export interface ICustomTemplate {
-    id: string
+    id?: string
     name: string
     flowData: string
-    updatedDate: Date
-    createdDate: Date
     description?: string
-    type?: string
     badge?: string
     framework?: string
     usecases?: string
+    type?: string
+    userId?: string
+    organizationId?: string
+    createdDate?: Date
+    updatedDate?: Date
 }
 
 export interface IFlowConfig {
