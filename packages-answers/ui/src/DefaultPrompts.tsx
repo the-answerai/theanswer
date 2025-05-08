@@ -6,7 +6,7 @@ import { StarterPrompt } from 'types'
 interface DefaultPromptsProps {
     prompts?: StarterPrompt[]
     expanded?: boolean
-    handleChange: (evt: any, expanded: boolean) => void
+    handleChange?: (evt: any, expanded: boolean) => void
     onPromptSelected: (prompt: StarterPrompt) => void
 }
 export const DefaultPrompts = ({ prompts, onPromptSelected }: DefaultPromptsProps) => {
