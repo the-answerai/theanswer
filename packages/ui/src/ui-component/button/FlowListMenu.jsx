@@ -21,10 +21,15 @@ import { IconX } from '@tabler/icons-react'
 
 import { uiBaseURL } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
+import chatflowsApi from '@/api/chatflows'
+import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
+
+import useConfirm from '@/hooks/useConfirm'
 import ChatflowConfigurationDialog from '../dialog/ChatflowConfigurationDialog'
 import { generateExportFlowData } from '@/utils/genericHelper'
 import ExportAsTemplateDialog from '@/ui-component/dialog/ExportAsTemplateDialog'
 import { Divider } from '@mui/material'
+import useNotifier from '@/utils/useNotifier'
 
 const StyledMenu = styled((props) => (
     <Menu
@@ -62,8 +67,10 @@ const StyledMenu = styled((props) => (
     }
 }))
 
-export default function FlowListMenu({ chatflow, isAgentCanvas }) {
+export default function FlowListMenu({ chatflow, isAgentCanvas, setError, setRefreshChatflows }) {
     const dispatch = useDispatch()
+    const { confirm } = useConfirm()
+    useNotifier()
 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
@@ -213,11 +220,8 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         if (isConfirmed) {
             try {
                 await chatflowsApi.deleteChatflow(chatflow.id)
-                await updateFlowsApi.request()
-            } catch (error) {
-                if (setError) setError(error)
                 enqueueSnackbar({
-                    message: 'Chatflow Configuration Saved',
+                    message: `${title} deleted successfully`,
                     options: {
                         key: new Date().getTime() + Math.random(),
                         variant: 'success',
@@ -228,9 +232,24 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
                         )
                     }
                 })
+                setRefreshChatflows(true)
+            } catch (error) {
+                if (setError) setError(error)
+                enqueueSnackbar({
+                    message: typeof error.response?.data === 'object' ? error.response.data.message : error.message,
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'error',
+                        persist: true,
+                        action: (key) => (
+                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                <IconX />
+                            </Button>
+                        )
+                    }
+                })
             }
         }
-        setChatflowConfigurationDialogOpen(true)
     }
 
     const handleDuplicate = () => {
@@ -342,6 +361,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
                     onCancel={() => setExportTemplateDialogOpen(false)}
                 />
             )}
+            <ConfirmDialog />
         </div>
     )
 }
@@ -350,5 +370,6 @@ FlowListMenu.propTypes = {
     chatflow: PropTypes.object,
     isAgentCanvas: PropTypes.bool,
     setError: PropTypes.func,
-    updateFlowsApi: PropTypes.object
+    updateFlowsApi: PropTypes.object,
+    setRefreshChatflows: PropTypes.func
 }

@@ -2,7 +2,17 @@ import PropTypes from 'prop-types'
 import { Box, Grid, Skeleton, Typography } from '@mui/material'
 import ItemCard from '@/ui-component/cards/ItemCard'
 
-const FlowListView = ({ data, images = {}, nodeTypes = {}, isLoading, updateFlowsApi, setError, type, onItemClick }) => {
+const FlowListView = ({
+    data,
+    images = {},
+    nodeTypes = {},
+    isLoading,
+    updateFlowsApi,
+    setError,
+    type,
+    onItemClick,
+    setRefreshChatflows
+}) => {
     const finalData = data?.filter(Boolean) || []
 
     const handleItemClick = (item) => {
@@ -32,6 +42,7 @@ const FlowListView = ({ data, images = {}, nodeTypes = {}, isLoading, updateFlow
                                 type={type}
                                 updateFlowsApi={updateFlowsApi}
                                 setError={setError}
+                                setRefreshChatflows={setRefreshChatflows}
                             />
                         </Grid>
                     ))
@@ -55,7 +66,8 @@ FlowListView.propTypes = {
     updateFlowsApi: PropTypes.object,
     setError: PropTypes.func,
     type: PropTypes.oneOf(['chatflows', 'agentflows', 'marketplace', 'tools']).isRequired,
-    onItemClick: PropTypes.func.isRequired
+    onItemClick: PropTypes.func.isRequired,
+    setRefreshChatflows: PropTypes.func
 }
 
 export default FlowListView
