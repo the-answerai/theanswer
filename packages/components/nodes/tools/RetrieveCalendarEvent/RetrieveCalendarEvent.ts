@@ -174,9 +174,9 @@ class RetrieveCalendarEvent_Tools implements INode {
 
     //@ts-ignore
     loadMethods = {
-        async listCalendars(nodeData: INodeData): Promise<{ label: string; name: string }[]> {
+        async listCalendars(nodeData: INodeData, options?: ICommonObject): Promise<{ label: string; name: string }[]> {
             try {
-                const credentialData = nodeData.credential ? JSON.parse(nodeData.credential) : null
+                const credentialData: any = await getCredentialData(nodeData?.credential ?? '', options ?? {})
                 if (!credentialData?.googleAccessToken) {
                     throw new Error('Google access token not found in credentials')
                 }
