@@ -67,6 +67,7 @@ const Chatflows = () => {
     const [answerAIChatflows, setAnswerAIChatflows] = useState([])
     const [communityChatflows, setCommunityChatflows] = useState([])
     const [organizationChatflows, setOrganizationChatflows] = useState([])
+    const [refreshChatflows, setRefreshChatflows] = useState(false)
 
     const [search, setSearch] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('All')
@@ -234,7 +235,15 @@ const Chatflows = () => {
             const sortedCategories = rawCategories.filter((c) => c && c !== 'All').sort((a, b) => a.localeCompare(b))
             setCategories(['All', ...sortedCategories])
         }
-    }, [flags, user, getAllChatflowsApi.data, getMarketplaceChatflowsApi.data])
+    }, [flags, user, getAllChatflowsApi.data, getMarketplaceChatflowsApi.data, refreshChatflows])
+
+    useEffect(() => {
+        if (refreshChatflows && user) {
+            getAllChatflowsApi.request()
+            getMarketplaceChatflowsApi.request()
+            setRefreshChatflows(false)
+        }
+    }, [refreshChatflows, user, getAllChatflowsApi, getMarketplaceChatflowsApi])
 
     const filteredMyChatflows = useMemo(() => {
         return sortChatflows(
@@ -362,6 +371,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -374,6 +384,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -386,6 +397,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={3}>
@@ -398,6 +410,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </TabPanel>
             </Box>
