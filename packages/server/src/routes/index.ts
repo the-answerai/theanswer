@@ -50,6 +50,7 @@ import nvidiaNimRouter from './nvidia-nim'
 import gmailRouter from './gmail'
 import csvParserRouter from './csv-parser'
 import browserExtensionRouter from './browser-extension'
+import dalleImageRouter from './dalle-images'
 
 const router = express.Router()
 
@@ -74,6 +75,7 @@ router.use('/internal-chatmessage', internalChatmessagesRouter)
 router.use('/internal-prediction', internalPredictionRouter)
 router.use('/get-upload-file', getUploadFileRouter)
 router.use('/get-upload-path', getUploadPathRouter)
+router.use('/dalle-image', dalleImageRouter)
 router.use('/leads', leadsRouter)
 router.use('/load-prompt', loadPromptRouter)
 router.use('/marketplaces', marketplacesRouter)
