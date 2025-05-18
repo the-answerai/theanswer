@@ -172,4 +172,4 @@ class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
     }
 }
 
-module.exports = { nodeClass: AAIChatMemory_Memory }
+module.exports = { nodeClass: AAIChatMemory_Memory, initializeRedis }
