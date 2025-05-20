@@ -23,7 +23,8 @@ import {
     Chip,
     useTheme,
     Tabs,
-    Tab
+    Tab,
+    TableSortLabel
 } from '@mui/material'
 
 // project imports
@@ -103,6 +104,39 @@ const Variables = () => {
     }
     function filterVariables(data) {
         return data.name.toLowerCase().indexOf(search.toLowerCase()) > -1
+    }
+
+    // sorting state
+    const [order, setOrder] = useState('asc')
+    const [orderBy, setOrderBy] = useState('name')
+
+    const handleRequestSort = (property) => {
+        const isAsc = orderBy === property && order === 'asc'
+        setOrder(isAsc ? 'desc' : 'asc')
+        setOrderBy(property)
+    }
+
+    const sortData = (data) => {
+        return data.sort((a, b) => {
+            let aValue = a[orderBy === 'name' ? 'name' : orderBy]
+            let bValue = b[orderBy === 'name' ? 'name' : orderBy]
+
+            if (orderBy === 'updatedDate' || orderBy === 'createdDate') {
+                aValue = new Date(aValue).getTime()
+                bValue = new Date(bValue).getTime()
+            }
+
+            if (orderBy === 'name') {
+                aValue = aValue.toLowerCase()
+                bValue = bValue.toLowerCase()
+            }
+
+            if (order === 'desc') {
+                return bValue < aValue ? -1 : bValue > aValue ? 1 : 0
+            } else {
+                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+            }
+        })
     }
 
     const addNew = () => {
@@ -263,12 +297,36 @@ const Variables = () => {
                                         }}
                                     >
                                         <TableRow>
-                                            <StyledTableCell>Name</StyledTableCell>
+                                            <StyledTableCell>
+                                                <TableSortLabel
+                                                    active={orderBy === 'name'}
+                                                    direction={orderBy === 'name' ? order : 'asc'}
+                                                    onClick={() => handleRequestSort('name')}
+                                                >
+                                                    Name
+                                                </TableSortLabel>
+                                            </StyledTableCell>
                                             <StyledTableCell>Value</StyledTableCell>
                                             <StyledTableCell>Type</StyledTableCell>
                                             <StyledTableCell>Visibility</StyledTableCell>
-                                            <StyledTableCell>Last Updated</StyledTableCell>
-                                            <StyledTableCell>Created</StyledTableCell>
+                                            <StyledTableCell>
+                                                <TableSortLabel
+                                                    active={orderBy === 'updatedDate'}
+                                                    direction={orderBy === 'updatedDate' ? order : 'asc'}
+                                                    onClick={() => handleRequestSort('updatedDate')}
+                                                >
+                                                    Last Updated
+                                                </TableSortLabel>
+                                            </StyledTableCell>
+                                            <StyledTableCell>
+                                                <TableSortLabel
+                                                    active={orderBy === 'createdDate'}
+                                                    direction={orderBy === 'createdDate' ? order : 'asc'}
+                                                    onClick={() => handleRequestSort('createdDate')}
+                                                >
+                                                    Created
+                                                </TableSortLabel>
+                                            </StyledTableCell>
                                             <StyledTableCell> </StyledTableCell>
                                             <StyledTableCell> </StyledTableCell>
                                         </TableRow>
@@ -305,9 +363,9 @@ const Variables = () => {
                                             </>
                                         ) : (
                                             <>
-                                                {(tabValue === 0 ? myVariables : organizationVariables)
-                                                    .filter(filterVariables)
-                                                    .map((variable, index) => (
+                                                {sortData(
+                                                    (tabValue === 0 ? myVariables : organizationVariables).filter(filterVariables)
+                                                ).map((variable, index) => (
                                                         <StyledTableRow
                                                             key={index}
                                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}

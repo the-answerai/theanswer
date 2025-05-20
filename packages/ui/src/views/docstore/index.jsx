@@ -17,7 +17,8 @@ import {
     TableRow,
     ToggleButton,
     ToggleButtonGroup,
-    Typography
+    Typography,
+    TableSortLabel
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 
@@ -53,11 +54,44 @@ const Documents = () => {
     const [error, setError] = useState(null)
     const [isLoading, setLoading] = useState(true)
     const [images, setImages] = useState({})
-    const [search, setSearch] = useState('')
-    const [showDialog, setShowDialog] = useState(false)
-    const [dialogProps, setDialogProps] = useState({})
-    const [docStores, setDocStores] = useState([])
-    const [view, setView] = useState(localStorage.getItem('docStoreDisplayStyle') || 'card')
+const [search, setSearch] = useState('')
+const [showDialog, setShowDialog] = useState(false)
+const [dialogProps, setDialogProps] = useState({})
+const [docStores, setDocStores] = useState([])
+const [view, setView] = useState(localStorage.getItem('docStoreDisplayStyle') || 'card')
+
+    // sorting state
+    const [order, setOrder] = useState('asc')
+    const [orderBy, setOrderBy] = useState('name')
+
+    const handleRequestSort = (property) => {
+        const isAsc = orderBy === property && order === 'asc'
+        setOrder(isAsc ? 'desc' : 'asc')
+        setOrderBy(property)
+    }
+
+    const sortData = (data) => {
+        return data.sort((a, b) => {
+            let aValue = a[orderBy === 'name' ? 'name' : orderBy]
+            let bValue = b[orderBy === 'name' ? 'name' : orderBy]
+
+            if (orderBy === 'updatedDate' || orderBy === 'createdDate') {
+                aValue = new Date(aValue).getTime()
+                bValue = new Date(bValue).getTime()
+            }
+
+            if (orderBy === 'name') {
+                aValue = aValue.toLowerCase()
+                bValue = bValue.toLowerCase()
+            }
+
+            if (order === 'desc') {
+                return bValue < aValue ? -1 : bValue > aValue ? 1 : 0
+            } else {
+                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+            }
+        })
+    }
 
     const handleChange = (event, nextView) => {
         if (nextView === null) return
@@ -199,7 +233,7 @@ const Documents = () => {
                                 </Box>
                             ) : (
                                 <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
-                                    {docStores?.filter(filterDocStores).map((data, index) => (
+                                    {sortData(docStores?.filter(filterDocStores)).map((data, index) => (
                                         <DocumentStoreCard
                                             key={index}
                                             images={images[data.id]}
@@ -221,7 +255,15 @@ const Documents = () => {
                                 >
                                     <TableRow>
                                         <TableCell>&nbsp;</TableCell>
-                                        <TableCell>Name</TableCell>
+                                        <TableCell>
+                                            <TableSortLabel
+                                                active={orderBy === 'name'}
+                                                direction={orderBy === 'name' ? order : 'asc'}
+                                                onClick={() => handleRequestSort('name')}
+                                            >
+                                                Name
+                                            </TableSortLabel>
+                                        </TableCell>
                                         <TableCell>Description</TableCell>
                                         <TableCell>Connected flows</TableCell>
                                         <TableCell>Total characters</TableCell>
@@ -230,7 +272,7 @@ const Documents = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {docStores?.filter(filterDocStores).map((data, index) => (
+                                    {sortData(docStores?.filter(filterDocStores)).map((data, index) => (
                                         <TableRow
                                             onClick={() => goToDocumentStore(data.id)}
                                             hover
