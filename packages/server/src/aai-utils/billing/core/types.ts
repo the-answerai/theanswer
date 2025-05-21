@@ -352,6 +352,7 @@ export interface UsageEvent {
     timestamp: string
     chatflowName?: string
     chatflowId?: string
+    stripeCustomerId: string
     totalCredits: number
     tokensIn: number
     tokensOut: number

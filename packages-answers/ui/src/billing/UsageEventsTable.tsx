@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Box,
     Typography,
@@ -13,7 +13,8 @@ import {
     Chip,
     Skeleton,
     IconButton,
-    Tooltip
+    Tooltip,
+    TextField
 } from '@mui/material'
 import { useUsageEvents } from './hooks/useUsageEvents'
 import { format } from 'date-fns'
@@ -38,8 +39,10 @@ const SkeletonRow = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 const UsageEventsTable: React.FC = () => {
     const { user } = useUser()
     const isAdmin = user?.['https://theanswer.ai/roles']?.includes('Admin')
-    const { events, pagination, isLoading, isError, setPage, setLimit, setSorting, params } = useUsageEvents()
+    const { events, pagination, isLoading, isError, setPage, setLimit, setSorting, setFilter, params } = useUsageEvents()
     const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+    const [chatflowSearch, setChatflowSearch] = useState('')
+    const [userSearch, setUserSearch] = useState('')
 
     const handleChangePage = (_: unknown, newPage: number) => {
         setPage(newPage + 1) // API is 1-indexed, MUI is 0-indexed
@@ -54,6 +57,18 @@ const UsageEventsTable: React.FC = () => {
         const isAsc = params.sortBy === column && params.sortOrder === 'asc'
         setSorting(column, isAsc ? 'desc' : 'asc')
     }
+
+    // Update filter whenever search fields change
+    useEffect(() => {
+        const filter: Record<string, any> = {}
+        if (chatflowSearch) {
+            filter.chatflow = chatflowSearch
+        }
+        if (isAdmin && userSearch) {
+            filter.user = userSearch
+        }
+        setFilter(filter)
+    }, [chatflowSearch, userSearch, isAdmin, setFilter])
 
     // Function to generate Langfuse trace URL
     const getLangfuseTraceUrl = (traceId: string) => {
@@ -100,6 +115,30 @@ const UsageEventsTable: React.FC = () => {
                     Individual events that consumed credits
                 </Typography>
             </Box>
+            <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+                <TextField
+                    size='small'
+                    label='Search Chatflow'
+                    variant='outlined'
+                    value={chatflowSearch}
+                    onChange={(e) => setChatflowSearch(e.target.value)}
+                    InputProps={{ sx: { color: '#fff' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    sx={{ flex: 1 }}
+                />
+                {isAdmin && (
+                    <TextField
+                        size='small'
+                        label='Search User'
+                        variant='outlined'
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        InputProps={{ sx: { color: '#fff' } }}
+                        InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                        sx={{ flex: 1 }}
+                    />
+                )}
+            </Box>
             <TableContainer>
                 <Table>
                     <TableHead>
@@ -124,6 +163,7 @@ const UsageEventsTable: React.FC = () => {
                             </TableCell>
                             {isAdmin && <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>User</TableCell>}
                             <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Chatflow</TableCell>
+                            <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Customer</TableCell>
                             {/* <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Total Credits</TableCell> */}
                             <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Usage</TableCell>
                         </TableRow>
@@ -171,6 +211,28 @@ const UsageEventsTable: React.FC = () => {
                                     </TableCell>
                                     {isAdmin && <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>{event.userId}</TableCell>}
                                     <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>{event.chatflowName || 'Unknown'}</TableCell>
+                                    <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', position: 'relative' }}>
+                                        {event.stripeCustomerId}
+                                        {hoveredRow === event.id && (
+                                            <Tooltip title='View in Stripe' placement='top'>
+                                                <IconButton
+                                                    size='small'
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        right: 8,
+                                                        color: 'rgba(255, 255, 255, 0.7)',
+                                                        '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        window.open(`https://dashboard.stripe.com/customers/${event.stripeCustomerId}`, '_blank')
+                                                    }}
+                                                >
+                                                    <OpenInNewIcon fontSize='small' />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </TableCell>
                                     {/* <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>{event.totalCredits.toFixed(2)}</TableCell> */}
                                     <TableCell>
                                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

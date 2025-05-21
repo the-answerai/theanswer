@@ -7,6 +7,7 @@ export interface UsageEvent {
     timestamp: string
     chatflowName?: string
     chatflowId?: string
+    stripeCustomerId: string
     totalCredits: number
     breakdown: {
         ai_tokens: number
@@ -42,12 +43,18 @@ export function useUsageEvents(initialParams: UsageEventsParams = { page: 1, lim
     // Create a stable cache key that includes the pagination parameters
     const cacheKey = useMemo(() => {
         // This ensures the cache key changes when any parameter changes
-        return `/api/billing/usage/events?${new URLSearchParams({
+        const searchParams = new URLSearchParams({
             page: params.page.toString(),
             limit: params.limit.toString(),
             sortBy: params.sortBy || 'timestamp',
             sortOrder: params.sortOrder || 'desc'
-        }).toString()}`
+        })
+
+        if (params.filter) {
+            searchParams.set('filter', encodeURIComponent(JSON.stringify(params.filter)))
+        }
+
+        return `/api/billing/usage/events?${searchParams.toString()}`
     }, [params])
 
     const fetcher = useCallback(async () => {
