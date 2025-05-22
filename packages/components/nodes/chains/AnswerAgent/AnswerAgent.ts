@@ -1,20 +1,13 @@
 import { BaseLanguageModel } from '@langchain/core/language_models/base'
 import { LLMChain } from 'langchain/chains'
-import {
-    ICommonObject,
-    INode,
-    INodeData,
-    INodeOutputsValue,
-    INodeParams
-} from '../../../../src/Interface' // Adjust path as necessary
-import { getBaseClasses, handleEscapeCharacters } from '../../../../src/utils' // Adjust path as necessary
+import { ICommonObject, INode, INodeData, INodeOutputsValue, INodeParams } from '../../../src/Interface'
+import { getBaseClasses, handleEscapeCharacters } from '../../../src/utils'
 import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate } from '@langchain/core/prompts'
 import { StructuredOutputParser, OutputFixingParser } from 'langchain/output_parsers'
-import { z } from 'zod'
 import { jsonrepair } from 'jsonrepair'
-import { checkInputs, Moderation, streamResponse } from '../../../moderation/Moderation' // Adjust path as necessary
-import { formatResponse, injectOutputParser } from '../../../outputparsers/OutputParserHelpers' // Adjust path as necessary
-import { additionalCallbacks, ConsoleCallbackHandler, CustomChainHandler } from '../../../../src/handler' // Adjust path as necessary
+import { checkInputs, Moderation, streamResponse } from '../../moderation/Moderation'
+import { formatResponse } from '../../outputparsers/OutputParserHelpers'
+import { additionalCallbacks, ConsoleCallbackHandler, CustomChainHandler } from '../../../src/handler'
 
 // Assuming LLMChain_Chains exists and is a suitable base, or create a similar structure.
 // If LLMChain_Chains is not directly inheritable or suitable, adapt from its structure.
@@ -38,7 +31,7 @@ class AnswerAgent implements INode {
         this.name = 'answerAgent'
         this.version = 1.0
         this.type = 'AnswerAgent'
-        this.icon = 'answerAgent.svg' // Placeholder icon name
+        this.icon = 'answerai-square-black.png'
         this.category = 'Chains'
         this.description = 'An agent that combines prompt templating, LLM interaction, and structured output parsing into a single node.'
         this.baseClasses = [this.type, ...getBaseClasses(LLMChain)] // Assuming LLMChain is a relevant base
@@ -70,7 +63,8 @@ class AnswerAgent implements INode {
                 optional: true,
                 acceptVariable: true,
                 list: true,
-                description: 'JSON object of key-value pairs to be injected into prompt templates. For example: {"input_language": "English", "output_language": "French"}'
+                description:
+                    'JSON object of key-value pairs to be injected into prompt templates. For example: {"input_language": "English", "output_language": "French"}'
             },
             {
                 label: 'Zod Schema (for JSON output)',
@@ -122,7 +116,9 @@ class AnswerAgent implements INode {
                 const outputParser = StructuredOutputParser.fromZodSchema(schema)
                 this.outputParser = outputParser
                 if (this.outputParser) {
-                    humanMessagePrompt = injectOutputParser(this.outputParser, humanMessagePrompt)
+                    // Add format instructions to the prompt
+                    const formatInstructions = this.outputParser.getFormatInstructions()
+                    humanMessagePrompt = `${humanMessagePrompt}\n${formatInstructions}`
                 }
             } catch (e) {
                 throw new Error(`Failed to parse Zod schema or inject output parser: ${e.message}`)
@@ -158,7 +154,8 @@ class AnswerAgent implements INode {
 
         const output = nodeData.outputs?.output as string
 
-        if (output === this.name) { // 'answerAgent'
+        if (output === this.name) {
+            // 'answerAgent'
             return chain
         } else if (output === 'outputPrediction') {
             // The `run` method is designed to handle the prediction logic.
@@ -203,24 +200,17 @@ class AnswerAgent implements INode {
                 }
             }
         }
-        
+
         // The 'input' for the chain.call might need to be specifically the 'question' if the prompt expects that.
         // Or, if the prompt is more generic like {{input}}, then we can pass the main input directly.
         // For now, assuming human prompt uses {question} and other values are auto-populated from llmCallInputs.
 
         if (inputModeration) {
             try {
-                // Moderate all string inputs in llmCallInputs
-                const inputsToModerate: ICommonObject = {}
-                for (const key in llmCallInputs) {
-                    if (typeof llmCallInputs[key] === 'string') {
-                        inputsToModerate[key] = llmCallInputs[key]
-                    }
-                }
-                await checkInputs(inputsToModerate, inputModeration)
+                await checkInputs([inputModeration], input)
             } catch (e) {
                 await new Promise((resolve) => setTimeout(resolve, 500))
-                streamResponse(options.socketIO && options.socketIOClientId, e.message, options.socketIO, options.socketIOClientId)
+                streamResponse(options.socketIO, options.socketIOClientId, e.message)
                 return formatResponse(e.message)
             }
         }
@@ -238,9 +228,9 @@ class AnswerAgent implements INode {
             if (this.outputParser) {
                 let parsedResponse = await this.outputParser.parse(fullResponse)
                 if (typeof parsedResponse === 'string' && typeof this.outputParser.lc_kwargs.schema !== 'undefined') {
-                     // try to repair json
-                     parsedResponse = jsonrepair(parsedResponse)
-                     parsedResponse = JSON.parse(parsedResponse)
+                    // try to repair json
+                    parsedResponse = jsonrepair(parsedResponse)
+                    parsedResponse = JSON.parse(parsedResponse)
                 }
                 return { output: parsedResponse, fullResponse }
             }
@@ -251,7 +241,7 @@ class AnswerAgent implements INode {
             if (this.outputParser) {
                 try {
                     let parsedResponse = await this.outputParser.parse(fullResponse)
-                     if (typeof parsedResponse === 'string' && typeof this.outputParser.lc_kwargs.schema !== 'undefined') {
+                    if (typeof parsedResponse === 'string' && typeof this.outputParser.lc_kwargs.schema !== 'undefined') {
                         // try to repair json
                         parsedResponse = jsonrepair(parsedResponse)
                         parsedResponse = JSON.parse(parsedResponse)
