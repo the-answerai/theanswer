@@ -1,0 +1,13 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with rounded corners -->
+  <rect width="50" height="50" rx="5" fill="#4A90E2"/> <!-- A pleasant blue background -->
+
+  <!-- Speech bubble -->
+  <!-- Path for a slightly more modern speech bubble shape -->
+  <path d="M10 12 C8.89543 12 8 12.8954 8 14 V 30 C8 31.1046 8.89543 32 10 32 H15 L19 38 L23 32 H38 C39.1046 32 40 31.1046 40 30 V 14 C40 12.8954 39.1046 12 38 12 H10 Z" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1.5"/>
+
+  <!-- Stylized 'A' for Answer - using a common sans-serif font for clarity -->
+  <text x="24" y="23.5" font-family="'-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'" font-size="16" font-weight="600" fill="#4A5568" text-anchor="middle" dominant-baseline="central">
+    A
+  </text>
+</svg>
