@@ -31,7 +31,7 @@ export class UsageEvent implements IUsageEvent {
     @Column({ nullable: true })
     traceId: string
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({ type: 'text', nullable: true })
     metadata: Record<string, any>
 
     @Column({ type: 'timestamp with time zone' })

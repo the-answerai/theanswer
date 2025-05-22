@@ -16,10 +16,10 @@ export class AppCsvParseRuns implements IAppCsvParseRuns {
     @Column({ type: 'uuid' })
     organizationId: string
 
-    @Column({ type: 'timestamp' })
+    @Column({})
     startedAt: Date
 
-    @Column({ type: 'timestamp', nullable: true })
+    @Column({ nullable: true })
     completedAt?: Date
 
     @Column({ type: 'integer' })
@@ -52,11 +52,11 @@ export class AppCsvParseRuns implements IAppCsvParseRuns {
     @Column({ type: 'json' })
     errorMessages: string[]
 
-    @Column({ type: 'timestamp' })
+    @Column({})
     @CreateDateColumn()
     createdDate: Date
 
-    @Column({ type: 'timestamp' })
+    @Column({})
     @UpdateDateColumn()
     updatedDate: Date
 }

@@ -34,13 +34,13 @@ export class Subscription implements ISubscription {
     @Column({ type: 'integer' })
     creditsLimit: number
 
-    @Column({ type: 'timestamp with time zone' })
+    @Column({})
     currentPeriodStart: Date
 
-    @Column({ type: 'timestamp with time zone' })
+    @Column({})
     currentPeriodEnd: Date
 
-    @Column({ type: 'timestamp with time zone' })
+    @Column({})
     @CreateDateColumn()
     createdDate: Date
 }

@@ -5,24 +5,8 @@ import Stripe from 'stripe'
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
-import apikeyService from '../../services/apikey'
 import { QueryFailedError } from 'typeorm'
-
-const jwtCheck = auth({
-    authRequired: true,
-    secret: process.env.AUTH0_SECRET,
-    audience: process.env.AUTH0_AUDIENCE,
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-    tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'HS256'
-})
-
-const jwtCheckPublic = auth({
-    authRequired: false,
-    secret: process.env.AUTH0_SECRET,
-    audience: process.env.AUTH0_AUDIENCE,
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-    tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'HS256'
-})
+import apikeyService from '../../services/apikey'
 
 const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<User | null> => {
     const authHeader = req.headers.authorization
@@ -188,12 +172,34 @@ const findOrCreateOrganization = async (AppDataSource: DataSource, auth0OrgId: s
     }
 }
 
+/**
+ * Factory function to create JWT auth middleware instances
+ * This prevents errors from being thrown directly during module initialization
+ */
+const createJwtMiddleware = (isRequired: boolean) => {
+    try {
+        return auth({
+            authRequired: isRequired,
+            secret: process.env.AUTH0_SECRET,
+            audience: process.env.AUTH0_AUDIENCE,
+            issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+            tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'HS256'
+        })
+    } catch (error) {
+        console.error(`[AuthMiddleware] Error creating JWT middleware (required=${isRequired}):`, error)
+        // Return a fallback middleware that will fail safely
+        return (req: Request, res: Response, next: NextFunction) => {
+            next(new Error('JWT middleware configuration error'))
+        }
+    }
+}
+
 export const authenticationHandlerMiddleware =
     ({ whitelistURLs, AppDataSource }: { whitelistURLs: string[]; AppDataSource: DataSource }) =>
     async (req: Request, res: Response, next: NextFunction) => {
         const startTime = new Date().getTime()
         const requireAuth = /\/api\/v1\//i.test(req.url) && !whitelistURLs.some((url) => req.url.includes(url))
-        const jwtMiddleware = requireAuth ? jwtCheck : jwtCheckPublic
+        const jwtMiddleware = requireAuth ? createJwtMiddleware(true) : createJwtMiddleware(false)
 
         // Check if there are any cookies for Authorization and inject them into the request
         const authCookie = req.cookies?.Authorization
