@@ -20,8 +20,6 @@ const GENERATE_CSV_CRON_SCHEDULE = process.env.GENERATE_CSV_CRON_SCHEDULE || '*/
  */
 const ENABLE_GENERATE_CSV_CRON = process.env.ENABLE_GENERATE_CSV_CRON !== 'false'
 
-const s3 = new S3(getS3Config())
-
 function convertToCSV<T extends object>(data: T[]): string {
     if (data.length === 0) {
         return ''
@@ -74,6 +72,7 @@ const generateCsv = async (csvParseRun: AppCsvParseRuns) => {
 
         // if includeOriginalColumns is set to true, download original csv from S3
         if (csvParseRun.includeOriginalColumns) {
+            const s3 = new S3(getS3Config())
             const originalCsv = await s3.send(
                 new GetObjectCommand({
                     Bucket: process.env.S3_STORAGE_BUCKET_NAME ?? '',
@@ -107,6 +106,8 @@ const generateCsv = async (csvParseRun: AppCsvParseRuns) => {
 
         // save csv to S3
         const key = `s3://${process.env.S3_STORAGE_BUCKET_NAME ?? ''}/csv-parse-runs/${csvParseRun.organizationId}/${csvParseRun.id}.csv`
+        const s3 = new S3(getS3Config())
+
         await s3.send(
             new PutObjectCommand({
                 Bucket: process.env.S3_STORAGE_BUCKET_NAME ?? '',

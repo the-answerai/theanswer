@@ -19,9 +19,8 @@ const INIT_CSV_RUN_CRON_SCHEDULE = process.env.INIT_CSV_RUN_CRON_SCHEDULE || '*/
  */
 const ENABLE_INIT_CSV_RUN_CRON = process.env.ENABLE_INIT_CSV_RUN_CRON !== 'false'
 
-const s3 = new S3(getS3Config())
-
 const initCsvRun = async (csvParseRun: IAppCsvParseRuns) => {
+    const s3 = new S3(getS3Config())
     try {
         const appServer = getRunningExpressApp()
         // download csv from s3
