@@ -27,9 +27,9 @@ export class AppCsvParseRows implements IAppCsvParseRows {
     @Column({ type: 'text', nullable: true })
     errorMessage?: string
 
-    @Column({ type: 'timestamp' })
+    @Column({})
     createdAt: Date
 
-    @Column({ type: 'timestamp' })
+    @Column({})
     updatedAt: Date
 }

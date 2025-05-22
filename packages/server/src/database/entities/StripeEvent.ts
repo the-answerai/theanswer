@@ -12,7 +12,7 @@ export class StripeEvent implements IStripeEvent {
     @Column()
     eventType: string
 
-    @Column({ type: 'jsonb' })
+    @Column({ type: 'text' })
     eventData: any
 
     @Column({ default: false })
