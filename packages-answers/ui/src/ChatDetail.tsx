@@ -11,15 +11,17 @@ import type { AppSettings, Document, Sidekick } from 'types'
 
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
+import Button from '@mui/material/Button'
+import RateReviewIcon from '@mui/icons-material/RateReview'
 
 const AppBar = dynamic(() => import('@mui/material/AppBar'))
 const ChatRoom = dynamic(() => import('./ChatRoom').then((mod) => ({ default: mod.ChatRoom })))
+const SidekickSelect = dynamic(() => import('./SidekickSelect'))
 const Drawer = dynamic(() => import('./Drawer'), { ssr: false })
 const SourceDocumentModal = dynamic(() => import('@ui/SourceDocumentModal'), { ssr: false })
 const CodePreview = dynamic(() => import('./Message/CodePreview').then((mod) => ({ default: mod.CodePreview })), { ssr: false })
 const DrawerFilters = dynamic(() => import('./DrawerFilters/DrawerFilters'), { ssr: false })
 const ChatInput = dynamic(() => import('./ChatInput'), { ssr: true })
-const SidekickSelect = dynamic(() => import('./SidekickSelect'), { ssr: false })
 
 const DISPLAY_MODES = {
     CHATBOT: 'chatbot',
@@ -62,7 +64,9 @@ export const ChatDetail = ({
 
     const displayMode = chatbotConfig?.displayMode || DISPLAY_MODES.CHATBOT
     const embeddedUrl = chatbotConfig?.embeddedUrl || ''
-    // console.log('chat', chat)
+    const handleNewChat = () => {
+        startNewChat()
+    }
     return (
         <>
             <Box sx={{ display: 'flex', width: '100%' }}>
@@ -111,12 +115,24 @@ export const ChatDetail = ({
                                             }
                                         }}
                                     >
-                                        {chat?.id ? <Typography variant='body1'>{chat?.title ?? chat.id}</Typography> : null}
+                                        {chat ? <Typography variant='body1'>{chat?.title ?? chat.id}</Typography> : null}
 
                                         {journey ? <Typography variant='body2'>{journey?.goal ?? journey?.title}</Typography> : null}
                                     </Box>
 
                                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                        <Button
+                                            variant='text'
+                                            onClick={handleNewChat}
+                                            endIcon={<RateReviewIcon />}
+                                            fullWidth
+                                            sx={{
+                                                textTransform: 'capitalize',
+                                                justifyContent: 'space-between'
+                                            }}
+                                        >
+                                            New chat
+                                        </Button>
                                         {/* {chat ? (
                                             <IconButton
                                                 size='large'

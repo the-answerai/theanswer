@@ -4,7 +4,7 @@ import { AxiosError } from 'axios'
 import { useFlags } from 'flagsmith/react'
 import Image from 'next/image'
 import { JsonViewer } from '@textea/json-viewer'
-import { Box, Typography, Avatar, Chip, Button, Divider } from '@mui/material'
+import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 
@@ -17,6 +17,8 @@ import {
 import { AppService, Document, Message } from 'types'
 import { Rating } from 'db/generated/prisma-client'
 import { getHTMLPreview, getReactPreview, isReactComponent } from '../utils/previewUtils'
+import ThumbUpIcon from '@mui/icons-material/ThumbUp'
+import ThumbDownIcon from '@mui/icons-material/ThumbDown'
 import dynamic from 'next/dynamic'
 import { FileUpload } from '../types'
 import isArray from 'lodash/isArray'
@@ -49,6 +51,7 @@ interface MessageExtra {
     isLoading?: boolean
     fileUploads?: string | FileUpload[]
     content: undefined | string | any
+    usedTools?: any[]
 }
 interface MessageCardProps extends Partial<Message>, MessageExtra {
     error?: AxiosError<MessageExtra>
@@ -63,6 +66,8 @@ interface MessageCardProps extends Partial<Message>, MessageExtra {
             getReactPreview: (code: string) => string
         } | null
     ) => void
+    isFeedbackAllowed?: boolean
+    chatflowid?: string
 }
 
 const getLanguageFromClassName = (className: string | undefined) => {
@@ -126,6 +131,11 @@ export const MessageCard = ({
     fileUploads,
     setPreviewCode,
     openLinksInNewTab,
+    isFeedbackAllowed,
+    chatId,
+    chatflowid,
+    id: messageId,
+    usedTools,
     ...other
 }: MessageCardProps) => {
     other = { ...other, role, user } as any
@@ -170,15 +180,16 @@ export const MessageCard = ({
         prompt = error?.response?.data.prompt
     }
 
-    const handleLike = async (evt: React.MouseEvent<HTMLButtonElement>) => {
-        evt.stopPropagation()
-        evt.preventDefault()
-        setLastInteraction('thumbsUp')
+    const handleReview = async (rating: Rating) => {
+        setLastInteraction(rating)
         if (id) {
             try {
                 const feedback = await sendMessageFeedback({
                     messageId: id,
-                    rating: 'thumbsUp'
+                    rating: rating === 'thumbsUp' ? 'THUMBS_UP' : 'THUMBS_DOWN',
+                    content: '',
+                    chatflowid: chatflowid ?? '',
+                    chatId: chatId ?? ''
                 })
                 setShowFeedback(true)
             } catch (err) {
@@ -192,23 +203,23 @@ export const MessageCard = ({
         navigator.clipboard.writeText(codeString)
     }
 
-    const handleDislike = async (evt: React.MouseEvent<HTMLButtonElement>) => {
-        evt.stopPropagation()
-        evt.preventDefault()
-        setLastInteraction('thumbsDown')
-        if (id) {
-            try {
-                const feedback = await sendMessageFeedback({
-                    messageId: id,
-                    rating: 'thumbsDown'
-                })
-                setShowFeedback(true)
-                // Show modal to ask for added feedback } catch (err) {
-            } catch (err) {
-                setLastInteraction(undefined)
-            }
-        }
-    }
+    // const handleDislike = async (evt: React.MouseEvent<HTMLButtonElement>) => {
+    //     evt.stopPropagation()
+    //     evt.preventDefault()
+    //     setLastInteraction('thumbsDown')
+    //     if (id) {
+    //         try {
+    //             const feedback = await sendMessageFeedback({
+    //                 messageId: id,
+    //                 rating: 'thumbsDown'
+    //             })
+    //             setShowFeedback(true)
+    //             // Show modal to ask for added feedback } catch (err) {
+    //         } catch (err) {
+    //             setLastInteraction(undefined)
+    //         }
+    //     }
+    // }
 
     const getDocumentLabel = (doc: Document) => {
         if (doc.metadata?.source == 'blob' && doc.metadata?.pdf) {
@@ -787,40 +798,6 @@ export const MessageCard = ({
                 ) : null}
             </Box>
 
-            {/* {(other as any).usedTools && (other as any).usedTools.length > 0 && (
-                <Box sx={{ mt: 2, width: '100%' }}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {(other as any).usedTools.map((tool: any, index: number) => {
-                            if (tool && typeof tool === 'object') {
-                                return (
-                                    <Chip
-                                        size='small'
-                                        key={index}
-                                        label={typeof tool.tool === 'string' ? tool.tool : 'Tool'}
-                                        component='a'
-                                        sx={{
-                                            borderColor: tool.error ? 'error.main' : 'primary.light',
-                                            color: tool.error ? 'error.main' : 'primary.light',
-                                            '&:hover': {
-                                                bgcolor: 'rgba(25, 118, 210, 0.08)'
-                                            }
-                                        }}
-                                        variant='outlined'
-                                        clickable
-                                        onClick={() =>
-                                            tool.output &&
-                                            onSourceDialogClick(tool.output, `${typeof tool.tool === 'string' ? tool.tool : 'Tool'} Output`)
-                                        }
-                                    />
-                                )
-                            }
-                            return null
-                        })}
-                    </Box>
-                </Box>
-            )} */}
-
-            {/* Action Buttons - Improved UI */}
             {(other as any).action && (
                 <Box sx={{ mt: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     {(other as any).action.text && (
@@ -908,6 +885,56 @@ export const MessageCard = ({
                     </DialogActions>
                 </Dialog>
             )}
+
+            {(role === 'assistant' || role === 'apiMessage') && isFeedbackAllowed && !isLoading ? (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        display: 'flex',
+                        gap: 0.5
+                    }}
+                >
+                    {lastInteraction ? (
+                        <IconButton disabled size='small' sx={{ p: 0.5 }}>
+                            {lastInteraction == 'thumbsUp' ? (
+                                <ThumbUpIcon sx={{ fontSize: 14 }} />
+                            ) : (
+                                <ThumbDownIcon sx={{ fontSize: 14 }} />
+                            )}
+                        </IconButton>
+                    ) : (
+                        <>
+                            <IconButton
+                                color={lastInteraction === 'thumbsUp' ? 'secondary' : 'default'}
+                                size='small'
+                                data-cy='like-button'
+                                onClick={(event) => {
+                                    event.stopPropagation()
+                                    event.preventDefault()
+                                    handleReview('thumbsUp')
+                                }}
+                                sx={{ p: 0.5 }}
+                            >
+                                <ThumbUpIcon sx={{ fontSize: 14 }} />
+                            </IconButton>
+                            <IconButton
+                                size='small'
+                                color={lastInteraction === 'thumbsDown' ? 'secondary' : 'default'}
+                                onClick={(event) => {
+                                    event.stopPropagation()
+                                    event.preventDefault()
+                                    handleReview('thumbsDown')
+                                }}
+                                sx={{ p: 0.5 }}
+                            >
+                                <ThumbDownIcon sx={{ fontSize: 14 }} />
+                            </IconButton>
+                        </>
+                    )}
+                </Box>
+            ) : null}
 
             {developer_mode?.enabled ? (
                 <Box>
@@ -1021,50 +1048,97 @@ export const MessageCard = ({
                             display: 'flex',
                             alignItems: 'center',
                             flexWrap: 'wrap',
-                            gap: 1
+                            gap: 1.8,
+                            mt: 1.5
                         }}
                     >
-                        <Typography variant='body2'>References:</Typography>
                         {Object.entries(contextDocumentsBySource)?.map(([source, documents]) => {
                             const doc = documents?.[0]
                             return (
                                 <Tooltip key={`references-${doc.metadata.url ?? doc.metadata.source}`} title={'Click to view details'}>
-                                    <Button
+                                    <Box
                                         onClick={() => setSelectedDocuments?.(documents)}
-                                        size='small'
-                                        variant='outlined'
-                                        color='inherit'
                                         sx={{
                                             textTransform: 'none',
                                             borderRadius: 20,
                                             color: 'text.secondary',
+                                            border: '1px solid',
                                             borderColor: 'text.secondary',
-                                            '&:hover': { textDecoration: 'none' }
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            padding: '4px 10px',
+                                            gap: 1,
+                                            fontSize: '0.8125rem',
+                                            cursor: 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                                            }
                                         }}
-                                        startIcon={
-                                            services[doc.source ?? doc.metadata?.source]?.imageURL ? (
-                                                <Avatar
-                                                    variant='source'
-                                                    src={services[doc.source ?? doc.metadata?.source]?.imageURL}
-                                                    sx={{ width: 20, height: 20 }}
-                                                />
-                                            ) : (
-                                                <Avatar
-                                                    variant='source'
-                                                    src={services['document']?.imageURL}
-                                                    sx={{ width: 20, height: 20 }}
-                                                />
-                                            )
-                                        }
                                     >
+                                        {services[doc.source ?? doc.metadata?.source]?.imageURL ? (
+                                            <Avatar
+                                                variant='source'
+                                                src={services[doc.source ?? doc.metadata?.source]?.imageURL}
+                                                sx={{ width: 20, height: 20 }}
+                                            />
+                                        ) : (
+                                            <Avatar variant='source' src={services['document']?.imageURL} sx={{ width: 20, height: 20 }} />
+                                        )}
                                         {getDocumentLabel(doc)}
-                                    </Button>
+                                    </Box>
                                 </Tooltip>
                             )
                         })}
                     </Box>
                 </>
             ) : null}
+            {/* Tools used section */}
+
+            {usedTools?.map(({ tool, toolInput, toolOutput }: any, idx) => {
+                if (!tool) return null
+                return (
+                    <CustomAccordion
+                        key={`tool-${idx}`}
+                        sx={{
+                            p: 0,
+                            borderRadius: 1,
+                            boxShadow: 'none',
+                            '&:before': { display: 'none' },
+
+                            mb: '8px!important',
+                            mt: '8px!important'
+                        }}
+                    >
+                        <CustomAccordionSummary
+                            expandIcon={<ExpandMoreIcon sx={{ color: '#e0e0e0' }} width={16} height={16} />}
+                            sx={{
+                                p: 0,
+                                minHeight: '36px'
+                            }}
+                        >
+                            <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                {`${tool} ${Object.entries(toolInput)
+                                    .map(([key, value]) => `"${value}"`)
+                                    .join(', ')}`}
+                            </Typography>
+                        </CustomAccordionSummary>
+                        <CustomAccordionDetails sx={{ p: 0 }}>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                <Typography variant='body2'>
+                                    <pre>{JSON.stringify(toolOutput, null, 2)}</pre>
+                                </Typography>
+                            </Box>
+                        </CustomAccordionDetails>
+                    </CustomAccordion>
+                )
+            })}
         </Box>
     )
 }
