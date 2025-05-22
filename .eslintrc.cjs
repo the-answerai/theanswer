@@ -24,9 +24,19 @@ module.exports = {
         '**/.gitbook/assets/*.json',
         '**/generated/**',
         '**/.turbo/**',
-        '**/coverage/**'
+        '**/coverage/**',
+        'packages/embed/**'
     ],
     plugins: ['unused-imports'],
+    overrides: [
+        {
+            files: ['packages/embed/**'],
+            env: {
+                browser: true,
+                node: true
+            }
+        }
+    ],
     rules: {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         'no-unused-vars': 'off',
