@@ -100,7 +100,7 @@
         "dotenv": "^16.0.0",
         "epub2": "^3.0.2",
         "exa-js": "^1.0.12",
-        "exa-mcp-server": "^0.0.1",
+        "exa-mcp-server": "^0.3.10",
         "express": "^4.17.3",
         "faiss-node": "^0.5.1",
         "fast-json-patch": "^3.1.1",
