@@ -285,127 +285,133 @@ const Chatflows = () => {
 
     return (
         <MainCard>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <ViewHeader
-                    onSearchChange={onSearchChange}
-                    search={true}
-                    searchPlaceholder='Search Name, Description or Category'
-                    title='Chatflows'
-                >
-                    <FormControl sx={{ minWidth: 120 }}>
-                        <InputLabel id='category-filter-label'>Category</InputLabel>
-                        <Select
-                            size='small'
-                            labelId='category-filter-label'
-                            value={categoryFilter}
-                            onChange={handleCategoryChange}
-                            label='Category'
-                            sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
+            {error ? (
+                <ErrorBoundary error={error} />
+            ) : (
+                <>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <ViewHeader
+                            onSearchChange={onSearchChange}
+                            search={true}
+                            searchPlaceholder='Search Name, Description or Category'
+                            title='Chatflows'
                         >
-                            {categories.map((category) => (
-                                <MenuItem key={category} value={category}>
-                                    {category}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormControl sx={{ minWidth: 140 }}>
-                        <InputLabel id='sort-by-label'>Sort By</InputLabel>
-                        <Select
-                            size='small'
-                            labelId='sort-by-label'
-                            value={sortBy}
-                            onChange={handleSortChange}
-                            label='Sort By'
-                            sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
-                        >
-                            <MenuItem value='name'>Name</MenuItem>
-                            <MenuItem value='createdDate'>Created Date</MenuItem>
-                            <MenuItem value='updatedDate'>Updated Date</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl sx={{ minWidth: 80, mr: 1 }}>
-                        <InputLabel id='sort-order-label'>Order</InputLabel>
-                        <Select
-                            size='small'
-                            labelId='sort-order-label'
-                            value={sortOrder}
-                            onChange={handleSortOrderChange}
-                            label='Order'
-                            sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
-                            renderValue={(selected) => (selected === 'asc' ? 'Asc' : 'Desc')}
-                        >
-                            <MenuItem value='asc'>Ascending</MenuItem>
-                            <MenuItem value='desc'>Descending</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <StyledButton variant='contained' onClick={addNew} startIcon={<IconPlus />}>
-                        Add New
-                    </StyledButton>
-                </ViewHeader>
+                            <FormControl sx={{ minWidth: 120 }}>
+                                <InputLabel id='category-filter-label'>Category</InputLabel>
+                                <Select
+                                    size='small'
+                                    labelId='category-filter-label'
+                                    value={categoryFilter}
+                                    onChange={handleCategoryChange}
+                                    label='Category'
+                                    sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
+                                >
+                                    {categories.map((category) => (
+                                        <MenuItem key={category} value={category}>
+                                            {category}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <FormControl sx={{ minWidth: 140 }}>
+                                <InputLabel id='sort-by-label'>Sort By</InputLabel>
+                                <Select
+                                    size='small'
+                                    labelId='sort-by-label'
+                                    value={sortBy}
+                                    onChange={handleSortChange}
+                                    label='Sort By'
+                                    sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
+                                >
+                                    <MenuItem value='name'>Name</MenuItem>
+                                    <MenuItem value='createdDate'>Created Date</MenuItem>
+                                    <MenuItem value='updatedDate'>Updated Date</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormControl sx={{ minWidth: 80, mr: 1 }}>
+                                <InputLabel id='sort-order-label'>Order</InputLabel>
+                                <Select
+                                    size='small'
+                                    labelId='sort-order-label'
+                                    value={sortOrder}
+                                    onChange={handleSortOrderChange}
+                                    label='Order'
+                                    sx={{ '& .MuiSelect-icon': { color: '#fff' } }}
+                                    renderValue={(selected) => (selected === 'asc' ? 'Asc' : 'Desc')}
+                                >
+                                    <MenuItem value='asc'>Ascending</MenuItem>
+                                    <MenuItem value='desc'>Descending</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <StyledButton variant='contained' onClick={addNew} startIcon={<IconPlus />}>
+                                Add New
+                            </StyledButton>
+                        </ViewHeader>
 
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={tabValue} onChange={handleTabChange} aria-label='chatflow tabs'>
-                        <Tab label='My Chatflows' />
-                        <Tab label='AnswerAI Supported' />
-                        <Tab label='Community' />
-                        {flags?.['org:manage']?.enabled ? <Tab label='Organization Chatflows' /> : null}
-                    </Tabs>
-                </Box>
-                <TabPanel value={tabValue} index={0}>
-                    <FlowListView
-                        data={filteredMyChatflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getAllChatflowsApi}
-                        setError={setError}
-                        type='chatflows'
-                        onItemClick={goToCanvas}
+                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                            <Tabs value={tabValue} onChange={handleTabChange} aria-label='chatflow tabs'>
+                                <Tab label='My Chatflows' />
+                                <Tab label='AnswerAI Supported' />
+                                <Tab label='Community' />
+                                {flags?.['org:manage']?.enabled ? <Tab label='Organization Chatflows' /> : null}
+                            </Tabs>
+                        </Box>
+                        <TabPanel value={tabValue} index={0}>
+                            <FlowListView
+                                data={filteredMyChatflows}
+                                images={images}
+                                nodeTypes={nodeTypes}
+                                isLoading={isLoading}
+                                updateFlowsApi={getAllChatflowsApi}
+                                setError={setError}
+                                type='chatflows'
+                                onItemClick={goToCanvas}
+                            />
+                        </TabPanel>
+                        <TabPanel value={tabValue} index={1}>
+                            <FlowListView
+                                data={filteredAnswerAIChatflows}
+                                images={images}
+                                nodeTypes={nodeTypes}
+                                isLoading={isLoading}
+                                updateFlowsApi={getMarketplaceChatflowsApi}
+                                setError={setError}
+                                type='marketplace'
+                                onItemClick={goToMarketplaceCanvas}
+                            />
+                        </TabPanel>
+                        <TabPanel value={tabValue} index={2}>
+                            <FlowListView
+                                data={filteredCommunityChatflows}
+                                images={images}
+                                nodeTypes={nodeTypes}
+                                isLoading={isLoading}
+                                updateFlowsApi={getMarketplaceChatflowsApi}
+                                setError={setError}
+                                type='marketplace'
+                                onItemClick={goToMarketplaceCanvas}
+                            />
+                        </TabPanel>
+                        <TabPanel value={tabValue} index={3}>
+                            <FlowListView
+                                data={filteredOrganizationChatflows}
+                                images={images}
+                                nodeTypes={nodeTypes}
+                                isLoading={isLoading}
+                                updateFlowsApi={getMarketplaceChatflowsApi}
+                                setError={setError}
+                                type='chatflows'
+                                onItemClick={goToCanvas}
+                            />
+                        </TabPanel>
+                    </Box>
+                    <MarketplaceLandingDialog
+                        open={isMarketplaceDialogOpen}
+                        onClose={handleCloseMarketplaceDialog}
+                        templateId={selectedTemplateId}
                     />
-                </TabPanel>
-                <TabPanel value={tabValue} index={1}>
-                    <FlowListView
-                        data={filteredAnswerAIChatflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getMarketplaceChatflowsApi}
-                        setError={setError}
-                        type='marketplace'
-                        onItemClick={goToMarketplaceCanvas}
-                    />
-                </TabPanel>
-                <TabPanel value={tabValue} index={2}>
-                    <FlowListView
-                        data={filteredCommunityChatflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getMarketplaceChatflowsApi}
-                        setError={setError}
-                        type='marketplace'
-                        onItemClick={goToMarketplaceCanvas}
-                    />
-                </TabPanel>
-                <TabPanel value={tabValue} index={3}>
-                    <FlowListView
-                        data={filteredOrganizationChatflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getMarketplaceChatflowsApi}
-                        setError={setError}
-                        type='chatflows'
-                        onItemClick={goToCanvas}
-                    />
-                </TabPanel>
-            </Box>
-            <MarketplaceLandingDialog
-                open={isMarketplaceDialogOpen}
-                onClose={handleCloseMarketplaceDialog}
-                templateId={selectedTemplateId}
-            />
+                </>
+            )}
         </MainCard>
     )
 }

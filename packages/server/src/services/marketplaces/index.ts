@@ -10,6 +10,7 @@ import { CustomTemplate } from '../../database/entities/CustomTemplate'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { ChatflowVisibility } from '../../database/entities/ChatFlow'
 import { validate as isUUID } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 import chatflowsService from '../chatflows'
 import checkOwnership from '../../utils/checkOwnership'
@@ -134,8 +135,6 @@ const getAllTemplates = async (user: IUser | undefined) => {
             }
             templates.push(template)
         })
-
-        // AnswerAI templates
         marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'answerai')
         jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
         jsonsInDir.forEach((file, index) => {
@@ -144,11 +143,6 @@ const getAllTemplates = async (user: IUser | undefined) => {
             const fileDataObj = JSON.parse(fileData.toString())
             const template = {
                 id: `${TEMPLATE_TYPE_PREFIXES.ANSWERAI}${index}`,
-                templateName: file.split('.json')[0],
-                flowData: fileData.toString(),
-                badge: fileDataObj?.badge,
-                framework: fileDataObj?.framework,
-                usecases: fileDataObj?.usecases,
                 categories: fileDataObj?.categories,
                 type: 'AnswerAI',
                 description: fileDataObj?.description || '',
@@ -158,6 +152,25 @@ const getAllTemplates = async (user: IUser | undefined) => {
             templates.push(template)
         })
 
+        marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflowsv2')
+        jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
+        jsonsInDir.forEach((file, index) => {
+            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflowsv2', file)
+            const fileData = fs.readFileSync(filePath)
+            const fileDataObj = JSON.parse(fileData.toString())
+            const template = {
+                id: `${TEMPLATE_TYPE_PREFIXES.AGENTFLOW + 'v2'}${index}`,
+                templateName: file.split('.json')[0],
+                flowData: fileData.toString(),
+                badge: fileDataObj?.badge,
+                framework: fileDataObj?.framework,
+                usecases: fileDataObj?.usecases,
+                categories: getCategories(fileDataObj),
+                type: 'AgentflowV2',
+                description: fileDataObj?.description || ''
+            }
+            templates.push(template)
+        })
         const sortedTemplates = templates.sort((a, b) => a.templateName.localeCompare(b.templateName))
         const FlowiseDocsQnAIndex = sortedTemplates.findIndex((tmp) => tmp.templateName === 'Flowise Docs QnA')
         if (FlowiseDocsQnAIndex > 0) {
@@ -382,6 +395,9 @@ const _generateExportFlowData = (flowData: any) => {
             version: node.data.version,
             name: node.data.name,
             type: node.data.type,
+            color: node.data.color,
+            hideOutput: node.data.hideOutput,
+            hideInput: node.data.hideInput,
             baseClasses: node.data.baseClasses,
             tags: node.data.tags,
             category: node.data.category,

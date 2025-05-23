@@ -22,6 +22,7 @@ import { StripeEvent } from './StripeEvent'
 import { CustomTemplate } from './CustomTemplate'
 import { AppCsvParseRuns } from './AppCsvParseRuns'
 import { AppCsvParseRows } from './AppCsvParseRows'
+import { Execution } from './Execution'
 
 export const entities = {
     ChatFlow,
@@ -47,7 +48,9 @@ export const entities = {
     StripeEvent,
     CustomTemplate,
     AppCsvParseRuns,
-    AppCsvParseRows
+    AppCsvParseRows,
+    CustomTemplate,
+    Execution
 }
 
 export * from './Subscription'
