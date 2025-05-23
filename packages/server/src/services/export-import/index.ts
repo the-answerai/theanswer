@@ -91,13 +91,15 @@ const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ File
         let AgentFlow: ChatFlow[] = exportInput.agentflow === true ? await chatflowService.getAllChatflows('MULTIAGENT', {}, user) : []
         let AgentFlowV2: ChatFlow[] = exportInput.agentflowv2 === true ? await chatflowService.getAllChatflows('AGENTFLOW', {}, user) : []
 
-        let AssistantCustom: Assistant[] = exportInput.assistantCustom === true ? await assistantService.getAllAssistants('CUSTOM') : []
+        let AssistantCustom: Assistant[] =
+            exportInput.assistantCustom === true ? await assistantService.getAllAssistants(user, 'CUSTOM') : []
         let AssistantFlow: ChatFlow[] =
             exportInput.assistantCustom === true ? await chatflowService.getAllChatflows('ASSISTANT', {}, user) : []
 
-        let AssistantOpenAI: Assistant[] = exportInput.assistantOpenAI === true ? await assistantService.getAllAssistants('OPENAI') : []
+        let AssistantOpenAI: Assistant[] =
+            exportInput.assistantOpenAI === true ? await assistantService.getAllAssistants(user, 'OPENAI') : []
 
-        let AssistantAzure: Assistant[] = exportInput.assistantAzure === true ? await assistantService.getAllAssistants('AZURE') : []
+        let AssistantAzure: Assistant[] = exportInput.assistantAzure === true ? await assistantService.getAllAssistants(user, 'AZURE') : []
 
         let ChatFlow: ChatFlow[] = exportInput.chatflow === true ? await chatflowService.getAllChatflows('CHATFLOW', {}, user) : []
 

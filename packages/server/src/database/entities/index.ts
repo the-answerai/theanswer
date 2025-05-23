@@ -49,7 +49,6 @@ export const entities = {
     CustomTemplate,
     AppCsvParseRuns,
     AppCsvParseRows,
-    CustomTemplate,
     Execution
 }
 

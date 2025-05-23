@@ -541,9 +541,7 @@ export const executeFlow = async ({
                 fileUploads: incomingInput.uploads ? JSON.stringify(fileUploads) : undefined,
                 leadEmail: incomingInput.leadEmail,
                 userId: user?.id ?? agentflow.userId,
-                organizationId: user?.organizationId ?? agentflow.organizationId,
-                fileUploads: uploads ? JSON.stringify(fileUploads) : undefined,
-                leadEmail: incomingInput.leadEmail
+                organizationId: user?.organizationId ?? agentflow.organizationId
             }
             await utilAddChatMessage(userMessage, appDataSource)
 

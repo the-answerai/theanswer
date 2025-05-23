@@ -23,6 +23,7 @@ import { baseURL } from '@/store/constant'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useFlags } from 'flagsmith/react'
 import PropTypes from 'prop-types'
+import ErrorBoundary from '@/ErrorBoundary'
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props

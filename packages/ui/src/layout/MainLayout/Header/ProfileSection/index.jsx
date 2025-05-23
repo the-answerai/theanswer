@@ -6,42 +6,18 @@ import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 // material-ui
-import {
-    Avatar,
-    Box,
-    Button,
-    ButtonBase,
-    Checkbox,
-    ClickAwayListener,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    FormControlLabel,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Paper,
-    Popper,
-    Stack,
-    Typography
-} from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack } from '@mui/material'
 
 // third-party
-import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // project imports
 const ProfileAvatar = dynamic(() => import('./ProfileAvatar'), { ssr: false })
 const ProfileMenu = dynamic(() => import('./ProfileMenu'), { ssr: false })
 const AboutDialog = dynamic(() => import('@/ui-component/dialog/AboutDialog'), { ssr: false })
-const ExportDialog = dynamic(() => import('@/ui-component/dialog/ExportDialog'), { ssr: false })
+// const ExportDialog = dynamic(() => import('@/ui-component/dialog/ExportDialog'), { ssr: false })
 
 // assets
 import ExportingGIF from '@/assets/images/Exporting.gif'
-import { IconFileExport, IconFileUpload, IconInfoCircle, IconLogout, IconSettings, IconX } from '@tabler/icons-react'
 import './index.css'
 
 //API
@@ -49,8 +25,7 @@ import exportImportApi from '@/api/exportimport'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-import { getErrorMessage } from '@/utils/errorHandler'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@/utils/navigation'
 
 const dataToExport = [
     'Agentflows',
@@ -68,7 +43,7 @@ const dataToExport = [
     'Variables'
 ]
 
-const ExportDialog = ({ show, onCancel, onExport }) => {
+export const ExportDialog = ({ show, onCancel, onExport }) => {
     const portalElement = document.getElementById('portal')
 
     const [selectedData, setSelectedData] = useState(dataToExport)

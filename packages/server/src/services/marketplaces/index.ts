@@ -10,7 +10,6 @@ import { CustomTemplate } from '../../database/entities/CustomTemplate'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { ChatflowVisibility } from '../../database/entities/ChatFlow'
 import { validate as isUUID } from 'uuid'
-import { v4 as uuidv4 } from 'uuid'
 
 import chatflowsService from '../chatflows'
 import checkOwnership from '../../utils/checkOwnership'
@@ -44,7 +43,7 @@ const getAllTemplates = async (user: IUser | undefined) => {
 
         // Database templates (keep existing ID as is since they're UUIDs)
         const appServer = getRunningExpressApp()
-        let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find()
+        let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find({ where: { userId: user?.id } })
         chatflows = chatflows.filter((chatflow) => chatflow.visibility?.includes(ChatflowVisibility.MARKETPLACE))
         chatflows = chatflows.filter((chatflow) => checkOwnership(chatflow, user))
 
@@ -145,6 +144,7 @@ const getAllTemplates = async (user: IUser | undefined) => {
                 id: `${TEMPLATE_TYPE_PREFIXES.ANSWERAI}${index}`,
                 categories: fileDataObj?.categories,
                 type: 'AnswerAI',
+                templateName: file.split('.json')[0],
                 description: fileDataObj?.description || '',
                 iconSrc: fileDataObj?.iconSrc || '',
                 requiresClone: true // All marketplace templates require cloning
@@ -171,7 +171,9 @@ const getAllTemplates = async (user: IUser | undefined) => {
             }
             templates.push(template)
         })
-        const sortedTemplates = templates.sort((a, b) => a.templateName.localeCompare(b.templateName))
+        console.log('templates', templates)
+        // const sortedTemplates = templates.sort((a, b) => a.templateName?.localeCompare(b.templateName))
+        const sortedTemplates = templates
         const FlowiseDocsQnAIndex = sortedTemplates.findIndex((tmp) => tmp.templateName === 'Flowise Docs QnA')
         if (FlowiseDocsQnAIndex > 0) {
             sortedTemplates.unshift(sortedTemplates.splice(FlowiseDocsQnAIndex, 1)[0])
@@ -308,7 +310,7 @@ const deleteCustomTemplate = async (templateId: string): Promise<DeleteResult> =
     }
 }
 
-const getAllCustomTemplates = async (): Promise<any> => {
+const getAllCustomTemplates = async (user: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         const templates: any[] = await appServer.AppDataSource.getRepository(CustomTemplate).find()

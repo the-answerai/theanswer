@@ -941,7 +941,9 @@ export const convertMultiOptionsToStringArray = (inputString: string): string[] 
  * @param {INodeData} nodeData
  */
 export const getVars = async (appDataSource: DataSource, databaseEntities: IDatabaseEntity, nodeData: INodeData) => {
-    const variables = ((await appDataSource.getRepository(databaseEntities['Variable']).find()) as IVariable[]) ?? []
+    const variables =
+        ((await appDataSource.getRepository(databaseEntities['Variable']).find({ where: { userId: nodeData.userId } })) as IVariable[]) ??
+        []
 
     // override variables defined in overrideConfig
     // nodeData.inputs.vars is an Object, check each property and override the variable

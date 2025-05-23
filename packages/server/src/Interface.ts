@@ -311,6 +311,7 @@ export interface IMessage {
 }
 
 export interface IncomingInput {
+    user: IUser
     question: string
     overrideConfig?: ICommonObject
     chatId?: string

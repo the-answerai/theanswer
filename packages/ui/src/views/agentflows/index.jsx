@@ -2,35 +2,35 @@
 import PropTypes from 'prop-types'
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from '@/utils/navigation'
-import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+// import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import FlowListView from '@/ui-component/lists/FlowListView'
 
 // material-ui
-import { Chip, Box, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Chip, Box, Tab, Tabs, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
 import ItemCard from '@/ui-component/cards/ItemCard'
 import { gridSpacing } from '@/store/constant'
 import AgentsEmptySVG from '@/assets/images/agents_empty.svg'
-import LoginDialog from '@/ui-component/dialog/LoginDialog'
-import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
+// import LoginDialog from '@/ui-component/dialog/LoginDialog'
+// import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import { FlowListTable } from '@/ui-component/table/FlowListTable'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
-import MainCard from '@/ui-component/cards/MainCard'
-import { StyledButton } from '@/ui-component/button/StyledButton'
-import { IconPlus } from '@tabler/icons-react'
+import { IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react'
+// import MainCard from '@/ui-component/cards/MainCard'
+// import { StyledButton } from '@/ui-component/button/StyledButton'
 
 // API
 import chatflowsApi from '@/api/chatflows'
-import marketplacesApi from '@/api/marketplaces'
 
 // Hooks
 import useApi from '@/hooks/useApi'
 
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
+import ErrorBoundary from '@/ErrorBoundary'
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props
@@ -192,26 +192,26 @@ const Agentflows = () => {
         }
     }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data])
 
-    const filterFlows = (flows, search, categoryFilter) => {
-        const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
+    // const filterFlows = (flows, search, categoryFilter) => {
+    //     const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
 
-        return flows.filter((flow) => {
-            if (!flow) return false
+    //     return flows.filter((flow) => {
+    //         if (!flow) return false
 
-            // Check category first
-            const category = flow.category || ''
-            if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
-                return false
-            }
+    //         // Check category first
+    //         const category = flow.category || ''
+    //         if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
+    //             return false
+    //         }
 
-            // If category matches, then check search
-            const name = flow.name || flow.templateName || ''
-            const description = flow.description || ''
-            const searchText = `${name} ${description}`
+    //         // If category matches, then check search
+    //         const name = flow.name || flow.templateName || ''
+    //         const description = flow.description || ''
+    //         const searchText = `${name} ${description}`
 
-            return searchRegex.test(searchText)
-        })
-    }
+    //         return searchRegex.test(searchText)
+    //     })
+    // }
 
     const filteredMyAgentflows = useMemo(() => filterFlows(myAgentflows, search, categoryFilter), [myAgentflows, search, categoryFilter])
 
