@@ -33,7 +33,6 @@ import { useHelpChatContext } from './HelpChatContext' // Import the context
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
-import dynamic from 'next/dynamic'
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
 
@@ -84,8 +83,19 @@ interface MenuConfig {
 export const AppDrawer = ({ session, flagsmithState }: any) => {
     const { helpChatOpen, setHelpChatOpen } = useHelpChatContext()
     const user = session?.user
-    const [drawerOpen, setDrawerOpen] = useState(false)
+    const [drawerOpen, setDrawerOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const stored = window.localStorage.getItem('AppDrawerOpen')
+            return stored ? stored === 'true' : false
+        }
+        return false
+    })
     const [submenuOpen, setSubmenuOpen] = useState('')
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('AppDrawerOpen', drawerOpen ? 'true' : 'false')
+        }
+    }, [drawerOpen])
     const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -184,7 +194,11 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
     }
 
     const toggleDrawer = () => {
-        setDrawerOpen(!drawerOpen)
+        const newState = !drawerOpen
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem('AppDrawerOpen', newState ? 'true' : 'false')
+        }
+        setDrawerOpen(newState)
     }
 
     const toggleHelpChat = () => {
@@ -347,7 +361,6 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                             </Collapse>
                         </Box>
                     ))}
-
 
                     {!user?.subscription && (
                         <ListItem disablePadding>
