@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 
 // material-ui
@@ -22,10 +22,15 @@ import ExpandTextDialog from '@/ui-component/dialog/ExpandTextDialog'
 import ManageScrapedLinksDialog from '@/ui-component/dialog/ManageScrapedLinksDialog'
 import CredentialInputHandler from '@/views/canvas/CredentialInputHandler'
 import { GmailLabelPicker } from '@/ui-component/gmail/GmailLabelPicker'
+import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
+import { ZoomMeetingPicker } from '@/ui-component/zoom/ZoomMeetingPicker'
 
 // const
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
-import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
+
+// API
+import credentialsApi from '@/api/credentials'
+import useApi from '@/hooks/useApi'
 
 // ===========================|| DocStoreInputHandler ||=========================== //
 
@@ -45,6 +50,23 @@ const DocStoreInputHandler = ({
     const [showManageScrapedLinksDialog, setShowManageScrapedLinksDialog] = useState(false)
     const [manageScrapedLinksDialogProps, setManageScrapedLinksDialogProps] = useState({})
     const [reloadTimestamp, setReloadTimestamp] = useState(Date.now().toString())
+
+    // API for fetching credential data for Zoom and other credentials
+    const getCredentialDataApi = useApi(credentialsApi.getSpecificCredential)
+
+    // Fetch credential data when selectedCredential changes (for Zoom and other non-Google credentials)
+    useEffect(() => {
+        if (selectedCredential && data.name === 'zoomTranscripts' && !selectedCredentialData) {
+            getCredentialDataApi.request(selectedCredential)
+        }
+    }, [selectedCredential, data.name, selectedCredentialData])
+
+    // Handle the fetched credential data
+    useEffect(() => {
+        if (getCredentialDataApi.data && data.name === 'zoomTranscripts') {
+            handleCredentialDataChange(getCredentialDataApi.data)
+        }
+    }, [getCredentialDataApi.data, data.name, handleCredentialDataChange])
 
     const onExpandDialogClicked = (value, inputParam) => {
         const dialogProps = {
@@ -163,6 +185,16 @@ const DocStoreInputHandler = ({
                         )}
                         {inputParam && data.name === 'googleDrive' && inputParam.name === 'selectedFiles' && (
                             <GoogleDrivePicker
+                                disabled={disabled}
+                                onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
+                                value={data.inputs[inputParam.name] ?? '[]'}
+                                credentialId={selectedCredential}
+                                credentialData={selectedCredentialData}
+                                handleCredentialDataChange={handleCredentialDataChange}
+                            />
+                        )}
+                        {inputParam && data.name === 'zoomTranscripts' && inputParam.name === 'selectedMeetings' && (
+                            <ZoomMeetingPicker
                                 disabled={disabled}
                                 onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
                                 value={data.inputs[inputParam.name] ?? '[]'}

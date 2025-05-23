@@ -1,19 +1,34 @@
 import axios from 'axios'
 
+interface ZoomCredentials {
+    clientId: string
+    clientSecret: string
+    accessToken: string
+    refreshToken: string
+}
+
+interface ZoomMeetingRecording {
+    recording_files?: Array<{
+        id: string
+        file_type: string
+        download_url?: string
+    }>
+}
+
 export class ZoomService {
     private clientId: string
     private clientSecret: string
     private accessToken: string
     private refreshToken: string
 
-    constructor(credentials: any) {
+    constructor(credentials: ZoomCredentials) {
         this.clientId = credentials.clientId
         this.clientSecret = credentials.clientSecret
         this.accessToken = credentials.accessToken
         this.refreshToken = credentials.refreshToken
     }
 
-    async getMeetingRecordings(meetingId: string): Promise<any> {
+    async getMeetingRecordings(meetingId: string): Promise<ZoomMeetingRecording> {
         try {
             const response = await axios.get(`https://api.zoom.us/v2/meetings/${meetingId}/recordings`, {
                 headers: {
@@ -21,8 +36,8 @@ export class ZoomService {
                 }
             })
             return response.data
-        } catch (error: any) {
-            if (error.response?.status === 401) {
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
                 await this.refreshAccessToken()
                 return this.getMeetingRecordings(meetingId)
             }
@@ -39,8 +54,8 @@ export class ZoomService {
                 responseType: 'text'
             })
             return response.data as string
-        } catch (error: any) {
-            if (error.response?.status === 401) {
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
                 await this.refreshAccessToken()
                 return this.downloadTranscript(url)
             }
@@ -48,7 +63,7 @@ export class ZoomService {
         }
     }
 
-    private async refreshAccessToken() {
+    private async refreshAccessToken(): Promise<string> {
         const params = new URLSearchParams()
         params.append('grant_type', 'refresh_token')
         params.append('refresh_token', this.refreshToken)

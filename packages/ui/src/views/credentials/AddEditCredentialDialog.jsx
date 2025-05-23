@@ -47,8 +47,7 @@ import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 import { useFlags } from 'flagsmith/react'
 import { GoogleAuthButton } from '@/ui-component/button/GoogleAuthButton'
-import { SalesforceAuthButton } from '@/ui-component/button/SalesforceAuthButton'
-import { AtlassianAuthButton } from '@/ui-component/button/AtlassianAuthButton'
+import { ZoomAuthButton } from '@/ui-component/button/ZoomAuthButton'
 import keySVG from '@/assets/images/key.svg'
 
 const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) => {
@@ -135,9 +134,12 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
     }, [dialogProps])
 
     useEffect(() => {
+        console.log('🔧 AddEditCredentialDialog show effect:', { show, dialogProps })
         if (show) {
+            console.log('🔧 Dispatching SHOW_CANVAS_DIALOG')
             dispatch({ type: SHOW_CANVAS_DIALOG })
         } else {
+            console.log('🔧 Dispatching HIDE_CANVAS_DIALOG')
             dispatch({ type: HIDE_CANVAS_DIALOG })
         }
         return () => dispatch({ type: HIDE_CANVAS_DIALOG })
@@ -306,7 +308,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
         window.addEventListener('message', handleMessage)
     }
 
-    const handleSalesforceOAuth = () => {
+    const handleZoomOAuth = () => {
         const width = 500
         const height = 600
         const left = window.screenX + (window.outerWidth - width) / 2
@@ -324,22 +326,18 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
             scrollbars=yes
         `.replace(/\s/g, '')
 
-        const authUrl = `${baseURL}/api/v1/salesforce-auth`
-        window.open(authUrl, 'Salesforce Auth', features)
+        window.open(`${baseURL}/api/v1/zoom-auth`, 'Zoom Auth', features)
 
         // Listen for messages from the popup
         const handleMessage = (event) => {
             if (event.data?.type === 'AUTH_SUCCESS' && event.data.user) {
-                setCredentialData((prevData) => ({
-                    ...prevData,
-                    refreshToken: event.data.user.refreshToken
-                }))
+                setCredentialData(event.data.user)
                 if (!name) {
-                    setName(`Salesforce OAuth (${event.data.user.userInfo?.name || 'User'})`)
+                    setName(`${event.data.user.fullName} (${event.data.user.email})`)
                 }
                 // Show success message
                 enqueueSnackbar({
-                    message: 'Successfully authenticated with Salesforce',
+                    message: 'Successfully authenticated with Zoom',
                     options: {
                         key: new Date().getTime() + Math.random(),
                         variant: 'success',
@@ -353,10 +351,10 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                 window.removeEventListener('message', handleMessage)
             }
             if (event.data?.type === 'AUTH_ERROR') {
-                console.error('Salesforce authentication error:', event.data.error)
+                console.error('Zoom authentication error:', event.data.error)
 
                 enqueueSnackbar({
-                    message: 'Failed to authenticate with Salesforce',
+                    message: 'Failed to authenticate with Zoom',
                     options: {
                         key: new Date().getTime() + Math.random(),
                         variant: 'error',
@@ -367,123 +365,11 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                         )
                     }
                 })
-                window.removeEventListener('message', handleMessage)
             }
         }
 
         // Add the event listener
         window.addEventListener('message', handleMessage)
-    }
-
-    const handleAtlassianOAuth = async () => {
-        try {
-            // Step 1: Initialize MCP OAuth flow
-            const mcpResponse = await fetch(`${baseURL}/api/v1/atlassian-auth/mcp-initialize`)
-            if (!mcpResponse.ok) {
-                throw new Error(`MCP initialization failed: ${mcpResponse.status} ${mcpResponse.statusText}`)
-            }
-
-            const mcpData = await mcpResponse.json()
-            console.log('MCP OAuth initialized:', mcpData)
-
-            // Step 2: Open OAuth popup with MCP endpoints
-            const width = 500
-            const height = 600
-            const left = window.screenX + (window.outerWidth - width) / 2
-            const top = window.screenY + (window.outerHeight - height) / 2
-            const features = `
-                width=${width},
-                height=${height},
-                left=${left},
-                top=${top},
-                status=yes,
-                toolbar=no,
-                location=no,
-                menubar=no,
-                resizable=yes,
-                scrollbars=yes
-            `.replace(/\s/g, '')
-
-            // Build MCP OAuth URL
-            const authParams = new URLSearchParams({
-                response_type: 'code',
-                client_id: mcpData.client_id,
-                redirect_uri: mcpData.redirect_uri,
-                scope: mcpData.scope,
-                state: mcpData.sessionId, // Use sessionId as state parameter
-                audience: 'api.atlassian.com',
-                prompt: 'consent'
-            })
-
-            const authUrl = `${mcpData.authorization_endpoint}?${authParams.toString()}`
-            window.open(authUrl, 'Atlassian MCP Auth', features)
-
-            // Listen for messages from the popup
-            const handleMessage = (event) => {
-                if (event.data?.type === 'AUTH_SUCCESS' && event.data.user) {
-                    setCredentialData((prevData) => ({
-                        ...prevData,
-                        access_token: event.data.user.access_token,
-                        refresh_token: event.data.user.refresh_token,
-                        expiration_time: event.data.user.expiration_time,
-                        // Store only essential MCP client credentials (endpoints fetched dynamically)
-                        mcp_client_id: event.data.user.mcp_client_id,
-                        mcp_client_secret: event.data.user.mcp_client_secret
-                    }))
-                    if (!name) {
-                        setName(`Atlassian MCP OAuth (${event.data.user.userInfo?.name || event.data.user.userInfo?.email || 'User'})`)
-                    }
-                    // Show success message
-                    enqueueSnackbar({
-                        message: 'Successfully authenticated with Atlassian MCP',
-                        options: {
-                            key: new Date().getTime() + Math.random(),
-                            variant: 'success',
-                            action: (key) => (
-                                <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                    <IconX />
-                                </Button>
-                            )
-                        }
-                    })
-                    window.removeEventListener('message', handleMessage)
-                }
-                if (event.data?.type === 'AUTH_ERROR') {
-                    console.error('Atlassian MCP authentication error:', event.data.error)
-
-                    enqueueSnackbar({
-                        message: 'Failed to authenticate with Atlassian MCP',
-                        options: {
-                            key: new Date().getTime() + Math.random(),
-                            variant: 'error',
-                            action: (key) => (
-                                <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                    <IconX />
-                                </Button>
-                            )
-                        }
-                    })
-                    window.removeEventListener('message', handleMessage)
-                }
-            }
-
-            // Add the event listener
-            window.addEventListener('message', handleMessage)
-        } catch (error) {
-            console.error('MCP initialization error:', error)
-            enqueueSnackbar({
-                message: `Failed to initialize Atlassian MCP OAuth: ${error.message}`,
-                options: {
-                    key: new Date().getTime() + Math.random(),
-                    variant: 'error',
-                    action: (key) => (
-                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                            <IconX />
-                        </Button>
-                    )
-                }
-            })
-        }
     }
 
     const component = show ? (
@@ -567,7 +453,6 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                 )}
                 {componentCredential && (
                     <GoogleAuthButton
-                        key='google-auth-button'
                         componentCredential={componentCredential}
                         name={name}
                         handleGoogleOAuth={handleGoogleOAuth}
@@ -575,22 +460,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                     />
                 )}
                 {componentCredential && (
-                    <SalesforceAuthButton
-                        key='salesforce-auth-button'
-                        componentCredential={componentCredential}
-                        credentialData={credentialData}
-                        handleSalesforceOAuth={handleSalesforceOAuth}
-                        baseURL={baseURL}
-                    />
-                )}
-                {componentCredential && (
-                    <AtlassianAuthButton
-                        key='atlassian-auth-button'
-                        componentCredential={componentCredential}
-                        credentialData={credentialData}
-                        handleAtlassianOAuth={handleAtlassianOAuth}
-                        baseURL={baseURL}
-                    />
+                    <ZoomAuthButton componentCredential={componentCredential} handleZoomOAuth={handleZoomOAuth} baseURL={baseURL} />
                 )}
                 {componentCredential &&
                     componentCredential.inputs &&
@@ -634,9 +504,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
             </DialogContent>
             <DialogActions>
                 <StyledButton
-                    disabled={
-                        componentCredential?.name === 'salesforceOAuth' ? !(credentialData && credentialData.refreshToken && name) : !name
-                    }
+                    disabled={!name}
                     variant='contained'
                     onClick={() => (dialogProps.type === 'ADD' ? addNewCredential() : saveCredential())}
                 >
