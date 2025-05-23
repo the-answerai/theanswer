@@ -33,7 +33,6 @@ import { useHelpChatContext } from './HelpChatContext' // Import the context
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
-import dynamic from 'next/dynamic'
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
 
@@ -347,7 +346,6 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                             </Collapse>
                         </Box>
                     ))}
-
 
                     {!user?.subscription && (
                         <ListItem disablePadding>
