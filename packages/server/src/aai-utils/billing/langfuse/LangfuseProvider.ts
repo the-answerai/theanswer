@@ -316,7 +316,15 @@ export class LangfuseProvider {
      * Get usage events from Langfuse traces
      */
     async getUsageEvents(params: GetUsageEventsParams): Promise<UsageEventsResponse> {
-        const { userId, customerId, page = 1, limit = 10, sortBy = 'timestamp', sortOrder = 'desc' } = params
+        const {
+            userId,
+            customerId,
+            page = 1,
+            limit = 10,
+            sortBy = 'timestamp',
+            sortOrder = 'desc',
+            filter
+        } = params
         // TODO: Admins should be able to see all events
         try {
             // Determine time range - default to last 30 days
@@ -336,15 +344,27 @@ export class LangfuseProvider {
                 // We'll filter the results after fetching
             })
 
-            // Filter traces by customerId
+            // Filter traces by customerId and optional search parameters
             const filteredTraces = (langfuseResponse?.data || []).filter((trace) => {
                 const metadata = trace.metadata as TraceMetadata
-                return (
+
+                const baseMatch =
                     trace.userId === userId ||
                     trace.userId === params.user.id ||
                     params.user.roles?.includes('Admin') ||
                     (metadata && metadata.stripeCustomerId === customerId)
-                )
+
+                if (!baseMatch) return false
+
+                if (filter?.chatflow && !metadata.chatflowName?.toLowerCase().includes(String(filter.chatflow).toLowerCase())) {
+                    return false
+                }
+
+                if (filter?.user && !trace.userId?.toLowerCase().includes(String(filter.user).toLowerCase())) {
+                    return false
+                }
+
+                return true
             })
 
             // Transform traces to UsageEvent format
@@ -380,6 +400,7 @@ export class LangfuseProvider {
                     timestamp: trace.timestamp,
                     chatflowName: metadata.chatflowName,
                     chatflowId: metadata.chatflowid,
+                    stripeCustomerId: metadata.stripeCustomerId || metadata.customerId || DEFAULT_CUSTOMER_ID!,
                     totalCredits,
                     tokensIn: 0,
                     tokensOut: 0,
