@@ -30,6 +30,7 @@ import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import { ChatPopUp } from '@/views/chatmessage/ChatPopUp'
 import { VectorStorePopUp } from '@/views/vectorstore/VectorStorePopUp'
 import { flowContext } from '@/store/context/ReactFlowContext'
+import CreateAgentButton from './CreateAgentButton'
 
 // API
 import nodesApi from '@/api/nodes'
@@ -649,6 +650,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
     usePrompt('You have unsaved changes! Do you want to navigate away?', canvasDataStore.isDirty)
 
+    // Make setDirty available to pass as a prop
+    const setDirtyForCanvas = () => {
+        dispatch({ type: SET_DIRTY })
+    }
+
     return (
         <>
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -682,13 +688,13 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                                 onEdgesChange={onEdgesChange}
                                 onDrop={onDrop}
                                 onDragOver={onDragOver}
-                                onNodeDragStop={setDirty}
+                                onNodeDragStop={setDirtyForCanvas}
                                 nodeTypes={nodeTypes}
                                 edgeTypes={edgeTypes}
                                 onConnect={onConnect}
                                 onInit={setReactFlowInstance}
                                 fitView
-                                deleteKeyCode={canvas.canvasDialogShow ? null : ['Delete']}
+                                deleteKeyCode={canvasDataStore?.canvasDialogShow ? null : ['Delete']}
                                 minZoom={0.1}
                                 className='chatflow-canvas'
                             >
@@ -702,11 +708,18 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                                 />
                                 <Background color='#aaa' gap={16} />
                                 <AddNodes isAgentCanvas={isAgentCanvas} nodesData={getNodesApi.data} node={selectedNode} />
+                                <CreateAgentButton
+                                    nodesData={getNodesApi.data}
+                                    canvasPublic={chatflow?.isPublic || false}
+                                    setNodes={setNodes}
+                                    setEdges={setEdges}
+                                    setDirtyReactFlow={setDirtyForCanvas}
+                                />
                                 {isSyncNodesButtonEnabled && (
                                     <Fab
                                         sx={{
                                             left: 40,
-                                            top: 20,
+                                            top: 140,
                                             color: 'white',
                                             background: 'orange',
                                             '&:hover': {
