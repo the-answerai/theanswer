@@ -45,15 +45,18 @@ import versionRouter from './versions'
 import planRouter from './plan'
 import chatsRouter from './chats'
 import googleAuthRouter from './google-auth'
+import zoomAuthRouter from './zoom-auth'
 import billingRouter from './billing'
 import nvidiaNimRouter from './nvidia-nim'
 import gmailRouter from './gmail'
+import zoomRouter from './zoom'
 import csvParserRouter from './csv-parser'
 import browserExtensionRouter from './browser-extension'
 
 const router = express.Router()
 
 router.use('/', googleAuthRouter)
+router.use('/', zoomAuthRouter)
 router.use('/ping', pingRouter)
 router.use('/apikey', apikeyRouter)
 router.use('/assistants', assistantsRouter)
@@ -102,6 +105,7 @@ router.use('/chats', chatsRouter)
 router.use('/billing', billingRouter)
 router.use('/nvidia-nim', nvidiaNimRouter)
 router.use('/gmail', gmailRouter)
+router.use('/zoom', zoomRouter)
 router.use('/csv-parser', csvParserRouter)
 router.use('/browser-extension', browserExtensionRouter)
 

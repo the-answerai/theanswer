@@ -1,8 +1,16 @@
-import { INode, INodeData, INodeParams, ICommonObject } from '../../../src/Interface'
-import { TextSplitter } from 'langchain/text_splitter'
+import type { INode, INodeData, INodeParams, ICommonObject } from '../../../src/Interface'
+import type { TextSplitter } from 'langchain/text_splitter'
 import { Document } from 'langchain/document'
 import { ZoomService } from './ZoomService'
 import { omit } from 'lodash'
+
+interface ZoomMeeting {
+    id: string
+    topic: string
+    start_time: string
+    duration: number
+    host_email: string
+}
 
 class ZoomTranscripts implements INode {
     label: string
@@ -33,9 +41,10 @@ class ZoomTranscripts implements INode {
         }
         this.inputs = [
             {
-                label: 'Meeting ID',
-                name: 'meetingId',
-                type: 'string'
+                label: 'Selected Meetings',
+                name: 'selectedMeetings',
+                type: 'string',
+                description: 'Selected Zoom meetings to process transcripts from'
             },
             {
                 label: 'Text Splitter',
@@ -62,9 +71,9 @@ class ZoomTranscripts implements INode {
         ]
     }
 
-    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<any> {
+    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<Document[]> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
-        const meetingId = nodeData.inputs?.meetingId as string
+        const selectedMeetings = nodeData.inputs?.selectedMeetings as string
         const metadata = nodeData.inputs?.metadata
         const omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const _omitMetadataKeys = omitMetadataKeys === '*' ? '*' : omitMetadataKeys?.split(',')
@@ -73,6 +82,20 @@ class ZoomTranscripts implements INode {
 
         if (!credentialData || Object.keys(credentialData).length === 0) {
             throw new Error('Credentials not found')
+        }
+
+        // Parse selected meetings
+        let meetings: ZoomMeeting[] = []
+        if (selectedMeetings) {
+            try {
+                meetings = JSON.parse(selectedMeetings)
+            } catch (error) {
+                throw new Error('Invalid selected meetings format')
+            }
+        }
+
+        if (!meetings || meetings.length === 0) {
+            throw new Error('No meetings selected')
         }
 
         const credentials = {
@@ -84,38 +107,56 @@ class ZoomTranscripts implements INode {
         }
 
         const zoomService = new ZoomService(credentials)
-        const meeting = await zoomService.getMeetingRecordings(meetingId)
         const documents: Document[] = []
-        const files = meeting.recording_files || []
 
-        for (const file of files) {
-            if (file.file_type === 'TRANSCRIPT' && file.download_url) {
-                const vtt = await zoomService.downloadTranscript(`${file.download_url}?type=transcript`)
-                const text = this.parseVtt(vtt)
-                let docs: Document[] = [
-                    new Document({
-                        pageContent: text,
-                        metadata:
-                            _omitMetadataKeys === '*'
-                                ? { ...metadata }
-                                : omit(
-                                      {
-                                          source: `zoom://${meetingId}`,
-                                          meetingId,
-                                          recordingId: file.id,
-                                          ...metadata
-                                      },
-                                      _omitMetadataKeys
-                                  )
-                    })
-                ]
+        // Process each selected meeting
+        for (const meeting of meetings) {
+            try {
+                const meetingRecordings = await zoomService.getMeetingRecordings(meeting.id)
+                const files = meetingRecordings.recording_files || []
 
-                if (textSplitter) {
-                    docs = await textSplitter.splitDocuments(docs)
+                for (const file of files) {
+                    if (file.file_type === 'TRANSCRIPT' && file.download_url) {
+                        const vtt = await zoomService.downloadTranscript(`${file.download_url}?type=transcript`)
+                        const text = this.parseVtt(vtt)
+                        let docs: Document[] = [
+                            new Document({
+                                pageContent: text,
+                                metadata:
+                                    _omitMetadataKeys === '*'
+                                        ? { ...metadata }
+                                        : omit(
+                                              {
+                                                  source: `zoom://${meeting.id}`,
+                                                  meetingId: meeting.id,
+                                                  meetingTopic: meeting.topic,
+                                                  meetingStartTime: meeting.start_time,
+                                                  meetingDuration: meeting.duration,
+                                                  meetingHost: meeting.host_email,
+                                                  recordingId: file.id,
+                                                  ...metadata
+                                              },
+                                              _omitMetadataKeys
+                                          )
+                            })
+                        ]
+
+                        if (textSplitter) {
+                            docs = await textSplitter.splitDocuments(docs)
+                        }
+
+                        documents.push(...docs)
+                    }
                 }
-
-                documents.push(...docs)
+            } catch (error) {
+                // Log error but continue processing other meetings
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+                throw new Error(`Failed to process meeting ${meeting.id}: ${errorMessage}`)
             }
+        }
+
+        if (documents.length === 0) {
+            throw new Error('No transcripts found for the selected meetings')
         }
 
         return documents
