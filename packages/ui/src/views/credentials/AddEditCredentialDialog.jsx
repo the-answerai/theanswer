@@ -47,6 +47,7 @@ import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 import { useFlags } from 'flagsmith/react'
 import { GoogleAuthButton } from '@/ui-component/button/GoogleAuthButton'
+import { ZoomAuthButton } from '@/ui-component/button/ZoomAuthButton'
 import keySVG from '@/assets/images/key.svg'
 
 const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) => {
@@ -307,6 +308,70 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
         window.addEventListener('message', handleMessage)
     }
 
+    const handleZoomOAuth = () => {
+        const width = 500
+        const height = 600
+        const left = window.screenX + (window.outerWidth - width) / 2
+        const top = window.screenY + (window.outerHeight - height) / 2
+        const features = `
+            width=${width},
+            height=${height},
+            left=${left},
+            top=${top},
+            status=yes,
+            toolbar=no,
+            location=no,
+            menubar=no,
+            resizable=yes,
+            scrollbars=yes
+        `.replace(/\s/g, '')
+
+        window.open(`${baseURL}/api/v1/zoom-auth`, 'Zoom Auth', features)
+
+        // Listen for messages from the popup
+        const handleMessage = (event) => {
+            if (event.data?.type === 'AUTH_SUCCESS' && event.data.user) {
+                setCredentialData(event.data.user)
+                if (!name) {
+                    setName(`${event.data.user.fullName} (${event.data.user.email})`)
+                }
+                // Show success message
+                enqueueSnackbar({
+                    message: 'Successfully authenticated with Zoom',
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'success',
+                        action: (key) => (
+                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                <IconX />
+                            </Button>
+                        )
+                    }
+                })
+                window.removeEventListener('message', handleMessage)
+            }
+            if (event.data?.type === 'AUTH_ERROR') {
+                console.error('Zoom authentication error:', event.data.error)
+
+                enqueueSnackbar({
+                    message: 'Failed to authenticate with Zoom',
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'error',
+                        action: (key) => (
+                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                <IconX />
+                            </Button>
+                        )
+                    }
+                })
+            }
+        }
+
+        // Add the event listener
+        window.addEventListener('message', handleMessage)
+    }
+
     const component = show ? (
         <Dialog
             fullWidth
@@ -393,6 +458,9 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                         handleGoogleOAuth={handleGoogleOAuth}
                         baseURL={baseURL}
                     />
+                )}
+                {componentCredential && (
+                    <ZoomAuthButton componentCredential={componentCredential} handleZoomOAuth={handleZoomOAuth} baseURL={baseURL} />
                 )}
                 {componentCredential &&
                     componentCredential.inputs &&

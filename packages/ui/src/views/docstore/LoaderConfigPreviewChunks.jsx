@@ -152,7 +152,12 @@ const LoaderConfigPreviewChunks = () => {
         if (checkMandatoryFields()) {
             setLoading(true)
             const config = prepareConfig()
-            config.loaderId === 'googleDrive' && (config.credential = selectedCredential)
+            if (config.loaderId === 'googleDrive') {
+                config.credential = JSON.stringify(selectedCredentialData)
+            }
+            if (config.loaderId === 'zoomTranscripts') {
+                config.credential = JSON.stringify(selectedCredentialData)
+            }
             config.previewChunkCount = previewChunkCount
 
             try {
@@ -187,7 +192,12 @@ const LoaderConfigPreviewChunks = () => {
         if (checkMandatoryFields()) {
             setLoading(true)
             const config = prepareConfig()
-            config.loaderId === 'googleDrive' && (config.credential = selectedCredential)
+            if (config.loaderId === 'googleDrive') {
+                config.credential = JSON.stringify(selectedCredentialData)
+            }
+            if (config.loaderId === 'zoomTranscripts') {
+                config.credential = JSON.stringify(selectedCredentialData)
+            }
             try {
                 const saveResp = await documentStoreApi.saveProcessingLoader(config)
                 setLoading(false)
