@@ -30,7 +30,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ===========================|| ITEM CARD ||=========================== //
 
-const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateFlowsApi, setError }) => {
+const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateFlowsApi, setError, setRefreshChatflows }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
     const [data, setData] = useState(initialData)
@@ -64,6 +64,7 @@ const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateF
                         onUpdateChatflow={(updatedChatflow) => {
                             setData(updatedChatflow)
                         }}
+                        setRefreshChatflows={setRefreshChatflows}
                     />
                 </Box>
             )
@@ -229,7 +230,8 @@ ItemCard.propTypes = {
     onClick: PropTypes.func,
     type: PropTypes.string,
     updateFlowsApi: PropTypes.object,
-    setError: PropTypes.func
+    setError: PropTypes.func,
+    setRefreshChatflows: PropTypes.func
 }
 
 export default ItemCard
