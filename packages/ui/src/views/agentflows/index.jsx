@@ -1,12 +1,13 @@
 'use client'
 import PropTypes from 'prop-types'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useNavigate } from '@/utils/navigation'
 // import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import FlowListView from '@/ui-component/lists/FlowListView'
 
 // material-ui
 import { Chip, Box, Tab, Tabs, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
@@ -24,6 +25,7 @@ import { IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react'
 
 // API
 import chatflowsApi from '@/api/chatflows'
+import marketplacesApi from '@/api/marketplaces'
 
 // Hooks
 import useApi from '@/hooks/useApi'
@@ -55,6 +57,7 @@ TabPanel.propTypes = {
 
 const Agentflows = () => {
     const navigate = useNavigate()
+    const theme = useTheme()
 
     const [tabValue, setTabValue] = useState(0)
     const [isLoading, setLoading] = useState(true)
@@ -66,8 +69,18 @@ const Agentflows = () => {
     const [loginDialogProps, setLoginDialogProps] = useState({})
 
     const getAllAgentflows = useApi(chatflowsApi.getAllAgentflows)
+    const getAllAgentflowsApi = useApi(chatflowsApi.getAllAgentflows)
+    const getMarketplaceAgentflowsApi = useApi(marketplacesApi.getAllTemplatesFromMarketplaces)
     const [view, setView] = useState(localStorage.getItem('flowDisplayStyle') || 'card')
     const [agentflowVersion, setAgentflowVersion] = useState(localStorage.getItem('agentFlowVersion') || 'v2')
+
+    // Missing state variables
+    const [myAgentflows, setMyAgentflows] = useState([])
+    const [answerAIAgentflows, setAnswerAIAgentflows] = useState([])
+    const [communityAgentflows, setCommunityAgentflows] = useState([])
+    const [nodeTypes, setNodeTypes] = useState({})
+    const [categoryFilter, setCategoryFilter] = useState('All')
+    const [categories, setCategories] = useState(['All'])
 
     const handleChange = (event, nextView) => {
         if (nextView === null) return
@@ -86,13 +99,24 @@ const Agentflows = () => {
         setSearch(event.target.value)
     }
 
-    function filterFlows(data) {
-        return (
-            data.name.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
-            (data.category && data.category.toLowerCase().indexOf(search.toLowerCase()) > -1) ||
-            data.id.toLowerCase().indexOf(search.toLowerCase()) > -1
-        )
-    }
+    const filterFlows = useCallback(
+        (data) => {
+            if (!data) return false
+
+            const name = data.name || data.templateName || ''
+            const category = data.category || ''
+            const id = data.id || ''
+            const description = data.description || ''
+
+            return (
+                name.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
+                category.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
+                id.toLowerCase().indexOf(search.toLowerCase()) > -1 ||
+                description.toLowerCase().indexOf(search.toLowerCase()) > -1
+            )
+        },
+        [search]
+    )
 
     const onLoginClick = (username, password) => {
         localStorage.setItem('username', username)
@@ -124,6 +148,42 @@ const Agentflows = () => {
         setCategoryFilter(event.target.value)
     }
 
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
+
+    const goToMarketplaceCanvas = (selectedAgentflow) => {
+        if (selectedAgentflow.type === 'AgentflowV2') {
+            navigate(`/v2/marketplace/${selectedAgentflow.id}`, { state: selectedAgentflow })
+        } else {
+            navigate(`/marketplace/${selectedAgentflow.id}`, { state: selectedAgentflow })
+        }
+    }
+
+    // Process flow data function similar to chatflows
+    const processFlowData = useCallback((flows) => {
+        const processedImages = {}
+        const processedNodeTypes = {}
+        flows.forEach((flow) => {
+            if (flow && flow.flowData) {
+                const flowData = JSON.parse(flow.flowData)
+                const nodes = flowData.nodes || []
+                processedImages[flow.id] = []
+                processedNodeTypes[flow.id] = []
+                nodes.forEach((node) => {
+                    if (['Agents', 'Chains', 'Chat Models', 'Tools', 'Document Loaders'].includes(node.data.category)) {
+                        const imageSrc = `${baseURL}/api/v1/node-icon/${node.data.name}`
+                        if (!processedImages[flow.id].includes(imageSrc)) {
+                            processedImages[flow.id].push(imageSrc)
+                            processedNodeTypes[flow.id].push(node.data.label)
+                        }
+                    }
+                })
+            }
+        })
+        return { processedImages, processedNodeTypes }
+    }, [])
+
     useEffect(() => {
         getAllAgentflowsApi.request()
         getMarketplaceAgentflowsApi.request()
@@ -139,6 +199,32 @@ const Agentflows = () => {
         setLoading(getAllAgentflowsApi.loading || getMarketplaceAgentflowsApi.loading)
     }, [getAllAgentflowsApi.loading, getMarketplaceAgentflowsApi.loading])
 
+    useEffect(() => {
+        if (getAllAgentflowsApi.data && getMarketplaceAgentflowsApi.data) {
+            const myAgentflowsData = getAllAgentflowsApi.data
+            const { processedImages: myImages, processedNodeTypes: myNodeTypes } = processFlowData(myAgentflowsData)
+            setMyAgentflows(myAgentflowsData)
+
+            const marketplaceAgentflows = getMarketplaceAgentflowsApi.data
+            const answerAIFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agentflow')
+            const communityFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agent Community')
+
+            const { processedImages: answerAIImages, processedNodeTypes: answerAINodeTypes } = processFlowData(answerAIFlows)
+            const { processedImages: communityImages, processedNodeTypes: communityNodeTypes } = processFlowData(communityFlows)
+
+            setAnswerAIAgentflows(answerAIFlows)
+            setCommunityAgentflows(communityFlows)
+
+            setImages({ ...myImages, ...answerAIImages, ...communityImages })
+            setNodeTypes({ ...myNodeTypes, ...answerAINodeTypes, ...communityNodeTypes })
+
+            const allFlows = [...myAgentflowsData, ...answerAIFlows, ...communityFlows]
+            const uniqueCategories = ['All', ...new Set(allFlows.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
+            setCategories(uniqueCategories)
+        }
+    }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data, processFlowData])
+
+    // Handle the original agentflows data for the main display (keeping existing logic)
     useEffect(() => {
         if (getAllAgentflows.data) {
             try {
@@ -163,34 +249,13 @@ const Agentflows = () => {
                         }
                     }
                 }
-                setImages(images)
+                setImages((prev) => ({ ...prev, ...images }))
                 setIcons(icons)
             } catch (e) {
                 console.error(e)
             }
-
-            const myAgentflowsData = getAllAgentflowsApi.data
-            const { processedImages: myImages, processedNodeTypes: myNodeTypes } = processFlowData(myAgentflowsData)
-            setMyAgentflows(myAgentflowsData)
-
-            const marketplaceAgentflows = getMarketplaceAgentflowsApi.data
-            const answerAIFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agentflow')
-            const communityFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agent Community')
-
-            const { processedImages: answerAIImages, processedNodeTypes: answerAINodeTypes } = processFlowData(answerAIFlows)
-            const { processedImages: communityImages, processedNodeTypes: communityNodeTypes } = processFlowData(communityFlows)
-
-            setAnswerAIAgentflows(answerAIFlows)
-            setCommunityAgentflows(communityFlows)
-
-            setImages({ ...myImages, ...answerAIImages, ...communityImages })
-            setNodeTypes({ ...myNodeTypes, ...answerAINodeTypes, ...communityNodeTypes })
-
-            const allFlows = [...myAgentflowsData, ...answerAIFlows, ...communityFlows]
-            const uniqueCategories = ['All', ...new Set(allFlows.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
-            setCategories(uniqueCategories)
         }
-    }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data])
+    }, [getAllAgentflows.data])
 
     // const filterFlows = (flows, search, categoryFilter) => {
     //     const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
@@ -213,17 +278,29 @@ const Agentflows = () => {
     //     })
     // }
 
-    const filteredMyAgentflows = useMemo(() => filterFlows(myAgentflows, search, categoryFilter), [myAgentflows, search, categoryFilter])
+    const filteredMyAgentflows = useMemo(() => {
+        return myAgentflows.filter((flow) => {
+            const matchesSearch = filterFlows(flow)
+            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.split(';').includes(categoryFilter))
+            return matchesSearch && matchesCategory
+        })
+    }, [myAgentflows, search, categoryFilter, filterFlows])
 
-    const filteredAnswerAIAgentflows = useMemo(
-        () => filterFlows(answerAIAgentflows, search, categoryFilter),
-        [answerAIAgentflows, search, categoryFilter]
-    )
+    const filteredAnswerAIAgentflows = useMemo(() => {
+        return answerAIAgentflows.filter((flow) => {
+            const matchesSearch = filterFlows(flow)
+            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.split(';').includes(categoryFilter))
+            return matchesSearch && matchesCategory
+        })
+    }, [answerAIAgentflows, search, categoryFilter, filterFlows])
 
-    const filteredCommunityAgentflows = useMemo(
-        () => filterFlows(communityAgentflows, search, categoryFilter),
-        [communityAgentflows, search, categoryFilter]
-    )
+    const filteredCommunityAgentflows = useMemo(() => {
+        return communityAgentflows.filter((flow) => {
+            const matchesSearch = filterFlows(flow)
+            const matchesCategory = categoryFilter === 'All' || (flow.category && flow.category.split(';').includes(categoryFilter))
+            return matchesSearch && matchesCategory
+        })
+    }, [communityAgentflows, search, categoryFilter, filterFlows])
 
     return (
         <MainCard>

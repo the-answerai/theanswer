@@ -5,7 +5,7 @@ import './index.css'
 import { useReward } from 'react-rewards'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from '@/utils/navigation'
 import {
     REMOVE_DIRTY,
     SET_DIRTY,
