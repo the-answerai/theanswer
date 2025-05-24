@@ -1,6 +1,6 @@
 {
     "name": "theanswer",
-    "version": "2.2.7",
+    "version": "3.0.0",
     "private": true,
     "homepage": "https://theanswer.ai",
     "workspaces": [
@@ -17,7 +17,7 @@
         "build": "dotenv -- turbo run build ",
         "build-force": "pnpm clean && turbo run build --force",
         "dev": "dotenv -- turbo run dev dev-docker",
-        "dev-docker": "docker-compose  -f \"./docker-compose.dev.yml\" up -d",
+        "dev-docker": "docker-compose -p flowise -f \"./docker-compose.dev.yml\" up -d",
         "start": "dotenv -- npx turbo run start",
         "start:windows": "cd packages/server/bin && run start",
         "start:default": "cd packages/server/bin && ./run start",
@@ -114,11 +114,11 @@
         "pnpm": ">=9"
     },
     "resolutions": {
-        "@google/generative-ai": "^0.22.0",
+        "@google/generative-ai": "^0.24.0",
         "@grpc/grpc-js": "^1.10.10",
         "@langchain/core": "0.3.37",
         "@qdrant/openapi-typescript-fetch": "1.2.6",
-        "openai": "4.82.0",
+        "openai": "4.96.0",
         "protobufjs": "7.4.0"
     },
     "eslintIgnore": [

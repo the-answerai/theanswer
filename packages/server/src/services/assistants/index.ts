@@ -9,13 +9,14 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { DeleteResult, QueryRunner } from 'typeorm'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS } from '../../Interface.Metrics'
-import { AssistantType } from '../../Interface'
+import { AssistantType, IUser } from '../../Interface'
 import nodesService from '../nodes'
 import { DocumentStore } from '../../database/entities/DocumentStore'
 import { ICommonObject } from 'flowise-components'
 import logger from '../../utils/logger'
 import { ASSISTANT_PROMPT_GENERATOR } from '../../utils/prompt'
 import { INPUT_PARAMS_TYPE } from '../../utils/constants'
+import { validate } from 'uuid'
 
 const createAssistant = async (requestBody: any): Promise<Assistant> => {
     try {
@@ -192,7 +193,7 @@ const deleteAssistant = async (assistantId: string, isDeleteBoth: any): Promise<
     }
 }
 
-const getAllAssistants = async (type?: AssistantType): Promise<Assistant[]> => {
+const getAllAssistants = async (user: IUser, type?: AssistantType): Promise<Assistant[]> => {
     try {
         const appServer = getRunningExpressApp()
         if (type) {
@@ -201,7 +202,7 @@ const getAllAssistants = async (type?: AssistantType): Promise<Assistant[]> => {
             })
             return dbResponse
         }
-        const dbResponse = await appServer.AppDataSource.getRepository(Assistant).find()
+        const dbResponse = await appServer.AppDataSource.getRepository(Assistant).find({ where: { userId: user.id } })
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -339,6 +340,12 @@ const updateAssistant = async (assistantId: string, requestBody: any): Promise<A
 
 const importAssistants = async (newAssistants: Partial<Assistant>[], queryRunner?: QueryRunner): Promise<any> => {
     try {
+        for (const data of newAssistants) {
+            if (data.id && !validate(data.id)) {
+                throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: importAssistants - invalid id!`)
+            }
+        }
+
         const appServer = getRunningExpressApp()
         const repository = queryRunner ? queryRunner.manager.getRepository(Assistant) : appServer.AppDataSource.getRepository(Assistant)
 
@@ -399,10 +406,10 @@ const getChatModels = async (): Promise<any> => {
     }
 }
 
-const getDocumentStores = async (): Promise<any> => {
+const getDocumentStores = async (user: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const stores = await appServer.AppDataSource.getRepository(DocumentStore).find()
+        const stores = await appServer.AppDataSource.getRepository(DocumentStore).find({ where: { userId: user.id } })
         const returnData = []
         for (const store of stores) {
             if (store.status === 'UPSERTED') {
@@ -426,9 +433,10 @@ const getDocumentStores = async (): Promise<any> => {
 const getTools = async (): Promise<any> => {
     try {
         const tools = await nodesService.getAllNodesForCategory('Tools')
+        const mcpTools = await nodesService.getAllNodesForCategory('Tools (MCP)')
 
         // filter out those tools that input params type are not in the list
-        const filteredTools = tools.filter((tool) => {
+        const filteredTools = [...tools, ...mcpTools].filter((tool) => {
             const inputs = tool.inputs || []
             return inputs.every((input) => INPUT_PARAMS_TYPE.includes(input.type))
         })

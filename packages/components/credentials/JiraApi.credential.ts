@@ -28,6 +28,18 @@ class JiraApi implements INodeCredential {
                 label: 'Jira URL',
                 name: 'jiraUrl',
                 type: 'string'
+            },
+            {
+                label: 'User Name',
+                name: 'username',
+                type: 'string',
+                placeholder: 'username@example.com'
+            },
+            {
+                label: 'Access Token',
+                name: 'accessToken',
+                type: 'password',
+                placeholder: '<JIRA_ACCESS_TOKEN>'
             }
         ]
     }

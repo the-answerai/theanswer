@@ -4,12 +4,18 @@
 
 # TheAnswer - Build LLM Apps Easily with Flowise
 
+<!-- <p align="center">
+<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_white.svg#gh-light-mode-only">
+<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_dark.svg#gh-dark-mode-only">
+</p> -->
+
+[![Release Notes](https://img.shields.io/github/release/the-answerai/theanswer)](https://github.com/the-answerai/theanswer/releases)
 [![Discord](https://img.shields.io/discord/1087698854775881778?label=Discord&logo=discord)](https://discord.gg/jbaHfsRVBW)
 [![Twitter Follow](https://img.shields.io/twitter/follow/TheAnswerAI?style=social)](https://twitter.com/TheAnswerAI)
 [![GitHub star chart](https://img.shields.io/github/stars/the-answerai/theanswer?style=social)](https://star-history.com/#the-answerai/theanswer)
 [![GitHub fork](https://img.shields.io/github/forks/the-answerai/theanswer?style=social)](https://github.com/the-answerai/theanswer/fork)
 
-English | [繁體中文](./i18n/README-TW.md) | [簡體中文](./i18n/README-ZH.md) | [日本語](./i18n/README-JA.md) | [한국어](./i18n/README-KR.md)
+English | [繁體中文](./i18n/README-TW.md) | [简体中文](./i18n/README-ZH.md) | [日本語](./i18n/README-JA.md) | [한국어](./i18n/README-KR.md)
 
 <h3>Drag & drop UI to build your customized LLM Flowise with The AnswerAI</h3>
 <a href="https://github.com/the-answerai/theanswer">
@@ -298,9 +304,9 @@ Deploy TheAnswer self-hosted in your existing infrastructure. We support various
 
         [![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/theanswer)
 
-    -   [Sealos](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
+    -   [Sealos](https://template.sealos.io/deploy?templateName=flowise)
 
-        [![](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
+        [![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://template.sealos.io/deploy?templateName=flowise)
 
     -   [RepoCloud](https://repocloud.io/details/?app_id=29)
 
