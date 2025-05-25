@@ -1,0 +1,67 @@
+---
+description: General information about the overall architecture and structure and code style
+globs: **/**
+alwaysApply: true
+---
+# Architecture and Structure
+
+- This is a full-stack application with separate client (React/Vite) and server (Node.js/Express) code
+- Backend follows MVC-like pattern with routes, controllers, and utilities
+- Uses WebSocket for real-time communication between client and server
+- Supabase as the primary database with multiple environment support (local, prime, wow)
+- When creating new Supabase migration files, always use the current time using bash to create it.
+- Environment configuration through .env.local, .env.prime, and .env.wow files
+- Uses pnpm as the package manager
+- When debugging run the command `npx @agentdeskai/browser-tools-server` then tell me to refresh teh browser or recreate the bug. Then you will use the browser-tools mcp server to get the logs, take screenshots and more
+
+## Code Organization
+
+### Backend (src/):
+- `src/routes`: API route definitions with Express
+- `src/controllers`: Business logic and API handlers
+- `src/utils`: Shared utility functions
+- `src/middleware`: Express middleware for auth, error handling, etc.
+- `src/config`: Configuration settings and environment variables
+
+### Frontend (client/):
+- `client/src/components`: Reusable UI components
+- `client/src/pages`: Page components for routes
+- `client/src/hooks`: Custom React hooks
+- `client/src/utils`: Frontend utility functions
+- `client/src/config`: Frontend configuration
+- `client/src/assets`: Static assets
+
+## Best Practices
+
+- Use ES6+ JavaScript features
+- Prefer const over let where applicable
+- Use arrow functions for consistency
+- Follow camelCase for variables/functions, PascalCase for components
+- Use JSDoc comments for documenting functions
+- Implement async/await for asynchronous operations
+- Handle errors properly with try/catch blocks
+- Use Material-UI (MUI v6) for UI components
+- Implement proper React hooks pattern
+- Optimize performance with React.memo() for expensive components
+- Utilize WebSockets efficiently for real-time data
+- Always look for existing functionality before creating new code. 
+- Refactor when files get too large or when reusable components and functions can be shared
+- Follow security best practices for API endpoints
+- Validate all user input
+- Properly handle authentication and authorization
+- Do not automatically update environment variables, ask me first
+- Always use the Auth0 `auth0` and Supabase `supabase` cli to check settings when checking app conifugrations and interacting with the services
+- If workign with an external third party get the latest information form the documents or search the web so you do not make mistakes and have the most up to date information
+
+## Database
+- Supabase for data persistence
+- Multiple environments (local, prime, wow)
+- Migrations tracked in supabase/migrations
+- Seeding scripts for initial data
+
+## Performance Considerations
+- Code splitting for optimized bundle size
+- Proper data caching strategies
+- Optimized WebSocket message handling
+- Database query optimization
+- Responsive design considerations

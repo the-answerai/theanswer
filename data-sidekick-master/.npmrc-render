@@ -1,0 +1,15 @@
+strict-peer-dependencies=false
+auto-install-peers=true
+node-linker=hoisted
+public-hoist-pattern[]=*
+ignore-workspace-root-check=true
+unsafe-perm=true
+enable-pre-post-scripts=true
+# Allow build scripts for specific packages
+allow-scripts=true
+# Specific packages that need build scripts
+allow-scripts[@ffmpeg-installer/linux-x64]=true
+allow-scripts[es5-ext]=true
+allow-scripts[ngrok]=true
+# Disable frozen-lockfile to handle package.json and lock file mismatches
+frozen-lockfile=false 

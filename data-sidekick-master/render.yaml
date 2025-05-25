@@ -1,0 +1,15 @@
+services:
+    - type: web
+      name: rds-answer-agent-ai
+      runtime: node
+      buildCommand: chmod +x ./build-render.sh && ./build-render.sh
+      startCommand: pnpm run start:rds
+      envVars:
+          - key: NODE_ENV
+            value: rds
+          - key: PORT
+            value: 3001
+          - key: PNPM_FLAGS
+            value: '--no-verify-store-integrity'
+      plan: free
+      region: oregon

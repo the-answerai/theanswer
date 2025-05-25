@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+    unstructured:
+        image: downloads.unstructured.io/unstructured-io/unstructured:latest
+        container_name: unstructured-api
+        ports:
+            - '8000:8000'
+        volumes:
+            - ./uploads:/app/uploads
+        environment:
+            - UNSTRUCTURED_API_KEY=${UNSTRUCTURED_API_KEY:-}
+        command: tail -f /dev/null
+        restart: unless-stopped
+        networks:
+            - unstructured-network
+
+networks:
+    unstructured-network:
+        name: unstructured-network

@@ -1,0 +1,54 @@
+---
+description: Helpful for information about how to work with the front end code in the client folder
+globs: client/**/**
+alwaysApply: false
+---
+# Frontend Development (client/)
+
+## Structure
+- `client/src/components/`: Reusable UI components organized by feature (tickets/, calls/, chats/, dashboard/, etc.)
+- `client/src/pages/`: Page-level components (CallListPage, ReportsPage, TicketListPage, etc.)
+- `client/src/hooks/`: Custom React hooks (useSupabase, useChatbotId, etc.)
+- `client/src/utils/`: Frontend utility functions
+- `client/src/assets/`: Static assets (images, icons, etc.)
+- `client/src/config/`: Frontend configuration
+
+## Technologies
+- React 18+ with functional components
+- Material-UI (MUI v6) for UI components
+- React Router v7 for navigation
+- Fetch API for data fetching
+- Vite as the build and development tool
+- Charting libraries including recharts and MUI X-Charts
+
+## Best Practices
+- Use React functional components with hooks
+- Follow component structure: pages for routes, specialized components for features
+- Implement proper memoization using memo, useMemo, and useCallback
+- Use React state hooks for local state management
+- Maintain responsive design using MUI's Grid system
+- Follow established patterns for API calls using fetch
+- Implement proper loading and error states
+- Use TypeScript where appropriate (particularly for complex components)
+- Leverage custom hooks for reusable logic
+
+## State Management
+- Use React's useState for component state
+- Use useCallback for memoized event handlers
+- Implement useMemo for expensive computations
+- Apply proper loading and error states in API calls
+- Maintain consistent state patterns across components
+
+## Data Fetching
+- Use fetch API with async/await for API calls
+- Implement proper error handling for network requests
+- Use useEffect hooks for data fetching lifecycle
+- Follow consistent patterns for loading states and error handling
+- Implement proper pagination where needed
+
+## UI Components
+- Use MUI components for consistent styling
+- Follow the established design system
+- Implement responsive layouts using MUI Grid
+- Use proper typography and spacing from MUI theme
+- Maintain consistent UI patterns across the application

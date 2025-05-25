@@ -1,0 +1,10 @@
+{
+    "summary": "Brief summary of the call content and key points discussed.",
+    "coaching": "Feedback and coaching suggestions for the call handler.",
+    "tags": ["customer service", "billing", "technical issue", "resolved"],
+    "sentiment_score": 0.75,
+    "resolution_status": "resolved",
+    "escalated": false,
+    "call_type": "support",
+    "persona": "technical"
+}

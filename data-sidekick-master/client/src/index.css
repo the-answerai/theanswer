@@ -1,0 +1,541 @@
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    font-size: 16px;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    /* Remove hardcoded background color to allow theme to control it */
+    /* background-color: #f5f5f5; */
+}
+
+#root {
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+/* Add transition for smooth theme switching */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Dark mode fixes for MDXEditor */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #24c3a1 !important;
+    padding: 8px 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar button {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    margin: 0 2px !important;
+    border-radius: 4px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar button:hover {
+    background-color: #3d3d3d !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar button:active,
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar button[data-active='true'] {
+    background-color: #24c3a1 !important;
+    color: #ffffff !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar select {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border-color: #24c3a1 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-content-editable {
+    color: #ffffff !important;
+    background-color: #121212 !important;
+    padding: 16px !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+/* Additional MDXEditor dark mode fixes */
+[data-mui-color-scheme='dark'] .mdxeditor {
+    background-color: #121212 !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-block-type-dropdown {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border-color: #24c3a1 !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-block-type-dropdown option {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    padding: 8px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar-group {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    padding: 0 4px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor svg {
+    fill: #ffffff !important;
+}
+
+/* Fix for editor content in dark mode */
+[data-mui-color-scheme='dark'] .prose {
+    color: #ffffff !important;
+}
+
+[data-mui-color-scheme='dark'] .prose h1,
+[data-mui-color-scheme='dark'] .prose h2,
+[data-mui-color-scheme='dark'] .prose h3,
+[data-mui-color-scheme='dark'] .prose h4,
+[data-mui-color-scheme='dark'] .prose h5,
+[data-mui-color-scheme='dark'] .prose h6 {
+    color: #ffffff !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+[data-mui-color-scheme='dark'] .prose p,
+[data-mui-color-scheme='dark'] .prose ul,
+[data-mui-color-scheme='dark'] .prose ol,
+[data-mui-color-scheme='dark'] .prose li {
+    color: #ffffff !important;
+    margin-bottom: 0.75em !important;
+}
+
+[data-mui-color-scheme='dark'] .prose a {
+    color: #24c3a1 !important;
+    text-decoration: underline !important;
+}
+
+[data-mui-color-scheme='dark'] .prose code {
+    background-color: #2d2d2d !important;
+    color: #24c3a1 !important;
+    padding: 0.2em 0.4em !important;
+    border-radius: 3px !important;
+    font-family: monospace !important;
+}
+
+[data-mui-color-scheme='dark'] .prose pre {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    padding: 1em !important;
+    border-radius: 4px !important;
+    overflow-x: auto !important;
+}
+
+[data-mui-color-scheme='dark'] .prose blockquote {
+    border-left: 4px solid #24c3a1 !important;
+    padding-left: 1em !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-style: italic !important;
+}
+
+[data-mui-color-scheme='dark'] .prose table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 1em 0 !important;
+}
+
+[data-mui-color-scheme='dark'] .prose th,
+[data-mui-color-scheme='dark'] .prose td {
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 0.5em !important;
+    color: #ffffff !important;
+}
+
+[data-mui-color-scheme='dark'] .prose th {
+    background-color: #2d2d2d !important;
+}
+
+/* Comprehensive dark mode text fixes */
+[data-mui-color-scheme='dark'] {
+    /* General text color */
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiTypography-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiButton-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiIconButton-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiInputBase-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiInputLabel-root {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-mui-color-scheme='dark'] .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(255, 255, 255, 0.23);
+}
+
+[data-mui-color-scheme='dark'] .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #24c3a1;
+}
+
+[data-mui-color-scheme='dark'] .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #24c3a1;
+}
+
+[data-mui-color-scheme='dark'] .MuiTableCell-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiMenuItem-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiListItemText-primary {
+    color: #ffffff !important;
+}
+
+[data-mui-color-scheme='dark'] .MuiListItemText-secondary {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-mui-color-scheme='dark'] .MuiTab-root {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-mui-color-scheme='dark'] .MuiTab-root.Mui-selected {
+    color: #24c3a1;
+}
+
+[data-mui-color-scheme='dark'] .MuiChip-root {
+    background-color: transparent;
+}
+
+[data-mui-color-scheme='dark'] .MuiChip-outlined {
+    border-color: #24c3a1;
+    color: #24c3a1;
+}
+
+[data-mui-color-scheme='dark'] .MuiChip-outlined.MuiChip-colorSecondary {
+    border-color: #ff9800;
+    color: #ff9800;
+}
+
+[data-mui-color-scheme='dark'] .MuiChip-outlined.MuiChip-colorError {
+    border-color: #f44336;
+    color: #f44336;
+}
+
+[data-mui-color-scheme='dark'] .MuiDialog-paper {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiDialogTitle-root {
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiDialogContentText-root {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-mui-color-scheme='dark'] .MuiPaper-root {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+[data-mui-color-scheme='dark'] .MuiAppBar-root {
+    background-color: #121212;
+}
+
+[data-mui-color-scheme='dark'] .MuiToolbar-root {
+    color: #ffffff;
+}
+
+/* MDXEditor dialog styling for dark mode */
+[data-mui-color-scheme='dark'] .mdxeditor-dialog {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+    padding: 16px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog input,
+[data-mui-color-scheme='dark'] .mdxeditor-dialog textarea {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog input:focus,
+[data-mui-color-scheme='dark'] .mdxeditor-dialog textarea:focus {
+    border-color: #24c3a1 !important;
+    outline: none !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog button {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 6px 12px !important;
+    margin-right: 8px !important;
+    cursor: pointer !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog button:hover {
+    background-color: #3d3d3d !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog button:active,
+[data-mui-color-scheme='dark'] .mdxeditor-dialog button.primary {
+    background-color: #24c3a1 !important;
+    border-color: #24c3a1 !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog label {
+    color: #ffffff !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-dialog-title {
+    color: #ffffff !important;
+    font-size: 18px !important;
+    margin-bottom: 16px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 8px !important;
+}
+
+/* Enhanced toolbar dropdown styling for dark mode */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [role='combobox'],
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar select {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border: 1px solid #24c3a1 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+    min-width: 120px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [role='combobox'] span,
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar select option {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-block-type-dropdown {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+}
+
+/* Fix for the heading dropdown specifically */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-trigger] {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    min-width: 120px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-trigger] span {
+    color: #ffffff !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-content] {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+    z-index: 1000 !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-item] {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    padding: 6px 8px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-item]:hover,
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-radix-select-item][data-highlighted] {
+    background-color: #3d3d3d !important;
+}
+
+/* Additional styling for any text in the toolbar */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar span,
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar div {
+    color: #ffffff !important;
+}
+
+/* Specific fix for BlockTypeSelect component */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-block-type-select] {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    min-width: 120px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-block-type-select] span {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* More specific fixes for the dropdown text in the toolbar */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar-block-type {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar-block-type button {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar-block-type span {
+    color: #ffffff !important;
+}
+
+/* Target the specific dropdown component */
+[data-mui-color-scheme='dark'] [data-lexical-editor] [role='combobox'],
+[data-mui-color-scheme='dark'] [data-lexical-editor] select {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border: 1px solid #24c3a1 !important;
+}
+
+[data-mui-color-scheme='dark'] [data-lexical-editor] [role='combobox'] span,
+[data-mui-color-scheme='dark'] [data-lexical-editor] select option {
+    color: #ffffff !important;
+}
+
+/* Target the heading dropdown specifically */
+[data-mui-color-scheme='dark'] [data-lexical-editor] [aria-haspopup='listbox'] {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+}
+
+[data-mui-color-scheme='dark'] [data-lexical-editor] [aria-haspopup='listbox'] span {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+/* Target any text in the dropdown */
+[data-mui-color-scheme='dark'] [data-lexical-editor] [role='combobox'] *,
+[data-mui-color-scheme='dark'] [data-lexical-editor] select * {
+    color: #ffffff !important;
+}
+
+/* Direct targeting of the heading dropdown */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-lexical-editor] button[aria-haspopup='listbox'] {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    min-width: 120px !important;
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar [data-lexical-editor] button[aria-haspopup='listbox'] span {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+}
+
+/* Force all text in the toolbar to be white */
+[data-mui-color-scheme='dark'] .mdxeditor-toolbar * {
+    color: #ffffff !important;
+}
+
+/* Target the dropdown menu */
+[data-mui-color-scheme='dark'] [data-radix-popper-content-wrapper] {
+    background-color: #2d2d2d !important;
+    border: 1px solid #24c3a1 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+}
+
+[data-mui-color-scheme='dark'] [data-radix-popper-content-wrapper] * {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+}
+
+[data-mui-color-scheme='dark'] [data-radix-popper-content-wrapper] [role='option']:hover {
+    background-color: #3d3d3d !important;
+}
+
+/* Chat panel specific dark mode styling */
+[data-mui-color-scheme='dark'] .MuiDrawer-paper {
+    background-color: #121212;
+    color: #ffffff;
+    border-left: 1px solid #24c3a1;
+}
+
+[data-mui-color-scheme='dark'] .MuiTabPanel-root {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* Chat message styling for dark mode */
+[data-mui-color-scheme='dark'] .chat-message-user {
+    background-color: #24c3a1 !important;
+    color: #000000 !important;
+    border: 1px solid #24c3a1 !important;
+    box-shadow: 0 0 5px #24c3a1 !important;
+}
+
+[data-mui-color-scheme='dark'] .chat-message-assistant {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 1px solid #24c3a1 !important;
+}

@@ -1,0 +1,412 @@
+{
+    "category": "conversational;knoweldgebase",
+    "chatbotConfig": {
+        "starterPrompts": {
+            "0": {
+                "prompt": "Starter Promtp1"
+            },
+            "1": {
+                "prompt": "Starter prompt 2"
+            }
+        },
+        "title": "Thsi is a title",
+        "welcomeMessage": "some welcome message"
+    },
+    "flowData": {
+        "edges": [
+            {
+                "id": "documentStoreVS_0-documentStoreVS_0-output-retriever-BaseRetriever-conversationalRetrievalQAChain_0-conversationalRetrievalQAChain_0-input-vectorStoreRetriever-BaseRetriever",
+                "source": "documentStoreVS_0",
+                "sourceHandle": "documentStoreVS_0-output-retriever-BaseRetriever",
+                "target": "conversationalRetrievalQAChain_0",
+                "targetHandle": "conversationalRetrievalQAChain_0-input-vectorStoreRetriever-BaseRetriever",
+                "type": "buttonedge"
+            },
+            {
+                "id": "RedisBackedChatMemory_0-RedisBackedChatMemory_0-output-RedisBackedChatMemory-RedisBackedChatMemory|BaseChatMemory|BaseMemory-conversationalRetrievalQAChain_0-conversationalRetrievalQAChain_0-input-memory-BaseMemory",
+                "source": "RedisBackedChatMemory_0",
+                "sourceHandle": "RedisBackedChatMemory_0-output-RedisBackedChatMemory-RedisBackedChatMemory|BaseChatMemory|BaseMemory",
+                "target": "conversationalRetrievalQAChain_0",
+                "targetHandle": "conversationalRetrievalQAChain_0-input-memory-BaseMemory",
+                "type": "buttonedge"
+            },
+            {
+                "id": "groqChat_0-groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable-conversationalRetrievalQAChain_0-conversationalRetrievalQAChain_0-input-model-BaseChatModel",
+                "source": "groqChat_0",
+                "sourceHandle": "groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable",
+                "target": "conversationalRetrievalQAChain_0",
+                "targetHandle": "conversationalRetrievalQAChain_0-input-model-BaseChatModel",
+                "type": "buttonedge"
+            }
+        ],
+        "nodes": [
+            {
+                "data": {
+                    "baseClasses": ["ConversationalRetrievalQAChain", "BaseChain", "Runnable"],
+                    "category": "Chains",
+                    "description": "Document QA - built on RetrievalQAChain to provide a chat history component",
+                    "id": "conversationalRetrievalQAChain_0",
+                    "inputAnchors": [
+                        {
+                            "id": "conversationalRetrievalQAChain_0-input-model-BaseChatModel",
+                            "label": "Chat Model",
+                            "name": "model",
+                            "type": "BaseChatModel"
+                        },
+                        {
+                            "id": "conversationalRetrievalQAChain_0-input-vectorStoreRetriever-BaseRetriever",
+                            "label": "Vector Store Retriever",
+                            "name": "vectorStoreRetriever",
+                            "type": "BaseRetriever"
+                        },
+                        {
+                            "description": "If left empty, a default BufferMemory will be used",
+                            "id": "conversationalRetrievalQAChain_0-input-memory-BaseMemory",
+                            "label": "Memory",
+                            "name": "memory",
+                            "optional": true,
+                            "type": "BaseMemory"
+                        },
+                        {
+                            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+                            "id": "conversationalRetrievalQAChain_0-input-inputModeration-Moderation",
+                            "label": "Input Moderation",
+                            "list": true,
+                            "name": "inputModeration",
+                            "optional": true,
+                            "type": "Moderation"
+                        }
+                    ],
+                    "inputParams": [
+                        {
+                            "id": "conversationalRetrievalQAChain_0-input-returnSourceDocuments-boolean",
+                            "label": "Return Source Documents",
+                            "name": "returnSourceDocuments",
+                            "optional": true,
+                            "type": "boolean"
+                        },
+                        {
+                            "additionalParams": true,
+                            "default": "Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.\n\nChat History:\n{chat_history}\nFollow Up Input: {question}\nStandalone Question:",
+                            "description": "Using previous chat history, rephrase question into a standalone question",
+                            "id": "conversationalRetrievalQAChain_0-input-rephrasePrompt-string",
+                            "label": "Rephrase Prompt",
+                            "name": "rephrasePrompt",
+                            "optional": true,
+                            "rows": 4,
+                            "type": "string",
+                            "warning": "Prompt must include input variables: {chat_history} and {question}"
+                        },
+                        {
+                            "additionalParams": true,
+                            "default": "I want you to act as a document that I am having a conversation with. Your name is \"AI Assistant\". Using the provided context, answer the user's question to the best of your ability using the resources provided.\nIf there is nothing in the context relevant to the question at hand, just say \"Hmm, I'm not sure\" and stop after that. Refuse to answer any question not about the info. Never break character.\n------------\n{context}\n------------\nREMEMBER: If there is no relevant information within the context, just say \"Hmm, I'm not sure\". Don't try to make up an answer. Never break character.",
+                            "description": "Taking the rephrased question, search for answer from the provided context",
+                            "id": "conversationalRetrievalQAChain_0-input-responsePrompt-string",
+                            "label": "Response Prompt",
+                            "name": "responsePrompt",
+                            "optional": true,
+                            "rows": 4,
+                            "type": "string",
+                            "warning": "Prompt must include input variable: {context}"
+                        }
+                    ],
+                    "inputs": {
+                        "inputModeration": "",
+                        "memory": "{{RedisBackedChatMemory_0.data.instance}}",
+                        "model": "{{groqChat_0.data.instance}}",
+                        "rephrasePrompt": "Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.\n\nChat History:\n{chat_history}\nFollow Up Input: {question}\nStandalone Question:",
+                        "responsePrompt": "I want you to act as a document that I am having a conversation with. Your name is \"AI Assistant\". Using the provided context, answer the user's question to the best of your ability using the resources provided.\nIf there is nothing in the context relevant to the question at hand, just say \"Hmm, I'm not sure\" and stop after that. Refuse to answer any question not about the info. Never break character.\n------------\n{context}\n------------\nREMEMBER: If there is no relevant information within the context, just say \"Hmm, I'm not sure\". Don't try to make up an answer. Never break character.",
+                        "returnSourceDocuments": true,
+                        "vectorStoreRetriever": "{{documentStoreVS_0.data.instance}}"
+                    },
+                    "label": "Conversational Retrieval QA Chain",
+                    "name": "conversationalRetrievalQAChain",
+                    "outputAnchors": [
+                        {
+                            "description": "Document QA - built on RetrievalQAChain to provide a chat history component",
+                            "id": "conversationalRetrievalQAChain_0-output-conversationalRetrievalQAChain-ConversationalRetrievalQAChain|BaseChain|Runnable",
+                            "label": "ConversationalRetrievalQAChain",
+                            "name": "conversationalRetrievalQAChain",
+                            "type": "ConversationalRetrievalQAChain | BaseChain | Runnable"
+                        }
+                    ],
+                    "outputs": {},
+                    "selected": false,
+                    "type": "ConversationalRetrievalQAChain",
+                    "version": 3
+                },
+                "dragging": false,
+                "height": 532,
+                "id": "conversationalRetrievalQAChain_0",
+                "position": {
+                    "x": 1495.2227080550942,
+                    "y": 347.63536762990407
+                },
+                "positionAbsolute": {
+                    "x": 1495.2227080550942,
+                    "y": 347.63536762990407
+                },
+                "selected": false,
+                "type": "customNode",
+                "width": 300
+            },
+            {
+                "data": {
+                    "baseClasses": ["DocumentStoreVS"],
+                    "category": "Vector Stores",
+                    "description": "Search and retrieve documents from Document Store",
+                    "id": "documentStoreVS_0",
+                    "inputAnchors": [],
+                    "inputParams": [
+                        {
+                            "id": "documentStoreVS_0-input-selectedStore-asyncOptions",
+                            "label": "Select Store",
+                            "loadMethod": "listStores",
+                            "name": "selectedStore",
+                            "type": "asyncOptions"
+                        }
+                    ],
+                    "inputs": {
+                        "selectedStore": "54965d04-587b-4027-a3bc-784bb16ccec5"
+                    },
+                    "label": "Document Store (Vector)",
+                    "name": "documentStoreVS",
+                    "outputAnchors": [
+                        {
+                            "default": "retriever",
+                            "description": "",
+                            "label": "Output",
+                            "name": "output",
+                            "options": [
+                                {
+                                    "description": "",
+                                    "id": "documentStoreVS_0-output-retriever-BaseRetriever",
+                                    "label": "Retriever",
+                                    "name": "retriever",
+                                    "type": "BaseRetriever"
+                                },
+                                {
+                                    "description": "",
+                                    "id": "documentStoreVS_0-output-vectorStore-VectorStore",
+                                    "label": "Vector Store",
+                                    "name": "vectorStore",
+                                    "type": "VectorStore"
+                                }
+                            ],
+                            "type": "options"
+                        }
+                    ],
+                    "outputs": {
+                        "output": "retriever"
+                    },
+                    "selected": false,
+                    "type": "DocumentStoreVS",
+                    "version": 1
+                },
+                "dragging": false,
+                "height": 312,
+                "id": "documentStoreVS_0",
+                "position": {
+                    "x": 615.5965576450517,
+                    "y": 404.4304929412274
+                },
+                "positionAbsolute": {
+                    "x": 615.5965576450517,
+                    "y": 404.4304929412274
+                },
+                "selected": false,
+                "type": "customNode",
+                "width": 300
+            },
+            {
+                "data": {
+                    "baseClasses": ["RedisBackedChatMemory", "BaseChatMemory", "BaseMemory"],
+                    "category": "Memory",
+                    "description": "Summarizes the conversation and stores the memory in Redis server",
+                    "id": "RedisBackedChatMemory_0",
+                    "inputAnchors": [],
+                    "inputParams": [
+                        {
+                            "credentialNames": ["redisCacheApi", "redisCacheUrlApi"],
+                            "id": "RedisBackedChatMemory_0-input-credential-credential",
+                            "label": "Connect Credential",
+                            "name": "credential",
+                            "optional": true,
+                            "type": "credential"
+                        },
+                        {
+                            "additionalParams": true,
+                            "default": "",
+                            "description": "If not specified, a random id will be used. Learn <a target=\"_blank\" href=\"https://docs.flowiseai.com/memory/long-term-memory#ui-and-embedded-chat\">more</a>",
+                            "id": "RedisBackedChatMemory_0-input-sessionId-string",
+                            "label": "Session Id",
+                            "name": "sessionId",
+                            "optional": true,
+                            "type": "string"
+                        },
+                        {
+                            "additionalParams": true,
+                            "description": "Seconds till a session expires. If not specified, the session will never expire.",
+                            "id": "RedisBackedChatMemory_0-input-sessionTTL-number",
+                            "label": "Session Timeouts",
+                            "name": "sessionTTL",
+                            "optional": true,
+                            "type": "number"
+                        },
+                        {
+                            "additionalParams": true,
+                            "default": "chat_history",
+                            "id": "RedisBackedChatMemory_0-input-memoryKey-string",
+                            "label": "Memory Key",
+                            "name": "memoryKey",
+                            "type": "string"
+                        },
+                        {
+                            "additionalParams": true,
+                            "description": "Window of size k to surface the last k back-and-forth to use as memory.",
+                            "id": "RedisBackedChatMemory_0-input-windowSize-number",
+                            "label": "Window Size",
+                            "name": "windowSize",
+                            "optional": true,
+                            "type": "number"
+                        }
+                    ],
+                    "inputs": {
+                        "memoryKey": "chat_history",
+                        "sessionId": "",
+                        "sessionTTL": "",
+                        "windowSize": ""
+                    },
+                    "label": "Redis-Backed Chat Memory",
+                    "name": "RedisBackedChatMemory",
+                    "outputAnchors": [
+                        {
+                            "description": "Summarizes the conversation and stores the memory in Redis server",
+                            "id": "RedisBackedChatMemory_0-output-RedisBackedChatMemory-RedisBackedChatMemory|BaseChatMemory|BaseMemory",
+                            "label": "RedisBackedChatMemory",
+                            "name": "RedisBackedChatMemory",
+                            "type": "RedisBackedChatMemory | BaseChatMemory | BaseMemory"
+                        }
+                    ],
+                    "outputs": {},
+                    "selected": false,
+                    "type": "RedisBackedChatMemory",
+                    "version": 2
+                },
+                "dragging": false,
+                "height": 328,
+                "id": "RedisBackedChatMemory_0",
+                "position": {
+                    "x": 1038.4049886320943,
+                    "y": 840.0950706781928
+                },
+                "positionAbsolute": {
+                    "x": 1038.4049886320943,
+                    "y": 840.0950706781928
+                },
+                "selected": false,
+                "type": "customNode",
+                "width": 300
+            },
+            {
+                "data": {
+                    "baseClasses": ["GroqChat", "BaseChatModel", "BaseLanguageModel", "Runnable"],
+                    "category": "Chat Models",
+                    "description": "Wrapper around Groq API with LPU Inference Engine",
+                    "id": "groqChat_0",
+                    "inputAnchors": [
+                        {
+                            "id": "groqChat_0-input-cache-BaseCache",
+                            "label": "Cache",
+                            "name": "cache",
+                            "optional": true,
+                            "type": "BaseCache"
+                        }
+                    ],
+                    "inputParams": [
+                        {
+                            "credentialNames": ["groqApi"],
+                            "id": "groqChat_0-input-credential-credential",
+                            "label": "Connect Credential",
+                            "name": "credential",
+                            "optional": true,
+                            "type": "credential"
+                        },
+                        {
+                            "id": "groqChat_0-input-modelName-asyncOptions",
+                            "label": "Model Name",
+                            "loadMethod": "listModels",
+                            "name": "modelName",
+                            "placeholder": "llama3-70b-8192",
+                            "type": "asyncOptions"
+                        },
+                        {
+                            "default": 0.9,
+                            "id": "groqChat_0-input-temperature-number",
+                            "label": "Temperature",
+                            "name": "temperature",
+                            "optional": true,
+                            "step": 0.1,
+                            "type": "number"
+                        },
+                        {
+                            "default": true,
+                            "id": "groqChat_0-input-streaming-boolean",
+                            "label": "Streaming",
+                            "name": "streaming",
+                            "optional": true,
+                            "type": "boolean"
+                        }
+                    ],
+                    "inputs": {
+                        "cache": "",
+                        "modelName": "llama-3.3-70b-versatile",
+                        "streaming": true,
+                        "temperature": 0.9
+                    },
+                    "label": "GroqChat",
+                    "name": "groqChat",
+                    "outputAnchors": [
+                        {
+                            "description": "Wrapper around Groq API with LPU Inference Engine",
+                            "id": "groqChat_0-output-groqChat-GroqChat|BaseChatModel|BaseLanguageModel|Runnable",
+                            "label": "GroqChat",
+                            "name": "groqChat",
+                            "type": "GroqChat | BaseChatModel | BaseLanguageModel | Runnable"
+                        }
+                    ],
+                    "outputs": {},
+                    "selected": false,
+                    "type": "GroqChat",
+                    "version": 4
+                },
+                "dragging": false,
+                "height": 618,
+                "id": "groqChat_0",
+                "position": {
+                    "x": 1051.6944828669466,
+                    "y": 95.88339352645758
+                },
+                "positionAbsolute": {
+                    "x": 1051.6944828669466,
+                    "y": 95.88339352645758
+                },
+                "selected": false,
+                "type": "customNode",
+                "width": 300
+            }
+        ]
+    },
+    "speechToText": {
+        "assemblyAiTranscribe": {
+            "status": false
+        },
+        "localAISTT": {
+            "status": false
+        },
+        "openAIWhisper": {
+            "credentialId": "ea34d459-5735-41eb-9f43-173983c83311",
+            "status": true
+        }
+    }
+}

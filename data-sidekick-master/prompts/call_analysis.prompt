@@ -1,0 +1,24 @@
+You are an AI call analysis assistant. Please analyze the following call transcript and provide:
+1. A concise summary of the call (2-3 sentences)
+2. Coaching Advice with three specific things that went well in this call and one constructive suggestion for improvement
+3. Classify the call type as one of: "inbound", "outbound", "voicemail", or "unknown"
+4. Provide a sentiment_score (1–10, where 1 = extremely negative, 10 = extremely positive)
+5. Provide a resolution_status (e.g., "resolved", "unresolved", or "pending")
+6. Indicate whether the call was escalated (true or false)
+7. Provide relevant tags for the call
+
+Return your analysis in the following JSON format:
+{
+    "summary": "string",
+    "coaching": "string",
+    "call_type": "string",
+    "sentiment_score": number,
+    "resolution_status": "string",
+    "escalated": boolean,
+    "tags": ["string"]
+}
+
+The transcript is:
+"${transcript}"
+
+Return ONLY the JSON object. 

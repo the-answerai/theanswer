@@ -1,0 +1,45 @@
+---
+description: Helpful for rules about how to work with the backend server
+globs: src/**/**
+alwaysApply: false
+---
+# Backend Server Development
+
+## Structure
+- `src/routes/`: Contains Express route definitions (e.g., callRoutes.js, tagRoutes.js, ticketRoutes.js)
+- `src/controllers/`: Contains business logic for API endpoints (e.g., callController.js, tagController.js)
+- `src/utils/`: Shared utility functions, including WebSocket handlers
+- `src/middleware/`: Express middleware like error handling
+- `src/config/`: Configuration including Supabase database connections
+
+## Best Practices
+- Follow RESTful API design patterns for route organization
+- Keep route files concise, focusing on URL paths and HTTP methods
+- Implement all business logic in controller files
+- Each controller function should handle one specific API endpoint
+- Use try/catch blocks with proper error handling in all async controllers
+- Use Supabase query builder for database operations
+- Document API endpoints with JSDoc comments
+
+## WebSocket Implementation
+- WebSocket server is initialized in server.js
+- Socket handling logic is in utils/websocketHandler.js
+- Use for real-time communication between client and server
+- Follow established patterns for message formats
+
+## Error Handling
+- Use the centralized errorHandler middleware for consistent error responses
+- Catch and handle specific error types (PostgrestError, AbortError, etc.)
+- Provide appropriate HTTP status codes and error messages
+- Limit error details in production environment
+
+## Database Interaction
+- Use Supabase client from config/db.js for all database operations
+- Structure queries for readability and performance
+- Implement proper filtering and pagination
+- Handle database errors consistently
+
+## Testing and Debugging
+- Utilize comprehensive logging for troubleshooting
+- Test all API endpoints thoroughly before deployment
+- Monitor WebSocket connections for issues
