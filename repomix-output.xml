@@ -1,0 +1,2845 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+AnalyzerHomePage.jsx
+CallListPage.jsx
+ChatListPage.jsx
+DashboardPage.jsx
+FAQPage.jsx
+OutboundCallsPage.jsx
+ReportDetail.jsx
+ReportsPage.jsx
+ResearchViewPage.jsx
+TagAnalysisPage.jsx
+TicketListPage.jsx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="AnalyzerHomePage.jsx">
+import { useState, useEffect, useCallback } from 'react'
+import {
+    Box,
+    Typography,
+    Button,
+    Card,
+    CardContent,
+    CardActions,
+    Grid,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Divider,
+    IconButton,
+    Tooltip,
+    CircularProgress,
+    Alert
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+
+const AnalyzerHomePage = () => {
+    const navigate = useNavigate()
+    const [researchViews, setResearchViews] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [openDialog, setOpenDialog] = useState(false)
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+    const [selectedView, setSelectedView] = useState(null)
+    const [formData, setFormData] = useState({
+        name: '',
+        description: ''
+    })
+
+    // Fetch research views
+    const fetchResearchViews = useCallback(async () => {
+        try {
+            setLoading(true)
+            setError(null)
+            const response = await axios.get('/api/analyzer/research-views')
+            setResearchViews(response.data.data || [])
+        } catch (err) {
+            console.error('Error fetching research views:', err)
+            setError('Failed to load research views. Please try again.')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchResearchViews()
+    }, [fetchResearchViews])
+
+    // Handle opening the create/edit dialog
+    const handleOpenDialog = (view = null) => {
+        if (view) {
+            setFormData({
+                name: view.name,
+                description: view.description || ''
+            })
+            setSelectedView(view)
+        } else {
+            setFormData({
+                name: '',
+                description: ''
+            })
+            setSelectedView(null)
+        }
+        setOpenDialog(true)
+    }
+
+    // Handle dialog close
+    const handleCloseDialog = () => {
+        setOpenDialog(false)
+        setSelectedView(null)
+    }
+
+    // Handle form input changes
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        setFormData({
+            ...formData,
+            [name]: value
+        })
+    }
+
+    // Save research view (create or update)
+    const handleSaveResearchView = async () => {
+        try {
+            if (!formData.name.trim()) {
+                setError('Research view name is required')
+                return
+            }
+
+            if (selectedView) {
+                // Update existing view
+                await axios.put(`/api/analyzer/research-views/${selectedView.id}`, formData)
+            } else {
+                // Create new view
+                const response = await axios.post('/api/analyzer/research-views', formData)
+                // Navigate to the newly created view
+                if (response.data?.data?.id) {
+                    handleCloseDialog()
+                    navigate(`/analyzer/research-views/${response.data.data.id}`)
+                    return // Exit early since we're navigating away
+                }
+            }
+
+            // Only reach here if updating or if creation didn't result in navigation
+            fetchResearchViews()
+            handleCloseDialog()
+        } catch (err) {
+            console.error('Error saving research view:', err)
+            setError(`Failed to ${selectedView ? 'update' : 'create'} research view. Please try again.`)
+        }
+    }
+
+    // Delete research view confirmation
+    const handleOpenDeleteDialog = (view) => {
+        setSelectedView(view)
+        setOpenDeleteDialog(true)
+    }
+
+    // Handle delete dialog close
+    const handleCloseDeleteDialog = () => {
+        setOpenDeleteDialog(false)
+        setSelectedView(null)
+    }
+
+    // Delete research view
+    const handleDeleteResearchView = async () => {
+        try {
+            await axios.delete(`/api/analyzer/research-views/${selectedView.id}`)
+            fetchResearchViews()
+            handleCloseDeleteDialog()
+        } catch (err) {
+            console.error('Error deleting research view:', err)
+            setError('Failed to delete research view. Please try again.')
+        }
+    }
+
+    // Navigate to research view details
+    const handleViewResearchView = (view) => {
+        navigate(`/analyzer/research-views/${view.id}`)
+    }
+
+    return (
+        <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
+            <Box display='flex' justifyContent='space-between' alignItems='center' mb={3}>
+                <Typography variant='h4' component='h1'>
+                    Research Views
+                </Typography>
+            </Box>
+
+            {error && (
+                <Alert severity='error' sx={{ mb: 3 }} onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+
+            {loading ? (
+                <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
+                    <CircularProgress />
+                </Box>
+            ) : researchViews.length === 0 ? (
+                <Card sx={{ p: 3, mb: 3, backgroundColor: '#f5f5f5' }}>
+                    <Box display='flex' flexDirection='column' alignItems='center' textAlign='center' py={4}>
+                        <Typography variant='h6' mb={2}>
+                            No research views yet
+                        </Typography>
+                        <Typography variant='body1' color='textSecondary' mb={3}>
+                            Create your first research view to start analyzing data sources
+                        </Typography>
+                        <Button variant='contained' startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+                            Create Research View
+                        </Button>
+                    </Box>
+                </Card>
+            ) : (
+                <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={4}>
+                        <Card
+                            sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                border: '1px dashed rgba(0, 0, 0, 0.12)',
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                    borderColor: 'primary.main'
+                                }
+                            }}
+                            onClick={() => handleOpenDialog()}
+                        >
+                            <Box display='flex' flexDirection='column' alignItems='center' justifyContent='center' p={4} textAlign='center'>
+                                <IconButton
+                                    color='primary'
+                                    sx={{
+                                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                        width: 56,
+                                        height: 56,
+                                        mb: 2,
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                                        }
+                                    }}
+                                >
+                                    <AddIcon sx={{ fontSize: 32 }} />
+                                </IconButton>
+                                <Typography variant='h6' color='primary.main'>
+                                    New Research View
+                                </Typography>
+                            </Box>
+                        </Card>
+                    </Grid>
+
+                    {researchViews.map((view) => (
+                        <Grid item xs={12} sm={6} md={4} key={view.id}>
+                            <Card
+                                sx={{
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        boxShadow: 3,
+                                        transform: 'translateY(-2px)'
+                                    }
+                                }}
+                                onClick={() => handleViewResearchView(view)}
+                            >
+                                <CardContent sx={{ flexGrow: 1 }}>
+                                    <Typography variant='h6' component='h2' noWrap>
+                                        {view.name}
+                                    </Typography>
+
+                                    <Box mt={1} mb={2}>
+                                        <Typography
+                                            variant='body2'
+                                            color='textSecondary'
+                                            sx={{
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden',
+                                                height: '40px'
+                                            }}
+                                        >
+                                            {view.description || 'No description provided'}
+                                        </Typography>
+                                    </Box>
+
+                                    <Divider sx={{ my: 1 }} />
+
+                                    <Grid container spacing={2} mt={1}>
+                                        <Grid item xs={6}>
+                                            <Typography variant='caption' color='textSecondary'>
+                                                Data Sources
+                                            </Typography>
+                                            <Typography variant='body2'>{view.data_sources?.length || 0}</Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant='caption' color='textSecondary'>
+                                                Documents
+                                            </Typography>
+                                            <Typography variant='body2'>{view.document_count || 0}</Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant='caption' color='textSecondary'>
+                                                Reports
+                                            </Typography>
+                                            <Typography variant='body2'>{view.analyzer_reports?.length || 0}</Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant='caption' color='textSecondary'>
+                                                Created
+                                            </Typography>
+                                            <Typography variant='body2'>{new Date(view.created_at).toLocaleDateString()}</Typography>
+                                        </Grid>
+                                    </Grid>
+                                </CardContent>
+                                <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1 }}>
+                                    <Box>
+                                        <Tooltip title='Edit'>
+                                            <IconButton
+                                                size='small'
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleOpenDialog(view)
+                                                }}
+                                            >
+                                                <EditIcon fontSize='small' />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title='Delete'>
+                                            <IconButton
+                                                size='small'
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleOpenDeleteDialog(view)
+                                                }}
+                                            >
+                                                <DeleteIcon fontSize='small' />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Box>
+                                </CardActions>
+                            </Card>
+                        </Grid>
+                    ))}
+                </Grid>
+            )}
+
+            {/* Create/Edit Dialog */}
+            <Dialog open={openDialog} onClose={handleCloseDialog}>
+                <DialogTitle>{selectedView ? 'Edit Research View' : 'Create Research View'}</DialogTitle>
+                <DialogContent sx={{ width: 500, maxWidth: '100%' }}>
+                    <Box mt={1}>
+                        <TextField
+                            autoFocus
+                            margin='dense'
+                            name='name'
+                            label='Name'
+                            fullWidth
+                            variant='outlined'
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <TextField
+                            margin='dense'
+                            name='description'
+                            label='Description'
+                            fullWidth
+                            variant='outlined'
+                            value={formData.description}
+                            onChange={handleInputChange}
+                            multiline
+                            rows={4}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button onClick={handleSaveResearchView} variant='contained'>
+                        {selectedView ? 'Update' : 'Create'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
+                <DialogTitle>Delete Research View</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete &quot;{selectedView?.name}&quot;? This action cannot be undone and will delete all
+                        associated data sources, documents, and reports.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+                    <Button onClick={handleDeleteResearchView} variant='contained' color='error'>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    )
+}
+
+export default AnalyzerHomePage
+</file>
+
+<file path="CallListPage.jsx">
+import { memo } from 'react'
+import { Box } from '@mui/material'
+import CallList from '../components/calls/CallList'
+
+const CallListPage = memo(function CallListPage() {
+    return (
+        <Box>
+            <CallList />
+        </Box>
+    )
+})
+
+export default CallListPage
+</file>
+
+<file path="ChatListPage.jsx">
+import { memo } from 'react'
+import { Box } from '@mui/material'
+import ChatManager from '../components/chats/ChatManager'
+
+const ChatListPage = memo(function ChatListPage() {
+    return (
+        <Box>
+            <ChatManager />
+        </Box>
+    )
+})
+
+export default ChatListPage
+</file>
+
+<file path="DashboardPage.jsx">
+import Dashboard from '../components/Dashboard/Dashboard'
+
+function DashboardPage() {
+    return <Dashboard />
+}
+
+export default DashboardPage
+</file>
+
+<file path="FAQPage.jsx">
+import { useState, useEffect, useRef, useCallback } from 'react'
+import {
+    Box,
+    Typography,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Container,
+    CircularProgress,
+    Chip,
+    Alert,
+    Grid,
+    Paper,
+    IconButton
+} from '@mui/material'
+import PropTypes from 'prop-types'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import EditIcon from '@mui/icons-material/Edit'
+import { createClient } from '@supabase/supabase-js'
+import { getApiUrl } from '../config/api'
+import { getRecordingFilename } from '../utils/recordingUrls'
+import FAQEditDialog from '../components/FAQEditDialog'
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+function AudioPlayer({ url, transcript }) {
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [error, setError] = useState(null)
+    const [audioUrl, setAudioUrl] = useState(null)
+    const audioRef = useRef(null)
+    const cleanFilename = getRecordingFilename(url)
+
+    // Fetch signed URL for the audio file
+    useEffect(() => {
+        async function fetchAudioUrl() {
+            try {
+                const { data, error: signedUrlError } = await supabase.storage.from('call-recordings').createSignedUrl(cleanFilename, 3600) // 1 hour expiry
+
+                if (signedUrlError) {
+                    throw signedUrlError
+                }
+
+                console.log('Audio URL:', {
+                    original: url,
+                    cleanFilename,
+                    signedUrl: data?.signedUrl
+                })
+
+                setAudioUrl(data?.signedUrl)
+            } catch (err) {
+                console.error('Error getting signed URL:', err)
+                setError('Failed to load audio file. Please try again later.')
+            }
+        }
+
+        if (cleanFilename) {
+            fetchAudioUrl()
+        }
+    }, [url, cleanFilename])
+
+    // Handle audio loading errors
+    const handleError = (e) => {
+        console.error('Audio loading error:', e)
+        setError('Failed to load audio file. Please try again later.')
+    }
+
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.src = ''
+            }
+        }
+    }, [])
+
+    return (
+        <Box sx={{ mt: 2 }}>
+            <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+                Audio Transcript
+            </Typography>
+            {audioUrl ? (
+                <audio
+                    controls
+                    style={{ width: '100%', marginBottom: '1rem' }}
+                    src={audioUrl}
+                    ref={audioRef}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={() => setIsPlaying(false)}
+                    onError={handleError}
+                    crossOrigin='anonymous'
+                    preload='metadata'
+                >
+                    <track kind='captions' />
+                    Your browser does not support the audio element.
+                </audio>
+            ) : (
+                !error && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress size={24} />
+                    </Box>
+                )
+            )}
+
+            {error && (
+                <Alert severity='error' sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+            {isPlaying && transcript && (
+                <Paper
+                    sx={(theme) => ({
+                        p: 2,
+                        mt: 2,
+                        bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50',
+                        maxHeight: '400px',
+                        overflow: 'auto',
+                        ...(theme.palette.mode === 'dark' && {
+                            border: '1px solid #24C3A1',
+                            boxShadow: '0 0 5px #24C3A1'
+                        })
+                    })}
+                >
+                    <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+                        Following Along:
+                    </Typography>
+                    <Typography variant='body1' component='div'>
+                        {transcript}
+                    </Typography>
+                </Paper>
+            )}
+        </Box>
+    )
+}
+
+AudioPlayer.propTypes = {
+    url: PropTypes.string.isRequired,
+    transcript: PropTypes.string
+}
+
+function FAQPage() {
+    const [faqs, setFaqs] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [paginationModel, setPaginationModel] = useState({
+        page: 0,
+        pageSize: 10
+    })
+    const [totalRows, setTotalRows] = useState(0)
+    const [tagCategories, setTagCategories] = useState({})
+    const [selectedTag, setSelectedTag] = useState(null)
+    const [tagCounts, setTagCounts] = useState({})
+    const [selectedStatus, setSelectedStatus] = useState('approved')
+    const [statusCounts, setStatusCounts] = useState({})
+    const [editDialogOpen, setEditDialogOpen] = useState(false)
+    const [selectedFaq, setSelectedFaq] = useState(null)
+
+    // Status options with colors
+    const statusOptions = {
+        new: { label: 'New', color: '#2196f3' },
+        approved: { label: 'Approved', color: '#4caf50' },
+        ignored: { label: 'Ignored', color: '#f44336' }
+    }
+
+    // Fetch status counts
+    const fetchStatusCounts = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.from('faqs').select('status')
+
+            if (error) throw error
+
+            const counts = data.reduce((acc, faq) => {
+                acc[faq.status] = (acc[faq.status] || 0) + 1
+                return acc
+            }, {})
+
+            setStatusCounts(counts)
+        } catch (err) {
+            console.error('Error fetching status counts:', err)
+        }
+    }, [])
+
+    // Initial load of status counts
+    useEffect(() => {
+        fetchStatusCounts()
+    }, [fetchStatusCounts])
+
+    // Fetch tag categories
+    useEffect(() => {
+        async function fetchTagCategories() {
+            try {
+                const response = await fetch(getApiUrl('/api/tags'))
+                const data = await response.json()
+                setTagCategories(data)
+            } catch (err) {
+                console.error('Error fetching tag categories:', err)
+            }
+        }
+
+        fetchTagCategories()
+    }, [])
+
+    // Fetch tag counts
+    const fetchTagCounts = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.from('faqs').select('original_tags')
+
+            if (error) throw error
+
+            const counts = {}
+            for (const faq of data) {
+                if (faq.original_tags) {
+                    for (const tag of faq.original_tags) {
+                        counts[tag] = (counts[tag] || 0) + 1
+                    }
+                }
+            }
+            setTagCounts(counts)
+        } catch (err) {
+            console.error('Error fetching tag counts:', err)
+        }
+    }, [])
+
+    // Initial load of tag counts
+    useEffect(() => {
+        fetchTagCounts()
+    }, [fetchTagCounts])
+
+    useEffect(() => {
+        async function fetchFaqs() {
+            try {
+                console.log('Fetching FAQs...')
+                let query = supabase
+                    .from('faqs')
+                    .select(
+                        `
+            id,
+            question,
+            answer,
+            reasoning,
+            tags,
+            transcript_id,
+            recording_url,
+            original_tags,
+            created_at,
+            updated_at,
+            status,
+            call_logs:transcript_id (
+              TRANSCRIPTION
+            ),
+            internal_notes
+          `,
+                        { count: 'exact' }
+                    )
+                    .order('created_at', { ascending: false })
+                    .range(paginationModel.page * paginationModel.pageSize, (paginationModel.page + 1) * paginationModel.pageSize - 1)
+
+                // Apply status filter
+                if (selectedStatus) {
+                    query = query.eq('status', selectedStatus)
+                }
+
+                // Apply tag filter if selected
+                if (selectedTag) {
+                    query = query.contains('original_tags', [selectedTag])
+                }
+
+                const { data, error, count } = await query
+
+                if (error) {
+                    console.error('Supabase error:', error)
+                    throw error
+                }
+
+                const transformedData =
+                    data?.map((faq) => ({
+                        ...faq,
+                        transcript: faq.call_logs?.TRANSCRIPTION || null
+                    })) || []
+
+                console.log('FAQs fetched:', transformedData)
+                setFaqs(transformedData)
+                setTotalRows(count || 0)
+            } catch (err) {
+                console.error('Error fetching FAQs:', err)
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchFaqs()
+    }, [paginationModel, selectedTag, selectedStatus])
+
+    const handleTagSelect = (tag) => {
+        setSelectedTag(selectedTag === tag ? null : tag)
+        setPaginationModel((prev) => ({ ...prev, page: 0 }))
+    }
+
+    const handleEditClick = (faq, event) => {
+        event.stopPropagation() // Prevent accordion from toggling
+        setSelectedFaq(faq)
+        setEditDialogOpen(true)
+    }
+
+    const handleEditClose = () => {
+        setSelectedFaq(null)
+        setEditDialogOpen(false)
+    }
+
+    const handleEditSave = async (formData) => {
+        try {
+            const { error: updateError } = await supabase
+                .from('faqs')
+                .update({
+                    question: formData.question,
+                    reasoning: formData.reasoning,
+                    internal_notes: formData.internal_notes,
+                    status: formData.status,
+                    original_tags: formData.tags,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', selectedFaq.id)
+
+            if (updateError) throw updateError
+
+            // Update local state
+            setFaqs((prevFaqs) =>
+                prevFaqs.map((faq) =>
+                    faq.id === selectedFaq.id
+                        ? {
+                              ...faq,
+                              question: formData.question,
+                              reasoning: formData.reasoning,
+                              internal_notes: formData.internal_notes,
+                              status: formData.status,
+                              original_tags: formData.tags
+                          }
+                        : faq
+                )
+            )
+
+            // Refresh status counts
+            await fetchStatusCounts()
+
+            // Refresh tag counts if tags were updated
+            if (formData.tags !== selectedFaq.original_tags) {
+                await fetchTagCounts()
+            }
+        } catch (err) {
+            console.error('Error updating FAQ:', err)
+            throw new Error('Failed to update FAQ. Please try again.')
+        }
+    }
+
+    if (loading) {
+        return (
+            <Container maxWidth='lg'>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <CircularProgress />
+                </Box>
+            </Container>
+        )
+    }
+
+    if (error) {
+        return (
+            <Container maxWidth='lg'>
+                <Alert severity='error' sx={{ mt: 4 }}>
+                    Error loading FAQs: {error}
+                </Alert>
+            </Container>
+        )
+    }
+
+    return (
+        <Container maxWidth='lg'>
+            <Box sx={{ mb: 4 }}>
+                <Typography variant='h4' component='h1' gutterBottom>
+                    Frequently Asked Questions
+                </Typography>
+                <Typography variant='body1' color='text.secondary' gutterBottom>
+                    Common questions and solutions from our support interactions
+                </Typography>
+            </Box>
+
+            <Grid container spacing={3}>
+                {/* Left sidebar with filters */}
+                <Grid item xs={12} md={3}>
+                    <Paper sx={{ p: 2, mb: { xs: 2, md: 0 } }}>
+                        {/* Status Filter Section */}
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant='h6' gutterBottom>
+                                FAQ Status
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                {Object.entries(statusOptions).map(([status, { label, color }]) => (
+                                    <Chip
+                                        key={status}
+                                        label={`${label} (${statusCounts[status] || 0})`}
+                                        onClick={() => {
+                                            setSelectedStatus(selectedStatus === status ? null : status)
+                                            setPaginationModel((prev) => ({ ...prev, page: 0 }))
+                                        }}
+                                        sx={{
+                                            bgcolor: selectedStatus === status ? `${color}22` : 'transparent',
+                                            border: `1px solid ${color}`,
+                                            color: selectedStatus === status ? color : 'text.primary',
+                                            '&:hover': {
+                                                bgcolor: `${color}33`
+                                            },
+                                            width: '100%',
+                                            justifyContent: 'flex-start'
+                                        }}
+                                        variant={selectedStatus === status ? 'filled' : 'outlined'}
+                                    />
+                                ))}
+                            </Box>
+                        </Box>
+
+                        {/* Issue Type Filter Section */}
+                        <Box>
+                            <Typography variant='h6' gutterBottom>
+                                Issue Type
+                            </Typography>
+                            {Object.entries(tagCategories)
+                                .filter(([key]) => key === 'issue-type')
+                                .map(([categoryKey, category]) => (
+                                    <Box key={categoryKey}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                            {Object.entries(category.subcategories || {}).map(([subKey, subCategory]) => (
+                                                <Chip
+                                                    key={subKey}
+                                                    label={`${subCategory.label} (${tagCounts[subKey] || 0})`}
+                                                    onClick={() => handleTagSelect(subKey)}
+                                                    sx={{
+                                                        bgcolor: selectedTag === subKey ? `${subCategory.color}22` : 'transparent',
+                                                        border: `1px solid ${subCategory.color}`,
+                                                        color: selectedTag === subKey ? subCategory.color : 'text.primary',
+                                                        '&:hover': {
+                                                            bgcolor: `${subCategory.color}33`
+                                                        },
+                                                        width: '100%',
+                                                        justifyContent: 'flex-start'
+                                                    }}
+                                                    variant={selectedTag === subKey ? 'filled' : 'outlined'}
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                ))}
+                        </Box>
+                    </Paper>
+                </Grid>
+
+                {/* Main content */}
+                <Grid item xs={12} md={9}>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant='body2' color='text.secondary'>
+                            Showing {paginationModel.page * paginationModel.pageSize + 1} -{' '}
+                            {Math.min((paginationModel.page + 1) * paginationModel.pageSize, totalRows)} of {totalRows} FAQs
+                        </Typography>
+                    </Box>
+
+                    <Box>
+                        {faqs.map((faq) => (
+                            <Accordion key={faq.id}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls={`faq-content-${faq.id}`}
+                                    id={`faq-header-${faq.id}`}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'flex-start',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant='h6'>{faq.question}</Typography>
+                                            <Box sx={{ mt: 1 }}>
+                                                {faq.tags?.map((tag) => (
+                                                    <Chip key={`${faq.id}-${tag}`} label={tag} size='small' sx={{ mr: 1, mb: 1 }} />
+                                                ))}
+                                            </Box>
+                                        </Box>
+                                        <IconButton onClick={(e) => handleEditClick(faq, e)} size='small' sx={{ ml: 1, mt: -0.5 }}>
+                                            <EditIcon />
+                                        </IconButton>
+                                    </Box>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Typography sx={{ whiteSpace: 'pre-wrap' }}>{faq.answer}</Typography>
+                                    {faq.reasoning && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant='subtitle2' color='text.secondary'>
+                                                Additional Context:
+                                            </Typography>
+                                            <Typography variant='body2' color='text.secondary'>
+                                                {faq.reasoning}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {faq.internal_notes && (
+                                        <Box
+                                            sx={{
+                                                mt: 2,
+                                                p: 2,
+                                                bgcolor: (theme) =>
+                                                    theme.palette.mode === 'dark' ? 'rgba(36, 195, 161, 0.1)' : 'rgba(25, 118, 210, 0.05)',
+                                                borderRadius: 1,
+                                                border: '1px solid',
+                                                borderColor: (theme) => (theme.palette.mode === 'dark' ? '#24C3A1' : '#1976d2')
+                                            }}
+                                        >
+                                            <Typography variant='subtitle2' color='primary' gutterBottom>
+                                                Internal Notes:
+                                            </Typography>
+                                            <Typography variant='body2' color='text.primary' sx={{ whiteSpace: 'pre-wrap' }}>
+                                                {faq.internal_notes}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {faq.recording_url && <AudioPlayer url={faq.recording_url} transcript={faq.transcript} />}
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+
+                        {faqs.length === 0 && <Alert severity='info'>No FAQs available at the moment.</Alert>}
+                    </Box>
+
+                    {/* Pagination controls */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            mt: 3,
+                            gap: 2
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <IconButton
+                                onClick={() =>
+                                    setPaginationModel((prev) => ({
+                                        ...prev,
+                                        page: Math.max(0, prev.page - 1)
+                                    }))
+                                }
+                                disabled={paginationModel.page === 0}
+                            >
+                                <KeyboardArrowUpIcon />
+                            </IconButton>
+                            <Typography variant='body2' color='text.secondary'>
+                                Page {paginationModel.page + 1} of {Math.ceil(totalRows / paginationModel.pageSize)}
+                            </Typography>
+                            <IconButton
+                                onClick={() =>
+                                    setPaginationModel((prev) => ({
+                                        ...prev,
+                                        page: Math.min(Math.ceil(totalRows / paginationModel.pageSize) - 1, prev.page + 1)
+                                    }))
+                                }
+                                disabled={paginationModel.page >= Math.ceil(totalRows / paginationModel.pageSize) - 1}
+                            >
+                                <KeyboardArrowDownIcon />
+                            </IconButton>
+                        </Box>
+                    </Box>
+                </Grid>
+            </Grid>
+
+            {/* Add the FAQEditDialog */}
+            <FAQEditDialog
+                open={editDialogOpen}
+                onClose={handleEditClose}
+                faq={selectedFaq}
+                tagCategories={tagCategories}
+                onSave={handleEditSave}
+            />
+        </Container>
+    )
+}
+
+export default FAQPage
+</file>
+
+<file path="OutboundCallsPage.jsx">
+import OutboundCalls from '../components/calls/OutboundCalls'
+
+function OutboundCallsPage() {
+    return <OutboundCalls />
+}
+
+export default OutboundCallsPage
+</file>
+
+<file path="ReportDetail.jsx">
+import { Box, Typography, Paper, CircularProgress, IconButton, Grid, List, ListItem, ListItemText, Chip } from '@mui/material'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { MDXEditor } from '@mdxeditor/editor'
+import { getApiUrl } from '../config/api'
+import CallPanel from '../components/calls/CallPanel'
+import { useTheme } from '../context/ThemeContext'
+
+// Import all the necessary plugins
+import {
+    headingsPlugin,
+    listsPlugin,
+    quotePlugin,
+    thematicBreakPlugin,
+    markdownShortcutPlugin,
+    toolbarPlugin,
+    UndoRedo,
+    BoldItalicUnderlineToggles,
+    BlockTypeSelect,
+    CreateLink,
+    InsertImage,
+    InsertTable,
+    InsertThematicBreak,
+    ListsToggle,
+    imagePlugin,
+    tablePlugin,
+    linkPlugin,
+    linkDialogPlugin,
+    frontmatterPlugin,
+    codeBlockPlugin,
+    codeMirrorPlugin
+} from '@mdxeditor/editor'
+
+// Import the styles
+import '@mdxeditor/editor/style.css'
+
+function ReportDetail() {
+    const { id } = useParams()
+    const navigate = useNavigate()
+    const [report, setReport] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [localContent, setLocalContent] = useState('')
+    const [hasContentChanged, setHasContentChanged] = useState(false)
+    const [reportCalls, setReportCalls] = useState([])
+    const [selectedCall, setSelectedCall] = useState(null)
+    const [tagCategories, setTagCategories] = useState({})
+    const { mode } = useTheme()
+
+    // Fetch report data and associated calls
+    useEffect(() => {
+        const fetchReportAndCalls = async () => {
+            try {
+                const response = await fetch(getApiUrl(`api/reports/${id}`))
+                const { data } = await response.json()
+                console.log('Report data:', data)
+                setReport(data)
+                setLocalContent(data.content || '')
+                setHasContentChanged(false)
+
+                // Transform documents_analyzed into call format
+                if (data.documents_analyzed?.length) {
+                    console.log('Documents analyzed:', data.documents_analyzed)
+                    const calls = data.documents_analyzed
+                        .filter((doc) => doc.type === 'call_log')
+                        .map((doc) => ({
+                            ...doc.data,
+                            RECORDING_URL: doc.documentId,
+                            analysis: {
+                                summary: doc.data.summary,
+                                coaching: doc.data.coaching
+                            }
+                        }))
+
+                    console.log('Transformed calls:', calls)
+                    setReportCalls(calls)
+
+                    // If we need transcripts, fetch them separately
+                    if (calls.length) {
+                        console.log(
+                            'Fetching transcripts for calls:',
+                            calls.map((c) => c.RECORDING_URL)
+                        )
+                        const callsResponse = await fetch(
+                            getApiUrl(
+                                `api/calls?recording_urls=${JSON.stringify(
+                                    calls.map((c) => c.RECORDING_URL)
+                                )}&fields=TRANSCRIPTION,WORD_TIMESTAMPS`
+                            )
+                        )
+                        const callsData = await callsResponse.json()
+                        console.log('Transcript data:', callsData)
+
+                        // Merge transcription data with existing call data
+                        const mergedCalls = calls.map((call) => {
+                            const transcriptData = callsData.calls.find((c) => c.RECORDING_URL === call.RECORDING_URL)
+                            return {
+                                ...call,
+                                TRANSCRIPTION: transcriptData?.TRANSCRIPTION,
+                                WORD_TIMESTAMPS: transcriptData?.WORD_TIMESTAMPS
+                            }
+                        })
+
+                        setReportCalls(mergedCalls)
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching report:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchReportAndCalls()
+    }, [id])
+
+    // Fetch tag categories
+    useEffect(() => {
+        const fetchTagCategories = async () => {
+            try {
+                const response = await fetch(getApiUrl('api/tags'))
+                const data = await response.json()
+                setTagCategories(data)
+            } catch (error) {
+                console.error('Error fetching tag categories:', error)
+            }
+        }
+
+        fetchTagCategories()
+    }, [])
+
+    const handleContentChange = (content) => {
+        setLocalContent(content)
+        setHasContentChanged(true)
+    }
+
+    const handleCallClick = (call) => {
+        setSelectedCall(call)
+    }
+
+    // Move handleSaveContent into useCallback to fix the dependency issue
+    const handleSaveContent = useCallback(async () => {
+        if (!hasContentChanged || !report) return
+
+        try {
+            const response = await fetch(getApiUrl(`api/reports/${report.id}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: report.name,
+                    content: localContent
+                })
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to update report content')
+            }
+
+            const { data } = await response.json()
+            setReport((prev) => ({
+                ...prev,
+                content: data.content,
+                name: data.name
+            }))
+            setHasContentChanged(false)
+        } catch (error) {
+            console.error('Error updating report content:', error)
+            alert(`Failed to update report content: ${error.message}`)
+        }
+    }, [hasContentChanged, report, localContent])
+
+    // Add auto-save effect
+    useEffect(() => {
+        if (hasContentChanged && report) {
+            const timeoutId = setTimeout(() => {
+                handleSaveContent()
+            }, 1000) // Auto-save after 1 second of no changes
+
+            return () => clearTimeout(timeoutId)
+        }
+    }, [hasContentChanged, report, handleSaveContent])
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <CircularProgress />
+            </Box>
+        )
+    }
+
+    if (!report) {
+        return (
+            <Box sx={{ mt: 4 }}>
+                <Typography variant='h5' color='error'>
+                    Report not found
+                </Typography>
+            </Box>
+        )
+    }
+
+    return (
+        <Box sx={{ height: 'calc(100vh - 100px)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+                <IconButton onClick={() => navigate('/reports')} sx={{ color: mode === 'dark' ? '#ffffff' : 'inherit' }}>
+                    <ArrowBackIcon />
+                </IconButton>
+                <Typography variant='h4' component='h1' color={mode === 'dark' ? '#ffffff' : 'inherit'}>
+                    {report.name}
+                </Typography>
+            </Box>
+
+            <Grid container spacing={2} sx={{ height: 'calc(100% - 60px)' }}>
+                {/* Left side - Calls List */}
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ height: '100%', overflow: 'auto', p: 2 }}>
+                        <Typography variant='h6' gutterBottom color={mode === 'dark' ? '#ffffff' : 'inherit'}>
+                            Calls in Report
+                        </Typography>
+                        <List>
+                            {reportCalls.map((call) => (
+                                <ListItem
+                                    key={call.RECORDING_URL}
+                                    onClick={() => handleCallClick(call)}
+                                    sx={{
+                                        '& .MuiListItemText-primary': {
+                                            color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                        },
+                                        '& .MuiListItemText-secondary': {
+                                            color: mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'inherit'
+                                        },
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <ListItemText
+                                        primary={`${call.EMPLOYEE_NAME} - ${call.CALLER_NAME}`}
+                                        secondary={
+                                            <Box
+                                                component='span'
+                                                sx={{
+                                                    display: 'flex',
+                                                    gap: 1,
+                                                    flexWrap: 'wrap',
+                                                    mt: 0.5
+                                                }}
+                                            >
+                                                {call.CALL_TYPE ? (
+                                                    <Chip
+                                                        size='small'
+                                                        label={call.CALL_TYPE}
+                                                        color='primary'
+                                                        variant='outlined'
+                                                        sx={{
+                                                            backgroundColor: mode === 'dark' ? 'transparent' : 'inherit',
+                                                            color: mode === 'dark' ? '#24C3A1' : 'inherit',
+                                                            borderColor: mode === 'dark' ? '#24C3A1' : 'inherit'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Chip
+                                                        size='small'
+                                                        label={'unknown'}
+                                                        color='primary'
+                                                        variant='outlined'
+                                                        sx={{
+                                                            backgroundColor: mode === 'dark' ? 'transparent' : 'inherit',
+                                                            color: mode === 'dark' ? '#24C3A1' : 'inherit',
+                                                            borderColor: mode === 'dark' ? '#24C3A1' : 'inherit'
+                                                        }}
+                                                    />
+                                                )}
+                                                <Chip
+                                                    size='small'
+                                                    label={`${call.CALL_DURATION}s`}
+                                                    color='secondary'
+                                                    variant='outlined'
+                                                    sx={{
+                                                        backgroundColor: mode === 'dark' ? 'transparent' : 'inherit',
+                                                        color: mode === 'dark' ? '#ff9800' : 'inherit',
+                                                        borderColor: mode === 'dark' ? '#ff9800' : 'inherit'
+                                                    }}
+                                                />
+                                            </Box>
+                                        }
+                                    />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                </Grid>
+
+                {/* Right side - Report Editor */}
+                <Grid item xs={12} md={8}>
+                    <Paper
+                        sx={{
+                            height: '100%',
+                            p: 2,
+                            overflow: 'auto',
+                            backgroundColor: mode === 'dark' ? '#121212' : '#ffffff',
+                            '& .mdxeditor-toolbar': {
+                                position: 'sticky',
+                                top: 0,
+                                zIndex: 10,
+                                backgroundColor: mode === 'dark' ? '#1e1e1e' : 'background.paper',
+                                borderBottom: '1px solid',
+                                borderColor: mode === 'dark' ? '#24C3A1' : 'divider',
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                padding: '8px 4px',
+                                boxShadow: mode === 'dark' ? '0 2px 4px rgba(0, 0, 0, 0.3)' : 'none',
+                                marginBottom: 2
+                            },
+                            "& .mdxeditor-toolbar [role='combobox'], & .mdxeditor-toolbar select, & .mdxeditor-toolbar [data-block-type-select]":
+                                {
+                                    backgroundColor: mode === 'dark' ? '#2d2d2d' : 'inherit',
+                                    color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                    border: mode === 'dark' ? '1px solid #24C3A1' : 'inherit',
+                                    borderRadius: '4px',
+                                    padding: '4px 8px',
+                                    minWidth: '120px',
+                                    fontWeight: 500
+                                },
+                            '& .mdxeditor-toolbar span, & .mdxeditor-toolbar div': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit'
+                            },
+                            '& .mdxeditor': {
+                                backgroundColor: mode === 'dark' ? '#121212' : '#ffffff',
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                border: mode === 'dark' ? '1px solid #24C3A1' : 'inherit',
+                                borderRadius: '4px',
+                                minHeight: '500px'
+                            },
+                            '& .mdxeditor-content-editable': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                padding: '16px',
+                                fontSize: '16px',
+                                lineHeight: 1.6
+                            },
+                            '& .mdxeditor button': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                backgroundColor: mode === 'dark' ? '#2d2d2d' : 'inherit',
+                                margin: mode === 'dark' ? '0 2px' : 'inherit',
+                                borderRadius: mode === 'dark' ? '4px' : 'inherit'
+                            },
+                            '& .mdxeditor button:hover': {
+                                backgroundColor: mode === 'dark' ? '#3d3d3d' : 'rgba(0, 0, 0, 0.04)'
+                            },
+                            '& .mdxeditor button:active, & .mdxeditor button[data-active=true]': {
+                                backgroundColor: mode === 'dark' ? '#24C3A1' : 'primary.main',
+                                color: '#ffffff'
+                            },
+                            '& .mdxeditor select': {
+                                backgroundColor: mode === 'dark' ? '#2d2d2d' : 'inherit',
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                borderColor: mode === 'dark' ? '#24C3A1' : 'inherit',
+                                padding: mode === 'dark' ? '4px 8px' : 'inherit',
+                                borderRadius: mode === 'dark' ? '4px' : 'inherit'
+                            },
+                            '& .mdxeditor svg': {
+                                fill: mode === 'dark' ? '#ffffff' : 'inherit'
+                            },
+                            '& .mdxeditor-toolbar-group': {
+                                borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'divider',
+                                padding: '0 4px'
+                            },
+                            '& .prose': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit'
+                            },
+                            '& .prose h1, & .prose h2, & .prose h3, & .prose h4, & .prose h5, & .prose h6': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                marginTop: '1.5em',
+                                marginBottom: '0.5em'
+                            },
+                            '& .prose p, & .prose ul, & .prose ol, & .prose li': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit',
+                                marginBottom: '0.75em'
+                            }
+                        }}
+                    >
+                        <MDXEditor
+                            markdown={localContent}
+                            onChange={handleContentChange}
+                            plugins={[
+                                headingsPlugin(),
+                                listsPlugin(),
+                                quotePlugin(),
+                                thematicBreakPlugin(),
+                                markdownShortcutPlugin(),
+                                codeBlockPlugin(),
+                                codeMirrorPlugin({
+                                    codeBlockLanguages: {
+                                        js: 'JavaScript',
+                                        jsx: 'JSX',
+                                        ts: 'TypeScript',
+                                        tsx: 'TSX',
+                                        css: 'CSS',
+                                        html: 'HTML',
+                                        json: 'JSON'
+                                    },
+                                    theme: mode === 'dark' ? 'dark' : 'light'
+                                }),
+                                frontmatterPlugin(),
+                                linkPlugin(),
+                                linkDialogPlugin(),
+                                imagePlugin(),
+                                tablePlugin(),
+                                toolbarPlugin({
+                                    toolbarContents: () => (
+                                        <>
+                                            <UndoRedo />
+                                            <BoldItalicUnderlineToggles />
+                                            <BlockTypeSelect />
+                                            <CreateLink />
+                                            <InsertImage />
+                                            <InsertTable />
+                                            <InsertThematicBreak />
+                                            <ListsToggle />
+                                        </>
+                                    )
+                                })
+                            ]}
+                            contentEditableClassName={`prose max-w-full ${mode === 'dark' ? 'dark-mode-editor' : ''}`}
+                        />
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            {/* Call Panel */}
+            <CallPanel call={selectedCall} open={!!selectedCall} onClose={() => setSelectedCall(null)} tagCategories={tagCategories} />
+        </Box>
+    )
+}
+
+export default ReportDetail
+</file>
+
+<file path="ReportsPage.jsx">
+import {
+    Box,
+    Typography,
+    Paper,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Grid,
+    Tabs,
+    Tab,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Switch,
+    FormControlLabel,
+    Tooltip,
+    Slider,
+    LinearProgress,
+    Backdrop,
+    FormHelperText,
+    Alert
+} from '@mui/material'
+import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import LockIcon from '@mui/icons-material/Lock'
+import { getApiUrl } from '../config/api'
+import CallList from '../components/calls/CallList'
+import PropTypes from 'prop-types'
+import CallFilters from '../components/Tagging/CallFilters'
+import { SENTIMENT_EMOJIS, getSentimentGradient } from '../utils/sentimentEmojis'
+import EditScheduledReportModal from '../components/reports/EditScheduledReportModal'
+import EmptyScheduledReports from '../components/reports/EmptyScheduledReports'
+import { useTheme } from '../context/ThemeContext'
+import { PROMPT_SUGGESTION_PROMPT, PROMPT_SUGGESTION_SCHEMA, generatePromptContext } from '../utils/reportPrompts'
+import { REPORT_TYPES } from '../utils/reportTypes'
+
+const GENERATION_MESSAGES = [
+    'Analyzing call patterns and trends...',
+    'Identifying key customer satisfaction indicators...',
+    'Processing sentiment analysis across conversations...',
+    'Extracting actionable insights from call data...',
+    'Evaluating agent performance metrics...',
+    'Generating recommendations for improvement...',
+    'Compiling resolution rate statistics...',
+    'Analyzing call duration patterns...',
+    'Identifying common customer pain points...',
+    'Correlating sentiment with resolution status...',
+    'Examining escalation patterns...',
+    'Synthesizing findings into comprehensive report...',
+    'Formatting report with detailed examples...',
+    'Adding executive summary and key metrics...',
+    'Finalizing report with actionable recommendations...'
+]
+
+function TabPanel(props) {
+    const { children, value, index, ...other } = props
+    return (
+        <div role='tabpanel' hidden={value !== index} id={`reports-tabpanel-${index}`} aria-labelledby={`reports-tab-${index}`} {...other}>
+            {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
+        </div>
+    )
+}
+
+TabPanel.propTypes = {
+    children: PropTypes.node,
+    index: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired
+}
+
+function ReportsPage() {
+    const navigate = useNavigate()
+    const [reports, setReports] = useState([])
+    const [scheduledReports, setScheduledReports] = useState([])
+    const [editDialogOpen, setEditDialogOpen] = useState(false)
+    const [editingReport, setEditingReport] = useState(null)
+    const [newReportName, setNewReportName] = useState('')
+    const [currentTab, setCurrentTab] = useState(0)
+    const [isScheduled, setIsScheduled] = useState(false)
+    const [scheduleFrequency, setScheduleFrequency] = useState('daily')
+    const [reportName, setReportName] = useState('')
+    const [userPrompt, setUserPrompt] = useState('')
+    const [selectedCalls, setSelectedCalls] = useState([])
+    const [reportFilters, setReportFilters] = useState({
+        callType: 'all',
+        employeeId: '',
+        selectedTags: [],
+        sentimentRange: [1, 10],
+        resolutionStatus: 'all',
+        escalated: 'all'
+    })
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [generationMessage, setGenerationMessage] = useState(GENERATION_MESSAGES[0])
+    const [progress, setProgress] = useState(0)
+    const [editingScheduledReport, setEditingScheduledReport] = useState(null)
+    const [isCreatingScheduledReport, setIsCreatingScheduledReport] = useState(false)
+    const { mode } = useTheme()
+    const [selectedReportType, setSelectedReportType] = useState(REPORT_TYPES.PERFORMANCE.id)
+
+    // Fetch all reports
+    const fetchReports = useCallback(async () => {
+        try {
+            const response = await fetch(getApiUrl('api/reports'))
+            const { data, error } = await response.json()
+
+            if (error) throw error
+            setReports(data || [])
+        } catch (error) {
+            console.error('Error fetching reports:', error)
+        }
+    }, [])
+
+    // Fetch all scheduled reports
+    const fetchScheduledReports = useCallback(async () => {
+        try {
+            const response = await fetch(getApiUrl('api/scheduled-reports'))
+            const { data, error } = await response.json()
+
+            if (error) throw error
+            setScheduledReports(data || [])
+        } catch (error) {
+            console.error('Error fetching scheduled reports:', error)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchReports()
+        fetchScheduledReports()
+    }, [fetchReports, fetchScheduledReports])
+
+    useEffect(() => {
+        if (isGenerating) {
+            // Create dynamic messages that incorporate the analysis prompt
+            const customMessages = [
+                `Analyzing calls based on your prompt: "${userPrompt}"...`,
+                'Processing call data and extracting key insights...',
+                'Identifying patterns and trends in the selected calls...',
+                'Evaluating customer interactions and agent responses...',
+                'Generating data visualizations and metrics...',
+                'Compiling findings into comprehensive analysis...',
+                `Creating detailed report "${reportName}"...`,
+                'Formatting results and preparing final document...',
+                'Adding executive summary and recommendations...',
+                'Finalizing report with actionable insights...'
+            ]
+
+            const messageInterval = setInterval(() => {
+                setGenerationMessage((prev) => {
+                    const currentIndex = customMessages.indexOf(prev)
+                    const nextIndex = (currentIndex + 1) % customMessages.length
+                    return customMessages[nextIndex]
+                })
+            }, 3000)
+
+            const progressInterval = setInterval(() => {
+                setProgress((prev) => {
+                    if (prev >= 90) return prev + Math.random() * 0.5
+                    return prev + Math.random() * 10
+                })
+            }, 1000)
+
+            // Set initial message
+            setGenerationMessage(customMessages[0])
+
+            return () => {
+                clearInterval(messageInterval)
+                clearInterval(progressInterval)
+            }
+        }
+
+        setProgress(0)
+        setGenerationMessage('')
+    }, [isGenerating, reportName, userPrompt])
+
+    const handleReportSelect = (report) => {
+        navigate(`/reports/${report.id}`)
+    }
+
+    const handleEditClick = (e, report) => {
+        e.stopPropagation()
+        setEditingReport(report)
+        setNewReportName(report.name)
+        setEditDialogOpen(true)
+    }
+
+    const handleSaveEdit = async () => {
+        try {
+            const response = await fetch(getApiUrl(`api/reports/${editingReport.id}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newReportName })
+            })
+
+            if (!response.ok) throw new Error('Failed to update report')
+
+            await fetchReports()
+            setEditDialogOpen(false)
+        } catch (error) {
+            console.error('Error updating report:', error)
+            alert(`Failed to update report: ${error.message}`)
+        }
+    }
+
+    const handleDelete = async (e, report) => {
+        e.stopPropagation()
+        if (!window.confirm('Are you sure you want to delete this report?')) {
+            return
+        }
+
+        try {
+            const response = await fetch(getApiUrl(`api/reports/${report.id}`), {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) throw new Error('Failed to delete report')
+
+            await fetchReports()
+        } catch (error) {
+            console.error('Error deleting report:', error)
+            alert(`Failed to delete report: ${error.message}`)
+        }
+    }
+
+    const handleDeleteScheduledReport = async (e, report) => {
+        e.stopPropagation()
+        if (!window.confirm('Are you sure you want to delete this scheduled report?')) {
+            return
+        }
+
+        try {
+            const response = await fetch(getApiUrl(`api/scheduled-reports/${report.id}`), {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) throw new Error('Failed to delete scheduled report')
+
+            await fetchScheduledReports()
+        } catch (error) {
+            console.error('Error deleting scheduled report:', error)
+            alert(`Failed to delete scheduled report: ${error.message}`)
+        }
+    }
+
+    const handleEditScheduledReport = (e, report) => {
+        e.stopPropagation()
+        setEditingScheduledReport(report)
+    }
+
+    const handleSaveScheduledReport = async () => {
+        await fetchScheduledReports()
+        setEditingScheduledReport(null)
+    }
+
+    const handleTabChange = (event, newValue) => {
+        setCurrentTab(newValue)
+    }
+
+    const handleReportTypeChange = (event) => {
+        const type = event.target.value
+        setSelectedReportType(type)
+
+        // Only set the base title if the current report name is empty
+        const reportType = Object.values(REPORT_TYPES).find((r) => r.id === type)
+        if (reportType && reportType.id !== 'custom' && !reportName.trim()) {
+            setReportName(reportType.baseTitle)
+        }
+    }
+
+    const handleSuggestPrompt = async () => {
+        if (!userPrompt.trim()) {
+            return
+        }
+
+        try {
+            const reportType = Object.values(REPORT_TYPES).find((r) => r.id === selectedReportType)
+            if (!reportType || reportType.id === 'custom') {
+                return
+            }
+
+            const context = generatePromptContext(reportType, userPrompt, reportFilters)
+
+            const response = await fetch(getApiUrl('api/answerai/analyze'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: context,
+                    systemPrompt: PROMPT_SUGGESTION_PROMPT,
+                    schema: PROMPT_SUGGESTION_SCHEMA
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to get prompt suggestion')
+            }
+
+            const result = await response.json()
+            setUserPrompt(result.prompt) // Update the user prompt directly
+        } catch (error) {
+            console.error('Error getting prompt suggestion:', error)
+        }
+    }
+
+    const handleCallFilterChange = useCallback(({ callType, employeeId, selectedTags }) => {
+        setReportFilters((prev) => ({
+            ...prev,
+            callType,
+            employeeId,
+            selectedTags: selectedTags || prev.selectedTags
+        }))
+    }, [])
+
+    const handleFilterChange = (newFilters) => {
+        setReportFilters(newFilters)
+    }
+
+    // Helper function to format cron expression to human readable format
+    const formatCronExpression = (cronExpression) => {
+        switch (cronExpression) {
+            case '0 0 * * *':
+                return 'Daily at midnight'
+            case '0 0 * * 0':
+                return 'Weekly on Sunday at midnight'
+            case '0 0 1 * *':
+                return 'Monthly on the 1st at midnight'
+            case '0 0 1 */3 *':
+                return 'Quarterly on the 1st at midnight'
+            default:
+                return cronExpression
+        }
+    }
+
+    const handleCreateReport = async () => {
+        try {
+            if (!reportName.trim()) {
+                alert('Please enter a report name')
+                return
+            }
+
+            if (!userPrompt.trim()) {
+                alert('Please enter analysis instructions')
+                return
+            }
+
+            if (!isScheduled && selectedCalls.length === 0) {
+                alert('Please select at least one call for the report')
+                return
+            }
+
+            setIsGenerating(true)
+
+            if (isScheduled) {
+                // Create scheduled report
+                const scheduledReport = {
+                    name: reportName,
+                    prompt: userPrompt,
+                    frequency: scheduleFrequency,
+                    filters: reportFilters
+                }
+
+                const response = await fetch(getApiUrl('api/scheduled-reports'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scheduledReport)
+                })
+
+                if (!response.ok) {
+                    const error = await response.json()
+                    throw new Error(error.error || 'Failed to create scheduled report')
+                }
+
+                // Reset form and switch to scheduled reports tab
+                setReportName('')
+                setUserPrompt('')
+                setIsScheduled(false)
+                setReportFilters({
+                    callType: 'all',
+                    employeeId: '',
+                    selectedTags: [],
+                    sentimentRange: [1, 10],
+                    resolutionStatus: 'all',
+                    escalated: 'all'
+                })
+                setIsGenerating(false)
+                await fetchScheduledReports()
+                setCurrentTab(2) // Switch to Scheduled Reports tab
+                return
+            }
+
+            // Create one-time report
+            const callsResponse = await fetch(getApiUrl(`/api/calls?recording_urls=${JSON.stringify(selectedCalls)}`))
+            const callsData = await callsResponse.json()
+
+            const response = await fetch(getApiUrl('api/reports/generate-report'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: reportName,
+                    customPrompt: userPrompt,
+                    calls: callsData.calls.map((call) => ({
+                        ...call,
+                        id: call.RECORDING_URL || `${call.EMPLOYEE_ID}-${call.TIMESTAMP}`
+                    }))
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to create report')
+            }
+
+            const responseData = await response.json()
+            navigate(`/reports/${responseData.id}`)
+        } catch (error) {
+            console.error('Error creating report:', error)
+            alert(`Failed to create report: ${error.message}`)
+        } finally {
+            setIsGenerating(false)
+        }
+    }
+
+    const handleCreateNewScheduledReport = () => {
+        setIsCreatingScheduledReport(true)
+    }
+
+    const handleSaveNewScheduledReport = async () => {
+        await fetchScheduledReports()
+        setIsCreatingScheduledReport(false)
+    }
+
+    const handleToggleStatus = async (e, report) => {
+        e.stopPropagation()
+        const newStatus = report.status === 'active' ? 'paused' : 'active'
+
+        try {
+            const response = await fetch(getApiUrl(`api/scheduled-reports/${report.id}`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to update report status')
+            }
+
+            await fetchScheduledReports()
+        } catch (error) {
+            console.error('Error updating report status:', error)
+            alert(`Failed to update status: ${error.message}`)
+        }
+    }
+
+    const renderReportsList = () => (
+        <Paper sx={{ height: 'calc(100vh - 200px)', overflow: 'auto' }}>
+            <List>
+                {reports.map((report) => (
+                    <ListItem
+                        key={report.id}
+                        button
+                        onClick={() => handleReportSelect(report)}
+                        sx={{
+                            '& .MuiListItemText-primary': {
+                                color: mode === 'dark' ? '#ffffff' : 'inherit'
+                            },
+                            '& .MuiListItemText-secondary': {
+                                color: mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'inherit'
+                            }
+                        }}
+                    >
+                        <ListItemText primary={report.name} secondary={new Date(report.created_at).toLocaleString()} />
+                        <ListItemSecondaryAction>
+                            <IconButton
+                                edge='end'
+                                aria-label='edit'
+                                onClick={(e) => handleEditClick(e, report)}
+                                sx={{
+                                    mr: 1,
+                                    color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                }}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton
+                                edge='end'
+                                aria-label='delete'
+                                onClick={(e) => handleDelete(e, report)}
+                                sx={{
+                                    color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                }}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        </ListItemSecondaryAction>
+                    </ListItem>
+                ))}
+            </List>
+        </Paper>
+    )
+
+    const renderScheduledReports = () => (
+        <Paper sx={{ height: 'calc(100vh - 200px)', overflow: 'auto' }}>
+            <Alert severity='info' sx={{ m: 2 }}>
+                This is a demo account. Scheduled reports are available in the paid version. Contact sales for more information.
+            </Alert>
+
+            {scheduledReports.length === 0 ? (
+                <EmptyScheduledReports onCreateNew={handleCreateNewScheduledReport} />
+            ) : (
+                <List>
+                    {scheduledReports.map((report) => (
+                        <ListItem
+                            key={report.id}
+                            sx={{
+                                '& .MuiListItemText-primary': {
+                                    color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                },
+                                '& .MuiListItemText-secondary': {
+                                    color: mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'inherit'
+                                },
+                                '& .MuiTypography-root': {
+                                    color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                }
+                            }}
+                        >
+                            <ListItemText
+                                primary={report.name}
+                                secondary={
+                                    <Box>
+                                        <Typography variant='body2' color={mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'}>
+                                            Schedule: {formatCronExpression(report.schedule)}
+                                        </Typography>
+                                        <Typography variant='body2' color={mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'}>
+                                            Last Run: {report.last_run_at ? new Date(report.last_run_at).toLocaleString() : 'Never'}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography
+                                                variant='body2'
+                                                color={mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'}
+                                            >
+                                                Status:
+                                            </Typography>
+                                            <Switch
+                                                size='small'
+                                                checked={report.status === 'active'}
+                                                onChange={(e) => handleToggleStatus(e, report)}
+                                                color='success'
+                                            />
+                                            <Typography
+                                                variant='body2'
+                                                color={
+                                                    report.status === 'active'
+                                                        ? 'success.main'
+                                                        : mode === 'dark'
+                                                        ? 'rgba(255, 255, 255, 0.7)'
+                                                        : 'text.secondary'
+                                                }
+                                            >
+                                                {report.status === 'active' ? 'Active' : 'Paused'}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                }
+                            />
+                            <ListItemSecondaryAction>
+                                <IconButton
+                                    edge='end'
+                                    aria-label='edit'
+                                    onClick={(e) => handleEditScheduledReport(e, report)}
+                                    sx={{
+                                        mr: 1,
+                                        color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                    }}
+                                >
+                                    <EditIcon />
+                                </IconButton>
+                                <IconButton
+                                    edge='end'
+                                    aria-label='delete'
+                                    onClick={(e) => handleDeleteScheduledReport(e, report)}
+                                    sx={{
+                                        color: mode === 'dark' ? '#ffffff' : 'inherit'
+                                    }}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </ListItemSecondaryAction>
+                        </ListItem>
+                    ))}
+                </List>
+            )}
+
+            <EditScheduledReportModal
+                open={!!editingScheduledReport || isCreatingScheduledReport}
+                onClose={() => {
+                    setEditingScheduledReport(null)
+                    setIsCreatingScheduledReport(false)
+                }}
+                report={editingScheduledReport}
+                onSave={editingScheduledReport ? handleSaveScheduledReport : handleSaveNewScheduledReport}
+            />
+        </Paper>
+    )
+
+    const renderReportSettings = () => (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant='subtitle1' gutterBottom>
+                    Filter Settings
+                </Typography>
+                <Paper sx={{ p: 1.5, mb: 2 }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 2,
+                            flexWrap: 'wrap'
+                        }}
+                    >
+                        {/* Resolution and Escalation filters */}
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: '100%' }}>
+                            <FormControl size='small' sx={{ width: 120 }}>
+                                <InputLabel>Resolution</InputLabel>
+                                <Select
+                                    value={reportFilters.resolutionStatus}
+                                    label='Resolution'
+                                    onChange={(e) =>
+                                        setReportFilters((prev) => ({
+                                            ...prev,
+                                            resolutionStatus: e.target.value
+                                        }))
+                                    }
+                                >
+                                    <MenuItem value='all'>All</MenuItem>
+                                    <MenuItem value='resolved'>Resolved</MenuItem>
+                                    <MenuItem value='dispatch'>Dispatch</MenuItem>
+                                    <MenuItem value='escalated'>Escalated</MenuItem>
+                                    <MenuItem value='followup'>Follow-up</MenuItem>
+                                </Select>
+                            </FormControl>
+
+                            <FormControl size='small' sx={{ width: 120 }}>
+                                <InputLabel>Escalated</InputLabel>
+                                <Select
+                                    value={reportFilters.escalated}
+                                    label='Escalated'
+                                    onChange={(e) =>
+                                        setReportFilters((prev) => ({
+                                            ...prev,
+                                            escalated: e.target.value
+                                        }))
+                                    }
+                                >
+                                    <MenuItem value='all'>All</MenuItem>
+                                    <MenuItem value='true'>Yes</MenuItem>
+                                    <MenuItem value='false'>No</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+
+                        {/* Call Type, Employee, and Tag filters */}
+                        <Box sx={{ width: '100%' }}>
+                            <CallFilters onFilterChange={handleCallFilterChange} filters={reportFilters} />
+                        </Box>
+
+                        {/* Sentiment range on new line */}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                width: '100%',
+                                mt: 2
+                            }}
+                        >
+                            <Typography variant='subtitle2' gutterBottom>
+                                Sentiment Range
+                            </Typography>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    px: 2,
+                                    width: '100%'
+                                }}
+                            >
+                                <Typography variant='body2'>{SENTIMENT_EMOJIS[reportFilters.sentimentRange[0]]}</Typography>
+                                <Slider
+                                    value={reportFilters.sentimentRange}
+                                    onChange={(_, newValue) =>
+                                        setReportFilters((prev) => ({
+                                            ...prev,
+                                            sentimentRange: newValue
+                                        }))
+                                    }
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    size='small'
+                                    valueLabelDisplay='auto'
+                                    valueLabelFormat={(value) => SENTIMENT_EMOJIS[value]}
+                                    sx={{
+                                        '& .MuiSlider-rail': {
+                                            background: getSentimentGradient(),
+                                            opacity: 1
+                                        }
+                                    }}
+                                />
+                                <Typography variant='body2'>{SENTIMENT_EMOJIS[reportFilters.sentimentRange[1]]}</Typography>
+                            </Box>
+                        </Box>
+                    </Box>
+                </Paper>
+            </Grid>
+
+            <Grid item xs={12}>
+                <FormControl fullWidth size='small'>
+                    <InputLabel>Report Type</InputLabel>
+                    <Select value={selectedReportType} label='Report Type' onChange={handleReportTypeChange}>
+                        {Object.values(REPORT_TYPES).map((type) => (
+                            <MenuItem key={type.id} value={type.id} disabled={type.id === 'custom'}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {type.label}
+                                    {type.id === 'custom' && <LockIcon fontSize='small' />}
+                                </Box>
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    <FormHelperText>{Object.values(REPORT_TYPES).find((t) => t.id === selectedReportType)?.description}</FormHelperText>
+                </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+                <TextField
+                    fullWidth
+                    label='Report Name'
+                    variant='outlined'
+                    size='small'
+                    value={reportName}
+                    onChange={(e) => setReportName(e.target.value)}
+                    required
+                />
+            </Grid>
+
+            <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <TextField
+                        fullWidth
+                        label='Analysis Instructions'
+                        variant='outlined'
+                        multiline
+                        rows={4}
+                        value={userPrompt}
+                        onChange={(e) => setUserPrompt(e.target.value)}
+                        required
+                        helperText='Specify what you want to analyze. Click the enhance button to improve your instructions with AI assistance.'
+                    />
+                    <Tooltip title='Enhance your analysis instructions with AI'>
+                        <span>
+                            <IconButton onClick={handleSuggestPrompt} color='primary' sx={{ mt: 0.5 }} disabled={!userPrompt.trim()}>
+                                <AutoFixHighIcon />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+                <Typography variant='subtitle1' gutterBottom sx={{ mt: 2 }}>
+                    Schedule Settings
+                </Typography>
+            </Grid>
+            <Grid item xs={12}>
+                <FormControlLabel
+                    control={<Switch checked={isScheduled} onChange={(e) => setIsScheduled(e.target.checked)} />}
+                    label='Schedule Report'
+                />
+            </Grid>
+            {isScheduled && (
+                <>
+                    <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth size='small'>
+                            <InputLabel>Frequency</InputLabel>
+                            <Select value={scheduleFrequency} label='Frequency' onChange={(e) => setScheduleFrequency(e.target.value)}>
+                                <MenuItem value='daily'>Daily</MenuItem>
+                                <MenuItem value='weekly'>Weekly</MenuItem>
+                                <MenuItem value='monthly'>Monthly</MenuItem>
+                                <MenuItem value='quarterly'>Quarterly</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+                            This report will run automatically at the specified frequency. The analysis will be performed on calls that
+                            match your selected filters above.
+                        </Typography>
+                    </Grid>
+                </>
+            )}
+            <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                    <Button
+                        variant='contained'
+                        onClick={handleCreateReport}
+                        disabled={
+                            isGenerating ||
+                            !reportName.trim() ||
+                            !userPrompt.trim() ||
+                            (!isScheduled && (selectedCalls.length === 0 || selectedCalls.length > 10))
+                        }
+                    >
+                        {isGenerating ? 'Generating Report...' : isScheduled ? 'Save Scheduled Report' : 'Create Report'}
+                    </Button>
+                </Box>
+            </Grid>
+        </Grid>
+    )
+
+    const renderCreateReport = () => (
+        <Box sx={{ display: 'flex', gap: 2, height: 'calc(100vh - 250px)' }}>
+            <Paper sx={{ p: 2, width: '50%', overflow: 'auto' }}>
+                <Typography variant='h6' gutterBottom>
+                    Report Settings
+                </Typography>
+                {renderReportSettings()}
+            </Paper>
+
+            {!isScheduled && (
+                <Box sx={{ width: '50%' }}>
+                    <Alert severity='info' sx={{ mb: 2 }}>
+                        Demo Account: Limited to 10 calls per report. Upgrade to access unlimited calls, thinking models, and enhanced
+                        analysis with accuracy review.
+                    </Alert>
+                    <CallList
+                        isEmbedded={true}
+                        onSelectionChange={(newSelection) => {
+                            // Limit selection to 10 calls
+                            if (newSelection.length > 10) {
+                                setSelectedCalls(newSelection.slice(0, 10))
+                            } else {
+                                setSelectedCalls(newSelection)
+                            }
+                        }}
+                        selectedCalls={selectedCalls}
+                        showSelection={true}
+                        hideFilters={true}
+                        filters={reportFilters}
+                        onFilterChange={handleFilterChange}
+                    />
+                    {selectedCalls.length === 10 && (
+                        <Typography variant='body2' color='warning.main' sx={{ mt: 1 }}>
+                            Maximum call limit reached (10 calls). Upgrade to analyze more calls simultaneously.
+                        </Typography>
+                    )}
+                </Box>
+            )}
+        </Box>
+    )
+
+    const renderLoadingOverlay = () => (
+        <Backdrop
+            sx={{
+                color: '#fff',
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+                flexDirection: 'column',
+                gap: 2,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)'
+            }}
+            open={isGenerating}
+        >
+            <Box sx={{ width: '80%', maxWidth: 600 }}>
+                <Typography variant='h5' gutterBottom align='center' sx={{ mb: 1 }}>
+                    Generating Report: {reportName}
+                </Typography>
+                <Typography variant='body1' gutterBottom align='center' sx={{ mb: 3, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Analysis Instructions: {userPrompt}
+                </Typography>
+                <Typography variant='h6' gutterBottom align='center' sx={{ mb: 3 }}>
+                    {generationMessage}
+                </Typography>
+                <LinearProgress
+                    variant='determinate'
+                    value={Math.min(progress, 100)}
+                    sx={{
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        '& .MuiLinearProgress-bar': {
+                            borderRadius: 5,
+                            backgroundColor: 'primary.light'
+                        }
+                    }}
+                />
+                <Typography variant='body2' sx={{ mt: 1, color: 'rgba(255, 255, 255, 0.7)' }} align='center'>
+                    {Math.round(progress)}% Complete
+                </Typography>
+            </Box>
+        </Backdrop>
+    )
+
+    return (
+        <Box sx={{ height: 'calc(100vh - 100px)', p: 2 }}>
+            {renderLoadingOverlay()}
+            <Typography variant='h4' component='h1' gutterBottom color={mode === 'dark' ? '#ffffff' : 'inherit'}>
+                Reports
+            </Typography>
+
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Tabs
+                    value={currentTab}
+                    onChange={handleTabChange}
+                    sx={{
+                        '& .MuiTab-root': {
+                            color: mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'inherit'
+                        },
+                        '& .MuiTab-root.Mui-selected': {
+                            color: mode === 'dark' ? '#24C3A1' : 'primary.main'
+                        }
+                    }}
+                >
+                    <Tab label='Create Report' />
+                    <Tab label='Report List' />
+                    <Tab label='Scheduled Reports' />
+                </Tabs>
+            </Box>
+
+            <TabPanel value={currentTab} index={0}>
+                {renderCreateReport()}
+            </TabPanel>
+
+            <TabPanel value={currentTab} index={1}>
+                {renderReportsList()}
+            </TabPanel>
+
+            <TabPanel value={currentTab} index={2}>
+                {renderScheduledReports()}
+            </TabPanel>
+
+            {/* Edit Dialog */}
+            <Dialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                PaperProps={{
+                    sx: {
+                        backgroundColor: mode === 'dark' ? '#121212' : '#ffffff',
+                        color: mode === 'dark' ? '#ffffff' : 'inherit'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: mode === 'dark' ? '#ffffff' : 'inherit' }}>Edit Report Name</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin='dense'
+                        label='Report Name'
+                        type='text'
+                        fullWidth
+                        value={newReportName}
+                        onChange={(e) => setNewReportName(e.target.value)}
+                        InputLabelProps={{
+                            style: {
+                                color: mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : undefined
+                            }
+                        }}
+                        InputProps={{
+                            style: { color: mode === 'dark' ? '#ffffff' : undefined }
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: mode === 'dark' ? '#24C3A1' : undefined
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: mode === 'dark' ? '#24C3A1' : undefined
+                                }
+                            }
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditDialogOpen(false)} sx={{ color: mode === 'dark' ? '#ffffff' : undefined }}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSaveEdit}
+                        variant='contained'
+                        sx={{
+                            backgroundColor: mode === 'dark' ? '#24C3A1' : undefined,
+                            '&:hover': {
+                                backgroundColor: mode === 'dark' ? '#1a8f76' : undefined
+                            }
+                        }}
+                    >
+                        Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    )
+}
+
+export default ReportsPage
+</file>
+
+<file path="ResearchViewPage.jsx">
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import {
+    Box,
+    Typography,
+    Button,
+    Tabs,
+    Tab,
+    Divider,
+    CircularProgress,
+    Alert,
+    Paper,
+    Breadcrumbs,
+    Link as MuiLink,
+    Chip,
+    Tooltip
+} from '@mui/material'
+import axios from 'axios'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ChatIcon from '@mui/icons-material/Chat'
+import StorageIcon from '@mui/icons-material/Storage'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
+import CloudIcon from '@mui/icons-material/Cloud'
+import AnalyticsIcon from '@mui/icons-material/Analytics'
+import DataSourcesPanel from '../components/analyzer/DataSourcesPanel'
+import AnalysisPanel from '../components/analyzer/AnalysisPanel'
+import FilesTab from '../components/analyzer/FilesTab'
+import ReportsPanel from '../components/analyzer/ReportsPanel'
+import { useResearchView } from '../context/ResearchViewContext.jsx'
+import PropTypes from 'prop-types'
+
+// Tab panel component
+function TabPanel({ children, value, index, ...other }) {
+    return (
+        <div
+            role='tabpanel'
+            hidden={value !== index}
+            id={`research-view-tabpanel-${index}`}
+            aria-labelledby={`research-view-tab-${index}`}
+            style={{ width: '100%' }}
+            {...other}
+        >
+            {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+        </div>
+    )
+}
+
+// Add prop types validation for TabPanel
+TabPanel.propTypes = {
+    children: PropTypes.node,
+    value: PropTypes.number.isRequired,
+    index: PropTypes.number.isRequired
+}
+
+const ResearchViewPage = () => {
+    const { viewId } = useParams()
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [researchView, setResearchView] = useState(null)
+    const [tabValue, setTabValue] = useState(0)
+    const { setCurrentResearchView } = useResearchView()
+
+    // Fetch research view details
+    const fetchResearchView = useCallback(async () => {
+        try {
+            setLoading(true)
+            const response = await axios.get(`/api/analyzer/research-views/${viewId}`)
+            setResearchView(response.data.data)
+            setCurrentResearchView(response.data.data) // Set in global context
+            setError(null)
+        } catch (err) {
+            console.error('Error fetching research view:', err)
+            setError(err.response?.data?.error || 'An error occurred while fetching the research view.')
+        } finally {
+            setLoading(false)
+        }
+    }, [viewId, setCurrentResearchView])
+
+    // Fetch data on component mount
+    useEffect(() => {
+        fetchResearchView()
+
+        // Clean up function to clear the research view from context when component unmounts
+        return () => setCurrentResearchView(null)
+    }, [fetchResearchView, setCurrentResearchView])
+
+    // Handle tab change
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
+
+    // Navigate back to research views list
+    const handleGoBack = () => {
+        navigate('/analyzer')
+    }
+
+    // Handle refresh
+    const handleRefresh = () => {
+        fetchResearchView()
+    }
+
+    // Loading state
+    if (loading) {
+        return (
+            <Box display='flex' justifyContent='center' alignItems='center' minHeight='400px'>
+                <CircularProgress />
+            </Box>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <Box p={3}>
+                <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mb: 2 }}>
+                    Back to Research Views
+                </Button>
+                <Alert severity='error'>
+                    {error}
+                    <Button size='small' onClick={fetchResearchView} sx={{ ml: 2 }}>
+                        Try Again
+                    </Button>
+                </Alert>
+            </Box>
+        )
+    }
+
+    // If no research view is found
+    if (!researchView) {
+        return (
+            <Box p={3}>
+                <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mb: 2 }}>
+                    Back to Research Views
+                </Button>
+                <Alert severity='warning'>Research view not found. It may have been deleted.</Alert>
+            </Box>
+        )
+    }
+
+    return (
+        <Box sx={{ p: 3, maxWidth: 1400, mx: 'auto' }}>
+            {/* Breadcrumbs navigation */}
+            <Breadcrumbs aria-label='breadcrumb' sx={{ mb: 2 }}>
+                <MuiLink underline='hover' color='inherit' sx={{ cursor: 'pointer' }} onClick={handleGoBack}>
+                    Research Views
+                </MuiLink>
+                <Typography color='text.primary'>{researchView.name}</Typography>
+            </Breadcrumbs>
+
+            {/* Header */}
+            <Box display='flex' justifyContent='space-between' alignItems='flex-start' mb={3}>
+                <Box>
+                    <Typography variant='h4' component='h1'>
+                        {researchView.name}
+                    </Typography>
+                    {researchView.description && (
+                        <Typography variant='body1' color='text.secondary' sx={{ mt: 1, mb: 2, maxWidth: '800px' }}>
+                            {researchView.description}
+                        </Typography>
+                    )}
+
+                    {/* Stats */}
+                    <Box display='flex' gap={2} mt={2}>
+                        <Chip label={`${researchView.data_sources?.length || 0} Data Sources`} variant='outlined' size='small' />
+                        <Chip label={`${researchView.document_count || 0} Documents`} variant='outlined' size='small' />
+                        <Chip label={`Created ${new Date(researchView.created_at).toLocaleDateString()}`} variant='outlined' size='small' />
+
+                        {/* Chatflow link */}
+                        {researchView.answerai_chatflow_id && (
+                            <Tooltip title='Edit Chatflow'>
+                                <Chip
+                                    icon={<ChatIcon fontSize='small' />}
+                                    label='Edit Chatflow'
+                                    variant='outlined'
+                                    size='small'
+                                    component='a'
+                                    href={`${import.meta.env.VITE_ANSWERAI_STUDIO_URL || 'http://localhost:3000'}/sidekick-studio/canvas/${
+                                        researchView.answerai_chatflow_id
+                                    }`}
+                                    target='_blank'
+                                    clickable
+                                    sx={{
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'primary.light',
+                                            color: 'primary.contrastText'
+                                        }
+                                    }}
+                                />
+                            </Tooltip>
+                        )}
+
+                        {/* Document Store link */}
+                        {researchView.answerai_store_id && (
+                            <Tooltip title='Open Document Store'>
+                                <Chip
+                                    icon={<StorageIcon fontSize='small' />}
+                                    label='Document Store'
+                                    variant='outlined'
+                                    size='small'
+                                    component='a'
+                                    href={`${
+                                        import.meta.env.VITE_ANSWERAI_STUDIO_URL || 'http://localhost:3000'
+                                    }/sidekick-studio/document-stores/${researchView.answerai_store_id}`}
+                                    target='_blank'
+                                    clickable
+                                    sx={{
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'primary.light',
+                                            color: 'primary.contrastText'
+                                        }
+                                    }}
+                                />
+                            </Tooltip>
+                        )}
+                    </Box>
+                </Box>
+
+                <Button variant='outlined' onClick={handleRefresh} sx={{ minWidth: '100px' }}>
+                    Refresh
+                </Button>
+            </Box>
+
+            <Divider sx={{ mb: 2 }} />
+
+            {/* Tabs */}
+            <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={tabValue} onChange={handleTabChange} aria-label='research view tabs' variant='scrollable' scrollButtons='auto'>
+                    <Tab label='Sources' id='research-view-tab-0' icon={<CloudIcon />} iconPosition='end' />
+                    <Tab label='Files' id='research-view-tab-1' icon={<AttachFileIcon />} iconPosition='end' />
+                    <Tab label='Analysis' id='research-view-tab-2' icon={<AnalyticsIcon />} iconPosition='end' />
+                    <Tab label='Reports' id='research-view-tab-3' icon={<ChatIcon />} iconPosition='end' />
+                </Tabs>
+            </Paper>
+
+            {/* Tab Panels */}
+            <TabPanel value={tabValue} index={0}>
+                <DataSourcesPanel researchView={researchView} onDataSourcesChange={fetchResearchView} />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+                <FilesTab researchView={researchView} />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+                <AnalysisPanel researchView={researchView} />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+                <ReportsPanel researchView={researchView} />
+            </TabPanel>
+        </Box>
+    )
+}
+
+export default ResearchViewPage
+</file>
+
+<file path="TagAnalysisPage.jsx">
+import { Box, Typography } from '@mui/material'
+import Tagging from '../components/Tagging/Tagging.jsx'
+
+function TagAnalysisPage() {
+    return (
+        <Box sx={{ my: 4 }}>
+            <Typography variant='h4' component='h1' gutterBottom>
+                Tag Analysis
+            </Typography>
+            <Tagging />
+        </Box>
+    )
+}
+
+export default TagAnalysisPage
+</file>
+
+<file path="TicketListPage.jsx">
+import { memo } from 'react'
+import TicketList from '../components/tickets/TicketList'
+import { Box } from '@mui/material'
+
+const TicketListPage = memo(function TicketListPage() {
+    return (
+        <Box>
+            <TicketList />
+        </Box>
+    )
+})
+
+export default TicketListPage
+</file>
+
+</files>

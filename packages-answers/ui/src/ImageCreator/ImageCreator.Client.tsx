@@ -278,7 +278,7 @@ const ImageCreator = ({ user, accessToken }: { user: User; accessToken?: string 
                 response_format: 'b64_json',
                 organizationId: user.organizationId || user.org_id,
                 userId: user.id,
-                userEmail: user.email
+                userEmail: user.email ?? undefined
             }
 
             // Add model-specific parameters

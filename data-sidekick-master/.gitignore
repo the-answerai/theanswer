@@ -35,3 +35,4 @@ downloaded_recordings
 converted_recordings
 skipped_recordings
 data/*
+csv/*
