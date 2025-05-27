@@ -30,7 +30,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ===========================|| ITEM CARD ||=========================== //
 
-const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateFlowsApi, setError }) => {
+const ItemCard = ({ data, images, icons, onClick }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
     const [data, setData] = useState(initialData)
@@ -144,27 +144,24 @@ const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateF
                             </span>
                         )}
                     </Box>
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'start',
-                            gap: 1,
-                            mt: 2 // Add margin-top to separate from description
-                        }}
-                    >
-                        {images && (
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'start',
-                                    gap: 1
-                                }}
-                            >
-                                {images.slice(0, images.length > 3 ? 3 : images.length).map((img, index) => (
-                                    <Tooltip key={img} title={nodeTypes && nodeTypes[index]} arrow>
+                    {(images?.length > 0 || icons?.length > 0) && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'start',
+                                gap: 1
+                            }}
+                        >
+                            {[
+                                ...(images || []).map((img) => ({ type: 'image', src: img })),
+                                ...(icons || []).map((ic) => ({ type: 'icon', icon: ic.icon, color: ic.color }))
+                            ]
+                                .slice(0, 3)
+                                .map((item, index) =>
+                                    item.type === 'image' ? (
                                         <Box
+                                            key={item.src}
                                             sx={{
                                                 width: 30,
                                                 height: 30,
@@ -177,35 +174,31 @@ const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateF
                                             <img
                                                 style={{ width: '100%', height: '100%', padding: 5, objectFit: 'contain' }}
                                                 alt=''
-                                                src={img}
+                                                src={item.src}
                                             />
                                         </Box>
-                                    </Tooltip>
-                                ))}
-                                {images.length > 3 && (
-                                    <Typography sx={{ alignItems: 'center', display: 'flex', fontSize: '.9rem', fontWeight: 200 }}>
-                                        + {images.length - 3} More
-                                    </Typography>
+                                    ) : (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                width: 30,
+                                                height: 30,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <item.icon size={25} color={item.color} />
+                                        </div>
+                                    )
                                 )}
-                            </Box>
-                        )}
-                        {data.category && (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                {data.category.split(';').map((tag, index) => (
-                                    <Chip
-                                        key={`chip-category-${tag}${index}`}
-                                        label={tag}
-                                        size='small'
-                                        sx={{
-                                            bgcolor: theme.palette.teal.main,
-                                            border: `1px solid ${theme.palette.divider}`,
-                                            color: theme.palette.text.primary
-                                        }}
-                                    />
-                                ))}
-                            </Box>
-                        )}
-                    </Box>
+                            {images?.length + (icons?.length || 0) > 3 && (
+                                <Typography sx={{ alignItems: 'center', display: 'flex', fontSize: '.9rem', fontWeight: 200 }}>
+                                    + {images?.length + (icons?.length || 0) - 3} More
+                                </Typography>
+                            )}
+                        </Box>
+                    )}
                 </Grid>
             </Box>
             <Box
@@ -225,11 +218,8 @@ const ItemCard = ({ data: initialData, images, nodeTypes, onClick, type, updateF
 ItemCard.propTypes = {
     data: PropTypes.object,
     images: PropTypes.array,
-    nodeTypes: PropTypes.array,
-    onClick: PropTypes.func,
-    type: PropTypes.string,
-    updateFlowsApi: PropTypes.object,
-    setError: PropTypes.func
+    icons: PropTypes.array,
+    onClick: PropTypes.func
 }
 
 export default ItemCard

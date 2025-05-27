@@ -240,23 +240,19 @@ const Tools = () => {
                     <ErrorBoundary error={error} />
                 ) : (
                     <Stack flexDirection='column' sx={{ gap: 3 }}>
-                        <ViewHeader onSearchChange={onSearchChange} search={true} searchPlaceholder='Search Tools' title='Tools'>
-                            <Button sx={{ borderRadius: 2, maxHeight: 40 }} value={view} color='primary' exclusive onChange={handleChange}>
-                                Load
-                            </Button>
-                            <input
-                                style={{ display: 'none' }}
-                                ref={inputRef}
-                                type='file'
-                                hidden
-                                accept='.json'
-                                onChange={(e) => handleFileUpload(e)}
-                            />
-                            <StyledButton
-                                variant='contained'
-                                onClick={addNew}
-                                startIcon={<IconPlus />}
-                                sx={{ borderRadius: 2, height: 40 }}
+                        <ViewHeader
+                            onSearchChange={onSearchChange}
+                            search={true}
+                            searchPlaceholder='Search Tools'
+                            title='Tools'
+                            description='External functions or APIs the agent can use to take action'
+                        >
+                            <ToggleButtonGroup
+                                sx={{ borderRadius: 2, maxHeight: 40 }}
+                                value={view}
+                                color='primary'
+                                exclusive
+                                onChange={handleChange}
                             >
                                 Create
                             </StyledButton>

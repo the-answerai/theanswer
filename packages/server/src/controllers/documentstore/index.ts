@@ -239,10 +239,8 @@ const processLoader = async (req: Request, res: Response, next: NextFunction) =>
         }
         const docLoaderId = req.params.loaderId
         const body = req.body
-        const apiResponse = await documentStoreService.processLoaderMiddleware(
-            { ...body, userId: req.user?.id!, organizationId: req.user?.organizationId! },
-            docLoaderId
-        )
+        const isInternalRequest = req.headers['x-request-from'] === 'internal'
+        const apiResponse = await documentStoreService.processLoaderMiddleware(req.user!, body, docLoaderId, isInternalRequest)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -392,14 +390,7 @@ const saveVectorStoreConfig = async (req: Request, res: Response, next: NextFunc
         }
         const body = req.body
         const appDataSource = getRunningExpressApp().AppDataSource
-        const componentNodes = getRunningExpressApp().nodesPool.componentNodes
-        const apiResponse = await documentStoreService.saveVectorStoreConfig(
-            appDataSource,
-            body,
-            true,
-            req.user?.id!,
-            req.user?.organizationId!
-        )
+        const apiResponse = await documentStoreService.saveVectorStoreConfig(req.user!, appDataSource, body)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
