@@ -455,7 +455,13 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, setUploadedFiles }: ChatInp
                         sx: {
                             gap: 1,
                             display: 'flex',
-                            paddingBottom: 1
+                            paddingBottom: 1,
+                            maxHeight: '30vh',
+                            overflowY: 'auto',
+                            textarea: {
+                                maxHeight: '30vh',
+                                overflowY: 'auto!important'
+                            }
                         },
                         startAdornment: (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
@@ -492,7 +498,11 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, setUploadedFiles }: ChatInp
                         sx: {
                             gap: 1,
                             display: 'flex',
-                            paddingBottom: 2
+                            paddingBottom: 2,
+                            textarea: {
+                                maxHeight: '30vh',
+                                overflowY: 'auto!important'
+                            }
                         },
                         startAdornment: (
                             <>

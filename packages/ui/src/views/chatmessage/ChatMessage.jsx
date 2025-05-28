@@ -184,7 +184,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     const [isChatFlowAvailableForSpeech, setIsChatFlowAvailableForSpeech] = useState(false)
     const [sourceDialogOpen, setSourceDialogOpen] = useState(false)
     const [sourceDialogProps, setSourceDialogProps] = useState({})
-    const [chatId, setChatId] = useState(uuidv4())
+    const [chatId, setChatId] = useState(localStorage.getItem(`${chatflowid}_INTERNAL_chatId`))
     const [isMessageStopping, setIsMessageStopping] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState([])
     const [imageUploadAllowedTypes, setImageUploadAllowedTypes] = useState('')
@@ -203,7 +203,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     const [fullFileUpload, setFullFileUpload] = useState(false)
 
     // feedback
-    const [chatFeedbackStatus, setChatFeedbackStatus] = useState(false)
+    const [chatFeedbackStatus, setChatFeedbackStatus] = useState(true)
     const [feedbackId, setFeedbackId] = useState('')
     const [showFeedbackContentDialog, setShowFeedbackContentDialog] = useState(false)
 
@@ -677,8 +677,9 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
             })
         }
 
-        if (data.chatId) {
+        if (data.chatId && data.chatId !== chatId) {
             setChatId(data.chatId)
+            localStorage.setItem(`${chatflowid}_INTERNAL_chatId`, data.chatId)
         }
 
         if (input === '' && data.question) {
@@ -1022,6 +1023,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
         if (getChatmessageApi.data?.length) {
             const chatId = getChatmessageApi.data[0]?.chatId
             setChatId(chatId)
+            localStorage.setItem(`${chatflowid}_INTERNAL_chatId`, chatId)
             const loadedMessages = getChatmessageApi.data.map((message) => {
                 const obj = {
                     id: message.id,
@@ -1056,7 +1058,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                 if (message.followUpPrompts) obj.followUpPrompts = JSON.parse(message.followUpPrompts)
                 return obj
             })
-            setMessages((prevMessages) => [...prevMessages, ...loadedMessages])
+            setMessages(loadedMessages)
             setLocalStorageChatflow(chatflowid, chatId)
         }
     }, [getChatmessageApi.data])
@@ -1094,9 +1096,10 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
                     })
                     setStarterPrompts(inputFields.filter((field) => field.prompt !== ''))
                 }
-                if (config.chatFeedback) {
+                if (config.chatFeedback && config.chatFeedback.status !== undefined) {
                     setChatFeedbackStatus(config.chatFeedback.status)
                 }
+                // If chatFeedback is not defined or status is not set, keep the default (true)
 
                 if (config.leads) {
                     setLeadsConfig(config.leads)
@@ -1148,10 +1151,21 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
     }, [isDialog, inputRef])
 
     useEffect(() => {
-        if (open && chatflowid) {
+        if (!chatId) {
+            console.log('No chatId found, generating new one')
+            const newChatId = uuidv4()
+            localStorage.setItem(`${chatflowid}_INTERNAL_chatId`, newChatId)
+            setChatId(newChatId)
+        }
+    }, [chatId, chatflowid])
+
+    useEffect(() => {
+        if (open && chatflowid && chatId) {
             // Only make API calls if we don't have messages yet
             // API request
-            getChatmessageApi.request(chatflowid)
+            console.log('Requesting chatmessages', { chatflowid, chatId })
+
+            getChatmessageApi.request(chatflowid, { chatId })
             getIsChatflowStreamingApi.request(chatflowid)
             getAllowChatFlowUploads.request(chatflowid)
             getChatflowConfig.request(chatflowid)
@@ -1182,7 +1196,7 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, chatflowid])
+    }, [open, chatflowid, chatId])
 
     useEffect(() => {
         // wait for audio recording to load and then send
@@ -1298,7 +1312,10 @@ export const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, preview
         const result = await leadsApi.addLead(body)
         if (result.data) {
             const data = result.data
-            setChatId(data.chatId)
+            if (chatId !== data.chatId) {
+                setChatId(data.chatId)
+                localStorage.setItem(`${chatflowid}_INTERNAL_chatId`, data.chatId)
+            }
             setLocalStorageChatflow(chatflowid, data.chatId, { lead: { name: leadName, email: leadEmail, phone: leadPhone } })
             setIsLeadSaved(true)
             setLeadEmail(leadEmail)
