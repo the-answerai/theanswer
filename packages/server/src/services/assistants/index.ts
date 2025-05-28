@@ -9,7 +9,7 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { DeleteResult, QueryRunner } from 'typeorm'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS } from '../../Interface.Metrics'
-import { AssistantType } from '../../Interface'
+import { AssistantType, IUser } from '../../Interface'
 import nodesService from '../nodes'
 import { DocumentStore } from '../../database/entities/DocumentStore'
 import { ICommonObject } from 'flowise-components'
@@ -193,7 +193,7 @@ const deleteAssistant = async (assistantId: string, isDeleteBoth: any): Promise<
     }
 }
 
-const getAllAssistants = async (type?: AssistantType): Promise<Assistant[]> => {
+const getAllAssistants = async (user: IUser, type?: AssistantType): Promise<Assistant[]> => {
     try {
         const appServer = getRunningExpressApp()
         if (type) {
@@ -202,7 +202,7 @@ const getAllAssistants = async (type?: AssistantType): Promise<Assistant[]> => {
             })
             return dbResponse
         }
-        const dbResponse = await appServer.AppDataSource.getRepository(Assistant).find()
+        const dbResponse = await appServer.AppDataSource.getRepository(Assistant).find({ where: { userId: user.id } })
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -406,10 +406,10 @@ const getChatModels = async (): Promise<any> => {
     }
 }
 
-const getDocumentStores = async (): Promise<any> => {
+const getDocumentStores = async (user: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const stores = await appServer.AppDataSource.getRepository(DocumentStore).find()
+        const stores = await appServer.AppDataSource.getRepository(DocumentStore).find({ where: { userId: user.id } })
         const returnData = []
         for (const store of stores) {
             if (store.status === 'UPSERTED') {

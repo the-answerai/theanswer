@@ -1,7 +1,7 @@
 import { cloneDeep, omit } from 'lodash'
 import { StatusCodes } from 'http-status-codes'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { INodeData, MODE } from '../../Interface'
+import { INodeData, IUser, MODE } from '../../Interface'
 import { INodeOptionsValue } from 'flowise-components'
 import { databaseEntities } from '../../utils'
 import logger from '../../utils/logger'
@@ -129,7 +129,7 @@ const getSingleNodeAsyncOptions = async (
 }
 
 // execute custom function node
-const executeCustomFunction = async (requestBody: any, userId: string, organizationId: string, user?: { permissions?: string[] }) => {
+const executeCustomFunction = async (user: IUser, requestBody: any) => {
     const appServer = getRunningExpressApp()
     const executeData = {
         appDataSource: appServer.AppDataSource,
@@ -137,8 +137,8 @@ const executeCustomFunction = async (requestBody: any, userId: string, organizat
         data: requestBody,
         isExecuteCustomFunction: true,
         logger,
-        userId,
-        organizationId,
+        userId: user?.id,
+        organizationId: user?.organizationId,
         isOrgAdmin: user?.permissions?.includes('org:manage')
     }
 

@@ -88,7 +88,7 @@ const initEndingNode = async ({
     nodeOverrides,
     variableOverrides
 }: {
-    user?: IUser
+    user: IUser
     endingNodeIds: string[]
     componentNodes: IComponentNodes
     reactFlowNodes: IReactFlowNode[]
@@ -391,6 +391,7 @@ export const executeFlow = async ({
     const isAgentFlowV2 = chatflow.type === 'AGENTFLOW'
     if (isAgentFlowV2) {
         return executeAgentFlow({
+            user: user,
             componentNodes,
             incomingInput,
             chatflow,

@@ -22,6 +22,7 @@ import executionService from '../executions'
 import marketplacesService from '../marketplaces'
 import toolsService from '../tools'
 import variableService from '../variables'
+import { IUser } from '../../Interface'
 
 type ExportInput = {
     agentflow: boolean
@@ -87,37 +88,39 @@ const convertExportInput = (body: any): ExportInput => {
 const FileDefaultName = 'ExportData.json'
 const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ FileDefaultName: string } & ExportData> => {
     try {
-        let AgentFlow: ChatFlow[] = exportInput.agentflow === true ? await chatflowService.getAllChatflows(user,'MULTIAGENT') : []
-        let AgentFlowV2: ChatFlow[] = exportInput.agentflowv2 === true ? await chatflowService.getAllChatflows(user,'AGENTFLOW') : []
+        let AgentFlow: ChatFlow[] = exportInput.agentflow === true ? await chatflowService.getAllChatflows(user, 'MULTIAGENT') : []
+        let AgentFlowV2: ChatFlow[] = exportInput.agentflowv2 === true ? await chatflowService.getAllChatflows(user, 'AGENTFLOW') : []
 
-        let AssistantCustom: Assistant[] = exportInput.assistantCustom === true ? await assistantService.getAllAssistants(user,'CUSTOM') : []
-        let AssistantFlow: ChatFlow[] = exportInput.assistantCustom === true ? await chatflowService.getAllChatflows(user,'ASSISTANT') : []
+        let AssistantCustom: Assistant[] =
+            exportInput.assistantCustom === true ? await assistantService.getAllAssistants(user, 'CUSTOM') : []
+        let AssistantFlow: ChatFlow[] = exportInput.assistantCustom === true ? await chatflowService.getAllChatflows(user, 'ASSISTANT') : []
 
-        let AssistantOpenAI: Assistant[] = exportInput.assistantOpenAI === true ? await assistantService.getAllAssistants(user,'OPENAI') : []
+        let AssistantOpenAI: Assistant[] =
+            exportInput.assistantOpenAI === true ? await assistantService.getAllAssistants(user, 'OPENAI') : []
 
-        let AssistantAzure: Assistant[] = exportInput.assistantAzure === true ? await assistantService.getAllAssistants(user,'AZURE') : []
+        let AssistantAzure: Assistant[] = exportInput.assistantAzure === true ? await assistantService.getAllAssistants(user, 'AZURE') : []
 
-        let ChatFlow: ChatFlow[] = exportInput.chatflow === true ? await chatflowService.getAllChatflows(user,'CHATFLOW') : []
+        let ChatFlow: ChatFlow[] = exportInput.chatflow === true ? await chatflowService.getAllChatflows(user, 'CHATFLOW') : []
 
-        let ChatMessage: ChatMessage[] = exportInput.chat_message === true ? await chatMessagesService.getAllMessages(user,) : []
+        let ChatMessage: ChatMessage[] = exportInput.chat_message === true ? await chatMessagesService.getAllMessages(user) : []
 
         let ChatMessageFeedback: ChatMessageFeedback[] =
-            exportInput.chat_feedback === true ? await chatMessagesService.getAllMessagesFeedback(user,) : []
+            exportInput.chat_feedback === true ? await chatMessagesService.getAllMessagesFeedback(user) : []
 
-        let CustomTemplate: CustomTemplate[] = exportInput.custom_template === true ? await marketplacesService.getAllCustomTemplates(user,) : []
+        let CustomTemplate: CustomTemplate[] =
+            exportInput.custom_template === true ? await marketplacesService.getAllCustomTemplates(user) : []
         CustomTemplate = CustomTemplate.map((customTemplate) => ({ ...customTemplate, usecases: JSON.stringify(customTemplate.usecases) }))
 
-        let DocumentStore: DocumentStore[] = exportInput.document_store === true ? await documenStoreService.getAllDocumentStores(user,) : []
+        let DocumentStore: DocumentStore[] = exportInput.document_store === true ? await documenStoreService.getAllDocumentStores(user) : []
 
         let DocumentStoreFileChunk: DocumentStoreFileChunk[] =
-            exportInput.document_store === true ? await documenStoreService.getAllDocumentFileChunks(user,) : []
+            exportInput.document_store === true ? await documenStoreService.getAllDocumentFileChunks(user) : []
 
-        const { data: totalExecutions } = exportInput.execution === true ? await executionService.getAllExecutions(user,) : { data: [] }
+        const { data: totalExecutions } = exportInput.execution === true ? await executionService.getAllExecutions(user) : { data: [] }
         let Execution: Execution[] = exportInput.execution === true ? totalExecutions : []
-user,
-        let Tool: Tool[] = exportInput.tool === true ? await toolsService.getAllTools(user,) : []
+        let Tool: Tool[] = exportInput.tool === true ? await toolsService.getAllTools(user) : []
 
-        let Variable: Variable[] = exportInput.variable === true ? await variableService.getAllVariables(user,) : []
+        let Variable: Variable[] = exportInput.variable === true ? await variableService.getAllVariables(user) : []
 
         return {
             FileDefaultName,
@@ -503,7 +506,7 @@ function reduceSpaceForChatflowFlowData(chatflows: ChatFlow[]) {
     })
 }
 
-const importData = async (importData: ExportData) => {
+const importData = async (user: IUser, importData: ExportData) => {
     // Initialize missing properties with empty arrays to avoid "undefined" errors
     importData.AgentFlow = importData.AgentFlow || []
     importData.AgentFlowV2 = importData.AgentFlowV2 || []

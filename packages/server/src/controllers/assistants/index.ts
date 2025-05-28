@@ -37,7 +37,7 @@ const deleteAssistant = async (req: Request, res: Response, next: NextFunction) 
 const getAllAssistants = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const type = req.query.type as AssistantType
-        const apiResponse = await assistantsService.getAllAssistants(type)
+        const apiResponse = await assistantsService.getAllAssistants(req.user!, type)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -91,7 +91,7 @@ const getChatModels = async (req: Request, res: Response, next: NextFunction) =>
 
 const getDocumentStores = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const apiResponse = await assistantsService.getDocumentStores()
+        const apiResponse = await assistantsService.getDocumentStores(req.user!)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

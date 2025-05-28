@@ -138,7 +138,7 @@ type ChatflowsFilter = {
     visibility?: string
     auth0_org_id?: string
 }
-const getAllChatflows = async (type?: ChatflowType, filter?: ChatflowsFilter, user?: IUser): Promise<ChatFlow[]> => {
+const getAllChatflows = async (user?: IUser, type?: ChatflowType, filter?: ChatflowsFilter): Promise<ChatFlow[]> => {
     try {
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions } = user ?? {}

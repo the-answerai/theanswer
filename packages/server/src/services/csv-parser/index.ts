@@ -167,8 +167,8 @@ const getProcessedCsvSignedUrl = async (csvParseRunId: string, user: IUser) => {
             Bucket: process.env.S3_STORAGE_BUCKET_NAME ?? '',
             Key: csvParseRun.processedCsvUrl
         })
-
-        const signedUrl = await getSignedUrl(s3, getCmd, {
+        //@ts-ignore
+        const signedUrl = await getSignedUrl(s3 as any, getCmd, {
             expiresIn: 60 * 60 * 24 // 1 day
         })
         return signedUrl

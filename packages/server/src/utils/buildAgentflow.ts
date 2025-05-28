@@ -29,7 +29,9 @@ import {
     IComponentNodes,
     INodeOverrides,
     IVariableOverride,
-    INodeDirectedGraph
+    INodeDirectedGraph,
+    IChatFlow,
+    IUser
 } from '../Interface'
 import {
     RUNTIME_MESSAGES_LENGTH_VAR_PREFIX,
@@ -42,7 +44,7 @@ import {
     getTelemetryFlowObj,
     QUESTION_VAR_PREFIX
 } from '.'
-import { ChatFlow } from '../database/entities/ChatFlow'
+
 import { Variable } from '../database/entities/Variable'
 import { replaceInputsWithConfig, constructGraphs, getAPIOverrideConfig } from '../utils'
 import logger from './logger'
@@ -88,6 +90,7 @@ interface IAgentFlowRuntime {
 }
 
 interface IExecuteNodeParams {
+    user: IUser
     nodeId: string
     reactFlowNode: IReactFlowNode
     nodes: IReactFlowNode[]
@@ -95,7 +98,7 @@ interface IExecuteNodeParams {
     graph: INodeDirectedGraph
     reversedGraph: INodeDirectedGraph
     incomingInput: IncomingAgentflowInput
-    chatflow: ChatFlow
+    chatflow: IChatFlow
     chatId: string
     sessionId: string
     apiMessageId: string
@@ -759,6 +762,7 @@ function combineNodeInputs(receivedInputs: Map<string, any>): any {
  * @returns The result of the node execution
  */
 const executeNode = async ({
+    user,
     nodeId,
     reactFlowNode,
     nodes,
@@ -824,7 +828,7 @@ const executeNode = async ({
         }
 
         // Get available variables and resolve them
-        const availableVariables = await appDataSource.getRepository(Variable).find()
+        const availableVariables = await appDataSource.getRepository(Variable).find({ where: { userId: user.id } })
 
         // Prepare flow config
         let updatedState = cloneDeep(agentflowRuntime.state)
@@ -902,6 +906,7 @@ const executeNode = async ({
 
         // Prepare run parameters
         const runParams = {
+            user: incomingInput.user,
             chatId,
             sessionId,
             chatflowid: chatflow.id,
@@ -978,6 +983,7 @@ const executeNode = async ({
                     try {
                         // Execute sub-flow recursively
                         const subFlowResult = await executeAgentFlow({
+                            user: user,
                             componentNodes,
                             incomingInput,
                             chatflow: iterationChatflow,
@@ -1475,6 +1481,7 @@ export const executeAgentFlow = async ({
 
             // Execute current node
             const executionResult = await executeNode({
+                user: incomingInput.user!,
                 nodeId: currentNode.nodeId,
                 reactFlowNode,
                 nodes,
