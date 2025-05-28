@@ -1,5 +1,6 @@
 'use client'
-import React, { useState } from 'react'
+import type React from 'react'
+import { useState } from 'react'
 import NextLink from 'next/link'
 import { styled } from '@mui/material/styles'
 import Avatar from '@mui/material/Avatar'
@@ -15,7 +16,7 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import Collapse from '@mui/material/Collapse'
-import { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
+import type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { usePathname } from 'next/navigation'
 import { Menu, MenuItem, Tooltip } from '@mui/material'
@@ -29,15 +30,13 @@ import IntegrationInstructionsOutlinedIcon from '@mui/icons-material/Integration
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
 import ContactSupport from '@mui/icons-material/ContactSupport'
 import AssessmentIcon from '@mui/icons-material/Assessment'
+import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import { useHelpChatContext } from './HelpChatContext' // Import the context
+import { ExportImportMenuItems } from './components/ExportImportComponent'
+import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
-import dynamic from 'next/dynamic'
 import ChatDrawer from './ChatDrawer'
-
-const PurchaseSubscription = dynamic(() => import('./billing/PurchaseSubscription'), { ssr: false })
-const Dialog = dynamic(() => import('@mui/material/Dialog'), { ssr: false })
-const DialogContent = dynamic(() => import('@mui/material/DialogContent'), { ssr: false })
-const DialogTitle = dynamic(() => import('@mui/material/DialogTitle'), { ssr: false })
+import StarIcon from '@mui/icons-material/Star'
 
 const drawerWidth = 240
 
@@ -83,16 +82,28 @@ interface MenuConfig {
     subMenu?: MenuConfig[]
 }
 
-export const AppDrawer = ({ session, flagsmithState }: any) => {
+interface AppDrawerProps {
+    session: {
+        user: {
+            picture?: string
+            email?: string
+            org_name?: string
+            subscription?: unknown
+        }
+    }
+    flagsmithState: unknown
+}
+
+export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
     const { helpChatOpen, setHelpChatOpen } = useHelpChatContext()
     const user = session?.user
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [submenuOpen, setSubmenuOpen] = useState('')
-    const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false)
+    const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage'])
-    const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'document-stores', 'billing']
+    const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'documentstores', 'apikey', 'credentials', 'billing', 'apps']
     const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'documentstores', 'admin', 'apps']
 
     const filterMenuItems = (items: MenuConfig[]) => {
@@ -164,13 +175,13 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                               text: 'Billing',
                               link: '/billing',
                               icon: <AssessmentIcon color='primary' />
+                          },
+                          {
+                              id: 'apps',
+                              text: 'Apps',
+                              link: '/sidekick-studio/apps',
+                              icon: <AppsOutlinedIcon color='primary' />
                           }
-                          //   {
-                          //       id: 'apps',
-                          //       text: 'Apps',
-                          //       link: '/sidekick-studio/apps',
-                          //       icon: <AppsOutlinedIcon color='primary' />
-                          //   }
                       ]
                   }
                 : {})
@@ -198,12 +209,8 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
     }
 
     const handleSubscriptionOpen = () => {
-        setSubscriptionDialogOpen(true)
+        openSubscriptionDialog()
         handleClose()
-    }
-
-    const handleSubscriptionClose = () => {
-        setSubscriptionDialogOpen(false)
     }
 
     return (
@@ -303,7 +310,7 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                                         href={item.link}
                                         component={item.link ? NextLink : 'button'}
                                         sx={{ flex: 1, display: 'flex', width: '100%' }}
-                                        onClick={() => setSubmenuOpen(item.text == submenuOpen ? '' : item.text ?? '')}
+                                        onClick={() => setSubmenuOpen(item.text === submenuOpen ? '' : item.text ?? '')}
                                     >
                                         <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
                                         <Typography
@@ -354,30 +361,32 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                         </Box>
                     ))}
 
-                    {/* <ListItem disablePadding>
-                        <ListItemButton
-                            onClick={handleSubscriptionOpen}
-                            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 1, mb: 1 }}
-                        >
-                            <ListItemIcon>
-                                <StarIcon sx={{ color: '#fff' }} />
-                            </ListItemIcon>
-                            <Typography
-                                sx={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    textTransform: 'capitalize',
-                                    display: '-webkit-box',
-                                    WebkitBoxOrient: 'vertical',
-                                    WebkitLineClamp: '1',
-                                    flex: '1',
-                                    color: '#fff'
-                                }}
+                    {!user?.subscription && (
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                onClick={handleSubscriptionOpen}
+                                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 1, mb: 1 }}
                             >
-                                Buy Credits
-                            </Typography>
-                        </ListItemButton>
-                    </ListItem> */}
+                                <ListItemIcon>
+                                    <StarIcon sx={{ color: '#fff' }} />
+                                </ListItemIcon>
+                                <Typography
+                                    sx={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        textTransform: 'capitalize',
+                                        display: '-webkit-box',
+                                        WebkitBoxOrient: 'vertical',
+                                        WebkitLineClamp: '1',
+                                        flex: '1',
+                                        color: '#fff'
+                                    }}
+                                >
+                                    Upgrade Plan
+                                </Typography>
+                            </ListItemButton>
+                        </ListItem>
+                    )}
 
                     <ListItem disablePadding sx={{ display: 'block' }}>
                         <Box
@@ -460,6 +469,7 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                                 </MenuItem>
                                 <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
 
+                                <ExportImportMenuItems onClose={handleClose} />
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()
@@ -481,20 +491,6 @@ export const AppDrawer = ({ session, flagsmithState }: any) => {
                     </ListItem>
                 </List>
             </Drawer>
-            <Dialog
-                open={subscriptionDialogOpen}
-                onClose={handleSubscriptionClose}
-                fullWidth
-                maxWidth='md'
-                aria-labelledby='subscription-dialog-title'
-            >
-                <DialogTitle sx={{ fontSize: '1rem' }} id='subscription-dialog-title'>
-                    Upgrade your plan
-                </DialogTitle>
-                <DialogContent>
-                    <PurchaseSubscription />
-                </DialogContent>
-            </Dialog>
         </>
     )
 }

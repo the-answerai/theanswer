@@ -8,6 +8,31 @@ import type { ICommonObject, INode, INodeData, INodeOutputsValue, INodeParams, I
 import { FLOWISE_CHATID, getBaseClasses } from '../../../src/utils'
 import { addMMRInputParams, howToUseFileUpload, resolveVectorStoreOrRetriever } from '../VectorStoreUtils'
 import { index } from '../../../src/indexing'
+import { generateSecureNamespace } from '../../../src/aaiUtils'
+
+// Standalone utility functions
+function createSecurityFilters(options: ICommonObject): any {
+    const filters: any = {
+        _chatflowId: { $eq: options.chatflowid }
+    }
+    if (options.user?.organizationId) {
+        filters._organizationId = { $eq: options.user.organizationId }
+    }
+    if (options.organizationId) {
+        filters._organizationId = { $eq: options.organizationId }
+    }
+    return filters
+}
+
+function addSecurityMetadata(doc: Document, options: ICommonObject): Document {
+    doc.metadata = {
+        ...doc.metadata,
+        _chatflowId: options.chatflowid,
+        ...(options.user?.organizationId ? { _organizationId: options.user.organizationId } : {}),
+        ...(options.organizationId ? { _organizationId: options.organizationId } : {})
+    }
+    return doc
+}
 
 /**
  * AAI Vector Store - Uses Pinecone with environment variables
@@ -17,6 +42,7 @@ class AAI_VectorStores implements INode {
     name: string
     version: number
     description: string
+    tags: string[]
     type: string
     icon: string
     category: string
@@ -27,6 +53,7 @@ class AAI_VectorStores implements INode {
 
     constructor() {
         this.label = 'AAI Vector Store'
+        this.tags = ['AAI']
         this.name = 'aaiVectorStore'
         this.version = 1.0
         this.type = 'AAIVectorStore'
@@ -127,14 +154,18 @@ class AAI_VectorStores implements INode {
 
             // Get index and API key from environment variables
             const pineconeApiKey = process.env.AAI_DEFAULT_PINECONE
-            const _index = process.env.AAI_PINECONE_INDEX
+            const _index = process.env.AAI_DEFAULT_PINECONE_INDEX
 
             if (!pineconeApiKey) {
                 throw new Error('AAI_DEFAULT_PINECONE environment variable is not set')
             }
 
             if (!_index) {
-                throw new Error('AAI_PINECONE_INDEX environment variable is not set')
+                throw new Error('AAI_DEFAULT_PINECONE_INDEX environment variable is not set')
+            }
+
+            if (!options.chatflowid) {
+                throw new Error('Chatflow ID is required for AAI Vector Store')
             }
 
             const client = new Pinecone({ apiKey: pineconeApiKey })
@@ -147,7 +178,8 @@ class AAI_VectorStores implements INode {
                     if (isFileUploadEnabled && options.chatId) {
                         flattenDocs[i].metadata = { ...flattenDocs[i].metadata, [FLOWISE_CHATID]: options.chatId }
                     }
-                    finalDocs.push(new Document(flattenDocs[i]))
+                    // Add security metadata to each document
+                    finalDocs.push(addSecurityMetadata(new Document(flattenDocs[i]), options))
                 }
             }
 
@@ -156,7 +188,8 @@ class AAI_VectorStores implements INode {
                 textKey: pineconeTextKey || 'text'
             }
 
-            if (namespace) obj.namespace = namespace
+            // Generate secure namespace
+            obj.namespace = generateSecureNamespace(options, namespace)
 
             try {
                 if (recordManager) {
@@ -169,7 +202,7 @@ class AAI_VectorStores implements INode {
                         options: {
                             cleanup: recordManager?.cleanup,
                             sourceIdKey: recordManager?.sourceIdKey ?? 'source',
-                            vectorStoreName: namespace
+                            vectorStoreName: obj.namespace || namespace
                         }
                     })
                     return res
@@ -188,14 +221,19 @@ class AAI_VectorStores implements INode {
 
             // Get index and API key from environment variables
             const pineconeApiKey = process.env.AAI_DEFAULT_PINECONE
-            const _index = process.env.AAI_PINECONE_INDEX
+            const _index = process.env.AAI_DEFAULT_PINECONE_INDEX
 
             if (!pineconeApiKey) {
                 throw new Error('AAI_DEFAULT_PINECONE environment variable is not set')
             }
 
             if (!_index) {
-                throw new Error('AAI_PINECONE_INDEX environment variable is not set')
+                throw new Error('AAI_DEFAULT_PINECONE_INDEX environment variable is not set')
+            }
+
+            // Require chatflow ID for proper isolation
+            if (!options.chatflowid) {
+                throw new Error('Chatflow ID is required for AAI Vector Store')
             }
 
             const client = new Pinecone({ apiKey: pineconeApiKey })
@@ -206,12 +244,17 @@ class AAI_VectorStores implements INode {
                 textKey: pineconeTextKey || 'text'
             }
 
-            if (namespace) obj.namespace = namespace
+            // Generate secure namespace
+            obj.namespace = generateSecureNamespace(options, namespace)
+
+            // Add security filters
+            obj.filter = createSecurityFilters(options)
+
             const pineconeStore = new PineconeStore(embeddings, obj)
 
             try {
                 if (recordManager) {
-                    const vectorStoreName = namespace
+                    const vectorStoreName = obj.namespace || namespace
                     await recordManager.createSchema()
                     recordManager.namespace = `${recordManager.namespace}_${vectorStoreName}`
                     const keys: string[] = await recordManager.listKeys({})
@@ -240,14 +283,19 @@ class AAI_VectorStores implements INode {
 
         // Get index and API key from environment variables
         const pineconeApiKey = process.env.AAI_DEFAULT_PINECONE
-        const index = process.env.AAI_PINECONE_INDEX
+        const index = process.env.AAI_DEFAULT_PINECONE_INDEX
 
         if (!pineconeApiKey) {
             throw new Error('AAI_DEFAULT_PINECONE environment variable is not set')
         }
 
         if (!index) {
-            throw new Error('AAI_PINECONE_INDEX environment variable is not set')
+            throw new Error('AAI_DEFAULT_PINECONE_INDEX environment variable is not set')
+        }
+
+        // Require chatflow ID for proper isolation
+        if (!options.chatflowid) {
+            throw new Error('Chatflow ID is required for AAI Vector Store')
         }
 
         const client = new Pinecone({ apiKey: pineconeApiKey })
@@ -258,12 +306,23 @@ class AAI_VectorStores implements INode {
             textKey: pineconeTextKey || 'text'
         }
 
-        if (namespace) obj.namespace = namespace
-        let metadatafilter = {}
+        // Generate secure namespace
+        obj.namespace = generateSecureNamespace(options, namespace)
+
+        // Create base security filters
+        let securityFilter = createSecurityFilters(options)
+
+        // Apply user-provided filters without compromising security
+        // We use $and to combine user filters with security filters
         if (pineconeMetadataFilter) {
-            metadatafilter = typeof pineconeMetadataFilter === 'object' ? pineconeMetadataFilter : JSON.parse(pineconeMetadataFilter)
-            obj.filter = metadatafilter
+            const userFilter = typeof pineconeMetadataFilter === 'object' ? pineconeMetadataFilter : JSON.parse(pineconeMetadataFilter)
+            securityFilter = {
+                $and: [securityFilter, userFilter]
+            }
         }
+
+        obj.filter = securityFilter
+
         if (isFileUploadEnabled && options.chatId) {
             obj.filter = obj.filter || {}
             obj.filter.$or = [

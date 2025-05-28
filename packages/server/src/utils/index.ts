@@ -541,6 +541,7 @@ export const buildFlow = async ({
         chatHistory,
         ...overrideConfig
     }
+    const chatflow = await appDataSource.getRepository(ChatFlow).findOne({ where: { id: chatflowid } })
     while (nodeQueue.length) {
         const { nodeId, depth } = nodeQueue.shift() as INodeQueue
 
@@ -588,7 +589,9 @@ export const buildFlow = async ({
                     cachePool,
                     dynamicVariables,
                     uploads,
-                    baseURL
+                    baseURL,
+                    user,
+                    organizationId: chatflow?.organizationId
                 })
                 if (indexResult) upsertHistory['result'] = indexResult
                 logger.debug(`[server]: Finished upserting ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
@@ -615,7 +618,9 @@ export const buildFlow = async ({
                     dynamicVariables,
                     uploads,
                     baseURL,
-                    componentNodes: componentNodes as ICommonObject
+                    componentNodes: componentNodes as ICommonObject,
+                    user,
+                    organizationId: chatflow?.organizationId
                 })
 
                 // Save dynamic variables
@@ -724,6 +729,7 @@ export const buildFlow = async ({
  * @param {string} isClearFromViewMessageDialog
  */
 export const clearSessionMemory = async (
+    user: IUser,
     reactFlowNodes: IReactFlowNode[],
     componentNodes: IComponentNodes,
     chatId: string,
@@ -741,7 +747,14 @@ export const clearSessionMemory = async (
         const nodeInstanceFilePath = componentNodes[node.data.name].filePath as string
         const nodeModule = await import(nodeInstanceFilePath)
         const newNodeInstance = new nodeModule.nodeClass()
-        const options: ICommonObject = { chatId, appDataSource, databaseEntities, logger }
+        const options: ICommonObject = {
+            chatId,
+            appDataSource,
+            databaseEntities,
+            logger,
+            userId: user?.id,
+            organizationId: user?.organizationId
+        }
 
         // SessionId always take priority first because it is the sessionId used for 3rd party memory node
         if (sessionId && node.data.inputs) {
@@ -1779,11 +1792,14 @@ export const getUploadPath = (): string => {
 }
 
 const getOrgId = () => {
-    const settingsContent = fs.readFileSync(getUserSettingsFilePath(), 'utf8')
     try {
+        const settingsContent = fs.readFileSync(getUserSettingsFilePath(), 'utf8')
         const settings = JSON.parse(settingsContent)
         return settings.instanceId
     } catch (error) {
+        if (process.env.AUTH0_ORGANIZATION_ID) {
+            return process.env.AUTH0_ORGANIZATION_ID
+        }
         return ''
     }
 }

@@ -51,6 +51,7 @@ import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssist
 import { UpdateUserUniqueAuth0Id1741898609435 } from './1741898609435-UpdateUserUniqueAuth0Id'
 import { AppCsvRuns1744553414309 } from './1744553414309-AddAppCsvRuns'
 import { AddUserOrgToCustomTemplate1744553414310 } from './1744553414310-AddUserOrgToCustomTemplate'
+import { AddBrowserExtConfig1746508019300 } from './1746508019300-AddBrowserExtConfig'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -105,5 +106,6 @@ export const postgresMigrations = [
     AddTypeToAssistant1733011290987,
     UpdateUserUniqueAuth0Id1741898609435,
     AppCsvRuns1744553414309,
-    AddUserOrgToCustomTemplate1744553414310
+    AddUserOrgToCustomTemplate1744553414310,
+    AddBrowserExtConfig1746508019300
 ]

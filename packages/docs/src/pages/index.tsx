@@ -71,7 +71,7 @@ function HomepageHeader() {
         script.onload = () => {
             window.Chatbot.init({
                 chatflowid: 'e24d5572-a27a-40b9-83fe-19a376535b9d',
-                apiHost: 'https://lastrev.flowise.theanswer.ai',
+                apiHost: 'https://lr-production.studio.theanswer.ai',
                 theme
             })
         }
@@ -94,7 +94,15 @@ function HomepageHeader() {
             <div className={styles.heroContent}>
                 <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAI Logo' className={styles.heroLogo} />
                 <div className={styles.heroSubtitle}>
-                    <p>Empowering you to ask the right questions in the age of AI</p>
+                    <p>Design, deploy, and manage your AI agent workforce in hours—not months.</p>
+                </div>
+                <div className={styles.heroCTAs}>
+                    <a href='/signup' className={styles.ctaButton}>
+                        Sign Up
+                    </a>
+                    <a href='/browser-extension' className={styles.ctaButton}>
+                        Download Browser Extension
+                    </a>
                 </div>
             </div>
         </header>
@@ -106,10 +114,7 @@ HomepageHeader.propTypes = {}
 export default function Home(): JSX.Element {
     const { siteConfig } = useDocusaurusContext()
     return (
-        <Layout
-            title={`AnswerAI: Empowering you to ask the right questions in the age of AI`}
-            description='AnswerAI is the platform that empowers you create advanced AI applications with low-code.'
-        >
+        <Layout title={'Answer Agent AI: Build your AI-Agent Workforce'} description='Orchestrate secure AI agents across your business.'>
             <HomepageHeader />
             <main>
                 <HomepageFeatures />

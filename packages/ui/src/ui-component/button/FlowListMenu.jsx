@@ -95,7 +95,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas, setError, setRef
 
     const handleChatflowConfiguration = () => {
         setAnchorEl(null)
-        setFlowDialogOpen(true)
+        setChatflowConfigurationDialogOpen(true)
     }
 
     const handleFlowStarterPrompts = () => {
