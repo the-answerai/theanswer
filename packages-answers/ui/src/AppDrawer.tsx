@@ -134,6 +134,24 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                               icon: <GroupsOutlinedIcon color='primary' />
                           },
                           {
+                              id: 'executions',
+                              text: 'Executions',
+                              link: '/sidekick-studio/executions',
+                              icon: <AssessmentIcon color='primary' />
+                          },
+                          {
+                              id: 'assistants',
+                              text: 'Assistants',
+                              link: '/sidekick-studio/assistants',
+                              icon: <GroupsOutlinedIcon color='primary' />
+                          },
+                          {
+                              id: 'marketplaces',
+                              text: 'Marketplaces',
+                              link: '/sidekick-studio/marketplaces',
+                              icon: <GroupsOutlinedIcon color='primary' />
+                          },
+                          {
                               id: 'documentstores',
                               text: 'Document Stores',
                               link: '/sidekick-studio/document-stores',
@@ -163,12 +181,6 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                               link: '/sidekick-studio/apikey',
                               icon: <VpnKeyOutlinedIcon color='primary' />
                           },
-                          //   {
-                          //       id: 'admin',
-                          //       text: 'Admin',
-                          //       link: '/sidekick-studio/admin',
-                          //       icon: <AdminOutlinedIcon color='primary' />
-                          //   },
                           {
                               id: 'billing',
                               text: 'Billing',
