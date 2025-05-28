@@ -107,7 +107,7 @@ class OpenAIAssistant_Agents implements INode {
                 return returnData
             }
 
-            const assistants = await appDataSource.getRepository(databaseEntities['Assistant']).find()
+            const assistants = await appDataSource.getRepository(databaseEntities['Assistant']).find({ where: { userId: options.userId } })
 
             for (let i = 0; i < assistants.length; i += 1) {
                 const assistantDetails = JSON.parse(assistants[i].details)

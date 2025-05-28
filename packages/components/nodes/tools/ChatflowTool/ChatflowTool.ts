@@ -122,7 +122,7 @@ class ChatflowTool_Tools implements INode {
                 return returnData
             }
 
-            const chatflows = await appDataSource.getRepository(databaseEntities['ChatFlow']).find()
+            const chatflows = await appDataSource.getRepository(databaseEntities['ChatFlow']).find({ where: { userId: options.userId } })
 
             for (let i = 0; i < chatflows.length; i += 1) {
                 const data = {
