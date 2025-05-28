@@ -1,13 +1,12 @@
 import PropTypes from 'prop-types'
 import { useSelector } from 'react-redux'
-import { useState } from 'react'
+
 // material-ui
 import { styled } from '@mui/material/styles'
-import { Box, Grid, Typography, useTheme, Chip, Tooltip } from '@mui/material'
+import { Box, Grid, Typography, useTheme } from '@mui/material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
-import FlowListMenu from '@/ui-component/button/FlowListMenu'
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
     background: theme.palette.card.main,
@@ -28,52 +27,15 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
     whiteSpace: 'pre-line'
 }))
 
-// ===========================|| ITEM CARD ||=========================== //
+// ===========================|| CONTRACT CARD ||=========================== //
 
 const ItemCard = ({ data, images, icons, onClick }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
-    const [data, setData] = useState(initialData)
-
-    if (!data) {
-        return null
-    }
-
-    const handleCardClick = (event) => {
-        if (!event.target.closest('.flow-list-menu') && !event.target.closest('.use-template-button')) {
-            onClick(data)
-        }
-    }
-
-    const renderActionButton = () => {
-        if (type !== 'marketplace' && type !== 'tools') {
-            return (
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8
-                    }}
-                    className='flow-list-menu'
-                >
-                    <FlowListMenu
-                        isAgentCanvas={type === 'agentflows'}
-                        chatflow={data}
-                        setError={setError}
-                        updateFlowsApi={updateFlowsApi}
-                        onUpdateChatflow={(updatedChatflow) => {
-                            setData(updatedChatflow)
-                        }}
-                    />
-                </Box>
-            )
-        }
-        return null
-    }
 
     return (
-        <CardWrapper content={false} sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}>
-            <Box sx={{ height: '100%', p: 2.25 }} onClick={handleCardClick}>
+        <CardWrapper content={false} onClick={onClick} sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}>
+            <Box sx={{ height: '100%', p: 2.25 }}>
                 <Grid container justifyContent='space-between' direction='column' sx={{ height: '100%', gap: 3 }}>
                     <Box display='flex' flexDirection='column' sx={{ width: '100%' }}>
                         <div
@@ -94,7 +56,7 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                                         flexShrink: 0,
                                         marginRight: 10,
                                         borderRadius: '50%',
-                                        background: `url(${data.iconSrc})`,
+                                        backgroundImage: `url(${data.iconSrc})`,
                                         backgroundSize: 'contain',
                                         backgroundRepeat: 'no-repeat',
                                         backgroundPosition: 'center center'
@@ -200,16 +162,6 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                         </Box>
                     )}
                 </Grid>
-            </Box>
-            <Box
-                sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    right: 8
-                }}
-                className='flow-list-menu'
-            >
-                {renderActionButton()}
             </Box>
         </CardWrapper>
     )

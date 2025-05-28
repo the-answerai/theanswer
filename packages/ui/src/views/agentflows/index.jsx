@@ -15,13 +15,10 @@ import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import { FlowListTable } from '@/ui-component/table/FlowListTable'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
-import MainCard from '@/ui-component/cards/MainCard'
-import { StyledButton } from '@/ui-component/button/StyledButton'
-import { IconPlus } from '@tabler/icons-react'
+import ErrorBoundary from '@/ErrorBoundary'
 
 // API
 import chatflowsApi from '@/api/chatflows'
-import marketplacesApi from '@/api/marketplaces'
 
 // Hooks
 import useApi from '@/hooks/useApi'
@@ -29,31 +26,15 @@ import useApi from '@/hooks/useApi'
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
 
-function TabPanel(props) {
-    const { children, value, index, ...other } = props
-    return (
-        <div
-            role='tabpanel'
-            hidden={value !== index}
-            id={`agentflow-tabpanel-${index}`}
-            aria-labelledby={`agentflow-tab-${index}`}
-            {...other}
-        >
-            {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
-        </div>
-    )
-}
+// icons
+import { IconPlus, IconLayoutGrid, IconList } from '@tabler/icons-react'
 
-TabPanel.propTypes = {
-    children: PropTypes.node,
-    index: PropTypes.number.isRequired,
-    value: PropTypes.number.isRequired
-}
+// ==============================|| AGENTS ||============================== //
 
 const Agentflows = () => {
     const navigate = useNavigate()
+    const theme = useTheme()
 
-    const [tabValue, setTabValue] = useState(0)
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [images, setImages] = useState({})
@@ -116,28 +97,26 @@ const Agentflows = () => {
     useEffect(() => {
         getAllAgentflows.request(agentflowVersion === 'v2' ? 'AGENTFLOW' : 'MULTIAGENT')
 
-    const onSearchChange = (event) => {
-        setSearch(event.target.value)
-    }
-
-    const handleCategoryChange = (event) => {
-        setCategoryFilter(event.target.value)
-    }
-
-    useEffect(() => {
-        getAllAgentflowsApi.request()
-        getMarketplaceAgentflowsApi.request()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-        if (getAllAgentflowsApi.error || getMarketplaceAgentflowsApi.error) {
-            setError(getAllAgentflowsApi.error || getMarketplaceAgentflowsApi.error)
+        if (getAllAgentflows.error) {
+            if (getAllAgentflows.error?.response?.status === 401) {
+                setLoginDialogProps({
+                    title: 'Login',
+                    confirmButtonName: 'Login'
+                })
+                setLoginDialogOpen(true)
+            } else {
+                setError(getAllAgentflows.error)
+            }
         }
-    }, [getAllAgentflowsApi.error, getMarketplaceAgentflowsApi.error])
+    }, [getAllAgentflows.error])
 
     useEffect(() => {
-        setLoading(getAllAgentflowsApi.loading || getMarketplaceAgentflowsApi.loading)
-    }, [getAllAgentflowsApi.loading, getMarketplaceAgentflowsApi.loading])
+        setLoading(getAllAgentflows.loading)
+    }, [getAllAgentflows.loading])
 
     useEffect(() => {
         if (getAllAgentflows.data) {
@@ -168,62 +147,8 @@ const Agentflows = () => {
             } catch (e) {
                 console.error(e)
             }
-
-            const myAgentflowsData = getAllAgentflowsApi.data
-            const { processedImages: myImages, processedNodeTypes: myNodeTypes } = processFlowData(myAgentflowsData)
-            setMyAgentflows(myAgentflowsData)
-
-            const marketplaceAgentflows = getMarketplaceAgentflowsApi.data
-            const answerAIFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agentflow')
-            const communityFlows = marketplaceAgentflows.filter((flow) => flow.type === 'Agent Community')
-
-            const { processedImages: answerAIImages, processedNodeTypes: answerAINodeTypes } = processFlowData(answerAIFlows)
-            const { processedImages: communityImages, processedNodeTypes: communityNodeTypes } = processFlowData(communityFlows)
-
-            setAnswerAIAgentflows(answerAIFlows)
-            setCommunityAgentflows(communityFlows)
-
-            setImages({ ...myImages, ...answerAIImages, ...communityImages })
-            setNodeTypes({ ...myNodeTypes, ...answerAINodeTypes, ...communityNodeTypes })
-
-            const allFlows = [...myAgentflowsData, ...answerAIFlows, ...communityFlows]
-            const uniqueCategories = ['All', ...new Set(allFlows.flatMap((item) => (item?.category ? item.category.split(';') : [])))]
-            setCategories(uniqueCategories)
         }
-    }, [getAllAgentflowsApi.data, getMarketplaceAgentflowsApi.data])
-
-    const filterFlows = (flows, search, categoryFilter) => {
-        const searchRegex = new RegExp(search, 'i') // 'i' flag for case-insensitive search
-
-        return flows.filter((flow) => {
-            if (!flow) return false
-
-            // Check category first
-            const category = flow.category || ''
-            if (categoryFilter !== 'All' && !category.includes(categoryFilter)) {
-                return false
-            }
-
-            // If category matches, then check search
-            const name = flow.name || flow.templateName || ''
-            const description = flow.description || ''
-            const searchText = `${name} ${description}`
-
-            return searchRegex.test(searchText)
-        })
-    }
-
-    const filteredMyAgentflows = useMemo(() => filterFlows(myAgentflows, search, categoryFilter), [myAgentflows, search, categoryFilter])
-
-    const filteredAnswerAIAgentflows = useMemo(
-        () => filterFlows(answerAIAgentflows, search, categoryFilter),
-        [answerAIAgentflows, search, categoryFilter]
-    )
-
-    const filteredCommunityAgentflows = useMemo(
-        () => filterFlows(communityAgentflows, search, categoryFilter),
-        [communityAgentflows, search, categoryFilter]
-    )
+    }, [getAllAgentflows.data])
 
     return (
         <MainCard>
@@ -356,50 +281,8 @@ const Agentflows = () => {
                 </Stack>
             )}
 
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={tabValue} onChange={handleTabChange} aria-label='agentflow tabs'>
-                        <Tab label='My Agentflows' />
-                        <Tab label='AnswerAI Supported' />
-                        <Tab label='Community' />
-                    </Tabs>
-                </Box>
-                <TabPanel value={tabValue} index={0}>
-                    <FlowListView
-                        data={filteredMyAgentflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getAllAgentflowsApi}
-                        setError={setError}
-                        type='agentflows'
-                        onItemClick={goToCanvas}
-                    />
-                </TabPanel>
-                <TabPanel value={tabValue} index={1}>
-                    <FlowListView
-                        data={filteredAnswerAIAgentflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getMarketplaceAgentflowsApi}
-                        setError={setError}
-                        type='marketplace'
-                        onItemClick={goToMarketplaceCanvas}
-                    />
-                </TabPanel>
-                <TabPanel value={tabValue} index={2}>
-                    <FlowListView
-                        data={filteredCommunityAgentflows}
-                        images={images}
-                        nodeTypes={nodeTypes}
-                        isLoading={isLoading}
-                        updateFlowsApi={getMarketplaceAgentflowsApi}
-                        setError={setError}
-                        type='marketplace'
-                        onItemClick={goToMarketplaceCanvas}
-                    />
-                </TabPanel>
-            </Box>
+            <LoginDialog show={loginDialogOpen} dialogProps={loginDialogProps} onConfirm={onLoginClick} />
+            <ConfirmDialog />
         </MainCard>
     )
 }

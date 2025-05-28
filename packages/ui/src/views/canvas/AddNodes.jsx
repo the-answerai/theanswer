@@ -42,12 +42,10 @@ import { IconPlus, IconSearch, IconMinus, IconX, IconSparkles } from '@tabler/ic
 import LlamaindexPNG from '@/assets/images/llamaindex.png'
 import LangChainPNG from '@/assets/images/langchain.png'
 import utilNodesPNG from '@/assets/images/utilNodes.png'
-import AAIPNG from '@/assets/images/aai.png'
 
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
 import { SET_COMPONENT_NODES } from '@/store/actions'
-import Image from 'next/image'
 
 // ==============================|| ADD NODES||============================== //
 function a11yProps(index) {
@@ -59,7 +57,7 @@ function a11yProps(index) {
 
 const blacklistCategoriesForAgentCanvas = ['Agents', 'Memory', 'Record Manager', 'Utilities']
 
-const agentMemoryNodes = ['agentMemory', 'sqliteAgentMemory', 'postgresAgentMemory', 'mySQLAgentMemory', 'answerAiAgentMemory']
+const agentMemoryNodes = ['agentMemory', 'sqliteAgentMemory', 'postgresAgentMemory', 'mySQLAgentMemory']
 
 // Show blacklisted nodes (exceptions) for agent canvas
 const exceptionsForAgentCanvas = {
@@ -161,15 +159,12 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
     }
 
     const groupByTags = (nodes, newTabValue = 0) => {
-        const aaiNodes = nodes.filter((nd) => nd.tags && nd.tags.includes('AAI'))
-        const langchainNodes = nodes.filter((nd) => !nd.tags || !nd.tags.includes('AAI'))
+        const langchainNodes = nodes.filter((nd) => !nd.tags)
         const llmaindexNodes = nodes.filter((nd) => nd.tags && nd.tags.includes('LlamaIndex'))
         const utilitiesNodes = nodes.filter((nd) => nd.tags && nd.tags.includes('Utilities'))
         if (newTabValue === 0) {
-            return aaiNodes
-        } else if (newTabValue === 1) {
             return langchainNodes
-        } else if (newTabValue === 2) {
+        } else if (newTabValue === 1) {
             return llmaindexNodes
         } else {
             return utilitiesNodes
@@ -268,10 +263,8 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
 
     const getImage = (tabValue) => {
         if (tabValue === 0) {
-            return AAIPNG
-        } else if (tabValue === 1) {
             return LangChainPNG
-        } else if (tabValue === 2) {
+        } else if (tabValue === 1) {
             return LlamaindexPNG
         } else {
             return utilNodesPNG
@@ -441,7 +434,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                 onChange={handleTabChange}
                                                 aria-label='tabs'
                                             >
-                                                {['AAI', 'All', 'LlamaIndex', 'Utilities'].map((item, index) => (
+                                                {['LangChain', 'LlamaIndex', 'Utilities'].map((item, index) => (
                                                     <Tab
                                                         icon={
                                                             <div
@@ -449,7 +442,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                     borderRadius: '50%'
                                                                 }}
                                                             >
-                                                                <Image
+                                                                <img
                                                                     style={{
                                                                         width: '20px',
                                                                         height: '20px',
@@ -487,7 +480,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                             <List
                                                 sx={{
                                                     width: '100%',
-                                                    maxWidth: 455,
+                                                    maxWidth: 370,
                                                     py: 0,
                                                     borderRadius: '10px',
                                                     [theme.breakpoints.down('md')]: {
@@ -508,7 +501,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                     .sort()
                                                     .map((category) => (
                                                         <Accordion
-                                                            expanded={categoryExpanded[category] || tabValue === 0 || false}
+                                                            expanded={categoryExpanded[category] || false}
                                                             onChange={handleAccordionChange(category)}
                                                             key={category}
                                                             disableGutters

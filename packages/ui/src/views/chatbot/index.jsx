@@ -18,7 +18,6 @@ import { alpha } from '@mui/material/styles'
 
 //Const
 import { baseURL, setBaseURL } from '@/store/constant'
-import { Box } from '@mui/material'
 
 // ==============================|| Chatbot ||============================== //
 

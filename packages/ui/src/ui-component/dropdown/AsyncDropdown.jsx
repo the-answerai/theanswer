@@ -33,7 +33,7 @@ const fetchList = async ({ name, nodeData, previousNodes, currentNode }) => {
     const username = localStorage.getItem('username')
     const password = localStorage.getItem('password')
 
-    let lists = await axios
+    let lists = await client
         .post(
             `${baseURL}/api/v1/node-load-method/${nodeData.name}`,
             { ...nodeData, loadMethod, previousNodes, currentNode },
