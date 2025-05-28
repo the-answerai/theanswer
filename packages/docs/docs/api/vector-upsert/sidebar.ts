@@ -1,24 +1,24 @@
-import type { SidebarsConfig } from '@docusaurus/plugin-content-docs'
+import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
 const sidebar: SidebarsConfig = {
-    apisidebar: [
+  apisidebar: [
+    {
+      type: "doc",
+      id: "api/vector-upsert/vector-upsert-api",
+    },
+    {
+      type: "category",
+      label: "vector",
+      items: [
         {
-            type: 'doc',
-            id: 'api/vector-upsert/vector-upsert-api'
+          type: "doc",
+          id: "api/vector-upsert/vector-upsert",
+          label: "Upsert vector embeddings",
+          className: "api-method post",
         },
-        {
-            type: 'category',
-            label: 'vector',
-            items: [
-                {
-                    type: 'doc',
-                    id: 'api/vector-upsert/vector-upsert',
-                    label: 'Upsert vector embeddings',
-                    className: 'api-method post'
-                }
-            ]
-        }
-    ]
-}
+      ],
+    },
+  ],
+};
 
-export default sidebar.apisidebar
+export default sidebar.apisidebar;
