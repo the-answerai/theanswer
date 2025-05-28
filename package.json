@@ -17,7 +17,7 @@
         "build": "dotenv -- turbo run build ",
         "build-force": "pnpm clean && turbo run build --force",
         "dev": "dotenv -- turbo run dev dev-docker",
-        "dev-docker": "docker-compose  -f \"./docker-compose.dev.yml\" up -d",
+        "dev-docker": "docker-compose  -p flowise -f \"./docker-compose.dev.yml\" up -d",
         "start": "dotenv -- npx turbo run start",
         "start:windows": "cd packages/server/bin && run start",
         "start:default": "cd packages/server/bin && ./run start",

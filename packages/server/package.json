@@ -64,7 +64,7 @@
     "license": "SEE LICENSE IN LICENSE.md",
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "^3.699.0",
-        "@aws-sdk/s3-request-presigner": "^3.374.0",
+        "@aws-sdk/s3-request-presigner": "^3.699.0",
         "@contentful/rich-text-from-markdown": "^15.16.15",
         "@google-cloud/logging-winston": "^6.0.0",
         "@oclif/core": "4.0.7",

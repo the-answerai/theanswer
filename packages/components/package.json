@@ -48,7 +48,7 @@
         "@langchain/aws": "0.1.4",
         "@langchain/baidu-qianfan": "^0.1.0",
         "@langchain/cohere": "^0.0.7",
-        "@langchain/community": "^0.3.34",
+        "@langchain/community": "^0.3.44",
         "@langchain/core": "0.3.37",
         "@langchain/exa": "^0.0.5",
         "@langchain/google-genai": "0.2.3",
