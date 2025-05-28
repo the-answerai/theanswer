@@ -27,6 +27,14 @@ export class Execution implements IExecution {
     @Column({ nullable: true })
     isPublic?: boolean
 
+    @Index()
+    @Column({ type: 'uuid', nullable: true })
+    userId: string
+
+    @Index()
+    @Column({ type: 'uuid', nullable: true })
+    organizationId: string
+
     @Column({ type: 'timestamp' })
     @CreateDateColumn()
     createdDate: Date

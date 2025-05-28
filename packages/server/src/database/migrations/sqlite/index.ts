@@ -39,6 +39,7 @@ import { AddCustomTemplate1725629836652 } from './1725629836652-AddCustomTemplat
 import { AddFollowUpPrompts1726666294213 } from './1726666294213-AddFollowUpPrompts'
 import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssistant'
 import { AddExecutionEntity1738090872625 } from './1738090872625-AddExecutionEntity'
+import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
 
 export const sqliteMigrations = [
     Init1693835579790,
@@ -81,5 +82,6 @@ export const sqliteMigrations = [
     AddCustomTemplate1725629836652,
     AddFollowUpPrompts1726666294213,
     AddTypeToAssistant1733011290987,
-    AddExecutionEntity1738090872625
+    AddExecutionEntity1738090872625,
+    AddUserScopingToExecution1738091000000
 ]

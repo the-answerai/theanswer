@@ -29,6 +29,7 @@ import { AddArtifactsToChatMessage1726156258465 } from './1726156258465-AddArtif
 import { AddFollowUpPrompts1726666318346 } from './1726666318346-AddFollowUpPrompts'
 import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssistant'
 import { AddExecutionEntity1738090872625 } from './1738090872625-AddExecutionEntity'
+import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
 
 export const mariadbMigrations = [
     Init1693840429259,
@@ -61,5 +62,6 @@ export const mariadbMigrations = [
     AddArtifactsToChatMessage1726156258465,
     AddFollowUpPrompts1726666318346,
     AddTypeToAssistant1733011290987,
-    AddExecutionEntity1738090872625
+    AddExecutionEntity1738090872625,
+    AddUserScopingToExecution1738091000000
 ]

@@ -1,11 +1,24 @@
 import { Request, Response, NextFunction } from 'express'
 import executionsService from '../../services/executions'
 import { ExecutionState } from '../../Interface'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { StatusCodes } from 'http-status-codes'
+import checkOwnership from '../../utils/checkOwnership'
 
 const getExecutionById = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+        }
+
         const executionId = req.params.id
-        const execution = await executionsService.getExecutionById(executionId)
+        const execution = await executionsService.getExecutionById(executionId, req.user)
+        
+        // Check ownership for the specific execution
+        if (!(await checkOwnership(execution, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+
         return res.json(execution)
     } catch (error) {
         next(error)
@@ -24,8 +37,19 @@ const getPublicExecutionById = async (req: Request, res: Response, next: NextFun
 
 const updateExecution = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+        }
+
         const executionId = req.params.id
-        const execution = await executionsService.updateExecution(executionId, req.body)
+        
+        // First check if the execution exists and the user has access to it
+        const existingExecution = await executionsService.getExecutionById(executionId, req.user)
+        if (!(await checkOwnership(existingExecution, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+
+        const execution = await executionsService.updateExecution(executionId, req.body, req.user)
         return res.json(execution)
     } catch (error) {
         next(error)
@@ -34,6 +58,10 @@ const updateExecution = async (req: Request, res: Response, next: NextFunction) 
 
 const getAllExecutions = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+        }
+
         // Extract all possible filters from query params
         const filters: any = {}
 
@@ -70,7 +98,9 @@ const getAllExecutions = async (req: Request, res: Response, next: NextFunction)
             filters.limit = parseInt(req.query.limit as string, 10)
         }
 
-        const apiResponse = await executionsService.getAllExecutions(filters)
+        // Apply the user/organization filter from the enforceAbility middleware
+        const userFilter = res.locals.filter
+        const apiResponse = await executionsService.getAllExecutions(filters, userFilter)
 
         return res.json(apiResponse)
     } catch (error) {
@@ -85,6 +115,10 @@ const getAllExecutions = async (req: Request, res: Response, next: NextFunction)
  */
 const deleteExecutions = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+        }
+
         let executionIds: string[] = []
 
         // Check if we're deleting a single execution from URL param
@@ -98,7 +132,9 @@ const deleteExecutions = async (req: Request, res: Response, next: NextFunction)
             return res.status(400).json({ success: false, message: 'No execution IDs provided' })
         }
 
-        const result = await executionsService.deleteExecutions(executionIds)
+        // Apply the user/organization filter from the enforceAbility middleware
+        const userFilter = res.locals.filter
+        const result = await executionsService.deleteExecutions(executionIds, userFilter)
         return res.json(result)
     } catch (error) {
         next(error)

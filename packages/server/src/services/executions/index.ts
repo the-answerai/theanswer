@@ -3,7 +3,7 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Execution } from '../../database/entities/Execution'
-import { ExecutionState, IAgentflowExecutedData } from '../../Interface'
+import { ExecutionState, IAgentflowExecutedData, IUser } from '../../Interface'
 import { In } from 'typeorm'
 import { ChatMessage } from '../../database/entities/ChatMessage'
 import { _removeCredentialId } from '../../utils/buildAgentflow'
@@ -19,11 +19,24 @@ interface ExecutionFilters {
     limit?: number
 }
 
-const getExecutionById = async (executionId: string): Promise<Execution | null> => {
+interface UserFilter {
+    userId?: string
+    organizationId: string
+}
+
+const getExecutionById = async (executionId: string, user?: IUser): Promise<Execution | null> => {
     try {
         const appServer = getRunningExpressApp()
         const executionRepository = appServer.AppDataSource.getRepository(Execution)
-        const res = await executionRepository.findOne({ where: { id: executionId } })
+        
+        const queryOptions: any = { where: { id: executionId } }
+        
+        // If user is provided, add user/organization filtering
+        if (user) {
+            queryOptions.where.organizationId = user.organizationId
+        }
+        
+        const res = await executionRepository.findOne(queryOptions)
         if (!res) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Execution ${executionId} not found`)
         }
@@ -56,7 +69,7 @@ const getPublicExecutionById = async (executionId: string): Promise<Execution | 
     }
 }
 
-const getAllExecutions = async (filters: ExecutionFilters = {}): Promise<{ data: Execution[]; total: number }> => {
+const getAllExecutions = async (filters: ExecutionFilters = {}, userFilter?: UserFilter): Promise<{ data: Execution[]; total: number }> => {
     try {
         const appServer = getRunningExpressApp()
         const { id, agentflowId, sessionId, state, startDate, endDate, page = 1, limit = 10 } = filters
@@ -69,6 +82,14 @@ const getAllExecutions = async (filters: ExecutionFilters = {}): Promise<{ data:
             .orderBy('execution.createdDate', 'DESC')
             .skip((page - 1) * limit)
             .take(limit)
+
+        // Apply user/organization filtering if provided
+        if (userFilter) {
+            queryBuilder.andWhere('execution.organizationId = :organizationId', { organizationId: userFilter.organizationId })
+            if (userFilter.userId) {
+                queryBuilder.andWhere('execution.userId = :userId', { userId: userFilter.userId })
+            }
+        }
 
         if (id) queryBuilder.andWhere('execution.id = :id', { id })
         if (agentflowId) queryBuilder.andWhere('execution.agentflowId = :agentflowId', { agentflowId })
@@ -95,12 +116,18 @@ const getAllExecutions = async (filters: ExecutionFilters = {}): Promise<{ data:
     }
 }
 
-const updateExecution = async (executionId: string, data: Partial<Execution>): Promise<Execution | null> => {
+const updateExecution = async (executionId: string, data: Partial<Execution>, user?: IUser): Promise<Execution | null> => {
     try {
         const appServer = getRunningExpressApp()
-        const execution = await appServer.AppDataSource.getRepository(Execution).findOneBy({
-            id: executionId
-        })
+        
+        const queryOptions: any = { id: executionId }
+        
+        // If user is provided, add user/organization filtering
+        if (user) {
+            queryOptions.organizationId = user.organizationId
+        }
+        
+        const execution = await appServer.AppDataSource.getRepository(Execution).findOneBy(queryOptions)
         if (!execution) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Execution ${executionId} not found`)
         }
@@ -118,21 +145,32 @@ const updateExecution = async (executionId: string, data: Partial<Execution>): P
 }
 
 /**
- * Delete multiple executions by their IDs
+ * Delete multiple executions by their IDs with user scoping
  * @param executionIds Array of execution IDs to delete
+ * @param userFilter User/organization filter to ensure only owned executions are deleted
  * @returns Object with success status and count of deleted executions
  */
-const deleteExecutions = async (executionIds: string[]): Promise<{ success: boolean; deletedCount: number }> => {
+const deleteExecutions = async (executionIds: string[], userFilter?: UserFilter): Promise<{ success: boolean; deletedCount: number }> => {
     try {
         const appServer = getRunningExpressApp()
         const executionRepository = appServer.AppDataSource.getRepository(Execution)
 
-        // Delete executions where id is in the provided array
-        const result = await executionRepository.delete({
+        let whereConditions: any = {
             id: In(executionIds)
-        })
+        }
 
-        // Update chat message executionId column to NULL
+        // Apply user/organization filtering if provided
+        if (userFilter) {
+            whereConditions.organizationId = userFilter.organizationId
+            if (userFilter.userId) {
+                whereConditions.userId = userFilter.userId
+            }
+        }
+
+        // Delete executions where id is in the provided array and user has access
+        const result = await executionRepository.delete(whereConditions)
+
+        // Update chat message executionId column to NULL for the deleted executions
         await appServer.AppDataSource.getRepository(ChatMessage).update({ executionId: In(executionIds) }, { executionId: null as any })
 
         return {

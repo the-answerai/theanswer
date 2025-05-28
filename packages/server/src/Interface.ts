@@ -201,6 +201,8 @@ export interface IExecution {
     sessionId: string
     isPublic?: boolean
     action?: string
+    userId?: string
+    organizationId?: string
     createdDate: Date
     updatedDate: Date
     stoppedDate: Date
