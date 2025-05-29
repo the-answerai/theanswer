@@ -910,7 +910,7 @@ const executeNode = async ({
 
         // Prepare run parameters
         const runParams = {
-            user: incomingInput.user,
+            user: user,
             chatId,
             sessionId,
             chatflowid: chatflow.id,
@@ -1214,7 +1214,8 @@ export const executeAgentFlow = async ({
     isRecursive = false,
     parentExecutionId,
     iterationContext,
-    isTool = false
+    isTool = false,
+    user
 }: IExecuteAgentFlowParams) => {
     logger.debug('\n🚀 Starting flow execution')
 
@@ -1375,7 +1376,7 @@ export const executeAgentFlow = async ({
             newExecution = parentExecution
         } else {
             console.warn(`   ⚠️ Parent execution ID ${parentExecutionId} not found, will create new execution`)
-            newExecution = await addExecution(appDataSource, chatflowid, agentFlowExecutedData, sessionId, incomingInput.user)
+            newExecution = await addExecution(appDataSource, chatflowid, agentFlowExecutedData, sessionId, user)
             parentExecutionId = newExecution.id
         }
     } else {
@@ -1384,7 +1385,7 @@ export const executeAgentFlow = async ({
         checkForMultipleStartNodes(startingNodeIds, isRecursive, nodes)
 
         // Only create a new execution if this is not a recursive call
-        newExecution = await addExecution(appDataSource, chatflowid, agentFlowExecutedData, sessionId, incomingInput.user)
+        newExecution = await addExecution(appDataSource, chatflowid, agentFlowExecutedData, sessionId, user)
         parentExecutionId = newExecution.id
     }
 
@@ -1485,7 +1486,7 @@ export const executeAgentFlow = async ({
 
             // Execute current node
             const executionResult = await executeNode({
-                user: incomingInput.user!,
+                user: user!,
                 nodeId: currentNode.nodeId,
                 reactFlowNode,
                 nodes,
