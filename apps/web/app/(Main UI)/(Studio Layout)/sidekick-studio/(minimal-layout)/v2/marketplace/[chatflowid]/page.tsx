@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 
-const View = dynamic(() => import('@/views/marketplaces/MarketplaceLanding'), { ssr: false })
+const View = dynamic(() => import('@/views/agentflowsv2/MarketplaceCanvas'), { ssr: false })
 
 interface PageProps {
     params: {
