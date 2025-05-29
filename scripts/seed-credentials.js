@@ -7,6 +7,18 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 const { DataSource } = require('typeorm')
 const fs = require('node:fs')
 const crypto = require('node:crypto')
+const { v5: uuidv5 } = require('uuid')
+
+// Get user ID and org ID (ensuring they're either valid UUIDs or null)
+let userId = process.env.SEEDCREDENTIALS_USER_ID
+let orgId = process.env.SEEDCREDENTIALS_ORG_ID
+
+// Helper to generate deterministic UUIDs for credentials
+function generateDeterministicUUID(name) {
+    // Use a custom namespace for TheAnswer credentials
+    const THEANSWER_NAMESPACE = uuidv5(`theanswer.ai.credentials.${process.env.DOMAIN}`, uuidv5.DNS)
+    return uuidv5(name, THEANSWER_NAMESPACE)
+}
 
 // Map of environment variable prefixes to credential configurations
 const ENV_TO_CREDENTIAL_MAP = {
@@ -287,10 +299,6 @@ async function seedCredentials() {
         // Initialize database connection
         dataSource = await createDataSource()
 
-        // Get user ID and org ID (ensuring they're either valid UUIDs or null)
-        let userId = process.env.USER_ID
-        let orgId = process.env.ORG_ID
-
         // Make sure the ID values are valid UUIDs or null
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -341,7 +349,7 @@ async function seedCredentials() {
                     "updatedDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     "userId" UUID,
                     "organizationId" UUID,
-                    visibility TEXT[] DEFAULT '{Private}'
+                    visibility TEXT[] DEFAULT 'Private'
                 );`
                 await dataSource.query(createTableSql)
                 console.log('Created credentials table')
@@ -375,19 +383,22 @@ async function seedCredentials() {
             }
 
             try {
-                // Check if credential already exists using raw SQL
+                // Generate deterministic UUID for this credential
+                const deterministicId = generateDeterministicUUID(credential.name)
+
+                // Check if credential already exists using name or deterministic ID
                 const existingCredentialSql = `
-                    SELECT id FROM credential WHERE name = $1 LIMIT 1
+                    SELECT id FROM credential WHERE name = $1 OR id = $2 LIMIT 1
                 `
-                const existingCredentials = await dataSource.query(existingCredentialSql, [credential.name])
+                const existingCredentials = await dataSource.query(existingCredentialSql, [credential.name, deterministicId])
 
                 if (existingCredentials.length > 0) {
                     const existingId = existingCredentials[0].id
                     console.log(`Credential '${credential.name}' already exists with ID: ${existingId}`)
 
                     // Delete the existing credential before recreating it
-                    console.log(`Deleting existing credential to recreate it...`)
-                    const deleteQuery = `DELETE FROM credential WHERE id = $1`
+                    console.log('Deleting existing credential to recreate it...')
+                    const deleteQuery = 'DELETE FROM credential WHERE id = $1'
                     await dataSource.query(deleteQuery, [existingId])
                     console.log(`Deleted credential with ID: ${existingId}`)
                 }
@@ -395,9 +406,10 @@ async function seedCredentials() {
                 // Encrypt the credential data
                 const encryptedData = encryptCredentialData(credential.plainDataObj)
 
-                // Create the credential using raw SQL
+                // Create the credential using raw SQL with deterministic ID
                 const insertSql = `
                     INSERT INTO credential (
+                        id,
                         name, 
                         "credentialName", 
                         "encryptedData", 
@@ -405,16 +417,24 @@ async function seedCredentials() {
                         "organizationId", 
                         visibility
                     ) 
-                    VALUES ($1, $2, $3, $4, $5, ARRAY[$6]::text[])
+                    VALUES ($1, $2, $3, $4, $5, $6, ARRAY[$7]::text[])
                     RETURNING id
                 `
 
-                const insertValues = [credential.name, credential.credentialName, encryptedData, userId || null, orgId || null, 'Private']
+                const insertValues = [
+                    deterministicId,
+                    credential.name,
+                    credential.credentialName,
+                    encryptedData,
+                    userId || null,
+                    orgId || null,
+                    'Private'
+                ]
 
                 const result = await dataSource.query(insertSql, insertValues)
                 const createdId = result[0].id
 
-                console.log(`Created credential for ${credential.name} with ID: ${createdId}`)
+                console.log(`Created credential for ${credential.name} with deterministic ID: ${createdId}`)
                 results.created.push({
                     name: credential.name,
                     id: createdId,

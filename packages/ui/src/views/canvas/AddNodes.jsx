@@ -159,16 +159,16 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
     }
 
     const groupByTags = (nodes, newTabValue = 0) => {
-        const langchainNodes = nodes.filter((nd) => !nd.tags)
-        const llmaindexNodes = nodes.filter((nd) => nd.tags && nd.tags.includes('LlamaIndex'))
-        const utilitiesNodes = nodes.filter((nd) => nd.tags && nd.tags.includes('Utilities'))
+        const langchainNodes = nodes.filter((nd) => !nd.tags || nd.tags?.includes('AAI'))
+        const llmaindexNodes = nodes.filter((nd) => nd.tags?.includes('LlamaIndex'))
+        const utilitiesNodes = nodes.filter((nd) => nd.tags?.includes('Utilities'))
         if (newTabValue === 0) {
             return langchainNodes
-        } else if (newTabValue === 1) {
-            return llmaindexNodes
-        } else {
-            return utilitiesNodes
         }
+        if (newTabValue === 1) {
+            return llmaindexNodes
+        }
+        return utilitiesNodes
     }
 
     const groupByCategory = (nodes, newTabValue, isFilter) => {
@@ -362,7 +362,6 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                 placement='bottom-end'
                 open={open}
                 anchorEl={anchorRef.current}
-                role={undefined}
                 transition
                 disablePortal
                 popperOptions={{
@@ -459,7 +458,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                         key={index}
                                                         label={item}
                                                         {...a11yProps(index)}
-                                                    ></Tab>
+                                                    />
                                                 ))}
                                             </Tabs>
                                         )}
