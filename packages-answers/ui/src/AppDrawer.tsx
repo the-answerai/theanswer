@@ -38,6 +38,7 @@ import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import dynamic from 'next/dynamic'
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 
 const drawerWidth = 240
 
@@ -103,7 +104,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage'])
-    const MEMBER_ACTIONS = ['chatflows', 'executions', 'agentflows', 'document-stores', 'billing']
+    const MEMBER_ACTIONS = ['chatflows', 'executions', 'marketplaces', 'agentflows', 'document-stores', 'billing']
     const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'documentstores', 'admin', 'apps']
 
     const filterMenuItems = (items: MenuConfig[]) => {
@@ -150,7 +151,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                               id: 'marketplaces',
                               text: 'Marketplaces',
                               link: '/sidekick-studio/marketplaces',
-                              icon: <GroupsOutlinedIcon color='primary' />
+                              icon: <StorefrontOutlinedIcon color='primary' />
                           },
                           {
                               id: 'documentstores',
