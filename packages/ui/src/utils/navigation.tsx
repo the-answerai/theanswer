@@ -54,25 +54,13 @@ export const getNavigationDebug = () => debugConfig
 export const usePathname = useNextPathname
 
 export const useNavigationState = () => {
-    const [state, setState] = React.useState<any>(null)
-
-    React.useEffect(() => {
-        logger.debug('Initializing navigation state from sessionStorage')
+    const [state, setState] = React.useState<any>(() => {
         const serializedState = sessionStorage.getItem('navigationState')
         if (serializedState) {
-            try {
-                const parsedState = JSON.parse(serializedState)
-                setState(parsedState)
-                logger.info('Navigation state restored from sessionStorage', parsedState)
-            } catch (error) {
-                logger.error('Failed to parse navigation state from sessionStorage', error)
-                setState(null)
-            }
-        } else {
-            logger.debug('No navigation state found in sessionStorage')
-            setState(null)
+            return JSON.parse(serializedState)
         }
-    }, [])
+        return {}
+    })
 
     const setNavigationState = (newState: any) => {
         logger.debug('Setting navigation state', newState)
@@ -92,17 +80,16 @@ export const useNavigationState = () => {
         setState(newState)
         logger.verbose('Navigation state updated in component', newState)
     }
-
     return [state, setNavigationState] as const
 }
 
 export const useNavigate = () => {
     const nextRouter = useNextRouter()
     const [, setNavigationState] = useNavigationState()
-
     const navigate = (url: string | number, options?: { state?: any; replace?: boolean }) => {
+        console.log('[Navigation] navigate', url, options)
         logger.info('Navigation initiated', { url, options })
-        
+
         // Log state changes
         if (options?.state) {
             logger.debug('Setting navigation state during navigate', options.state)
@@ -120,14 +107,14 @@ export const useNavigate = () => {
             nextRouter.refresh()
             return
         }
-        
+
         const fullUrl = `/sidekick-studio${url}`
-        logger.info('Navigating to URL', { 
-            originalUrl: url, 
-            fullUrl, 
-            replace: options?.replace || false 
+        logger.info('Navigating to URL', {
+            originalUrl: url,
+            fullUrl,
+            replace: options?.replace || false
         })
-        
+
         if (options?.replace) {
             logger.debug('Using replace navigation')
             nextRouter.replace(fullUrl)
@@ -135,7 +122,7 @@ export const useNavigate = () => {
             logger.debug('Using push navigation')
             nextRouter.push(fullUrl)
         }
-        
+
         logger.verbose('Navigation command completed', { url: fullUrl, method: options?.replace ? 'replace' : 'push' })
     }
 
@@ -147,7 +134,7 @@ export const useLocation = () => {
     const [state] = useNavigationState()
 
     logger.verbose('Location accessed', { pathname, state })
-    
+
     return { pathname, state }
 }
 
@@ -167,13 +154,13 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link
         logger.debug('Link component rendered with no destination')
         return null
     }
-    
+
     const linkHref = `/sidekick-studio${href ?? to}`
-    logger.verbose('Link component rendered', { 
-        originalHref: href ?? to, 
-        fullHref: linkHref 
+    logger.verbose('Link component rendered', {
+        originalHref: href ?? to,
+        fullHref: linkHref
     })
-    
+
     return <NextLink {...props} ref={ref} href={linkHref} />
 })
 
