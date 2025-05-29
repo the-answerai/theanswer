@@ -7,6 +7,8 @@ export interface Document extends DB.Document {
     pageContent: string
     metadata: any
 }
+
+export interface ResearchView extends DB.ResearchView {}
 export interface Sidekick extends DB.Sidekick {
     constraints: {
         isSpeechToTextEnabled: boolean

@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "lib": ["es2021"],
+        "outDir": "./dist",
+        "isolatedModules": false,
+        "paths": {
+            "@utils/*": ["../utils/src/*"],
+            "@db/*": ["../db/src/*"],
+            "@types/*": ["../types/src/*"]
+        }
+    },
+    "include": ["src"],
+    "extends": "../tsconfig/node.json",
+    "types": ["node"]
+}

@@ -6,6 +6,8 @@ generator client {
   output               = "../generated/prisma-client"
   referentialIntegrity = "prisma"
 }
+
+
 generator json {
   provider = "prisma-json-types-generator"
   // namespace = "PrismaJson"
@@ -521,4 +523,17 @@ model AppCsvParseRows {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   csvParseRun AppCsvParseRuns @relation(fields: [csvParseRunId], references: [id])
+}
+model ResearchView {
+  id                 String   @id @default(uuid())
+  orgId              String   @map("org_id")
+  userId             String?  @map("user_id")
+  name               String
+  description        String?
+  answeraiChatflowId String?  @map("answerai_chatflow_id")
+  answeraiStoreId    String?  @map("answerai_store_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("research_views")
 }
