@@ -18,7 +18,7 @@ import { ASSISTANT_PROMPT_GENERATOR } from '../../utils/prompt'
 import { INPUT_PARAMS_TYPE } from '../../utils/constants'
 import { validate } from 'uuid'
 
-const createAssistant = async (requestBody: any): Promise<Assistant> => {
+const createAssistant = async (requestBody: any, user?: IUser): Promise<Assistant> => {
     try {
         const appServer = getRunningExpressApp()
         if (!requestBody.details) {
@@ -29,6 +29,12 @@ const createAssistant = async (requestBody: any): Promise<Assistant> => {
         if (requestBody.type === 'CUSTOM') {
             const newAssistant = new Assistant()
             Object.assign(newAssistant, requestBody)
+
+            // Set user and organization if provided
+            if (user) {
+                newAssistant.userId = user.id
+                newAssistant.organizationId = user.organizationId
+            }
 
             const assistant = appServer.AppDataSource.getRepository(Assistant).create(newAssistant)
             const dbResponse = await appServer.AppDataSource.getRepository(Assistant).save(assistant)
@@ -131,6 +137,12 @@ const createAssistant = async (requestBody: any): Promise<Assistant> => {
         const newAssistant = new Assistant()
         Object.assign(newAssistant, requestBody)
 
+        // Set user and organization if provided
+        if (user) {
+            newAssistant.userId = user.id
+            newAssistant.organizationId = user.organizationId
+        }
+
         const assistant = appServer.AppDataSource.getRepository(Assistant).create(newAssistant)
         const dbResponse = await appServer.AppDataSource.getRepository(Assistant).save(assistant)
 
@@ -198,7 +210,8 @@ const getAllAssistants = async (user: IUser, type?: AssistantType): Promise<Assi
         const appServer = getRunningExpressApp()
         if (type) {
             const dbResponse = await appServer.AppDataSource.getRepository(Assistant).findBy({
-                type
+                type,
+                userId: user.id
             })
             return dbResponse
         }
