@@ -1,10 +1,11 @@
-import { INode, INodeData, INodeParams } from '../../../src/Interface'
+import { INode, INodeData, INodeParams, INodeOutputsValue, ICommonObject } from '../../../src/Interface'
 import { TextSplitter } from 'langchain/text_splitter'
 import { Document } from 'langchain/document'
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv'
 import { DriveService } from './DriveService'
-import _, { omit } from 'lodash'
+import { omit, isEmpty } from 'lodash'
+import { handleEscapeCharacters } from '../../../src'
 
 class GoogleDrive implements INode {
     label: string
@@ -17,16 +18,17 @@ class GoogleDrive implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
+    outputs: INodeOutputsValue[]
 
     constructor() {
         this.label = 'Google Drive'
         this.name = 'googleDrive'
         this.version = 1.0
-        this.type = 'GoogleDrive'
+        this.type = 'Document'
         this.icon = 'drive.svg'
         this.category = 'Document Loaders'
         this.description = 'Load documents from Google Drive'
-        this.baseClasses = [this.type, 'DocumentLoader']
+        this.baseClasses = [this.type]
         this.credential = {
             label: 'Connect Credential',
             name: 'credential',
@@ -88,9 +90,23 @@ class GoogleDrive implements INode {
                 additionalParams: true
             }
         ]
+        this.outputs = [
+            {
+                label: 'Document',
+                name: 'document',
+                description: 'Array of document objects containing metadata and pageContent',
+                baseClasses: [...this.baseClasses, 'json']
+            },
+            {
+                label: 'Text',
+                name: 'text',
+                description: 'Concatenated string from pageContent of documents',
+                baseClasses: ['string', 'json']
+            }
+        ]
     }
 
-    async init(nodeData: INodeData): Promise<any> {
+    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
         const metadata = nodeData.inputs?.metadata
         const selectedFiles = nodeData.inputs?.selectedFiles && JSON.parse(nodeData.inputs?.selectedFiles)
@@ -100,8 +116,9 @@ class GoogleDrive implements INode {
         const credentialData = nodeData.credential ? JSON.parse(nodeData.credential).plainDataObj : {}
         const omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const _omitMetadataKeys = omitMetadataKeys === '*' ? '*' : omitMetadataKeys.split(',')
+        const output = nodeData.outputs?.output as string
 
-        if (!credentialData || _.isEmpty(credentialData)) {
+        if (!credentialData || isEmpty(credentialData)) {
             throw new Error('Credentials not found')
         }
 
@@ -159,10 +176,18 @@ class GoogleDrive implements INode {
             documents.push(...docs)
         }
 
-        return documents
+        if (output === 'document') {
+            return documents
+        } else {
+            let finaltext = ''
+            for (const doc of documents) {
+                finaltext += `${doc.pageContent}\n`
+            }
+            return handleEscapeCharacters(finaltext, false)
+        }
     }
 
-    async syncAndRefresh(nodeData: INodeData): Promise<any> {
+    async syncAndRefresh(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
         const metadata = nodeData.inputs?.metadata
         const selectedFiles = nodeData.inputs?.selectedFiles && JSON.parse(nodeData.inputs?.selectedFiles)
@@ -172,8 +197,9 @@ class GoogleDrive implements INode {
         const credentialData = nodeData.credential ? JSON.parse(nodeData.credential).plainDataObj : {}
         const omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const _omitMetadataKeys = omitMetadataKeys === '*' ? '*' : omitMetadataKeys.split(',')
+        const output = nodeData.outputs?.output as string
 
-        if (!credentialData || _.isEmpty(credentialData)) {
+        if (!credentialData || isEmpty(credentialData)) {
             throw new Error('Credentials not found')
         }
 
@@ -234,7 +260,15 @@ class GoogleDrive implements INode {
             documents.push(...docs)
         }
 
-        return documents
+        if (output === 'document') {
+            return documents
+        } else {
+            let finaltext = ''
+            for (const doc of documents) {
+                finaltext += `${doc.pageContent}\n`
+            }
+            return handleEscapeCharacters(finaltext, false)
+        }
     }
 
     private async processPdfFile(buffer: Buffer, usage: string, textSplitter?: TextSplitter): Promise<Document[]> {
