@@ -16,24 +16,18 @@ class JiraApi implements INodeCredential {
         this.inputs = [
             {
                 label: 'Jira API Key',
-                name: 'jiraApiKey',
+                name: 'accessToken',
                 type: 'password'
             },
             {
                 label: 'Jira API Email',
-                name: 'jiraApiEmail',
+                name: 'username',
                 type: 'string'
             },
             {
                 label: 'Jira URL',
-                name: 'jiraUrl',
+                name: 'host',
                 type: 'string'
-            },
-            {
-                label: 'Access Token',
-                name: 'accessToken',
-                type: 'password',
-                placeholder: '<JIRA_ACCESS_TOKEN>'
             }
         ]
     }
