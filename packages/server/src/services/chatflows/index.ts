@@ -517,6 +517,7 @@ const updateChatflow = async (chatflow: ChatFlow, updateChatFlow: ChatFlow, user
             updateChatFlow.visibility = Array.from(new Set([...updateChatFlow.visibility, ChatflowVisibility.PRIVATE]))
         }
 
+
         const newDbChatflow = appServer.AppDataSource.getRepository(ChatFlow).merge(chatflow, mergedChatflow)
 
         await _checkAndUpdateDocumentStoreUsage(newDbChatflow)
