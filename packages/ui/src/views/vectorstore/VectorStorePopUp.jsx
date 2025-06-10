@@ -8,7 +8,7 @@ import { StyledFab } from '@/ui-component/button/StyledFab'
 import VectorStoreDialog from './VectorStoreDialog'
 import UpsertResultDialog from './UpsertResultDialog'
 
-export const VectorStorePopUp = ({ chatflowid }) => {
+export const VectorStorePopUp = ({ chatflowid, handleSaveFlow, chatflow }) => {
     const [open, setOpen] = useState(false)
     const [showExpandDialog, setShowExpandDialog] = useState(false)
     const [expandDialogProps, setExpandDialogProps] = useState({})
@@ -23,7 +23,9 @@ export const VectorStorePopUp = ({ chatflowid }) => {
         const props = {
             open: true,
             title: 'Upsert Vector Store',
-            chatflowid
+            chatflowid,
+            handleSaveFlow,
+            chatflow
         }
         setExpandDialogProps(props)
         setShowExpandDialog(true)
@@ -76,4 +78,8 @@ export const VectorStorePopUp = ({ chatflowid }) => {
     )
 }
 
-VectorStorePopUp.propTypes = { chatflowid: PropTypes.string }
+VectorStorePopUp.propTypes = {
+    chatflowid: PropTypes.string,
+    handleSaveFlow: PropTypes.func,
+    chatflow: PropTypes.object
+}

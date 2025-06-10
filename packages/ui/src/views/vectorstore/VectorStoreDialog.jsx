@@ -1,9 +1,10 @@
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useContext, useState, useEffect } from 'react'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 import { CopyBlock, atomOneDark } from 'react-code-blocks'
+import { useNavigate, usePathname } from '@/utils/navigation'
 
 import {
     Dialog,
@@ -32,6 +33,7 @@ import cURLSVG from '@/assets/images/cURL.svg'
 import useApi from '@/hooks/useApi'
 import configApi from '@/api/config'
 import vectorstoreApi from '@/api/vectorstore'
+import chatflowsApi from '@/api/chatflows'
 
 // Utils
 import {
@@ -46,7 +48,7 @@ import useNotifier from '@/utils/useNotifier'
 
 // Store
 import { flowContext } from '@/store/context/ReactFlowContext'
-import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
+import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG, SET_CHATFLOW } from '@/store/actions'
 import { baseURL } from '@/store/constant'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 
@@ -82,6 +84,10 @@ const VectorStoreDialog = ({ show, dialogProps, onCancel, onIndexResult }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const { reactFlowInstance } = useContext(flowContext)
     const dispatch = useDispatch()
+    const canvasState = useSelector((state) => state.canvas)
+    const navigate = useNavigate()
+    const pathname = usePathname()
+    const isAgentCanvas = pathname.includes('agentcanvas')
 
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
@@ -96,6 +102,7 @@ const VectorStoreDialog = ({ show, dialogProps, onCancel, onIndexResult }) => {
     const [tabValue, setTabValue] = useState(0)
     const [expandedVectorNodeId, setExpandedVectorNodeId] = useState('')
     const [configData, setConfigData] = useState({})
+    const [waitingForSave, setWaitingForSave] = useState(false)
 
     const reformatConfigData = (configData, nodes) => {
         return configData.filter((item1) => nodes.some((item2) => item1.nodeId === item2.id))
@@ -306,9 +313,99 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
     const onUpsertClicked = async (vectorStoreNode) => {
         setLoading(true)
         try {
-            const res = await vectorstoreApi.upsertVectorStore(dialogProps.chatflowid, { stopNodeId: vectorStoreNode.data.id })
+            let currentChatflowId = dialogProps.chatflowid
+            let wasNewlySaved = false
+
+            if (!currentChatflowId || !dialogProps.chatflow?.id) {
+                if (dialogProps.handleSaveFlow && dialogProps.chatflow) {
+                    try {
+                        if (!reactFlowInstance) {
+                            throw new Error('React Flow instance not available. Please save the chatflow manually first.')
+                        }
+
+                        const nodes = reactFlowInstance.getNodes().map((node) => {
+                            const nodeData = { ...node.data }
+                            if (nodeData.inputs && nodeData.inputs.credential) {
+                                delete nodeData.inputs.credential
+                            }
+                            node.data = {
+                                ...nodeData,
+                                selected: false
+                            }
+                            return node
+                        })
+
+                        const rfInstanceObject = reactFlowInstance.toObject()
+                        rfInstanceObject.nodes = nodes
+                        const flowData = JSON.stringify(rfInstanceObject)
+
+                        const saveBody = {
+                            name: dialogProps.chatflow?.name || `Untitled Chatflow`,
+                            flowData: flowData,
+                            deployed: false,
+                            isPublic: false,
+                            type: isAgentCanvas ? 'MULTIAGENT' : 'CHATFLOW',
+                            description: dialogProps.chatflow?.description || '',
+                            visibility: dialogProps.chatflow?.visibility || [],
+                            category: dialogProps.chatflow?.category || '',
+                            chatbotConfig: dialogProps.chatflow?.chatbotConfig || ''
+                        }
+
+                        const savedChatflow = await chatflowsApi.createNewChatflow(saveBody)
+                        if (savedChatflow && savedChatflow.data && savedChatflow.data.id) {
+                            dispatch({ type: SET_CHATFLOW, chatflow: savedChatflow.data })
+                            currentChatflowId = savedChatflow.data.id
+                            wasNewlySaved = true
+                        } else {
+                            throw new Error('Failed to save chatflow - no ID returned')
+                        }
+                    } catch (saveError) {
+                        console.error('Error saving chatflow before upsert:', saveError)
+                        enqueueSnackbar({
+                            message: 'Failed to save chatflow automatically. Please save the chatflow manually first.',
+                            options: {
+                                key: new Date().getTime() + Math.random(),
+                                variant: 'error',
+                                persist: true,
+                                action: (key) => (
+                                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                        <IconX />
+                                    </Button>
+                                )
+                            }
+                        })
+                        setLoading(false)
+                        return
+                    }
+                } else {
+                    enqueueSnackbar({
+                        message: 'Please save the chatflow first before upserting the vector store.',
+                        options: {
+                            key: new Date().getTime() + Math.random(),
+                            variant: 'warning',
+                            persist: true,
+                            action: (key) => (
+                                <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                    <IconX />
+                                </Button>
+                            )
+                        }
+                    })
+                    setLoading(false)
+                    return
+                }
+            }
+
+            const res = await vectorstoreApi.upsertVectorStore(currentChatflowId, { stopNodeId: vectorStoreNode.data.id })
+
+            if (wasNewlySaved) {
+                navigate(`/${isAgentCanvas ? 'agentcanvas' : 'canvas'}/${currentChatflowId}`, {
+                    replace: true
+                })
+            }
+
             enqueueSnackbar({
-                message: 'Succesfully upserted vector store. You can start chatting now!',
+                message: 'Successfully upserted vector store. You can start chatting now!',
                 options: {
                     key: new Date().getTime() + Math.random(),
                     variant: 'success',
@@ -323,7 +420,10 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
             if (res && res.data && typeof res.data === 'object') onIndexResult(res.data)
         } catch (error) {
             enqueueSnackbar({
-                message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
+                message:
+                    typeof error.response?.data === 'object'
+                        ? error.response.data.message
+                        : error.response?.data || error.message || 'An error occurred during upsert',
                 options: {
                     key: new Date().getTime() + Math.random(),
                     variant: 'error',

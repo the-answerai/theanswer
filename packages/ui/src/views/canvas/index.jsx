@@ -722,7 +722,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                                         <IconRefreshAlert />
                                     </Fab>
                                 )}
-                                {isUpsertButtonEnabled && <VectorStorePopUp chatflowid={chatflowId} />}
+                                {isUpsertButtonEnabled && (
+                                    <VectorStorePopUp chatflowid={chatflowId} handleSaveFlow={handleSaveFlow} chatflow={chatflow} />
+                                )}
                                 <ChatPopUp isAgentCanvas={isAgentCanvas} chatflowid={chatflowId} />
                             </ReactFlow>
                         </div>
