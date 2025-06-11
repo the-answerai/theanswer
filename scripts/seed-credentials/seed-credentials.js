@@ -327,6 +327,144 @@ function isTestMode() {
     return process.argv.includes('--test') || process.argv.includes('--dry-run') || process.env.TEST_MODE === 'true'
 }
 
+// Helper function to show available users and organizations
+async function showAvailableUsersAndOrgs(dataSource) {
+    console.log('\n' + '='.repeat(60))
+    console.log('🔍 AVAILABLE USERS & ORGANIZATIONS')
+    console.log('='.repeat(60))
+
+    try {
+        // Show available users
+        console.log('👥 AVAILABLE USERS:')
+        const usersQuery = `SELECT id, email, name, "createdDate" FROM "user" ORDER BY "createdDate" DESC LIMIT 10`
+        const users = await dataSource.query(usersQuery)
+
+        if (users.length > 0) {
+            users.forEach((user, index) => {
+                console.log(`   ${index + 1}. ${user.email || '(no email)'} - ${user.name || '(no name)'}`)
+                console.log(`      ID: ${user.id}`)
+                console.log(`      Created: ${user.createdDate}`)
+                console.log('')
+            })
+        } else {
+            console.log('   No users found in database')
+        }
+
+        // Show available organizations
+        console.log('🏢 AVAILABLE ORGANIZATIONS:')
+        const orgsQuery = `SELECT id, name, "createdDate" FROM organization ORDER BY "createdDate" DESC LIMIT 10`
+        const orgs = await dataSource.query(orgsQuery)
+
+        if (orgs.length > 0) {
+            orgs.forEach((org, index) => {
+                console.log(`   ${index + 1}. ${org.name || '(no name)'}`)
+                console.log(`      ID: ${org.id}`)
+                console.log(`      Created: ${org.createdDate}`)
+                console.log('')
+            })
+        } else {
+            console.log('   No organizations found in database')
+        }
+
+        console.log('💡 TO USE THESE VALUES:')
+        console.log('   export USER_ID="<copy-user-id-from-above>"')
+        console.log('   export ORG_ID="<copy-org-id-from-above>"')
+    } catch (error) {
+        console.log(`❌ Error querying available users/orgs: ${error.message}`)
+        console.log('   Tables might not exist or have different schema')
+    }
+
+    console.log('='.repeat(60))
+}
+
+// Query user and organization details from database
+async function queryUserOrgDetails(dataSource) {
+    const userId = process.env.USER_ID
+    const orgId = process.env.ORG_ID
+
+    console.log('\n' + '='.repeat(60))
+    console.log('👤 USER & ORGANIZATION VERIFICATION')
+    console.log('='.repeat(60))
+
+    // Show the IDs we're using
+    console.log(`USER_ID: ${userId || '❌ (not set)'}`)
+    console.log(`ORG_ID: ${orgId || '❌ (not set)'}`)
+
+    if (!userId && !orgId) {
+        console.log('\n⚠️  WARNING: Both USER_ID and ORG_ID are missing!')
+        console.log('   Credentials will not be properly assigned to a user/organization.')
+        console.log('='.repeat(60))
+        return { userExists: false, orgExists: false }
+    }
+
+    try {
+        let userDetails = null
+        let orgDetails = null
+
+        // Query user details if USER_ID is set
+        if (userId) {
+            try {
+                const userQuery = `SELECT id, email, name, "createdDate", "updatedDate" FROM "user" WHERE id = $1 LIMIT 1`
+                const userResult = await dataSource.query(userQuery, [userId])
+
+                if (userResult.length > 0) {
+                    userDetails = userResult[0]
+                    console.log('\n✅ USER FOUND:')
+                    console.log(`   ID: ${userDetails.id}`)
+                    console.log(`   Email: ${userDetails.email || '(no email)'}`)
+                    console.log(`   Name: ${userDetails.name || '(no name)'}`)
+                    console.log(`   Created: ${userDetails.createdDate}`)
+                    console.log(`   Updated: ${userDetails.updatedDate}`)
+                } else {
+                    console.log('\n❌ USER NOT FOUND:')
+                    console.log(`   The USER_ID "${userId}" does not exist in the database`)
+                    console.log('   This will create orphaned credentials!')
+                }
+            } catch (error) {
+                console.log(`\n⚠️  Error querying user table: ${error.message}`)
+                console.log('   (Table might not exist or have different schema)')
+            }
+        }
+
+        // Query organization details if ORG_ID is set
+        if (orgId) {
+            try {
+                const orgQuery = `SELECT id, name, "createdDate", "updatedDate" FROM organization WHERE id = $1 LIMIT 1`
+                const orgResult = await dataSource.query(orgQuery, [orgId])
+
+                if (orgResult.length > 0) {
+                    orgDetails = orgResult[0]
+                    console.log('\n✅ ORGANIZATION FOUND:')
+                    console.log(`   ID: ${orgDetails.id}`)
+                    console.log(`   Name: ${orgDetails.name || '(no name)'}`)
+                    console.log(`   Created: ${orgDetails.createdDate}`)
+                    console.log(`   Updated: ${orgDetails.updatedDate}`)
+                } else {
+                    console.log('\n❌ ORGANIZATION NOT FOUND:')
+                    console.log(`   The ORG_ID "${orgId}" does not exist in the database`)
+                    console.log('   This will create orphaned credentials!')
+                }
+            } catch (error) {
+                console.log(`\n⚠️  Error querying organization table: ${error.message}`)
+                console.log('   (Table might not exist or have different schema)')
+            }
+        }
+
+        console.log('='.repeat(60))
+
+        return {
+            userExists: userDetails !== null,
+            orgExists: orgDetails !== null,
+            userDetails,
+            orgDetails
+        }
+    } catch (error) {
+        console.log(`\n❌ Error verifying user/org details: ${error.message}`)
+        console.log('='.repeat(60))
+        return { userExists: false, orgExists: false }
+    }
+}
+
 // Display database connection information
 function displayDatabaseInfo() {
     const dbType = process.env.DATABASE_TYPE || 'postgres'
@@ -334,6 +472,8 @@ function displayDatabaseInfo() {
     const dbPort = process.env.DATABASE_PORT || '5432'
     const dbUser = process.env.DATABASE_USER || 'postgres'
     const dbName = process.env.DATABASE_NAME || 'flowise'
+    const userId = process.env.USER_ID
+    const orgId = process.env.ORG_ID
 
     const testMode = isTestMode()
 
@@ -347,6 +487,10 @@ function displayDatabaseInfo() {
     console.log(`Database Name: ${dbName}`)
     console.log(`Username: ${dbUser}`)
     console.log(`Password: ${'*'.repeat(8)} (hidden for security)`)
+    console.log('')
+    console.log('CREDENTIAL OWNERSHIP:')
+    console.log(`User ID: ${userId ? `✅ ${userId}` : '❌ (not set - credentials will be orphaned!)'}`)
+    console.log(`Org ID: ${orgId ? `✅ ${orgId}` : '❌ (not set - credentials will be orphaned!)'}`)
     console.log('='.repeat(60))
 }
 
@@ -371,6 +515,9 @@ async function seedCredentials() {
         // Initialize database connection
         dataSource = await createDataSource()
 
+        // Verify user and organization details in database
+        const userOrgVerification = await queryUserOrgDetails(dataSource)
+
         // =====================================================
         // ⚠️  IMPORTANT: USER_ID AND ORG_ID CONFIGURATION  ⚠️
         // =====================================================
@@ -388,6 +535,10 @@ async function seedCredentials() {
         // Validate and provide detailed feedback for USER_ID
         const hasValidUserId = userId && uuidRegex.test(userId)
         const hasValidOrgId = orgId && uuidRegex.test(orgId)
+
+        // Check if USER_ID and ORG_ID are valid UUIDs AND exist in database
+        const userIdValid = hasValidUserId && userOrgVerification.userExists
+        const orgIdValid = hasValidOrgId && userOrgVerification.orgExists
 
         if (!hasValidUserId && !hasValidOrgId) {
             console.log('❌ CRITICAL ERROR: Both USER_ID and ORG_ID are missing or invalid!')
@@ -418,36 +569,54 @@ async function seedCredentials() {
             console.log('='.repeat(60))
 
             process.exit(1)
-        } else if (!hasValidUserId) {
-            console.log('❌ CRITICAL ERROR: USER_ID is missing or invalid!')
+        } else if (!hasValidUserId || !userIdValid) {
+            console.log('❌ CRITICAL ERROR: USER_ID is missing, invalid, or user not found in database!')
             console.log(`   Current value: "${userId || '(not set)'}"`)
+            if (hasValidUserId && !userOrgVerification.userExists) {
+                console.log('   UUID format is valid, but user does not exist in database!')
+            }
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
-            console.log('   USER_ID is required for proper credential ownership.')
+            console.log('   USER_ID must be valid and exist in the database for proper credential ownership.')
             console.log('')
-            console.log('🔧 SET USER_ID ENVIRONMENT VARIABLE:')
-            console.log('   export USER_ID="your-user-uuid-here"')
-            console.log('   (must be a valid UUID format)')
+            console.log('🔧 FIX OPTIONS:')
+            console.log('   1. Set correct USER_ID: export USER_ID="valid-user-uuid-from-database"')
+            console.log('   2. Query database: SELECT id, email, name FROM "user" LIMIT 10;')
             console.log('')
-            console.log('='.repeat(60))
+
+            // Show available users/orgs in test mode to help user find correct IDs
+            if (testMode) {
+                await showAvailableUsersAndOrgs(dataSource)
+            } else {
+                console.log('='.repeat(60))
+            }
 
             process.exit(1)
-        } else if (!hasValidOrgId) {
-            console.log('❌ CRITICAL ERROR: ORG_ID is missing or invalid!')
+        } else if (!hasValidOrgId || !orgIdValid) {
+            console.log('❌ CRITICAL ERROR: ORG_ID is missing, invalid, or organization not found in database!')
             console.log(`   Current value: "${orgId || '(not set)'}"`)
+            if (hasValidOrgId && !userOrgVerification.orgExists) {
+                console.log('   UUID format is valid, but organization does not exist in database!')
+            }
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
-            console.log('   ORG_ID is required for proper credential organization.')
+            console.log('   ORG_ID must be valid and exist in the database for proper credential organization.')
             console.log('')
-            console.log('🔧 SET ORG_ID ENVIRONMENT VARIABLE:')
-            console.log('   export ORG_ID="your-organization-uuid-here"')
-            console.log('   (must be a valid UUID format)')
+            console.log('🔧 FIX OPTIONS:')
+            console.log('   1. Set correct ORG_ID: export ORG_ID="valid-org-uuid-from-database"')
+            console.log('   2. Query database: SELECT id, name FROM organization LIMIT 10;')
             console.log('')
-            console.log('='.repeat(60))
+
+            // Show available users/orgs in test mode to help user find correct IDs
+            if (testMode) {
+                await showAvailableUsersAndOrgs(dataSource)
+            } else {
+                console.log('='.repeat(60))
+            }
 
             process.exit(1)
         } else {
-            console.log('✅ USER_ID and ORG_ID are properly configured!')
+            console.log('\n✅ USER_ID and ORG_ID are properly configured and verified in database!')
         }
 
         console.log('')
