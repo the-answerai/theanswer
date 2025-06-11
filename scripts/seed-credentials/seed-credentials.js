@@ -18,6 +18,16 @@
  * • And many more... (see ENV_TO_CREDENTIAL_MAP below)
  *
  * EXAMPLE USAGE:
+ *
+ * TEST MODE (shows what would be done without making changes):
+ * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
+ * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
+ * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
+ * node scripts/seed-credentials/seed-credentials.js --test
+ * # OR: node scripts/seed-credentials/seed-credentials.js --dry-run
+ * # OR: TEST_MODE=true node scripts/seed-credentials/seed-credentials.js
+ *
+ * PRODUCTION MODE (actually creates/updates credentials):
  * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
  * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
  * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
@@ -312,8 +322,48 @@ function detectUnmappedCredentials(defaultVars, mappedCredentials) {
     return unmappedCredentials
 }
 
+// Check if running in test mode
+function isTestMode() {
+    return process.argv.includes('--test') || process.argv.includes('--dry-run') || process.env.TEST_MODE === 'true'
+}
+
+// Display database connection information
+function displayDatabaseInfo() {
+    const dbType = process.env.DATABASE_TYPE || 'postgres'
+    const dbHost = process.env.DATABASE_HOST || 'localhost'
+    const dbPort = process.env.DATABASE_PORT || '5432'
+    const dbUser = process.env.DATABASE_USER || 'postgres'
+    const dbName = process.env.DATABASE_NAME || 'flowise'
+
+    const testMode = isTestMode()
+
+    console.log('\n' + '='.repeat(60))
+    console.log('🗄️  DATABASE CONNECTION INFORMATION')
+    console.log('='.repeat(60))
+    console.log(`Mode: ${testMode ? '🧪 TEST/DRY-RUN (read-only)' : '🚀 PRODUCTION (write operations)'}`)
+    console.log(`Database Type: ${dbType}`)
+    console.log(`Host: ${dbHost}`)
+    console.log(`Port: ${dbPort}`)
+    console.log(`Database Name: ${dbName}`)
+    console.log(`Username: ${dbUser}`)
+    console.log(`Password: ${'*'.repeat(8)} (hidden for security)`)
+    console.log('='.repeat(60))
+}
+
 async function seedCredentials() {
-    console.log('Starting auto credential seeding process...')
+    const testMode = isTestMode()
+
+    if (testMode) {
+        console.log('🧪 RUNNING IN TEST MODE (DRY RUN)')
+        console.log('   No changes will be made to the database')
+        console.log('   This will only show existing credentials and what would be processed')
+    } else {
+        console.log('🚀 RUNNING IN PRODUCTION MODE')
+        console.log('   This will create/update credentials in the database')
+    }
+
+    // Display database connection info
+    displayDatabaseInfo()
 
     let dataSource
 
@@ -343,8 +393,13 @@ async function seedCredentials() {
             console.log('❌ CRITICAL ERROR: Both USER_ID and ORG_ID are missing or invalid!')
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
-            console.log('   Cannot create credentials without proper owner assignment.')
-            console.log('   This would create orphaned credentials with access issues.')
+            if (testMode) {
+                console.log('   Cannot analyze credentials without proper owner assignment values.')
+                console.log('   Even in test mode, these values are required for proper analysis.')
+            } else {
+                console.log('   Cannot create credentials without proper owner assignment.')
+                console.log('   This would create orphaned credentials with access issues.')
+            }
             console.log('')
             console.log('🔧 TO FIX THIS, SET THE FOLLOWING ENVIRONMENT VARIABLES:')
             console.log('   export USER_ID="your-user-uuid-here"')
@@ -358,7 +413,7 @@ async function seedCredentials() {
             console.log('💡 EXAMPLE:')
             console.log('   export USER_ID="123e4567-e89b-12d3-a456-426614174000"')
             console.log('   export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"')
-            console.log('   node scripts/seed-credentials/seed-credentials.js')
+            console.log(`   node scripts/seed-credentials/seed-credentials.js${testMode ? ' --test' : ''}`)
             console.log('')
             console.log('='.repeat(60))
 
@@ -415,6 +470,105 @@ async function seedCredentials() {
 
         // Combine mapped and auto-detected credentials
         credentialsToCreate = [...credentialsToCreate, ...unmappedCredentials]
+
+        if (testMode) {
+            console.log('\n' + '='.repeat(60))
+            console.log('🧪 TEST MODE: CREDENTIAL ANALYSIS')
+            console.log('='.repeat(60))
+            console.log(`Found ${credentialsToCreate.length} credentials to process`)
+            console.log('')
+
+            if (credentialsToCreate.length === 0) {
+                console.log('❌ No credentials found to process!')
+                console.log('   Make sure you have AAI_DEFAULT_* environment variables set')
+                return { created: [], failed: [], existing: [] }
+            }
+
+            // In test mode, just check what exists and what would be processed
+            const results = {
+                existing: [],
+                wouldCreate: [],
+                wouldUpdate: []
+            }
+
+            for (const credential of credentialsToCreate) {
+                console.log(`\n🔍 Analyzing: ${credential.name}`)
+
+                try {
+                    // Check if credential exists
+                    const existingCredentialSql = `SELECT id, "createdDate", "updatedDate" FROM credential WHERE name = $1 LIMIT 1`
+                    const existingCredentials = await dataSource.query(existingCredentialSql, [credential.name])
+
+                    if (existingCredentials.length > 0) {
+                        const existing = existingCredentials[0]
+                        console.log(`   ✅ EXISTS - UUID: ${existing.id}`)
+                        console.log(`   📅 Created: ${existing.createdDate}`)
+                        console.log(`   📅 Updated: ${existing.updatedDate}`)
+                        console.log(`   🔄 ACTION: Would UPDATE (preserve UUID)`)
+
+                        results.wouldUpdate.push({
+                            name: credential.name,
+                            id: existing.id,
+                            credentialName: credential.credentialName,
+                            autoDetected: credential.autoDetected
+                        })
+                    } else {
+                        console.log(`   ➕ NOT FOUND`)
+                        console.log(`   🔄 ACTION: Would CREATE (new UUID)`)
+
+                        results.wouldCreate.push({
+                            name: credential.name,
+                            credentialName: credential.credentialName,
+                            autoDetected: credential.autoDetected
+                        })
+                    }
+
+                    // Show credential data summary (without sensitive info)
+                    const fieldCount = Object.keys(credential.plainDataObj).length
+                    const fieldNames = Object.keys(credential.plainDataObj).join(', ')
+                    console.log(`   📋 Fields (${fieldCount}): ${fieldNames}`)
+                } catch (error) {
+                    console.log(`   ❌ ERROR: ${error.message}`)
+                }
+            }
+
+            // Show test mode summary
+            console.log('\n' + '='.repeat(60))
+            console.log('🧪 TEST MODE SUMMARY')
+            console.log('='.repeat(60))
+            console.log(`Would CREATE: ${results.wouldCreate.length} new credentials`)
+            console.log(`Would UPDATE: ${results.wouldUpdate.length} existing credentials`)
+            console.log(`Total processed: ${credentialsToCreate.length}`)
+
+            if (results.wouldUpdate.length > 0) {
+                console.log('\n📝 EXISTING CREDENTIALS (would be updated):')
+                for (const cred of results.wouldUpdate) {
+                    const type = cred.autoDetected ? '🤖 Auto-detected' : '📋 Mapped'
+                    console.log(`   ${type}: ${cred.name}`)
+                    console.log(`     UUID: ${cred.id}`)
+                    console.log(`     Type: ${cred.credentialName}`)
+                }
+            }
+
+            if (results.wouldCreate.length > 0) {
+                console.log('\n🆕 NEW CREDENTIALS (would be created):')
+                for (const cred of results.wouldCreate) {
+                    const type = cred.autoDetected ? '🤖 Auto-detected' : '📋 Mapped'
+                    console.log(`   ${type}: ${cred.name}`)
+                    console.log(`     Type: ${cred.credentialName}`)
+                }
+            }
+
+            console.log('\n💡 To run in production mode: node scripts/seed-credentials/seed-credentials.js')
+            console.log('='.repeat(60))
+
+            return results
+        }
+
+        // PRODUCTION MODE - Actually create/update credentials
+        console.log('\n' + '='.repeat(60))
+        console.log('🚀 PRODUCTION MODE: PROCESSING CREDENTIALS')
+        console.log('='.repeat(60))
 
         // Ensure credential table exists
         try {
@@ -625,12 +779,19 @@ async function seedCredentials() {
 
 // Execute if run directly
 if (require.main === module) {
+    const testMode = isTestMode()
+
     seedCredentials()
         .then(() => {
-            console.log('Auto credential seeding completed')
+            if (testMode) {
+                console.log('\n✅ Test mode analysis completed - no changes were made')
+                console.log('💡 Run without --test to actually create/update credentials')
+            } else {
+                console.log('\n✅ Credential seeding completed successfully')
+            }
         })
         .catch((error) => {
-            console.error('Unhandled error during credential seeding:', error)
+            console.error('\n❌ Error during credential seeding:', error)
             process.exit(1)
         })
 }
