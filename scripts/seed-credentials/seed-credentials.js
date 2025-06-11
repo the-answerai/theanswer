@@ -38,6 +38,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 const { DataSource } = require('typeorm')
 const fs = require('node:fs')
 const crypto = require('node:crypto')
+const readline = require('node:readline')
 
 // Map of environment variable prefixes to credential configurations
 const ENV_TO_CREDENTIAL_MAP = {
@@ -140,6 +141,167 @@ const ENV_TO_CREDENTIAL_MAP = {
     }
 }
 
+// Parse PostgreSQL connection URL
+function parsePostgresUrl(url) {
+    try {
+        // Handle postgresql:// or postgres:// URLs
+        const urlObj = new URL(url)
+
+        if (!['postgresql:', 'postgres:'].includes(urlObj.protocol)) {
+            throw new Error('URL must start with postgresql:// or postgres://')
+        }
+
+        return {
+            host: urlObj.hostname,
+            port: urlObj.port || '5432',
+            username: urlObj.username,
+            password: urlObj.password,
+            database: urlObj.pathname.slice(1), // Remove leading slash
+            type: 'postgres'
+        }
+    } catch (error) {
+        throw new Error(`Invalid PostgreSQL URL: ${error.message}`)
+    }
+}
+
+// Interactive prompt for PostgreSQL URL
+function promptForPostgresUrl() {
+    return new Promise((resolve) => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        })
+
+        console.log('\n' + '🔧 DATABASE CONNECTION FAILED!'.padStart(40, '=').padEnd(60, '='))
+        console.log('Please provide your PostgreSQL connection URL.')
+        console.log('')
+        console.log('💡 Expected format:')
+        console.log('   postgresql://username:password@host:port/database')
+        console.log('')
+        console.log('📝 Example:')
+        console.log('   postgresql://admin:mypass@localhost:5432/mydb')
+        console.log('   postgresql://user:pass@host.render.com/database_name')
+        console.log('')
+
+        rl.question('🔗 Enter your PostgreSQL URL: ', (url) => {
+            rl.close()
+            resolve(url.trim())
+        })
+    })
+}
+
+// Create database connection with fallback URL prompt
+async function createDataSource() {
+    let attempts = 0
+    const maxAttempts = 2
+
+    while (attempts < maxAttempts) {
+        attempts++
+
+        try {
+            // Get current database configuration
+            const dbType = process.env.DATABASE_TYPE || 'postgres'
+            const dbHost = process.env.DATABASE_HOST || 'localhost'
+            const dbPort = Number.parseInt(process.env.DATABASE_PORT || '5432', 10)
+            const dbUser = process.env.DATABASE_USER || 'postgres'
+            const dbPassword = process.env.DATABASE_PASSWORD || 'postgres'
+            const dbName = process.env.DATABASE_NAME || 'flowise'
+
+            console.log(`Connecting to ${dbType} database at ${dbHost}:${dbPort}/${dbName} (attempt ${attempts}/${maxAttempts})`)
+
+            const dataSource = new DataSource({
+                type: dbType,
+                host: dbHost,
+                port: dbPort,
+                username: dbUser,
+                password: dbPassword,
+                database: dbName,
+                synchronize: false,
+                ssl:
+                    dbHost.includes('.render.com') || dbHost.includes('.railway.app') || process.env.DATABASE_SSL
+                        ? {
+                              rejectUnauthorized: false // Allow self-signed certificates for cloud providers
+                          }
+                        : false
+            })
+
+            await dataSource.initialize()
+            console.log('✅ Database connection initialized successfully')
+            return dataSource
+        } catch (error) {
+            console.log(`❌ Database connection failed (attempt ${attempts}/${maxAttempts}): ${error.message}`)
+
+            if (attempts >= maxAttempts) {
+                // Last attempt failed, prompt for URL
+                console.log('')
+                console.log('🚨 All connection attempts failed!')
+
+                try {
+                    const postgresUrl = await promptForPostgresUrl()
+
+                    if (!postgresUrl) {
+                        throw new Error('No URL provided')
+                    }
+
+                    console.log('\n📋 Parsing PostgreSQL URL...')
+                    const parsedConfig = parsePostgresUrl(postgresUrl)
+
+                    console.log('✅ URL parsed successfully:')
+                    console.log(`   Host: ${parsedConfig.host}`)
+                    console.log(`   Port: ${parsedConfig.port}`)
+                    console.log(`   Database: ${parsedConfig.database}`)
+                    console.log(`   Username: ${parsedConfig.username}`)
+                    console.log(`   Password: ${'*'.repeat(Math.min(parsedConfig.password?.length || 0, 8))}`)
+
+                    // Override environment variables with parsed values
+                    process.env.DATABASE_TYPE = parsedConfig.type
+                    process.env.DATABASE_HOST = parsedConfig.host
+                    process.env.DATABASE_PORT = parsedConfig.port
+                    process.env.DATABASE_USER = parsedConfig.username
+                    process.env.DATABASE_PASSWORD = parsedConfig.password
+                    process.env.DATABASE_NAME = parsedConfig.database
+
+                    // Enable SSL for cloud providers
+                    if (
+                        parsedConfig.host.includes('.render.com') ||
+                        parsedConfig.host.includes('.railway.app') ||
+                        parsedConfig.host.includes('aws.com') ||
+                        parsedConfig.host.includes('google.com')
+                    ) {
+                        process.env.DATABASE_SSL = 'true'
+                    }
+
+                    console.log('\n🔄 Retrying connection with parsed URL...')
+
+                    const dataSource = new DataSource({
+                        type: parsedConfig.type,
+                        host: parsedConfig.host,
+                        port: parseInt(parsedConfig.port),
+                        username: parsedConfig.username,
+                        password: parsedConfig.password,
+                        database: parsedConfig.database,
+                        synchronize: false,
+                        ssl: {
+                            rejectUnauthorized: false // Allow self-signed certificates (common for cloud providers)
+                        }
+                    })
+
+                    await dataSource.initialize()
+                    console.log('✅ Database connection successful with provided URL!')
+                    return dataSource
+                } catch (urlError) {
+                    console.log(`❌ Failed to connect with provided URL: ${urlError.message}`)
+                    throw new Error(`Database connection failed after all attempts. Last error: ${urlError.message}`)
+                }
+            } else {
+                // Not the last attempt, continue to next iteration
+                console.log('🔄 Retrying...')
+                await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+            }
+        }
+    }
+}
+
 // Helper to encrypt credential data
 function encryptCredentialData(plainDataObj) {
     // Use the same encryption key as the server
@@ -150,32 +312,6 @@ function encryptCredentialData(plainDataObj) {
 
     // This is exactly how the server encrypts credentials
     return CryptoJS.AES.encrypt(JSON.stringify(plainDataObj), encryptKey).toString()
-}
-
-async function createDataSource() {
-    // Database configuration from .env
-    const dbType = process.env.DATABASE_TYPE || 'postgres'
-    const dbHost = process.env.DATABASE_HOST || 'localhost'
-    const dbPort = Number.parseInt(process.env.DATABASE_PORT || '5432', 10)
-    const dbUser = process.env.DATABASE_USER || 'postgres'
-    const dbPassword = process.env.DATABASE_PASSWORD || 'postgres'
-    const dbName = process.env.DATABASE_NAME || 'flowise'
-
-    console.log(`Connecting to ${dbType} database at ${dbHost}:${dbPort}/${dbName}`)
-
-    const dataSource = new DataSource({
-        type: dbType,
-        host: dbHost,
-        port: dbPort,
-        username: dbUser,
-        password: dbPassword,
-        database: dbName,
-        synchronize: false
-    })
-
-    await dataSource.initialize()
-    console.log('Database connection initialized')
-    return dataSource
 }
 
 // Find all environment variables with AAI_DEFAULT prefix
@@ -512,7 +648,7 @@ async function seedCredentials() {
     let dataSource
 
     try {
-        // Initialize database connection
+        // Initialize database connection with fallback URL prompt
         dataSource = await createDataSource()
 
         // Verify user and organization details in database
