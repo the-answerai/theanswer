@@ -1,6 +1,27 @@
 /**
  * Seed all default credentials from AAI_DEFAULT environment variables
  * This script automatically detects all AAI_DEFAULT_* variables and creates credentials for them
+ *
+ * ⚠️  REQUIRED PREREQUISITES:
+ * ============================
+ * This script REQUIRES these environment variables or it will fail:
+ *
+ * MANDATORY - SCRIPT WILL EXIT WITHOUT THESE:
+ * • USER_ID="your-user-uuid"        - UUID of the user who will own these credentials
+ * • ORG_ID="your-organization-uuid" - UUID of the organization these credentials belong to
+ *
+ * CREDENTIAL API KEYS (set any you want to seed):
+ * • AAI_DEFAULT_OPENAI_API_KEY      - OpenAI API key
+ * • AAI_DEFAULT_ANTHROPHIC          - Anthropic API key
+ * • AAI_DEFAULT_GROQ                - Groq API key
+ * • AAI_DEFAULT_REPLICATE           - Replicate API key
+ * • And many more... (see ENV_TO_CREDENTIAL_MAP below)
+ *
+ * EXAMPLE USAGE:
+ * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
+ * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
+ * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
+ * node scripts/seed-credentials/seed-credentials.js
  */
 const path = require('node:path')
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
@@ -12,54 +33,59 @@ const crypto = require('node:crypto')
 const ENV_TO_CREDENTIAL_MAP = {
     // Direct mappings for single API key credentials
     AAI_DEFAULT_OPENAI_API_KEY: {
-        name: 'openai-default',
+        name: 'OpenAI - AAI - Default',
         credentialName: 'openAIApi',
         mapFn: (value) => ({ openAIApiKey: value })
     },
     AAI_DEFAULT_ANTHROPHIC: {
-        name: 'anthropic-default',
+        name: 'Anthropic - AAI - Default',
         credentialName: 'anthropicApi',
         mapFn: (value) => ({ anthropicApiKey: value })
     },
     AAI_DEFAULT_GROQ: {
-        name: 'groq-default',
+        name: 'Groq - AAI - Default',
         credentialName: 'groqApi',
         mapFn: (value) => ({ groqApiKey: value })
     },
     AAI_DEFAULT_DEEPSEEK: {
-        name: 'deepseek-default',
+        name: 'Deepseek - AAI - Default',
         credentialName: 'deepseekApi',
         mapFn: (value) => ({ deepseekApiKey: value })
     },
     AAI_DEFAULT_EXASEARCH: {
-        name: 'exasearch-default',
+        name: 'ExaSearchAI - AAI - Default',
         credentialName: 'exaSearchApi',
         mapFn: (value) => ({ exaSearchApiKey: value })
     },
     AAI_DEFAULT_REPLICATE: {
-        name: 'replicate-default',
+        name: 'Replicate - AAI - Default',
         credentialName: 'replicateApi',
         mapFn: (value) => ({ replicateApiKey: value })
     },
     AAI_DEFAULT_SERPAPI: {
-        name: 'serpapi-default',
+        name: 'SerpAPI - AAI - Default',
         credentialName: 'serpApi',
         mapFn: (value) => ({ serpApiKey: value })
     },
     AAI_DEFAULT_PINCONE: {
-        name: 'pinecone-default',
+        name: 'Pinecone - AAI - Default',
         credentialName: 'pineconeApi',
         mapFn: (value) => ({ pineconeApiKey: value })
     },
     AAI_DEFAULT_GITHUB_TOKEN: {
-        name: 'github-default',
+        name: 'GitHub - AAI - Default',
         credentialName: 'githubApi',
         mapFn: (value) => ({ accessToken: value })
+    },
+    AAI_DEFAULT_BRAVE_SEARCH: {
+        name: 'Brave Search - AAI - Default',
+        credentialName: 'braveSearchApi',
+        mapFn: (value) => ({ braveSearchApiKey: value })
     },
 
     // Group mappings for multi-field credentials
     AAI_DEFAULT_AWS_BEDROCK: {
-        name: 'aws-bedrock-default',
+        name: 'AWS - AAI - Default',
         credentialName: 'awsApi',
         requiredVars: ['ACCESS_KEY', 'SECRET_KEY'],
         mapFn: (vars) => ({
@@ -69,7 +95,7 @@ const ENV_TO_CREDENTIAL_MAP = {
         })
     },
     AAI_DEFAULT_SUPABASE: {
-        name: 'supabase-default',
+        name: 'Supabase - AAI - Default',
         credentialName: 'supabaseApi',
         requiredVars: ['URL', 'API'],
         mapFn: (vars) => ({
@@ -78,7 +104,7 @@ const ENV_TO_CREDENTIAL_MAP = {
         })
     },
     AAI_DEFAULT_GOOGLE_SEARCH_API: {
-        name: 'google-search-default',
+        name: 'Google Search API - AAI - Default',
         credentialName: 'googleCustomSearchApi',
         requiredVars: ['ENGINE_ID'],
         mapFn: (vars, apiKey) => ({
@@ -87,7 +113,7 @@ const ENV_TO_CREDENTIAL_MAP = {
         })
     },
     AAI_DEFAULT_REDIS: {
-        name: 'redis-default',
+        name: 'Redis - AAI - Default',
         credentialName: 'redisCacheApi',
         optionalVars: ['HOST', 'PORT', 'USERNAME', 'PASSWORD'],
         mapFn: (vars) => ({
@@ -96,6 +122,11 @@ const ENV_TO_CREDENTIAL_MAP = {
             redisCacheUser: vars['USERNAME'] || 'default',
             redisCachePwd: vars['PASSWORD'] || ''
         })
+    },
+    AAI_DEFAULT_DATA_ANALYZER: {
+        name: 'Data Analyzer - AAI - Default',
+        credentialName: 'dataAnalyzerApi',
+        mapFn: (value) => ({ dataAnalyzerApiKey: value })
     }
 }
 
@@ -260,8 +291,11 @@ function detectUnmappedCredentials(defaultVars, mappedCredentials) {
                     const plainData = {}
                     plainData[fieldName] = defaultVars[key]
 
+                    // Capitalize the API name properly for prettier display
+                    const prettyApiName = apiName.charAt(0).toUpperCase() + apiName.slice(1)
+
                     unmappedCredentials.push({
-                        name: `${apiName}-default`,
+                        name: `${prettyApiName} - AAI - Default`,
                         credentialName: `${apiName}Api`,
                         plainDataObj: plainData,
                         autoDetected: true
@@ -287,6 +321,13 @@ async function seedCredentials() {
         // Initialize database connection
         dataSource = await createDataSource()
 
+        // =====================================================
+        // ⚠️  IMPORTANT: USER_ID AND ORG_ID CONFIGURATION  ⚠️
+        // =====================================================
+        console.log('\n' + '='.repeat(60))
+        console.log('🔍 CHECKING USER_ID AND ORG_ID CONFIGURATION')
+        console.log('='.repeat(60))
+
         // Get user ID and org ID (ensuring they're either valid UUIDs or null)
         let userId = process.env.USER_ID
         let orgId = process.env.ORG_ID
@@ -294,19 +335,71 @@ async function seedCredentials() {
         // Make sure the ID values are valid UUIDs or null
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-        // Set to null if not a valid UUID
-        if (!userId || !uuidRegex.test(userId)) {
-            console.log('USER_ID is not a valid UUID, setting to null')
-            userId = null
+        // Validate and provide detailed feedback for USER_ID
+        const hasValidUserId = userId && uuidRegex.test(userId)
+        const hasValidOrgId = orgId && uuidRegex.test(orgId)
+
+        if (!hasValidUserId && !hasValidOrgId) {
+            console.log('❌ CRITICAL ERROR: Both USER_ID and ORG_ID are missing or invalid!')
+            console.log('')
+            console.log('🚫 SCRIPT EXECUTION TERMINATED')
+            console.log('   Cannot create credentials without proper owner assignment.')
+            console.log('   This would create orphaned credentials with access issues.')
+            console.log('')
+            console.log('🔧 TO FIX THIS, SET THE FOLLOWING ENVIRONMENT VARIABLES:')
+            console.log('   export USER_ID="your-user-uuid-here"')
+            console.log('   export ORG_ID="your-organization-uuid-here"')
+            console.log('')
+            console.log('📋 HOW TO GET THESE VALUES:')
+            console.log('   1. USER_ID: Query your users table or check the Flowise admin panel')
+            console.log('   2. ORG_ID: Query your organizations table or check the Flowise admin panel')
+            console.log('   3. Both values must be valid UUIDs (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)')
+            console.log('')
+            console.log('💡 EXAMPLE:')
+            console.log('   export USER_ID="123e4567-e89b-12d3-a456-426614174000"')
+            console.log('   export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"')
+            console.log('   node scripts/seed-credentials/seed-credentials.js')
+            console.log('')
+            console.log('='.repeat(60))
+
+            process.exit(1)
+        } else if (!hasValidUserId) {
+            console.log('❌ CRITICAL ERROR: USER_ID is missing or invalid!')
+            console.log(`   Current value: "${userId || '(not set)'}"`)
+            console.log('')
+            console.log('🚫 SCRIPT EXECUTION TERMINATED')
+            console.log('   USER_ID is required for proper credential ownership.')
+            console.log('')
+            console.log('🔧 SET USER_ID ENVIRONMENT VARIABLE:')
+            console.log('   export USER_ID="your-user-uuid-here"')
+            console.log('   (must be a valid UUID format)')
+            console.log('')
+            console.log('='.repeat(60))
+
+            process.exit(1)
+        } else if (!hasValidOrgId) {
+            console.log('❌ CRITICAL ERROR: ORG_ID is missing or invalid!')
+            console.log(`   Current value: "${orgId || '(not set)'}"`)
+            console.log('')
+            console.log('🚫 SCRIPT EXECUTION TERMINATED')
+            console.log('   ORG_ID is required for proper credential organization.')
+            console.log('')
+            console.log('🔧 SET ORG_ID ENVIRONMENT VARIABLE:')
+            console.log('   export ORG_ID="your-organization-uuid-here"')
+            console.log('   (must be a valid UUID format)')
+            console.log('')
+            console.log('='.repeat(60))
+
+            process.exit(1)
+        } else {
+            console.log('✅ USER_ID and ORG_ID are properly configured!')
         }
 
-        if (!orgId || !uuidRegex.test(orgId)) {
-            console.log('ORG_ID is not a valid UUID, setting to null')
-            orgId = null
-        }
-
-        console.log(`Using User ID: ${userId || '(not set - will be null)'}`)
-        console.log(`Using Organization ID: ${orgId || '(not set - will be null)'}`)
+        console.log('')
+        console.log('📊 FINAL CONFIGURATION:')
+        console.log(`   User ID: ${userId ? `✅ ${userId}` : '❌ NULL (not set)'}`)
+        console.log(`   Organization ID: ${orgId ? `✅ ${orgId}` : '❌ NULL (not set)'}`)
+        console.log('='.repeat(60) + '\n')
 
         // Find all AAI_DEFAULT environment variables
         const defaultVars = findDefaultEnvVars()
@@ -375,50 +468,75 @@ async function seedCredentials() {
             }
 
             try {
+                // Encrypt the credential data
+                const encryptedData = encryptCredentialData(credential.plainDataObj)
+
                 // Check if credential already exists using raw SQL
                 const existingCredentialSql = `
                     SELECT id FROM credential WHERE name = $1 LIMIT 1
                 `
                 const existingCredentials = await dataSource.query(existingCredentialSql, [credential.name])
 
-                if (existingCredentials.length > 0) {
-                    const existingId = existingCredentials[0].id
-                    console.log(`Credential '${credential.name}' already exists with ID: ${existingId}`)
+                let credentialId
+                let isUpdate = false
 
-                    // Delete the existing credential before recreating it
-                    console.log(`Deleting existing credential to recreate it...`)
-                    const deleteQuery = `DELETE FROM credential WHERE id = $1`
-                    await dataSource.query(deleteQuery, [existingId])
-                    console.log(`Deleted credential with ID: ${existingId}`)
+                if (existingCredentials.length > 0) {
+                    // Update existing credential to preserve UUID
+                    credentialId = existingCredentials[0].id
+                    console.log(`Updating existing credential '${credential.name}' with ID: ${credentialId}`)
+
+                    const updateSql = `
+                        UPDATE credential 
+                        SET "credentialName" = $1,
+                            "encryptedData" = $2,
+                            "userId" = $3,
+                            "organizationId" = $4,
+                            "updatedDate" = CURRENT_TIMESTAMP,
+                            visibility = ARRAY[$5]::text[]
+                        WHERE id = $6
+                    `
+
+                    const updateValues = [credential.credentialName, encryptedData, userId || null, orgId || null, 'Private', credentialId]
+
+                    await dataSource.query(updateSql, updateValues)
+                    console.log(`Updated credential '${credential.name}' (preserved UUID: ${credentialId})`)
+                    isUpdate = true
+                } else {
+                    // Create new credential
+                    console.log(`Creating new credential '${credential.name}'`)
+
+                    const insertSql = `
+                        INSERT INTO credential (
+                            name, 
+                            "credentialName", 
+                            "encryptedData", 
+                            "userId", 
+                            "organizationId", 
+                            visibility
+                        ) 
+                        VALUES ($1, $2, $3, $4, $5, ARRAY[$6]::text[])
+                        RETURNING id
+                    `
+
+                    const insertValues = [
+                        credential.name,
+                        credential.credentialName,
+                        encryptedData,
+                        userId || null,
+                        orgId || null,
+                        'Private'
+                    ]
+
+                    const result = await dataSource.query(insertSql, insertValues)
+                    credentialId = result[0].id
+                    console.log(`Created new credential '${credential.name}' with ID: ${credentialId}`)
                 }
 
-                // Encrypt the credential data
-                const encryptedData = encryptCredentialData(credential.plainDataObj)
-
-                // Create the credential using raw SQL
-                const insertSql = `
-                    INSERT INTO credential (
-                        name, 
-                        "credentialName", 
-                        "encryptedData", 
-                        "userId", 
-                        "organizationId", 
-                        visibility
-                    ) 
-                    VALUES ($1, $2, $3, $4, $5, ARRAY[$6]::text[])
-                    RETURNING id
-                `
-
-                const insertValues = [credential.name, credential.credentialName, encryptedData, userId || null, orgId || null, 'Private']
-
-                const result = await dataSource.query(insertSql, insertValues)
-                const createdId = result[0].id
-
-                console.log(`Created credential for ${credential.name} with ID: ${createdId}`)
                 results.created.push({
                     name: credential.name,
-                    id: createdId,
-                    autoDetected: credential.autoDetected
+                    id: credentialId,
+                    autoDetected: credential.autoDetected,
+                    isUpdate: isUpdate
                 })
             } catch (error) {
                 console.error(`Error creating credential for ${credential.name}:`, error.message)
@@ -431,27 +549,55 @@ async function seedCredentials() {
 
         // Show summary
         console.log('\n===== CREDENTIAL SEEDING SUMMARY =====')
-        console.log(`Created: ${results.created.length}`)
+        const createdCount = results.created.filter((cred) => !cred.isUpdate).length
+        const updatedCount = results.created.filter((cred) => cred.isUpdate).length
+
+        console.log(`New credentials created: ${createdCount}`)
+        console.log(`Existing credentials updated: ${updatedCount}`)
         console.log(`Failed: ${results.failed.length}`)
 
         if (results.created.length > 0) {
-            console.log('\nNewly created credentials:')
+            // Show updated credentials first
+            const updatedCreds = results.created.filter((cred) => cred.isUpdate)
+            if (updatedCreds.length > 0) {
+                console.log('\n📝 UPDATED CREDENTIALS (UUID preserved):')
 
-            // First show manually mapped credentials
-            const manualCreds = results.created.filter((cred) => !cred.autoDetected)
-            if (manualCreds.length > 0) {
-                console.log('\n  Mapped credentials:')
-                for (const cred of manualCreds) {
-                    console.log(`  - ${cred.name}: ${cred.id}`)
+                const updatedManual = updatedCreds.filter((cred) => !cred.autoDetected)
+                if (updatedManual.length > 0) {
+                    console.log('\n  Mapped credentials:')
+                    for (const cred of updatedManual) {
+                        console.log(`  ✅ ${cred.name}: ${cred.id}`)
+                    }
+                }
+
+                const updatedAuto = updatedCreds.filter((cred) => cred.autoDetected)
+                if (updatedAuto.length > 0) {
+                    console.log('\n  Auto-detected credentials:')
+                    for (const cred of updatedAuto) {
+                        console.log(`  ✅ ${cred.name}: ${cred.id}`)
+                    }
                 }
             }
 
-            // Then show auto-detected credentials
-            const autoCreds = results.created.filter((cred) => cred.autoDetected)
-            if (autoCreds.length > 0) {
-                console.log('\n  Auto-detected credentials:')
-                for (const cred of autoCreds) {
-                    console.log(`  - ${cred.name}: ${cred.id}`)
+            // Show new credentials
+            const newCreds = results.created.filter((cred) => !cred.isUpdate)
+            if (newCreds.length > 0) {
+                console.log('\n🆕 NEW CREDENTIALS CREATED:')
+
+                const newManual = newCreds.filter((cred) => !cred.autoDetected)
+                if (newManual.length > 0) {
+                    console.log('\n  Mapped credentials:')
+                    for (const cred of newManual) {
+                        console.log(`  ➕ ${cred.name}: ${cred.id}`)
+                    }
+                }
+
+                const newAuto = newCreds.filter((cred) => cred.autoDetected)
+                if (newAuto.length > 0) {
+                    console.log('\n  Auto-detected credentials:')
+                    for (const cred of newAuto) {
+                        console.log(`  ➕ ${cred.name}: ${cred.id}`)
+                    }
                 }
             }
         }
