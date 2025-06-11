@@ -118,7 +118,7 @@ async function createDataSource() {
     const dbPort = Number.parseInt(process.env.DATABASE_PORT || '5432', 10)
     const dbUser = process.env.DATABASE_USER || 'postgres'
     const dbPassword = process.env.DATABASE_PASSWORD || 'postgres'
-    const dbName = 'example_db'
+    const dbName = process.env.DATABASE_NAME || 'flowise'
 
     console.log(`Connecting to ${dbType} database at ${dbHost}:${dbPort}/${dbName}`)
 
