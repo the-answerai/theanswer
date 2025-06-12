@@ -54,8 +54,8 @@
         "list-projects": "node ./scripts/bws-secure/list-projects.js",
         "bws-deps": "[ -d node_modules/dotenv ] && [ -d node_modules/dotenv-cli ] && [ -f node_modules/.bin/bws ] || npm install",
         "bws-update": "rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh",
-        "seed-credentials": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js\"",
-        "seed-credentials-test": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --test\""
+        "seed-credentials": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --test\"",
+        "seed-credentials:write": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js\""
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --fix"

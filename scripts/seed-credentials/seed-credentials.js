@@ -19,19 +19,24 @@
  *
  * EXAMPLE USAGE:
  *
- * TEST MODE (shows what would be done without making changes):
+ * 🧪 TEST MODE (default, safe, dry-run):
  * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
  * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
  * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
- * node scripts/seed-credentials/seed-credentials.js --test
+ * pnpm seed-credentials
+ * # OR: node scripts/seed-credentials/seed-credentials.js --test
  * # OR: node scripts/seed-credentials/seed-credentials.js --dry-run
  * # OR: TEST_MODE=true node scripts/seed-credentials/seed-credentials.js
  *
- * PRODUCTION MODE (actually creates/updates credentials):
+ * 🚀 PRODUCTION MODE (actually creates/updates credentials):
  * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
  * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
  * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
- * node scripts/seed-credentials/seed-credentials.js
+ * pnpm seed-credentials:write
+ * # OR: node scripts/seed-credentials/seed-credentials.js
+ *
+ * ⚠️  By default, running 'pnpm seed-credentials' is SAFE and will NOT write to the database.
+ *     You must use 'pnpm seed-credentials:write' to actually write credentials.
  */
 const path = require('node:path')
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
@@ -788,7 +793,13 @@ function displayDatabaseInfo() {
     console.log('\n' + '='.repeat(60))
     console.log('🗄️  DATABASE CONNECTION INFORMATION')
     console.log('='.repeat(60))
-    console.log(`Mode: ${testMode ? '🧪 TEST/DRY-RUN (read-only)' : '🚀 PRODUCTION (write operations)'}`)
+    console.log(
+        `Mode: ${
+            testMode
+                ? '🧪 TEST/DRY-RUN (read-only, default for pnpm seed-credentials)'
+                : '🚀 PRODUCTION (write operations, pnpm seed-credentials:write)'
+        }`
+    )
     console.log(`Database Type: ${dbType}`)
     console.log(`Host: ${dbHost}`)
     console.log(`Port: ${dbPort}`)
@@ -806,11 +817,12 @@ async function seedCredentials() {
     const testMode = isTestMode()
 
     if (testMode) {
-        console.log('🧪 RUNNING IN TEST MODE (DRY RUN)')
+        console.log('🧪 RUNNING IN TEST MODE (DRY RUN, DEFAULT FOR pnpm seed-credentials)')
         console.log('   No changes will be made to the database')
         console.log('   This will only show existing credentials and what would be processed')
+        console.log('   To actually write credentials, use: pnpm seed-credentials:write')
     } else {
-        console.log('🚀 RUNNING IN PRODUCTION MODE')
+        console.log('🚀 RUNNING IN PRODUCTION MODE (pnpm seed-credentials:write)')
         console.log('   This will create/update credentials in the database')
     }
 

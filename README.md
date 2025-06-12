@@ -354,6 +354,26 @@ Reach out to us on [Discord](https://discord.gg/jbaHfsRVBW) if you have any ques
 
 Source code in this repository is made available under the [Apache License Version 2.0](LICENSE.md).
 
+## 🔑 Seeding Default Credentials
+
+TheAnswer provides a script to automatically seed default credentials (API keys, service tokens, etc) into the Flowise database from environment variables. This is useful for setting up new environments or automating credential management.
+
+-   **Safe by default:** Running `pnpm seed-credentials` will perform a dry-run (test mode) and show what would be seeded, but will NOT write to the database.
+-   **To actually write credentials:** Use `pnpm seed-credentials:write` to perform the operation and insert/update credentials in the database.
+-   **Full documentation:** See [`scripts/seed-credentials/README.md`](./scripts/seed-credentials/README.md) for detailed instructions, environment variable requirements, and advanced usage.
+
+**Example:**
+
+```bash
+# Test mode (safe, dry-run, default)
+pnpm seed-credentials
+
+# Production mode (actually writes credentials)
+pnpm seed-credentials:write
+```
+
+The script supports a wide range of credential types and includes robust safety checks. For more details, troubleshooting, and environment variable examples, refer to the [seed-credentials README](./scripts/seed-credentials/README.md).
+
 <!-- BWS-SECURE-DOCS-START -->
 
 ## BWS Secure Environmental Variable Integration

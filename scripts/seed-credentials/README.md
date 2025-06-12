@@ -19,24 +19,31 @@ The credential seeding script provides:
 
 ## Usage
 
+> **⚠️ Default is Safe: `pnpm seed-credentials` now runs in TEST MODE (dry-run, no writes).**
+> To actually write credentials to the database, you must use `pnpm seed-credentials:write`.
+
 ```bash
 # Test mode (shows what would be done without making changes)
-node scripts/seed-credentials/seed-credentials.js --test
+pnpm seed-credentials
 # OR
-node scripts/seed-credentials/seed-credentials.js --dry-run
+pnpm run seed-credentials
 
 # Production mode (actually creates/updates credentials)
-node scripts/seed-credentials/seed-credentials.js
+pnpm seed-credentials:write
+# OR
+pnpm run seed-credentials:write
 
 # Debug mode (shows detailed environment variable loading)
-node scripts/seed-credentials/seed-credentials.js --debug
+pnpm seed-credentials -- --debug
 
 # Combined test and debug mode
-node scripts/seed-credentials/seed-credentials.js --test --debug
+pnpm seed-credentials -- --debug
 
-# With npm scripts (if configured)
-npm run seed-credentials-test  # Test mode
-npm run seed-credentials       # Production mode
+# Direct node usage (advanced)
+node scripts/seed-credentials/seed-credentials.js --test
+node scripts/seed-credentials/seed-credentials.js --debug
+node scripts/seed-credentials/seed-credentials.js --test --debug
+node scripts/seed-credentials/seed-credentials.js           # (production, not recommended)
 ```
 
 ## Database Configuration
@@ -100,6 +107,8 @@ postgresql://admin:mypassword@dpg-abc123.oregon-postgres.render.com/mydatabase
 | `DEBUG_MODE` | Set to `true` to enable debug output |
 
 **Important**: `DATABASE_SEED_USER_ID` and `DATABASE_SEED_ORG_ID` must be valid UUIDs that exist in your database. The script will verify these exist and show you the associated user/organization details for safety.
+
+> **Note:** By default, `pnpm seed-credentials` runs in test mode. Use `pnpm seed-credentials:write` to actually write to the database.
 
 ## Supported Credential Types
 
@@ -278,7 +287,7 @@ AAI_DEFAULT_REDIS_PASSWORD=your-redis-password
 
 ### Test Mode vs Production Mode
 
-#### Test Mode (`--test` or `--dry-run`)
+#### Test Mode (`pnpm seed-credentials`, `--test` or `--dry-run`)
 
 -   **Read-Only**: No database modifications
 -   **Analysis**: Shows existing credentials and what would be created/updated
@@ -286,7 +295,7 @@ AAI_DEFAULT_REDIS_PASSWORD=your-redis-password
 -   **Preview**: Shows exact UUIDs that would be preserved
 -   **Summary**: Detailed breakdown of planned changes
 
-#### Production Mode (default)
+#### Production Mode (`pnpm seed-credentials:write`)
 
 -   **Write Operations**: Actually creates/updates credentials in database
 -   **UUID Preservation**: Updates existing credentials without changing UUIDs
@@ -409,10 +418,12 @@ The script provides comprehensive logging including:
 
 ### Debug and Test Modes
 
-#### Test Mode (`--test` or `--dry-run`)
+#### Test Mode (`pnpm seed-credentials`, `--test` or `--dry-run`)
 
 ```bash
 # See what would be changed without making modifications
+pnpm seed-credentials
+# OR
 node scripts/seed-credentials/seed-credentials.js --test
 
 # Shows:
@@ -426,6 +437,8 @@ node scripts/seed-credentials/seed-credentials.js --test
 
 ```bash
 # See detailed environment variable loading
+pnpm seed-credentials -- --debug
+# OR
 node scripts/seed-credentials/seed-credentials.js --debug
 
 # Shows:
@@ -439,6 +452,8 @@ node scripts/seed-credentials/seed-credentials.js --debug
 
 ```bash
 # Get maximum visibility into what's happening
+pnpm seed-credentials -- --debug
+# OR
 node scripts/seed-credentials/seed-credentials.js --test --debug
 ```
 
