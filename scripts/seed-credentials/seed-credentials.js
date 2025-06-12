@@ -78,7 +78,7 @@ const ENV_TO_CREDENTIAL_MAP = {
         credentialName: 'serpApi',
         mapFn: (value) => ({ serpApiKey: value })
     },
-    AAI_DEFAULT_PINCONE: {
+    AAI_DEFAULT_PINECONE: {
         name: 'Pinecone - AAI - Default',
         credentialName: 'pineconeApi',
         mapFn: (value) => ({ pineconeApiKey: value })
@@ -88,10 +88,67 @@ const ENV_TO_CREDENTIAL_MAP = {
         credentialName: 'githubApi',
         mapFn: (value) => ({ accessToken: value })
     },
+    AAI_DEFAULT_GITHUB_API_KEY: {
+        name: 'GitHub - AAI - Default',
+        credentialName: 'githubApi',
+        mapFn: (value) => ({ accessToken: value })
+    },
     AAI_DEFAULT_BRAVE_SEARCH: {
         name: 'Brave Search - AAI - Default',
         credentialName: 'braveSearchApi',
-        mapFn: (value) => ({ braveSearchApiKey: value })
+        mapFn: (value) => ({ braveApiKey: value })
+    },
+
+    // Additional single field mappings based on credential files
+    AAI_DEFAULT_AIRTABLE_API_KEY: {
+        name: 'Airtable - AAI - Default',
+        credentialName: 'airtableApi',
+        mapFn: (value) => ({ accessToken: value })
+    },
+    AAI_DEFAULT_NOTION_API_KEY: {
+        name: 'Notion - AAI - Default',
+        credentialName: 'notionApi',
+        mapFn: (value) => ({ notionIntegrationToken: value })
+    },
+    AAI_DEFAULT_SLACK_API_KEY: {
+        name: 'Slack - AAI - Default',
+        credentialName: 'slackApi',
+        mapFn: (value) => ({ botToken: value })
+    },
+    AAI_DEFAULT_FIGMA_API_KEY: {
+        name: 'Figma - AAI - Default',
+        credentialName: 'figmaApi',
+        mapFn: (value) => ({ accessToken: value })
+    },
+    AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY: {
+        name: 'Google Generative AI - AAI - Default',
+        credentialName: 'googleGenerativeAI',
+        mapFn: (value) => ({ googleGenerativeAPIKey: value })
+    },
+    AAI_DEFAULT_GOOGLE_OAUTH_API_KEY: {
+        name: 'Google OAuth - AAI - Default',
+        credentialName: 'googleGenerativeAI',
+        mapFn: (value) => ({ googleGenerativeAPIKey: value })
+    },
+    AAI_DEFAULT_GOOGLE_VERTEX_AI_API_KEY: {
+        name: 'Google Vertex AI - AAI - Default',
+        credentialName: 'googleVertexAuth',
+        mapFn: (value) => ({ googleApplicationCredential: value })
+    },
+    AAI_DEFAULT_N8N_API_KEY: {
+        name: 'N8N - AAI - Default',
+        credentialName: 'n8nApi',
+        mapFn: (value) => ({ apiKey: value })
+    },
+    AAI_DEFAULT_REDIS_URL: {
+        name: 'Redis URL - AAI - Default',
+        credentialName: 'redisCacheUrlApi',
+        mapFn: (value) => ({ redisUrl: value })
+    },
+    AAI_DEFAULT_DATA_ANALYZER: {
+        name: 'Data Analyzer - AAI - Default',
+        credentialName: 'dataAnalyzerApi',
+        mapFn: (value) => ({ dataAnalyzerApiKey: value })
     },
 
     // Group mappings for multi-field credentials
@@ -111,7 +168,7 @@ const ENV_TO_CREDENTIAL_MAP = {
         requiredVars: ['URL', 'API'],
         mapFn: (vars) => ({
             supabaseApiKey: vars['API'],
-            supabaseUrl: vars['URL'] // Assuming URL is used for auth
+            supabaseUrl: vars['URL']
         })
     },
     AAI_DEFAULT_GOOGLE_SEARCH_API: {
@@ -134,10 +191,71 @@ const ENV_TO_CREDENTIAL_MAP = {
             redisCachePwd: vars['PASSWORD'] || ''
         })
     },
-    AAI_DEFAULT_DATA_ANALYZER: {
-        name: 'Data Analyzer - AAI - Default',
-        credentialName: 'dataAnalyzerApi',
-        mapFn: (value) => ({ dataAnalyzerApiKey: value })
+
+    // Individual mappings for Contentful (matching exact env var names)
+    AAI_DEFAULT_CONTENTFUL_DELIVERY_API_KEY: {
+        name: 'Contentful Delivery - AAI - Default',
+        credentialName: 'contentfulDeliveryApi',
+        mapFn: (value) => ({ deliveryToken: value })
+    },
+    AAI_DEFAULT_CONTENTFUL_PREVIEW_API_KEY: {
+        name: 'Contentful Preview - AAI - Default',
+        credentialName: 'contentfulDeliveryApi',
+        mapFn: (value) => ({ previewToken: value })
+    },
+    AAI_DEFAULT_CONTENTFUL_SPACE_ID: {
+        name: 'Contentful Space - AAI - Default',
+        credentialName: 'contentfulDeliveryApi',
+        mapFn: (value) => ({ spaceId: value })
+    },
+    AAI_DEFAULT_CONTENTFUL_MANAGEMENT_ACCESS_TOKEN: {
+        name: 'Contentful Management - AAI - Default',
+        credentialName: 'contentfulManagementApi',
+        mapFn: (value) => ({ managementToken: value })
+    },
+
+    // Individual mappings for Confluence (matching exact env var names)
+    AAI_DEFAULT_CONFLUENCE_CLOUD_API_KEY: {
+        name: 'Confluence Cloud API Key - AAI - Default',
+        credentialName: 'confluenceCloudApi',
+        mapFn: (value) => ({ accessToken: value })
+    },
+    AAI_DEFAULT_CONFLUENCE_CLOUD_API_USERNAME: {
+        name: 'Confluence Cloud Username - AAI - Default',
+        credentialName: 'confluenceCloudApi',
+        mapFn: (value) => ({ username: value })
+    },
+
+    // Individual mappings for Postgres Record Manager (matching exact env var names)
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_HOST: {
+        name: 'Postgres Record Manager Host - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ host: value })
+    },
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_PORT: {
+        name: 'Postgres Record Manager Port - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ port: value })
+    },
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE: {
+        name: 'Postgres Record Manager Database - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ database: value })
+    },
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER: {
+        name: 'Postgres Record Manager User - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ user: value })
+    },
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_PASSWORD: {
+        name: 'Postgres Record Manager Password - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ password: value })
+    },
+    AAI_DEFAULT_POSTGRES_RECORDMANAGER_TABLE_NAME: {
+        name: 'Postgres Record Manager Table - AAI - Default',
+        credentialName: 'PostgresApi',
+        mapFn: (value) => ({ tableName: value })
     }
 }
 
