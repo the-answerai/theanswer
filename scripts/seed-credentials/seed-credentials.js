@@ -190,6 +190,52 @@ function promptForPostgresUrl() {
     })
 }
 
+// Interactive prompt for USER_ID
+function promptForUserId() {
+    return new Promise((resolve) => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        })
+
+        console.log('\n' + '👤 USER_ID REQUIRED'.padStart(35, '=').padEnd(60, '='))
+        console.log('USER_ID is required to assign credential ownership.')
+        console.log('This must be a valid UUID of an existing user in your database.')
+        console.log('')
+        console.log('💡 Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
+        console.log('📝 Example: 123e4567-e89b-12d3-a456-426614174000')
+        console.log('')
+
+        rl.question('👤 Enter USER_ID: ', (userId) => {
+            rl.close()
+            resolve(userId.trim())
+        })
+    })
+}
+
+// Interactive prompt for ORG_ID
+function promptForOrgId() {
+    return new Promise((resolve) => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        })
+
+        console.log('\n' + '🏢 ORG_ID REQUIRED'.padStart(35, '=').padEnd(60, '='))
+        console.log('ORG_ID is required to assign credential organization.')
+        console.log('This must be a valid UUID of an existing organization in your database.')
+        console.log('')
+        console.log('💡 Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')
+        console.log('📝 Example: 987fcdeb-51c2-43d1-9f4a-123456789abc')
+        console.log('')
+
+        rl.question('🏢 Enter ORG_ID: ', (orgId) => {
+            rl.close()
+            resolve(orgId.trim())
+        })
+    })
+}
+
 // Create database connection with fallback URL prompt
 async function createDataSource() {
     let attempts = 0
@@ -232,13 +278,21 @@ async function createDataSource() {
             console.log(`❌ Database connection failed (attempt ${attempts}/${maxAttempts}): ${error.message}`)
 
             if (attempts >= maxAttempts) {
-                // Last attempt failed, prompt for URL
+                // Last attempt failed, check for DATABASE_SECURE_EXTERNAL_URL first
                 console.log('')
                 console.log('🚨 All connection attempts failed!')
 
-                try {
-                    const postgresUrl = await promptForPostgresUrl()
+                let postgresUrl = process.env.DATABASE_SECURE_EXTERNAL_URL
 
+                if (postgresUrl) {
+                    console.log('\n📋 Found DATABASE_SECURE_EXTERNAL_URL environment variable')
+                    console.log('🔗 Using URL from DATABASE_SECURE_EXTERNAL_URL...')
+                } else {
+                    console.log('\n💡 DATABASE_SECURE_EXTERNAL_URL not found, prompting for URL...')
+                    postgresUrl = await promptForPostgresUrl()
+                }
+
+                try {
                     if (!postgresUrl) {
                         throw new Error('No URL provided')
                     }
@@ -515,19 +569,19 @@ async function showAvailableUsersAndOrgs(dataSource) {
 
 // Query user and organization details from database
 async function queryUserOrgDetails(dataSource) {
-    const userId = process.env.USER_ID
-    const orgId = process.env.ORG_ID
+    const userId = process.env.DATABASE_SEED_USER_ID
+    const orgId = process.env.DATABASE_SEED_ORG_ID
 
     console.log('\n' + '='.repeat(60))
     console.log('👤 USER & ORGANIZATION VERIFICATION')
     console.log('='.repeat(60))
 
     // Show the IDs we're using
-    console.log(`USER_ID: ${userId || '❌ (not set)'}`)
-    console.log(`ORG_ID: ${orgId || '❌ (not set)'}`)
+    console.log(`DATABASE_SEED_USER_ID: ${userId || '❌ (not set)'}`)
+    console.log(`DATABASE_SEED_ORG_ID: ${orgId || '❌ (not set)'}`)
 
     if (!userId && !orgId) {
-        console.log('\n⚠️  WARNING: Both USER_ID and ORG_ID are missing!')
+        console.log('\n⚠️  WARNING: Both DATABASE_SEED_USER_ID and DATABASE_SEED_ORG_ID are missing!')
         console.log('   Credentials will not be properly assigned to a user/organization.')
         console.log('='.repeat(60))
         return { userExists: false, orgExists: false }
@@ -537,7 +591,7 @@ async function queryUserOrgDetails(dataSource) {
         let userDetails = null
         let orgDetails = null
 
-        // Query user details if USER_ID is set
+        // Query user details if DATABASE_SEED_USER_ID is set
         if (userId) {
             try {
                 const userQuery = `SELECT id, email, name, "createdDate", "updatedDate" FROM "user" WHERE id = $1 LIMIT 1`
@@ -553,7 +607,7 @@ async function queryUserOrgDetails(dataSource) {
                     console.log(`   Updated: ${userDetails.updatedDate}`)
                 } else {
                     console.log('\n❌ USER NOT FOUND:')
-                    console.log(`   The USER_ID "${userId}" does not exist in the database`)
+                    console.log(`   The DATABASE_SEED_USER_ID "${userId}" does not exist in the database`)
                     console.log('   This will create orphaned credentials!')
                 }
             } catch (error) {
@@ -562,7 +616,7 @@ async function queryUserOrgDetails(dataSource) {
             }
         }
 
-        // Query organization details if ORG_ID is set
+        // Query organization details if DATABASE_SEED_ORG_ID is set
         if (orgId) {
             try {
                 const orgQuery = `SELECT id, name, "createdDate", "updatedDate" FROM organization WHERE id = $1 LIMIT 1`
@@ -577,7 +631,7 @@ async function queryUserOrgDetails(dataSource) {
                     console.log(`   Updated: ${orgDetails.updatedDate}`)
                 } else {
                     console.log('\n❌ ORGANIZATION NOT FOUND:')
-                    console.log(`   The ORG_ID "${orgId}" does not exist in the database`)
+                    console.log(`   The DATABASE_SEED_ORG_ID "${orgId}" does not exist in the database`)
                     console.log('   This will create orphaned credentials!')
                 }
             } catch (error) {
@@ -608,8 +662,8 @@ function displayDatabaseInfo() {
     const dbPort = process.env.DATABASE_PORT || '5432'
     const dbUser = process.env.DATABASE_USER || 'postgres'
     const dbName = process.env.DATABASE_NAME || 'flowise'
-    const userId = process.env.USER_ID
-    const orgId = process.env.ORG_ID
+    const userId = process.env.DATABASE_SEED_USER_ID
+    const orgId = process.env.DATABASE_SEED_ORG_ID
 
     const testMode = isTestMode()
 
@@ -655,29 +709,75 @@ async function seedCredentials() {
         const userOrgVerification = await queryUserOrgDetails(dataSource)
 
         // =====================================================
-        // ⚠️  IMPORTANT: USER_ID AND ORG_ID CONFIGURATION  ⚠️
+        // ⚠️  IMPORTANT: DATABASE_SEED_USER_ID AND DATABASE_SEED_ORG_ID CONFIGURATION  ⚠️
         // =====================================================
         console.log('\n' + '='.repeat(60))
-        console.log('🔍 CHECKING USER_ID AND ORG_ID CONFIGURATION')
+        console.log('🔍 CHECKING DATABASE_SEED_USER_ID AND DATABASE_SEED_ORG_ID CONFIGURATION')
         console.log('='.repeat(60))
 
-        // Get user ID and org ID (ensuring they're either valid UUIDs or null)
-        let userId = process.env.USER_ID
-        let orgId = process.env.ORG_ID
+        // Get user ID and org ID (with interactive prompting for missing values)
+        let userId = process.env.DATABASE_SEED_USER_ID
+        let orgId = process.env.DATABASE_SEED_ORG_ID
 
         // Make sure the ID values are valid UUIDs or null
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-        // Validate and provide detailed feedback for USER_ID
+        // Track whether we prompted for values (before overriding environment)
+        let promptedForUserId = false
+        let promptedForOrgId = false
+
+        // Prompt for DATABASE_SEED_USER_ID if missing
+        if (!userId) {
+            console.log('\n⚠️  DATABASE_SEED_USER_ID not found in environment variables')
+            await showAvailableUsersAndOrgs(dataSource)
+            userId = await promptForUserId()
+
+            if (!userId) {
+                console.log('❌ No DATABASE_SEED_USER_ID provided. Cannot proceed without valid user assignment.')
+                process.exit(1)
+            }
+
+            promptedForUserId = true
+            // Override environment for this session
+            process.env.DATABASE_SEED_USER_ID = userId
+        }
+
+        // Prompt for DATABASE_SEED_ORG_ID if missing
+        if (!orgId) {
+            console.log('\n⚠️  DATABASE_SEED_ORG_ID not found in environment variables')
+            if (!promptedForUserId) {
+                // Only show this again if we didn't show it for DATABASE_SEED_USER_ID
+                await showAvailableUsersAndOrgs(dataSource)
+            }
+            orgId = await promptForOrgId()
+
+            if (!orgId) {
+                console.log('❌ No DATABASE_SEED_ORG_ID provided. Cannot proceed without valid organization assignment.')
+                process.exit(1)
+            }
+
+            promptedForOrgId = true
+            // Override environment for this session
+            process.env.DATABASE_SEED_ORG_ID = orgId
+        }
+
+        // Validate UUID format
         const hasValidUserId = userId && uuidRegex.test(userId)
         const hasValidOrgId = orgId && uuidRegex.test(orgId)
 
-        // Check if USER_ID and ORG_ID are valid UUIDs AND exist in database
-        const userIdValid = hasValidUserId && userOrgVerification.userExists
-        const orgIdValid = hasValidOrgId && userOrgVerification.orgExists
+        // If we prompted for values, we need to re-verify them in the database
+        let userOrgVerificationUpdated = userOrgVerification
+        if (promptedForUserId || promptedForOrgId) {
+            console.log('\n🔄 Re-verifying prompted DATABASE_SEED_USER_ID and DATABASE_SEED_ORG_ID in database...')
+            userOrgVerificationUpdated = await queryUserOrgDetails(dataSource)
+        }
+
+        // Check if DATABASE_SEED_USER_ID and DATABASE_SEED_ORG_ID are valid UUIDs AND exist in database
+        const userIdValid = hasValidUserId && userOrgVerificationUpdated.userExists
+        const orgIdValid = hasValidOrgId && userOrgVerificationUpdated.orgExists
 
         if (!hasValidUserId && !hasValidOrgId) {
-            console.log('❌ CRITICAL ERROR: Both USER_ID and ORG_ID are missing or invalid!')
+            console.log('❌ CRITICAL ERROR: Both DATABASE_SEED_USER_ID and DATABASE_SEED_ORG_ID are missing or invalid!')
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
             if (testMode) {
@@ -689,34 +789,34 @@ async function seedCredentials() {
             }
             console.log('')
             console.log('🔧 TO FIX THIS, SET THE FOLLOWING ENVIRONMENT VARIABLES:')
-            console.log('   export USER_ID="your-user-uuid-here"')
-            console.log('   export ORG_ID="your-organization-uuid-here"')
+            console.log('   export DATABASE_SEED_USER_ID="your-user-uuid-here"')
+            console.log('   export DATABASE_SEED_ORG_ID="your-organization-uuid-here"')
             console.log('')
             console.log('📋 HOW TO GET THESE VALUES:')
-            console.log('   1. USER_ID: Query your users table or check the Flowise admin panel')
-            console.log('   2. ORG_ID: Query your organizations table or check the Flowise admin panel')
+            console.log('   1. DATABASE_SEED_USER_ID: Query your users table or check the Flowise admin panel')
+            console.log('   2. DATABASE_SEED_ORG_ID: Query your organizations table or check the Flowise admin panel')
             console.log('   3. Both values must be valid UUIDs (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)')
             console.log('')
             console.log('💡 EXAMPLE:')
-            console.log('   export USER_ID="123e4567-e89b-12d3-a456-426614174000"')
-            console.log('   export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"')
+            console.log('   export DATABASE_SEED_USER_ID="123e4567-e89b-12d3-a456-426614174000"')
+            console.log('   export DATABASE_SEED_ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"')
             console.log(`   node scripts/seed-credentials/seed-credentials.js${testMode ? ' --test' : ''}`)
             console.log('')
             console.log('='.repeat(60))
 
             process.exit(1)
         } else if (!hasValidUserId || !userIdValid) {
-            console.log('❌ CRITICAL ERROR: USER_ID is missing, invalid, or user not found in database!')
+            console.log('❌ CRITICAL ERROR: DATABASE_SEED_USER_ID is missing, invalid, or user not found in database!')
             console.log(`   Current value: "${userId || '(not set)'}"`)
-            if (hasValidUserId && !userOrgVerification.userExists) {
+            if (hasValidUserId && !userOrgVerificationUpdated.userExists) {
                 console.log('   UUID format is valid, but user does not exist in database!')
             }
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
-            console.log('   USER_ID must be valid and exist in the database for proper credential ownership.')
+            console.log('   DATABASE_SEED_USER_ID must be valid and exist in the database for proper credential ownership.')
             console.log('')
             console.log('🔧 FIX OPTIONS:')
-            console.log('   1. Set correct USER_ID: export USER_ID="valid-user-uuid-from-database"')
+            console.log('   1. Set correct DATABASE_SEED_USER_ID: export DATABASE_SEED_USER_ID="valid-user-uuid-from-database"')
             console.log('   2. Query database: SELECT id, email, name FROM "user" LIMIT 10;')
             console.log('')
 
@@ -729,17 +829,17 @@ async function seedCredentials() {
 
             process.exit(1)
         } else if (!hasValidOrgId || !orgIdValid) {
-            console.log('❌ CRITICAL ERROR: ORG_ID is missing, invalid, or organization not found in database!')
+            console.log('❌ CRITICAL ERROR: DATABASE_SEED_ORG_ID is missing, invalid, or organization not found in database!')
             console.log(`   Current value: "${orgId || '(not set)'}"`)
-            if (hasValidOrgId && !userOrgVerification.orgExists) {
+            if (hasValidOrgId && !userOrgVerificationUpdated.orgExists) {
                 console.log('   UUID format is valid, but organization does not exist in database!')
             }
             console.log('')
             console.log('🚫 SCRIPT EXECUTION TERMINATED')
-            console.log('   ORG_ID must be valid and exist in the database for proper credential organization.')
+            console.log('   DATABASE_SEED_ORG_ID must be valid and exist in the database for proper credential organization.')
             console.log('')
             console.log('🔧 FIX OPTIONS:')
-            console.log('   1. Set correct ORG_ID: export ORG_ID="valid-org-uuid-from-database"')
+            console.log('   1. Set correct DATABASE_SEED_ORG_ID: export DATABASE_SEED_ORG_ID="valid-org-uuid-from-database"')
             console.log('   2. Query database: SELECT id, name FROM organization LIMIT 10;')
             console.log('')
 
@@ -752,7 +852,7 @@ async function seedCredentials() {
 
             process.exit(1)
         } else {
-            console.log('\n✅ USER_ID and ORG_ID are properly configured and verified in database!')
+            console.log('\n✅ DATABASE_SEED_USER_ID and DATABASE_SEED_ORG_ID are properly configured and verified in database!')
         }
 
         console.log('')
