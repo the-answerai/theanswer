@@ -1,7 +1,7 @@
 ---
-description: Use this information to get details about the Flowise UI in the canvas. 
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # UI Package (flowise-ui)
 

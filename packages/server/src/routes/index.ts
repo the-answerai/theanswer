@@ -56,6 +56,7 @@ import dalleImageRouter from './dalle-image'
 import executionsRouter from './executions'
 import validationRouter from './validation'
 import agentflowv2GeneratorRouter from './agentflowv2-generator'
+import screamingFrogAnalysisRouter from './apps/screaming-frog-analysis'
 
 const router = express.Router()
 
@@ -116,5 +117,6 @@ router.use('/browser-extension', browserExtensionRouter)
 router.use('/executions', executionsRouter)
 router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
+router.use('/screaming-frog-analysis', screamingFrogAnalysisRouter)
 
 export default router

@@ -5,7 +5,7 @@ import { useUser } from '@auth0/nextjs-auth0/client'
 import { Container, Stack, Typography, Card, CardContent, CardActions, Button } from '@mui/material'
 
 const Apps = () => {
-    const { user, isLoading } = useUser()
+    const { isLoading } = useUser()
 
     if (isLoading) {
         return (
@@ -35,7 +35,7 @@ const Apps = () => {
                             <Typography variant='body2'>Transform your CSV files with AI.</Typography>
                         </CardContent>
                         <CardActions>
-                            <Button size='small' variant='contained' fullWidth component={Link} href='/sidekick-studio/csv-transformer'>
+                            <Button size='small' variant='contained' fullWidth component={Link} href='/apps/csv-transformer'>
                                 Start
                             </Button>
                         </CardActions>
@@ -48,7 +48,20 @@ const Apps = () => {
                             <Typography variant='body2'>Generate images with DALL·E.</Typography>
                         </CardContent>
                         <CardActions>
-                            <Button size='small' variant='contained' fullWidth component={Link} href='/sidekick-studio/media-creator'>
+                            <Button size='small' variant='contained' fullWidth component={Link} href='/apps/media-creator'>
+                                Start
+                            </Button>
+                        </CardActions>
+                    </Card>
+                    <Card variant='outlined'>
+                        <CardContent>
+                            <Typography variant='h5' component='div'>
+                                Screaming Frog Analyzer
+                            </Typography>
+                            <Typography variant='body2'>Analyze Screaming Frog CSV exports.</Typography>
+                        </CardContent>
+                        <CardActions>
+                            <Button size='small' variant='contained' fullWidth component={Link} href='/apps/screaming-frog-analysis'>
                                 Start
                             </Button>
                         </CardActions>

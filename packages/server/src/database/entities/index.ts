@@ -23,6 +23,8 @@ import { CustomTemplate } from './CustomTemplate'
 import { AppCsvParseRuns } from './AppCsvParseRuns'
 import { AppCsvParseRows } from './AppCsvParseRows'
 import { Execution } from './Execution'
+import { ScreamingFrogAnalysisFile } from './ScreamingFrogAnalysisFile'
+import { ScreamingFrogAnalysisProject } from './ScreamingFrogAnalysisProject'
 
 export const entities = {
     ChatFlow,
@@ -49,7 +51,9 @@ export const entities = {
     CustomTemplate,
     AppCsvParseRuns,
     AppCsvParseRows,
-    Execution
+    Execution,
+    ScreamingFrogAnalysisFile,
+    ScreamingFrogAnalysisProject
 }
 
 export * from './Subscription'

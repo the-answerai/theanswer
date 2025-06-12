@@ -203,7 +203,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                           {
                               id: 'apps',
                               text: 'Apps',
-                              link: '/sidekick-studio/apps',
+                              link: '/apps',
                               icon: <AppsOutlinedIcon color='primary' />
                           }
                       ]

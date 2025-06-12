@@ -1,7 +1,7 @@
 ---
-description: This rule is helpful for context about creating new nodes and credentials for the app to be used in the canvas
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Components Package (flowise-components)
 

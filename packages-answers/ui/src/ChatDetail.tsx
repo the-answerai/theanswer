@@ -22,7 +22,7 @@ const SourceDocumentModal = dynamic(() => import('@ui/SourceDocumentModal'), { s
 const CodePreview = dynamic(() => import('./Message/CodePreview').then((mod) => ({ default: mod.CodePreview })), { ssr: false })
 const DrawerFilters = dynamic(() => import('./DrawerFilters/DrawerFilters'), { ssr: false })
 const ChatInput = dynamic(() => import('./ChatInput'), { ssr: true })
-const ImageCreator = dynamic(() => import('@ui/ImageCreator').then((mod) => ({ default: mod.default })), { ssr: false })
+const ImageCreator = dynamic(() => import('@ui/Apps/ImageCreator').then((mod) => ({ default: mod.default })), { ssr: false })
 
 const DISPLAY_MODES = {
     CHATBOT: 'chatbot',

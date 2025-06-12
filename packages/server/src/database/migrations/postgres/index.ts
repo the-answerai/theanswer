@@ -53,6 +53,7 @@ import { AppCsvRuns1744553414309 } from './1744553414309-AddAppCsvRuns'
 import { AddBrowserExtConfig1746508019300 } from './1746508019300-AddBrowserExtConfig'
 import { AddExecutionEntity1738090872625 } from './1738090872625-AddExecutionEntity'
 import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
+import { AddScreamingFrogAnalysis1749137558236 } from './1749137558236-AddScreamingFrogAnalysis'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -109,5 +110,6 @@ export const postgresMigrations = [
     AppCsvRuns1744553414309,
     AddBrowserExtConfig1746508019300,
     AddExecutionEntity1738090872625,
-    AddUserScopingToExecution1738091000000
+    AddUserScopingToExecution1738091000000,
+    AddScreamingFrogAnalysis1749137558236
 ]
