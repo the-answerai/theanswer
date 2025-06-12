@@ -204,6 +204,7 @@ function shouldIgnorePath(filePath, ignorePatterns) {
       // Handle glob patterns
       if (pattern.includes('*') || pattern.includes('?')) {
         const regexPattern = pattern
+          .replace(/\\/g, '\\\\') // Escape backslashes first
           .replace(/\./g, '\\.')
           .replace(/\*/g, '[^/]*')
           .replace(/\?/g, '[^/]')
@@ -376,8 +377,11 @@ function isGlobPath(p) {
  * the user-supplied glob pattern.
  */
 function wildcardToRegex(pattern) {
-  // First, escape literal dots
-  let regexStr = pattern.replace(/\./g, '\\.');
+  // First, escape backslashes
+  let regexStr = pattern.replace(/\\/g, '\\\\');
+
+  // Then escape literal dots
+  regexStr = regexStr.replace(/\./g, '\\.');
 
   // Replace ** with a placeholder that we'll later replace with ".*"
   regexStr = regexStr.replace(/\*\*/g, '___GLOBSTAR___');

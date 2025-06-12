@@ -89,8 +89,9 @@ function debug(message, command = '') {
 const sanitizeValue = (value) => {
   // Remove surrounding single or double quotes if present
   const unquotedValue = value.replace(/^['"]|['"]$/g, '');
-  // Escape double quotes within the value
-  return `"${unquotedValue.replace(/"/g, '\\"')}"`;
+  // Escape backslashes first, then double quotes within the value
+  const escapedValue = unquotedValue.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `"${escapedValue}"`;
 };
 
 /**
