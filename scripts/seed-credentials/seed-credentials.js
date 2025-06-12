@@ -477,7 +477,7 @@ function detectUnmappedCredentials(defaultVars, mappedCredentials) {
 
             // Attempt to find matching credential file
             try {
-                const credentialFiles = fs.readdirSync(path.resolve(__dirname, '../components/credentials'))
+                const credentialFiles = fs.readdirSync(path.resolve(__dirname, '../../packages/components/credentials'))
                 const matchingFiles = credentialFiles.filter(
                     (file) => file.toLowerCase().includes(apiName) && file.endsWith('.credential.ts')
                 )
