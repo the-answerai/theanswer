@@ -150,6 +150,7 @@ yarn-error.log*
 .env.production.local
 .env.*
 .env
+!.env.template
 
 # turbo
 .turbo
