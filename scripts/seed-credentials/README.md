@@ -389,8 +389,8 @@ The script provides comprehensive logging including:
     node scripts/seed-credentials/seed-credentials.js --test
 
     # Copy the correct UUIDs from the output
-    export USER_ID="valid-uuid-from-database"
-    export ORG_ID="valid-uuid-from-database"
+    export DATABASE_SEED_USER_ID="valid-uuid-from-database"
+    export DATABASE_SEED_ORG_ID="valid-uuid-from-database"
     ```
 
 4. **Missing Credentials/Environment Variables**

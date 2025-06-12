@@ -20,8 +20,8 @@
  * EXAMPLE USAGE:
  *
  * 🧪 TEST MODE (default, safe, dry-run):
- * export USER_ID="123e4567-e89b-12d3-a456-426614174000"
- * export ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
+ * export DATABASE_SEED_USER_ID="123e4567-e89b-12d3-a456-426614174000"
+ * export DATABASE_SEED_ORG_ID="987fcdeb-51d2-43a1-b123-456789abcdef"
  * export AAI_DEFAULT_OPENAI_API_KEY="sk-your-openai-key-here"
  * pnpm seed-credentials
  * # OR: node scripts/seed-credentials/seed-credentials.js --test
