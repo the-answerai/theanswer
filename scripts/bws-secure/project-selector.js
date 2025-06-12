@@ -108,14 +108,27 @@ async function updateEnvironmentBwsSection(project, environment, onlyToggleEnvir
       bwsSection.push('', '# Environment options (uncomment to switch)');
 
       // Add all environment options for the selected project
-      for (const environment_ of ['local', 'dev', 'prod']) {
+      // Get available environments from the project's bwsProjectIds keys
+      const availableEnvironments = Object.keys(project.bwsProjectIds || {});
+      const environmentsToUse =
+        availableEnvironments.length > 0 ? availableEnvironments : ['local', 'dev', 'prod'];
+
+      for (const environment_ of environmentsToUse) {
         const line = `BWS_ENV=${environment_}`;
-        const comment =
-          environment_ === 'local'
-            ? '     # For local development'
-            : environment_ === 'dev'
-            ? '      # For development/preview deployments'
-            : '     # For production deployments';
+
+        // Generate appropriate comments based on environment name
+        let comment = '';
+        if (environment_ === 'local') {
+          comment = '     # For local development';
+        } else if (environment_ === 'dev' || environment_ === 'development') {
+          comment = '      # For development/preview deployments';
+        } else if (environment_ === 'prod' || environment_ === 'production') {
+          comment = '     # For production deployments';
+        } else if (environment_ === 'staging') {
+          comment = '   # For staging deployments';
+        } else {
+          comment = `     # For ${environment_} deployments`;
+        }
 
         if (environment_ === environment) {
           bwsSection.push(`${line}${comment}`);
@@ -401,19 +414,23 @@ function normalizeEnvironment(environmentName) {
     return 'dev';
   }
 
-  // Check other development-like environments
+  // Check other development-like environments (but preserve staging as-is)
   const developmentEnvironments = [
     'preview',
     'deploy-preview',
     'branch-deploy',
     'deploy/preview',
     'branch',
-    'test',
-    'staging'
+    'test'
   ];
 
   if (developmentEnvironments.includes(environment)) {
     return 'dev';
+  }
+
+  // Handle staging separately - don't normalize it to dev
+  if (environment === 'staging') {
+    return 'staging';
   }
 
   if (environment === 'local' || environment === 'development-local') {
