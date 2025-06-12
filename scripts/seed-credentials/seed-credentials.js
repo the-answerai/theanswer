@@ -231,36 +231,20 @@ const ENV_TO_CREDENTIAL_MAP = {
         mapFn: (value) => ({ username: value })
     },
 
-    // Individual mappings for Postgres Record Manager (matching exact env var names)
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_HOST: {
-        name: 'Postgres Record Manager Host - AAI - Default',
+    // Group mapping for Postgres API (user + password)
+    AAI_DEFAULT_POSTGRES_API: {
+        name: 'Postgres API - AAI - Default',
         credentialName: 'PostgresApi',
-        mapFn: (value) => ({ host: value })
+        requiredVars: ['USER', 'PASSWORD'],
+        mapFn: (vars) => ({
+            user: vars['USER'],
+            password: vars['PASSWORD']
+        })
     },
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_PORT: {
-        name: 'Postgres Record Manager Port - AAI - Default',
-        credentialName: 'PostgresApi',
-        mapFn: (value) => ({ port: value })
-    },
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE: {
-        name: 'Postgres Record Manager Database - AAI - Default',
-        credentialName: 'PostgresApi',
-        mapFn: (value) => ({ database: value })
-    },
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER: {
-        name: 'Postgres Record Manager User - AAI - Default',
-        credentialName: 'PostgresApi',
-        mapFn: (value) => ({ user: value })
-    },
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_PASSWORD: {
-        name: 'Postgres Record Manager Password - AAI - Default',
-        credentialName: 'PostgresApi',
-        mapFn: (value) => ({ password: value })
-    },
-    AAI_DEFAULT_POSTGRES_RECORDMANAGER_TABLE_NAME: {
-        name: 'Postgres Record Manager Table - AAI - Default',
-        credentialName: 'PostgresApi',
-        mapFn: (value) => ({ tableName: value })
+    AAI_DEFAULT_POSTGRES_URL: {
+        name: 'Postgres URL - AAI - Default',
+        credentialName: 'PostgresUrl',
+        mapFn: (value) => ({ postgresUrl: value })
     }
 }
 
