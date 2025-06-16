@@ -7,6 +7,8 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
+import { Box, Link } from '@mui/material'
+import { IconDownload } from '@tabler/icons-react'
 
 /**
  * Checks if text likely contains LaTeX math notation
@@ -115,6 +117,42 @@ export const MemoizedReactMarkdown = memo(
                                 <code className={className} {...codeProps}>
                                     {children}
                                 </code>
+                            )
+                        },
+                        img({ src, alt, ...imgProps }) {
+                            return (
+                                <Box sx={{ display: 'inline-block', margin: '8px 0' }}>
+                                    <img 
+                                        src={src} 
+                                        alt={alt} 
+                                        style={{ 
+                                            maxWidth: '100%',
+                                            height: 'auto',
+                                            display: 'block'
+                                        }}
+                                        {...imgProps}
+                                    />
+                                    <Box sx={{ mt: 1, textAlign: 'center' }}>
+                                        <Link 
+                                            href={src}
+                                            download
+                                            target="_blank"
+                                            sx={{ 
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 0.5,
+                                                fontSize: '0.875rem',
+                                                textDecoration: 'none',
+                                                '&:hover': { 
+                                                    textDecoration: 'underline'
+                                                }
+                                            }}
+                                        >
+                                            <IconDownload size={16} />
+                                            Download Image
+                                        </Link>
+                                    </Box>
+                                </Box>
                             )
                         },
                         p({ children }) {
