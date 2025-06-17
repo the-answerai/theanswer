@@ -9,6 +9,7 @@ import { StyledButton } from '@/ui-component/button/StyledButton'
 import { IconPlus } from '@tabler/icons-react'
 import { useLocation } from '@/utils/navigation'
 import dynamic from 'next/dynamic'
+import { getHref } from '@/utils/navigation'
 const MarketplaceLandingDialog = dynamic(() => import('./MarketplaceLandingDialog'), { ssr: false })
 // API
 import chatflowsApi from '@/api/chatflows'
@@ -285,7 +286,7 @@ const Chatflows = () => {
 
     // Helper functions to generate hrefs for different types
     const getChatflowHref = (chatflow) => {
-        return `/canvas/${chatflow.id}`
+        return getHref(`/canvas/${chatflow.id}`)
     }
 
     const getMarketplaceHref = (chatflow) => {

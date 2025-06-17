@@ -2,6 +2,7 @@
 import PropTypes from 'prop-types'
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from '@/utils/navigation'
+import { getHref } from '@/utils/navigation'
 import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import FlowListView from '@/ui-component/lists/FlowListView'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
@@ -201,7 +202,7 @@ const Agentflows = () => {
 
     // Helper function to generate hrefs for agentflows
     const getAgentflowHref = (agentflow) => {
-        return `/agentcanvas/${agentflow.id}`
+        return getHref(`/agentcanvas/${agentflow.id}`)
     }
 
     // Marketplace items don't have direct URLs since they open dialogs
