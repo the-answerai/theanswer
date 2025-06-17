@@ -244,6 +244,9 @@ class GoogleGenerativeAI_ChatModels implements INode {
             }
         }
 
+        console.log('====genai obj')
+        console.log(obj)
+
         const model = new ChatGoogleGenerativeAI(nodeData.id, obj)
         model.setMultiModalOption(multiModalOption)
         if (contextCache) model.setContextCache(contextCache)

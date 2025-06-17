@@ -377,6 +377,8 @@ export class ChatGoogleGenerativeAI extends LangchainChatGoogleGenerativeAI impl
     id: string
 
     constructor(id: string, fields?: GoogleGenerativeAIChatInput) {
+        console.log('======fields')
+        console.log({ fields })
         super(fields)
         this.id = id
         this.configuredModel = fields?.modelName ?? ''

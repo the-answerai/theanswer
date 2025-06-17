@@ -532,25 +532,25 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                     const tracer = new LangChainTracer(langSmithField)
                     callbacks.push(tracer)
                 } else if (provider === 'langFuse') {
-                    console.debug('Starting LangFuse configuration for provider:', provider)
+                    //console.debug('Starting LangFuse configuration for provider:', provider)
 
                     const release = analytic[provider].release as string
-                    console.debug('Release:', release)
+                    //console.debug('Release:', release)
 
                     const langFuseSecretKey =
                         analytic[provider]?.secretKey ?? getCredentialParam('langFuseSecretKey', credentialData, nodeData)
-                    console.debug('LangFuse Secret Key:', langFuseSecretKey)
+                    //console.debug('LangFuse Secret Key:', langFuseSecretKey)
 
                     const langFusePublicKey =
                         analytic[provider]?.publicKey ?? getCredentialParam('langFusePublicKey', credentialData, nodeData)
-                    console.debug('LangFuse Public Key:', langFusePublicKey)
+                    //console.debug('LangFuse Public Key:', langFusePublicKey)
 
                     const langFuseEndpoint =
                         analytic[provider]?.endpoint ?? getCredentialParam('langFuseEndpoint', credentialData, nodeData)
-                    console.debug('LangFuse Endpoint:', langFuseEndpoint)
+                    //console.debug('LangFuse Endpoint:', langFuseEndpoint)
 
                     const langfuse = new Langfuse()
-                    console.debug('Langfuse instance created.')
+                    //console.debug('Langfuse instance created.')
 
                     const chatflow = await options.appDataSource
                         .getRepository(options.databaseEntities['ChatFlow'])
@@ -561,7 +561,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         .getRepository(options.databaseEntities['Credential'])
                         .findBy({ id: In(credentialIds?.credentials?.map((credential) => credential.credentialId) ?? []) })
 
-                    console.debug('Credentials::::', credentials)
+                    //console.debug('Credentials::::', credentials)
                     let aiCredentialsOwnership = 'platform'
                     if (credentials.every((credential: { visibility: string[] }) => !credential.visibility?.includes('Platform'))) {
                         aiCredentialsOwnership = 'user'
@@ -572,13 +572,13 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         publicKey: langFusePublicKey,
                         baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com'
                     }
-                    console.debug('LangFuse Options:', langFuseOptions)
-                    console.debug('User:', options?.user)
-                    // console.debug('Options:', options)
+                    //console.debug('LangFuse Options:', langFuseOptions)
+                    //console.debug('User:', options?.user)
+                    // //console.debug('Options:', options)
 
                     if (nodeData?.inputs?.analytics?.langFuse) {
                         langFuseOptions = { ...langFuseOptions, ...nodeData?.inputs?.analytics?.langFuse }
-                        console.debug('LangFuse Options updated with nodeData inputs:', langFuseOptions)
+                        //console.debug('LangFuse Options updated with nodeData inputs:', langFuseOptions)
                     }
                     const metadata: TraceMetadata = {
                         name: `${chatflow.id}`,
@@ -602,12 +602,12 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                     //     metadata: metadata
                     // })
 
-                    const handler = new CallbackHandler({
+                    const handler = new MyLangfuseHandler({
                         ...langFuseOptions,
                         metadata: metadata,
                         userId: options?.user?.id,
                         sessionId: options.sessionId,
-                        tags: [`Name:${chatflow.name}`],
+                        tags: [`Name:${chatflow.name}`, 'Adam Test'],
                         version: chatflow.updatedDate
                         // TODO: This is still causing an error
                         // This works to keep the root trace name and have everything else update on the root trace
@@ -617,7 +617,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                     })
 
                     callbacks.push(handler)
-                    console.debug('Handler added to callbacks.')
+                    //console.debug('Handler added to callbacks.')
                 } else if (provider === 'lunary') {
                     const lunaryPublicKey = getCredentialParam('lunaryAppId', credentialData, nodeData)
                     const lunaryEndpoint = getCredentialParam('lunaryEndpoint', credentialData, nodeData)
@@ -1952,5 +1952,80 @@ export class CustomStreamingHandler extends BaseCallbackHandler {
             runId,
             parentRunId: parentRunId || null
         })
+    }
+}
+
+// Custom wrapper for Langfuse CallbackHandler to log generation events
+class MyLangfuseHandler extends CallbackHandler {
+    logger: any
+    constructor(options: any) {
+        super(options)
+        this.logger = options?.logger
+        if (this.logger && typeof this.logger.info === 'function') {
+            this.logger.info('MyLangfuseHandler instantiated')
+        } else {
+            console.log('MyLangfuseHandler instantiated')
+        }
+    }
+
+    async handleGenerationStart(
+        llm: Serialized,
+        messages: any[],
+        runId: string,
+        parentRunId?: string,
+        extraParams?: Record<string, unknown>,
+        tags?: string[],
+        metadata?: Record<string, unknown>,
+        name?: string
+    ): Promise<void> {
+        // Optionally log or modify arguments here
+        if (this.logger?.info) {
+            this.logger.info('LLM Generation Start logger:')
+            this.logger.info(JSON.stringify({ llm, messages, runId, parentRunId, extraParams, tags, metadata, name }, null, 2))
+        } else {
+            console.log('LLM Generation Start console:', { llm, messages, runId, parentRunId, extraParams, tags, metadata, name })
+        }
+        return super.handleGenerationStart(llm, messages, runId, parentRunId, extraParams, tags, metadata, name)
+    }
+
+    async handleLLMEnd(output: any, runId: string, parentRunId?: string): Promise<void> {
+        // const usageMetadata = output?.generations?.[0]?.[0]?.message?.kwargs?.usage_metadata
+
+        // if (usageMetadata && typeof usageMetadata.total_tokens === 'number') {
+        //     output.llmOutput = {
+        //         estimatedTokenUsage: {
+        //             input: usageMetadata.input_tokens,
+        //             output: usageMetadata.output_tokens,
+        //             total: usageMetadata.total_tokens
+        //         }
+        //     }
+        // }
+
+        output.llmOutput = {
+            estimatedTokenUsage: {
+                input: 60,
+                output: 9,
+                total: 69
+            }
+        }
+
+        const logData = {
+            output,
+            runId,
+            parentRunId
+        }
+
+        if (this.logger?.info) {
+            this.logger.info('LLM Generation Ended logger:')
+            this.logger.info(JSON.stringify(logData, null, 2))
+        } else {
+            console.log('LLM Generation Ended console:', logData)
+            console.log(JSON.stringify(logData, null, 2))
+        }
+
+        console.log('============TRACE')
+        console.log(JSON.stringify(this ?? {}, null, 2))
+
+        return super.handleLLMEnd(output, runId, parentRunId)
     }
 }
