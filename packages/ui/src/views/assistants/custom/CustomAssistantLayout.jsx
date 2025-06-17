@@ -127,6 +127,7 @@ const CustomAssistantLayout = () => {
                                             images={getImages(JSON.parse(data.details))}
                                             key={index}
                                             onClick={() => navigate('/assistants/custom/' + data.id)}
+                                            href={`/assistants/custom/${data.id}`}
                                         />
                                     ))}
                             </Box>

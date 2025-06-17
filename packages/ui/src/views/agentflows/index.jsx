@@ -199,6 +199,16 @@ const Agentflows = () => {
         [communityAgentflows, search, categoryFilter]
     )
 
+    // Helper function to generate hrefs for agentflows
+    const getAgentflowHref = (agentflow) => {
+        return `/agentcanvas/${agentflow.id}`
+    }
+
+    // Marketplace items don't have direct URLs since they open dialogs
+    const getMarketplaceHref = () => {
+        return null
+    }
+
     return (
         <MainCard>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -246,6 +256,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='agentflows'
                         onItemClick={goToCanvas}
+                        getHref={getAgentflowHref}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -258,6 +269,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        getHref={getMarketplaceHref}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -270,6 +282,7 @@ const Agentflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        getHref={getMarketplaceHref}
                     />
                 </TabPanel>
             </Box>

@@ -283,6 +283,16 @@ const Chatflows = () => {
         window.history.pushState(null, '', window.location.pathname)
     }
 
+    // Helper functions to generate hrefs for different types
+    const getChatflowHref = (chatflow) => {
+        return `/canvas/${chatflow.id}`
+    }
+
+    const getMarketplaceHref = (chatflow) => {
+        // Marketplace items don't have direct URLs since they open dialogs
+        return null
+    }
+
     return (
         <MainCard>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -362,6 +372,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        getHref={getChatflowHref}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={1}>
@@ -374,6 +385,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        getHref={getMarketplaceHref}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={2}>
@@ -386,6 +398,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='marketplace'
                         onItemClick={goToMarketplaceCanvas}
+                        getHref={getMarketplaceHref}
                     />
                 </TabPanel>
                 <TabPanel value={tabValue} index={3}>
@@ -398,6 +411,7 @@ const Chatflows = () => {
                         setError={setError}
                         type='chatflows'
                         onItemClick={goToCanvas}
+                        getHref={getChatflowHref}
                     />
                 </TabPanel>
             </Box>
