@@ -1882,7 +1882,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                                                 }}
                                             >
                                                 {message.fileUploads.map((item, index) => {
-                                                    return <>{renderFileUploads(item, index)}</>
+                                                    return <Fragment key={`file-upload-${index}`}>{renderFileUploads(item, index)}</Fragment>
                                                 })}
                                             </div>
                                         )}
@@ -1962,7 +1962,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                                                 }}
                                             >
                                                 {message.artifacts.map((item, index) => {
-                                                    return item !== null ? <>{renderArtifacts(item, index)}</> : null
+                                                    return item !== null ? <Fragment key={`artifact-${index}`}>{renderArtifacts(item, index)}</Fragment> : null
                                                 })}
                                             </div>
                                         )}
@@ -2246,7 +2246,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                 {previews && previews.length > 0 && (
                     <Box sx={{ width: '100%', mb: 1.5, display: 'flex', alignItems: 'center' }}>
                         {previews.map((item, index) => (
-                            <Fragment key={index}>{previewDisplay(item)}</Fragment>
+                            <Fragment key={`preview-${index}`}>{previewDisplay(item)}</Fragment>
                         ))}
                     </Box>
                 )}

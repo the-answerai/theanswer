@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import moment from 'moment'
 import axios from 'axios'
 import { cloneDeep } from 'lodash'
+import React from 'react'
 
 // material-ui
 import {
@@ -613,7 +614,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
         if (item?.mime?.startsWith('image/')) {
             return (
                 <Card
-                    key={index}
+                    key={`file-upload-${index}`}
                     sx={{
                         p: 0,
                         m: 0,
@@ -777,7 +778,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
         if (item.type === 'png' || item.type === 'jpeg') {
             return (
                 <Card
-                    key={index}
+                    key={`artifact-${index}`}
                     sx={{
                         p: 0,
                         m: 0,
@@ -1135,7 +1136,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                         }}
                                                                     >
                                                                         {message.fileUploads.map((item, index) => {
-                                                                            return <>{renderFileUploads(item, index)}</>
+                                                                            return <React.Fragment key={`file-upload-${index}`}>{renderFileUploads(item, index)}</React.Fragment>
                                                                         })}
                                                                     </div>
                                                                 )}
@@ -1271,13 +1272,13 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                                     agent.artifacts
                                                                                                 ).map((item, index) => {
                                                                                                     return item !== null ? (
-                                                                                                        <>
+                                                                                                        <React.Fragment key={`agent-artifact-${index}`}>
                                                                                                             {renderArtifacts(
                                                                                                                 item,
                                                                                                                 index,
                                                                                                                 true
                                                                                                             )}
-                                                                                                        </>
+                                                                                                        </React.Fragment>
                                                                                                     ) : null
                                                                                                 })}
                                                                                             </div>
@@ -1340,14 +1341,8 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                                                     clickable
                                                                                                                     onClick={() =>
                                                                                                                         URL
-                                                                                                                            ? onURLClick(
-                                                                                                                                  source
-                                                                                                                                      .metadata
-                                                                                                                                      .source
-                                                                                                                              )
-                                                                                                                            : onSourceDialogClick(
-                                                                                                                                  source
-                                                                                                                              )
+                                                                                                                            ? onURLClick(source.metadata.source)
+                                                                                                                            : onSourceDialogClick(source)
                                                                                                                     }
                                                                                                                 />
                                                                                                             )
@@ -1405,7 +1400,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                     >
                                                                         {message.artifacts.map((item, index) => {
                                                                             return item !== null ? (
-                                                                                <>{renderArtifacts(item, index)}</>
+                                                                                <React.Fragment key={`message-artifact-${index}`}>{renderArtifacts(item, index)}</React.Fragment>
                                                                             ) : null
                                                                         })}
                                                                     </div>
