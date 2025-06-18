@@ -523,7 +523,7 @@ const updateChatflow = async (chatflow: ChatFlow, updateChatFlow: ChatFlow, user
         }
 
         updateChatFlow.visibility = Array.from(
-            new Set([...(updateChatFlow.visibility ?? []), ...[ChatflowVisibility.PRIVATE, ChatflowVisibility.ANSWERAI]])
+            new Set([...(updateChatFlow.visibility ?? []), ChatflowVisibility.PRIVATE, ChatflowVisibility.ANSWERAI])
         )
 
         const newDbChatflow = appServer.AppDataSource.getRepository(ChatFlow).merge(chatflow, mergedChatflow)
@@ -577,20 +577,23 @@ const getSinglePublicChatbotConfig = async (chatflowId: string, user: IUser | un
         if (!dbResponse) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
         }
-if (dbResponse.isPublic || (await checkOwnership(dbResponse, user))) {
-        const uploadsConfig = await utilGetUploadsConfig(chatflowId)
-        // even if chatbotConfig is not set but uploads are enabled
-        // send uploadsConfig to the chatbot
-        if (dbResponse.chatbotConfig || uploadsConfig) {
-            try {
-                const parsedConfig = dbResponse.chatbotConfig ? JSON.parse(dbResponse.chatbotConfig) : {}
-                return { ...parsedConfig, uploads: uploadsConfig, flowData: dbResponse.flowData }
-            } catch (e) {
-                throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error parsing Chatbot Config for Chatflow ${chatflowId}`)
+        if (dbResponse.isPublic || (await checkOwnership(dbResponse, user))) {
+            const uploadsConfig = await utilGetUploadsConfig(chatflowId)
+            // even if chatbotConfig is not set but uploads are enabled
+            // send uploadsConfig to the chatbot
+            if (dbResponse.chatbotConfig || uploadsConfig) {
+                try {
+                    const parsedConfig = dbResponse.chatbotConfig ? JSON.parse(dbResponse.chatbotConfig) : {}
+                    return { ...parsedConfig, uploads: uploadsConfig, flowData: dbResponse.flowData }
+                } catch (e) {
+                    throw new InternalFlowiseError(
+                        StatusCodes.INTERNAL_SERVER_ERROR,
+                        `Error parsing Chatbot Config for Chatflow ${chatflowId}`
+                    )
+                }
+                return 'OK'
             }
-            return 'OK'
         }
-    }
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
