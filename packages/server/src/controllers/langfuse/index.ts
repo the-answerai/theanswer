@@ -15,6 +15,15 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
         })
 
         const mainOperation = async () => {
+            // ✅ CONFIGURABLE: Change this value to adjust the time range (in minutes)
+            const MINUTES_TO_QUERY = 10080 // Easy to modify - examples:
+            // 5 minutes = 5
+            // 15 minutes = 15
+            // 1 hour = 60
+            // 24 hours = 1440
+            // 7 days = 10080
+            // 30 days = 43200
+
             const secretKey = process.env.LANGFUSE_SECRET_KEY || ''
             const publicKey = process.env.LANGFUSE_PUBLIC_KEY || ''
             const baseUrl = process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
@@ -23,16 +32,16 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                 throw new Error('Missing Langfuse API keys')
             }
 
-            // Calculate date 7 days ago
-            const sevenDaysAgo = new Date()
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+            // Calculate date range based on configurable minutes
+            const startDate = new Date()
+            startDate.setMinutes(startDate.getMinutes() - MINUTES_TO_QUERY)
 
             // Create Basic Auth header
             const auth = Buffer.from(`${publicKey}:${secretKey}`).toString('base64')
 
-            // Build base query parameters for last 7 days
+            // Build base query parameters for the specified date range
             const baseParams = {
-                fromTimestamp: sevenDaysAgo.toISOString(),
+                fromTimestamp: startDate.toISOString(),
                 toTimestamp: new Date().toISOString()
             }
 
@@ -212,8 +221,8 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                     }
                 },
                 metadata: {
-                    period: '30 days',
-                    from: sevenDaysAgo.toISOString(),
+                    period: `${MINUTES_TO_QUERY} minutes (${Math.round((MINUTES_TO_QUERY / 60 / 24) * 100) / 100} days)`,
+                    from: startDate.toISOString(),
                     to: new Date().toISOString(),
                     totalPages: totalPages,
                     totalTraces: allTraces.length,
