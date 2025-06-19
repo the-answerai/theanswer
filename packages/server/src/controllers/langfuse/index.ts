@@ -7,6 +7,11 @@ interface LangfuseTrace {
     [key: string]: any // Allow other properties
 }
 
+// Interface for health check response
+interface HealthCheckResult {
+    status: 'ok' | 'critical'
+}
+
 const getHealthCheck = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Set overall timeout for the entire operation (10 minutes)
@@ -16,7 +21,7 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
         const mainOperation = async () => {
             // ✅ CONFIGURABLE: Change this value to adjust the time range (in minutes)
-            const MINUTES_TO_QUERY = 10080 // Easy to modify - examples:
+            const MINUTES_TO_QUERY = 5 // Easy to modify - examples:
             // 5 minutes = 5
             // 15 minutes = 15
             // 1 hour = 60
@@ -42,7 +47,8 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
             // Build base query parameters for the specified date range
             const baseParams = {
                 fromTimestamp: startDate.toISOString(),
-                toTimestamp: new Date().toISOString()
+                toTimestamp: new Date().toISOString(),
+                limit: '100'
             }
 
             // Helper function to fetch a specific page with retry logic and timeout handling
@@ -194,69 +200,28 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
             }
 
             const problematicTraces = allTraces.filter(isProblematic)
-            const nonProblematicTraces = allTraces.filter((trace: LangfuseTrace) => !isProblematic(trace))
 
             console.log(`Found ${problematicTraces.length} problematic traces out of ${allTraces.length} total traces`)
 
+            // Determine status for Datadog alerts based on problematic traces
+            const alertStatus = problematicTraces.length === 0 ? 'ok' : 'critical'
+
             return {
-                status: 'success',
-                data: {
-                    data: allTraces,
-                    problematicTraces: problematicTraces,
-                    nonProblematicTraces: nonProblematicTraces,
-                    meta: {
-                        ...firstPageResult.meta,
-                        totalItemsFetched: allTraces.length,
-                        problematicCount: problematicTraces.length,
-                        nonProblematicCount: nonProblematicTraces.length,
-                        pagesFetched: fetchedPages,
-                        totalPages: totalPages,
-                        successRate: successRate,
-                        failedPages: failedPages,
-                        allPages: allPages.map((page, index) => ({
-                            page: index + 1,
-                            itemCount: page.data?.length || 0,
-                            meta: page.meta
-                        }))
-                    }
-                },
-                metadata: {
-                    period: `${MINUTES_TO_QUERY} minutes (${Math.round((MINUTES_TO_QUERY / 60 / 24) * 100) / 100} days)`,
-                    from: startDate.toISOString(),
-                    to: new Date().toISOString(),
-                    totalPages: totalPages,
-                    totalTraces: allTraces.length,
-                    dataReliability: {
-                        pagesFetched: fetchedPages,
-                        totalPages: totalPages,
-                        successRate: `${successRate}%`,
-                        failedPages: failedPages,
-                        batchProcessing: {
-                            batchSize: 5,
-                            delayBetweenRequests: '200ms',
-                            delayBetweenBatches: '1000ms'
-                        }
-                    },
-                    filtering: {
-                        problematicConditions: [
-                            'totalCost is 0, null, or undefined',
-                            "output is NOT 'Error: Non string message content not supported'"
-                        ],
-                        problematicCount: problematicTraces.length,
-                        nonProblematicCount: nonProblematicTraces.length,
-                        problematicPercentage: Math.round((problematicTraces.length / allTraces.length) * 100)
-                    }
-                }
+                status: alertStatus
             }
         }
 
         // Race between the main operation and the timeout
-        const result = await Promise.race([mainOperation(), operationTimeout])
-        return res.json(result)
+        const result = (await Promise.race([mainOperation(), operationTimeout])) as HealthCheckResult
+
+        // Set HTTP status code based on alert status for Datadog monitoring
+        const httpStatus = result.status === 'critical' ? 503 : 200 // 503 Service Unavailable for critical issues
+
+        return res.status(httpStatus).json(result)
     } catch (error) {
+        console.error('Langfuse health check error:', error instanceof Error ? error.message : 'An error occurred while fetching traces')
         return res.status(500).json({
-            status: 'error',
-            message: error instanceof Error ? error.message : 'An error occurred while fetching traces'
+            status: 'critical'
         })
     }
 }
