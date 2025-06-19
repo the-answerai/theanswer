@@ -21,7 +21,7 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
         const mainOperation = async () => {
             // ✅ CONFIGURABLE: Change this value to adjust the time range (in minutes)
-            const MINUTES_TO_QUERY = 5 // Easy to modify - examples:
+            const MINUTES_TO_QUERY = 60 // Easy to modify - examples:
             // 5 minutes = 5
             // 15 minutes = 15
             // 1 hour = 60
