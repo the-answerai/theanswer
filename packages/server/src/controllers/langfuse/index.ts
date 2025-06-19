@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 
+// Interface for Langfuse trace object
+interface LangfuseTrace {
+    totalCost?: number | null
+    output?: string
+    [key: string]: any // Allow other properties
+}
+
 const getHealthCheck = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const secretKey = process.env.LANGFUSE_SECRET_KEY || ''
@@ -78,13 +85,34 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
         console.log(`Successfully fetched ${allTraces.length} traces from ${totalPages} pages`)
 
+        // Filter for problematic traces
+        // Problematic = totalCost is 0 (or null/undefined) AND output is NOT "Error: Non string message content not supported"
+        const isProblematic = (trace: LangfuseTrace): boolean => {
+            // Check if totalCost is 0, null, or undefined
+            const hasCostIssue = trace.totalCost === 0 || trace.totalCost === null || trace.totalCost === undefined
+
+            // Check if output is NOT the specific error message
+            const hasNonErrorOutput = trace.output !== 'Error: Non string message content not supported'
+
+            return hasCostIssue && hasNonErrorOutput
+        }
+
+        const problematicTraces = allTraces.filter(isProblematic)
+        const nonProblematicTraces = allTraces.filter((trace: LangfuseTrace) => !isProblematic(trace))
+
+        console.log(`Found ${problematicTraces.length} problematic traces out of ${allTraces.length} total traces`)
+
         return res.json({
             status: 'success',
             data: {
                 data: allTraces,
+                problematicTraces: problematicTraces,
+                nonProblematicTraces: nonProblematicTraces,
                 meta: {
                     ...firstPageResult.meta,
                     totalItemsFetched: allTraces.length,
+                    problematicCount: problematicTraces.length,
+                    nonProblematicCount: nonProblematicTraces.length,
                     pagesFetched: totalPages,
                     allPages: allPages.map((page, index) => ({
                         page: index + 1,
@@ -98,7 +126,16 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                 from: sevenDaysAgo.toISOString(),
                 to: new Date().toISOString(),
                 totalPages: totalPages,
-                totalTraces: allTraces.length
+                totalTraces: allTraces.length,
+                filtering: {
+                    problematicConditions: [
+                        'totalCost is 0, null, or undefined',
+                        "output is NOT 'Error: Non string message content not supported'"
+                    ],
+                    problematicCount: problematicTraces.length,
+                    nonProblematicCount: nonProblematicTraces.length,
+                    problematicPercentage: Math.round((problematicTraces.length / allTraces.length) * 100)
+                }
             }
         })
     } catch (error) {
