@@ -9,135 +9,241 @@ interface LangfuseTrace {
 
 const getHealthCheck = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const secretKey = process.env.LANGFUSE_SECRET_KEY || ''
-        const publicKey = process.env.LANGFUSE_PUBLIC_KEY || ''
-        const baseUrl = process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-
-        if (!secretKey || !publicKey) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Missing Langfuse API keys'
-            })
-        }
-
-        // Calculate date 7 days ago
-        const sevenDaysAgo = new Date()
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-        // Create Basic Auth header
-        const auth = Buffer.from(`${publicKey}:${secretKey}`).toString('base64')
-
-        // Build base query parameters for last 7 days
-        const baseParams = {
-            fromTimestamp: sevenDaysAgo.toISOString(),
-            toTimestamp: new Date().toISOString()
-        }
-
-        // Helper function to fetch a specific page
-        const fetchPage = async (page: number) => {
-            const params = new URLSearchParams({
-                ...baseParams,
-                page: page.toString()
-            })
-
-            const response = await fetch(`${baseUrl}/api/public/traces?${params}`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Basic ${auth}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-
-            if (!response.ok) {
-                throw new Error(`Langfuse API error on page ${page}: ${response.status} ${response.statusText}`)
-            }
-
-            return await response.json()
-        }
-
-        // First, fetch page 1 to get totalPages
-        console.log('Fetching page 1 to determine total pages...')
-        const firstPageResult = await fetchPage(1)
-        const totalPages = firstPageResult.meta?.totalPages || 1
-
-        console.log(`Found ${totalPages} total pages, fetching all pages...`)
-
-        // Collect all data from all pages
-        let allTraces = firstPageResult.data || []
-        const allPages = [firstPageResult]
-
-        // Fetch remaining pages if there are more than 1
-        if (totalPages > 1) {
-            const remainingPagePromises = []
-            for (let page = 2; page <= totalPages; page++) {
-                remainingPagePromises.push(fetchPage(page))
-            }
-
-            // Wait for all remaining pages to complete
-            const remainingPages = await Promise.all(remainingPagePromises)
-
-            // Combine all traces from all pages
-            for (const pageResult of remainingPages) {
-                allTraces = allTraces.concat(pageResult.data || [])
-                allPages.push(pageResult)
-            }
-        }
-
-        console.log(`Successfully fetched ${allTraces.length} traces from ${totalPages} pages`)
-
-        // Filter for problematic traces
-        // Problematic = totalCost is 0 (or null/undefined) AND output is NOT "Error: Non string message content not supported"
-        const isProblematic = (trace: LangfuseTrace): boolean => {
-            // Check if totalCost is 0, null, or undefined
-            const hasCostIssue = trace.totalCost === 0 || trace.totalCost === null || trace.totalCost === undefined
-
-            // Check if output is NOT the specific error message
-            const hasNonErrorOutput = trace.output !== 'Error: Non string message content not supported'
-
-            return hasCostIssue && hasNonErrorOutput
-        }
-
-        const problematicTraces = allTraces.filter(isProblematic)
-        const nonProblematicTraces = allTraces.filter((trace: LangfuseTrace) => !isProblematic(trace))
-
-        console.log(`Found ${problematicTraces.length} problematic traces out of ${allTraces.length} total traces`)
-
-        return res.json({
-            status: 'success',
-            data: {
-                data: allTraces,
-                problematicTraces: problematicTraces,
-                nonProblematicTraces: nonProblematicTraces,
-                meta: {
-                    ...firstPageResult.meta,
-                    totalItemsFetched: allTraces.length,
-                    problematicCount: problematicTraces.length,
-                    nonProblematicCount: nonProblematicTraces.length,
-                    pagesFetched: totalPages,
-                    allPages: allPages.map((page, index) => ({
-                        page: index + 1,
-                        itemCount: page.data?.length || 0,
-                        meta: page.meta
-                    }))
-                }
-            },
-            metadata: {
-                period: '7 days',
-                from: sevenDaysAgo.toISOString(),
-                to: new Date().toISOString(),
-                totalPages: totalPages,
-                totalTraces: allTraces.length,
-                filtering: {
-                    problematicConditions: [
-                        'totalCost is 0, null, or undefined',
-                        "output is NOT 'Error: Non string message content not supported'"
-                    ],
-                    problematicCount: problematicTraces.length,
-                    nonProblematicCount: nonProblematicTraces.length,
-                    problematicPercentage: Math.round((problematicTraces.length / allTraces.length) * 100)
-                }
-            }
+        // Set overall timeout for the entire operation (10 minutes)
+        const operationTimeout = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Operation timed out after 10 minutes')), 10 * 60 * 1000)
         })
+
+        const mainOperation = async () => {
+            const secretKey = process.env.LANGFUSE_SECRET_KEY || ''
+            const publicKey = process.env.LANGFUSE_PUBLIC_KEY || ''
+            const baseUrl = process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+
+            if (!secretKey || !publicKey) {
+                throw new Error('Missing Langfuse API keys')
+            }
+
+            // Calculate date 7 days ago
+            const sevenDaysAgo = new Date()
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+            // Create Basic Auth header
+            const auth = Buffer.from(`${publicKey}:${secretKey}`).toString('base64')
+
+            // Build base query parameters for last 7 days
+            const baseParams = {
+                fromTimestamp: sevenDaysAgo.toISOString(),
+                toTimestamp: new Date().toISOString()
+            }
+
+            // Helper function to fetch a specific page with retry logic and timeout handling
+            const fetchPage = async (page: number, retries: number = 3): Promise<any> => {
+                const params = new URLSearchParams({
+                    ...baseParams,
+                    page: page.toString()
+                })
+
+                for (let attempt = 1; attempt <= retries; attempt++) {
+                    try {
+                        const controller = new AbortController()
+                        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+                        const response = await fetch(`${baseUrl}/api/public/traces?${params}`, {
+                            method: 'GET',
+                            headers: {
+                                Authorization: `Basic ${auth}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        })
+
+                        clearTimeout(timeoutId)
+
+                        if (response.status === 429) {
+                            // Rate limited - wait longer before retry
+                            const waitTime = Math.pow(2, attempt) * 2000 // Exponential backoff: 2s, 4s, 8s
+                            console.log(`Rate limited on page ${page}, attempt ${attempt}/${retries}. Waiting ${waitTime}ms...`)
+                            await new Promise((resolve) => setTimeout(resolve, waitTime))
+                            continue
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+                        }
+
+                        return await response.json()
+                    } catch (error) {
+                        console.log(
+                            `Attempt ${attempt}/${retries} failed for page ${page}: ${
+                                error instanceof Error ? error.message : 'Unknown error'
+                            }`
+                        )
+
+                        if (attempt === retries) {
+                            throw new Error(
+                                `Failed to fetch page ${page} after ${retries} attempts: ${
+                                    error instanceof Error ? error.message : 'Unknown error'
+                                }`
+                            )
+                        }
+
+                        // Wait before retry (exponential backoff)
+                        const waitTime = Math.pow(2, attempt) * 1000 // 1s, 2s, 4s
+                        await new Promise((resolve) => setTimeout(resolve, waitTime))
+                    }
+                }
+            }
+
+            // Helper function to add delay between requests to avoid rate limiting
+            const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+            // First, fetch page 1 to get totalPages
+            console.log('Fetching page 1 to determine total pages...')
+            const firstPageResult = await fetchPage(1)
+            const totalPages = firstPageResult.meta?.totalPages || 1
+
+            console.log(`Found ${totalPages} total pages, fetching all pages...`)
+
+            // Collect all data from all pages
+            let allTraces = firstPageResult.data || []
+            const allPages = [firstPageResult]
+            const failedPages: number[] = []
+
+            // Fetch remaining pages if there are more than 1
+            if (totalPages > 1) {
+                const BATCH_SIZE = 5 // Process 5 pages at a time to avoid overwhelming the API
+                const remainingPageNumbers = []
+                for (let page = 2; page <= totalPages; page++) {
+                    remainingPageNumbers.push(page)
+                }
+
+                console.log(`Processing ${remainingPageNumbers.length} remaining pages in batches of ${BATCH_SIZE}...`)
+
+                // Process pages in batches
+                for (let i = 0; i < remainingPageNumbers.length; i += BATCH_SIZE) {
+                    const batch = remainingPageNumbers.slice(i, i + BATCH_SIZE)
+                    console.log(`Processing batch: pages ${batch[0]}-${batch[batch.length - 1]}`)
+
+                    try {
+                        // Fetch batch with small delay between requests
+                        const batchPromises = batch.map(async (page, index) => {
+                            if (index > 0) {
+                                await delay(200) // 200ms delay between requests in the same batch
+                            }
+                            return fetchPage(page)
+                        })
+
+                        const batchResults = await Promise.allSettled(batchPromises)
+
+                        // Process batch results
+                        batchResults.forEach((result, index) => {
+                            const pageNumber = batch[index]
+                            if (result.status === 'fulfilled') {
+                                allTraces = allTraces.concat(result.value.data || [])
+                                allPages.push(result.value)
+                            } else {
+                                console.error(`Failed to fetch page ${pageNumber}: ${result.reason}`)
+                                failedPages.push(pageNumber)
+                            }
+                        })
+
+                        // Add delay between batches to be respectful to the API
+                        if (i + BATCH_SIZE < remainingPageNumbers.length) {
+                            console.log('Waiting 1 second before next batch...')
+                            await delay(1000)
+                        }
+                    } catch (error) {
+                        console.error(`Batch processing error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                        // Continue with next batch even if current batch fails
+                    }
+                }
+            }
+
+            const fetchedPages = allPages.length
+            const successRate = Math.round((fetchedPages / totalPages) * 100)
+
+            if (failedPages.length > 0) {
+                console.log(
+                    `Partially successful: fetched ${
+                        allTraces.length
+                    } traces from ${fetchedPages}/${totalPages} pages. Failed pages: ${failedPages.join(', ')}`
+                )
+            } else {
+                console.log(`Successfully fetched ${allTraces.length} traces from ${fetchedPages}/${totalPages} pages`)
+            }
+
+            // Filter for problematic traces
+            // Problematic = totalCost is 0 (or null/undefined) AND output is NOT "Error: Non string message content not supported"
+            const isProblematic = (trace: LangfuseTrace): boolean => {
+                // Check if totalCost is 0, null, or undefined
+                const hasCostIssue = trace.totalCost === 0 || trace.totalCost === null || trace.totalCost === undefined
+
+                // Check if output is NOT the specific error message
+                const hasNonErrorOutput = trace.output !== 'Error: Non string message content not supported'
+
+                return hasCostIssue && hasNonErrorOutput
+            }
+
+            const problematicTraces = allTraces.filter(isProblematic)
+            const nonProblematicTraces = allTraces.filter((trace: LangfuseTrace) => !isProblematic(trace))
+
+            console.log(`Found ${problematicTraces.length} problematic traces out of ${allTraces.length} total traces`)
+
+            return {
+                status: 'success',
+                data: {
+                    data: allTraces,
+                    problematicTraces: problematicTraces,
+                    nonProblematicTraces: nonProblematicTraces,
+                    meta: {
+                        ...firstPageResult.meta,
+                        totalItemsFetched: allTraces.length,
+                        problematicCount: problematicTraces.length,
+                        nonProblematicCount: nonProblematicTraces.length,
+                        pagesFetched: fetchedPages,
+                        totalPages: totalPages,
+                        successRate: successRate,
+                        failedPages: failedPages,
+                        allPages: allPages.map((page, index) => ({
+                            page: index + 1,
+                            itemCount: page.data?.length || 0,
+                            meta: page.meta
+                        }))
+                    }
+                },
+                metadata: {
+                    period: '30 days',
+                    from: sevenDaysAgo.toISOString(),
+                    to: new Date().toISOString(),
+                    totalPages: totalPages,
+                    totalTraces: allTraces.length,
+                    dataReliability: {
+                        pagesFetched: fetchedPages,
+                        totalPages: totalPages,
+                        successRate: `${successRate}%`,
+                        failedPages: failedPages,
+                        batchProcessing: {
+                            batchSize: 5,
+                            delayBetweenRequests: '200ms',
+                            delayBetweenBatches: '1000ms'
+                        }
+                    },
+                    filtering: {
+                        problematicConditions: [
+                            'totalCost is 0, null, or undefined',
+                            "output is NOT 'Error: Non string message content not supported'"
+                        ],
+                        problematicCount: problematicTraces.length,
+                        nonProblematicCount: nonProblematicTraces.length,
+                        problematicPercentage: Math.round((problematicTraces.length / allTraces.length) * 100)
+                    }
+                }
+            }
+        }
+
+        // Race between the main operation and the timeout
+        const result = await Promise.race([mainOperation(), operationTimeout])
+        return res.json(result)
     } catch (error) {
         return res.status(500).json({
             status: 'error',
