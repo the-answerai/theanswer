@@ -77,7 +77,6 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                         if (response.status === 429) {
                             // Rate limited - wait longer before retry
                             const waitTime = Math.pow(2, attempt) * 2000 // Exponential backoff: 2s, 4s, 8s
-                            console.log(`Rate limited on page ${page}, attempt ${attempt}/${retries}. Waiting ${waitTime}ms...`)
                             await new Promise((resolve) => setTimeout(resolve, waitTime))
                             continue
                         }
@@ -88,12 +87,6 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
                         return await response.json()
                     } catch (error) {
-                        console.log(
-                            `Attempt ${attempt}/${retries} failed for page ${page}: ${
-                                error instanceof Error ? error.message : 'Unknown error'
-                            }`
-                        )
-
                         if (attempt === retries) {
                             throw new Error(
                                 `Failed to fetch page ${page} after ${retries} attempts: ${
@@ -113,15 +106,11 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
             const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
             // First, fetch page 1 to get totalPages
-            console.log('Fetching page 1 to determine total pages...')
             const firstPageResult = await fetchPage(1)
             const totalPages = firstPageResult.meta?.totalPages || 1
 
-            console.log(`Found ${totalPages} total pages, fetching all pages...`)
-
             // Collect all data from all pages
             let allTraces = firstPageResult.data || []
-            const allPages = [firstPageResult]
             const failedPages: number[] = []
 
             // Fetch remaining pages if there are more than 1
@@ -132,12 +121,9 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                     remainingPageNumbers.push(page)
                 }
 
-                console.log(`Processing ${remainingPageNumbers.length} remaining pages in batches of ${BATCH_SIZE}...`)
-
                 // Process pages in batches
                 for (let i = 0; i < remainingPageNumbers.length; i += BATCH_SIZE) {
                     const batch = remainingPageNumbers.slice(i, i + BATCH_SIZE)
-                    console.log(`Processing batch: pages ${batch[0]}-${batch[batch.length - 1]}`)
 
                     try {
                         // Fetch batch with small delay between requests
@@ -155,7 +141,6 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                             const pageNumber = batch[index]
                             if (result.status === 'fulfilled') {
                                 allTraces = allTraces.concat(result.value.data || [])
-                                allPages.push(result.value)
                             } else {
                                 console.error(`Failed to fetch page ${pageNumber}: ${result.reason}`)
                                 failedPages.push(pageNumber)
@@ -164,7 +149,6 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
                         // Add delay between batches to be respectful to the API
                         if (i + BATCH_SIZE < remainingPageNumbers.length) {
-                            console.log('Waiting 1 second before next batch...')
                             await delay(1000)
                         }
                     } catch (error) {
@@ -172,19 +156,6 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
                         // Continue with next batch even if current batch fails
                     }
                 }
-            }
-
-            const fetchedPages = allPages.length
-            const successRate = Math.round((fetchedPages / totalPages) * 100)
-
-            if (failedPages.length > 0) {
-                console.log(
-                    `Partially successful: fetched ${
-                        allTraces.length
-                    } traces from ${fetchedPages}/${totalPages} pages. Failed pages: ${failedPages.join(', ')}`
-                )
-            } else {
-                console.log(`Successfully fetched ${allTraces.length} traces from ${fetchedPages}/${totalPages} pages`)
             }
 
             // Filter for problematic traces
@@ -200,8 +171,22 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
             }
 
             const problematicTraces = allTraces.filter(isProblematic)
+            const nonProblematicTraces = allTraces.filter((trace: LangfuseTrace) => !isProblematic(trace))
 
-            console.log(`Found ${problematicTraces.length} problematic traces out of ${allTraces.length} total traces`)
+            // Debug logging - only when DEBUG=true environment variable is set
+            if (process.env.DEBUG === 'true') {
+                console.log('=== DEBUG INFORMATION ===', {
+                    filtering: {
+                        problematicConditions: [
+                            'totalCost is 0, null, or undefined',
+                            "output is NOT 'Error: Non string message content not supported'"
+                        ],
+                        problematicCount: problematicTraces.length,
+                        nonProblematicCount: nonProblematicTraces.length,
+                        problematicPercentage: Math.round((problematicTraces.length / allTraces.length) * 100)
+                    }
+                })
+            }
 
             // Determine status for Datadog alerts based on problematic traces
             const alertStatus = problematicTraces.length === 0 ? 'ok' : 'critical'
