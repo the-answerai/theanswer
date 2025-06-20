@@ -1,19 +1,19 @@
 /**
  * Chatflow Testing Script
  *
- * This script tests chatflows by making API requests to each chatflow ID listed in a CSV file.
- * It supports both UUID-only and full URL formats in the CSV.
+ * This script tests chatflows by making API requests to each chatflow ID listed in a JSON file.
+ * It supports both UUID-only and full URL formats in the JSON file.
  *
- * Required Environment Variables (.env file):
- * ----------------------------------------
- * TESTING_CHATFLOWS_API_URL - Base URL for the API (e.g., https://lr-staging.studio.theanswer.ai/api/v1/prediction)
+ * Required Environment Variables:
+ * -----------------------------
+ * TESTING_CHATFLOWS_API_URL - Base URL for the API (e.g., https://prod.studio.theanswer.ai/)
  * TESTING_CHATFLOWS_AUTH_TOKEN - Bearer token for authentication
  * TESTING_CHATFLOWS_QUESTION - The question to send to each chatflow
- * TESTING_CHATFLOWS_REQUEST_DELAY_MS - Delay between requests in milliseconds (e.g., 500)
+ * TESTING_CHATFLOWS_REQUEST_DELAY_MS - Delay between requests in milliseconds (e.g., 50)
  *
  * Command Line Options:
  * -------------------
- * --csv, -c: Path to CSV file (default: ./chatflows.csv)
+ * --file, -f: Path to JSON file (default: ./chatflows.json)
  * --no-delay: Disable delay between requests
  * --retries, -r: Number of retry attempts (default: 2)
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
@@ -21,18 +21,12 @@
  * --verbose, -v: Enable detailed logging
  * --help, -h: Show help
  *
- * CSV File Format:
+ * JSON File Format:
  * --------------
- * One chatflow ID per line, either as:
- * - UUID only: 8ef0e7d2-7c31-496d-8666-60133a246e15
- * - Full URL: https://staging.theanswer.ai/chat/8ef0e7d2-7c31-496d-8666-60133a246e15
- *
- * Example .env file:
- * -----------------
- * TESTING_CHATFLOWS_API_URL=https://lr-staging.studio.theanswer.ai/api/v1/prediction
- * TESTING_CHATFLOWS_AUTH_TOKEN=your-bearer-token-here
- * TESTING_CHATFLOWS_QUESTION=Hey, how are you?
- * TESTING_CHATFLOWS_REQUEST_DELAY_MS=500
+ * An array of chatflow objects, each with:
+ * - "id": "8ef0e7d2-7c31-496d-8666-60133a246e15" (or full URL)
+ * - "enabled": true/false (optional, defaults to true)
+ * - "name": "My Chatflow" (optional, for reference)
  */
 
 const fs = require('fs')
@@ -44,11 +38,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
 
 // Parse command line arguments
 const argv = yargs(hideBin(process.argv))
-    .option('csv', {
-        alias: 'c',
-        description: 'Path to CSV file',
+    .option('file', {
+        alias: 'f',
+        description: 'Path to JSON file',
         type: 'string',
-        default: path.join(__dirname, 'chatflows.csv')
+        default: path.join(__dirname, 'chatflows.json')
     })
     .option('no-delay', {
         description: 'Disable delay between requests',
@@ -102,8 +96,10 @@ const extractUUID = (input) => {
 // Function to fetch chatflow name from Flowise API
 async function getChatflowName(chatflowId) {
     try {
-        // Extract base URL from the prediction API URL
-        const baseUrl = process.env.TESTING_CHATFLOWS_API_URL.split('/api/v1/prediction')[0]
+        // Build the chatflows API URL from the base URL
+        const baseUrl = process.env.TESTING_CHATFLOWS_API_URL.endsWith('/')
+            ? process.env.TESTING_CHATFLOWS_API_URL.slice(0, -1)
+            : process.env.TESTING_CHATFLOWS_API_URL
         const response = await axios.get(
             `${baseUrl}/api/v1/chatflows/${chatflowId}`, // Note: it's 'chatflows' not 'chatflow'
             {
@@ -128,8 +124,12 @@ async function getChatflowName(chatflowId) {
 async function testChatflow(chatflowId, retryCount = 0) {
     const startTime = Date.now()
     try {
+        // Build the prediction API URL from the base URL
+        const baseUrl = process.env.TESTING_CHATFLOWS_API_URL.endsWith('/')
+            ? process.env.TESTING_CHATFLOWS_API_URL.slice(0, -1)
+            : process.env.TESTING_CHATFLOWS_API_URL
         const response = await axios.post(
-            `${process.env.TESTING_CHATFLOWS_API_URL}/${chatflowId}`,
+            `${baseUrl}/api/v1/prediction/${chatflowId}`,
             { question: process.env.TESTING_CHATFLOWS_QUESTION },
             {
                 headers: {
@@ -177,14 +177,14 @@ async function main() {
             throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
         }
 
-        // Read and parse CSV file
-        const csvPath = argv.csv
-        const csvContent = fs.readFileSync(csvPath, 'utf-8')
-        const chatflowIds = csvContent
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !line.startsWith('#'))
-            .map(extractUUID) // Extract UUIDs from URLs or strings
+        // Read and parse JSON file
+        const jsonPath = argv.file
+        const jsonContent = fs.readFileSync(jsonPath, 'utf-8')
+        const chatflowsData = JSON.parse(jsonContent)
+
+        const chatflowIds = chatflowsData
+            .filter((item) => item.enabled !== false) // Default to enabled if property is missing
+            .map((item) => extractUUID(item.id)) // Extract UUID from id field
 
         if (argv.verbose) {
             console.log('🔍 Extracted UUIDs from input:')
