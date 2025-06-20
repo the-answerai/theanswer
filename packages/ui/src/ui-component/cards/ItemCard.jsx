@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types'
 import { useSelector } from 'react-redux'
-
 // material-ui
 import { styled } from '@mui/material/styles'
-import { Box, Grid, Typography, useTheme } from '@mui/material'
+import { Box, Grid, Typography, useTheme, Tooltip } from '@mui/material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
@@ -33,39 +32,12 @@ const ItemCard = ({ data, images, icons, onClick }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
 
-    // Wrap the card content in an anchor tag if href is provided
-    const CardContent = ({ children }) => {
-        if (href) {
-            return (
-                <Box
-                    component='a'
-                    href={href}
-                    sx={{
-                        textDecoration: 'none',
-                        color: 'inherit',
-                        display: 'block',
-                        height: '100%'
-                    }}
-                    onClick={handleCardClick}
-                    onMouseDown={handleCardClick}
-                >
-                    {children}
-                </Box>
-            )
-        }
-        return (
-            <Box sx={{ height: '100%' }} onClick={handleCardClick}>
-                {children}
-            </Box>
-        )
-    }
-
     return (
         <CardWrapper
             content={false}
             onClick={onClick}
             sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
-            data-href={href}
+            // data-href={href}
         >
             <Box sx={{ height: '100%', p: 2.25 }}>
                 <Grid container justifyContent='space-between' direction='column' sx={{ height: '100%', gap: 3 }}>
@@ -74,15 +46,16 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                             style={{
                                 width: '100%',
                                 display: 'flex',
+                                flexDirection: 'row',
                                 alignItems: 'center',
-                                justifyContent: 'start',
-                                gap: 1,
-                                mt: 2 // Add margin-top to separate from description
+                                overflow: 'hidden'
                             }}
                         >
-                            {images && (
-                                <Box
-                                    sx={{
+                            {data.iconSrc && (
+                                <div
+                                    style={{
+                                        width: 35,
+                                        height: 35,
                                         display: 'flex',
                                         flexShrink: 0,
                                         marginRight: 10,
@@ -92,33 +65,7 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                                         backgroundRepeat: 'no-repeat',
                                         backgroundPosition: 'center center'
                                     }}
-                                >
-                                    {images.slice(0, images.length > 3 ? 3 : images.length).map((img, index) => (
-                                        <Tooltip key={img} title={nodeTypes && nodeTypes[index]} arrow>
-                                            <Box
-                                                sx={{
-                                                    width: 30,
-                                                    height: 30,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: customization.isDarkMode
-                                                        ? theme.palette.common.white
-                                                        : theme.palette.grey[300] + 75
-                                                }}
-                                            >
-                                                <img
-                                                    style={{ width: '100%', height: '100%', padding: 5, objectFit: 'contain' }}
-                                                    alt=''
-                                                    src={img}
-                                                />
-                                            </Box>
-                                        </Tooltip>
-                                    ))}
-                                    {images.length > 3 && (
-                                        <Typography sx={{ alignItems: 'center', display: 'flex', fontSize: '.9rem', fontWeight: 200 }}>
-                                            + {images.length - 3} More
-                                        </Typography>
-                                    )}
-                                </Box>
+                                ></div>
                             )}
                             {!data.iconSrc && data.color && (
                                 <div
@@ -182,9 +129,12 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                                         <Box
                                             key={item.src}
                                             sx={{
-                                                bgcolor: theme.palette.teal.main,
-                                                border: `1px solid ${theme.palette.divider}`,
-                                                color: theme.palette.text.primary
+                                                width: 30,
+                                                height: 30,
+                                                borderRadius: '50%',
+                                                backgroundColor: customization.isDarkMode
+                                                    ? theme.palette.common.white
+                                                    : theme.palette.grey[300] + 75
                                             }}
                                         >
                                             <img
@@ -225,6 +175,7 @@ ItemCard.propTypes = {
     data: PropTypes.object,
     images: PropTypes.array,
     icons: PropTypes.array,
+    nodeTypes: PropTypes.array,
     onClick: PropTypes.func
 }
 
