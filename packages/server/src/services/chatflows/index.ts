@@ -322,9 +322,13 @@ const saveChatflow = async (newChatFlow: ChatFlow): Promise<any> => {
                 }
             }
         }
-        newChatFlow.visibility = Array.from(
-            new Set([...(newChatFlow.visibility ?? []), ChatflowVisibility.PRIVATE, ChatflowVisibility.ANSWERAI])
-        )
+
+        if (!newChatFlow.visibility || newChatFlow.visibility.length === 0) {
+            newChatFlow.visibility = [ChatflowVisibility.PRIVATE]
+        } else {
+            newChatFlow.visibility = Array.from(new Set([...newChatFlow.visibility, ChatflowVisibility.PRIVATE]))
+        }
+
         if (containsBase64File(newChatFlow)) {
             // we need a 2-step process, as we need to save the chatflow first and then update the file paths
             // this is because we need the chatflow id to create the file paths
@@ -424,6 +428,8 @@ const importChatflows = async (user: IUser, newChatflows: Partial<ChatFlow>[], q
             newChatflow.userId = user?.id
             newChatflow.organizationId = user?.organizationId
 
+            newChatflow.visibility = [ChatflowVisibility.PRIVATE]
+
             // Ensure chatFeedback is set to true by default
             if (newChatflow.chatbotConfig) {
                 try {
@@ -522,9 +528,10 @@ const updateChatflow = async (chatflow: ChatFlow, updateChatFlow: ChatFlow, user
             chatbotConfig: updatedChatbotConfig
         }
 
-        updateChatFlow.visibility = Array.from(
-            new Set([...(updateChatFlow.visibility ?? []), ChatflowVisibility.PRIVATE, ChatflowVisibility.ANSWERAI])
-        )
+        if (updateChatFlow.visibility) {
+            updateChatFlow.visibility = Array.from(new Set([...updateChatFlow.visibility, ChatflowVisibility.PRIVATE]))
+        }
+
 
         const newDbChatflow = appServer.AppDataSource.getRepository(ChatFlow).merge(chatflow, mergedChatflow)
 
