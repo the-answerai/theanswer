@@ -114,7 +114,8 @@ const extractUUID = (input) => {
 // Function to read and encode file as base64
 function readFileAsBase64(filePath) {
     try {
-        const fullPath = path.resolve(filePath)
+        // Resolve path relative to current working directory
+        const fullPath = path.resolve(process.cwd(), filePath)
         if (!fs.existsSync(fullPath)) {
             throw new Error(`File not found: ${fullPath}`)
         }
@@ -138,11 +139,16 @@ function processFiles(files) {
 
         const fileName = path.basename(file.path)
         const base64Data = readFileAsBase64(file.path)
+        const mimeType = file.type || 'application/octet-stream'
+
+        // Format as data URI expected by the API
+        const dataUri = `data:${mimeType};base64,${base64Data}`
 
         return {
+            type: 'file',
             name: fileName,
-            type: file.type || 'application/octet-stream',
-            data: base64Data
+            data: dataUri,
+            mime: mimeType
         }
     })
 }
@@ -196,7 +202,7 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
         // Add files if present
         if (files && files.length > 0) {
             const processedFiles = processFiles(files)
-            payload.files = processedFiles
+            payload.uploads = processedFiles
         }
 
         const response = await axios.post(`${baseUrl}/api/v1/prediction/${chatflowId}`, payload, {
