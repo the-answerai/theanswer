@@ -154,7 +154,6 @@ export const MemoizedReactMarkdown = memo(
                                             }}
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
                                             onError={(e) => {
-                                                // Fallback: si Next.js Image falla, usar img nativa
                                                 const imgElement = e.target
                                                 const fallbackImg = document.createElement('img')
                                                 fallbackImg.src = src
