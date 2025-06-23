@@ -1,8 +1,8 @@
 /**
  * Chatflow Testing Script
  *
- * This script tests chatflows by making API requests to each chatflow ID listed in a JSON file.
- * It supports both UUID-only and full URL formats in the JSON file.
+ * This script tests chatflows by making API requests to each chatflow ID listed in a JS file.
+ * It supports only JS files that export an array of chatflow objects.
  *
  * Required Environment Variables:
  * -----------------------------
@@ -13,7 +13,7 @@
  *
  * Command Line Options:
  * -------------------
- * --file, -f: Path to JSON file (default: ./chatflows.json)
+ * --file, -f: Path to JS file (default: ./chatflows.js)
  * --no-delay: Disable delay between requests
  * --retries, -r: Number of retry attempts (default: 2)
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
@@ -21,12 +21,12 @@
  * --verbose, -v: Enable detailed logging
  * --help, -h: Show help
  *
- * JSON File Format:
+ * JS File Format:
  * --------------
- * An array of chatflow objects, each with:
- * - "id": "8ef0e7d2-7c31-496d-8666-60133a246e15" (or full URL)
- * - "enabled": true/false (optional, defaults to true)
- * - "name": "My Chatflow" (optional, for reference)
+ * module.exports = [
+ *   { id: '...', enabled: true, name: '...' },
+ *   ...
+ * ]
  */
 
 const fs = require('fs')
@@ -40,9 +40,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
 const argv = yargs(hideBin(process.argv))
     .option('file', {
         alias: 'f',
-        description: 'Path to JSON file',
+        description: 'Path to JS file (module.exports = [...])',
         type: 'string',
-        default: path.join(__dirname, 'chatflows.json')
+        default: path.join(__dirname, 'chatflows.js')
     })
     .option('no-delay', {
         description: 'Disable delay between requests',
@@ -177,10 +177,8 @@ async function main() {
             throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
         }
 
-        // Read and parse JSON file
-        const jsonPath = argv.file
-        const jsonContent = fs.readFileSync(jsonPath, 'utf-8')
-        const chatflowsData = JSON.parse(jsonContent)
+        // Read and load JS file
+        const chatflowsData = require(path.resolve(argv.file))
 
         const chatflowIds = chatflowsData
             .filter((item) => item.enabled !== false) // Default to enabled if property is missing
