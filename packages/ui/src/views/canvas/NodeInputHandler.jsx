@@ -45,6 +45,7 @@ import { TabsList } from '@/ui-component/tabs/TabsList'
 import { ArrayRenderer } from '@/ui-component/array/ArrayRenderer'
 import { Tab } from '@/ui-component/tabs/Tab'
 import { ContentfulConfig } from '@/ui-component/contentful/ContentfulConfig'
+import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
 import { ConfigInput } from '@/views/agentflowsv2/ConfigInput'
 import { BackdropLoader } from '@/ui-component/loading/BackdropLoader'
 import DocStoreInputHandler from '@/views/docstore/DocStoreInputHandler'
@@ -125,6 +126,10 @@ const NodeInputHandler = ({
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
+    // Add credential state management for GoogleDrivePicker
+    const [selectedCredential, setSelectedCredential] = useState('')
+    const [selectedCredentialData, setSelectedCredentialData] = useState({})
+
     const [position, setPosition] = useState(0)
     const [showExpandDialog, setShowExpandDialog] = useState(false)
     const [expandDialogProps, setExpandDialogProps] = useState({})
@@ -154,6 +159,22 @@ const NodeInputHandler = ({
 
     const [promptGeneratorDialogOpen, setPromptGeneratorDialogOpen] = useState(false)
     const [promptGeneratorDialogProps, setPromptGeneratorDialogProps] = useState({})
+
+    // Add credential handling functions
+    const handleCredentialChange = (credentialId) => {
+        setSelectedCredential(credentialId)
+    }
+
+    const handleCredentialDataChange = (credentialData) => {
+        setSelectedCredentialData(credentialData)
+    }
+
+    // Initialize credential state from data
+    useEffect(() => {
+        if (data.credential) {
+            setSelectedCredential(data.credential)
+        }
+    }, [data.credential])
 
     const handleDataChange = ({ inputParam, newValue }) => {
         data.inputs[inputParam.name] = newValue
@@ -1015,6 +1036,17 @@ const NodeInputHandler = ({
                                 value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
                                 nodeData={data}
                                 isDarkMode={customization.isDarkMode}
+                            />
+                        )}
+
+                        {inputParam.type === 'googleDrive' && (
+                            <GoogleDrivePicker
+                                disabled={disabled}
+                                onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
+                                value={data.inputs[inputParam.name] ?? '[]'}
+                                credentialId={selectedCredential}
+                                credentialData={selectedCredentialData}
+                                handleCredentialDataChange={handleCredentialDataChange}
                             />
                         )}
 
