@@ -1,7 +1,7 @@
 {
     "name": "chatflow-tester",
     "version": "1.0.0",
-    "description": "Script to test chatflows API",
+    "description": "Comprehensive testing script for chatflows with multi-turn conversation support",
     "main": "testingChatflows.js",
     "scripts": {
         "test": "node testingChatflows.js"
