@@ -23,6 +23,7 @@ export type NodeParamsType =
     | 'folder'
     | 'tabs'
     | 'contentfulConfig'
+    | 'googleDrive'
 
 export type CommonType = string | number | boolean | undefined | null
 
