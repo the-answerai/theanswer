@@ -2,13 +2,15 @@
  * Chatflow Testing Script
  *
  * This script tests chatflows by making API requests to each chatflow ID listed in a JS file.
- * It supports only JS files that export an array of chatflow objects.
+ * All chatflows must use the conversation format (multi-turn with optional files).
+ *
+ * IMPORTANT: This script maintains conversation context across turns within the same chatflow
+ * by using sessionId. Each turn in a conversation will remember previous interactions.
  *
  * Required Environment Variables:
  * -----------------------------
  * TESTING_CHATFLOWS_API_URL - Base URL for the API (e.g., https://prod.studio.theanswer.ai/)
  * TESTING_CHATFLOWS_AUTH_TOKEN - Bearer token for authentication
- * TESTING_CHATFLOWS_QUESTION - The question to send to each chatflow
  * TESTING_CHATFLOWS_REQUEST_DELAY_MS - Delay between requests in milliseconds (e.g., 50)
  *
  * Command Line Options:
@@ -18,14 +20,30 @@
  * --retries, -r: Number of retry attempts (default: 2)
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
  * --output, -o: Save results to JSON file
- * --verbose, -v: Enable detailed logging
+ * --verbose, -v: Enable detailed logging (includes session IDs)
  * --help, -h: Show help
  *
  * JS File Format:
  * --------------
+ * JS File Format:
  * module.exports = [
- *   { id: '...', enabled: true, name: '...' },
- *   ...
+ *   {
+ *     id: '...',
+ *     enabled: true,
+ *     internalName: '...',
+ *     conversation: [
+ *       {
+ *         input: 'First message',
+ *         files: [
+ *           { path: './assets/image.png', type: 'image/png' }
+ *         ]
+ *       },
+ *       {
+ *         input: 'Follow-up message',
+ *         files: []
+ *       }
+ *     ]
+ *   }
  * ]
  */
 
@@ -93,6 +111,42 @@ const extractUUID = (input) => {
     return match ? match[0] : input
 }
 
+// Function to read and encode file as base64
+function readFileAsBase64(filePath) {
+    try {
+        const fullPath = path.resolve(filePath)
+        if (!fs.existsSync(fullPath)) {
+            throw new Error(`File not found: ${fullPath}`)
+        }
+        const fileBuffer = fs.readFileSync(fullPath)
+        return fileBuffer.toString('base64')
+    } catch (error) {
+        throw new Error(`Failed to read file ${filePath}: ${error.message}`)
+    }
+}
+
+// Function to process files array and encode them
+function processFiles(files) {
+    if (!files || !Array.isArray(files) || files.length === 0) {
+        return []
+    }
+
+    return files.map((file) => {
+        if (!file.path) {
+            throw new Error('File object must have a path property')
+        }
+
+        const fileName = path.basename(file.path)
+        const base64Data = readFileAsBase64(file.path)
+
+        return {
+            name: fileName,
+            type: file.type || 'application/octet-stream',
+            data: base64Data
+        }
+    })
+}
+
 // Function to fetch chatflow name from Flowise API
 async function getChatflowName(chatflowId) {
     try {
@@ -121,29 +175,46 @@ async function getChatflowName(chatflowId) {
     }
 }
 
-async function testChatflow(chatflowId, retryCount = 0) {
+async function testChatflowTurn(chatflowId, input, files = [], sessionId = null, retryCount = 0) {
     const startTime = Date.now()
     try {
         // Build the prediction API URL from the base URL
         const baseUrl = process.env.TESTING_CHATFLOWS_API_URL.endsWith('/')
             ? process.env.TESTING_CHATFLOWS_API_URL.slice(0, -1)
             : process.env.TESTING_CHATFLOWS_API_URL
-        const response = await axios.post(
-            `${baseUrl}/api/v1/prediction/${chatflowId}`,
-            { question: process.env.TESTING_CHATFLOWS_QUESTION },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${process.env.TESTING_CHATFLOWS_AUTH_TOKEN}`
-                },
-                timeout: argv.timeout
+
+        // Prepare payload
+        const payload = { question: input }
+
+        // Add sessionId to maintain conversation context if provided
+        if (sessionId) {
+            payload.overrideConfig = {
+                sessionId: sessionId
             }
-        )
+        }
+
+        // Add files if present
+        if (files && files.length > 0) {
+            const processedFiles = processFiles(files)
+            payload.files = processedFiles
+        }
+
+        const response = await axios.post(`${baseUrl}/api/v1/prediction/${chatflowId}`, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.TESTING_CHATFLOWS_AUTH_TOKEN}`
+            },
+            timeout: argv.timeout
+        })
         return {
             success: true,
             chatflowId,
+            input,
             response: response.data,
-            duration: Date.now() - startTime
+            sessionId: response.data.sessionId, // Return the sessionId for next turn
+            chatId: response.data.chatId, // Return the chatId for reference
+            duration: Date.now() - startTime,
+            filesCount: files ? files.length : 0
         }
     } catch (error) {
         if (retryCount < argv.retries) {
@@ -151,26 +222,103 @@ async function testChatflow(chatflowId, retryCount = 0) {
                 console.log(`⚠️  Retrying ${chatflowId} (attempt ${retryCount + 1}/${argv.retries})`)
             }
             await sleep(1000 * (retryCount + 1)) // Exponential backoff
-            return testChatflow(chatflowId, retryCount + 1)
+            return testChatflowTurn(chatflowId, input, files, sessionId, retryCount + 1)
         }
         return {
             success: false,
             chatflowId,
+            input,
             error: error.response?.data || error.message,
-            duration: Date.now() - startTime
+            duration: Date.now() - startTime,
+            filesCount: files ? files.length : 0
         }
+    }
+}
+
+async function testChatflow(chatflowData) {
+    const chatflowId = extractUUID(chatflowData.id)
+    const internalName = chatflowData.internalName || 'Unnamed'
+    const actualName = await getChatflowName(chatflowId)
+
+    // Validate that conversation property exists
+    if (!chatflowData.conversation || !Array.isArray(chatflowData.conversation)) {
+        throw new Error(`Chatflow ${internalName} (${chatflowId}) is missing required 'conversation' property`)
+    }
+
+    if (chatflowData.conversation.length === 0) {
+        throw new Error(`Chatflow ${internalName} (${chatflowId}) has empty 'conversation' array`)
+    }
+
+    const conversationResults = []
+    let currentSessionId = null // Track session ID across turns
+    let currentChatId = null // Track chat ID across turns
+
+    console.log(`\n📝 Testing: ${actualName} [${internalName}]`)
+    console.log(`ID: ${chatflowId}`)
+    console.log(`Turns: ${chatflowData.conversation.length}`)
+
+    for (let i = 0; i < chatflowData.conversation.length; i++) {
+        const turn = chatflowData.conversation[i]
+
+        console.log(`\n  Turn ${i + 1}/${chatflowData.conversation.length}:`)
+        console.log(`  Input: "${turn.input}"`)
+        if (turn.files && turn.files.length > 0) {
+            console.log(`  Files: ${turn.files.map((f) => f.path).join(', ')}`)
+        }
+        if (currentSessionId) {
+            console.log(`  Using Session ID: ${currentSessionId}`)
+        }
+
+        const result = await testChatflowTurn(chatflowId, turn.input, turn.files, currentSessionId)
+        result.turnNumber = i + 1
+        result.totalTurns = chatflowData.conversation.length
+        conversationResults.push(result)
+
+        if (result.success) {
+            console.log('  ✅ Success!')
+            console.log('  Response:', JSON.stringify(result.response, null, 4))
+
+            // Update session and chat IDs from the response for next turn
+            if (result.sessionId) {
+                currentSessionId = result.sessionId
+            }
+            if (result.chatId) {
+                currentChatId = result.chatId
+            }
+        } else {
+            console.log('  ❌ Error:')
+            console.log('  Error details:', JSON.stringify(result.error, null, 4))
+        }
+        console.log(`  ⏱️  Duration: ${formatDuration(result.duration)}`)
+
+        // Add delay between turns (except for the last turn)
+        if (!argv['no-delay'] && i < chatflowData.conversation.length - 1) {
+            await sleep(parseInt(process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS))
+        }
+    }
+
+    // Return consolidated result
+    const allSuccessful = conversationResults.every((r) => r.success)
+    const totalDuration = conversationResults.reduce((acc, r) => acc + r.duration, 0)
+
+    return {
+        success: allSuccessful,
+        chatflowId,
+        internalName,
+        actualName,
+        type: 'conversation',
+        turns: conversationResults,
+        duration: totalDuration,
+        totalTurns: chatflowData.conversation.length,
+        finalSessionId: currentSessionId, // Include final session ID in results
+        finalChatId: currentChatId // Include final chat ID in results
     }
 }
 
 async function main() {
     try {
         // Validate required environment variables
-        const requiredEnvVars = [
-            'TESTING_CHATFLOWS_API_URL',
-            'TESTING_CHATFLOWS_AUTH_TOKEN',
-            'TESTING_CHATFLOWS_QUESTION',
-            'TESTING_CHATFLOWS_REQUEST_DELAY_MS'
-        ]
+        const requiredEnvVars = ['TESTING_CHATFLOWS_API_URL', 'TESTING_CHATFLOWS_AUTH_TOKEN', 'TESTING_CHATFLOWS_REQUEST_DELAY_MS']
 
         const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
         if (missingEnvVars.length > 0) {
@@ -180,18 +328,19 @@ async function main() {
         // Read and load JS file
         const chatflowsData = require(path.resolve(argv.file))
 
-        const chatflowIds = chatflowsData
-            .filter((item) => item.enabled !== false) // Default to enabled if property is missing
-            .map((item) => extractUUID(item.id)) // Extract UUID from id field
+        const enabledChatflows = chatflowsData.filter((item) => item.enabled !== false)
 
         if (argv.verbose) {
-            console.log('🔍 Extracted UUIDs from input:')
-            chatflowIds.forEach((id) => console.log(id))
+            console.log('🔍 Loaded chatflows:')
+            enabledChatflows.forEach((cf, i) => {
+                console.log(`${i + 1}. ${cf.internalName || 'Unnamed'} (${extractUUID(cf.id)})`)
+                console.log(`   Turns: ${cf.conversation?.length || 0}`)
+            })
             console.log('')
         }
 
         console.log('🚀 Starting chatflow testing...\n')
-        console.log(`📊 Total chatflows to test: ${chatflowIds.length}`)
+        console.log(`📊 Total chatflows to test: ${enabledChatflows.length}`)
         console.log(`⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`)
         console.log(`🔄 Retry attempts: ${argv.retries}`)
         console.log(`⏳ Request timeout: ${argv.timeout}ms\n`)
@@ -200,68 +349,74 @@ async function main() {
         const startTime = Date.now()
 
         // Test each chatflow
-        for (let i = 0; i < chatflowIds.length; i++) {
-            const chatflowId = chatflowIds[i]
-            const chatflowName = await getChatflowName(chatflowId)
+        for (let i = 0; i < enabledChatflows.length; i++) {
+            const chatflowData = enabledChatflows[i]
 
-            if (argv.verbose) {
-                console.log(`\n📝 Testing chatflow ${i + 1}/${chatflowIds.length}`)
-                console.log(`Name: ${chatflowName}`)
-                console.log(`ID: ${chatflowId}`)
-            }
-
-            const result = await testChatflow(chatflowId)
-            result.name = chatflowName
+            const result = await testChatflow(chatflowData)
             results.push(result)
 
-            if (argv.verbose) {
-                if (result.success) {
-                    console.log('✅ Success!')
-                    console.log('Response:', JSON.stringify(result.response, null, 2))
-                } else {
-                    console.log('❌ Error:')
-                    console.log('Error details:', JSON.stringify(result.error, null, 2))
-                }
-                console.log(`⏱️  Duration: ${formatDuration(result.duration)}`)
-                console.log('----------------------------------------')
-            } else {
-                // Show each result on a new line with name and status
-                console.log(`${result.success ? '✅' : '❌'} ${result.name} (${result.chatflowId})`)
-            }
-
-            // Add delay between requests (except for the last request)
-            if (!argv['no-delay'] && i < chatflowIds.length - 1) {
+            // Add delay between chatflows (except for the last chatflow)
+            if (!argv['no-delay'] && i < enabledChatflows.length - 1) {
                 await sleep(parseInt(process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS))
             }
         }
+
+        // Show clean checkmark summary
+        console.log('\n\n' + '='.repeat(60))
+        console.log('RESULTS SUMMARY')
+        console.log('='.repeat(60))
+
+        results.forEach((result) => {
+            const failedTurns = result.turns.filter((t) => !t.success).length
+            if (failedTurns === 0) {
+                console.log(`✅ ${result.internalName} (${result.chatflowId}) - ${result.totalTurns} turns`)
+                if (result.finalSessionId && argv.verbose) {
+                    console.log(`   Session ID: ${result.finalSessionId}`)
+                }
+            } else {
+                console.log(`❌ ${result.internalName} (${result.chatflowId}) - ${failedTurns}/${result.totalTurns} turns failed`)
+            }
+        })
 
         // Generate summary
         const totalDuration = Date.now() - startTime
         const successful = results.filter((r) => r.success).length
         const failed = results.filter((r) => !r.success).length
         const avgDuration = results.reduce((acc, r) => acc + r.duration, 0) / results.length
-        const failedChatflows = results
+
+        // Count total turns
+        const totalTurns = results.reduce((acc, r) => acc + r.totalTurns, 0)
+
+        const failedResults = results
             .filter((r) => !r.success)
             .map((r) => ({
                 id: r.chatflowId,
-                name: r.name,
-                error: r.error
+                internalName: r.internalName,
+                actualName: r.actualName,
+                type: r.type,
+                error: r.turns.filter((t) => !t.success).map((t) => ({ turn: t.turnNumber, error: t.error }))
             }))
 
         console.log('\n\n📊 Summary:')
-        console.log(`Total tests: ${results.length}`)
-        console.log(`Successful: ${successful}`)
-        console.log(`Failed: ${failed}`)
+        console.log(`Total chatflows: ${results.length}`)
+        console.log(`Total turns: ${totalTurns}`)
+        console.log(`Successful chatflows: ${successful}`)
+        console.log(`Failed chatflows: ${failed}`)
         console.log(`Success rate: ${((successful / results.length) * 100).toFixed(1)}%`)
-        console.log(`Average duration: ${formatDuration(avgDuration)}`)
+        console.log(`Average duration per chatflow: ${formatDuration(avgDuration)}`)
         console.log(`Total duration: ${formatDuration(totalDuration)}`)
 
         if (failed > 0) {
             console.log('\n❌ Failed Chatflows:')
-            failedChatflows.forEach(({ id, name, error }) => {
-                console.log(`\nName: ${name}`)
+            failedResults.forEach(({ id, internalName, actualName, type, error }) => {
+                console.log(`\nActual Name: ${actualName}`)
+                console.log(`Internal Name: ${internalName}`)
                 console.log(`ID: ${id}`)
-                console.log('Error:', typeof error === 'string' ? error : JSON.stringify(error, null, 2))
+                console.log(`Type: ${type}`)
+                console.log('Failed turns:')
+                error.forEach(({ turn, error: turnError }) => {
+                    console.log(`  Turn ${turn}:`, typeof turnError === 'string' ? turnError : JSON.stringify(turnError, null, 2))
+                })
             })
         }
 
