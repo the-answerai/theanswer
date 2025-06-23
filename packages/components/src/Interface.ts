@@ -23,6 +23,7 @@ export type NodeParamsType =
     | 'folder'
     | 'tabs'
     | 'contentfulConfig'
+    | 'googleDrive'
 
 export type CommonType = string | number | boolean | undefined | null
 
@@ -46,6 +47,12 @@ export interface IVariable {
 
 export type IDatabaseEntity = {
     [key: string]: any
+}
+
+export interface IGoogleDriveFile {
+    fileId: string
+    fileName: string
+    iconUrl: string
 }
 
 export interface IAttachment {

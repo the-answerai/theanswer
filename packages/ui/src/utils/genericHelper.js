@@ -138,7 +138,8 @@ export const initNode = (nodeData, newNodeId, isAgentflow) => {
         'folder',
         'tabs',
         'conditionFunction', // This is a special type for condition functions
-        'contentfulConfig'
+        'contentfulConfig',
+        'googleDrive'
     ]
 
     // Inputs
