@@ -25,7 +25,7 @@
  *
  * Updated: Uses proper document loaders instead of generic text processing
  */
-import { INode, INodeData, INodeOutputsValue, INodeParams, ICommonObject } from '../../../src/Interface'
+import { INode, INodeData, INodeOutputsValue, INodeParams, ICommonObject, IGoogleDriveFile } from '../../../src/Interface'
 import { TextSplitter } from 'langchain/text_splitter'
 import { Document } from 'langchain/document'
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf'
@@ -121,7 +121,7 @@ class GoogleDrive implements INode {
         ]
     }
 
-    private parseSelectedFiles(selectedFilesInput: any): any[] {
+    private parseSelectedFiles(selectedFilesInput: any): IGoogleDriveFile[] {
         if (!selectedFilesInput) {
             throw new Error('No files selected')
         }
@@ -133,7 +133,7 @@ class GoogleDrive implements INode {
             // 3. Comma-separated file IDs: "id1,id2,id3"
             
             const selectedFilesStr = selectedFilesInput.toString().trim()
-            let selectedFiles: any[]
+            let selectedFiles: IGoogleDriveFile[]
             
             if (selectedFilesStr.startsWith('[') && selectedFilesStr.endsWith(']')) {
                 // JSON array format
@@ -218,7 +218,7 @@ class GoogleDrive implements INode {
         const metadata = nodeData.inputs?.metadata
         
         const selectedFiles = this.parseSelectedFiles(nodeData.inputs?.selectedFiles)
-        const fileIds = selectedFiles.map((file: any) => file.fileId)
+        const fileIds = selectedFiles.map((file) => file.fileId)
         const pdfUsage = nodeData.inputs?.pdfUsage as string
         const columnName = nodeData.inputs?.columnName as string
         
@@ -266,7 +266,7 @@ class GoogleDrive implements INode {
         
         // Validate and parse selectedFiles - use the same robust parsing as init()
         const selectedFiles = this.parseSelectedFiles(nodeData.inputs?.selectedFiles)
-        const fileIds = selectedFiles.map((file: any) => file.fileId)
+        const fileIds = selectedFiles.map((file) => file.fileId)
         const pdfUsage = nodeData.inputs?.pdfUsage as string
         const columnName = nodeData.inputs?.columnName as string
         

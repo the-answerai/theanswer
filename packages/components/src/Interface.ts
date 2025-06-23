@@ -49,6 +49,12 @@ export type IDatabaseEntity = {
     [key: string]: any
 }
 
+export interface IGoogleDriveFile {
+    fileId: string
+    fileName: string
+    iconUrl: string
+}
+
 export interface IAttachment {
     content: string
     contentType: string

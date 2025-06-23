@@ -6,26 +6,13 @@ import credentialsApi from '@/api/credentials'
 import { IconX, IconTrash } from '@tabler/icons-react'
 import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
+import { GOOGLE_DRIVE_SUPPORTED_MIME_TYPES as SUPPORTED_MIME_TYPES } from '@/components/src/constants'
 
-// Constants for MIME types to avoid duplication
-const SUPPORTED_MIME_TYPES = [
-    'application/vnd.google-apps.document',
-    'application/vnd.google-apps.spreadsheet',
-    'application/vnd.google-apps.presentation',
-    'application/pdf',
-    'text/csv',
-    'application/csv',
-    'text/comma-separated-values',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'application/msword',
-    'application/vnd.ms-powerpoint',
-    'text/plain'
-].join(',')
-
-// Custom hook for Google API script loading
+/**
+ * Custom hook for loading Google API scripts (Google Picker and Identity Services)
+ * @param {string} accessToken - Google OAuth access token for authentication
+ * @returns {boolean} scriptsLoaded - Whether the Google API scripts have been loaded
+ */
 const useGoogleAPILoader = (accessToken) => {
     const [scriptsLoaded, setScriptsLoaded] = useState(false)
     const scriptsLoadedRef = useRef(false)
@@ -81,7 +68,12 @@ const useGoogleAPILoader = (accessToken) => {
     return scriptsLoaded
 }
 
-// Custom hook for picker management
+/**
+ * Custom hook for managing Google Drive Picker instances
+ * @param {string} accessToken - Google OAuth access token for authentication
+ * @param {Function} onFilesSelected - Callback function when files are selected
+ * @returns {Object} Object containing createPicker, closePicker functions and pickerInstance state
+ */
 const useGooglePicker = (accessToken, onFilesSelected) => {
     const [pickerInstance, setPickerInstance] = useState(null)
 
