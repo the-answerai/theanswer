@@ -142,7 +142,7 @@ module.exports = [
     },
     {
         id: 'd377e905-7ab1-4ebf-899d-605ee7ba345b',
-        enabled: false,
+        enabled: true,
         internalName: 'ChatGPT - Official',
         conversation: [
             {
@@ -335,14 +335,16 @@ module.exports = [
     {
         id: '1ffd22be-5d19-4127-8de5-5ec756462009',
         enabled: true,
-        internalName: 'Chief Sidekick - Official',
+        internalName: 'Full Test - Chief Sidekick - Official',
         conversation: [
             {
-                input: 'Hello, my name is John Doe, what can you do?',
-                files: []
+                input: 'Create an image of a golden retriever holding a baby elephant'
             },
             {
-                input: 'Describe this image.',
+                input: 'What is todays date? Whats in the news today?'
+            },
+            {
+                input: 'Here is an image.',
                 files: [
                     {
                         path: 'scripts/testing-chatflows/assets/image.png',
@@ -351,8 +353,13 @@ module.exports = [
                 ]
             },
             {
-                input: 'What is my name? What is the image?',
-                files: []
+                input: 'What was in the image I just sent you?'
+            },
+            {
+                input: 'Create a randomstory about something.'
+            },
+            {
+                input: 'What was the story about?'
             }
         ]
     }
