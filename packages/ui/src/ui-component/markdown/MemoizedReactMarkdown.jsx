@@ -7,6 +7,9 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
+import { Box, Link } from '@mui/material'
+import { IconDownload } from '@tabler/icons-react'
+import Image from 'next/image'
 
 /**
  * Checks if text likely contains LaTeX math notation
@@ -115,6 +118,75 @@ export const MemoizedReactMarkdown = memo(
                                 <code className={className} {...codeProps}>
                                     {children}
                                 </code>
+                            )
+                        },
+                        img({ src, alt, ...imgProps }) {
+                            return (
+                                <Box 
+                                    sx={{ 
+                                        display: 'block', 
+                                        margin: '16px 0',
+                                        width: '100%',
+                                        maxWidth: '800px',
+                                        mx: 'auto'
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            position: 'relative',
+                                            width: '100%',
+                                            borderRadius: 1,
+                                            overflow: 'hidden',
+                                            '& img': {
+                                                borderRadius: 1,
+                                                display: 'block'
+                                            }
+                                        }}
+                                    >
+                                        <Image
+                                            src={src}
+                                            alt={alt || 'Markdown image'}
+                                            width={800}
+                                            height={600}
+                                            style={{
+                                                width: '100%',
+                                                height: 'auto'
+                                            }}
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                                            onError={(e) => {
+                                                const imgElement = e.target
+                                                const fallbackImg = document.createElement('img')
+                                                fallbackImg.src = src
+                                                fallbackImg.alt = alt || 'Markdown image'
+                                                fallbackImg.style.cssText = 'width: 100%; height: auto; border-radius: 4px; display: block;'
+                                                imgElement.parentNode.replaceChild(fallbackImg, imgElement)
+                                            }}
+                                            {...imgProps}
+                                        />
+                                    </Box>
+                                    <Box sx={{ mt: 1, textAlign: 'center' }}>
+                                        <Link 
+                                            href={src}
+                                            download
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            sx={{ 
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 0.5,
+                                                fontSize: '0.875rem',
+                                                textDecoration: 'none',
+                                                color: 'primary.main',
+                                                '&:hover': { 
+                                                    textDecoration: 'underline'
+                                                }
+                                            }}
+                                        >
+                                            <IconDownload size={16} />
+                                            Download Image
+                                        </Link>
+                                    </Box>
+                                </Box>
                             )
                         },
                         p({ children }) {
