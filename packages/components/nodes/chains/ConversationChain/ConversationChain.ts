@@ -230,9 +230,6 @@ const prepareChain = async (nodeData: INodeData, options: ICommonObject, session
     const memoryKey = memory.memoryKey ?? 'chat_history'
     const prependMessages = options?.prependMessages
 
-    console.log('=========== prepareChain')
-    console.log({ model, vision: llmSupportsVision(model) })
-
     let messageContent: MessageContentImageUrl[] = []
     if (llmSupportsVision(model)) {
         messageContent = await addImagesToMessages(nodeData, options, model.multiModalOption)

@@ -265,6 +265,8 @@ export interface IFileUpload {
     type: string
     name: string
     mime: string
+    duration?: number
+    isQuestion?: boolean
 }
 
 export interface IMultiModalOption {

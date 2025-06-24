@@ -297,7 +297,17 @@ export const executeFlow = async ({
             }
 
             // Run Speech to Text conversion
-            if (upload.mime === 'audio/webm' || upload.mime === 'audio/mp4' || upload.mime === 'audio/ogg') {
+            if (
+                upload.mime === 'audio/wav' ||
+                upload.mime === 'audio/webm' ||
+                upload.mime === 'audio/mpeg' ||
+                upload.mime === 'audio/m4a' ||
+                upload.mime === 'audio/mp4' ||
+                upload.mime === 'audio/ogg' ||
+                upload.mime === 'audio/x-m4a' ||
+                upload.mime === 'audio/mp3' ||
+                upload.mime === 'audio/mpga'
+            ) {
                 logger.debug(`Attempting a speech to text conversion...`)
                 let speechToTextConfig: ICommonObject = {}
                 if (chatflow.speechToText) {
@@ -311,7 +321,7 @@ export const executeFlow = async ({
                         }
                     }
                 }
-                if (speechToTextConfig) {
+                if (Object.keys(speechToTextConfig)?.length) {
                     const options: ICommonObject = {
                         chatId,
                         chatflowid,
@@ -323,8 +333,12 @@ export const executeFlow = async ({
                     const speechToTextResult = await convertSpeechToText(upload, speechToTextConfig, options)
                     logger.debug(`Speech to text result: ${speechToTextResult}`)
                     if (speechToTextResult) {
-                        incomingInput.question = speechToTextResult
-                        question = speechToTextResult
+                        const newQuestion =
+                            incomingInput.question && !upload.isQuestion
+                                ? `${incomingInput.question}\n\n ###Audio file: "${upload.name}"\n${speechToTextResult}`
+                                : speechToTextResult
+                        incomingInput.question = newQuestion
+                        question = newQuestion
                     }
                 }
             }
@@ -540,7 +554,7 @@ export const executeFlow = async ({
                 sessionId,
                 createdDate: userMessageDateTime,
                 fileUploads: uploads ? JSON.stringify(fileUploads) : undefined,
-                leadEmail: incomingInput.leadEmail, 
+                leadEmail: incomingInput.leadEmail,
                 userId: user?.id ?? agentflow.userId,
                 organizationId: user?.organizationId ?? agentflow.organizationId
             }

@@ -1979,14 +1979,19 @@ class MyLangfuseHandler extends CallbackHandler {
         name?: string
     ): Promise<void> {
         // Optionally log or modify arguments here
-        if (this.logger?.info) {
-            this.logger.info('LLM Generation Start logger:')
-            this.logger.info(JSON.stringify({ llm, messages, runId, parentRunId, extraParams, tags, metadata, name }, null, 2))
-        } else {
-            console.log('LLM Generation Start console:', { llm, messages, runId, parentRunId, extraParams, tags, metadata, name })
-        }
+        // if (this.logger?.info) {
+        //     this.logger.info('LLM Generation Start logger:')
+        //     this.logger.info(JSON.stringify({ llm, messages, runId, parentRunId, extraParams, tags, metadata, name }, null, 2))
+        // } else {
+        //     console.log('LLM Generation Start console:', { llm, messages, runId, parentRunId, extraParams, tags, metadata, name })
+        // }
         return super.handleGenerationStart(llm, messages, runId, parentRunId, extraParams, tags, metadata, name)
     }
+
+    // async handleLLMNewToken(token: string, idx: any, runId: string, parentRunId?: string, tags?: string[], fields?: any): Promise<void> {
+
+    //     super.handleLLMNewToken(token, idx, runId, parentRunId, tags, fields)
+    // }
 
     async handleLLMEnd(output: any, runId: string, parentRunId?: string): Promise<void> {
         // const usageMetadata = output?.generations?.[0]?.[0]?.message?.kwargs?.usage_metadata
@@ -2001,13 +2006,13 @@ class MyLangfuseHandler extends CallbackHandler {
         //     }
         // }
 
-        output.llmOutput = {
-            estimatedTokenUsage: {
-                input: 60,
-                output: 9,
-                total: 69
-            }
-        }
+        // output.llmOutput = {
+        //     estimatedTokenUsage: {
+        //         input: 60,
+        //         output: 9,
+        //         total: 69
+        //     }
+        // }
 
         const logData = {
             output,
@@ -2020,7 +2025,7 @@ class MyLangfuseHandler extends CallbackHandler {
             this.logger.info(JSON.stringify(logData, null, 2))
         } else {
             console.log('LLM Generation Ended console:', logData)
-            console.log(JSON.stringify(logData, null, 2))
+            console.log(JSON.stringify(logData?.output?.generations?.[0] ?? {}, null, 2))
         }
 
         console.log('============TRACE')

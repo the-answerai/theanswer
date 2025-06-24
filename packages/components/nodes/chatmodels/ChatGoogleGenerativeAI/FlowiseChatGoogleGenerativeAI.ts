@@ -92,7 +92,7 @@ class LangchainChatGoogleGenerativeAI
     private contextCache?: FlowiseGoogleAICacheManager
 
     get _isMultimodalModel() {
-        return this.modelName.includes('vision') || this.modelName.startsWith('gemini-1.5')
+        return this.modelName.includes('vision') || this.modelName.startsWith('gemini-1.5') || this.modelName.startsWith('gemini-2.5')
     }
 
     constructor(fields?: GoogleGenerativeAIChatInput) {
@@ -266,7 +266,17 @@ class LangchainChatGoogleGenerativeAI
             }
             return output
         })
-        const generationResult = mapGenerateContentResultToChatResult(res.response)
+
+        let genAIUsageMetadata = {
+            usageMetadata: res.response.usageMetadata as {
+                promptTokenCount: number
+                candidatesTokenCount: number
+                totalTokenCount: number
+            }
+        }
+
+        const generationResult = mapGenerateContentResultToChatResult(res.response, this.modelName, genAIUsageMetadata)
+
         await _runManager?.handleLLMNewToken(generationResult.generations?.length ? generationResult.generations[0].text : '')
         return generationResult
     }
@@ -287,18 +297,63 @@ class LangchainChatGoogleGenerativeAI
 
             for await (const chunk of stream) {
                 const index = (chunk.generationInfo as NewTokenIndices)?.completion ?? 0
+
+                if (chunk.generationInfo) {
+                    if (!chunk.generationInfo.model_name && this.modelName) {
+                        chunk.generationInfo.model_name = this.modelName
+                    }
+                }
+
                 if (finalChunks[index] === undefined) {
                     finalChunks[index] = chunk
                 } else {
-                    finalChunks[index] = finalChunks[index].concat(chunk)
+                    // Concatenate the chunks
+                    const existingChunk = finalChunks[index]
+
+                    const concatenated = existingChunk.concat(chunk)
+
+                    // Use the latest chunk's usage_metadata (which has the correct diff details)
+                    // @ts-ignore - Custom metadata structure
+                    concatenated.message.usage_metadata = chunk.message.usage_metadata
+
+                    finalChunks[index] = concatenated
+                }
+
+                // @ts-ignore - Custom metadata structure
+                if (chunk.message.usage_metadata) {
+                    // @ts-ignore - Custom metadata structure
+                    const usage = chunk.message.usage_metadata as UsageMetadata
+
+                    for (const key of ['input_tokens', 'output_tokens', 'total_tokens'] as const) {
+                        // @ts-ignore - Custom metadata structure
+                        tokenUsage[key] = (tokenUsage[key] ?? 0) + (usage[key] ?? 0)
+                    }
+
+                    for (const detailKey of ['input_token_details', 'output_token_details'] as const) {
+                        // @ts-ignore - Custom metadata structure
+                        tokenUsage[detailKey] ??= {}
+                        // @ts-ignore - Custom metadata structure
+                        const detail = usage[detailKey] ?? {}
+                        for (const modality in detail) {
+                            // @ts-ignore - Custom metadata structure
+                            tokenUsage[detailKey][modality] = (tokenUsage[detailKey][modality] ?? 0) + detail[modality]
+                        }
+                    }
                 }
             }
+
             const generations = Object.entries(finalChunks)
                 .sort(([aKey], [bKey]) => parseInt(aKey, 10) - parseInt(bKey, 10))
                 .map(([_, value]) => value)
 
+            for (const generation of generations) {
+                // @ts-ignore - Custom metadata structure
+                generation.message.usage_metadata = tokenUsage
+            }
+
             return { generations, llmOutput: { estimatedTokenUsage: tokenUsage } }
         }
+
         return this._generateNonStreaming(prompt, options, runManager)
     }
 
@@ -328,41 +383,94 @@ class LangchainChatGoogleGenerativeAI
             return stream
         })
 
-        let usageMetadata: UsageMetadata | ICommonObject | undefined
         let index = 0
+        let prevInputTokenDetails: Record<string, number> = {}
+        let prevOutputTokenDetails: Record<string, number> = {}
+
         for await (const response of stream) {
+            let usageMetadata: UsageMetadata | undefined
+
             if ('usageMetadata' in response && this.streamUsage !== false && options.streamUsage !== false) {
-                const genAIUsageMetadata = response.usageMetadata as {
-                    promptTokenCount: number
-                    candidatesTokenCount: number
-                    totalTokenCount: number
+                const meta = response.usageMetadata as {
+                    promptTokenCount?: number
+                    candidatesTokenCount?: number
+                    thoughtsTokenCount?: number
+                    totalTokenCount?: number
+                    promptTokensDetails?: { modality: string; tokenCount: number }[]
+                    candidatesTokensDetails?: { modality: string; tokenCount: number }[]
                 }
-                if (!usageMetadata) {
-                    usageMetadata = {
-                        input_tokens: genAIUsageMetadata.promptTokenCount,
-                        output_tokens: genAIUsageMetadata.candidatesTokenCount,
-                        total_tokens: genAIUsageMetadata.totalTokenCount
-                    }
-                } else {
-                    // Under the hood, LangChain combines the prompt tokens. Google returns the updated
-                    // total each time, so we need to find the difference between the tokens.
-                    const outputTokenDiff = genAIUsageMetadata.candidatesTokenCount - (usageMetadata as ICommonObject).output_tokens
-                    usageMetadata = {
-                        input_tokens: 0,
-                        output_tokens: outputTokenDiff,
-                        total_tokens: outputTokenDiff
+
+                // Extract current input token details
+                const currentInputTokenDetails = Array.isArray(meta.promptTokensDetails)
+                    ? meta.promptTokensDetails.reduce((acc: Record<string, number>, { modality, tokenCount }) => {
+                          if (modality && typeof tokenCount === 'number') {
+                              acc[modality.toLowerCase()] = tokenCount
+                          }
+                          return acc
+                      }, {})
+                    : {}
+
+                // Extract current output token details
+                const currentOutputTokenDetails = Array.isArray(meta.candidatesTokensDetails)
+                    ? meta.candidatesTokensDetails.reduce((acc: Record<string, number>, { modality, tokenCount }) => {
+                          if (modality && typeof tokenCount === 'number') {
+                              acc[modality.toLowerCase()] = tokenCount
+                          }
+                          return acc
+                      }, {})
+                    : {
+                          text: meta.candidatesTokenCount ?? 0,
+                          reasoning: meta.thoughtsTokenCount ?? 0
+                      }
+
+                // Diff input tokens
+                const diffInputTokenDetails: Record<string, number> = {}
+                for (const modality in currentInputTokenDetails) {
+                    const prev = prevInputTokenDetails[modality] ?? 0
+                    const curr = currentInputTokenDetails[modality]
+                    const diff = curr - prev
+                    if (diff > 0) {
+                        diffInputTokenDetails[modality] = diff
                     }
                 }
+
+                // Diff output tokens
+                const diffOutputTokenDetails: Record<string, number> = {}
+                for (const modality in currentOutputTokenDetails) {
+                    const prev = prevOutputTokenDetails[modality] ?? 0
+                    const curr = currentOutputTokenDetails[modality]
+                    const diff = curr - prev
+                    if (diff > 0) {
+                        diffOutputTokenDetails[modality] = diff
+                    }
+                }
+
+                // Update previous values for next iteration
+                prevInputTokenDetails = currentInputTokenDetails
+                prevOutputTokenDetails = currentOutputTokenDetails
+
+                // Roll into a standard usageMetadata object
+
+                usageMetadata = {
+                    // @ts-ignore
+                    input_tokens: Object.values(diffInputTokenDetails).reduce((sum, val) => sum + val, 0),
+                    output_tokens: Object.values(diffOutputTokenDetails).reduce((sum, val) => sum + val, 0),
+                    total_tokens:
+                        Object.values(diffInputTokenDetails).reduce((sum, val) => sum + val, 0) +
+                        Object.values(diffOutputTokenDetails).reduce((sum, val) => sum + val, 0),
+                    input_token_details: diffInputTokenDetails,
+                    output_token_details: diffOutputTokenDetails
+                }
+
+                // console.log('=== Diffed usageMetadata for chunk', index, usageMetadata)
             }
 
             const chunk = convertResponseContentToChatGenerationChunk(response, {
-                usageMetadata: usageMetadata as UsageMetadata,
+                usageMetadata,
                 index
             })
             index += 1
-            if (!chunk) {
-                continue
-            }
+            if (!chunk) continue
 
             yield chunk
             await runManager?.handleLLMNewToken(chunk.text ?? '')
@@ -377,8 +485,6 @@ export class ChatGoogleGenerativeAI extends LangchainChatGoogleGenerativeAI impl
     id: string
 
     constructor(id: string, fields?: GoogleGenerativeAIChatInput) {
-        console.log('======fields')
-        console.log({ fields })
         super(fields)
         this.id = id
         this.configuredModel = fields?.modelName ?? ''
@@ -602,6 +708,7 @@ function convertBaseMessagesToContent(messages: BaseMessage[], isMultimodalModel
 
 function mapGenerateContentResultToChatResult(
     response: EnhancedGenerateContentResponse,
+    model_name?: string,
     extra?: {
         usageMetadata: UsageMetadata | undefined
     }
@@ -618,8 +725,11 @@ function mapGenerateContentResultToChatResult(
 
     const functionCalls = response.functionCalls()
     const [candidate] = response.candidates
+
     const { content, ...generationInfo } = candidate
     const text = content?.parts[0]?.text ?? ''
+
+    const usageMetadata: any = extra?.usageMetadata
 
     const generation: ChatGeneration = {
         text,
@@ -627,11 +737,32 @@ function mapGenerateContentResultToChatResult(
             content: text,
             tool_calls: functionCalls,
             additional_kwargs: {
+                model_name,
                 ...generationInfo
             },
-            usage_metadata: extra?.usageMetadata as any
+            usage_metadata: {
+                input_tokens: usageMetadata?.promptTokenCount ?? 0,
+                output_tokens: usageMetadata?.candidatesTokenCount ?? 0 + usageMetadata?.thoughtsTokenCount ?? 0,
+                total_tokens: usageMetadata?.totalTokenCount ?? 0,
+                input_token_details: Array.isArray(usageMetadata?.promptTokensDetails)
+                    ? usageMetadata?.promptTokensDetails.reduce((acc: any, curr: any) => {
+                          if (curr.modality && typeof curr.tokenCount === 'number') {
+                              acc[curr.modality.toLowerCase()] = curr.tokenCount
+                          }
+                          return acc
+                      }, {})
+                    : {},
+
+                output_token_details: {
+                    text: usageMetadata?.candidatesTokenCount ?? 0,
+                    reasoning: usageMetadata?.thoughtsTokenCount ?? 0
+                }
+            }
         }),
-        generationInfo
+        generationInfo: {
+            model_name,
+            ...generationInfo
+        }
     }
 
     return {
@@ -664,6 +795,7 @@ function convertResponseContentToChatGenerationChunk(
             }))
         )
     }
+
     return new ChatGenerationChunk({
         text,
         message: new AIMessageChunk({
