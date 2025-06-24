@@ -321,7 +321,9 @@ export const executeFlow = async ({
                         }
                     }
                 }
+                // If there is a speech-to-text configuration present, proceed to convert audio
                 if (Object.keys(speechToTextConfig)?.length) {
+                    // Prepare options object with context for the conversion (chat, user, org, db, etc.)
                     const options: ICommonObject = {
                         chatId,
                         chatflowid,
@@ -330,13 +332,18 @@ export const executeFlow = async ({
                         userId: user?.id,
                         organizationId: user?.organizationId
                     }
+                    // Call the speech-to-text conversion utility with the uploaded file and config
                     const speechToTextResult = await convertSpeechToText(upload, speechToTextConfig, options)
                     logger.debug(`Speech to text result: ${speechToTextResult}`)
+                    // If conversion was successful and returned a transcript
                     if (speechToTextResult) {
+                        // If there is an existing question and the upload is not itself a question, append the transcript to the question
+                        // Otherwise, use the transcript as the question
                         const newQuestion =
                             incomingInput.question && !upload.isQuestion
                                 ? `${incomingInput.question}\n\n ###Audio file: "${upload.name}"\n${speechToTextResult}`
                                 : speechToTextResult
+                        // Update the input and question with the new value (now including the transcript)
                         incomingInput.question = newQuestion
                         question = newQuestion
                     }

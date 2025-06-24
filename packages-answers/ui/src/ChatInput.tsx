@@ -9,7 +9,6 @@ import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
 import { IconCircleDot } from '@tabler/icons-react'
 
-import { throttle } from '@utils/throttle'
 import { useAnswers } from './AnswersContext'
 
 import type { Sidekick, StarterPrompt } from 'types'
@@ -28,8 +27,7 @@ interface ChatInputProps {
     setUploadedFiles: React.Dispatch<React.SetStateAction<FileUpload[]>>
 }
 
-const ChatInput = ({ scrollRef, isWidget, sidekicks, uploadedFiles, setUploadedFiles }: ChatInputProps) => {
-    const defaultPlaceholderValue = 'How can you help me accomplish my goal?'
+const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
     const [inputValue, setInputValue] = useState('')
     const [isDragging, setIsDragging] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -40,17 +38,10 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, uploadedFiles, setUploadedF
     const [isLoadingRecording, setIsLoadingRecording] = useState(false)
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const recordingIntervalRef = useRef<number | undefined>(undefined)
-    const { chat, messages, sendMessage, isLoading, sidekick, gptModel, chatbotConfig, handleAbort } = useAnswers()
+    const { messages, sendMessage, isLoading, sidekick, gptModel, chatbotConfig, handleAbort } = useAnswers()
     const constraints = sidekick?.constraints
     const [isMessageStopping, setIsMessageStopping] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-    const throttledScroll = React.useCallback(
-        throttle(() => {
-            scrollRef?.current?.scrollTo({ top: scrollRef.current.scrollHeight })
-        }, 300),
-        [scrollRef]
-    )
 
     const recordedAudioUrl = React.useMemo(() => {
         if (!recordedAudio) return ''
@@ -368,19 +359,19 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, uploadedFiles, setUploadedF
                 mediaRecorderRef.current = new MediaRecorder(stream)
                 mediaRecorderRef.current.start()
 
-                console.log('[handleAudioRecordStart] Recording started')
+                // [handleAudioRecordStart] Recording started
                 setIsRecording(true)
                 setRecordingTime(0)
                 setRecordingStatus('')
 
                 mediaRecorderRef.current.ondataavailable = async (event) => {
-                    console.log('[ondataavailable] Event received')
+                    // [ondataavailable] Event received
 
                     const audioBlob = event.data
                     const audioFile = new File([audioBlob], `${Date.now()}.webm`, { type: 'audio/webm' })
 
                     if (isLoadingRecording) {
-                        console.log('[ondataavailable] isLoadingRecording = true. Sending message...')
+                        // [ondataavailable] isLoadingRecording = true. Sending message...'
                         const audioUpload = await convertAudioFileToFileUpload(audioFile)
 
                         sendMessage({
@@ -398,13 +389,13 @@ const ChatInput = ({ scrollRef, isWidget, sidekicks, uploadedFiles, setUploadedF
                         setIsLoadingRecording(false)
                         setRecordingTime(0)
                     } else {
-                        console.log('[ondataavailable] Storing recorded audio for later')
+                        // [ondataavailable] Storing recorded audio for later
                         setRecordedAudio(audioFile)
                     }
                 }
 
                 mediaRecorderRef.current.onstop = () => {
-                    console.log('[onstop] Recording stopped')
+                    // [onstop] Recording stopped
                     setIsRecording(false)
                     stream.getTracks().forEach((track) => track.stop())
                 }

@@ -145,7 +145,7 @@ class AutoGPT_Agents implements INode {
                     executor.fullMessageHistory.push(new AIMessage(assistantReply))
 
                     const action = await executor.outputParser.parse(assistantReply)
-                    // Fix: Use 'any' for the tool map to avoid type incompatibility
+
                     // TODO: Refine type when langchain types are clarified
                     const tools = executor.tools.reduce<{ [key: string]: any }>((acc, tool) => {
                         acc[tool.name] = tool

@@ -499,7 +499,6 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                 baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
                 sdkIntegration: 'Flowise'
             }
-            // console.log('Langfuse override enabled', analytic)
         }
         const callbacks: any = []
 
@@ -602,7 +601,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                     //     metadata: metadata
                     // })
 
-                    const handler = new MyLangfuseHandler({
+                    const handler = new CallbackHandler({
                         ...langFuseOptions,
                         metadata: metadata,
                         userId: options?.user?.id,
@@ -957,10 +956,10 @@ export class AnalyticHandler {
                     metadata: { tags: ['openai-assistant'] },
                     ...this.nodeData?.inputs?.analytics?.langFuse
                 })
-                console.log(`Langfuse trace created: ${langfuseTraceClient.id}`)
+                // console.log(`Langfuse trace created: ${langfuseTraceClient.id}`)
             } else {
                 langfuseTraceClient = this.handlers['langFuse'].trace[parentIds['langFuse']]
-                console.log(`Langfuse trace retrieved: ${langfuseTraceClient.id}`)
+                // console.log(`Langfuse trace retrieved: ${langfuseTraceClient.id}`)
             }
 
             if (langfuseTraceClient) {
@@ -979,7 +978,7 @@ export class AnalyticHandler {
                 this.handlers['langFuse'].span = { [span.id]: span }
                 returnIds['langFuse'].trace = langfuseTraceClient.id
                 returnIds['langFuse'].span = span.id
-                console.log(`Langfuse span created: ${span.id}`)
+                // console.log(`Langfuse span created: ${span.id}`)
             }
         }
 
@@ -1162,7 +1161,7 @@ export class AnalyticHandler {
                 if (shutdown) {
                     const langfuse: Langfuse = this.handlers['langFuse'].client
                     await langfuse.shutdownAsync()
-                    console.log('Langfuse shutdown completed')
+                    // console.log('Langfuse shutdown completed')
                 }
             }
         }
@@ -1256,7 +1255,7 @@ export class AnalyticHandler {
                 if (shutdown) {
                     const langfuse: Langfuse = this.handlers['langFuse'].client
                     await langfuse.shutdownAsync()
-                    console.log('Langfuse shutdown completed')
+                    // console.log('Langfuse shutdown completed')
                 }
             }
         }
@@ -1348,7 +1347,7 @@ export class AnalyticHandler {
                 })
                 this.handlers['langFuse'].generation = { [generation.id]: generation }
                 returnIds['langFuse'].generation = generation.id
-                console.log(`Langfuse generation created: ${generation.id}`)
+                // console.log(`Langfuse generation created: ${generation.id}`)
             }
         }
 
@@ -1460,7 +1459,7 @@ export class AnalyticHandler {
                 generation.end({
                     output: output
                 })
-                console.log(`Langfuse generation ended: ${generation.id}`)
+                // console.log(`Langfuse generation ended: ${generation.id}`)
             }
         }
 
@@ -1535,7 +1534,7 @@ export class AnalyticHandler {
                 generation.end({
                     output: error
                 })
-                console.log(`Langfuse generation errored: ${generation.id}`)
+                // console.log(`Langfuse generation errored: ${generation.id}`)
             }
         }
 
@@ -1815,7 +1814,7 @@ export class AnalyticHandler {
                 toolSpan.end({
                     output: error
                 })
-                console.log(`Langfuse tool span errored: ${toolSpan.id}`)
+                // console.log(`Langfuse tool span errored: ${toolSpan.id}`)
             }
         }
 
@@ -1952,85 +1951,5 @@ export class CustomStreamingHandler extends BaseCallbackHandler {
             runId,
             parentRunId: parentRunId || null
         })
-    }
-}
-
-// Custom wrapper for Langfuse CallbackHandler to log generation events
-class MyLangfuseHandler extends CallbackHandler {
-    logger: any
-    constructor(options: any) {
-        super(options)
-        this.logger = options?.logger
-        if (this.logger && typeof this.logger.info === 'function') {
-            this.logger.info('MyLangfuseHandler instantiated')
-        } else {
-            console.log('MyLangfuseHandler instantiated')
-        }
-    }
-
-    async handleGenerationStart(
-        llm: Serialized,
-        messages: any[],
-        runId: string,
-        parentRunId?: string,
-        extraParams?: Record<string, unknown>,
-        tags?: string[],
-        metadata?: Record<string, unknown>,
-        name?: string
-    ): Promise<void> {
-        // Optionally log or modify arguments here
-        // if (this.logger?.info) {
-        //     this.logger.info('LLM Generation Start logger:')
-        //     this.logger.info(JSON.stringify({ llm, messages, runId, parentRunId, extraParams, tags, metadata, name }, null, 2))
-        // } else {
-        //     console.log('LLM Generation Start console:', { llm, messages, runId, parentRunId, extraParams, tags, metadata, name })
-        // }
-        return super.handleGenerationStart(llm, messages, runId, parentRunId, extraParams, tags, metadata, name)
-    }
-
-    // async handleLLMNewToken(token: string, idx: any, runId: string, parentRunId?: string, tags?: string[], fields?: any): Promise<void> {
-
-    //     super.handleLLMNewToken(token, idx, runId, parentRunId, tags, fields)
-    // }
-
-    async handleLLMEnd(output: any, runId: string, parentRunId?: string): Promise<void> {
-        // const usageMetadata = output?.generations?.[0]?.[0]?.message?.kwargs?.usage_metadata
-
-        // if (usageMetadata && typeof usageMetadata.total_tokens === 'number') {
-        //     output.llmOutput = {
-        //         estimatedTokenUsage: {
-        //             input: usageMetadata.input_tokens,
-        //             output: usageMetadata.output_tokens,
-        //             total: usageMetadata.total_tokens
-        //         }
-        //     }
-        // }
-
-        // output.llmOutput = {
-        //     estimatedTokenUsage: {
-        //         input: 60,
-        //         output: 9,
-        //         total: 69
-        //     }
-        // }
-
-        const logData = {
-            output,
-            runId,
-            parentRunId
-        }
-
-        if (this.logger?.info) {
-            this.logger.info('LLM Generation Ended logger:')
-            this.logger.info(JSON.stringify(logData, null, 2))
-        } else {
-            console.log('LLM Generation Ended console:', logData)
-            console.log(JSON.stringify(logData?.output?.generations?.[0] ?? {}, null, 2))
-        }
-
-        console.log('============TRACE')
-        console.log(JSON.stringify(this ?? {}, null, 2))
-
-        return super.handleLLMEnd(output, runId, parentRunId)
     }
 }
