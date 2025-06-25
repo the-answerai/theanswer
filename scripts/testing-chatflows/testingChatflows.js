@@ -17,6 +17,8 @@
  * Command Line Options:
  * -------------------
  * --file, -f: Path to JS file (default: ./chatflows.js)
+ * --all, -a: Run all chatflows without interactive selection
+ * --ids, -i: Comma-separated list of chatflow IDs/names to run (bypasses interactive selection)
  * --no-delay: Disable delay between requests
  * --retries, -r: Number of retry attempts (default: 2)
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
@@ -27,11 +29,9 @@
  *
  * JS File Format:
  * --------------
- * JS File Format:
  * module.exports = [
  *   {
  *     id: '...',
- *     enabled: true,
  *     internalName: '...',
  *     conversation: [
  *       {
@@ -47,6 +47,16 @@
  *     ]
  *   }
  * ]
+ *
+ * Interactive Selection:
+ * ---------------------
+ * By default, the script will show an interactive menu to select which chatflows to run:
+ * - Run all chatflows
+ * - Select specific chatflows (checkbox interface with arrow keys)
+ * - Run a single chatflow (list interface with arrow keys)
+ *
+ * Use --all flag to bypass interactive selection and run all chatflows
+ * Use --ids flag to specify chatflow IDs/names to run (comma-separated)
  */
 
 const fs = require('fs')
@@ -54,6 +64,7 @@ const path = require('path')
 const axios = require('axios')
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
+const inquirer = require('inquirer')
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
 
 // Error detection configuration
@@ -160,6 +171,17 @@ const argv = yargs(hideBin(process.argv))
         description: 'Path to JS file (module.exports = [...])',
         type: 'string',
         default: path.join(__dirname, 'chatflows.js')
+    })
+    .option('all', {
+        alias: 'a',
+        description: 'Run all chatflows without interactive selection',
+        type: 'boolean',
+        default: false
+    })
+    .option('ids', {
+        alias: 'i',
+        description: 'Comma-separated list of chatflow IDs to run (bypasses interactive selection)',
+        type: 'string'
     })
     .option('no-delay', {
         description: 'Disable delay between requests',
@@ -342,6 +364,77 @@ function getBaseUrl() {
     }
 
     return apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
+}
+
+// Function to interactively select chatflows
+async function selectChatflows(chatflowsData) {
+    console.log('\n🎯 Chatflow Selection\n')
+
+    // Create choices with enhanced display
+    const choices = chatflowsData.map((cf, index) => {
+        const chatflowId = extractUUID(cf.id)
+        const internalName = cf.internalName || 'Unnamed'
+        const turnCount = cf.conversation?.length || 0
+
+        return {
+            name: `${internalName} (${chatflowId}) - ${turnCount} turns`,
+            value: index,
+            short: internalName
+        }
+    })
+
+    const answers = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'selectionMode',
+            message: 'How would you like to select chatflows?',
+            choices: [
+                { name: '🚀 Run all chatflows', value: 'all' },
+                { name: '🎯 Select specific chatflows', value: 'select' },
+                { name: '📝 Run a single chatflow', value: 'single' }
+            ]
+        }
+    ])
+
+    switch (answers.selectionMode) {
+        case 'all':
+            return chatflowsData
+
+        case 'single': {
+            const singleAnswer = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'selectedChatflow',
+                    message: 'Select a chatflow to run:',
+                    choices: choices,
+                    pageSize: Math.min(choices.length, 15)
+                }
+            ])
+            return [chatflowsData[singleAnswer.selectedChatflow]]
+        }
+
+        case 'select': {
+            const multipleAnswer = await inquirer.prompt([
+                {
+                    type: 'checkbox',
+                    name: 'selectedChatflows',
+                    message: 'Select chatflows to run (use Space to select, Enter to confirm):',
+                    choices: choices,
+                    pageSize: Math.min(choices.length, 15),
+                    validate: (input) => {
+                        if (input.length === 0) {
+                            return 'Please select at least one chatflow'
+                        }
+                        return true
+                    }
+                }
+            ])
+            return multipleAnswer.selectedChatflows.map((index) => chatflowsData[index])
+        }
+
+        default:
+            throw new Error('Invalid selection mode')
+    }
 }
 
 async function getChatflowName(chatflowId) {
@@ -559,20 +652,47 @@ async function main() {
         // Read and load JS file
         const chatflowsData = require(path.resolve(argv.file))
 
-        const enabledChatflows = chatflowsData.filter((item) => item.enabled !== false)
+        // Determine which chatflows to test based on CLI options
+        let selectedChatflows
+
+        if (argv.all) {
+            // Run all chatflows via CLI flag
+            selectedChatflows = chatflowsData
+            console.log('🚀 Running all chatflows (--all flag specified)')
+        } else if (argv.ids) {
+            // Run specific chatflows by ID via CLI flag
+            const requestedIds = argv.ids.split(',').map((id) => id.trim())
+            selectedChatflows = chatflowsData.filter((cf) => {
+                const chatflowId = extractUUID(cf.id)
+                return requestedIds.some(
+                    (requestedId) =>
+                        chatflowId.toLowerCase().includes(requestedId.toLowerCase()) ||
+                        (cf.internalName && cf.internalName.toLowerCase().includes(requestedId.toLowerCase()))
+                )
+            })
+
+            if (selectedChatflows.length === 0) {
+                throw new Error(`No chatflows found matching IDs: ${requestedIds.join(', ')}`)
+            }
+
+            console.log(`🎯 Running ${selectedChatflows.length} chatflows matching IDs: ${requestedIds.join(', ')}`)
+        } else {
+            // Interactive selection
+            selectedChatflows = await selectChatflows(chatflowsData)
+        }
 
         if (argv.verbose) {
-            console.log('🔍 Loaded chatflows:')
-            enabledChatflows.forEach((cf, i) => {
+            console.log('\n🔍 Selected chatflows:')
+            selectedChatflows.forEach((cf, i) => {
                 console.log(`${i + 1}. ${cf.internalName || 'Unnamed'} (${extractUUID(cf.id)})`)
                 console.log(`   Turns: ${cf.conversation?.length || 0}`)
             })
             console.log('')
         }
 
-        console.log('🚀 Starting chatflow testing...\n')
+        console.log('\n🚀 Starting chatflow testing...\n')
         console.log(`🌐 API URL: ${getBaseUrl()}`)
-        console.log(`📊 Total chatflows to test: ${enabledChatflows.length}`)
+        console.log(`📊 Total chatflows to test: ${selectedChatflows.length}`)
         console.log(`⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`)
         console.log(`🔄 Retry attempts: ${argv.retries}`)
         console.log(`⏳ Request timeout: ${argv.timeout}ms`)
@@ -582,14 +702,14 @@ async function main() {
         const startTime = Date.now()
 
         // Test each chatflow
-        for (let i = 0; i < enabledChatflows.length; i++) {
-            const chatflowData = enabledChatflows[i]
+        for (let i = 0; i < selectedChatflows.length; i++) {
+            const chatflowData = selectedChatflows[i]
 
             const result = await testChatflow(chatflowData)
             results.push(result)
 
             // Add delay between chatflows (except for the last chatflow)
-            if (!argv['no-delay'] && i < enabledChatflows.length - 1) {
+            if (!argv['no-delay'] && i < selectedChatflows.length - 1) {
                 await sleep(parseInt(process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS))
             }
         }
