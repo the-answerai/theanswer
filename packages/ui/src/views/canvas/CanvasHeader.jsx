@@ -132,8 +132,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
             try {
                 let flowData = chatflow.flowData
                 const parsedFlowData = JSON.parse(flowData)
+                parsedFlowData.name = `${chatflow.name}`
                 flowData = JSON.stringify(parsedFlowData)
-                flowData.name = `Copy of ${flowData.name}`
                 localStorage.setItem('duplicatedFlowData', flowData)
                 if (isAgentflowV2) {
                     window.open(`${uiBaseURL}/v2/agentcanvas`, '_blank')

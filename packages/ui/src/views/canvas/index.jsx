@@ -575,14 +575,13 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
             if (duplicatedFlowData) {
                 const parsedData = JSON.parse(duplicatedFlowData)
-
                 setNodes(parsedData.nodes || [])
                 setEdges(parsedData.edges || [])
 
                 const newChatflow = {
                     ...parsedData,
                     id: undefined,
-                    name: `Copy of ${parsedData.name ?? templateName}`,
+                    name: `Copy of ${parsedData.name || templateName || 'Untitled Chatflow'}`,
                     deployed: false,
                     isPublic: false
                 }
