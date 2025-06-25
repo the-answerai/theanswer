@@ -55,8 +55,13 @@
  * - Select specific chatflows (checkbox interface with arrow keys)
  * - Run a single chatflow (list interface with arrow keys)
  *
+ * After selection, you'll be prompted to choose output verbosity:
+ * - Summary mode: Clean, minimal output with just success/failure status
+ * - Verbose mode: Detailed responses, session IDs, and full error information
+ *
  * Use --all flag to bypass interactive selection and run all chatflows
  * Use --ids flag to specify chatflow IDs/names to run (comma-separated)
+ * Use --verbose flag to force verbose output mode
  */
 
 const fs = require('fs')
@@ -396,9 +401,12 @@ async function selectChatflows(chatflowsData) {
         }
     ])
 
+    let selectedChatflows
+
     switch (answers.selectionMode) {
         case 'all':
-            return chatflowsData
+            selectedChatflows = chatflowsData
+            break
 
         case 'single': {
             const singleAnswer = await inquirer.prompt([
@@ -410,7 +418,8 @@ async function selectChatflows(chatflowsData) {
                     pageSize: Math.min(choices.length, 15)
                 }
             ])
-            return [chatflowsData[singleAnswer.selectedChatflow]]
+            selectedChatflows = [chatflowsData[singleAnswer.selectedChatflow]]
+            break
         }
 
         case 'select': {
@@ -429,11 +438,30 @@ async function selectChatflows(chatflowsData) {
                     }
                 }
             ])
-            return multipleAnswer.selectedChatflows.map((index) => chatflowsData[index])
+            selectedChatflows = multipleAnswer.selectedChatflows.map((index) => chatflowsData[index])
+            break
         }
 
         default:
             throw new Error('Invalid selection mode')
+    }
+
+    // Ask about output verbosity
+    const verbosityAnswer = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'outputLevel',
+            message: 'Choose output level:',
+            choices: [
+                { name: '📋 Summary mode (clean, minimal output)', value: 'summary' },
+                { name: '🔍 Verbose mode (detailed responses and logs)', value: 'verbose' }
+            ]
+        }
+    ])
+
+    return {
+        chatflows: selectedChatflows,
+        verboseOutput: verbosityAnswer.outputLevel === 'verbose'
     }
 }
 
@@ -545,20 +573,28 @@ async function testChatflow(chatflowData) {
     let currentSessionId = null // Track session ID across turns
     let currentChatId = null // Track chat ID across turns
 
-    console.log(`\n📝 Testing: ${actualName} [${internalName}]`)
-    console.log(`ID: ${chatflowId}`)
-    console.log(`Turns: ${chatflowData.conversation.length}`)
+    if (argv.verbose) {
+        console.log(`\n📝 Testing: ${actualName} [${internalName}]`)
+        console.log(`ID: ${chatflowId}`)
+        console.log(`Turns: ${chatflowData.conversation.length}`)
+    } else {
+        console.log(`\n📝 ${actualName} [${internalName}] - ${chatflowData.conversation.length} turns`)
+    }
 
     for (let i = 0; i < chatflowData.conversation.length; i++) {
         const turn = chatflowData.conversation[i]
 
-        console.log(`\n  Turn ${i + 1}/${chatflowData.conversation.length}:`)
-        console.log(`  Input: "${turn.input}"`)
-        if (turn.files && turn.files.length > 0) {
-            console.log(`  Files: ${turn.files.map((f) => f.path).join(', ')}`)
-        }
-        if (currentSessionId) {
-            console.log(`  Using Session ID: ${currentSessionId}`)
+        if (argv.verbose) {
+            console.log(`\n  Turn ${i + 1}/${chatflowData.conversation.length}:`)
+            console.log(`  Input: "${turn.input}"`)
+            if (turn.files && turn.files.length > 0) {
+                console.log(`  Files: ${turn.files.map((f) => f.path).join(', ')}`)
+            }
+            if (currentSessionId) {
+                console.log(`  Using Session ID: ${currentSessionId}`)
+            }
+        } else {
+            process.stdout.write(`  Turn ${i + 1}/${chatflowData.conversation.length}: `)
         }
 
         const result = await testChatflowTurn(chatflowId, turn.input, turn.files, currentSessionId)
@@ -568,16 +604,21 @@ async function testChatflow(chatflowData) {
 
         if (result.success) {
             const successIcon = result.errorDetection.hasIssues ? `✅${getErrorSummaryIcon(result.errorDetection)}` : '✅'
-            console.log(`  ${successIcon} Success!`)
 
-            // Show error detection results if any issues found
-            if (result.errorDetection.hasIssues) {
-                console.log(`  📋 Error Detection (${result.errorDetection.totalIssues} issues):`)
-                const errorDisplay = formatErrorDetection(result.errorDetection)
-                console.log(`  ${errorDisplay}`)
+            if (argv.verbose) {
+                console.log(`  ${successIcon} Success!`)
+
+                // Show error detection results if any issues found
+                if (result.errorDetection.hasIssues) {
+                    console.log(`  📋 Error Detection (${result.errorDetection.totalIssues} issues):`)
+                    const errorDisplay = formatErrorDetection(result.errorDetection)
+                    console.log(`  ${errorDisplay}`)
+                }
+
+                console.log('  Response:', JSON.stringify(result.response, null, 4))
+            } else {
+                console.log(`${successIcon} (${formatDuration(result.duration)})`)
             }
-
-            console.log('  Response:', JSON.stringify(result.response, null, 4))
 
             // Update session and chat IDs from the response for next turn
             if (result.sessionId) {
@@ -587,10 +628,17 @@ async function testChatflow(chatflowData) {
                 currentChatId = result.chatId
             }
         } else {
-            console.log('  ❌ Error:')
-            console.log('  Error details:', JSON.stringify(result.error, null, 4))
+            if (argv.verbose) {
+                console.log('  ❌ Error:')
+                console.log('  Error details:', JSON.stringify(result.error, null, 4))
+            } else {
+                console.log(`❌ Error (${formatDuration(result.duration)})`)
+            }
         }
-        console.log(`  ⏱️  Duration: ${formatDuration(result.duration)}`)
+
+        if (argv.verbose) {
+            console.log(`  ⏱️  Duration: ${formatDuration(result.duration)}`)
+        }
 
         // Add delay between turns (except for the last turn)
         if (!argv['no-delay'] && i < chatflowData.conversation.length - 1) {
@@ -678,7 +726,13 @@ async function main() {
             console.log(`🎯 Running ${selectedChatflows.length} chatflows matching IDs: ${requestedIds.join(', ')}`)
         } else {
             // Interactive selection
-            selectedChatflows = await selectChatflows(chatflowsData)
+            const selectionResult = await selectChatflows(chatflowsData)
+            selectedChatflows = selectionResult.chatflows
+
+            // Override verbose setting if user chose verbose output
+            if (selectionResult.verboseOutput !== undefined) {
+                argv.verbose = selectionResult.verboseOutput
+            }
         }
 
         if (argv.verbose) {
@@ -688,15 +742,19 @@ async function main() {
                 console.log(`   Turns: ${cf.conversation?.length || 0}`)
             })
             console.log('')
-        }
 
-        console.log('\n🚀 Starting chatflow testing...\n')
-        console.log(`🌐 API URL: ${getBaseUrl()}`)
-        console.log(`📊 Total chatflows to test: ${selectedChatflows.length}`)
-        console.log(`⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`)
-        console.log(`🔄 Retry attempts: ${argv.retries}`)
-        console.log(`⏳ Request timeout: ${argv.timeout}ms`)
-        console.log(`🔍 Error detection: ${argv['no-error-detection'] ? 'disabled' : 'enabled'}\n`)
+            console.log('\n🚀 Starting chatflow testing...\n')
+            console.log(`🌐 API URL: ${getBaseUrl()}`)
+            console.log(`📊 Total chatflows to test: ${selectedChatflows.length}`)
+            console.log(
+                `⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`
+            )
+            console.log(`🔄 Retry attempts: ${argv.retries}`)
+            console.log(`⏳ Request timeout: ${argv.timeout}ms`)
+            console.log(`🔍 Error detection: ${argv['no-error-detection'] ? 'disabled' : 'enabled'}\n`)
+        } else {
+            console.log(`\n🚀 Testing ${selectedChatflows.length} chatflow${selectedChatflows.length === 1 ? '' : 's'}...\n`)
+        }
 
         const results = []
         const startTime = Date.now()
@@ -724,25 +782,39 @@ async function main() {
             const errorSummary = result.errorDetection || {}
 
             if (failedTurns === 0) {
-                let statusLine = `✅ ${result.internalName} (${result.chatflowId}) - ${result.totalTurns} turns`
+                if (argv.verbose) {
+                    let statusLine = `✅ ${result.internalName} (${result.chatflowId}) - ${result.totalTurns} turns`
 
-                // Add error detection summary if enabled and issues found
-                if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
-                    const icons = []
-                    if (errorSummary.critical > 0) icons.push('🚨')
-                    if (errorSummary.warnings > 0) icons.push('⚠️')
-                    if (errorSummary.suspicious > 0) icons.push('🔍')
-                    if (errorSummary.markup > 0) icons.push('📄')
+                    // Add error detection summary if enabled and issues found
+                    if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
+                        const icons = []
+                        if (errorSummary.critical > 0) icons.push('🚨')
+                        if (errorSummary.warnings > 0) icons.push('⚠️')
+                        if (errorSummary.suspicious > 0) icons.push('🔍')
+                        if (errorSummary.markup > 0) icons.push('📄')
 
-                    statusLine += ` ${icons.join('')} (${errorSummary.totalIssues} issues in ${errorSummary.turnsWithIssues} turns)`
-                }
+                        statusLine += ` ${icons.join('')} (${errorSummary.totalIssues} issues in ${errorSummary.turnsWithIssues} turns)`
+                    }
 
-                console.log(statusLine)
-                if (result.finalSessionId && argv.verbose) {
-                    console.log(`   Session ID: ${result.finalSessionId}`)
+                    console.log(statusLine)
+                    if (result.finalSessionId) {
+                        console.log(`   Session ID: ${result.finalSessionId}`)
+                    }
+                } else {
+                    // Summary mode - just show name and any critical issues
+                    let statusLine = `✅ ${result.internalName}`
+                    if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
+                        const issueIcon = errorSummary.critical > 0 ? '🚨' : '⚠️'
+                        statusLine += ` ${issueIcon} (${errorSummary.totalIssues} issues)`
+                    }
+                    console.log(statusLine)
                 }
             } else {
-                console.log(`❌ ${result.internalName} (${result.chatflowId}) - ${failedTurns}/${result.totalTurns} turns failed`)
+                if (argv.verbose) {
+                    console.log(`❌ ${result.internalName} (${result.chatflowId}) - ${failedTurns}/${result.totalTurns} turns failed`)
+                } else {
+                    console.log(`❌ ${result.internalName} - ${failedTurns}/${result.totalTurns} turns failed`)
+                }
             }
         })
 
@@ -783,14 +855,22 @@ async function main() {
                     }))
             }))
 
-        console.log('\n\n📊 Summary:')
-        console.log(`Total chatflows: ${results.length}`)
-        console.log(`Total turns: ${totalTurns}`)
-        console.log(`Successful chatflows: ${successful}`)
-        console.log(`Failed chatflows: ${failed}`)
-        console.log(`Success rate: ${((successful / results.length) * 100).toFixed(1)}%`)
-        console.log(`Average duration per chatflow: ${formatDuration(avgDuration)}`)
-        console.log(`Total duration: ${formatDuration(totalDuration)}`)
+        if (argv.verbose) {
+            console.log('\n\n📊 Summary:')
+            console.log(`Total chatflows: ${results.length}`)
+            console.log(`Total turns: ${totalTurns}`)
+            console.log(`Successful chatflows: ${successful}`)
+            console.log(`Failed chatflows: ${failed}`)
+            console.log(`Success rate: ${((successful / results.length) * 100).toFixed(1)}%`)
+            console.log(`Average duration per chatflow: ${formatDuration(avgDuration)}`)
+            console.log(`Total duration: ${formatDuration(totalDuration)}`)
+        } else {
+            console.log(
+                `\n📊 ${successful}/${results.length} successful (${((successful / results.length) * 100).toFixed(1)}%) - ${formatDuration(
+                    totalDuration
+                )}`
+            )
+        }
 
         // Error detection summary
         if (!argv['no-error-detection']) {
@@ -817,45 +897,59 @@ async function main() {
                 }
             )
 
-            console.log('\n🔍 Error Detection Summary:')
-            console.log(`Total issues detected: ${errorStats.totalIssues}`)
-            console.log(`Chatflows with issues: ${errorStats.chatflowsWithIssues}/${results.length}`)
-            console.log(`Turns with issues: ${errorStats.turnsWithIssues}/${totalTurns}`)
+            if (argv.verbose) {
+                console.log('\n🔍 Error Detection Summary:')
+                console.log(`Total issues detected: ${errorStats.totalIssues}`)
+                console.log(`Chatflows with issues: ${errorStats.chatflowsWithIssues}/${results.length}`)
+                console.log(`Turns with issues: ${errorStats.turnsWithIssues}/${totalTurns}`)
 
-            if (errorStats.totalIssues > 0) {
-                console.log('\nIssue breakdown:')
-                if (errorStats.critical > 0) console.log(`  🚨 Critical: ${errorStats.critical}`)
-                if (errorStats.warnings > 0) console.log(`  ⚠️  Warnings: ${errorStats.warnings}`)
-                if (errorStats.suspicious > 0) console.log(`  🔍 Suspicious: ${errorStats.suspicious}`)
-                if (errorStats.markup > 0) console.log(`  📄 Markup: ${errorStats.markup}`)
+                if (errorStats.totalIssues > 0) {
+                    console.log('\nIssue breakdown:')
+                    if (errorStats.critical > 0) console.log(`  🚨 Critical: ${errorStats.critical}`)
+                    if (errorStats.warnings > 0) console.log(`  ⚠️  Warnings: ${errorStats.warnings}`)
+                    if (errorStats.suspicious > 0) console.log(`  🔍 Suspicious: ${errorStats.suspicious}`)
+                    if (errorStats.markup > 0) console.log(`  📄 Markup: ${errorStats.markup}`)
+                } else {
+                    console.log('  🎉 No issues detected!')
+                }
             } else {
-                console.log('  🎉 No issues detected!')
+                // Summary mode - just show if there are issues
+                if (errorStats.totalIssues > 0) {
+                    const criticalIcon = errorStats.critical > 0 ? '🚨' : '⚠️'
+                    console.log(
+                        `${criticalIcon} ${errorStats.totalIssues} issues detected across ${errorStats.chatflowsWithIssues} chatflows`
+                    )
+                }
             }
         }
 
         if (failed > 0) {
-            console.log('\n❌ Failed Chatflows:')
-            failedResults.forEach(({ id, internalName, actualName, type, error, errorDetection }) => {
-                console.log(`\nActual Name: ${actualName}`)
-                console.log(`Internal Name: ${internalName}`)
-                console.log(`ID: ${id}`)
-                console.log(`Type: ${type}`)
-                console.log('Failed turns:')
-                error.forEach(({ turn, error: turnError }) => {
-                    console.log(`  Turn ${turn}:`, typeof turnError === 'string' ? turnError : JSON.stringify(turnError, null, 2))
-                })
+            if (argv.verbose) {
+                console.log('\n❌ Failed Chatflows:')
+                failedResults.forEach(({ id, internalName, actualName, type, error, errorDetection }) => {
+                    console.log(`\nActual Name: ${actualName}`)
+                    console.log(`Internal Name: ${internalName}`)
+                    console.log(`ID: ${id}`)
+                    console.log(`Type: ${type}`)
+                    console.log('Failed turns:')
+                    error.forEach(({ turn, error: turnError }) => {
+                        console.log(`  Turn ${turn}:`, typeof turnError === 'string' ? turnError : JSON.stringify(turnError, null, 2))
+                    })
 
-                // Show error detection summary for failed chatflows if any issues were found
-                if (!argv['no-error-detection'] && errorDetection?.totalIssues > 0) {
-                    console.log(
-                        `Error detection issues: ${errorDetection.totalIssues} total (${errorDetection.turnsWithIssues} turns affected)`
-                    )
-                }
-            })
+                    // Show error detection summary for failed chatflows if any issues were found
+                    if (!argv['no-error-detection'] && errorDetection?.totalIssues > 0) {
+                        console.log(
+                            `Error detection issues: ${errorDetection.totalIssues} total (${errorDetection.turnsWithIssues} turns affected)`
+                        )
+                    }
+                })
+            } else {
+                console.log(`\n❌ ${failed} chatflow${failed === 1 ? '' : 's'} failed - run with verbose mode for details`)
+            }
         }
 
         // Show successful chatflows that had error detection issues
-        if (!argv['no-error-detection'] && successfulWithIssues.length > 0) {
+        if (!argv['no-error-detection'] && successfulWithIssues.length > 0 && argv.verbose) {
             console.log('\n⚠️  Successful Chatflows with Detected Issues:')
             successfulWithIssues.forEach(({ id, internalName, actualName, type, errorDetection, turnsWithIssues }) => {
                 console.log(`\nActual Name: ${actualName}`)
@@ -866,7 +960,7 @@ async function main() {
                     `Total Issues: ${errorDetection.totalIssues} (Critical: ${errorDetection.critical}, Warnings: ${errorDetection.warnings}, Suspicious: ${errorDetection.suspicious}, Markup: ${errorDetection.markup})`
                 )
 
-                if (argv.verbose && turnsWithIssues.length > 0) {
+                if (turnsWithIssues.length > 0) {
                     console.log('Turns with issues:')
                     turnsWithIssues.forEach(({ turn, issues }) => {
                         console.log(`  Turn ${turn}: ${issues.totalIssues} issues`)

@@ -48,6 +48,11 @@ By default, the script shows an interactive menu with three options:
 2. **🎯 Select specific chatflows** - Multi-select with checkboxes (use Space to select, Enter to confirm)
 3. **📝 Run a single chatflow** - Choose one from a list
 
+After selecting chatflows, you'll choose the output verbosity:
+
+-   **📋 Summary mode** - Clean, minimal output showing just success/failure status and timing
+-   **🔍 Verbose mode** - Detailed responses, session IDs, full error information, and complete logs
+
 Use arrow keys to navigate, Space to select (for multi-select), and Enter to confirm.
 
 **Options:**
