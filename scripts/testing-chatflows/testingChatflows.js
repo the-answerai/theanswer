@@ -697,8 +697,20 @@ async function main() {
             console.log(`🌐 Using API URL: ${apiUrl}${isUsingFallback ? ' (fallback from API_HOST)' : ''}`)
         }
 
+        // Check if chatflows file exists, if not create it from environment variable
+        const chatflowsFilePath = path.resolve(argv.file)
+        if (!fs.existsSync(chatflowsFilePath)) {
+            if (process.env._chatflows_js) {
+                console.log(`📁 Creating ${path.basename(chatflowsFilePath)} from _chatflows_js environment variable...`)
+                fs.writeFileSync(chatflowsFilePath, process.env._chatflows_js)
+                console.log(`✅ Created ${path.basename(chatflowsFilePath)} successfully`)
+            } else {
+                throw new Error(`Chatflows file not found at ${chatflowsFilePath} and _chatflows_js environment variable is not set`)
+            }
+        }
+
         // Read and load JS file
-        const chatflowsData = require(path.resolve(argv.file))
+        const chatflowsData = require(chatflowsFilePath)
 
         // Determine which chatflows to test based on CLI options
         let selectedChatflows
