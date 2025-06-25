@@ -22,6 +22,7 @@
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
  * --output, -o: Save results to JSON file
  * --verbose, -v: Enable detailed logging (includes session IDs)
+ * --no-error-detection: Disable error detection in responses
  * --help, -h: Show help
  *
  * JS File Format:
@@ -54,6 +55,103 @@ const axios = require('axios')
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
+
+// Error detection configuration
+const ERROR_DETECTION_CONFIG = {
+    // Critical error patterns (case-insensitive)
+    critical: [
+        'internal server error',
+        'internal error',
+        'server error',
+        'fatal error',
+        'critical error',
+        'system error',
+        'database error',
+        'connection error',
+        'timeout error',
+        'out of memory',
+        'memory error',
+        'stack overflow',
+        'segmentation fault',
+        'null pointer',
+        'access denied',
+        'unauthorized',
+        'forbidden',
+        'authentication failed',
+        'permission denied'
+    ],
+    // Warning patterns (case-insensitive)
+    warnings: [
+        'warning',
+        'deprecated',
+        'invalid',
+        'not found',
+        'missing',
+        'failed',
+        'error',
+        'exception',
+        'unable to',
+        'cannot',
+        'could not',
+        'unavailable',
+        'maintenance',
+        'temporary',
+        'retry',
+        'timeout',
+        'rate limit',
+        'quota exceeded',
+        'api limit',
+        'service unavailable',
+        'bad request',
+        'malformed',
+        'invalid format',
+        'parse error',
+        'syntax error'
+    ],
+    // Suspicious patterns that might indicate issues
+    suspicious: [
+        'please try again',
+        'something went wrong',
+        'an error occurred',
+        'unexpected',
+        'unknown error',
+        'please contact',
+        'support',
+        'technical issue',
+        'maintenance mode',
+        'service down',
+        'temporarily unavailable',
+        'please wait',
+        'loading',
+        'processing',
+        'placeholder',
+        'todo',
+        'fixme',
+        'hack',
+        'workaround',
+        'temp',
+        'debug',
+        'test',
+        'lorem ipsum'
+    ],
+    // HTML/XML error indicators
+    markup: [
+        '<error',
+        '<exception',
+        '<fault',
+        'error code',
+        'error message',
+        'stack trace',
+        'backtrace',
+        'line number',
+        'file not found',
+        '404',
+        '500',
+        '502',
+        '503',
+        '504'
+    ]
+}
 
 // Parse command line arguments
 const argv = yargs(hideBin(process.argv))
@@ -91,6 +189,11 @@ const argv = yargs(hideBin(process.argv))
         type: 'boolean',
         default: false
     })
+    .option('no-error-detection', {
+        description: 'Disable error detection in responses',
+        type: 'boolean',
+        default: false
+    })
     .help()
     .alias('help', 'h').argv
 
@@ -110,6 +213,81 @@ const extractUUID = (input) => {
     const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
     const match = input.match(uuidPattern)
     return match ? match[0] : input
+}
+
+// Function to detect potential errors in response text
+function detectErrors(responseText) {
+    if (!responseText || typeof responseText !== 'string' || argv['no-error-detection']) {
+        return {
+            hasIssues: false,
+            critical: [],
+            warnings: [],
+            suspicious: [],
+            markup: []
+        }
+    }
+
+    const lowerText = responseText.toLowerCase()
+    const detected = {
+        critical: [],
+        warnings: [],
+        suspicious: [],
+        markup: []
+    }
+
+    // Check each category
+    Object.keys(ERROR_DETECTION_CONFIG).forEach((category) => {
+        ERROR_DETECTION_CONFIG[category].forEach((pattern) => {
+            if (lowerText.includes(pattern.toLowerCase())) {
+                detected[category].push(pattern)
+            }
+        })
+    })
+
+    const hasIssues = Object.values(detected).some((arr) => arr.length > 0)
+
+    return {
+        hasIssues,
+        ...detected,
+        totalIssues: Object.values(detected).reduce((sum, arr) => sum + arr.length, 0)
+    }
+}
+
+// Function to format error detection results for display
+function formatErrorDetection(errorInfo) {
+    if (!errorInfo.hasIssues) {
+        return ''
+    }
+
+    const parts = []
+
+    if (errorInfo.critical.length > 0) {
+        parts.push(`🚨 CRITICAL: ${errorInfo.critical.join(', ')}`)
+    }
+
+    if (errorInfo.warnings.length > 0) {
+        parts.push(`⚠️  WARNINGS: ${errorInfo.warnings.join(', ')}`)
+    }
+
+    if (errorInfo.suspicious.length > 0) {
+        parts.push(`🔍 SUSPICIOUS: ${errorInfo.suspicious.join(', ')}`)
+    }
+
+    if (errorInfo.markup.length > 0) {
+        parts.push(`📄 MARKUP: ${errorInfo.markup.join(', ')}`)
+    }
+
+    return parts.join('\n  ')
+}
+
+// Function to get error detection summary icon
+function getErrorSummaryIcon(errorInfo) {
+    if (!errorInfo.hasIssues) return ''
+    if (errorInfo.critical.length > 0) return '🚨'
+    if (errorInfo.warnings.length > 0) return '⚠️'
+    if (errorInfo.suspicious.length > 0) return '🔍'
+    if (errorInfo.markup.length > 0) return '📄'
+    return '⚠️'
 }
 
 // Function to read and encode file as base64
@@ -220,6 +398,11 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             },
             timeout: argv.timeout
         })
+
+        // Detect errors in response text
+        const responseText = response.data?.text || JSON.stringify(response.data)
+        const errorDetection = detectErrors(responseText)
+
         return {
             success: true,
             chatflowId,
@@ -228,7 +411,8 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             sessionId: response.data.sessionId, // Return the sessionId for next turn
             chatId: response.data.chatId, // Return the chatId for reference
             duration: Date.now() - startTime,
-            filesCount: files ? files.length : 0
+            filesCount: files ? files.length : 0,
+            errorDetection // Add error detection results
         }
     } catch (error) {
         if (retryCount < argv.retries) {
@@ -244,7 +428,8 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             input,
             error: error.response?.data || error.message,
             duration: Date.now() - startTime,
-            filesCount: files ? files.length : 0
+            filesCount: files ? files.length : 0,
+            errorDetection: { hasIssues: false, critical: [], warnings: [], suspicious: [], markup: [] } // Default for failed requests
         }
     }
 }
@@ -289,7 +474,16 @@ async function testChatflow(chatflowData) {
         conversationResults.push(result)
 
         if (result.success) {
-            console.log('  ✅ Success!')
+            const successIcon = result.errorDetection.hasIssues ? `✅${getErrorSummaryIcon(result.errorDetection)}` : '✅'
+            console.log(`  ${successIcon} Success!`)
+
+            // Show error detection results if any issues found
+            if (result.errorDetection.hasIssues) {
+                console.log(`  📋 Error Detection (${result.errorDetection.totalIssues} issues):`)
+                const errorDisplay = formatErrorDetection(result.errorDetection)
+                console.log(`  ${errorDisplay}`)
+            }
+
             console.log('  Response:', JSON.stringify(result.response, null, 4))
 
             // Update session and chat IDs from the response for next turn
@@ -315,6 +509,16 @@ async function testChatflow(chatflowData) {
     const allSuccessful = conversationResults.every((r) => r.success)
     const totalDuration = conversationResults.reduce((acc, r) => acc + r.duration, 0)
 
+    // Aggregate error detection results
+    const aggregatedErrors = {
+        totalIssues: conversationResults.reduce((sum, r) => sum + (r.errorDetection?.totalIssues || 0), 0),
+        critical: conversationResults.reduce((sum, r) => sum + (r.errorDetection?.critical?.length || 0), 0),
+        warnings: conversationResults.reduce((sum, r) => sum + (r.errorDetection?.warnings?.length || 0), 0),
+        suspicious: conversationResults.reduce((sum, r) => sum + (r.errorDetection?.suspicious?.length || 0), 0),
+        markup: conversationResults.reduce((sum, r) => sum + (r.errorDetection?.markup?.length || 0), 0),
+        turnsWithIssues: conversationResults.filter((r) => r.errorDetection?.hasIssues).length
+    }
+
     return {
         success: allSuccessful,
         chatflowId,
@@ -325,7 +529,8 @@ async function testChatflow(chatflowData) {
         duration: totalDuration,
         totalTurns: chatflowData.conversation.length,
         finalSessionId: currentSessionId, // Include final session ID in results
-        finalChatId: currentChatId // Include final chat ID in results
+        finalChatId: currentChatId, // Include final chat ID in results
+        errorDetection: aggregatedErrors // Include aggregated error detection results
     }
 }
 
@@ -370,7 +575,8 @@ async function main() {
         console.log(`📊 Total chatflows to test: ${enabledChatflows.length}`)
         console.log(`⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`)
         console.log(`🔄 Retry attempts: ${argv.retries}`)
-        console.log(`⏳ Request timeout: ${argv.timeout}ms\n`)
+        console.log(`⏳ Request timeout: ${argv.timeout}ms`)
+        console.log(`🔍 Error detection: ${argv['no-error-detection'] ? 'disabled' : 'enabled'}\n`)
 
         const results = []
         const startTime = Date.now()
@@ -395,8 +601,23 @@ async function main() {
 
         results.forEach((result) => {
             const failedTurns = result.turns.filter((t) => !t.success).length
+            const errorSummary = result.errorDetection || {}
+
             if (failedTurns === 0) {
-                console.log(`✅ ${result.internalName} (${result.chatflowId}) - ${result.totalTurns} turns`)
+                let statusLine = `✅ ${result.internalName} (${result.chatflowId}) - ${result.totalTurns} turns`
+
+                // Add error detection summary if enabled and issues found
+                if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
+                    const icons = []
+                    if (errorSummary.critical > 0) icons.push('🚨')
+                    if (errorSummary.warnings > 0) icons.push('⚠️')
+                    if (errorSummary.suspicious > 0) icons.push('🔍')
+                    if (errorSummary.markup > 0) icons.push('📄')
+
+                    statusLine += ` ${icons.join('')} (${errorSummary.totalIssues} issues in ${errorSummary.turnsWithIssues} turns)`
+                }
+
+                console.log(statusLine)
                 if (result.finalSessionId && argv.verbose) {
                     console.log(`   Session ID: ${result.finalSessionId}`)
                 }
@@ -421,7 +642,25 @@ async function main() {
                 internalName: r.internalName,
                 actualName: r.actualName,
                 type: r.type,
-                error: r.turns.filter((t) => !t.success).map((t) => ({ turn: t.turnNumber, error: t.error }))
+                error: r.turns.filter((t) => !t.success).map((t) => ({ turn: t.turnNumber, error: t.error })),
+                errorDetection: r.errorDetection
+            }))
+
+        // Also collect chatflows that succeeded but had error detection issues
+        const successfulWithIssues = results
+            .filter((r) => r.success && r.errorDetection?.totalIssues > 0)
+            .map((r) => ({
+                id: r.chatflowId,
+                internalName: r.internalName,
+                actualName: r.actualName,
+                type: r.type,
+                errorDetection: r.errorDetection,
+                turnsWithIssues: r.turns
+                    .filter((t) => t.success && t.errorDetection?.hasIssues)
+                    .map((t) => ({
+                        turn: t.turnNumber,
+                        issues: t.errorDetection
+                    }))
             }))
 
         console.log('\n\n📊 Summary:')
@@ -433,9 +672,50 @@ async function main() {
         console.log(`Average duration per chatflow: ${formatDuration(avgDuration)}`)
         console.log(`Total duration: ${formatDuration(totalDuration)}`)
 
+        // Error detection summary
+        if (!argv['no-error-detection']) {
+            const errorStats = results.reduce(
+                (acc, result) => {
+                    const ed = result.errorDetection || {}
+                    acc.totalIssues += ed.totalIssues || 0
+                    acc.critical += ed.critical || 0
+                    acc.warnings += ed.warnings || 0
+                    acc.suspicious += ed.suspicious || 0
+                    acc.markup += ed.markup || 0
+                    acc.chatflowsWithIssues += ed.totalIssues > 0 ? 1 : 0
+                    acc.turnsWithIssues += ed.turnsWithIssues || 0
+                    return acc
+                },
+                {
+                    totalIssues: 0,
+                    critical: 0,
+                    warnings: 0,
+                    suspicious: 0,
+                    markup: 0,
+                    chatflowsWithIssues: 0,
+                    turnsWithIssues: 0
+                }
+            )
+
+            console.log('\n🔍 Error Detection Summary:')
+            console.log(`Total issues detected: ${errorStats.totalIssues}`)
+            console.log(`Chatflows with issues: ${errorStats.chatflowsWithIssues}/${results.length}`)
+            console.log(`Turns with issues: ${errorStats.turnsWithIssues}/${totalTurns}`)
+
+            if (errorStats.totalIssues > 0) {
+                console.log('\nIssue breakdown:')
+                if (errorStats.critical > 0) console.log(`  🚨 Critical: ${errorStats.critical}`)
+                if (errorStats.warnings > 0) console.log(`  ⚠️  Warnings: ${errorStats.warnings}`)
+                if (errorStats.suspicious > 0) console.log(`  🔍 Suspicious: ${errorStats.suspicious}`)
+                if (errorStats.markup > 0) console.log(`  📄 Markup: ${errorStats.markup}`)
+            } else {
+                console.log('  🎉 No issues detected!')
+            }
+        }
+
         if (failed > 0) {
             console.log('\n❌ Failed Chatflows:')
-            failedResults.forEach(({ id, internalName, actualName, type, error }) => {
+            failedResults.forEach(({ id, internalName, actualName, type, error, errorDetection }) => {
                 console.log(`\nActual Name: ${actualName}`)
                 console.log(`Internal Name: ${internalName}`)
                 console.log(`ID: ${id}`)
@@ -444,6 +724,38 @@ async function main() {
                 error.forEach(({ turn, error: turnError }) => {
                     console.log(`  Turn ${turn}:`, typeof turnError === 'string' ? turnError : JSON.stringify(turnError, null, 2))
                 })
+
+                // Show error detection summary for failed chatflows if any issues were found
+                if (!argv['no-error-detection'] && errorDetection?.totalIssues > 0) {
+                    console.log(
+                        `Error detection issues: ${errorDetection.totalIssues} total (${errorDetection.turnsWithIssues} turns affected)`
+                    )
+                }
+            })
+        }
+
+        // Show successful chatflows that had error detection issues
+        if (!argv['no-error-detection'] && successfulWithIssues.length > 0) {
+            console.log('\n⚠️  Successful Chatflows with Detected Issues:')
+            successfulWithIssues.forEach(({ id, internalName, actualName, type, errorDetection, turnsWithIssues }) => {
+                console.log(`\nActual Name: ${actualName}`)
+                console.log(`Internal Name: ${internalName}`)
+                console.log(`ID: ${id}`)
+                console.log(`Type: ${type}`)
+                console.log(
+                    `Total Issues: ${errorDetection.totalIssues} (Critical: ${errorDetection.critical}, Warnings: ${errorDetection.warnings}, Suspicious: ${errorDetection.suspicious}, Markup: ${errorDetection.markup})`
+                )
+
+                if (argv.verbose && turnsWithIssues.length > 0) {
+                    console.log('Turns with issues:')
+                    turnsWithIssues.forEach(({ turn, issues }) => {
+                        console.log(`  Turn ${turn}: ${issues.totalIssues} issues`)
+                        const errorDisplay = formatErrorDetection(issues)
+                        if (errorDisplay) {
+                            console.log(`    ${errorDisplay.replace(/\n {2}/g, '\n    ')}`)
+                        }
+                    })
+                }
             })
         }
 
