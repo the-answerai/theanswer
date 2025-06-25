@@ -22,7 +22,7 @@
 module.exports = [
     {
         id: '8ef0e7d2-7c31-496d-8666-60133a246e15',
-        enabled: true,
+        enabled: false,
         internalName: 'AAI Chat Memory - Official',
         conversation: [
             {
@@ -37,7 +37,7 @@ module.exports = [
     },
     {
         id: '74e347c6-eb06-4c9e-9a6e-4f18577fce31',
-        enabled: true,
+        enabled: false,
         internalName: 'AAI Vector Store - Official',
         conversation: [
             {
@@ -50,7 +50,7 @@ module.exports = [
     },
     {
         id: '432b894c-67bd-4f22-b065-ebae71a91f8a',
-        enabled: true,
+        enabled: false,
         internalName: 'AAI Record Manager - Official',
         conversation: [
             {
@@ -63,7 +63,7 @@ module.exports = [
     },
     {
         id: 'e442fafb-eea9-4434-8bb2-1d29bbccaafb',
-        enabled: true,
+        enabled: false,
         internalName: 'Anthropic - Official',
         conversation: [
             {
@@ -85,7 +85,7 @@ module.exports = [
     },
     {
         id: '5407cf97-d3e3-4a84-99c3-f360b43fd408',
-        enabled: true,
+        enabled: false,
         internalName: 'AWS Bedrock - Official',
         conversation: [
             {
@@ -145,7 +145,7 @@ module.exports = [
     },
     {
         id: '05f81e6d-21b4-40d2-b0f8-bd1d62abd6f4',
-        enabled: true,
+        enabled: false,
         internalName: 'Deepseek - Official',
         conversation: [
             {
@@ -168,7 +168,7 @@ module.exports = [
     },
     {
         id: 'c4f35602-1f59-4185-98c1-e07d590ccbc4',
-        enabled: true,
+        enabled: false,
         internalName: 'ExaSearch - Dynamic Web Search - Official',
         conversation: [
             {
@@ -183,7 +183,7 @@ module.exports = [
     },
     {
         id: 'fdee98e5-168c-44d7-b5cb-73b590566524',
-        enabled: true,
+        enabled: false,
         internalName: 'Google - Dynamic Web Search - Official',
         conversation: [
             {
@@ -198,7 +198,7 @@ module.exports = [
     },
     {
         id: '80592745-6789-456d-8f26-ebca25354e12',
-        enabled: true,
+        enabled: false,
         internalName: 'Google Generative AI - Official',
         conversation: [
             {
@@ -222,7 +222,7 @@ module.exports = [
     },
     {
         id: 'be877fe8-9df9-477e-bb96-ed31b91eee3b',
-        enabled: true,
+        enabled: false,
         internalName: 'Groq - Official',
         conversation: [
             {
@@ -246,7 +246,7 @@ module.exports = [
     },
     {
         id: '66f87de0-9273-46bc-8b9d-4a3f98e27ab4',
-        enabled: true,
+        enabled: false,
         internalName: 'Pinecone Vector Store - Official',
         conversation: [
             {

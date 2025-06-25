@@ -22,7 +22,6 @@
  * --timeout, -t: Request timeout in milliseconds (default: 30000)
  * --output, -o: Save results to JSON file
  * --verbose, -v: Enable detailed logging (includes session IDs)
- * --skip-image-generation: Skip turns that request image generation to avoid rate limiting
  * --help, -h: Show help
  *
  * JS File Format:
@@ -92,19 +91,11 @@ const argv = yargs(hideBin(process.argv))
         type: 'boolean',
         default: false
     })
-    .option('skip-image-generation', {
-        description: 'Skip turns that request image generation to avoid rate limiting',
-        type: 'boolean',
-        default: false
-    })
     .help()
     .alias('help', 'h').argv
 
 // Utility function to create delay
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
-// Add after the existing sleep function
-const sleepForImageGeneration = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Utility function to format duration
 const formatDuration = (ms) => {
@@ -200,62 +191,8 @@ async function getChatflowName(chatflowId) {
     }
 }
 
-// Add function to detect if a request is for image generation
-const isImageGenerationRequest = (input) => {
-    const imageKeywords = [
-        'create image',
-        'generate image',
-        'dall-e',
-        'create.*image',
-        'generate.*picture',
-        'golden retriever',
-        'baby elephant',
-        'art style',
-        'realistic',
-        'soft lighting',
-        'create a',
-        'draw',
-        'paint',
-        'illustration',
-        'picture',
-        'visual'
-    ]
-    const lowerInput = input.toLowerCase()
-    return imageKeywords.some((keyword) => {
-        if (keyword.includes('.*')) {
-            // Simple regex-like matching
-            const parts = keyword.split('.*')
-            return parts.every((part) => lowerInput.includes(part))
-        }
-        return lowerInput.includes(keyword)
-    })
-}
-
-// Add function to handle rate limiting specifically
-const handleRateLimitError = async (error, retryCount, maxRetries) => {
-    if (error.message && error.message.includes('rate limit')) {
-        if (retryCount < maxRetries) {
-            const backoffDelay = Math.min(60000 * Math.pow(2, retryCount), 300000) // Max 5 minutes
-            console.log(`🔄 Rate limited, waiting ${backoffDelay / 1000}s before retry ${retryCount + 1}/${maxRetries}`)
-            await sleepForImageGeneration(backoffDelay)
-            return true
-        }
-    }
-    return false
-}
-
 async function testChatflowTurn(chatflowId, input, files = [], sessionId = null, retryCount = 0) {
     const startTime = Date.now()
-
-    // Check if this is an image generation request
-    const isImageGen = isImageGenerationRequest(input)
-
-    // Add extra delay for image generation requests to avoid rate limiting
-    if (isImageGen && retryCount === 0) {
-        console.log('  🎨 Image generation request detected, adding extra delay...')
-        await sleepForImageGeneration(2000)
-    }
-
     try {
         // Build the prediction API URL from the base URL
         const baseUrl = getBaseUrl()
@@ -276,15 +213,12 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             payload.uploads = processedFiles
         }
 
-        // Use longer timeout for image generation requests
-        const requestTimeout = isImageGen ? Math.max(argv.timeout, 60000) : argv.timeout
-
         const response = await axios.post(`${baseUrl}/api/v1/prediction/${chatflowId}`, payload, {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${process.env.TESTING_CHATFLOWS_AUTH_TOKEN}`
             },
-            timeout: requestTimeout
+            timeout: argv.timeout
         })
         return {
             success: true,
@@ -297,32 +231,18 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             filesCount: files ? files.length : 0
         }
     } catch (error) {
-        // Special handling for rate limiting errors
-        const errorMessage = error.response?.data || error.message
-        const isRateLimited =
-            (typeof errorMessage === 'string' && errorMessage.includes('rate limit')) ||
-            (typeof errorMessage === 'object' && JSON.stringify(errorMessage).includes('rate limit'))
-
-        if (isRateLimited && (await handleRateLimitError(error, retryCount, argv.retries))) {
-            return testChatflowTurn(chatflowId, input, files, sessionId, retryCount + 1)
-        }
-
         if (retryCount < argv.retries) {
             if (argv.verbose) {
                 console.log(`⚠️  Retrying ${chatflowId} (attempt ${retryCount + 1}/${argv.retries})`)
             }
-
-            // Use longer backoff for image generation requests
-            const backoffMultiplier = isImageGen ? 3 : 1
-            const backoffDelay = 1000 * (retryCount + 1) * backoffMultiplier
-            await sleep(backoffDelay)
+            await sleep(1000 * (retryCount + 1)) // Exponential backoff
             return testChatflowTurn(chatflowId, input, files, sessionId, retryCount + 1)
         }
         return {
             success: false,
             chatflowId,
             input,
-            error: errorMessage,
+            error: error.response?.data || error.message,
             duration: Date.now() - startTime,
             filesCount: files ? files.length : 0
         }
@@ -363,26 +283,6 @@ async function testChatflow(chatflowData) {
             console.log(`  Using Session ID: ${currentSessionId}`)
         }
 
-        // Check if we should skip this turn due to image generation
-        if (argv['skip-image-generation'] && isImageGenerationRequest(turn.input)) {
-            console.log('  ⏭️  Skipping image generation turn (--skip-image-generation enabled)')
-            const skippedResult = {
-                success: true,
-                chatflowId,
-                input: turn.input,
-                response: { text: 'Skipped due to --skip-image-generation flag' },
-                sessionId: currentSessionId,
-                chatId: currentChatId,
-                duration: 0,
-                filesCount: turn.files ? turn.files.length : 0,
-                turnNumber: i + 1,
-                totalTurns: chatflowData.conversation.length,
-                skipped: true
-            }
-            conversationResults.push(skippedResult)
-            continue
-        }
-
         const result = await testChatflowTurn(chatflowId, turn.input, turn.files, currentSessionId)
         result.turnNumber = i + 1
         result.totalTurns = chatflowData.conversation.length
@@ -407,18 +307,7 @@ async function testChatflow(chatflowData) {
 
         // Add delay between turns (except for the last turn)
         if (!argv['no-delay'] && i < chatflowData.conversation.length - 1) {
-            const baseDelay = parseInt(process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS)
-            // Add extra delay if the current or next turn involves image generation
-            const currentIsImageGen = isImageGenerationRequest(turn.input)
-            const nextTurn = chatflowData.conversation[i + 1]
-            const nextIsImageGen = nextTurn ? isImageGenerationRequest(nextTurn.input) : false
-
-            if (currentIsImageGen || nextIsImageGen) {
-                console.log('  ⏱️  Adding extra delay due to image generation...')
-                await sleep(baseDelay * 3) // Triple the delay for image generation
-            } else {
-                await sleep(baseDelay)
-            }
+            await sleep(parseInt(process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS))
         }
     }
 
@@ -481,9 +370,7 @@ async function main() {
         console.log(`📊 Total chatflows to test: ${enabledChatflows.length}`)
         console.log(`⏱️  Delay between requests: ${argv['no-delay'] ? 'disabled' : process.env.TESTING_CHATFLOWS_REQUEST_DELAY_MS + 'ms'}`)
         console.log(`🔄 Retry attempts: ${argv.retries}`)
-        console.log(`⏳ Request timeout: ${argv.timeout}ms`)
-        console.log(`🎨 Skip image generation: ${argv['skip-image-generation'] ? 'enabled' : 'disabled'}`)
-        console.log('')
+        console.log(`⏳ Request timeout: ${argv.timeout}ms\n`)
 
         const results = []
         const startTime = Date.now()
