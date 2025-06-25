@@ -11,8 +11,10 @@
  * -----------------------------
  * TESTING_CHATFLOWS_API_URL - Base URL for the API (e.g., https://prod.studio.theanswer.ai/) [Takes precedence]
  * API_HOST - Backup/fallback base URL for the API (used if TESTING_CHATFLOWS_API_URL is not set)
- * TESTING_CHATFLOWS_AUTH_TOKEN - Bearer token for authentication
+ * TESTING_CHATFLOWS_AUTH_TOKEN - Bearer token for authentication (for testing predictions)
  * TESTING_CHATFLOWS_REQUEST_DELAY_MS - Delay between requests in milliseconds (e.g., 50)
+ *
+ * Note: Chatflow names are fetched via public API endpoints (no auth required)
  *
  * Command Line Options:
  * -------------------
@@ -467,24 +469,22 @@ async function selectChatflows(chatflowsData) {
 
 async function getChatflowName(chatflowId) {
     try {
-        // Build the chatflows API URL from the base URL
+        // Build the public chatflows API URL from the base URL (no auth required)
         const baseUrl = getBaseUrl()
-        const response = await axios.get(
-            `${baseUrl}/api/v1/chatflows/${chatflowId}`, // Note: it's 'chatflows' not 'chatflow'
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.TESTING_CHATFLOWS_AUTH_TOKEN}`
-                },
-                timeout: argv.timeout
-            }
-        )
-        // The name is in the response.data.name field according to Flowise API docs
+        const response = await axios.get(`${baseUrl}/api/v1/public-chatflows/${chatflowId}`, {
+            timeout: argv.timeout
+        })
+        // The name is in the response.data.name field
         return response.data.name || 'Unknown Name'
     } catch (error) {
         if (error.response?.status === 404) {
-            console.error(`⚠️  Chatflow ${chatflowId} not found`)
+            if (argv.verbose) {
+                console.error(`⚠️  Chatflow ${chatflowId} not found`)
+            }
         } else {
-            console.error(`⚠️  Failed to fetch name for chatflow ${chatflowId}:`, error.message)
+            if (argv.verbose) {
+                console.error(`⚠️  Failed to fetch name for chatflow ${chatflowId}:`, error.message)
+            }
         }
         return 'Unknown Name'
     }
