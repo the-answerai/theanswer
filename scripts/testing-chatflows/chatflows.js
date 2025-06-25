@@ -168,7 +168,7 @@ module.exports = [
     },
     {
         id: 'c4f35602-1f59-4185-98c1-e07d590ccbc4',
-        enabled: false,
+        enabled: true,
         internalName: 'ExaSearch - Dynamic Web Search - Official',
         conversation: [
             {
