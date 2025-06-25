@@ -82,3 +82,56 @@ module.exports = [
 -   **401 errors**: Verify auth token is valid
 -   **File errors**: Check file paths are correct and files exist
 -   **Rate limits**: Increase `TESTING_CHATFLOWS_REQUEST_DELAY_MS`
+
+## New Rate Limiting Features
+
+### Image Generation Support
+
+-   **Automatic Detection**: Script detects image generation requests and applies longer delays
+-   **Extended Timeouts**: Image generation requests get 60+ second timeouts automatically
+-   **Exponential Backoff**: Special rate limiting handling with up to 5-minute delays
+-   **Skip Option**: Use `--skip-image-generation` to skip image generation turns entirely
+
+### Rate Limiting Troubleshooting
+
+If you encounter OpenAI rate limiting errors (Error 1015):
+
+1. **Use Skip Option**: `--skip-image-generation` to avoid image generation
+2. **Increase Delays**: Set higher `TESTING_CHATFLOWS_REQUEST_DELAY_MS` (e.g., 5000ms)
+3. **Different Environment**: Test against staging instead of production
+4. **Different API Key**: Use a separate OpenAI API key for testing
+
+### Example Commands
+
+```bash
+# Skip image generation to avoid rate limits
+pnpm test:chatflows -- --skip-image-generation
+
+# Use longer delays with verbose logging
+TESTING_CHATFLOWS_REQUEST_DELAY_MS=5000 pnpm test:chatflows -- --verbose
+
+# Test against different environment
+TESTING_CHATFLOWS_API_URL=https://staging.studio.theanswer.ai pnpm test:chatflows
+
+# Save results to file for analysis
+pnpm test:chatflows -- --output results.json --verbose
+```
+
+## Environment Variables
+
+-   `TESTING_CHATFLOWS_API_URL` - API base URL (takes precedence over API_HOST)
+-   `API_HOST` - Fallback API base URL
+-   `TESTING_CHATFLOWS_AUTH_TOKEN` - Bearer token for authentication
+-   `TESTING_CHATFLOWS_REQUEST_DELAY_MS` - Delay between requests (increase for rate limiting)
+-   `AAI_DEFAULT_OPENAI_API_KEY` - OpenAI API key used by the chatflows
+
+## Command Line Options
+
+-   `--file, -f`: Path to JS file (default: ./chatflows.js)
+-   `--no-delay`: Disable delay between requests
+-   `--retries, -r`: Number of retry attempts (default: 2)
+-   `--timeout, -t`: Request timeout in milliseconds (default: 30000)
+-   `--output, -o`: Save results to JSON file
+-   `--verbose, -v`: Enable detailed logging
+-   `--skip-image-generation`: Skip image generation turns to avoid rate limiting
+-   `--help, -h`: Show help
