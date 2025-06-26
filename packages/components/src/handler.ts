@@ -533,7 +533,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                 } else if (provider === 'langFuse') {
                     //console.debug('Starting LangFuse configuration for provider:', provider)
 
-                    const release = analytic[provider].release as string
+                    // const release = analytic[provider].release as string
                     //console.debug('Release:', release)
 
                     const langFuseSecretKey =
@@ -548,7 +548,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         analytic[provider]?.endpoint ?? getCredentialParam('langFuseEndpoint', credentialData, nodeData)
                     //console.debug('LangFuse Endpoint:', langFuseEndpoint)
 
-                    const langfuse = new Langfuse()
+                    // const langfuse = new Langfuse()
                     //console.debug('Langfuse instance created.')
 
                     const chatflow = await options.appDataSource
@@ -560,7 +560,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         .getRepository(options.databaseEntities['Credential'])
                         .findBy({ id: In(credentialIds?.credentials?.map((credential) => credential.credentialId) ?? []) })
 
-                    //console.debug('Credentials::::', credentials)
+                    // console.debug('Credentials::::', credentials)
                     let aiCredentialsOwnership = 'platform'
                     if (credentials.every((credential: { visibility: string[] }) => !credential.visibility?.includes('Platform'))) {
                         aiCredentialsOwnership = 'user'
@@ -571,9 +571,9 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         publicKey: langFusePublicKey,
                         baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com'
                     }
-                    //console.debug('LangFuse Options:', langFuseOptions)
-                    //console.debug('User:', options?.user)
-                    // //console.debug('Options:', options)
+                    // console.debug('LangFuse Options:', langFuseOptions)
+                    // console.debug('User:', options?.user)
+                    // console.debug('Options:', options)
 
                     if (nodeData?.inputs?.analytics?.langFuse) {
                         langFuseOptions = { ...langFuseOptions, ...nodeData?.inputs?.analytics?.langFuse }
@@ -606,7 +606,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         metadata: metadata,
                         userId: options?.user?.id,
                         sessionId: options.sessionId,
-                        tags: [`Name:${chatflow.name}`, 'Adam Test'],
+                        tags: [`Name:${chatflow.name}`],
                         version: chatflow.updatedDate
                         // TODO: This is still causing an error
                         // This works to keep the root trace name and have everything else update on the root trace
