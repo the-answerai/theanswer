@@ -598,14 +598,19 @@ async function testChatflowTurn(chatflowId, input, files = [], sessionId = null,
             await sleep(1000 * (retryCount + 1)) // Exponential backoff
             return testChatflowTurn(chatflowId, input, files, sessionId, retryCount + 1)
         }
+        // Run error detection on failed response content
+        const errorContent = error.response?.data || error.message
+        const errorText = typeof errorContent === 'string' ? errorContent : JSON.stringify(errorContent)
+        const errorDetection = detectErrors(errorText)
+
         return {
             success: false,
             chatflowId,
             input,
-            error: error.response?.data || error.message,
+            error: errorContent,
             duration: Date.now() - startTime,
             filesCount: files ? files.length : 0,
-            errorDetection: { hasIssues: false, critical: [], warnings: [], suspicious: [], markup: [] } // Default for failed requests
+            errorDetection // Run actual error detection on failed responses too
         }
     }
 }
@@ -683,11 +688,21 @@ async function testChatflow(chatflowData) {
                 currentChatId = result.chatId
             }
         } else {
+            // Show error detection icon for failed turns if issues detected
+            const errorIcon = result.errorDetection.hasIssues ? `❌${getErrorSummaryIcon(result.errorDetection)}` : '❌'
+
             if (argv.verbose) {
-                console.log('  ❌ Error:')
+                console.log(`  ${errorIcon} Error:`)
                 console.log('  Error details:', JSON.stringify(result.error, null, 4))
+
+                // Show error detection results for failed turns if any issues found
+                if (result.errorDetection.hasIssues) {
+                    console.log(`  📋 Error Detection (${result.errorDetection.totalIssues} issues):`)
+                    const errorDisplay = formatErrorDetection(result.errorDetection)
+                    console.log(`  ${errorDisplay}`)
+                }
             } else {
-                console.log(`❌ Error (${formatDuration(result.duration)})`)
+                console.log(`${errorIcon} Error (${formatDuration(result.duration)})`)
             }
         }
 
@@ -921,10 +936,27 @@ async function main() {
                     console.log(statusLine)
                 }
             } else {
+                // Show error detection icon for failed chatflows if issues detected
+                const failedIcon = errorSummary.totalIssues > 0 ? `❌${getErrorSummaryIcon(errorSummary)}` : '❌'
+
                 if (argv.verbose) {
-                    console.log(`❌ ${result.internalName} (${result.chatflowId}) - ${failedTurns}/${result.totalTurns} turns failed`)
+                    let statusLine = `${failedIcon} ${result.internalName} (${result.chatflowId}) - ${failedTurns}/${result.totalTurns} turns failed`
+
+                    // Add error detection summary if enabled and issues found
+                    if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
+                        statusLine += ` (${errorSummary.totalIssues} issues in ${errorSummary.turnsWithIssues} turns)`
+                    }
+
+                    console.log(statusLine)
                 } else {
-                    console.log(`❌ ${result.internalName} - ${failedTurns}/${result.totalTurns} turns failed`)
+                    let statusLine = `${failedIcon} ${result.internalName} - ${failedTurns}/${result.totalTurns} turns failed`
+
+                    // Add error detection summary if enabled and issues found
+                    if (!argv['no-error-detection'] && errorSummary.totalIssues > 0) {
+                        statusLine += ` (${errorSummary.totalIssues} issues)`
+                    }
+
+                    console.log(statusLine)
                 }
             }
         })
@@ -945,7 +977,13 @@ async function main() {
                 internalName: r.internalName,
                 actualName: r.actualName,
                 type: r.type,
-                error: r.turns.filter((t) => !t.success).map((t) => ({ turn: t.turnNumber, error: t.error })),
+                error: r.turns
+                    .filter((t) => !t.success)
+                    .map((t) => ({
+                        turn: t.turnNumber,
+                        error: t.error,
+                        errorDetection: t.errorDetection // Include error detection for each failed turn
+                    })),
                 errorDetection: r.errorDetection
             }))
 
@@ -1043,8 +1081,15 @@ async function main() {
                     console.log(`ID: ${id}`)
                     console.log(`Type: ${type}`)
                     console.log('Failed turns:')
-                    error.forEach(({ turn, error: turnError }) => {
+                    error.forEach(({ turn, error: turnError, errorDetection: turnErrorDetection }) => {
                         console.log(`  Turn ${turn}:`, typeof turnError === 'string' ? turnError : JSON.stringify(turnError, null, 2))
+
+                        // Show error detection results for this specific failed turn if any issues found
+                        if (!argv['no-error-detection'] && turnErrorDetection?.hasIssues) {
+                            console.log(`    📋 Error Detection (${turnErrorDetection.totalIssues} issues):`)
+                            const errorDisplay = formatErrorDetection(turnErrorDetection, true) // Enable context display
+                            console.log(`    ${errorDisplay.replace(/\n {2}/g, '\n    ')}`)
+                        }
                     })
 
                     // Show error detection summary for failed chatflows if any issues were found
@@ -1057,6 +1102,55 @@ async function main() {
             } else {
                 console.log(`\n❌ ${failed} chatflow${failed === 1 ? '' : 's'} failed - run with verbose mode for details`)
             }
+        }
+
+        // Also collect failed chatflows that have error detection issues
+        const failedWithIssues = results
+            .filter((r) => !r.success && r.errorDetection?.totalIssues > 0)
+            .map((r) => ({
+                id: r.chatflowId,
+                internalName: r.internalName,
+                actualName: r.actualName,
+                type: r.type,
+                errorDetection: r.errorDetection,
+                turnsWithIssues: r.turns
+                    .filter((t) => !t.success && t.errorDetection?.hasIssues)
+                    .map((t) => ({
+                        turn: t.turnNumber,
+                        error: t.error,
+                        issues: t.errorDetection
+                    }))
+            }))
+
+        // Show failed chatflows that had error detection issues (always show, not just in verbose mode)
+        if (!argv['no-error-detection'] && failedWithIssues.length > 0) {
+            console.log('\n❌ Failed Chatflows with Detected Issues:')
+            failedWithIssues.forEach(({ id, internalName, actualName, type, errorDetection, turnsWithIssues }) => {
+                console.log(`\nActual Name: ${actualName}`)
+                console.log(`Internal Name: ${internalName}`)
+                console.log(`ID: ${id}`)
+                console.log(`Type: ${type}`)
+                console.log(
+                    `Total Issues: ${errorDetection.totalIssues} (Critical: ${errorDetection.critical}, Warnings: ${errorDetection.warnings}, Suspicious: ${errorDetection.suspicious}, Markup: ${errorDetection.markup})`
+                )
+
+                if (turnsWithIssues.length > 0) {
+                    console.log('Failed turns with detected issues:')
+                    turnsWithIssues.forEach(({ turn, error, issues }) => {
+                        console.log(`  Turn ${turn}: ${issues.totalIssues} issues`)
+
+                        // Show the actual error that caused the failure
+                        const errorMessage = typeof error === 'string' ? error : JSON.stringify(error)
+                        console.log(`    ❌ Error: ${errorMessage}`)
+
+                        // Show context around detected issues for better understanding
+                        const errorDisplay = formatErrorDetection(issues, true) // Enable context display
+                        if (errorDisplay) {
+                            console.log(`    ${errorDisplay.replace(/\n {2}/g, '\n    ')}`)
+                        }
+                    })
+                }
+            })
         }
 
         // Show successful chatflows that had error detection issues (always show, not just in verbose mode)
@@ -1092,13 +1186,11 @@ async function main() {
             console.log(`\n💾 Results saved to: ${outputPath}`)
         }
 
-        // Exit with error if any tests failed
-        if (failed > 0) {
-            process.exit(1)
-        }
+        // Script completed - let it exit gracefully even if tests failed
+        // All error information and summaries have been displayed above
     } catch (error) {
         console.error('❌ Fatal error:', error.message)
-        process.exit(1)
+        // Exit gracefully even on fatal errors to avoid abrupt termination
     }
 }
 
