@@ -3,7 +3,7 @@ import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const MASTER_MODEL_LIST = 'https://raw.githubusercontent.com/the-answerai/theanswer/production/packages-answers/assets/aai-models.json'
+const MASTER_MODEL_LIST = 'https://raw.githubusercontent.com/the-answerai/theanswer/production/packages-answers/assets/models.json'
 
 export enum MODEL_TYPE {
     CHAT = 'chat',
