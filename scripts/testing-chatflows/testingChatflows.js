@@ -149,7 +149,6 @@ const ERROR_DETECTION_CONFIG = {
         'workaround',
         'temp',
         'debug',
-        'test',
         'lorem ipsum'
     ],
     // HTML/XML error indicators
@@ -702,7 +701,31 @@ async function main() {
         if (!fs.existsSync(chatflowsFilePath)) {
             if (process.env._chatflows_js) {
                 console.log(`📁 Creating ${path.basename(chatflowsFilePath)} from _chatflows_js environment variable...`)
-                fs.writeFileSync(chatflowsFilePath, process.env._chatflows_js)
+                console.log(`📝 Environment variable length: ${process.env._chatflows_js.length} characters`)
+
+                // Debug: Check for trailing content and line endings
+                const envContent = process.env._chatflows_js
+                const lastChars = envContent.slice(-20) // Last 20 chars
+                const hasTrailingNewline = envContent.endsWith('\n')
+                const hasTrailingCarriageReturn = envContent.endsWith('\r\n') || envContent.endsWith('\r')
+
+                if (argv.verbose) {
+                    console.log(`🔍 Debug info:`)
+                    console.log(`   - Last 20 chars: ${JSON.stringify(lastChars)}`)
+                    console.log(`   - Ends with \\n: ${hasTrailingNewline}`)
+                    console.log(`   - Ends with \\r or \\r\\n: ${hasTrailingCarriageReturn}`)
+                    console.log(
+                        `   - Character codes of last 5 chars: ${envContent
+                            .slice(-5)
+                            .split('')
+                            .map((c) => c.charCodeAt(0))
+                            .join(', ')}`
+                    )
+                }
+
+                // Write the full environment variable content directly to the file
+                // Add a newline at the end to ensure proper file formatting
+                fs.writeFileSync(chatflowsFilePath, envContent + '\n')
                 console.log(`✅ Created ${path.basename(chatflowsFilePath)} successfully`)
             } else {
                 throw new Error(`Chatflows file not found at ${chatflowsFilePath} and _chatflows_js environment variable is not set`)
@@ -710,7 +733,27 @@ async function main() {
         }
 
         // Read and load JS file
-        const chatflowsData = require(chatflowsFilePath)
+        let chatflowsData
+        try {
+            // Clear require cache to ensure fresh load
+            delete require.cache[chatflowsFilePath]
+            chatflowsData = require(chatflowsFilePath)
+        } catch (error) {
+            throw new Error(
+                `Failed to load chatflows file: ${error.message}. Please ensure the file contains a valid 'module.exports = [...]' array.`
+            )
+        }
+
+        // Validate that chatflowsData is an array
+        if (!Array.isArray(chatflowsData)) {
+            throw new Error(
+                `Chatflows data must be an array, but got: ${typeof chatflowsData}. Please ensure the file exports an array with 'module.exports = [...]'`
+            )
+        }
+
+        if (chatflowsData.length === 0) {
+            throw new Error(`Chatflows array is empty. Please add some chatflow configurations to the file.`)
+        }
 
         // Determine which chatflows to test based on CLI options
         let selectedChatflows
