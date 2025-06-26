@@ -1,6 +1,5 @@
 import { useNavigationState } from '@/utils/navigation'
-import { useTheme } from '@emotion/react'
-import { alpha, Box, Tooltip, Chip, Button } from '@mui/material'
+import { alpha, Box, Tooltip, Chip, Button, CircularProgress, useTheme } from '@mui/material'
 import {
     Star as StarIcon,
     StarBorder as StarBorderIcon,
@@ -8,7 +7,7 @@ import {
     Edit as EditIcon,
     ContentCopy as IconCopy
 } from '@mui/icons-material'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Sidekick } from './SidekickSelect.types'
 import {
     SidekickCardContainer,
@@ -20,6 +19,7 @@ import {
     WhiteButton
 } from './StyledComponents'
 import Link from 'next/link'
+import useSidekickDetails from './hooks/useSidekickDetails'
 
 const SidekickCard = ({
     sidekick,
@@ -41,24 +41,45 @@ const SidekickCard = ({
     toggleFavorite: any
 }) => {
     const [, setNavigationState] = useNavigationState()
+    const { fetchSidekickDetails } = useSidekickDetails()
+    const [loadingAction, setLoadingAction] = useState<'clone' | 'preview' | null>(null)
 
     const theme = useTheme()
+
     const handleClone = useCallback(
-        (sidekick: Sidekick, e: React.MouseEvent) => {
+        async (sidekick: Sidekick, e: React.MouseEvent) => {
+            e.preventDefault()
             e.stopPropagation()
 
             if (!sidekick) return
 
-            const isAgentCanvas = (sidekick.flowData?.nodes || []).some(
+            setLoadingAction('clone')
+
+            // Fetch full sidekick details if we don't have flowData
+            let fullSidekick = sidekick
+            if (!sidekick.flowData) {
+                const details = await fetchSidekickDetails(sidekick.id)
+                if (details) {
+                    fullSidekick = details
+                } else {
+                    setLoadingAction(null)
+                    return
+                }
+            }
+
+            const isAgentCanvas = (fullSidekick.flowData?.nodes || []).some(
                 (node: { data: { category: string } }) =>
                     node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
             )
 
-            localStorage.setItem('duplicatedFlowData', JSON.stringify(sidekick.chatflow))
+            localStorage.setItem('duplicatedFlowData', JSON.stringify(fullSidekick.chatflow))
             const state = {
-                templateData: JSON.stringify(sidekick),
-                parentChatflowId: sidekick.id
+                templateData: JSON.stringify(fullSidekick),
+                parentChatflowId: fullSidekick.id
             }
+
+            setLoadingAction(null)
+
             if (!user) {
                 const redirectUrl = `/sidekick-studio/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`
                 const loginUrl = `/api/auth/login?redirect_uri=${redirectUrl}`
@@ -70,7 +91,7 @@ const SidekickCard = ({
                 })
             }
         },
-        [navigate, user, setNavigationState]
+        [navigate, user, setNavigationState, fetchSidekickDetails]
     )
 
     const handleEdit = useCallback((sidekick: Sidekick, e: React.MouseEvent) => {
@@ -86,14 +107,34 @@ const SidekickCard = ({
         window.open(url, '_blank')
     }, [])
 
-    const handleCardClick = (sidekick: Sidekick) => {
-        handleSidekickSelect(sidekick)
+    const handleCardClick = async (sidekick: Sidekick) => {
+        // For executable sidekicks, fetch full details before selection
+        if (sidekick.isExecutable && !sidekick.flowData) {
+            const fullSidekick = await fetchSidekickDetails(sidekick.id)
+            if (fullSidekick) {
+                handleSidekickSelect(fullSidekick)
+            }
+        } else {
+            handleSidekickSelect(sidekick)
+        }
     }
 
-    const handlePreviewClick = (sidekick: Sidekick, e: React.MouseEvent) => {
+    const handlePreviewClick = async (sidekick: Sidekick, e: React.MouseEvent) => {
+        e.preventDefault()
         e.stopPropagation()
+        setLoadingAction('preview')
+
+        // Fetch full details if needed
+        if (!sidekick.flowData) {
+            const fullSidekick = await fetchSidekickDetails(sidekick.id)
+            if (fullSidekick) {
+                sidekick = fullSidekick
+            }
+        }
+
         setSelectedTemplateId(sidekick.id)
         setIsMarketplaceDialogOpen(true)
+        setLoadingAction(null)
     }
 
     // Get the appropriate href for the sidekick card
@@ -105,11 +146,21 @@ const SidekickCard = ({
     }, [])
 
     // Handle link clicks to prevent default behavior and use our custom handler instead
-    const handleLinkClick = (e: React.MouseEvent, sidekick: Sidekick) => {
+    const handleLinkClick = async (e: React.MouseEvent, sidekick: Sidekick) => {
+        // Check if the click originated from an interactive element (button, etc.)
+        const target = e.target as HTMLElement
+        const isInteractiveElement = target.closest('button') || target.closest('.actionButtons')
+
+        // If clicking on an interactive element, don't process the link click
+        if (isInteractiveElement) {
+            e.preventDefault()
+            return
+        }
+
         // Only prevent default for left clicks to allow middle clicks to work natively
         if (e.button === 0) {
             e.preventDefault()
-            handleCardClick(sidekick)
+            await handleCardClick(sidekick)
         }
     }
 
@@ -201,7 +252,11 @@ const SidekickCard = ({
                         {sidekick.chatflow.canEdit ? (
                             <>
                                 <Tooltip title='Edit this sidekick'>
-                                    <WhiteIconButton size='small' onClick={(e) => handleEdit(sidekick, e)}>
+                                    <WhiteIconButton
+                                        size='small'
+                                        onClick={(e) => handleEdit(sidekick, e)}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                    >
                                         <EditIcon />
                                     </WhiteIconButton>
                                 </Tooltip>
@@ -209,13 +264,32 @@ const SidekickCard = ({
                         ) : null}
                         {sidekick.isExecutable ? (
                             <Tooltip title='Clone this sidekick'>
-                                <WhiteIconButton size='small' onClick={(e) => handleClone(sidekick, e)}>
-                                    <IconCopy />
+                                <WhiteIconButton
+                                    size='small'
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleClone(sidekick, e)
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    disabled={loadingAction === 'clone'}
+                                >
+                                    {loadingAction === 'clone' ? <CircularProgress size={16} /> : <IconCopy />}
                                 </WhiteIconButton>
                             </Tooltip>
                         ) : (
                             <Tooltip title='Clone this sidekick'>
-                                <WhiteButton variant='outlined' endIcon={<IconCopy />} onClick={(e) => handleClone(sidekick, e)}>
+                                <WhiteButton
+                                    variant='outlined'
+                                    endIcon={loadingAction === 'clone' ? <CircularProgress size={16} /> : <IconCopy />}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleClone(sidekick, e)
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    disabled={loadingAction === 'clone'}
+                                >
                                     Clone
                                 </WhiteButton>
                             </Tooltip>
@@ -229,33 +303,63 @@ const SidekickCard = ({
                                     : 'Add to favorites'
                             }
                         >
-                            <span>
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.stopPropagation()
+                                    }
+                                }}
+                                role='button'
+                                tabIndex={0}
+                                style={{ display: 'inline-flex' }}
+                            >
                                 <WhiteIconButton
                                     onClick={(e) => toggleFavorite(sidekick, e)}
+                                    onMouseDown={(e) => e.stopPropagation()}
                                     size='small'
                                     disabled={!sidekick.isExecutable && !favorites.has(sidekick.id)}
                                 >
                                     {favorites.has(sidekick.id) ? <StarIcon /> : <StarBorderIcon />}
                                 </WhiteIconButton>
-                            </span>
+                            </div>
                         </Tooltip>
 
                         <Tooltip title='Preview this sidekick'>
-                            <span>
-                                <WhiteIconButton onClick={(e) => handlePreviewClick(sidekick, e)} size='small'>
-                                    <VisibilityIcon />
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.stopPropagation()
+                                    }
+                                }}
+                                role='button'
+                                tabIndex={0}
+                                style={{ display: 'inline-flex' }}
+                            >
+                                <WhiteIconButton
+                                    onClick={(e) => handlePreviewClick(sidekick, e)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    size='small'
+                                    disabled={loadingAction === 'preview'}
+                                >
+                                    {loadingAction === 'preview' ? <CircularProgress size={16} /> : <VisibilityIcon />}
                                 </WhiteIconButton>
-                            </span>
+                            </div>
                         </Tooltip>
                         {sidekick.isExecutable && (
                             <Tooltip title='Use this sidekick'>
                                 <Button
                                     variant='contained'
                                     size='small'
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                         e.stopPropagation()
-                                        handleSidekickSelect(sidekick)
+                                        e.preventDefault()
+                                        await handleCardClick(sidekick)
                                     }}
+                                    onMouseDown={(e) => e.stopPropagation()}
                                 >
                                     Use
                                 </Button>

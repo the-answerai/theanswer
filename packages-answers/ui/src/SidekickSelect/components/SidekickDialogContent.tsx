@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react'
 import { UserProfile } from '@auth0/nextjs-auth0/client'
 import { Sidekick } from '../SidekickSelect.types'
-import { NavigateFunction } from '@/utils/navigation'
 import SidekickSearchPanel from '../SidekickSearchPanel'
 import SidekickCategoryList from '../SidekickCategoryList'
 import dynamic from 'next/dynamic'
@@ -33,7 +32,7 @@ interface SidekickDialogContentProps {
     setActiveFilterCategory: React.Dispatch<React.SetStateAction<Record<string, string>>>
     favorites: Set<string>
     toggleFavorite: (sidekick: Sidekick, e?: React.MouseEvent) => void
-    navigate: NavigateFunction
+    navigate: any
     handleSidekickSelect: (sidekick: Sidekick) => void
     isMarketplaceDialogOpen: boolean
     setIsMarketplaceDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
