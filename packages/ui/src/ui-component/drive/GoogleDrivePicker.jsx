@@ -6,7 +6,7 @@ import credentialsApi from '@/api/credentials'
 import { IconX, IconTrash } from '@tabler/icons-react'
 import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
-import { GOOGLE_DRIVE_SUPPORTED_MIME_TYPES as SUPPORTED_MIME_TYPES } from '@/components/src/constants'
+import { GOOGLE_DRIVE_SUPPORTED_MIME_TYPES as SUPPORTED_MIME_TYPES } from '../../../../components/src/constants'
 
 /**
  * Custom hook for loading Google API scripts (Google Picker and Identity Services)
