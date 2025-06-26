@@ -752,7 +752,66 @@ async function main() {
 
         const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
         if (missingEnvVars.length > 0) {
-            throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
+            // Create a visually prominent error message
+            console.error('\n' + '═'.repeat(60))
+            console.error('🚨  CONFIGURATION ERROR - Missing Environment Variables  🚨')
+            console.error('═'.repeat(60))
+            console.error('')
+            console.error('❌ Missing required environment variables:')
+            console.error('')
+
+            missingEnvVars.forEach((varName) => {
+                console.error(`   🔴 ${varName}`)
+
+                // Add helpful context for each variable
+                switch (varName) {
+                    case 'TESTING_CHATFLOWS_AUTH_TOKEN':
+                        console.error('      → Bearer token for API authentication')
+                        console.error('      → Get this from your API settings/dashboard')
+                        break
+                    case 'TESTING_CHATFLOWS_REQUEST_DELAY_MS':
+                        console.error('      → Delay between requests in milliseconds')
+                        console.error('      → Example: 50 (for 50ms delay)')
+                        break
+                    default:
+                        console.error('      → Required for chatflow testing')
+                        break
+                }
+                console.error('')
+            })
+
+            console.error('📋 How to fix this:')
+            console.error('')
+            console.error('   1. Create a .env file in the project root directory')
+            console.error('   2. Add the missing variables:')
+            console.error('')
+            missingEnvVars.forEach((varName) => {
+                switch (varName) {
+                    case 'TESTING_CHATFLOWS_AUTH_TOKEN':
+                        console.error(`      ${varName}=your_bearer_token_here`)
+                        break
+                    case 'TESTING_CHATFLOWS_REQUEST_DELAY_MS':
+                        console.error(`      ${varName}=50`)
+                        break
+                    default:
+                        console.error(`      ${varName}=your_value_here`)
+                        break
+                }
+            })
+            console.error('')
+            console.error('   3. Restart the script')
+            console.error('')
+            console.error('💡 Note: You also need either TESTING_CHATFLOWS_API_URL or API_HOST')
+            console.error('   for the base API URL (e.g., https://prod.studio.theanswer.ai/)')
+            console.error('')
+            console.error('═'.repeat(60))
+            console.error('')
+
+            throw new Error(
+                `Configuration incomplete - missing ${missingEnvVars.length} required environment variable${
+                    missingEnvVars.length === 1 ? '' : 's'
+                }`
+            )
         }
 
         // Validate API URL (either TESTING_CHATFLOWS_API_URL or API_HOST is required)
