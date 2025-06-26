@@ -241,6 +241,40 @@ const extractUUID = (input) => {
     return match ? match[0] : input
 }
 
+// Function to extract context around a matched pattern
+function extractContext(text, pattern, contextWordCount = 5) {
+    const lowerText = text.toLowerCase()
+    const lowerPattern = pattern.toLowerCase()
+    const words = text.split(/\s+/)
+    const lowerWords = words.map((word) => word.toLowerCase())
+
+    const contexts = []
+
+    // Find all occurrences of the pattern
+    for (let i = 0; i < lowerWords.length; i++) {
+        const wordGroup = lowerWords.slice(i, i + lowerPattern.split(/\s+/).length).join(' ')
+        if (wordGroup.includes(lowerPattern)) {
+            // Found a match, extract context
+            const startIndex = Math.max(0, i - contextWordCount)
+            const endIndex = Math.min(words.length, i + lowerPattern.split(/\s+/).length + contextWordCount)
+
+            const contextWords = words.slice(startIndex, endIndex)
+            const beforeContext = words.slice(startIndex, i)
+            const matchWords = words.slice(i, i + lowerPattern.split(/\s+/).length)
+            const afterContext = words.slice(i + lowerPattern.split(/\s+/).length, endIndex)
+
+            contexts.push({
+                before: beforeContext.join(' '),
+                match: matchWords.join(' '),
+                after: afterContext.join(' '),
+                full: contextWords.join(' ')
+            })
+        }
+    }
+
+    return contexts
+}
+
 // Function to detect potential errors in response text
 function detectErrors(responseText) {
     if (!responseText || typeof responseText !== 'string' || argv['no-error-detection']) {
@@ -265,7 +299,11 @@ function detectErrors(responseText) {
     Object.keys(ERROR_DETECTION_CONFIG).forEach((category) => {
         ERROR_DETECTION_CONFIG[category].forEach((pattern) => {
             if (lowerText.includes(pattern.toLowerCase())) {
-                detected[category].push(pattern)
+                const contexts = extractContext(responseText, pattern, 5)
+                detected[category].push({
+                    pattern: pattern,
+                    contexts: contexts
+                })
             }
         })
     })
@@ -280,28 +318,48 @@ function detectErrors(responseText) {
 }
 
 // Function to format error detection results for display
-function formatErrorDetection(errorInfo) {
+function formatErrorDetection(errorInfo, showContext = false) {
     if (!errorInfo.hasIssues) {
         return ''
     }
 
     const parts = []
 
-    if (errorInfo.critical.length > 0) {
-        parts.push(`🚨 CRITICAL: ${errorInfo.critical.join(', ')}`)
+    const formatCategory = (categoryItems, icon, label) => {
+        if (categoryItems.length === 0) return null
+
+        if (showContext) {
+            const contextParts = []
+            categoryItems.forEach((item) => {
+                const pattern = typeof item === 'string' ? item : item.pattern
+                contextParts.push(`${pattern}`)
+
+                if (typeof item === 'object' && item.contexts && item.contexts.length > 0) {
+                    item.contexts.forEach((context) => {
+                        const contextLine = `"...${context.before} [${context.match}] ${context.after}..."`
+                        contextParts.push(`    └─ ${contextLine}`)
+                    })
+                }
+            })
+            return `${icon} ${label}: \n    ${contextParts.join('\n    ')}`
+        } else {
+            // Legacy format for backward compatibility
+            const patterns = categoryItems.map((item) => (typeof item === 'string' ? item : item.pattern))
+            return `${icon} ${label}: ${patterns.join(', ')}`
+        }
     }
 
-    if (errorInfo.warnings.length > 0) {
-        parts.push(`⚠️  WARNINGS: ${errorInfo.warnings.join(', ')}`)
-    }
+    const criticalPart = formatCategory(errorInfo.critical, '🚨', 'CRITICAL')
+    if (criticalPart) parts.push(criticalPart)
 
-    if (errorInfo.suspicious.length > 0) {
-        parts.push(`🔍 SUSPICIOUS: ${errorInfo.suspicious.join(', ')}`)
-    }
+    const warningsPart = formatCategory(errorInfo.warnings, '⚠️', 'WARNINGS')
+    if (warningsPart) parts.push(warningsPart)
 
-    if (errorInfo.markup.length > 0) {
-        parts.push(`📄 MARKUP: ${errorInfo.markup.join(', ')}`)
-    }
+    const suspiciousPart = formatCategory(errorInfo.suspicious, '🔍', 'SUSPICIOUS')
+    if (suspiciousPart) parts.push(suspiciousPart)
+
+    const markupPart = formatCategory(errorInfo.markup, '📄', 'MARKUP')
+    if (markupPart) parts.push(markupPart)
 
     return parts.join('\n  ')
 }
@@ -1001,8 +1059,8 @@ async function main() {
             }
         }
 
-        // Show successful chatflows that had error detection issues
-        if (!argv['no-error-detection'] && successfulWithIssues.length > 0 && argv.verbose) {
+        // Show successful chatflows that had error detection issues (always show, not just in verbose mode)
+        if (!argv['no-error-detection'] && successfulWithIssues.length > 0) {
             console.log('\n⚠️  Successful Chatflows with Detected Issues:')
             successfulWithIssues.forEach(({ id, internalName, actualName, type, errorDetection, turnsWithIssues }) => {
                 console.log(`\nActual Name: ${actualName}`)
@@ -1017,7 +1075,8 @@ async function main() {
                     console.log('Turns with issues:')
                     turnsWithIssues.forEach(({ turn, issues }) => {
                         console.log(`  Turn ${turn}: ${issues.totalIssues} issues`)
-                        const errorDisplay = formatErrorDetection(issues)
+                        // Show context around detected issues for better understanding
+                        const errorDisplay = formatErrorDetection(issues, true) // Enable context display
                         if (errorDisplay) {
                             console.log(`    ${errorDisplay.replace(/\n {2}/g, '\n    ')}`)
                         }
