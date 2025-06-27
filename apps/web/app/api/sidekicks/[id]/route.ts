@@ -30,6 +30,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json(sidekickWithCloneInfo)
     } catch (error) {
         console.error('Error fetching sidekick details:', error)
-        return respond401()
+        if (error instanceof Error && error.message === 'Unauthorized') {
+            return respond401()
+        }
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

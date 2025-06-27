@@ -2,10 +2,13 @@
 import { useState, useCallback } from 'react'
 import { Sidekick } from '../SidekickSelect.types'
 import { useAnswers } from '../../AnswersContext'
+import { Chat, SidekickListItem } from 'types'
+
+type NavigateFn = (url: string | number, options?: { state?: any; replace?: boolean }) => void
 
 interface UseSidekickSelectionHandlersProps {
-    chat?: any
-    navigate: any
+    chat?: Chat
+    navigate: NavigateFn
 }
 
 interface UseSidekickSelectionHandlersResult {
@@ -38,11 +41,11 @@ const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHa
                 window.history.pushState({ sidekick, isClientNavigation: true }, '', newUrl)
 
                 // Directly initialize the chat with the sidekick data
-                setSelectedSidekick(sidekick as any)
-                setSidekick(sidekick as any)
+                setSelectedSidekick(sidekick as unknown as SidekickListItem)
+                setSidekick(sidekick as unknown as SidekickListItem)
             } else {
-                setSelectedSidekick(sidekick as any)
-                setSidekick(sidekick as any)
+                setSelectedSidekick(sidekick as unknown as SidekickListItem)
+                setSidekick(sidekick as unknown as SidekickListItem)
                 const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
                 sidekickHistory.lastUsed = sidekick
                 localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
