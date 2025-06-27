@@ -38,11 +38,11 @@ const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHa
                 window.history.pushState({ sidekick, isClientNavigation: true }, '', newUrl)
 
                 // Directly initialize the chat with the sidekick data
-                setSelectedSidekick(sidekick)
-                setSidekick(sidekick)
+                setSelectedSidekick(sidekick as any)
+                setSidekick(sidekick as any)
             } else {
-                setSelectedSidekick(sidekick)
-                setSidekick(sidekick)
+                setSelectedSidekick(sidekick as any)
+                setSidekick(sidekick as any)
                 const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
                 sidekickHistory.lastUsed = sidekick
                 localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
