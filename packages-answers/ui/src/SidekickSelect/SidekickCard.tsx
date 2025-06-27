@@ -45,6 +45,7 @@ const SidekickCard = ({
     const theme = useTheme()
     const handleClone = useCallback(
         (sidekick: Sidekick, e: React.MouseEvent) => {
+            e.preventDefault()
             e.stopPropagation()
 
             if (!sidekick) return
@@ -74,6 +75,7 @@ const SidekickCard = ({
     )
 
     const handleEdit = useCallback((sidekick: Sidekick, e: React.MouseEvent) => {
+        e.preventDefault()
         e.stopPropagation()
 
         if (!sidekick) return
@@ -91,6 +93,7 @@ const SidekickCard = ({
     }
 
     const handlePreviewClick = (sidekick: Sidekick, e: React.MouseEvent) => {
+        e.preventDefault()
         e.stopPropagation()
         setSelectedTemplateId(sidekick.id)
         setIsMarketplaceDialogOpen(true)
@@ -104,10 +107,13 @@ const SidekickCard = ({
         return `/chat/${sidekick.id}`
     }, [])
 
-    // Handle link clicks to prevent default behavior and use our custom handler instead
-    const handleLinkClick = (e: React.MouseEvent, sidekick: Sidekick) => {
-        // Only prevent default for left clicks to allow middle clicks to work natively
-        if (e.button === 0) {
+    // Handle card clicks - improved to check if click comes from action buttons
+    const handleCardClickWrapper = (e: React.MouseEvent) => {
+        // Check if the click target is a button or inside a button
+        const target = e.target as HTMLElement
+        const isButtonClick = target.closest('button') || target.closest('.actionButtons button')
+
+        if (!isButtonClick && sidekick.isExecutable) {
             e.preventDefault()
             handleCardClick(sidekick)
         }
@@ -120,7 +126,6 @@ const SidekickCard = ({
         <Link
             href={href || '#'}
             passHref
-            onClick={sidekick.isExecutable ? (e) => handleLinkClick(e, sidekick) : undefined}
             style={{
                 textDecoration: 'none',
                 color: 'inherit',
@@ -128,6 +133,7 @@ const SidekickCard = ({
             }}
         >
             <SidekickCardContainer
+                onClick={handleCardClickWrapper}
                 key={sidekick.id}
                 sx={{
                     position: 'relative',
@@ -209,13 +215,28 @@ const SidekickCard = ({
                         ) : null}
                         {sidekick.isExecutable ? (
                             <Tooltip title='Clone this sidekick'>
-                                <WhiteIconButton size='small' onClick={(e) => handleClone(sidekick, e)}>
+                                <WhiteIconButton
+                                    size='small'
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleClone(sidekick, e)
+                                    }}
+                                >
                                     <IconCopy />
                                 </WhiteIconButton>
                             </Tooltip>
                         ) : (
                             <Tooltip title='Clone this sidekick'>
-                                <WhiteButton variant='outlined' endIcon={<IconCopy />} onClick={(e) => handleClone(sidekick, e)}>
+                                <WhiteButton
+                                    variant='outlined'
+                                    endIcon={<IconCopy />}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleClone(sidekick, e)
+                                    }}
+                                >
                                     Clone
                                 </WhiteButton>
                             </Tooltip>
@@ -231,7 +252,11 @@ const SidekickCard = ({
                         >
                             <span>
                                 <WhiteIconButton
-                                    onClick={(e) => toggleFavorite(sidekick, e)}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        toggleFavorite(sidekick, e)
+                                    }}
                                     size='small'
                                     disabled={!sidekick.isExecutable && !favorites.has(sidekick.id)}
                                 >
@@ -253,8 +278,9 @@ const SidekickCard = ({
                                     variant='contained'
                                     size='small'
                                     onClick={(e) => {
+                                        e.preventDefault()
                                         e.stopPropagation()
-                                        handleSidekickSelect(sidekick)
+                                        handleCardClick(sidekick)
                                     }}
                                 >
                                     Use
