@@ -4,7 +4,7 @@ import { Sidekick } from '../SidekickSelect.types'
 import { useAnswers } from '../../AnswersContext'
 import { Chat, SidekickListItem } from 'types'
 
-type NavigateFn = (url: string | number, options?: { state?: any; replace?: boolean }) => void
+export type NavigateFn = (url: string | number, options?: { state?: any; replace?: boolean }) => void
 
 interface UseSidekickSelectionHandlersProps {
     chat?: Chat

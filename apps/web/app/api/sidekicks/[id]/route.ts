@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server'
 import getCachedSession from '@ui/getCachedSession'
-import { findSidekicksForChat } from '@utils/findSidekicksForChat'
+import { findSidekickById } from '@utils/findSidekickById'
 import { respond401 } from '@utils/auth/respond401'
+import type { Chatflow } from 'types'
+
+interface SidekickApiResponse {
+    id: string
+    label: string
+    chatflow: Chatflow
+    chatbotConfig?: any
+    flowData?: any
+    isExecutable: boolean
+}
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     const session = await getCachedSession()
@@ -10,24 +20,18 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     if (!session?.user?.email) return respond401()
 
     try {
-        // Fetch full data for all sidekicks (non-lightweight mode)
-        const data = await findSidekicksForChat(user, { lightweight: false })
-
-        // Find the specific sidekick by ID
-        const sidekick = data.sidekicks.find((s: any) => s.id === params.id)
+        const sidekick = await findSidekickById(user, params.id)
 
         if (!sidekick) {
             return NextResponse.json({ error: 'Sidekick not found' }, { status: 404 })
         }
 
-        // Add isExecutable flag
-        const chatbotConfig = sidekick.chatflow?.chatbotConfig ? JSON.parse(sidekick.chatflow.chatbotConfig) : {}
-        const sidekickWithCloneInfo = {
+        const response: SidekickApiResponse = {
             ...sidekick,
             isExecutable: true
         }
 
-        return NextResponse.json(sidekickWithCloneInfo)
+        return NextResponse.json(response)
     } catch (error) {
         console.error('Error fetching sidekick details:', error)
         if (error instanceof Error && error.message === 'Unauthorized') {
