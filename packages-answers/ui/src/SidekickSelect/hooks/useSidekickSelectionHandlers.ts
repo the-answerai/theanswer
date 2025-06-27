@@ -2,12 +2,10 @@
 import { useState, useCallback } from 'react'
 import { Sidekick } from '../SidekickSelect.types'
 import { useAnswers } from '../../AnswersContext'
-import { NavigateFunction } from '@/utils/navigation'
 
 interface UseSidekickSelectionHandlersProps {
     chat?: any
-    navigate: NavigateFunction
-    enablePerformanceLogs?: boolean
+    navigate: any
 }
 
 interface UseSidekickSelectionHandlersResult {
@@ -21,11 +19,7 @@ interface UseSidekickSelectionHandlersResult {
     handleCreateNewSidekick: () => void
 }
 
-const useSidekickSelectionHandlers = ({
-    chat,
-    navigate,
-    enablePerformanceLogs = false
-}: UseSidekickSelectionHandlersProps): UseSidekickSelectionHandlersResult => {
+const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHandlersProps): UseSidekickSelectionHandlersResult => {
     const { setSidekick, setSidekick: setSelectedSidekick } = useAnswers()
     const [isMarketplaceDialogOpen, setIsMarketplaceDialogOpen] = useState(false)
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
@@ -33,7 +27,6 @@ const useSidekickSelectionHandlers = ({
 
     const handleSidekickSelect = useCallback(
         (sidekick: Sidekick) => {
-            console.log('[SidekickSelect] Sidekick selected:', sidekick.id)
             if (!chat?.id) {
                 // Update local storage first
                 const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')

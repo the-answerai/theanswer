@@ -13,10 +13,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         // Fetch full data for all sidekicks (non-lightweight mode)
         const data = await findSidekicksForChat(user, { lightweight: false })
 
-        if (!data) {
-            return NextResponse.json({ error: 'Failed to fetch sidekicks' }, { status: 500 })
-        }
-
         // Find the specific sidekick by ID
         const sidekick = data.sidekicks.find((s: any) => s.id === params.id)
 
@@ -25,6 +21,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         }
 
         // Add isExecutable flag
+        const chatbotConfig = sidekick.chatflow?.chatbotConfig ? JSON.parse(sidekick.chatflow.chatbotConfig) : {}
         const sidekickWithCloneInfo = {
             ...sidekick,
             isExecutable: true
