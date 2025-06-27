@@ -20,6 +20,7 @@ import {
 } from './StyledComponents'
 import Link from 'next/link'
 import useSidekickDetails from './hooks/useSidekickDetails'
+import type { NavigateFn } from './hooks/useSidekickSelectionHandlers'
 
 const SidekickCard = ({
     sidekick,
@@ -34,7 +35,7 @@ const SidekickCard = ({
     sidekick: Sidekick
     user: any
     favorites: any
-    navigate: any
+    navigate: NavigateFn
     handleSidekickSelect: any
     setSelectedTemplateId: any
     setIsMarketplaceDialogOpen: any
@@ -43,6 +44,7 @@ const SidekickCard = ({
     const [, setNavigationState] = useNavigationState()
     const { fetchSidekickDetails } = useSidekickDetails()
     const [loadingAction, setLoadingAction] = useState<'clone' | 'preview' | null>(null)
+    const [isProcessing, setIsProcessing] = useState(false)
 
     const theme = useTheme()
 
@@ -51,8 +53,9 @@ const SidekickCard = ({
             e.preventDefault()
             e.stopPropagation()
 
-            if (!sidekick) return
+            if (isProcessing || !sidekick) return
 
+            setIsProcessing(true)
             setLoadingAction('clone')
 
             // Fetch full sidekick details if we don't have flowData
@@ -63,6 +66,7 @@ const SidekickCard = ({
                     fullSidekick = details
                 } else {
                     setLoadingAction(null)
+                    setIsProcessing(false)
                     return
                 }
             }
@@ -90,8 +94,9 @@ const SidekickCard = ({
                     state
                 })
             }
+            setIsProcessing(false)
         },
-        [navigate, user, setNavigationState, fetchSidekickDetails]
+        [navigate, user, setNavigationState, fetchSidekickDetails, isProcessing]
     )
 
     const handleEdit = useCallback((sidekick: Sidekick, e: React.MouseEvent) => {
@@ -109,6 +114,8 @@ const SidekickCard = ({
     }, [])
 
     const handleCardClick = async (sidekick: Sidekick) => {
+        if (isProcessing) return
+        setIsProcessing(true)
         // For executable sidekicks, fetch full details before selection
         if (sidekick.isExecutable && !sidekick.flowData) {
             const fullSidekick = await fetchSidekickDetails(sidekick.id)
@@ -118,11 +125,14 @@ const SidekickCard = ({
         } else {
             handleSidekickSelect(sidekick)
         }
+        setIsProcessing(false)
     }
 
     const handlePreviewClick = async (sidekick: Sidekick, e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
+        if (isProcessing) return
+        setIsProcessing(true)
         setLoadingAction('preview')
 
         // Fetch full details if needed
@@ -136,6 +146,7 @@ const SidekickCard = ({
         setSelectedTemplateId(sidekick.id)
         setIsMarketplaceDialogOpen(true)
         setLoadingAction(null)
+        setIsProcessing(false)
     }
 
     // Get the appropriate href for the sidekick card
@@ -261,7 +272,7 @@ const SidekickCard = ({
                                         e.stopPropagation()
                                         handleClone(sidekick, e)
                                     }}
-                                    disabled={loadingAction === 'clone'}
+                                    disabled={loadingAction === 'clone' || isProcessing}
                                 >
                                     {loadingAction === 'clone' ? <CircularProgress size={16} /> : <IconCopy />}
                                 </WhiteIconButton>
@@ -276,7 +287,7 @@ const SidekickCard = ({
                                         e.stopPropagation()
                                         handleClone(sidekick, e)
                                     }}
-                                    disabled={loadingAction === 'clone'}
+                                    disabled={loadingAction === 'clone' || isProcessing}
                                 >
                                     Clone
                                 </WhiteButton>
@@ -299,7 +310,7 @@ const SidekickCard = ({
                                         toggleFavorite(sidekick, e)
                                     }}
                                     size='small'
-                                    disabled={!sidekick.isExecutable && !favorites.has(sidekick.id)}
+                                    disabled={(!sidekick.isExecutable && !favorites.has(sidekick.id)) || isProcessing}
                                 >
                                     {favorites.has(sidekick.id) ? <StarIcon /> : <StarBorderIcon />}
                                 </WhiteIconButton>
@@ -311,7 +322,7 @@ const SidekickCard = ({
                                 <WhiteIconButton
                                     onClick={(e) => handlePreviewClick(sidekick, e)}
                                     size='small'
-                                    disabled={loadingAction === 'preview'}
+                                    disabled={loadingAction === 'preview' || isProcessing}
                                 >
                                     {loadingAction === 'preview' ? <CircularProgress size={16} /> : <VisibilityIcon />}
                                 </WhiteIconButton>
@@ -327,6 +338,7 @@ const SidekickCard = ({
                                         e.stopPropagation()
                                         await handleCardClick(sidekick)
                                     }}
+                                    disabled={isProcessing}
                                 >
                                     Use
                                 </Button>

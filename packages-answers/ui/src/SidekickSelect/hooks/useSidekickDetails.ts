@@ -16,21 +16,28 @@ const useSidekickDetails = (): UseSidekickDetailsResult => {
         setLoading(true)
         setError(null)
 
-        try {
-            const response = await fetch(`/api/sidekicks/${sidekickId}`)
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch sidekick details: ${response.statusText}`)
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 10000)
+            try {
+                const response = await fetch(`/api/sidekicks/${sidekickId}`, { signal: controller.signal })
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch sidekick details: ${response.statusText}`)
+                }
+                const data = await response.json()
+                setLoading(false)
+                return data
+            } catch (err) {
+                if (attempt === 1) {
+                    setError(err instanceof Error ? err : new Error('Unknown error'))
+                }
+            } finally {
+                clearTimeout(timeout)
             }
-
-            const data = await response.json()
-            return data
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error'))
-            return null
-        } finally {
-            setLoading(false)
         }
+
+        setLoading(false)
+        return null
     }, [])
 
     return {
