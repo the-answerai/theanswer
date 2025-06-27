@@ -27,6 +27,10 @@ export async function GET(req: Request) {
         // console.log({ sidekicks: sidekicksWithCloneInfo })
         return NextResponse.json({ ...data, sidekicks: sidekicksWithCloneInfo })
     } catch (error) {
-        return respond401()
+        if (error instanceof Error && error.message === 'Unauthorized') {
+            return respond401()
+        }
+        console.error('Error fetching sidekicks:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

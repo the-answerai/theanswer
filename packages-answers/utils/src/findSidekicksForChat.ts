@@ -204,6 +204,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
         }
     } catch (err) {
         console.error('Error fetching chatflows:', err)
+        throw err
     }
 }
 
