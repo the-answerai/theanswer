@@ -5,14 +5,17 @@ import { respond401 } from '@utils/auth/respond401'
 
 export async function GET(req: Request) {
     const session = await getCachedSession()
+    const { searchParams } = new URL(req.url)
+    const lightweight = searchParams.get('lightweight') !== 'false' // Default to true
 
     const user = session?.user
     if (!session?.user?.email) return respond401()
     try {
-        const data = await findSidekicksForChat(user)
+        const data = await findSidekicksForChat(user, { lightweight })
         // Use the requiresClone field from the chatbotConfig
         const sidekicksWithCloneInfo = data.sidekicks.map((sidekick: any) => {
-            const chatbotConfig = JSON.parse(sidekick.chatflow.chatbotConfig || '{}')
+            // In lightweight mode, chatbotConfig might not be available
+            const chatbotConfig = sidekick.chatflow?.chatbotConfig ? JSON.parse(sidekick.chatflow.chatbotConfig) : {}
             return {
                 ...sidekick,
                 isExecutable: true
