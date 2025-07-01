@@ -1,5 +1,5 @@
 import { flatten } from 'lodash'
-import { Tool, StructuredTool } from '@langchain/core/tools'
+import { Tool } from '@langchain/core/tools'
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { VectorStoreRetriever } from '@langchain/core/vectorstores'
@@ -10,7 +10,8 @@ import { INode, INodeData, INodeParams } from '../../../src/Interface'
 import { checkInputs, Moderation } from '../../moderation/Moderation'
 import { formatResponse } from '../../outputparsers/OutputParserHelpers'
 
-type ObjectTool = StructuredTool
+// Remove or rename the local alias for ObjectTool
+// type ObjectTool = StructuredTool
 const FINISH_NAME = 'finish'
 
 class AutoGPT_Agents implements INode {
@@ -144,7 +145,12 @@ class AutoGPT_Agents implements INode {
                     executor.fullMessageHistory.push(new AIMessage(assistantReply))
 
                     const action = await executor.outputParser.parse(assistantReply)
-                    const tools = executor.tools.reduce((acc, tool) => ({ ...acc, [tool.name]: tool }), {} as { [key: string]: ObjectTool })
+
+                    // TODO: Refine type when langchain types are clarified
+                    const tools = executor.tools.reduce<{ [key: string]: any }>((acc, tool) => {
+                        acc[tool.name] = tool
+                        return acc
+                    }, {})
                     if (action.name === FINISH_NAME) {
                         return action.args.response
                     }
