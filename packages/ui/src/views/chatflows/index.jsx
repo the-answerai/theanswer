@@ -17,7 +17,6 @@ import { FlowListTable } from '@/ui-component/table/FlowListTable'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
-
 // API
 import chatflowsApi from '@/api/chatflows'
 
@@ -125,6 +124,16 @@ const Chatflows = () => {
             }
         }
     }, [getAllChatflowsApi.data])
+
+    // Helper functions to generate hrefs for different types
+    const getChatflowHref = (chatflow) => {
+        return getHref(`/canvas/${chatflow.id}`)
+    }
+
+    const getMarketplaceHref = (chatflow) => {
+        // Marketplace items don't have direct URLs since they open dialogs
+        return null
+    }
 
     // Helper functions to generate hrefs for different types
     const getChatflowHref = (chatflow) => {
