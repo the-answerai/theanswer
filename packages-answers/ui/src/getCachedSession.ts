@@ -70,8 +70,14 @@ const getCachedSession = cache(
                     ...orgData
                 }
             })
-            session.user.id = user.id
-            session.user.organizationId = user.organizationId
+            // Include appSettings in session
+            session.user = {
+                ...session.user,
+                id: user.id,
+                organizationId: user.organizationId,
+                appSettings: user.appSettings,
+                defaultChatflowId: user.appSettings?.defaultChatflowId
+            }
         }
         // console.log('User', session?.user)
         if (session?.user?.['https://theanswer.ai/roles']) {

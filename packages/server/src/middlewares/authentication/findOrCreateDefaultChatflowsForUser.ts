@@ -2,8 +2,42 @@ import { DataSource } from 'typeorm'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { User } from '../../database/entities/User'
 
-export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSource, user: User) => {
-    if (!user) return
+/**
+ * Result object for the findOrCreateDefaultChatflowsForUser operation
+ */
+export interface DefaultChatflowResult {
+    success: boolean
+    error?: Error
+    defaultChatflowId?: string
+    chatflowsCreated?: number
+}
+
+/**
+ * Finds or creates default chatflows for a user based on INITIAL_CHATFLOW_IDS environment variable.
+ * This function is idempotent - multiple calls will not create duplicate chatflows.
+ *
+ * @param AppDataSource - The TypeORM data source
+ * @param user - The user to create default chatflows for
+ * @returns A result object indicating success/failure and any created chatflows
+ *
+ * @description
+ * This function performs the following operations:
+ * 1. Checks if the user already has a defaultChatflowId set in their appSettings
+ * 2. Fetches existing chatflows that were created from the initial templates
+ * 3. If user doesn't have a default chatflow but has existing ones, sets the first as default
+ * 4. Creates copies of template chatflows that the user doesn't already have
+ * 5. If user still doesn't have a default after creation, sets the first created as default
+ *
+ * The INITIAL_CHATFLOW_IDS environment variable should contain comma-separated chatflow template IDs
+ * that will be copied for each new user.
+ */
+export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSource, user: User): Promise<DefaultChatflowResult> => {
+    if (!user) {
+        return {
+            success: false,
+            error: new Error('User is required')
+        }
+    }
 
     // If user already has a defaultChatflowId, return early
     if (user.defaultChatflowId) return
@@ -14,7 +48,12 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
         .map((id) => id.trim())
         .filter(Boolean)
 
-    if (!ids.length) return
+    if (!ids.length) {
+        return {
+            success: true,
+            chatflowsCreated: 0
+        }
+    }
 
     // Only use the first ID from the list
     const firstId = ids[0]
@@ -73,9 +112,22 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
         }
 
         await queryRunner.commitTransaction()
+
+        return {
+            success: true,
+            defaultChatflowId: currentSettings.defaultChatflowId,
+            chatflowsCreated: chatflowsToImport.length
+        }
     } catch (err) {
         await queryRunner.rollbackTransaction()
-        console.error('[findOrCreateDefaultChatflowsForUser] Error in transaction:', err)
+        const error = err instanceof Error ? err : new Error(String(err))
+        console.error('[findOrCreateDefaultChatflowsForUser] Error in transaction:', error)
+
+        return {
+            success: false,
+            error,
+            chatflowsCreated: 0
+        }
     } finally {
         await queryRunner.release()
     }

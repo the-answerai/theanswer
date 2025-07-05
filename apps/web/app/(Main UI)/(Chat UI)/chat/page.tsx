@@ -1,8 +1,6 @@
 import React from 'react'
 
 import Chat from '@ui/Chat'
-import getCachedSession from '@ui/getCachedSession'
-import { findSidekicksForChat } from '@utils/findSidekicksForChat'
 
 export const metadata = {
     title: 'Chats | Answer Agent',
@@ -10,12 +8,9 @@ export const metadata = {
 }
 
 const ChatDetailPage = async ({ params }: any) => {
-    // const session = await getCachedSession()
-    // const user = session?.user
-
-    const chatcomponent = <Chat {...params} />
-    // console.log('chatcomponent', chatcomponent)
-    return chatcomponent
+    // Simply render the Chat component - sidekick selection now happens on client-side
+    // This enables faster page loads and better caching since no server-side API calls are needed
+    return <Chat {...params} />
 }
 
 export default ChatDetailPage

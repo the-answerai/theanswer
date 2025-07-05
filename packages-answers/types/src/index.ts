@@ -124,6 +124,7 @@ export interface AppSettings {
     models?: Models
     filters?: AnswersFilters
     chatflowDomain?: string // This should be required
+    defaultChatflowId?: string
 }
 
 export interface JiraFilters {

@@ -26,19 +26,7 @@ import chatmessagefeedbackApi from '@/api/chatmessagefeedback'
 // } from 'types'
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source'
 
-import {
-    AnswersFilters,
-    AppSettings,
-    Chat,
-    Journey,
-    Message,
-    Prompt,
-    Sidekick,
-    User,
-    MessageFeedback,
-    SidekickListItem,
-    FeedbackPayload
-} from 'types'
+import { AnswersFilters, AppSettings, Chat, Journey, Message, Prompt, Sidekick, User, SidekickListItem, FeedbackPayload } from 'types'
 import { ChatbotConfig } from './types'
 import { FlowData } from './types'
 
@@ -176,14 +164,12 @@ interface AnswersProviderProps {
     chat?: Chat
     journey?: Journey
     prompts?: Prompt[]
-    sidekicks?: SidekickListItem[]
     // chats?: Chat[];
 }
 
 export function AnswersProvider({
     chat,
     journey: initialJourney,
-    sidekicks,
     user,
     appSettings,
     children,
@@ -210,9 +196,7 @@ export function AnswersProvider({
 
     const [chatId, setChatId] = useState<string | undefined>(chat?.id ?? uuidv4())
 
-    const [sidekick, setSidekick] = useState<SidekickListItem | undefined>(
-        sidekicks?.find((s) => s.id === chat?.messages?.[chat?.messages?.length - 1]?.chatflowid || s.id === chat?.chatflowId)
-    )
+    const [sidekick, setSidekick] = useState<SidekickListItem | undefined>(undefined)
     const chatbotConfig = React.useMemo(() => sidekick?.chatbotConfig, [sidekick])
     const flowData = React.useMemo(() => sidekick?.flowData, [sidekick])
     const [messages, setMessages] = useState<Array<Message>>(chat?.messages ?? [])

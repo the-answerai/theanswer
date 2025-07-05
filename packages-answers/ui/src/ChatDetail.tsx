@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography'
 
 import { useAnswers } from './AnswersContext'
 import Toolbar from '@mui/material/Toolbar'
+import useDefaultSidekick from './hooks/useDefaultSidekick'
 
 import type { AppSettings, Document, Sidekick } from 'types'
 
@@ -30,16 +31,7 @@ const DISPLAY_MODES = {
     MEDIA_CREATION: 'mediaCreation'
 }
 
-export const ChatDetail = ({
-    appSettings,
-    sidekicks = [],
-    session
-}: {
-    appSettings: AppSettings
-    prompts?: any
-    sidekicks?: Sidekick[]
-    session: any
-}) => {
+export const ChatDetail = ({ appSettings, session }: { appSettings: AppSettings; prompts?: any; sidekicks?: Sidekick[]; session: any }) => {
     const {
         error,
         chat,
@@ -52,6 +44,9 @@ export const ChatDetail = ({
         sidekick: selectedSidekick,
         startNewChat
     } = useAnswers()
+
+    // Use client-side sidekick fetching for better performance
+    const { sidekicks, isLoading: sidekicksLoading } = useDefaultSidekick()
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedDocuments, setSelectedDocuments] = React.useState<Document[] | undefined>()

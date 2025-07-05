@@ -134,7 +134,11 @@ export const authenticationHandlerMiddleware =
                     user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
 
                     // Find or create default chatflows for the user
-                    await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
+                    const chatflowResult = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
+                    if (!chatflowResult.success) {
+                        console.error('[AuthMiddleware] Error creating default chatflows:', chatflowResult.error)
+                        // Continue anyway - this is not a critical error that should block authentication
+                    }
 
                     req.user = { ...authUser, ...user, roles }
                 } catch (error) {
