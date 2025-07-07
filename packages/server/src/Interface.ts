@@ -70,7 +70,6 @@ export interface IUser {
         id: string
         metadata?: IApiKeyMetadata
     }
-    appSettings?: any
 }
 export interface IOrganization {
     id: string

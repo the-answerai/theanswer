@@ -75,8 +75,7 @@ const getCachedSession = cache(
                 ...session.user,
                 id: user.id,
                 organizationId: user.organizationId,
-                defaultChatflowId: user.defaultChatflowId,
-                appSettings: user.appSettings
+                defaultChatflowId: user.defaultChatflowId
             }
         }
         // console.log('User', session?.user)
