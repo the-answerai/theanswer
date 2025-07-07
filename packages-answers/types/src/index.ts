@@ -255,6 +255,7 @@ export interface Organization extends Omit<DB.Organization, 'appSettings'> {
 
 export interface User extends Omit<DB.User, 'appSettings'> {
     appSettings: AppSettings
+    defaultChatflowId?: string
     currentOrganization?: Organization
     contextFields?: ContextField[]
     chatflowDomain: string
