@@ -40,7 +40,13 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
     }
 
     // If user already has a defaultChatflowId, return early
-    if (user.defaultChatflowId) return
+    if (user.defaultChatflowId) {
+        return {
+            success: true,
+            defaultChatflowId: user.defaultChatflowId,
+            chatflowsCreated: 0
+        }
+    }
 
     const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? ''
     const ids = rawIds
@@ -79,14 +85,20 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
                 await userRepo.update(user.id, { defaultChatflowId: existingChatflow.id })
             }
             await queryRunner.commitTransaction()
-            await queryRunner.release()
-            return
+
+            return {
+                success: true,
+                defaultChatflowId: existingChatflow.id,
+                chatflowsCreated: 1
+            }
         }
 
         // Fetch the template for the first ID
         const template = await chatFlowRepo.findOne({
             where: { id: firstId }
         })
+
+        let newChatflowId = ''
 
         if (template) {
             const templateCopy = { ...template }
@@ -103,7 +115,7 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
             const insertResult = await chatFlowRepo.insert(chatflowToImport)
 
             // Get the newly created chatflow ID
-            const newChatflowId = insertResult.identifiers[0]?.id
+            newChatflowId = insertResult.identifiers[0]?.id
 
             if (newChatflowId) {
                 // Update the user's defaultChatflowId
@@ -113,10 +125,17 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
 
         await queryRunner.commitTransaction()
 
-        return {
-            success: true,
-            defaultChatflowId: currentSettings.defaultChatflowId,
-            chatflowsCreated: chatflowsToImport.length
+        if (newChatflowId) {
+            return {
+                success: true,
+                defaultChatflowId: newChatflowId,
+                chatflowsCreated: 1
+            }
+        } else {
+            return {
+                success: true,
+                chatflowsCreated: 0
+            }
         }
     } catch (err) {
         await queryRunner.rollbackTransaction()
