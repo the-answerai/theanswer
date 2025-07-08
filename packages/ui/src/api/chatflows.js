@@ -2,6 +2,15 @@ import client from './client'
 
 const getAllChatflows = () => client.get('/chatflows?type=CHATFLOW')
 
+const getAdminChatflows = (filter) => {
+    const params = new URLSearchParams()
+    params.append('type', 'CHATFLOW')
+    if (filter) {
+        params.append('filter', JSON.stringify(filter))
+    }
+    return client.get(`/admin/chatflows?${params.toString()}`)
+}
+
 const getAllAgentflows = (type) => client.get(`/chatflows?type=${type}`)
 
 const getSpecificChatflow = (id) => client.get(`/chatflows/${id}`)
@@ -25,6 +34,7 @@ const generateAgentflow = (body) => client.post(`/agentflowv2-generator/generate
 export default {
     getAllChatflows,
     getAllAgentflows,
+    getAdminChatflows,
     getSpecificChatflow,
     getSpecificChatflowFromPublicEndpoint,
     createNewChatflow,

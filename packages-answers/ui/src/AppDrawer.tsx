@@ -316,7 +316,23 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                   text: 'API Keys',
                                   link: '/sidekick-studio/apikey',
                                   icon: <VpnKeyOutlinedIcon color='primary' />
-                              }
+                              },
+                              ...(userRole === 'admin'
+                                  ? [
+                                        {
+                                            id: 'admin',
+                                            text: 'Admin',
+                                            link: '/sidekick-studio/admin',
+                                            icon: <AssessmentOutlinedIcon color='primary' />
+                                        },
+                                        {
+                                            id: 'apps',
+                                            text: 'Apps',
+                                            link: '/sidekick-studio/apps',
+                                            icon: <AppsOutlinedIcon color='primary' />
+                                        }
+                                    ]
+                                  : [])
                           ]
                       }
                   ]

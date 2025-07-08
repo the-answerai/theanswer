@@ -159,13 +159,62 @@ const deleteChatflow = async (chatflowId: string, user: IUser | undefined): Prom
 type ChatflowsFilter = {
     visibility?: string
     auth0_org_id?: string
+    select?: string[] // Array of field names to select
 }
-const getAllChatflows = async (user?: IUser, type?: ChatflowType, filter?: ChatflowsFilter): Promise<ChatFlow[]> => {
+const getAllChatflows = async (user?: IUser, type?: ChatflowType, _filter?: ChatflowsFilter): Promise<ChatFlow[]> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const { id: userId, permissions } = user ?? {}
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+        const queryBuilder = chatFlowRepository.createQueryBuilder('chatFlow').where(`chatFlow.userId = :userId`, { userId })
+
+        const response = await queryBuilder.getMany()
+        const dbResponse = response.map((chatflow) => ({
+            ...chatflow,
+            badge: chatflow?.visibility?.includes(ChatflowVisibility.MARKETPLACE)
+                ? 'SHARED'
+                : chatflow?.visibility?.includes(ChatflowVisibility.ORGANIZATION)
+                ? 'ORGANIZATION'
+                : '',
+            isOwner: chatflow.userId === userId,
+            canEdit: chatflow.userId === userId || permissions?.includes('org:manage')
+        }))
+
+        if (!(await checkOwnership(dbResponse, user))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+        if (type === 'MULTIAGENT') {
+            return dbResponse.filter((chatflow) => chatflow.type === 'MULTIAGENT')
+        } else if (type === 'AGENTFLOW') {
+            return dbResponse.filter((chatflow) => chatflow.type === 'AGENTFLOW')
+        } else if (type === 'ASSISTANT') {
+            return dbResponse.filter((chatflow) => chatflow.type === 'ASSISTANT')
+        } else if (type === 'CHATFLOW') {
+            // fetch all chatflows that are not agentflow
+            return dbResponse.filter((chatflow) => chatflow.type === 'CHATFLOW' || !chatflow.type)
+        }
+        return dbResponse
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.getAllChatflows - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: ChatflowsFilter): Promise<ChatFlow[]> => {
     try {
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions } = user ?? {}
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
         const queryBuilder = chatFlowRepository.createQueryBuilder('chatFlow')
+
+        // Apply field selection if specified
+        if (filter?.select && filter.select.length > 0) {
+            // Always include id for proper entity mapping
+            const selectFields = ['chatFlow.id', ...filter.select.map((field) => `chatFlow.${field}`)]
+            queryBuilder.select(selectFields)
+        }
 
         // Handle auth0_org_id filter for cross-org access
         let targetOrgId = organizationId
@@ -704,6 +753,7 @@ export default {
     checkIfChatflowIsValidForUploads,
     deleteChatflow,
     getAllChatflows,
+    getAdminChatflows,
     getChatflowByApiKey,
     getChatflowById,
     saveChatflow,

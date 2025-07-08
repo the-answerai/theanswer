@@ -56,8 +56,29 @@ const getAllChatflows = async (req: Request, res: Response, next: NextFunction) 
         if (!userId) {
             return res.status(401).send('Unauthorized')
         }
+
         const filter = req.query.filter ? JSON.parse(decodeURIComponent(req.query.filter as string)) : undefined
+
         const apiResponse = await chatflowsService.getAllChatflows(req.user, req.query?.type as ChatflowType, {
+            ...res.locals.filter,
+            ...filter
+        })
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getAdminChatflows = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?.id
+        if (!userId) {
+            return res.status(401).send('Unauthorized')
+        }
+
+        const filter = req.query.filter ? JSON.parse(decodeURIComponent(req.query.filter as string)) : undefined
+
+        const apiResponse = await chatflowsService.getAdminChatflows(req.user, req.query?.type as ChatflowType, {
             ...res.locals.filter,
             ...filter
         })
@@ -257,5 +278,6 @@ export default {
     importChatflows,
     updateChatflow,
     getSinglePublicChatflow,
-    getSinglePublicChatbotConfig
+    getSinglePublicChatbotConfig,
+    getAdminChatflows
 }
