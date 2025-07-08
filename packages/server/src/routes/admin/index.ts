@@ -4,6 +4,6 @@ import enforceAbility from '../../middlewares/authentication/enforceAbility'
 const router = express.Router()
 
 // READ
-router.get('/chatflows', enforceAbility('ChatFlow'), chatflowsController.getAllChatflows)
+router.get('/chatflows', enforceAbility('ChatFlow'), chatflowsController.getAdminChatflows)
 
 export default router
