@@ -98,10 +98,18 @@ class ZoomTranscripts implements INode {
             throw new Error('No meetings selected')
         }
 
+        // Validate required environment variables
+        if (!process.env.ZOOM_CLIENT_ID || !process.env.ZOOM_CLIENT_SECRET) {
+            throw new Error('ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET environment variables are required')
+        }
+
+        if (!credentialData.zoomAccessToken || !credentialData.zoomRefreshToken) {
+            throw new Error('Zoom access token and refresh token are required')
+        }
+
         const credentials = {
             clientId: process.env.ZOOM_CLIENT_ID,
             clientSecret: process.env.ZOOM_CLIENT_SECRET,
-            redirectUrl: process.env.ZOOM_CALLBACK_URL,
             accessToken: credentialData.zoomAccessToken,
             refreshToken: credentialData.zoomRefreshToken
         }
