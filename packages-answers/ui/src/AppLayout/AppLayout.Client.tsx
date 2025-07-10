@@ -11,7 +11,7 @@ import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
-import { Auth0Setup } from '@/hooks/useAuth0Setup'
+import { Auth0Setup } from '../hooks/useAuth0Setup'
 import dynamic from 'next/dynamic'
 const HelpChatDrawer = dynamic(() => import('../HelpChatDrawer'), { ssr: false })
 const HelpChatProvider = dynamic(() => import('../HelpChatContext').then((mod) => mod.HelpChatProvider), {

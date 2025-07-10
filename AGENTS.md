@@ -483,3 +483,135 @@ Required for development:
 -   [Auth0 Documentation](https://auth0.com/docs)
 
 Remember: This codebase is complex but well-structured. Take time to understand the patterns before making changes, and always prioritize maintainability and security over quick fixes.
+
+## Zoom Integration Implementation
+
+### Current Architecture
+
+The Zoom integration follows the standard Flowise patterns with these key components:
+
+#### Frontend Layer
+
+-   **ZoomMeetingPicker.jsx** (`packages/ui/src/ui-component/zoom/`): Enhanced React dialog component using Material-UI with **tabbed interface** for different meeting types (My, Shared, Organization) and **date range controls**. Features include:
+    -   **Three tabs**: My Meetings, Shared Meetings, Organization Meetings
+    -   **Date range picker**: Defaults to last 14 days (was previously hardcoded 30 days)
+    -   **Real-time meeting counts** in tab badges
+    -   **Enhanced error handling** with specific messaging per tab
+    -   **Token refresh functionality** with user notifications
+    -   **Account ID validation** for organization meetings
+-   **zoom.js API client** (`packages/ui/src/api/zoom.js`): Enhanced with new methods:
+    -   `getMeetings()` - Original endpoint for user's own meetings
+    -   `getSharedMeetings()` - For meetings shared with the user
+    -   `getOrganizationMeetings()` - For organization-wide meetings (admin access)
+    -   `getMeetingsByType()` - Unified endpoint with meeting type parameter
+
+#### Backend Layer
+
+-   **Zoom Controller** (`packages/server/src/controllers/zoom/index.ts`): Enhanced with **four new endpoints**:
+    -   `getMeetings()` - Enhanced original endpoint with date range support (14-day default)
+    -   `getSharedMeetings()` - Handles shared meeting requests
+    -   `getOrganizationMeetings()` - Uses account-level Zoom API endpoint `GET /accounts/{accountId}/users/{userId}/recordings`
+    -   `getMeetingsByType()` - Unified endpoint that routes based on `meetingType` parameter
+    -   **Enhanced error handling** with specific HTTP status codes (401, 403)
+    -   **Flexible date ranges** with configurable from/to dates
+    -   **Account ID validation** for organization-level access
+-   **Zoom Routes** (`packages/server/src/routes/zoom/index.ts`): Added new route patterns:
+    -   `/api/v1/zoom/meetings` - Original endpoint
+    -   `/api/v1/zoom/meetings/shared` - Shared meetings endpoint
+    -   `/api/v1/zoom/meetings/organization` - Organization meetings endpoint
+    -   `/api/v1/zoom/meetings/by-type` - Unified endpoint
+-   **ZoomService.ts** (`packages/components/nodes/documentloaders/Zoom/ZoomService.ts`): Enhanced with new methods:
+    -   `getUserMeetings()` - Enhanced user meetings with date range options
+    -   `getOrganizationMeetings()` - Account-level meetings access
+    -   `getSharedMeetings()` - Shared meetings (currently delegates to user meetings)
+    -   `getUserMeetingsById()` - Get meetings for specific user ID
+    -   **Account ID management** methods
+    -   **Default date range helpers** (14 days back)
+
+### Key Implementation Details
+
+#### Meeting Type Tabs Architecture
+
+```javascript
+const meetingTypes = [
+    {
+        key: 'my',
+        label: 'My Meetings',
+        icon: IconCalendar,
+        description: 'Meetings where you are the host',
+        apiMethod: zoomApi.getMeetings
+    },
+    {
+        key: 'shared',
+        label: 'Shared Meetings',
+        icon: IconUsers,
+        description: 'Meetings that have been shared with you',
+        apiMethod: zoomApi.getSharedMeetings
+    },
+    {
+        key: 'organization',
+        label: 'Organization',
+        icon: IconBuilding,
+        description: 'Organization-wide meetings (admin access required)',
+        apiMethod: zoomApi.getOrganizationMeetings
+    }
+]
+```
+
+#### Date Range Implementation
+
+-   **Default Range**: 14 days ago to today (previously was hardcoded 30 days)
+-   **User Configurable**: Date picker controls in modal dialog
+-   **API Integration**: Passes `fromDate` and `toDate` parameters to all endpoints
+
+#### Account-Level Access Pattern
+
+```typescript
+// Controller usage of account-level endpoint
+const endpoint = `https://api.zoom.us/v2/accounts/${params.accountId}/users/${userId}/recordings`
+```
+
+### Zoom API Endpoints Used
+
+1. **User Meetings**: `GET /users/me/recordings` - Current user's meetings where they are host
+2. **Account-Level Meetings**: `GET /accounts/{accountId}/users/{userId}/recordings` - Organization meetings with account permissions
+3. **Meeting Recordings**: `GET /meetings/{meetingId}/recordings` - Individual meeting recordings and transcripts
+
+### Current Implementation Status
+
+✅ **COMPLETED FEATURES:**
+
+-   Enhanced tabbed interface with three meeting types
+-   Date range controls with 14-day default
+-   Account-level recordings access for organization meetings
+-   Enhanced error handling with specific messaging
+-   Token refresh functionality
+-   Real-time meeting counts in tab badges
+-   Proper Material-UI integration with theme support
+
+### Authentication & Permissions
+
+-   **Access Token**: Required for all API calls, with automatic refresh on 401 errors
+-   **Account ID**: Required for organization-level meetings, validated in frontend and backend
+-   **Permissions**: Organization meetings require admin-level Zoom account permissions
+-   **Error Handling**: Specific messaging for 401 (token expired) and 403 (insufficient permissions)
+
+### Future Enhancement Opportunities
+
+1. **Shared Meetings Enhancement**: Currently uses same endpoint as user meetings. Could be enhanced to:
+
+    - Query specific shared user IDs
+    - Use organization directory to find shared meetings
+    - Implement meeting sharing patterns based on organization structure
+
+2. **Pagination Support**: Add pagination controls for large meeting lists
+
+3. **Advanced Filtering**: Add filters by host, duration, recording type, etc.
+
+4. **Caching Strategy**: Implement client-side caching for meeting lists to reduce API calls
+
+### Known Limitations
+
+-   **Shared Meetings**: Currently delegates to user meetings endpoint due to Zoom API limitations for discovering truly "shared" meetings without knowing specific user IDs
+-   **Account ID Requirement**: Organization meetings require account ID to be present in Zoom credentials
+-   **Permission Dependencies**: Organization features require admin-level Zoom account permissions

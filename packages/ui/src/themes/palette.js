@@ -87,6 +87,20 @@ export default function themePalette(theme) {
             light: theme.customization.isDarkMode ? theme.colors?.darkPrimary200 : theme.colors?.paper,
             hover: theme.customization.isDarkMode ? theme.colors?.darkPrimary800 : theme.colors?.paper
         },
+        documentCard: {
+            main: theme.customization.isDarkMode
+                ? 'rgba(0, 230, 118, 0.05)' // Subtle green background for dark mode
+                : 'rgba(0, 230, 118, 0.02)', // Very subtle green background for light mode
+            light: theme.customization.isDarkMode ? 'rgba(0, 230, 118, 0.08)' : 'rgba(0, 230, 118, 0.04)',
+            hover: theme.customization.isDarkMode
+                ? 'rgba(0, 230, 118, 0.1)' // Slightly more green on hover for dark mode
+                : 'rgba(0, 230, 118, 0.05)', // Slightly more green on hover for light mode
+            border: theme.colors?.successMain, // Green border using success main color
+            text: theme.customization.isDarkMode
+                ? theme.colors?.successLight // Bright green text for dark mode
+                : theme.colors?.successDark, // Dark green text for light mode
+            shadow: theme.colors?.successMain + '20' // Green shadow
+        },
         asyncSelect: {
             main: theme.customization.isDarkMode ? theme.colors?.darkPrimary800 : theme.colors?.grey50
         },
