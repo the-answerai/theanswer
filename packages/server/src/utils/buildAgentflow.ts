@@ -1787,7 +1787,7 @@ export const executeAgentFlow = async ({
     result.form = form
     result.chatId = chatId
     result.chatMessageId = chatMessage?.id
-    result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
+    result.followUpPrompts = apiMessage.followUpPrompts
     result.executionId = newExecution.id
     result.agentFlowExecutedData = agentFlowExecutedData
 

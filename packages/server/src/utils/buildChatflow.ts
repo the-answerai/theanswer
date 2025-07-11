@@ -648,7 +648,7 @@ export const executeFlow = async ({
             if (agentReasoning?.length) result.agentReasoning = agentReasoning
             if (finalAction && Object.keys(finalAction).length) result.action = finalAction
             if (Object.keys(setVariableNodesOutput).length) result.flowVariables = setVariableNodesOutput
-            result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
+            result.followUpPrompts = apiMessage.followUpPrompts
 
             PlansService.incrementUsedExecutionCount(agentflow.userId, agentflow.organizationId)
 
@@ -817,7 +817,7 @@ export const executeFlow = async ({
         result.question = incomingInput.question // return the question in the response, this is used when input text is empty but question is in audio format
         result.chatId = chatId
         result.chatMessageId = chatMessage?.id
-        result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
+        result.followUpPrompts = apiMessage.followUpPrompts
         result.isStreamValid = isStreamValid
 
         if (sessionId) result.sessionId = sessionId

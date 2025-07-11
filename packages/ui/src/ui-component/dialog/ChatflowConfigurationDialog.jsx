@@ -8,6 +8,7 @@ import RateLimit from '@/ui-component/extended/RateLimit'
 import AllowedDomains from '@/ui-component/extended/AllowedDomains'
 import ChatFeedback from '@/ui-component/extended/ChatFeedback'
 import StarterPrompts from '@/ui-component/extended/StarterPrompts'
+import FollowUpPrompts from '@/ui-component/extended/FollowUpPrompts'
 import Leads from '@/ui-component/extended/Leads'
 import VisibilitySettings from '@/ui-component/extended/VisibilitySettings'
 import GeneralSettings from '@/ui-component/extended/GeneralSettings'
@@ -41,6 +42,10 @@ const CHATFLOW_CONFIGURATION_TABS = [
     {
         label: 'Starter Prompts',
         id: 'conversationStarters'
+    },
+    {
+        label: 'Follow-up Prompts',
+        id: 'followUpPrompts'
     },
     {
         label: 'Speech to Text',
@@ -155,6 +160,7 @@ const ChatflowConfigurationDialog = ({ show, isAgentCanvas, dialogProps, onCance
                     <TabPanel key={item.id} value={tabValue} index={filteredTabs.indexOf(item)}>
                         {item.id === 'rateLimiting' && <RateLimit dialogProps={dialogProps} />}
                         {item.id === 'conversationStarters' ? <StarterPrompts dialogProps={dialogProps} /> : null}
+                        {item.id === 'followUpPrompts' ? <FollowUpPrompts dialogProps={dialogProps} /> : null}
                         {item.id === 'speechToText' ? <SpeechToText dialogProps={dialogProps} /> : null}
                         {item.id === 'chatFeedback' ? <ChatFeedback dialogProps={dialogProps} /> : null}
                         {item.id === 'allowedDomains' ? <AllowedDomains dialogProps={dialogProps} /> : null}
