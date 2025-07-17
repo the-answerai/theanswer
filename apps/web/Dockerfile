@@ -1,4 +1,6 @@
-FROM --platform=linux/amd64 node:20-alpine AS base
+# Build argument for platform (defaults to linux/amd64 for consistency with native deps)
+ARG BUILDPLATFORM=linux/amd64
+FROM --platform=$BUILDPLATFORM node:20-alpine AS base
 
 # This Dockerfile is optimized for Next.js standalone mode deployment
 # Make sure you update both files if copying to documentation!
