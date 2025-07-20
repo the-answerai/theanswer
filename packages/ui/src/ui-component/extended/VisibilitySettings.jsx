@@ -21,6 +21,7 @@ import { TooltipWithParser } from '../tooltip/TooltipWithParser'
 const visibilityOptions = [
     { name: 'Private', description: 'Only visible to you' },
     { name: 'Organization', description: 'Visible to all members of your organization' },
+    { name: 'AnswerAI', description: 'Visible to AnswerAgent Sidekick users' },
     { name: 'Browser Extension', description: 'Accessible via browser extension' }
 ]
 
@@ -111,6 +112,7 @@ const VisibilitySettings = ({ dialogProps }) => {
                             name === 'Private' ||
                             (name === 'Browser Extension' && !flags['org:manage']?.enabled) ||
                             (name === 'Organization' && !flags['org:manage']?.enabled) ||
+                            (name === 'AnswerAI' && !flags['chatflow:share:internal']?.enabled) ||
                             (name === 'Marketplace' && !flags['chatflow:share:internal']?.enabled)
                         return (
                             <Box key={name} display='flex' alignItems='center'>
@@ -120,7 +122,7 @@ const VisibilitySettings = ({ dialogProps }) => {
                                             <Checkbox checked={visibility.includes(name)} onChange={(event) => handleChange(event, name)} />
                                         </Tooltip>
                                     }
-                                    label={name}
+                                    label={name === 'AnswerAI' ? 'AnswerAgent Sidekick' : name}
                                     disabled={isDisabled}
                                 />
                                 <TooltipWithParser title={description} />

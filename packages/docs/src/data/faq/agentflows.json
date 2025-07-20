@@ -1,0 +1,37 @@
+{
+    "title": "Agentflows",
+    "description": "Design multi-agent workflows for complex automation",
+    "icon": "🤖",
+    "faqs": [
+        {
+            "id": "what-are-agentflows",
+            "question": "What are Agentflows and how do they differ from Chatflows?",
+            "answer": "Agentflows are advanced multi-agent workflow systems that allow for more complex, autonomous AI operations:\n\n**Chatflows vs Agentflows:**\n- **Chatflows**: Linear workflows, good for straightforward conversational AI\n- **Agentflows**: Multi-agent systems with complex decision-making, parallel processing, and long-running tasks\n\n**Get Started**: [Create an agentflow](/sidekick-studio/agentflows) or [build a chatflow](/sidekick-studio/chatflows)"
+        },
+        {
+            "id": "types-of-agentflows",
+            "question": "What types of Agentflows are available?",
+            "answer": "**1. Multi-Agent Systems:**\n- Supervisor agents coordinate multiple worker agents\n- Each agent specializes in specific tasks\n- Good for complex, multi-step processes\n\n**2. Sequential Agents (AgentFlow V2):**\n- More granular control over workflow orchestration\n- Support for loops, conditional branching, and human-in-the-loop interactions\n- Better for sophisticated workflows requiring complex logic\n\n**Explore**: [Browse agentflow examples](/sidekick-studio/agentflows) and [check execution history](/sidekick-studio/executions)"
+        },
+        {
+            "id": "when-to-use-agentflows",
+            "question": "When should I use Agentflows?",
+            "answer": "Use Agentflows for:\n- **Complex Business Processes**: Multi-step workflows with decision points\n- **Long-running Tasks**: Operations that take time and may need checkpointing\n- **Multi-agent Collaboration**: Tasks requiring different types of expertise\n- **Human-in-the-Loop**: Workflows requiring human approval or input\n- **Dynamic Branching**: Processes that change based on conditions\n\n**Start Building**: [Create your first agentflow](/sidekick-studio/agentflows) or [configure tools](/sidekick-studio/tools)"
+        },
+        {
+            "id": "key-features",
+            "question": "What are the key features of Agentflows?",
+            "answer": "- **Agent-to-Agent Communication**: Agents can collaborate and delegate tasks\n- **Human-in-the-Loop**: Pause execution for human input without blocking\n- **Checkpointing**: Resume workflows after interruption\n- **State Management**: Persistent data throughout workflow execution\n- **Parallel Execution**: Multiple operations running simultaneously\n\n**Monitor**: [Track execution history](/sidekick-studio/executions) and [manage your workflows](/sidekick-studio/agentflows)"
+        },
+        {
+            "id": "human-in-the-loop",
+            "question": "How does Human-in-the-Loop (HITL) work?",
+            "answer": "Available in Sequential Agents, HITL allows workflows to pause and wait for human input or approval:\n- **Tool Approval**: Require human approval before executing sensitive tools\n- **Decision Points**: Let humans make complex decisions in workflows\n- **Quality Control**: Review AI outputs before proceeding\n- **Checkpoint Resume**: Resume workflows after approval\n\n**Configure**: [Set up tools](/sidekick-studio/tools) and [manage credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "best-practices",
+            "question": "What are Agentflow best practices?",
+            "answer": "- **Design for Resilience**: Include error handling and recovery mechanisms\n- **Use Checkpoints**: Save state at critical points for recovery\n- **Plan Agent Roles**: Clearly define what each agent is responsible for\n- **Monitor Performance**: Track execution time and resource usage\n- **Test Thoroughly**: Use smaller workflows to test logic before scaling\n- **Documentation**: Document complex decision trees and agent interactions\n\n**Optimize**: [Review execution history](/sidekick-studio/executions) and [manage your agentflows](/sidekick-studio/agentflows)"
+        }
+    ]
+}

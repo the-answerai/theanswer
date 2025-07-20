@@ -599,6 +599,10 @@ const config: Config = {
                             label: 'Learn'
                         },
                         {
+                            to: '/faq',
+                            label: 'FAQ'
+                        },
+                        {
                             to: '/ai-workshops',
                             label: 'AI Workshops'
                         },
@@ -672,6 +676,10 @@ const config: Config = {
                 {
                     title: 'Support',
                     items: [
+                        {
+                            to: '/faq',
+                            label: 'FAQ'
+                        },
                         {
                             label: 'Discord',
                             href: 'https://discord.gg/X54ywt8pzj'

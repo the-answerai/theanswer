@@ -1,0 +1,47 @@
+{
+    "title": "Document Stores",
+    "description": "Organize and manage your knowledge base with vector storage",
+    "icon": "📚",
+    "faqs": [
+        {
+            "id": "what-are-document-stores",
+            "question": "What are Document Stores?",
+            "answer": "Document Stores are centralized knowledge bases that allow you to upload, organize, and manage documents for use in your AI workflows. They're essentially your AI's memory bank.\n\n**Get Started**: [Create your first document store](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "key-features",
+            "question": "What are the key features of Document Stores?",
+            "answer": "- **Centralized Management**: Organize multiple documents in one place\n- **Vector Storage**: Documents are converted to vectors for semantic search\n- **Multiple Formats**: Support for PDFs, text files, web pages, and more\n- **Semantic Search**: Find relevant information based on meaning, not just keywords\n- **Integration**: Use stored knowledge in any chatflow or agentflow\n\n**Explore**: [Browse document stores](/sidekick-studio/document-stores) and [configure tools](/sidekick-studio/tools)"
+        },
+        {
+            "id": "how-they-work",
+            "question": "How do Document Stores work?",
+            "answer": "1. **Upload Documents**: Add files, URLs, or text content\n2. **Processing**: Documents are split into chunks and converted to vector embeddings\n3. **Storage**: Vectors are stored in specialized databases for fast retrieval\n4. **Retrieval**: When queried, the system finds the most relevant chunks\n5. **Integration**: Retrieved information is used to enhance AI responses\n\n**Set Up**: [Create a document store](/sidekick-studio/document-stores) and [configure credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "supported-loaders",
+            "question": "What types of documents can I upload?",
+            "answer": "Document Stores support 40+ file formats through various loaders:\n\n**File-Based Loaders:**\n- **Universal File Loader**: PDF, DOCX, DOC, TXT, MD, HTML, JSON, CSV, XLS, XLSX\n- **Code Files**: JS, TS, PY, CPP, JAVA, GO, PHP, SQL, and many more\n- **Specialized**: TEX, LaTeX, XML formats\n\n**Cloud & API Loaders:**\n- **Google Drive**: Import from Google Workspace\n- **S3 Directory**: Load files from AWS S3 buckets\n- **API Loader**: Fetch data from REST endpoints\n- **Airtable**: Import structured data\n\n**Web Loaders:**\n- **Spider**: Advanced web scraping and crawling\n- **SearchAPI**: Import search results\n- **GitHub Repomix**: Repository documentation processing\n\n**Configure**: [Set up your credentials](/sidekick-studio/credentials) and [browse tools](/sidekick-studio/tools)"
+        },
+        {
+            "id": "text-splitters",
+            "question": "How are documents processed and split?",
+            "answer": "Documents are processed using specialized text splitters:\n- **Recursive Character Text Splitter**: Intelligent splitting preserving structure\n- **Character Text Splitter**: Simple character-based splitting\n- **Token Text Splitter**: Split by token count for AI models\n- **Markdown Text Splitter**: Preserve Markdown structure\n- **Code Text Splitter**: Language-aware code splitting\n- **HTML to Markdown Text Splitter**: Convert and split HTML content\n\n**Optimize**: [Configure your document stores](/sidekick-studio/document-stores) and [test processing](/sidekick-studio/executions)"
+        },
+        {
+            "id": "setup-process",
+            "question": "How do I set up a Document Store?",
+            "answer": "1. Go to [Sidekick Studio → Document Stores](/sidekick-studio/document-stores)\n2. Create a new Document Store\n3. Choose document loaders based on your data source\n4. Configure text splitters based on content type\n5. Set up vector storage and embeddings\n6. Upload and process your documents\n7. Use in chatflows via Document Store nodes\n\n**Prerequisites**: [Set up credentials](/sidekick-studio/credentials) and [configure API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "best-practices",
+            "question": "What are Document Store best practices?",
+            "answer": "- **Choose Right Loader**: Match loader to your data source type\n- **Optimize Splitting**: Use appropriate splitter for content type\n- **Organize Logically**: Group related documents together\n- **Use Descriptive Names**: Make stores easy to identify\n- **Regular Updates**: Keep information current\n- **Test Processing**: Verify chunk quality before deployment\n- **Monitor Performance**: Track embedding and retrieval speed\n\n**Monitor**: [Check execution history](/sidekick-studio/executions) and [manage your stores](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "integration-with-flows",
+            "question": "How do I use Document Stores in my workflows?",
+            "answer": "Document Stores integrate seamlessly with your workflows:\n- **Document Store Nodes**: Add document retrieval to any chatflow\n- **Semantic Search**: AI automatically finds relevant information\n- **Context Enhancement**: Retrieved content enhances AI responses\n- **Multiple Stores**: Use multiple document stores in one workflow\n- **Real-time Updates**: Changes to documents are reflected immediately\n\n**Integrate**: [Add to your chatflows](/sidekick-studio/chatflows) or [use in agentflows](/sidekick-studio/agentflows)"
+        }
+    ]
+}

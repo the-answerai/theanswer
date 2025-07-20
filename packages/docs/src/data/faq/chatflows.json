@@ -1,0 +1,47 @@
+{
+    "title": "Chatflows",
+    "description": "Create conversation flows and logic with visual workflows",
+    "icon": "🔀",
+    "faqs": [
+        {
+            "id": "what-are-chatflows",
+            "question": "What are Chatflows?",
+            "answer": "Chatflows are the core building blocks of AnswerAgent. They are configurable workflows that connect various nodes (AI models, tools, data sources) to create complete AI solutions that can be deployed across multiple platforms.\n\n**Get Started**: [Create your first chatflow](/sidekick-studio/chatflows)"
+        },
+        {
+            "id": "key-features",
+            "question": "What are the key features of Chatflows?",
+            "answer": "- **Visual Construction**: Build complex AI workflows using a drag-and-drop canvas without coding\n- **Modular Design**: Combine and reconfigure nodes to create custom solutions\n- **Multi-Platform Deployment**: Deploy across websites, apps, browser extensions, and API endpoints\n- **Model Flexibility**: Easily swap between different AI models\n- **Tool Integration**: Connect to external tools and data sources\n- **Version Control**: Track changes and maintain multiple versions\n\n**Explore**: [Browse available tools](/sidekick-studio/tools) and [configure your credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "when-to-use",
+            "question": "When should I use Chatflows?",
+            "answer": "Use Chatflows for:\n- **Embedded Chatbots**: Deploy interactive chatbots on websites\n- **Customer Support**: Automated support systems using your knowledge base\n- **Process Guidance**: Guide users through complex procedures\n- **API Endpoints**: Expose AI capabilities as APIs\n- **Internal Tools**: Create AI assistants for your team\n\n**Start Building**: [Create your first chatflow](/sidekick-studio/chatflows) or [browse examples in the Sidekick Store](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "how-to-create",
+            "question": "How do I create a Chatflow?",
+            "answer": "1. Go to [Sidekick Studio → Chatflows](/sidekick-studio/chatflows)\n2. Click \"Add New\" or \"Create New Chatflow\"\n3. Use the visual canvas to drag and drop nodes\n4. Connect nodes to create your workflow\n5. Configure each node's settings\n6. Test your chatflow\n7. Deploy when ready\n\n**Prerequisites**: [Set up your credentials](/sidekick-studio/credentials) and [configure API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "available-nodes",
+            "question": "What types of nodes can I use in Chatflows?",
+            "answer": "Chatflows support 300+ pre-built nodes including:\n- **Chat Models**: AI engines (OpenAI, Anthropic, Google, etc.)\n- **Document Loaders**: Import data from various sources\n- **Vector Stores**: Enable semantic search and retrieval\n- **Tools**: Connect to external services and APIs\n- **Memory**: Maintain conversation context\n- **Prompts**: Control AI responses\n- **Chains**: Sequence operations for complex tasks\n\n**Explore Tools**: [Browse available tools](/sidekick-studio/tools) and [set up document stores](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "deployment-options",
+            "question": "How can I deploy my Chatflows?",
+            "answer": "Chatflows can be deployed in multiple ways:\n- **Web Embed**: Embed as a widget on any website\n- **API Endpoint**: Access via REST API\n- **Browser Extension**: Use within the AnswerAgent extension\n- **Direct Link**: Share as a standalone web page\n- **SDK Integration**: Integrate into mobile apps or other software\n\n**Deploy Now**: [Start a chat](/chat) with your deployed sidekicks or [manage your apps](/sidekick-studio/apps)"
+        },
+        {
+            "id": "vs-agentflows",
+            "question": "What's the difference between Chatflows and Agentflows?",
+            "answer": "Both are workflow systems but with different strengths:\n\n**Chatflows:**\n- Linear workflows\n- Good for straightforward conversational AI\n- Faster execution\n- Simpler to build and understand\n\n**Agentflows:**\n- Multi-agent systems with complex decision-making\n- Parallel processing capabilities\n- Long-running tasks with checkpointing\n- Better for sophisticated workflows requiring complex logic\n\n**Choose Your Path**: [Create a chatflow](/sidekick-studio/chatflows) or [build an agentflow](/sidekick-studio/agentflows)"
+        },
+        {
+            "id": "best-practices",
+            "question": "What are some Chatflow best practices?",
+            "answer": "- **Start Simple**: Begin with basic flows before adding complexity\n- **Test Thoroughly**: Use the testing features before deployment\n- **Use Memory Wisely**: Add conversation memory where needed\n- **Optimize Prompts**: Craft clear, specific prompts for AI nodes\n- **Handle Errors**: Include error handling and fallback responses\n- **Document Your Flow**: Add descriptions to nodes for future reference\n- **Version Control**: Save different versions as you iterate\n\n**Monitor Performance**: [Check execution history](/sidekick-studio/executions) and [review your sidekicks](/sidekick-studio/chatflows)"
+        }
+    ]
+}

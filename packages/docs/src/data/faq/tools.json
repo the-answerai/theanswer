@@ -1,0 +1,37 @@
+{
+    "title": "Tools",
+    "description": "Configure tools and integrations for your workflows",
+    "icon": "🛠️",
+    "faqs": [
+        {
+            "id": "what-are-tools",
+            "question": "What are Tools in AnswerAgent?",
+            "answer": "Tools are functions and integrations that extend your AI agents' capabilities. They allow agents to interact with external systems, perform calculations, and access additional functionality.\n\n**Get Started**: [Browse available tools](/sidekick-studio/tools) and [create custom tools](/sidekick-studio/tools)"
+        },
+        {
+            "id": "types-of-tools",
+            "question": "What types of Tools are available?",
+            "answer": "**1. Built-in Tools:**\n- Calculator\n- Web Browser\n- File operations (Read/Write)\n- API requests (GET/POST)\n- Search engines (Google, Brave, Serper)\n\n**2. Custom Tools:**\n- JavaScript functions you create\n- API integrations\n- Database queries\n- Business logic\n\n**3. MCP (Model Context Protocol) Tools:**\n- Zero-configuration integrations\n- Business systems (Salesforce, Jira)\n- Development tools (GitHub)\n- Search engines (Brave Search)\n\n**Explore**: [Browse tools](/sidekick-studio/tools) and [configure credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "mcp-tools",
+            "question": "What MCP Tools are available?",
+            "answer": "MCP Tools provide standardized integrations:\n\n**Zero Configuration:**\n- **AnswerAgent MCP**: Direct integration with AnswerAgent API (no setup required)\n\n**Business & Productivity:**\n- **Salesforce MCP**: CRM operations, lead management, opportunity tracking\n- **Jira MCP**: Issue tracking, project management, sprint planning\n- **Confluence MCP**: Knowledge base access and content management\n\n**Development:**\n- **GitHub MCP**: Repository management, issue tracking, pull requests\n- **Custom MCP**: Build your own MCP server configurations\n\n**Search & Content:**\n- **Brave Search MCP**: Real-time web search capabilities\n- **YouTube MCP**: Video management and content analysis\n\n**Configure**: [Set up MCP tools](/sidekick-studio/tools) and [manage credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "creating-custom-tools",
+            "question": "How do I create custom tools?",
+            "answer": "1. Go to [Sidekick Studio → Tools](/sidekick-studio/tools)\n2. Click \"Create New Tool\"\n3. Define tool name and description\n4. Set input parameters\n5. Write JavaScript function\n6. Test and save\n\n**Example Custom Tool:**\n```javascript\n// Tool to fetch weather data\nconst fetch = require('node-fetch');\n\nconst city = $city; // Input parameter\nconst apiKey = $vars.WEATHER_API_KEY; // Global variable\n\ntry {\n    const response = await fetch(`https://api.weather.com/v1/current?key=${apiKey}&q=${city}`);\n    const data = await response.json();\n    return `Weather in ${city}: ${data.temp_c}°C, ${data.condition.text}`;\n} catch (error) {\n    return `Error fetching weather data: ${error.message}`;\n}\n```\n\n**Prerequisites**: [Set up credentials](/sidekick-studio/credentials) and [configure global variables](/sidekick-studio/variables)"
+        },
+        {
+            "id": "tool-best-practices",
+            "question": "What are Tool best practices?",
+            "answer": "- **Use descriptive names**: Help AI understand when to use the tool\n- **Handle errors gracefully**: Include try-catch blocks\n- **Return meaningful data**: Provide useful information to the AI\n- **Use global variables**: Store API keys and configuration securely\n- **Test thoroughly**: Verify tools work correctly before using in workflows\n- **Document parameters**: Clearly describe what inputs the tool expects\n\n**Optimize**: [Review your tools](/sidekick-studio/tools) and [test execution](/sidekick-studio/executions)"
+        },
+        {
+            "id": "tool-integration",
+            "question": "How do I use Tools in my workflows?",
+            "answer": "Tools integrate seamlessly into your workflows:\n- **Tool Nodes**: Add tool functionality to any chatflow or agentflow\n- **Automatic Selection**: AI agents can automatically choose appropriate tools\n- **Parameter Passing**: Tools receive data from previous workflow steps\n- **Error Handling**: Workflows can handle tool failures gracefully\n- **Result Processing**: Tool outputs can be used by subsequent workflow steps\n\n**Integrate**: [Add tools to chatflows](/sidekick-studio/chatflows) or [use in agentflows](/sidekick-studio/agentflows)"
+        }
+    ]
+}

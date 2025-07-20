@@ -1,0 +1,47 @@
+{
+    "title": "Global Variables",
+    "description": "Reusable configuration values and settings across all your workflows",
+    "icon": "🔧",
+    "faqs": [
+        {
+            "id": "what-are-global-variables",
+            "question": "What are Global Variables?",
+            "answer": "Global Variables are reusable values that can be accessed across all your workflows in AnswerAgent. They're perfect for storing configuration, API keys, database URLs, and other data you want to use in multiple places without having to redefine them each time.\n\n**Benefits of Global Variables:**\n- **Centralized Management**: Store values in one place\n- **Reusability**: Use the same values across multiple workflows\n- **Security**: Safely store sensitive information\n- **Maintainability**: Change values once, update everywhere\n- **Organization**: Keep configuration separate from workflow logic\n\n**Get Started**: [Create your first variable](/sidekick-studio/variables)"
+        },
+        {
+            "id": "types-of-variables",
+            "question": "What types of Global Variables are available?",
+            "answer": "AnswerAgent supports two main types of Global Variables:\n\n**Static Variables:**\n- **Direct Storage**: Values stored directly in AnswerAgent\n- **Simple Management**: Easy to create and modify through the interface\n- **Immediate Access**: Available instantly across all workflows\n- **Version Control**: Changes are tracked and can be reverted\n\n**Runtime Variables:**\n- **Environment-based**: Values fetched from environment variables (.env file)\n- **Security-focused**: Ideal for sensitive data like API keys\n- **Deployment-aware**: Different values for development/staging/production\n- **External Management**: Managed outside of AnswerAgent interface\n\n**Configure**: [Set up variables](/sidekick-studio/variables) and [manage credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "creating-variables",
+            "question": "How do I create and manage Global Variables?",
+            "answer": "Creating Global Variables is straightforward:\n\n**Creating Variables:**\n1. **Navigate**: Go to [Sidekick Studio → Global Variables](/sidekick-studio/variables)\n2. **Add New**: Click 'Add New Variable'\n3. **Configure**: Set name, type, and value\n4. **Save**: Store the variable for use\n\n**Configuration Options:**\n- **Variable Name**: Use clear, descriptive names (e.g., OPENAI_API_KEY, DATABASE_URL)\n- **Variable Type**: Choose between Static or Runtime\n- **Variable Value**: Set the actual value or environment variable reference\n- **Description**: Add notes explaining the variable's purpose\n- **Scope**: Set organization or user-level access\n\n**Manage**: [Create variables](/sidekick-studio/variables) and [configure settings](/sidekick-studio/variables)"
+        },
+        {
+            "id": "using-variables",
+            "question": "How do I use Global Variables in my workflows?",
+            "answer": "Global Variables can be used throughout your workflows:\n\n**Variable Reference Syntax:**\n- **Basic Usage**: `$vars.VARIABLE_NAME`\n- **In Custom Tools**: `const apiKey = $vars.OPENAI_API_KEY;`\n- **In Prompts**: `{{$vars.API_KEY}}`\n- **In Node Configuration**: Reference in any input field that accepts variables\n\n**Examples:**\n```javascript\n// In a custom tool\nconst apiKey = $vars.OPENAI_API_KEY;\nconst databaseUrl = $vars.DATABASE_URL;\nconst appConfig = $vars.APP_SETTINGS;\n\n// In a prompt template\n\"Use the API key: {{$vars.API_KEY}} to make requests\"\n\n// In node configuration\nBaseURL: $vars.API_BASE_URL\nTimeout: $vars.REQUEST_TIMEOUT\n```\n\n**Use**: [Add to your workflows](/sidekick-studio/chatflows) and [configure tools](/sidekick-studio/tools)"
+        },
+        {
+            "id": "variable-scope",
+            "question": "What are the different variable scopes?",
+            "answer": "Global Variables have different scope levels that control who can access them:\n\n**Organization Level:**\n- **Shared Access**: Available to all users in your organization\n- **Admin Management**: Only admins can create/modify\n- **Team Collaboration**: Perfect for shared resources like API keys\n- **Consistent Configuration**: Ensures everyone uses the same settings\n\n**User Level:**\n- **Personal Variables**: Private to your account\n- **Individual Control**: You can create and modify\n- **Personal Workflows**: For your specific use cases\n- **Testing/Development**: Safe space for experimentation\n\n**Public/System Variables:**\n- **Platform Defaults**: Available to all users\n- **Read-only**: Cannot be modified by users\n- **Common Values**: Standard configurations and constants\n\n**Manage**: [Configure variable scope](/sidekick-studio/variables) and [set up organization settings](/sidekick-studio/variables)"
+        },
+        {
+            "id": "security-best-practices",
+            "question": "What are the security best practices for Global Variables?",
+            "answer": "Follow these security practices when using Global Variables:\n\n**For Sensitive Data:**\n- **Use Runtime Variables**: Store secrets in environment variables, not static variables\n- **Environment Separation**: Different .env files for dev/staging/production\n- **Limited Access**: Restrict who can view/modify sensitive variables\n- **Regular Rotation**: Change API keys and secrets periodically\n\n**Naming Conventions:**\n- **Descriptive Names**: Use clear, consistent naming (e.g., OPENAI_API_KEY, not KEY1)\n- **Environment Prefixes**: Consider DEV_, STAGING_, PROD_ prefixes\n- **Type Indicators**: Use suffixes like _API_KEY, _URL, _CONFIG\n\n**Access Control:**\n- **Principle of Least Privilege**: Only grant necessary access\n- **Regular Audits**: Review who has access to what variables\n- **Documentation**: Keep records of what each variable is used for\n\n**Secure**: [Manage API keys](/sidekick-studio/apikey) and [configure credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "common-use-cases",
+            "question": "What are common use cases for Global Variables?",
+            "answer": "Global Variables are useful in many scenarios:\n\n**API Configuration:**\n- **API Keys**: OpenAI, Anthropic, Google, etc.\n- **Base URLs**: Service endpoints and API bases\n- **Timeouts**: Request timeout values\n- **Rate Limits**: API call frequency settings\n\n**Database Configuration:**\n- **Connection Strings**: Database URLs and connection info\n- **Credentials**: Database usernames and passwords\n- **Pool Settings**: Connection pool configurations\n\n**Application Settings:**\n- **Feature Flags**: Enable/disable features across workflows\n- **Business Logic**: Company-specific rules and values\n- **Branding**: Company names, logos, colors\n- **Contact Info**: Support emails, phone numbers\n\n**Environment Configuration:**\n- **Deployment Settings**: Different configs for different environments\n- **Debug Flags**: Enable/disable logging and debugging\n- **Performance Tuning**: Memory limits, processing settings\n\n**Configure**: [Set up common variables](/sidekick-studio/variables) and [manage API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "troubleshooting-variables",
+            "question": "How do I troubleshoot Global Variable issues?",
+            "answer": "Common Global Variable issues and solutions:\n\n**Variable Not Found:**\n- **Check Spelling**: Verify variable name is correct\n- **Verify Scope**: Ensure you have access to the variable\n- **Check Existence**: Confirm variable has been created\n- **Review Permissions**: Verify user/organization access rights\n\n**Runtime Variable Issues:**\n- **Environment File**: Verify .env file exists and is properly formatted\n- **Variable Names**: Ensure environment variable names match exactly\n- **File Location**: Check .env file is in the correct directory\n- **Server Restart**: Some environment changes require server restart\n\n**Value Issues:**\n- **Data Types**: Ensure values are in expected format (string, number, JSON)\n- **Encoding**: Check for special characters or encoding issues\n- **Quotes**: Be careful with quoted strings in environment files\n- **Newlines**: Watch for unintended line breaks in values\n\n**Debugging Tips:**\n- **Test Variables**: Create simple test workflows to verify variable access\n- **Log Values**: Use console logging to check variable values (be careful with secrets)\n- **Check Execution Logs**: Review execution details for variable-related errors\n- **Use Descriptive Names**: Make debugging easier with clear variable names\n\n**Debug**: [Check execution history](/sidekick-studio/executions) and [verify variables](/sidekick-studio/variables)"
+        }
+    ]
+}
