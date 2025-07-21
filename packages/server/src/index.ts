@@ -136,12 +136,21 @@ export class App {
         // Allow access from specified domains
         this.app.use(cors(getCorsOptions()))
 
-        // Passport Middleware
+        // Add Redis debugging
+        logger.info('🔍 [server]: Redis environment variables check:', {
+            REDIS_URL: process.env.REDIS_URL ? 'Set' : 'Not set',
+            REDIS_HOST: process.env.REDIS_HOST ? 'Set' : 'Not set',
+            REDIS_PORT: process.env.REDIS_PORT ? 'Set' : 'Not set',
+            NODE_ENV: process.env.NODE_ENV
+        })
+
         let redisStore
         try {
             redisStore = createRedisStore()
+            logger.info('✅ [server]: Redis store created successfully')
         } catch (error) {
             logger.error('❌ [server]: Error during Redis Store initialization:', error)
+            logger.error('❌ [server]: Redis store creation failed, will use memory store')
         }
 
         const sessionConfig: any = {
@@ -157,7 +166,17 @@ export class App {
         // Only use Redis store if it was successfully created
         if (redisStore) {
             sessionConfig.store = redisStore
+            logger.info('✅ [server]: Using Redis session store')
+        } else {
+            logger.warn('⚠️ [server]: Using memory session store - sessions will not persist across containers')
         }
+
+        logger.info('🔍 [server]: Session configuration:', {
+            resave: sessionConfig.resave,
+            saveUninitialized: sessionConfig.saveUninitialized,
+            cookieSecure: sessionConfig.cookie.secure,
+            hasStore: !!sessionConfig.store
+        })
 
         this.app.use(session(sessionConfig))
         this.app.use(passport.initialize())

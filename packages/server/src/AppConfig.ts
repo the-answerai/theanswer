@@ -33,13 +33,29 @@ export function createRedisClient() {
 }
 
 export const createRedisStore = () => {
-    // console.log('🔑 [server]: Creating Redis Store')
+    logger.info('🔍 [server]: Creating Redis Store')
+    logger.info('🔍 [server]: REDIS_URL:', process.env.REDIS_URL ? 'Set' : 'Not set')
+    
     if (!process.env.REDIS_URL) {
+        logger.error('❌ [server]: REDIS_URL is not set')
         throw new Error('REDIS_URL is not set')
     }
+    
+    logger.info('🔍 [server]: Attempting to create Redis client with URL:', process.env.REDIS_URL)
+    
     const redisClient = createRedisClient()
-    redisClient.on('error', (err) => logger.error('Redis Client Error', err))
-    redisClient.on('connect', () => logger.info('✨ Redis Client Connected'))
+    
+    // Enhanced error handling
+    redisClient.on('error', (err) => {
+        logger.error('❌ [server]: Redis Client Error:', err)
+    })
+    
+    redisClient.on('connect', () => logger.info('✅ [server]: Redis Client Connected'))
+    redisClient.on('ready', () => logger.info('✅ [server]: Redis Client Ready'))
+    redisClient.on('close', () => logger.warn('⚠️ [server]: Redis Client Connection Closed'))
+    redisClient.on('reconnecting', () => logger.info('🔄 [server]: Redis Client Reconnecting'))
+
+    logger.info('🔍 [server]: Creating RedisStore with prefix:', process.env.REDIS_SESSION_PREFIX || 'theanswer:')
 
     return new RedisStore({
         client: redisClient,
