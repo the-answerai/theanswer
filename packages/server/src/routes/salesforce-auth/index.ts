@@ -42,7 +42,7 @@ router.get('/callback', (req, res, next) => {
     console.log('🔍 [SALESFORCE ROUTES] Session ID:', req.sessionID)
     console.log('🔍 [SALESFORCE ROUTES] Session data:', req.session)
     console.log('🔍 [SALESFORCE ROUTES] State from query:', req.query.state)
-    console.log('🔍 [SALESFORCE ROUTES] State from session:', req.session?.oauth2state)
+    console.log('🔍 [SALESFORCE ROUTES] State from session:', (req.session as any)?.oauth2state)
     console.log('🔍 [SALESFORCE ROUTES] Full URL:', `${req.protocol}://${req.get('host')}${req.originalUrl}`)
     console.log('🔍 [SALESFORCE ROUTES] Query parameters:', req.query)
     console.log('🔍 [SALESFORCE ROUTES] Headers:', {

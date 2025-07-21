@@ -106,7 +106,7 @@ const salesforceAuthCallback = async (req: Request, res: Response) => {
         console.log('🔍 [SALESFORCE CALLBACK] Session ID:', req.sessionID)
         console.log('🔍 [SALESFORCE CALLBACK] Session data:', req.session)
         console.log('🔍 [SALESFORCE CALLBACK] State from query:', req.query.state)
-        console.log('🔍 [SALESFORCE CALLBACK] State from session:', req.session?.oauth2state)
+        console.log('🔍 [SALESFORCE CALLBACK] State from session:', (req.session as any)?.oauth2state)
 
         // Check for OAuth error parameters
         if (req.query.error) {
