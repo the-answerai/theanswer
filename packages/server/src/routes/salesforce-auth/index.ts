@@ -10,6 +10,21 @@ router.get('/', (req, res, next) => {
     console.log('🔍 [SALESFORCE ROUTES] Auth route hit:', req.url)
     console.log('🔍 [SALESFORCE ROUTES] Session ID:', req.sessionID)
     console.log('🔍 [SALESFORCE ROUTES] Session data before auth:', req.session)
+    
+    // 🚨 MARK: Track when we create the session for OAuth
+    if (!req.session) {
+        console.error('🚨 [SALESFORCE ROUTES] CRITICAL: No session object available - session middleware issue')
+    } else {
+        // Mark this session with a timestamp so we can track it in callback
+        ;(req.session as any).authInitiatedAt = new Date().toISOString()
+        ;(req.session as any).authInitiationSessionId = req.sessionID
+        console.log('🚨 [SALESFORCE ROUTES] SESSION MARKED for OAuth flow:', {
+            sessionID: req.sessionID,
+            authInitiatedAt: (req.session as any).authInitiatedAt,
+            sessionKeys: Object.keys(req.session)
+        })
+    }
+    
     console.log('🔍 [SALESFORCE ROUTES] Request details:', {
         method: req.method,
         headers: {
@@ -43,6 +58,39 @@ router.get('/callback', (req, res, next) => {
     console.log('🔍 [SALESFORCE ROUTES] Session data:', req.session)
     console.log('🔍 [SALESFORCE ROUTES] State from query:', req.query.state)
     console.log('🔍 [SALESFORCE ROUTES] State from session:', (req.session as any)?.oauth2state)
+    
+    // 🚨 CRITICAL: Check if this is a new session (load balancer routing issue)
+    const isNewSession = !req.session || Object.keys(req.session).length <= 1
+    const sessionCreatedAt = (req.session as any)?.createdAt
+    const authInitiatedAt = (req.session as any)?.authInitiatedAt
+    const authInitiationSessionId = (req.session as any)?.authInitiationSessionId
+    
+    console.log('🚨 [SALESFORCE ROUTES] SESSION ANALYSIS:', {
+        sessionID: req.sessionID,
+        isNewSession: isNewSession,
+        sessionKeys: req.session ? Object.keys(req.session) : [],
+        sessionCreatedAt: sessionCreatedAt,
+        authInitiatedAt: authInitiatedAt,
+        authInitiationSessionId: authInitiationSessionId,
+        sessionIdMatch: req.sessionID === authInitiationSessionId,
+        hasOAuthState: !!(req.session as any)?.oauth2state
+    })
+    
+    // 🚨 CRITICAL: Check if we're in the same session as auth initiation
+    if (authInitiationSessionId && req.sessionID !== authInitiationSessionId) {
+        console.error('🚨 [SALESFORCE ROUTES] CRITICAL: Session ID mismatch between auth initiation and callback!')
+        console.error('🚨 [SALESFORCE ROUTES] Auth initiated with session:', authInitiationSessionId)
+        console.error('🚨 [SALESFORCE ROUTES] Callback received with session:', req.sessionID)
+        console.error('🚨 [SALESFORCE ROUTES] This confirms load balancer is routing to different container instances')
+    }
+    
+    // 🚨 CRITICAL: This will tell us if sessions are being lost between auth and callback
+    if (req.query.state && !(req.session as any)?.oauth2state) {
+        console.error('🚨 [SALESFORCE ROUTES] CRITICAL: State mismatch detected!')
+        console.error('🚨 [SALESFORCE ROUTES] Query state present but session state missing - likely load balancer issue')
+        console.error('🚨 [SALESFORCE ROUTES] This indicates session was not preserved between auth initiation and callback')
+    }
+    
     console.log('🔍 [SALESFORCE ROUTES] Full URL:', `${req.protocol}://${req.get('host')}${req.originalUrl}`)
     console.log('🔍 [SALESFORCE ROUTES] Query parameters:', req.query)
     console.log('🔍 [SALESFORCE ROUTES] Headers:', {
