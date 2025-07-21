@@ -47,8 +47,8 @@ export default function (passport: any) {
                     callbackURL: `${process.env.API_HOST}/api/v1/salesforce-auth/callback`,
                     scope: 'api refresh_token',
                     passReqToCallback: true,
-                    pkce: true,
-                    state: true
+                    pkce: false,
+                    state: false
                 },
                 async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
                     try {
