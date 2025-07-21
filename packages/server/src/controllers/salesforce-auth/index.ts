@@ -23,6 +23,13 @@ const logEnvironmentInfo = () => {
 
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        console.log('🔍 [SALESFORCE AUTH] Session configuration debug:', {
+            sessionID: req.sessionID,
+            sessionStore: req.sessionStore ? 'Present' : 'Missing',
+            sessionData: req.session,
+            cookieSecure: req.session?.cookie?.secure,
+            cookieSameSite: req.session?.cookie?.sameSite
+        })
         console.log('🔍 [SALESFORCE AUTH] Starting authentication process')
         console.log('🔍 [SALESFORCE AUTH] Request URL:', req.url)
         console.log('🔍 [SALESFORCE AUTH] Request headers:', {
@@ -96,6 +103,10 @@ const salesforceAuthCallback = async (req: Request, res: Response) => {
             referer: req.headers.referer,
             origin: req.headers.origin
         })
+        console.log('🔍 [SALESFORCE CALLBACK] Session ID:', req.sessionID)
+        console.log('🔍 [SALESFORCE CALLBACK] Session data:', req.session)
+        console.log('🔍 [SALESFORCE CALLBACK] State from query:', req.query.state)
+        console.log('🔍 [SALESFORCE CALLBACK] State from session:', req.session?.oauth2state)
 
         // Check for OAuth error parameters
         if (req.query.error) {

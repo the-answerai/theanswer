@@ -48,7 +48,7 @@ export default function (passport: any) {
                     scope: 'api refresh_token',
                     passReqToCallback: true,
                     pkce: true,
-                    state: false
+                    state: true
                 },
                 async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
                     try {

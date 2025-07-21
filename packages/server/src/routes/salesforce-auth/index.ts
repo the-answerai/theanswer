@@ -8,6 +8,8 @@ const router = express.Router()
 // Main authentication endpoint
 router.get('/', (req, res, next) => {
     console.log('🔍 [SALESFORCE ROUTES] Auth route hit:', req.url)
+    console.log('🔍 [SALESFORCE ROUTES] Session ID:', req.sessionID)
+    console.log('🔍 [SALESFORCE ROUTES] Session data before auth:', req.session)
     console.log('🔍 [SALESFORCE ROUTES] Request details:', {
         method: req.method,
         headers: {
@@ -37,6 +39,10 @@ router.get('/error', (req, res) => {
 // OAuth callback endpoint - this is where most deployment issues occur
 router.get('/callback', (req, res, next) => {
     console.log('🔍 [SALESFORCE ROUTES] Callback route hit:', req.url)
+    console.log('🔍 [SALESFORCE ROUTES] Session ID:', req.sessionID)
+    console.log('🔍 [SALESFORCE ROUTES] Session data:', req.session)
+    console.log('🔍 [SALESFORCE ROUTES] State from query:', req.query.state)
+    console.log('🔍 [SALESFORCE ROUTES] State from session:', req.session?.oauth2state)
     console.log('🔍 [SALESFORCE ROUTES] Full URL:', `${req.protocol}://${req.get('host')}${req.originalUrl}`)
     console.log('🔍 [SALESFORCE ROUTES] Query parameters:', req.query)
     console.log('🔍 [SALESFORCE ROUTES] Headers:', {
