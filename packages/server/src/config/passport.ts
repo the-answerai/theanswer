@@ -36,6 +36,15 @@ export default function (passport: any) {
     }
 
     if (process.env.SALESFORCE_CLIENT_ID && process.env.SALESFORCE_CLIENT_SECRET && process.env.SALESFORCE_INSTANCE_URL) {
+        console.log('🔍 [PASSPORT CONFIG] Configuring Salesforce OAuth strategy')
+        console.log('🔍 [PASSPORT CONFIG] Strategy config:', {
+            authorizationURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize`,
+            tokenURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
+            callbackURL: `${process.env.API_HOST}/api/v1/salesforce-auth/callback`,
+            scope: 'api refresh_token',
+            state: false,
+            pkce: true
+        })
         passport.use(
             `salesforce-dynamic`,
             new OAuth2Strategy(
@@ -48,7 +57,7 @@ export default function (passport: any) {
                     scope: 'api refresh_token',
                     passReqToCallback: true,
                     pkce: true,
-                    state: true
+                    state: false
                 },
                 async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
                     try {
@@ -72,6 +81,9 @@ export default function (passport: any) {
                 }
             )
         )
+        console.log('✅ [PASSPORT CONFIG] Salesforce strategy registered successfully')
+    } else {
+        console.warn('⚠️ [PASSPORT CONFIG] Salesforce OAuth not configured - missing environment variables')
     }
 
     passport.serializeUser((user: any, done: any) => {
