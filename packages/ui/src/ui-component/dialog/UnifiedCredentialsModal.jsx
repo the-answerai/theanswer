@@ -372,7 +372,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     justifyContent: 'space-between'
                 }}
             >
-                <Typography variant='h5'>
+                <Typography variant='body1' sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
                     {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
                 </Typography>
                 <IconButton onClick={handleCancel} size='small'>
