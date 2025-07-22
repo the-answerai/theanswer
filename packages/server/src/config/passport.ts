@@ -1,5 +1,5 @@
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import { Strategy as OAuth2Strategy } from 'passport-oauth2'
+import { Strategy as SalesforceStrategy } from 'passport-forcedotcom'
 
 export default function (passport: any) {
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -38,19 +38,18 @@ export default function (passport: any) {
     if (process.env.SALESFORCE_CLIENT_ID && process.env.SALESFORCE_CLIENT_SECRET && process.env.SALESFORCE_INSTANCE_URL) {
         passport.use(
             `salesforce-dynamic`,
-            new OAuth2Strategy(
+            new SalesforceStrategy(
                 {
-                    authorizationURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize`,
-                    tokenURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
                     clientID: process.env.SALESFORCE_CLIENT_ID,
                     clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
                     callbackURL: `${process.env.API_HOST}/api/v1/salesforce-auth/callback`,
+                    authorizationURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize`,
+                    tokenURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
                     scope: 'api refresh_token',
-                    passReqToCallback: true,
                     pkce: true,
                     state: true
                 },
-                async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
+                async (accessToken: string, refreshToken: string, profile: any, done: any) => {
                     try {
                         // Fetch user info from Salesforce
                         const response = await fetch(`${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/userinfo`, {
