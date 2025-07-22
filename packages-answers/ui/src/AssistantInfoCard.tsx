@@ -30,7 +30,9 @@ const WhiteIconButton = styled(IconButton)(({ theme }) => ({
         color: theme.palette.primary.main
     }
 }))
-const DescriptionText = styled(Typography)<{ expanded?: boolean }>(({ expanded }) => ({
+const DescriptionText = styled(Typography, {
+    shouldForwardProp: (prop) => prop !== 'expanded'
+})<{ expanded?: boolean }>(({ expanded }) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     display: '-webkit-box',
@@ -38,14 +40,22 @@ const DescriptionText = styled(Typography)<{ expanded?: boolean }>(({ expanded }
     WebkitBoxOrient: 'vertical'
 }))
 
-const DescriptionContainer = styled(Box)<{ expanded?: boolean }>(({ expanded }) => ({
+const DescriptionContainer = styled(Box, {
+    shouldForwardProp: (prop) => prop !== 'expanded'
+})<{ expanded?: boolean }>(({ expanded }) => ({
     overflow: 'hidden',
     transition: 'max-height 0.3s ease',
     position: 'relative',
     maxHeight: expanded ? '500px' : '40px' // Adjust the maxHeight values as needed
 }))
 
-const AssistantInfoCard = ({ sidekick, onShare, onEdit, isFavorite: propIsFavorite, onToggleFavorite }: AssistantInfoCardProps) => {
+const AssistantInfoCard = ({
+    sidekick,
+    onShare,
+    onEdit: _onEdit,
+    isFavorite: _propIsFavorite,
+    onToggleFavorite
+}: AssistantInfoCardProps) => {
     const [expanded, setExpanded] = useState(false)
     const description = sidekick?.chatflow?.description || 'No description available'
     const theme = useTheme()
@@ -59,7 +69,7 @@ const AssistantInfoCard = ({ sidekick, onShare, onEdit, isFavorite: propIsFavori
 
     const [localIsFavorite, setLocalIsFavorite] = useState(false)
 
-    const [showCopyMessage, setShowCopyMessage] = useState(false)
+    const [_showCopyMessage, setShowCopyMessage] = useState(false)
 
     // Initialize favorite status from localStorage
     useEffect(() => {
@@ -166,7 +176,7 @@ const AssistantInfoCard = ({ sidekick, onShare, onEdit, isFavorite: propIsFavori
         [sidekick, onToggleFavorite]
     )
 
-    const handleShare = useCallback(
+    const _handleShare = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation()
             if (!sidekick) return

@@ -22,7 +22,6 @@ import { IconX } from '@tabler/icons-react'
 import { theme as themes } from '@/themes'
 // @ts-ignore - JavaScript module without types
 import { useCredentialChecker } from '@/hooks/useCredentialChecker'
-import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import chatflowsApi from '@/api/chatflows'
 
 // Local imports
@@ -96,29 +95,43 @@ export const ChatDetail = ({
     const closeSnackbar = useCallback((...args: any[]) => dispatch(closeSnackbarAction(...args)), [dispatch])
 
     // Notification helper function
-    const createNotification = useCallback((message: string, variant: 'success' | 'error', persist = false) => ({
-        message,
-        options: {
-            key: new Date().getTime() + Math.random(),
-            variant,
-            ...(persist && { persist: true }),
-            action: (key: string) => (
-                <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                    <IconX />
-                </Button>
-            )
-        }
-    }), [closeSnackbar])
+    const createNotification = useCallback(
+        (message: string, variant: 'success' | 'error', persist = false) => ({
+            message,
+            options: {
+                key: new Date().getTime() + Math.random(),
+                variant,
+                ...(persist && { persist: true }),
+                action: (key: string) => (
+                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                        <IconX />
+                    </Button>
+                )
+            }
+        }),
+        [closeSnackbar]
+    )
+
+    // Error handler for modal
+    const handleModalError = useCallback(
+        (errorMessage: string) => {
+            enqueueSnackbar(createNotification(errorMessage, 'error', true))
+        },
+        [enqueueSnackbar, createNotification]
+    )
 
     // Custom handlers for modal actions
-    const handleModalAssign = useCallback(async (credentialAssignments: any) => {
-        try {
-            handleAssign(credentialAssignments)
-        } catch (error) {
-            console.error('Error assigning credentials:', error)
-            enqueueSnackbar(createNotification('Error assigning credentials. Please try again.', 'error', true))
-        }
-    }, [handleAssign, enqueueSnackbar, createNotification])
+    const handleModalAssign = useCallback(
+        async (credentialAssignments: any) => {
+            try {
+                handleAssign(credentialAssignments)
+            } catch (error) {
+                console.error('Error assigning credentials:', error)
+                enqueueSnackbar(createNotification('Error assigning credentials. Please try again.', 'error', true))
+            }
+        },
+        [handleAssign, enqueueSnackbar, createNotification]
+    )
 
     const handleModalSkip = useCallback(() => {
         setCredentialCheckStatus('completed')
@@ -140,44 +153,59 @@ export const ChatDetail = ({
     useEffect(() => {
         if (chat && credentialCheckStatus === 'idle' && selectedSidekick?.flowData) {
             setCredentialCheckStatus('checking')
-            checkCredentials(selectedSidekick.flowData, async (updatedFlowData: any, credentialAssignments: any) => {
-                setCredentialCheckStatus('completed')
-                
-                // Save credentials to backend when assigned
-                if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
-                    try {
-                        if (selectedSidekick?.id) {
-                            await chatflowsApi.updateChatflow(selectedSidekick.id, {
-                                flowData: JSON.stringify(updatedFlowData)
-                            })
-                            enqueueSnackbar(createNotification('Credentials saved successfully!', 'success'))
+            checkCredentials(
+                selectedSidekick.flowData,
+                async (updatedFlowData: any, credentialAssignments: any) => {
+                    setCredentialCheckStatus('completed')
+
+                    // Save credentials to backend when assigned
+                    if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
+                        try {
+                            if (selectedSidekick?.id) {
+                                await chatflowsApi.updateChatflow(selectedSidekick.id, {
+                                    flowData: JSON.stringify(updatedFlowData)
+                                })
+                                enqueueSnackbar(createNotification('Credentials saved successfully!', 'success'))
+                            }
+                        } catch (error) {
+                            console.error('Error saving chatflow with credentials:', error)
+                            enqueueSnackbar(createNotification('Failed to save credentials. Please try again.', 'error', true))
                         }
-                    } catch (error) {
-                        console.error('Error saving chatflow with credentials:', error)
-                        enqueueSnackbar(createNotification('Failed to save credentials. Please try again.', 'error', true))
-                    }
-                    
-                    // Navigate to chat page without QuickSetup parameter (only in QuickSetup mode)
-                    if (isQuickSetup) {
+
+                        // Navigate to chat page without QuickSetup parameter (only in QuickSetup mode)
+                        if (isQuickSetup) {
+                            const chatId = chat?.id || selectedSidekick?.id
+                            if (chatId) {
+                                // Use requestAnimationFrame for smoother transition timing
+                                requestAnimationFrame(() => {
+                                    router.replace(`/chat/${chatId}`)
+                                })
+                            }
+                        }
+                    } else if (isQuickSetup) {
+                        // If no credentials were assigned but we're in QuickSetup, still navigate
                         const chatId = chat?.id || selectedSidekick?.id
                         if (chatId) {
-                            setTimeout(() => {
-                                router.replace(`/chat/${chatId}`)
-                            }, 500)
+                            // Immediate navigation since no credentials were assigned
+                            router.replace(`/chat/${chatId}`)
                         }
                     }
-                } else if (isQuickSetup) {
-                    // If no credentials were assigned but we're in QuickSetup, still navigate
-                    const chatId = chat?.id || selectedSidekick?.id
-                    if (chatId) {
-                        setTimeout(() => {
-                            router.replace(`/chat/${chatId}`)
-                        }, 100)
-                    }
-                }
-            }, isQuickSetup)
+                },
+                isQuickSetup
+            )
         }
-    }, [chat?.id, credentialCheckStatus, selectedSidekick?.id, selectedSidekick?.flowData, isQuickSetup, router, enqueueSnackbar, checkCredentials, createNotification])
+    }, [
+        chat,
+        chat?.id,
+        credentialCheckStatus,
+        selectedSidekick?.id,
+        selectedSidekick?.flowData,
+        isQuickSetup,
+        router,
+        enqueueSnackbar,
+        checkCredentials,
+        createNotification
+    ])
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedDocuments, setSelectedDocuments] = React.useState<Document[] | undefined>()
@@ -188,7 +216,7 @@ export const ChatDetail = ({
         getHTMLPreview: (code: string) => string
         getReactPreview: (code: string) => string
     } | null>(null)
-    
+
     const messages = clientMessages || chat?.messages
     const displayMode = chatbotConfig?.displayMode || DISPLAY_MODES.CHATBOT
     const embeddedUrl = chatbotConfig?.embeddedUrl || ''
@@ -373,7 +401,7 @@ export const ChatDetail = ({
                         )}
                     </Box>
                 </Box>
-                
+
                 <Drawer
                     sx={{
                         flexShrink: 0,
@@ -417,7 +445,8 @@ export const ChatDetail = ({
                         onAssign={handleModalAssign}
                         onSkip={handleModalSkip}
                         onCancel={handleModalCancel}
-                        flowData={(chat as any)?.flowData || null}
+                        onError={handleModalError}
+                        flowData={selectedSidekick?.flowData || null}
                     />
                 </ThemeProvider>
             </StyledEngineProvider>

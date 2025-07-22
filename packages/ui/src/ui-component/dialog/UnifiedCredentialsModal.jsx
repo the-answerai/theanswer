@@ -15,7 +15,6 @@ import {
     MenuItem,
     FormControl,
     IconButton,
-    Divider,
     Stack,
     useTheme,
     CircularProgress,
@@ -38,34 +37,32 @@ import credentialsApi from '@/api/credentials'
 import useApi from '@/hooks/useApi'
 
 // Assets
-import keySVG from '@/assets/images/key.svg'
 
 // Constants
 import { baseURL } from '@/store/constant'
 
 // ==============================|| UnifiedCredentialsModal ||============================== //
 
-const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, flowData }) => {
-    const theme = useTheme()
+const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, flowData: _flowData, onError }) => {
+    const _theme = useTheme()
     const portalElement = document.getElementById('portal')
 
     const [credentialAssignments, setCredentialAssignments] = useState({})
     const [availableCredentials, setAvailableCredentials] = useState({})
     const [loading, setLoading] = useState(false)
+    const [assigningCredentials, setAssigningCredentials] = useState(false)
     const [showCredentialDialog, setShowCredentialDialog] = useState(false)
     const [credentialDialogProps, setCredentialDialogProps] = useState({})
     const [refreshKey, setRefreshKey] = useState(0)
     const [creatingCredentialFor, setCreatingCredentialFor] = useState(null) // Track which credential type is being created
 
     // API hooks for loading component credentials
-    const getComponentCredentialApi = useApi(credentialsApi.getSpecificComponentCredential)
+    const _getComponentCredentialApi = useApi(credentialsApi.getSpecificComponentCredential)
 
     // Group credentials by type for better organization
     // Check if we're in QuickSetup mode (showing all credentials, not just missing ones)
-    const isQuickSetupMode = missingCredentials.some(cred => cred.hasOwnProperty('isAssigned'))
-    const groupedCredentials = isQuickSetupMode 
-        ? groupAllCredentialsByType(missingCredentials) 
-        : groupCredentialsByType(missingCredentials)
+    const isQuickSetupMode = missingCredentials.some((cred) => Object.prototype.hasOwnProperty.call(cred, 'isAssigned'))
+    const groupedCredentials = isQuickSetupMode ? groupAllCredentialsByType(missingCredentials) : groupCredentialsByType(missingCredentials)
 
     // Load available credentials when modal opens
     useEffect(() => {
@@ -73,14 +70,14 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             const loadCredentials = async () => {
                 setLoading(true)
                 const credentialsData = {}
-                const groupedCreds = isQuickSetupMode 
-                    ? groupAllCredentialsByType(missingCredentials) 
+                const groupedCreds = isQuickSetupMode
+                    ? groupAllCredentialsByType(missingCredentials)
                     : groupCredentialsByType(missingCredentials)
 
                 try {
                     // Load credentials for each group
                     await Promise.all(
-                        Object.entries(groupedCreds).map(async ([groupKey, group]) => {
+                        Object.entries(groupedCreds).map(async ([_groupKey, group]) => {
                             try {
                                 // For grouped credentials, load all credential types in the group
                                 const credentialTypes = group.credentialTypes || [group.credentialName]
@@ -89,19 +86,19 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 await Promise.all(
                                     credentialTypes.map(async (credType) => {
                                         try {
-                                            const response = await credentialsApi.getAllCredentials()
-                                            const credentialsOfType = response.data.filter((cred) => cred.credentialName === credType)
-                                            allCredentials.push(...credentialsOfType)
+                                            // Use specific credential endpoint by name for better performance
+                                            const response = await credentialsApi.getCredentialsByName(credType)
+                                            allCredentials.push(...response.data)
                                         } catch (error) {
                                             console.warn(`Failed to load credentials for type ${credType}:`, error)
                                         }
                                     })
                                 )
 
-                                credentialsData[groupKey] = allCredentials
+                                credentialsData[_groupKey] = allCredentials
                             } catch (error) {
-                                console.error(`Failed to load credentials for group ${groupKey}:`, error)
-                                credentialsData[groupKey] = []
+                                console.error(`Failed to load credentials for group ${_groupKey}:`, error)
+                                credentialsData[_groupKey] = []
                             }
                         })
                     )
@@ -110,7 +107,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
                     // Handle credential assignments based on mode
                     const initialAssignments = {}
-                    
+
                     if (isQuickSetupMode) {
                         // In QuickSetup mode, pre-populate with already assigned credentials
                         Object.entries(groupedCreds).forEach(([groupKey, group]) => {
@@ -144,7 +141,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
             loadCredentials()
         }
-    }, [show, missingCredentials, refreshKey]) // Added refreshKey to dependency array
+    }, [show, missingCredentials, refreshKey, isQuickSetupMode]) // Added refreshKey and isQuickSetupMode to dependency array
 
     const handleCredentialChange = (nodeId, credentialId) => {
         setCredentialAssignments((prev) => ({
@@ -173,8 +170,12 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('❌ Error loading credential component:', error)
-            // Show user-friendly error message
-            alert(`Failed to load credential component: ${error.message}`)
+            // Use proper error notification if available
+            if (onError) {
+                onError(`Failed to load credential component: ${error.message}`)
+            } else {
+                alert(`Failed to load credential component: ${error.message}`)
+            }
         }
     }
 
@@ -196,7 +197,6 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     ...prev,
                     ...newAssignments
                 }))
-                console.log('🎯 Auto-selected new credential:', newAssignments)
             }
         }
 
@@ -207,9 +207,19 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         setRefreshKey((prev) => prev + 1)
     }
 
-    const handleAssignCredentials = () => {
+    const handleAssignCredentials = async () => {
         if (onAssign) {
-            onAssign(credentialAssignments)
+            setAssigningCredentials(true)
+            try {
+                await onAssign(credentialAssignments)
+            } catch (error) {
+                console.error('Error assigning credentials:', error)
+                if (onError) {
+                    onError('Failed to assign credentials. Please try again.')
+                }
+            } finally {
+                setAssigningCredentials(false)
+            }
         }
     }
 
@@ -257,96 +267,14 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('❌ Error loading credential component:', error)
-            // Show user-friendly error message
-            alert(`Failed to load credential component: ${error.message}`)
+            // Use proper error notification if available
+            if (onError) {
+                onError(`Failed to load credential component: ${error.message}`)
+            } else {
+                alert(`Failed to load credential component: ${error.message}`)
+            }
             setCreatingCredentialFor(null) // Reset on error
         }
-    }
-
-    const renderCredentialRow = (credentialName, credentialInfo) => {
-        const available = availableCredentials[credentialName] || []
-        const nodes = credentialInfo.nodes
-
-        return (
-            <Box key={credentialName} sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Box
-                        sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            mr: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <img
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                padding: 6,
-                                borderRadius: '50%',
-                                objectFit: 'contain'
-                            }}
-                            alt={credentialName}
-                            src={getCredentialIcon(credentialName)}
-                            onError={(e) => {
-                                e.target.onerror = null
-                                e.target.style.padding = '5px'
-                                e.target.src = keySVG
-                            }}
-                        />
-                    </Box>
-                    <Typography variant='h6' sx={{ flex: 1 }}>
-                        {credentialInfo.label}
-                    </Typography>
-                    <IconButton
-                        size='small'
-                        color='primary'
-                        onClick={() => handleAddCredential(credentialName)}
-                        title='Add new credential'
-                        sx={{ ml: 1 }}
-                    >
-                        <IconPlus />
-                    </IconButton>
-                </Box>
-
-                {/* Show nodes that need this credential */}
-                <Box sx={{ ml: 6, mb: 2 }}>
-                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                        Required by: {nodes.map((n) => n.nodeName).join(', ')}
-                    </Typography>
-                </Box>
-
-                {/* Credential selection */}
-                {nodes.map((node) => (
-                    <Box key={node.nodeId} sx={{ ml: 6, mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Typography variant='body2' sx={{ minWidth: 120, mr: 2 }}>
-                            {node.nodeName}:
-                        </Typography>
-                        <FormControl size='small' sx={{ minWidth: 200 }}>
-                            <Select
-                                value={credentialAssignments[node.nodeId] || ''}
-                                onChange={(e) => handleCredentialChange(node.nodeId, e.target.value)}
-                                displayEmpty
-                                disabled={loading || available.length === 0}
-                            >
-                                <MenuItem value=''>
-                                    <em>Select credential...</em>
-                                </MenuItem>
-                                {available.map((credential) => (
-                                    <MenuItem key={credential.id} value={credential.id}>
-                                        {credential.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Box>
-                ))}
-            </Box>
-        )
     }
 
     if (!show) return null
@@ -411,11 +339,11 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                                         {group.label}
                                                     </Typography>
                                                     {isQuickSetupMode && group.isAssigned && (
-                                                        <Chip 
-                                                            label="Assigned" 
-                                                            size="small" 
-                                                            color="success" 
-                                                            variant="outlined"
+                                                        <Chip
+                                                            label='Assigned'
+                                                            size='small'
+                                                            color='success'
+                                                            variant='outlined'
                                                             sx={{ fontSize: '0.7rem', height: 20 }}
                                                         />
                                                     )}
@@ -441,6 +369,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                                         })
                                                     }}
                                                     label='Select Credential'
+                                                    disabled={loading || assigningCredentials}
                                                     sx={{ mb: 1 }}
                                                 >
                                                     {credentialsForGroup.map((credential) => (
@@ -492,8 +421,13 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 <Button onClick={handleSkip} color='inherit'>
                     {isQuickSetupMode ? 'Cancel' : 'Skip for now'}
                 </Button>
-                <StyledButton variant='contained' onClick={handleAssignCredentials} disabled={loading}>
-                    {isQuickSetupMode ? 'Save Changes' : 'Assign & Continue'}
+                <StyledButton
+                    variant='contained'
+                    onClick={handleAssignCredentials}
+                    disabled={loading || assigningCredentials}
+                    startIcon={assigningCredentials ? <CircularProgress size={16} /> : null}
+                >
+                    {assigningCredentials ? 'Saving...' : isQuickSetupMode ? 'Save Changes' : 'Assign & Continue'}
                 </StyledButton>
             </DialogActions>
 
@@ -519,7 +453,8 @@ UnifiedCredentialsModal.propTypes = {
     onAssign: PropTypes.func.isRequired,
     onSkip: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
-    flowData: PropTypes.object
+    flowData: PropTypes.object,
+    onError: PropTypes.func
 }
 
 export default UnifiedCredentialsModal
