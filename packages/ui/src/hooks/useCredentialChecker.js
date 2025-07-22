@@ -3,7 +3,6 @@ import { extractMissingCredentials, extractAllCredentials, updateFlowDataWithCre
 
 /**
  * Custom hook for checking and managing missing credentials in flows
- * @returns {object} Hook interface with methods and state
  */
 export const useCredentialChecker = () => {
     const [showCredentialModal, setShowCredentialModal] = useState(false)
@@ -47,14 +46,14 @@ export const useCredentialChecker = () => {
                 return false
             }
         } catch (error) {
-            console.error('❌ Error checking credentials:', error)
+            console.error('Error checking credentials:', error)
             // Proceed without credentials modal on error
             if (onAssign) {
                 onAssign(flowData, {})
             }
             return false
         }
-    }, [showCredentialModal])
+    }, [])
 
     /**
      * Handle credential assignments from the modal
@@ -67,7 +66,7 @@ export const useCredentialChecker = () => {
                     const updatedFlowData = updateFlowDataWithCredentials(pendingFlowData, credentialAssignments)
                     onCredentialsAssigned(updatedFlowData, credentialAssignments)
                 } catch (error) {
-                    console.error('❌ Error updating flow data with credentials:', error)
+                    console.error('Error updating flow data with credentials:', error)
                     // Proceed with original flow data
                     onCredentialsAssigned(pendingFlowData, credentialAssignments)
                 }
