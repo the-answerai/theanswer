@@ -1,48 +1,58 @@
 'use client'
-import React, { useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import React, { useRef, useCallback, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useDispatch } from 'react-redux'
+import dynamic from 'next/dynamic'
 
+// Material-UI imports
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-
-import { useAnswers } from './AnswersContext'
 import Toolbar from '@mui/material/Toolbar'
-import dynamic from 'next/dynamic'
-// @ts-ignore - JavaScript module without types
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
-
-import type { AppSettings, Document, Sidekick } from 'types'
-
-// Dynamic import for UnifiedCredentialsModal
-const UnifiedCredentialsModal = dynamic(
-    // @ts-ignore - JavaScript module without types
-    () => import('@/ui-component/dialog/UnifiedCredentialsModal.jsx'),
-    { ssr: false }
-) as any
-
-import Image from 'next/image'
 import Button from '@mui/material/Button'
-import RateReviewIcon from '@mui/icons-material/RateReview'
-
-// Theme imports for modal
 import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline, StyledEngineProvider } from '@mui/material'
+
+// Redux notification imports - exact same pattern as chatflows
+import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
+import useNotifier from '@/utils/useNotifier'
+
+// UI components and utilities
+import { IconX } from '@tabler/icons-react'
 // @ts-ignore - JavaScript module without types
 import { theme as themes } from '@/themes'
+// @ts-ignore - JavaScript module without types
+import { useCredentialChecker } from '@/hooks/useCredentialChecker'
+import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
+import chatflowsApi from '@/api/chatflows'
 
+// Local imports
+import { useAnswers } from './AnswersContext'
+import type { AppSettings, Document, Sidekick } from 'types'
+
+// Dynamic imports
 const AppBar = dynamic(() => import('@mui/material/AppBar'))
 const ChatRoom = dynamic(() => import('./ChatRoom').then((mod) => ({ default: mod.ChatRoom })))
 const SidekickSelect = dynamic(() => import('./SidekickSelect'))
 const Drawer = dynamic(() => import('./Drawer'), { ssr: false })
 const SourceDocumentModal = dynamic(() => import('@ui/SourceDocumentModal'), { ssr: false })
 const CodePreview = dynamic(() => import('./Message/CodePreview').then((mod) => ({ default: mod.CodePreview })), { ssr: false })
-const DrawerFilters = dynamic(() => import('./DrawerFilters/DrawerFilters'), { ssr: false })
+const DrawerFilters = dynamic(() => import('./DrawerFilters/DrawerFilters'))
 const ChatInput = dynamic(() => import('./ChatInput'), { ssr: true })
+const Image = dynamic(() => import('next/image'))
+const RateReviewIcon = dynamic(() => import('@mui/icons-material/RateReview'))
 const ImageCreator = dynamic(() => import('@ui/ImageCreator').then((mod) => ({ default: mod.default })), { ssr: false })
 
+// Dynamic import for UnifiedCredentialsModal
+const UnifiedCredentialsModal = dynamic(
+    // @ts-ignore - JavaScript module without types
+    () => import('@/ui-component/dialog/UnifiedCredentialsModal'),
+    { ssr: false }
+)
+
+// Constants
 const DISPLAY_MODES = {
     CHATBOT: 'chatbot',
-    EMBEDDED_FORM: 'embeddedForm',
+    EMBEDDED: 'embedded',
     MEDIA_CREATION: 'mediaCreation'
 }
 
@@ -71,54 +81,103 @@ export const ChatDetail = ({
 
     // Get search params to check for QuickSetup
     const searchParams = useSearchParams()
-    const quickSetup = searchParams?.get('QuickSetup') === 'true'
+    const router = useRouter()
+    const isQuickSetup = searchParams.get('QuickSetup') === 'true'
 
     // Credential checking hook
     const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
-    const [hasShownCredentialModal, setHasShownCredentialModal] = React.useState(false)
+    // Credential modal state: 'idle' | 'checking' | 'completed'
+    const [credentialCheckStatus, setCredentialCheckStatus] = React.useState<'idle' | 'checking' | 'completed'>('idle')
+
+    // Redux notification setup
+    const dispatch = useDispatch()
+    useNotifier()
+    const enqueueSnackbar = useCallback((...args: any[]) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
+    const closeSnackbar = useCallback((...args: any[]) => dispatch(closeSnackbarAction(...args)), [dispatch])
+
+    // Notification helper function
+    const createNotification = useCallback((message: string, variant: 'success' | 'error', persist = false) => ({
+        message,
+        options: {
+            key: new Date().getTime() + Math.random(),
+            variant,
+            ...(persist && { persist: true }),
+            action: (key: string) => (
+                <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                    <IconX />
+                </Button>
+            )
+        }
+    }), [closeSnackbar])
 
     // Custom handlers for modal actions
-    const handleModalAssign = (credentialAssignments: any) => {
-        setHasShownCredentialModal(true)
-        handleAssign(credentialAssignments)
-        // Refresh the page to apply new credentials
-        window.location.reload()
-    }
-
-    const handleModalSkip = () => {
-        setHasShownCredentialModal(true)
-        // Just close the modal without any action
-        handleSkip()
-    }
-
-    const handleModalCancel = () => {
-        setHasShownCredentialModal(true)
-        handleCancel()
-    }
-
-    React.useEffect(() => {
-        // Only run once when chat data is available and we haven't shown the modal yet
-        if ((chat as any)?.flowData && !hasShownCredentialModal) {
-            // Parse flowData if it's a string
-            const flowData = typeof (chat as any).flowData === 'string' 
-                ? JSON.parse((chat as any).flowData) 
-                : (chat as any).flowData
-            
-            // Call checkCredentials to trigger the modal if needed
-            const modalShown = checkCredentials(flowData, (updatedFlowData: any, credentialAssignments: any) => {
-                setHasShownCredentialModal(true)
-                // Only reload if credentials were actually assigned
-                if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
-                    window.location.reload()
-                }
-            }, quickSetup) // Pass quickSetup as forceShow parameter
-            
-            // If no modal was shown, mark as handled
-            if (!modalShown) {
-                setHasShownCredentialModal(true)
-            }
+    const handleModalAssign = useCallback(async (credentialAssignments: any) => {
+        try {
+            handleAssign(credentialAssignments)
+        } catch (error) {
+            console.error('Error assigning credentials:', error)
+            enqueueSnackbar(createNotification('Error assigning credentials. Please try again.', 'error', true))
         }
-    }, [chat, hasShownCredentialModal, checkCredentials]) // Added checkCredentials to dependencies
+    }, [handleAssign, enqueueSnackbar, createNotification])
+
+    const handleModalSkip = useCallback(() => {
+        setCredentialCheckStatus('completed')
+        if (isQuickSetup && chat?.id) {
+            router.replace(`/chat/${chat.id}`)
+        }
+        handleSkip()
+    }, [handleSkip, isQuickSetup, chat?.id, router])
+
+    const handleModalCancel = useCallback(() => {
+        setCredentialCheckStatus('completed')
+        if (isQuickSetup && chat?.id) {
+            router.replace(`/chat/${chat.id}`)
+        }
+        handleCancel()
+    }, [handleCancel, isQuickSetup, chat?.id, router])
+
+    // Check credentials when component mounts or chat changes
+    useEffect(() => {
+        if (chat && credentialCheckStatus === 'idle' && selectedSidekick?.flowData) {
+            setCredentialCheckStatus('checking')
+            checkCredentials(selectedSidekick.flowData, async (updatedFlowData: any, credentialAssignments: any) => {
+                setCredentialCheckStatus('completed')
+                
+                // Save credentials to backend when assigned
+                if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
+                    try {
+                        if (selectedSidekick?.id) {
+                            await chatflowsApi.updateChatflow(selectedSidekick.id, {
+                                flowData: JSON.stringify(updatedFlowData)
+                            })
+                            enqueueSnackbar(createNotification('Credentials saved successfully!', 'success'))
+                        }
+                    } catch (error) {
+                        console.error('Error saving chatflow with credentials:', error)
+                        enqueueSnackbar(createNotification('Failed to save credentials. Please try again.', 'error', true))
+                    }
+                    
+                    // Navigate to chat page without QuickSetup parameter (only in QuickSetup mode)
+                    if (isQuickSetup) {
+                        const chatId = chat?.id || selectedSidekick?.id
+                        if (chatId) {
+                            setTimeout(() => {
+                                router.replace(`/chat/${chatId}`)
+                            }, 500)
+                        }
+                    }
+                } else if (isQuickSetup) {
+                    // If no credentials were assigned but we're in QuickSetup, still navigate
+                    const chatId = chat?.id || selectedSidekick?.id
+                    if (chatId) {
+                        setTimeout(() => {
+                            router.replace(`/chat/${chatId}`)
+                        }, 100)
+                    }
+                }
+            }, isQuickSetup)
+        }
+    }, [chat?.id, credentialCheckStatus, selectedSidekick?.id, selectedSidekick?.flowData, isQuickSetup, router, enqueueSnackbar, checkCredentials, createNotification])
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedDocuments, setSelectedDocuments] = React.useState<Document[] | undefined>()
@@ -129,13 +188,15 @@ export const ChatDetail = ({
         getHTMLPreview: (code: string) => string
         getReactPreview: (code: string) => string
     } | null>(null)
+    
     const messages = clientMessages || chat?.messages
-
     const displayMode = chatbotConfig?.displayMode || DISPLAY_MODES.CHATBOT
     const embeddedUrl = chatbotConfig?.embeddedUrl || ''
+
     const handleNewChat = () => {
         startNewChat()
     }
+
     return (
         <>
             <Box sx={{ display: 'flex', width: '100%' }}>
@@ -185,7 +246,6 @@ export const ChatDetail = ({
                                         }}
                                     >
                                         {chat ? <Typography variant='body1'>{chat?.title ?? chat.id}</Typography> : null}
-
                                         {journey ? <Typography variant='body2'>{journey?.goal ?? journey?.title}</Typography> : null}
                                     </Box>
 
@@ -202,36 +262,20 @@ export const ChatDetail = ({
                                         >
                                             New chat
                                         </Button>
-                                        {/* {chat ? (
-                                            <IconButton
-                                                size='large'
-                                                edge='start'
-                                                color='inherit'
-                                                aria-label='share'
-                                                component={NextLink}
-                                                href={`?modal=share`}
-                                            >
-                                                <ShareIcon />
-                                            </IconButton>
-                                        ) : null} */}
                                     </Box>
                                 </Toolbar>
                             </AppBar>
                         ) : null}
-                        {selectedSidekick || chat ? <></> : null}
+
                         {!selectedSidekick && !chat ? (
                             <Box
                                 sx={{
-                                    // border: '1px solid red',
                                     display: 'flex',
-                                    // justifyContent: 'flex-start',
                                     alignItems: 'center',
-                                    // height: '100%',
                                     width: '100%',
                                     flexDirection: 'column',
                                     paddingTop: 10,
                                     maxWidth: 1200,
-
                                     px: { xs: 2, sm: 3 },
                                     overflowY: 'auto',
                                     margin: '0 auto'
@@ -329,6 +373,7 @@ export const ChatDetail = ({
                         )}
                     </Box>
                 </Box>
+                
                 <Drawer
                     sx={{
                         flexShrink: 0,
