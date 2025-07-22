@@ -23,27 +23,20 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
                 }
             }
 
-            const host = await this.getHost()
-            const port = await this.getPort()
-            const ssl = await this.getSSL()
-            const user = await this.getUser()
-            const password = await this.getPassword()
-            const database = await this.getDatabase()
-
             this._postgresConnectionOptions = {
                 ...additionalConfiguration,
                 type: 'postgres',
-                host,
-                port,
-                ssl,
-                username: user, // Required by TypeORMVectorStore
-                user, // Required by Pool in similaritySearchVectorWithScore
-                password,
-                database
+                host: this.getHost(),
+                port: this.getPort(),
+                ssl: this.getSSL(),
+                username: this.getUser(), // Required by TypeORMVectorStore
+                user: this.getUser(), // Required by Pool in similaritySearchVectorWithScore
+                password: this.getPassword(),
+                database: this.getDatabase()
             } as DataSourceOptions
 
             // Prevent using default MySQL port, otherwise will throw uncaught error and crashing the app
-            if (port === 3006) {
+            if (this.getPort() === 3006) {
                 throw new Error('Invalid port number')
             }
         }
@@ -53,7 +46,7 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
     async getArgs(): Promise<TypeORMVectorStoreArgs> {
         return {
             postgresConnectionOptions: await this.getPostgresConnectionOptions(),
-            tableName: await this.getTableName()
+            tableName: this.getTableName()
         }
     }
 
@@ -155,7 +148,7 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
     }
 
     protected async adaptInstance(instance: TypeORMVectorStore, metadataFilters?: any): Promise<VectorStore> {
-        const tableName = await this.getTableName()
+        const tableName = this.getTableName()
 
         // Rewrite the method to use pg pool connection instead of the default connection
         /* Otherwise a connection error is displayed when the chain tries to execute the function

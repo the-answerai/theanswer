@@ -7,6 +7,7 @@ import { howToUseFileUpload } from '../VectorStoreUtils'
 import { VectorStore } from '@langchain/core/vectorstores'
 import { AAIVectorStoreDriver } from './driver/Base'
 import { AAITypeORMDriver } from './driver/AAITypeORM'
+import { getTableName } from './utils'
 
 // Check if AAI environment variables exist
 const aaiServerCredentialsExist = !!(
@@ -165,11 +166,11 @@ class AAIPostgres_VectorStores implements INode {
     //@ts-ignore
     vectorStoreMethods = {
         async upsert(nodeData: INodeData, options: ICommonObject): Promise<Partial<IndexingResult>> {
+            const tableName = getTableName()
             const docs = nodeData.inputs?.document as Document[]
             const recordManager = nodeData.inputs?.recordManager
             const isFileUploadEnabled = nodeData.inputs?.fileUpload as boolean
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
-            const tableName = await vectorStoreDriver.getTableName()
 
             const flattenDocs = docs && docs.length ? flatten(docs) : []
             const finalDocs = []
@@ -212,7 +213,7 @@ class AAIPostgres_VectorStores implements INode {
         },
         async delete(nodeData: INodeData, ids: string[], options: ICommonObject): Promise<void> {
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
-            const tableName = await vectorStoreDriver.getTableName()
+            const tableName = getTableName()
             const recordManager = nodeData.inputs?.recordManager
 
             const vectorStore = await vectorStoreDriver.instanciate()

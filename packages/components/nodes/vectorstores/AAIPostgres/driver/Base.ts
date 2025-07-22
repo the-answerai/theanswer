@@ -1,29 +1,11 @@
 import { VectorStore } from '@langchain/core/vectorstores'
-import { getCredentialData, ICommonObject, INodeData } from '../../../../src'
+import { ICommonObject, INodeData } from '../../../../src'
 import { Document } from '@langchain/core/documents'
 import { Embeddings } from '@langchain/core/embeddings'
 import { getDatabase, getHost, getPort, getSSL, getTableName, getUser, getPassword } from '../utils'
 
 export abstract class AAIVectorStoreDriver {
-    protected _credentialData: ICommonObject | null = null
-
     constructor(protected nodeData: INodeData, protected options: ICommonObject) {}
-
-    protected async getCredentialData(): Promise<ICommonObject | null> {
-        if (this._credentialData === null) {
-            try {
-                if (this.nodeData.credential) {
-                    this._credentialData = await getCredentialData(this.nodeData.credential, this.options)
-                } else {
-                    this._credentialData = {}
-                }
-            } catch (error) {
-                // If credential retrieval fails, fall back to empty object
-                this._credentialData = {}
-            }
-        }
-        return this._credentialData
-    }
 
     abstract instanciate(metaDataFilters?: any): Promise<VectorStore>
 
@@ -33,39 +15,32 @@ export abstract class AAIVectorStoreDriver {
         return instance
     }
 
-    async getHost() {
-        const credentialData = await this.getCredentialData()
-        return getHost(this.nodeData, credentialData || undefined) as string
+    getHost() {
+        return getHost() as string
     }
 
-    async getPort() {
-        const credentialData = await this.getCredentialData()
-        return getPort(this.nodeData, credentialData || undefined) as number
+    getPort() {
+        return getPort() as number
     }
 
-    async getSSL() {
-        const credentialData = await this.getCredentialData()
-        return getSSL(this.nodeData, credentialData || undefined) as boolean
+    getSSL() {
+        return getSSL() as boolean
     }
 
-    async getDatabase() {
-        const credentialData = await this.getCredentialData()
-        return getDatabase(this.nodeData, credentialData || undefined) as string
+    getDatabase() {
+        return getDatabase() as string
     }
 
-    async getUser() {
-        const credentialData = await this.getCredentialData()
-        return getUser(this.nodeData, credentialData || undefined) as string
+    getUser() {
+        return getUser() as string
     }
 
-    async getPassword() {
-        const credentialData = await this.getCredentialData()
-        return getPassword(this.nodeData, credentialData || undefined) as string
+    getPassword() {
+        return getPassword() as string
     }
 
-    async getTableName() {
-        const credentialData = await this.getCredentialData()
-        return this.sanitizeTableName(getTableName(this.nodeData, credentialData || undefined))
+    getTableName() {
+        return this.sanitizeTableName(getTableName())
     }
 
     getEmbeddings() {
