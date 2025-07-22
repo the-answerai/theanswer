@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { extractMissingCredentials, updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
+import { extractMissingCredentials, extractAllCredentials, updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 
 /**
  * Custom hook for checking and managing missing credentials in flows
@@ -15,32 +15,32 @@ export const useCredentialChecker = () => {
      * Check if a flow has missing credentials and show modal if needed
      * @param {string|object} flowData - Flow data to check
      * @param {function} onAssign - Callback when credentials are assigned
+     * @param {boolean} forceShow - Force show modal regardless of missing credentials
      * @returns {boolean} Whether modal was shown
      */
-    const checkCredentials = useCallback((flowData, onAssign) => {
-        console.log('🔍 checkCredentials called with:', {
-            flowDataType: typeof flowData,
-            hasOnAssign: !!onAssign,
-            currentModalState: showCredentialModal
-        })
-
+    const checkCredentials = useCallback((flowData, onAssign, forceShow = false) => {
         try {
-            const result = extractMissingCredentials(flowData)
-            console.log('🔍 Credential extraction result:', {
-                hasCredentials: result.hasCredentials,
-                missingCount: result.missingCredentials.length,
-                missingTypes: result.missingCredentials.map((c) => c.credentialType)
-            })
+            let result
+            let credentialsToShow
 
-            if (result.hasCredentials && result.missingCredentials.length > 0) {
-                console.log('🚨 Missing credentials detected, showing modal')
-                setMissingCredentials(result.missingCredentials)
+            if (forceShow) {
+                // For QuickSetup mode, extract ALL credentials (assigned and unassigned)
+                result = extractAllCredentials(flowData)
+                credentialsToShow = result.allCredentials || []
+            } else {
+                // Normal mode - extract only missing credentials
+                result = extractMissingCredentials(flowData)
+                credentialsToShow = result.missingCredentials || []
+            }
+
+            // Show modal if forceShow is true OR if there are missing credentials
+            if (forceShow || (result.hasCredentials && credentialsToShow.length > 0)) {
+                setMissingCredentials(credentialsToShow)
                 setPendingFlowData(flowData)
                 setOnCredentialsAssigned(() => onAssign)
                 setShowCredentialModal(true)
                 return true
             } else {
-                console.log('✅ No missing credentials, proceeding directly')
                 if (onAssign) {
                     onAssign(flowData, {})
                 }
@@ -62,12 +62,9 @@ export const useCredentialChecker = () => {
      */
     const handleAssign = useCallback(
         (credentialAssignments) => {
-            console.log('💾 handleAssign called with:', credentialAssignments)
-
             if (pendingFlowData && onCredentialsAssigned) {
                 try {
                     const updatedFlowData = updateFlowDataWithCredentials(pendingFlowData, credentialAssignments)
-                    console.log('💾 Calling onCredentialsAssigned callback...')
                     onCredentialsAssigned(updatedFlowData, credentialAssignments)
                 } catch (error) {
                     console.error('❌ Error updating flow data with credentials:', error)
@@ -77,7 +74,6 @@ export const useCredentialChecker = () => {
             }
 
             // Reset state
-            console.log('💾 Resetting credential checker state...')
             setShowCredentialModal(false)
             setMissingCredentials([])
             setPendingFlowData(null)

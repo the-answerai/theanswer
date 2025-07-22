@@ -29,7 +29,7 @@ import { IconPlus, IconX, IconLock } from '@tabler/icons-react'
 // project imports
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import AddEditCredentialDialog from '@/views/credentials/AddEditCredentialDialog'
-import { groupCredentialsByType } from '@/utils/flowCredentialsHelper'
+import { groupCredentialsByType, groupAllCredentialsByType } from '@/utils/flowCredentialsHelper'
 
 // API
 import credentialsApi from '@/api/credentials'
@@ -61,7 +61,11 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const getComponentCredentialApi = useApi(credentialsApi.getSpecificComponentCredential)
 
     // Group credentials by type for better organization
-    const groupedCredentials = groupCredentialsByType(missingCredentials)
+    // Check if we're in QuickSetup mode (showing all credentials, not just missing ones)
+    const isQuickSetupMode = missingCredentials.some(cred => cred.hasOwnProperty('isAssigned'))
+    const groupedCredentials = isQuickSetupMode 
+        ? groupAllCredentialsByType(missingCredentials) 
+        : groupCredentialsByType(missingCredentials)
 
     // Load available credentials when modal opens
     useEffect(() => {
@@ -69,7 +73,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             const loadCredentials = async () => {
                 setLoading(true)
                 const credentialsData = {}
-                const groupedCreds = groupCredentialsByType(missingCredentials)
+                const groupedCreds = isQuickSetupMode 
+                    ? groupAllCredentialsByType(missingCredentials) 
+                    : groupCredentialsByType(missingCredentials)
 
                 try {
                     // Load credentials for each group
@@ -93,7 +99,6 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 )
 
                                 credentialsData[groupKey] = allCredentials
-                                console.log(`📋 Loaded ${allCredentials.length} credentials for group ${groupKey}:`, allCredentials)
                             } catch (error) {
                                 console.error(`Failed to load credentials for group ${groupKey}:`, error)
                                 credentialsData[groupKey] = []
@@ -103,20 +108,32 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
                     setAvailableCredentials(credentialsData)
 
-                    // Auto-select credentials where there's only one option
-                    const autoSelections = {}
-                    Object.entries(credentialsData).forEach(([groupKey, creds]) => {
-                        if (creds && creds.length === 1) {
-                            // Auto-select for all nodes in this group
-                            groupedCreds[groupKey].nodes.forEach((node) => {
-                                autoSelections[node.nodeId] = creds[0].id
-                            })
-                        }
-                    })
+                    // Handle credential assignments based on mode
+                    const initialAssignments = {}
+                    
+                    if (isQuickSetupMode) {
+                        // In QuickSetup mode, pre-populate with already assigned credentials
+                        Object.entries(groupedCreds).forEach(([groupKey, group]) => {
+                            if (group.isAssigned && group.assignedCredentialId) {
+                                group.nodes.forEach((node) => {
+                                    initialAssignments[node.nodeId] = group.assignedCredentialId
+                                })
+                            }
+                        })
+                    } else {
+                        // Normal mode - Auto-select credentials where there's only one option
+                        Object.entries(credentialsData).forEach(([groupKey, creds]) => {
+                            if (creds && creds.length === 1) {
+                                // Auto-select for all nodes in this group
+                                groupedCreds[groupKey].nodes.forEach((node) => {
+                                    initialAssignments[node.nodeId] = creds[0].id
+                                })
+                            }
+                        })
+                    }
 
-                    if (Object.keys(autoSelections).length > 0) {
-                        setCredentialAssignments(autoSelections)
-                        console.log('🎯 Auto-selected credentials:', autoSelections)
+                    if (Object.keys(initialAssignments).length > 0) {
+                        setCredentialAssignments(initialAssignments)
                     }
                 } catch (error) {
                     console.error('Error loading credentials:', error)
@@ -138,11 +155,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
     const handleAddCredential = async (credentialName) => {
         try {
-            console.log('🔧 handleAddCredential called with:', credentialName)
             const response = await credentialsApi.getSpecificComponentCredential(credentialName)
             const componentCredential = response.data
-
-            console.log('🔧 Component credential loaded:', componentCredential)
 
             // Check if the response actually contains credential component data
             if (!componentCredential || !componentCredential.name) {
@@ -165,12 +179,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }
 
     const handleCredentialDialogConfirm = (newCredentialId) => {
-        console.log('🎯 New credential created with ID:', newCredentialId)
         setShowCredentialDialog(false)
 
         // Auto-select the newly created credential for the appropriate group
         if (newCredentialId && creatingCredentialFor) {
-            console.log('🎯 Auto-selecting new credential for group:', creatingCredentialFor)
             const groupedCreds = groupCredentialsByType(missingCredentials)
             const group = groupedCreds[creatingCredentialFor]
 
@@ -219,8 +231,6 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
     const handleCreateCredential = async (credentialName) => {
         try {
-            console.log('🔧 handleCreateCredential called with:', credentialName)
-
             // Find which group this credential belongs to for auto-selection later
             const groupedCreds = groupCredentialsByType(missingCredentials)
             const groupKey = Object.keys(groupedCreds).find((key) => {
@@ -228,12 +238,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 return group.credentialTypes?.includes(credentialName) || group.credentialName === credentialName
             })
             setCreatingCredentialFor(groupKey)
-            console.log('🔧 Creating credential for group:', groupKey)
 
             const response = await credentialsApi.getSpecificComponentCredential(credentialName)
             const componentCredential = response.data
-
-            console.log('🔧 Component credential loaded:', componentCredential)
 
             // Check if the response actually contains credential component data
             if (!componentCredential || !componentCredential.name) {
@@ -246,10 +253,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 confirmButtonName: 'Add',
                 credentialComponent: componentCredential
             }
-            console.log('🔧 Setting dialog props:', dialogProps)
             setCredentialDialogProps(dialogProps)
             setShowCredentialDialog(true)
-            console.log('🔧 Dialog should be showing now')
         } catch (error) {
             console.error('❌ Error loading credential component:', error)
             // Show user-friendly error message
@@ -367,7 +372,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     justifyContent: 'space-between'
                 }}
             >
-                <Typography variant='h5'>Setup Required Credentials</Typography>
+                <Typography variant='h5'>
+                    {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
+                </Typography>
                 <IconButton onClick={handleCancel} size='small'>
                     <IconX />
                 </IconButton>
@@ -399,9 +406,20 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                                 <IconLock />
                                             </Avatar>
                                             <Box flex={1}>
-                                                <Typography variant='h6' fontWeight='bold'>
-                                                    {group.label}
-                                                </Typography>
+                                                <Box display='flex' alignItems='center' gap={1}>
+                                                    <Typography variant='h6' fontWeight='bold'>
+                                                        {group.label}
+                                                    </Typography>
+                                                    {isQuickSetupMode && group.isAssigned && (
+                                                        <Chip 
+                                                            label="Assigned" 
+                                                            size="small" 
+                                                            color="success" 
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.7rem', height: 20 }}
+                                                        />
+                                                    )}
+                                                </Box>
                                                 <Typography variant='body2' color='text.secondary'>
                                                     {hasMultipleNodes
                                                         ? `Required by ${group.nodes.length} nodes`
@@ -472,10 +490,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
             <DialogActions sx={{ px: 3, pb: 3 }}>
                 <Button onClick={handleSkip} color='inherit'>
-                    Skip for now
+                    {isQuickSetupMode ? 'Cancel' : 'Skip for now'}
                 </Button>
                 <StyledButton variant='contained' onClick={handleAssignCredentials} disabled={loading}>
-                    Assign & Continue
+                    {isQuickSetupMode ? 'Save Changes' : 'Assign & Continue'}
                 </StyledButton>
             </DialogActions>
 

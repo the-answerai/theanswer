@@ -1,18 +1,34 @@
 'use client'
 import React, { useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
 import { useAnswers } from './AnswersContext'
 import Toolbar from '@mui/material/Toolbar'
+import dynamic from 'next/dynamic'
+// @ts-ignore - JavaScript module without types
+import { useCredentialChecker } from '@/hooks/useCredentialChecker'
 
 import type { AppSettings, Document, Sidekick } from 'types'
 
-import dynamic from 'next/dynamic'
+// Dynamic import for UnifiedCredentialsModal
+const UnifiedCredentialsModal = dynamic(
+    // @ts-ignore - JavaScript module without types
+    () => import('@/ui-component/dialog/UnifiedCredentialsModal.jsx'),
+    { ssr: false }
+) as any
+
 import Image from 'next/image'
 import Button from '@mui/material/Button'
 import RateReviewIcon from '@mui/icons-material/RateReview'
+
+// Theme imports for modal
+import { ThemeProvider } from '@mui/material/styles'
+import { CssBaseline, StyledEngineProvider } from '@mui/material'
+// @ts-ignore - JavaScript module without types
+import { theme as themes } from '@/themes'
 
 const AppBar = dynamic(() => import('@mui/material/AppBar'))
 const ChatRoom = dynamic(() => import('./ChatRoom').then((mod) => ({ default: mod.ChatRoom })))
@@ -52,6 +68,57 @@ export const ChatDetail = ({
         sidekick: selectedSidekick,
         startNewChat
     } = useAnswers()
+
+    // Get search params to check for QuickSetup
+    const searchParams = useSearchParams()
+    const quickSetup = searchParams?.get('QuickSetup') === 'true'
+
+    // Credential checking hook
+    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
+    const [hasShownCredentialModal, setHasShownCredentialModal] = React.useState(false)
+
+    // Custom handlers for modal actions
+    const handleModalAssign = (credentialAssignments: any) => {
+        setHasShownCredentialModal(true)
+        handleAssign(credentialAssignments)
+        // Refresh the page to apply new credentials
+        window.location.reload()
+    }
+
+    const handleModalSkip = () => {
+        setHasShownCredentialModal(true)
+        // Just close the modal without any action
+        handleSkip()
+    }
+
+    const handleModalCancel = () => {
+        setHasShownCredentialModal(true)
+        handleCancel()
+    }
+
+    React.useEffect(() => {
+        // Only run once when chat data is available and we haven't shown the modal yet
+        if ((chat as any)?.flowData && !hasShownCredentialModal) {
+            // Parse flowData if it's a string
+            const flowData = typeof (chat as any).flowData === 'string' 
+                ? JSON.parse((chat as any).flowData) 
+                : (chat as any).flowData
+            
+            // Call checkCredentials to trigger the modal if needed
+            const modalShown = checkCredentials(flowData, (updatedFlowData: any, credentialAssignments: any) => {
+                setHasShownCredentialModal(true)
+                // Only reload if credentials were actually assigned
+                if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
+                    window.location.reload()
+                }
+            }, quickSetup) // Pass quickSetup as forceShow parameter
+            
+            // If no modal was shown, mark as handled
+            if (!modalShown) {
+                setHasShownCredentialModal(true)
+            }
+        }
+    }, [chat, hasShownCredentialModal, checkCredentials]) // Added checkCredentials to dependencies
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedDocuments, setSelectedDocuments] = React.useState<Document[] | undefined>()
@@ -218,9 +285,11 @@ export const ChatDetail = ({
                                             regenerateAnswer={regenerateAnswer}
                                             chatbotConfig={chatbotConfig}
                                             setSelectedDocuments={setSelectedDocuments}
+                                            // @ts-ignore - Type mismatch in setPreviewCode
                                             setPreviewCode={setPreviewCode}
                                             sidekicks={sidekicks}
                                             scrollRef={scrollRef}
+                                            // @ts-ignore - Type mismatch in selectedSidekick
                                             selectedSidekick={selectedSidekick}
                                         />
                                     </Box>
@@ -292,6 +361,21 @@ export const ChatDetail = ({
                     ) : null}
                 </Drawer>
             </Box>
+
+            {/* Unified Credentials Modal with Theme */}
+            <StyledEngineProvider injectFirst>
+                <ThemeProvider theme={themes({ isDarkMode: true })}>
+                    <CssBaseline />
+                    <UnifiedCredentialsModal
+                        show={showCredentialModal}
+                        missingCredentials={missingCredentials}
+                        onAssign={handleModalAssign}
+                        onSkip={handleModalSkip}
+                        onCancel={handleModalCancel}
+                        flowData={(chat as any)?.flowData || null}
+                    />
+                </ThemeProvider>
+            </StyledEngineProvider>
         </>
     )
 }
