@@ -9,21 +9,13 @@ const Modal = () => {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const modal = searchParams?.get('modal')
-    const quickSetup = searchParams?.get('QuickSetup')
-    
+
     const handleClose = () => {
         if (pathname) router.push(pathname)
     }
 
     if (modal === 'share') {
         return <ShareModal onClose={handleClose} />
-    }
-
-    // QuickSetup modal support - redirect to credentials page for now
-    if (modal === 'quickSetup' || quickSetup === 'true') {
-        // For now, just redirect to the main page without QuickSetup
-        // The actual modal will be handled by the useQuickSetup hook
-        return null
     }
 
     return null

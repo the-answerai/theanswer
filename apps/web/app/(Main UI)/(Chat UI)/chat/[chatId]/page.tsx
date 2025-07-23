@@ -44,7 +44,7 @@ async function getChat(chatId: string, user: User) {
             chatflowChatId: chatflowChat.id
         }
     }
-    
+
     // If no Chat, check if it's a chatflow ID
     const chatflow: Chatflow = await (token
         ? fetch(`${user.chatflowDomain}/api/v1/chatflows/${chatId}`, {
@@ -63,8 +63,7 @@ async function getChat(chatId: string, user: User) {
     if (chatflow) {
         return {
             chatflowId: chatflow.id,
-            sidekickId: chatflow.id,
-            flowData: chatflow.flowData // Add flowData for credential checking
+            sidekickId: chatflow.id
         }
     }
 }
