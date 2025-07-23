@@ -30,6 +30,7 @@ There are three different .env files you can set environment variables for Answe
 | VITE_AUTH_ORGANIZATION_ID     | Auth0 organization ID for authentication                 | Root, UI               |
 | DOMAIN                        | Domain for the staging environment                       | Root                   |
 | ANSWERAI_DOMAIN               | Domain for the beta environment                          | Root                   |
+| API_HOST                      | Canonical API server host URL                            | Root, Server           |
 | DATABASE_TYPE                 | Type of database (e.g., postgres)                        | Root, Server           |
 | DATABASE_USER                 | Database username                                        | Root, Server           |
 | DATABASE_PASSWORD             | Database password                                        | Root, Server           |
@@ -90,73 +91,74 @@ AAI-branded nodes use environment variables with the `AAI_DEFAULT_` prefix to pr
 
 ### Core AI Model Variables
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `AAI_DEFAULT_OPENAI_API_KEY` | OpenAI API key for GPT models | AAIChatOpenAI, AAIConversationChain, AAIAssistant |
-| `AAI_DEFAULT_ANTHROPHIC` | Anthropic API key for Claude models | AAIChatAnthropic |
-| `AAI_DEFAULT_GROQ` | Groq API key for fast inference models | AAIGroq |
-| `AAI_DEFAULT_DEEPSEEK` | Deepseek API key | AAIDeepseek |
-| `AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY` | Google AI Studio API key | AAIChatGoogleGenerativeAI |
-| `AAI_DEFAULT_GOOGLE_VERTEX_AI_API_KEY` | Google Cloud Vertex AI API key | Various Google AI nodes |
-| `AAI_DEFAULT_REPLICATE` | Replicate API key for open-source models | Various Replicate nodes |
+| Variable                                   | Description                              | Used By                                           |
+| ------------------------------------------ | ---------------------------------------- | ------------------------------------------------- |
+| `AAI_DEFAULT_OPENAI_API_KEY`               | OpenAI API key for GPT models            | AAIChatOpenAI, AAIConversationChain, AAIAssistant |
+| `AAI_DEFAULT_ANTHROPHIC`                   | Anthropic API key for Claude models      | AAIChatAnthropic                                  |
+| `AAI_DEFAULT_GROQ`                         | Groq API key for fast inference models   | AAIGroq                                           |
+| `AAI_DEFAULT_DEEPSEEK`                     | Deepseek API key                         | AAIDeepseek                                       |
+| `AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY` | Google AI Studio API key                 | AAIChatGoogleGenerativeAI                         |
+| `AAI_DEFAULT_GOOGLE_VERTEX_AI_API_KEY`     | Google Cloud Vertex AI API key           | Various Google AI nodes                           |
+| `AAI_DEFAULT_REPLICATE`                    | Replicate API key for open-source models | Various Replicate nodes                           |
 
 ### AWS Bedrock Variables
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY` | AWS access key for Bedrock service | AAIAWSChatBedrock |
-| `AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY` | AWS secret key for Bedrock service | AAIAWSChatBedrock |
+| Variable                                | Description                                             | Used By           |
+| --------------------------------------- | ------------------------------------------------------- | ----------------- |
+| `AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY`    | AWS access key for Bedrock service                      | AAIAWSChatBedrock |
+| `AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY`    | AWS secret key for Bedrock service                      | AAIAWSChatBedrock |
 | `AAI_DEFAULT_AWS_BEDROCK_SESSION_TOKEN` | AWS session token (optional, for temporary credentials) | AAIAWSChatBedrock |
 
 **Note**: AWS Bedrock variables are required for AWS Bedrock integration. The session token is optional and only needed when using temporary AWS credentials.
 
 ### Vector Database Variables
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `AAI_DEFAULT_PINECONE` | Pinecone API key | AAIVectorStore |
-| `AAI_DEFAULT_PINECONE_INDEX` | Pinecone index name | AAIVectorStore |
-| `AAI_DEFAULT_SUPABASE_URL` | Supabase project URL | Various Supabase integrations |
-| `AAI_DEFAULT_SUPABASE_API` | Supabase API key | Various Supabase integrations |
+| Variable                     | Description          | Used By                       |
+| ---------------------------- | -------------------- | ----------------------------- |
+| `AAI_DEFAULT_PINECONE`       | Pinecone API key     | AAIVectorStore                |
+| `AAI_DEFAULT_PINECONE_INDEX` | Pinecone index name  | AAIVectorStore                |
+| `AAI_DEFAULT_SUPABASE_URL`   | Supabase project URL | Various Supabase integrations |
+| `AAI_DEFAULT_SUPABASE_API`   | Supabase API key     | Various Supabase integrations |
 
 ### Memory and Storage Variables
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `AAI_DEFAULT_REDIS_URL` | Redis connection URL | AAIChatMemory |
-| `AAI_DEFAULT_REDIS_HOST` | Redis host (alternative to URL) | AAIChatMemory |
-| `AAI_DEFAULT_REDIS_PORT` | Redis port (default: 6379) | AAIChatMemory |
-| `AAI_DEFAULT_REDIS_USERNAME` | Redis username (optional) | AAIChatMemory |
-| `AAI_DEFAULT_REDIS_PASSWORD` | Redis password (optional) | AAIChatMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_HOST` | PostgreSQL host for agent memory | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_PORT` | PostgreSQL port (default: 5432) | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE` | Database name for agent memory | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER` | PostgreSQL username | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_PASSWORD` | PostgreSQL password | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_TABLE_NAME` | Table name (default: aai_agent_memory) | AAIAgentMemory |
-| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_HOST` | PostgreSQL host for record manager | AAIRecordManager |
-| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_PORT` | PostgreSQL port (default: 5432) | AAIRecordManager |
-| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE` | Database name for record manager | AAIRecordManager |
-| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER` | PostgreSQL username | AAIRecordManager |
-| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_PASSWORD` | PostgreSQL password | AAIRecordManager |
+| Variable                                        | Description                                 | Used By          |
+| ----------------------------------------------- | ------------------------------------------- | ---------------- |
+| `AAI_DEFAULT_REDIS_URL`                         | Redis connection URL                        | AAIChatMemory    |
+| `AAI_DEFAULT_REDIS_HOST`                        | Redis host (alternative to URL)             | AAIChatMemory    |
+| `AAI_DEFAULT_REDIS_PORT`                        | Redis port (default: 6379)                  | AAIChatMemory    |
+| `AAI_DEFAULT_REDIS_USERNAME`                    | Redis username (optional)                   | AAIChatMemory    |
+| `AAI_DEFAULT_REDIS_PASSWORD`                    | Redis password (optional)                   | AAIChatMemory    |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_HOST`         | PostgreSQL host for agent memory            | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_PORT`         | PostgreSQL port (default: 5432)             | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE`     | Database name for agent memory              | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER`         | PostgreSQL username                         | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_PASSWORD`     | PostgreSQL password                         | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_AGENTMEMORY_TABLE_NAME`   | Table name (default: aai_agent_memory)      | AAIAgentMemory   |
+| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_HOST`       | PostgreSQL host for record manager          | AAIRecordManager |
+| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_PORT`       | PostgreSQL port (default: 5432)             | AAIRecordManager |
+| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE`   | Database name for record manager            | AAIRecordManager |
+| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER`       | PostgreSQL username                         | AAIRecordManager |
+| `AAI_DEFAULT_POSTGRES_RECORDMANAGER_PASSWORD`   | PostgreSQL password                         | AAIRecordManager |
 | `AAI_DEFAULT_POSTGRES_RECORDMANAGER_TABLE_NAME` | Table name (default: aai_upsertion_records) | AAIRecordManager |
 
 ### Search and API Variables
 
-| Variable | Description | Used By |
-|----------|-------------|---------|
-| `AAI_DEFAULT_EXA_SEARCH_API_KEY` | Exa search API key | AAIExaSearch |
-| `AAI_DEFAULT_SERPAPI` | SerpAPI key for web search | Various search nodes |
-| `AAI_DEFAULT_GOOGLE_SEARCH_API` | Google Custom Search API key | Google search integrations |
+| Variable                                  | Description                    | Used By                    |
+| ----------------------------------------- | ------------------------------ | -------------------------- |
+| `AAI_DEFAULT_EXA_SEARCH_API_KEY`          | Exa search API key             | AAIExaSearch               |
+| `AAI_DEFAULT_SERPAPI`                     | SerpAPI key for web search     | Various search nodes       |
+| `AAI_DEFAULT_GOOGLE_SEARCH_API`           | Google Custom Search API key   | Google search integrations |
 | `AAI_DEFAULT_GOOGLE_SEARCH_API_ENGINE_ID` | Google Custom Search Engine ID | Google search integrations |
-| `AAI_DEFAULT_GITHUB_TOKEN` | GitHub personal access token | GitHub integrations |
+| `AAI_DEFAULT_GITHUB_TOKEN`                | GitHub personal access token   | GitHub integrations        |
 
 ### Security Considerations
 
 1. **Environment Variable Security**: These variables contain sensitive credentials and should be:
-   - Never committed to version control
-   - Stored securely in production environments
-   - Rotated regularly
+
+    - Never committed to version control
+    - Stored securely in production environments
+    - Rotated regularly
 
 2. **Access Control**: Ensure that only authorized services and users have access to these environment variables.
 
@@ -165,6 +167,7 @@ AAI-branded nodes use environment variables with the `AAI_DEFAULT_` prefix to pr
 ### Usage Examples
 
 #### Development Environment
+
 ```bash
 # .env.local
 AAI_DEFAULT_OPENAI_API_KEY=sk-your-openai-key
@@ -174,13 +177,14 @@ AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY=your-secret-key
 ```
 
 #### Docker Environment
+
 ```yaml
 # docker-compose.yml
 environment:
-  - AAI_DEFAULT_OPENAI_API_KEY=${OPENAI_API_KEY}
-  - AAI_DEFAULT_ANTHROPHIC=${ANTHROPHIC_API_KEY}
-  - AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY=${AWS_ACCESS_KEY}
-  - AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY=${AWS_SECRET_KEY}
+    - AAI_DEFAULT_OPENAI_API_KEY=${OPENAI_API_KEY}
+    - AAI_DEFAULT_ANTHROPHIC=${ANTHROPHIC_API_KEY}
+    - AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY=${AWS_ACCESS_KEY}
+    - AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY=${AWS_SECRET_KEY}
 ```
 
 ### Troubleshooting
@@ -195,5 +199,10 @@ environment:
 
 #### Error Messages
 
-- `AAI_DEFAULT_OPENAI_API_KEY environment variable is not set`: OpenAI API key is missing
-- `AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY and AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY environment variables are required`: AWS Bedrock credentials are missing
+-   `AAI_DEFAULT_OPENAI_API_KEY environment variable is not set`: OpenAI API key is missing
+-   `AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY and AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY environment variables are required`: AWS Bedrock credentials are missing
+
+## Related Documentation
+
+-   [API Standardization](API_STANDARDIZATION.md) - Migration from API_BASE_URL to API_HOST
+-   [Deployment Guide](../deployment/README.md) - Environment setup for different deployment scenarios
