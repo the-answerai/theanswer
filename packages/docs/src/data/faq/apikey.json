@@ -1,0 +1,47 @@
+{
+    "title": "API Keys",
+    "description": "Secure authentication and programmatic access to AnswerAgent APIs",
+    "icon": "🔑",
+    "faqs": [
+        {
+            "id": "what-are-api-keys",
+            "question": "What are API Keys in AnswerAgent?",
+            "answer": "API Keys provide secure authentication for accessing AnswerAgent's APIs and external services. They enable programmatic access to your workflows, allowing you to integrate AnswerAgent capabilities into your applications, scripts, and external systems.\n\n**API Keys enable:**\n- **Programmatic Access**: Call AnswerAgent APIs from code\n- **Secure Authentication**: Encrypted, tokenized access control\n- **Integration**: Connect AnswerAgent to other systems\n- **Automation**: Trigger workflows from external events\n- **Access Control**: Fine-grained permission management\n\n**Get Started**: [Create your first API key](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "types-of-api-keys",
+            "question": "What types of API Keys are available?",
+            "answer": "AnswerAgent supports several types of API Keys for different use cases:\n\n**User API Keys:**\n- **Personal Access**: Tied to your individual account\n- **User Permissions**: Limited to your account's capabilities\n- **Individual Control**: You manage creation and rotation\n- **Personal Projects**: Ideal for individual development and testing\n\n**Organization API Keys:**\n- **Shared Access**: Available to team members\n- **Organization Scope**: Access to org-level resources\n- **Admin Managed**: Created and managed by administrators\n- **Team Projects**: Perfect for collaborative applications\n\n**Service API Keys:**\n- **Specific Integrations**: For particular services or workflows\n- **Limited Scope**: Restricted to specific functions\n- **Enhanced Security**: Minimal permissions for specific tasks\n- **Production Use**: Ideal for deployed applications\n\n**Manage**: [Create API keys](/sidekick-studio/apikey) and [configure access](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "managing-api-keys",
+            "question": "How do I create and manage API Keys?",
+            "answer": "Managing API Keys is straightforward through the AnswerAgent interface:\n\n**Creating API Keys:**\n1. **Navigate**: Go to [Sidekick Studio → API Keys](/sidekick-studio/apikey)\n2. **Create New**: Click 'Create New API Key'\n3. **Name Your Key**: Use descriptive names (e.g., 'Production App', 'Development Testing')\n4. **Set Permissions**: Choose appropriate access levels\n5. **Generate**: Create and securely store the key\n\n**Management Features:**\n- **View Existing Keys**: See all your active and inactive keys\n- **Activity Tracking**: Monitor when keys were last used\n- **Enable/Disable**: Activate or deactivate keys without deletion\n- **Delete Keys**: Remove keys you no longer need\n- **Usage Monitoring**: Track API calls and usage patterns\n\n**Configure**: [Manage your API keys](/sidekick-studio/apikey) and [monitor usage](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "using-api-keys",
+            "question": "How do I use API Keys to access AnswerAgent APIs?",
+            "answer": "Use API Keys to make authenticated requests to AnswerAgent APIs:\n\n**Basic API Usage:**\n```bash\ncurl -X POST \"https://api.theanswer.ai/api/v1/prediction/your-chatflow-id\" \\\n  -H \"Authorization: Bearer YOUR_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"question\": \"Hello, how are you?\"}'\n```\n\n**Common API Endpoints:**\n- **Chatflow Prediction**: `/api/v1/prediction/{chatflowId}`\n- **Agentflow Execution**: `/api/v1/agentflows/{agentflowId}/run`\n- **Document Upload**: `/api/v1/document-stores/{storeId}/upload`\n- **Execution Status**: `/api/v1/executions/{executionId}`\n\n**Programming Languages:**\n```javascript\n// JavaScript/Node.js\nconst response = await fetch('https://api.theanswer.ai/api/v1/prediction/chatflow-id', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer YOUR_API_KEY',\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify({ question: 'Hello!' })\n});\n```\n\n```python\n# Python\nimport requests\n\nresponse = requests.post(\n  'https://api.theanswer.ai/api/v1/prediction/chatflow-id',\n  headers={'Authorization': 'Bearer YOUR_API_KEY'},\n  json={'question': 'Hello!'}\n)\n```\n\n**Integrate**: [Use with your chatflows](/sidekick-studio/chatflows) and [deploy your apps](/sidekick-studio/apps)"
+        },
+        {
+            "id": "api-key-security",
+            "question": "What are the security best practices for API Keys?",
+            "answer": "Follow these security practices to protect your API Keys:\n\n**Storage Security:**\n- **Environment Variables**: Store keys in environment variables, never in code\n- **Secure Storage**: Use secure credential management systems\n- **No Client-Side Exposure**: Never expose keys in client-side code\n- **Version Control**: Never commit keys to repositories\n\n**Access Control:**\n- **Minimal Permissions**: Use keys with least necessary access\n- **Specific Scopes**: Limit keys to specific workflows or resources\n- **Regular Auditing**: Review key usage and permissions regularly\n- **Team Management**: Control who can create and manage keys\n\n**Rotation and Monitoring:**\n- **Regular Rotation**: Change keys periodically\n- **Usage Monitoring**: Watch for unusual usage patterns\n- **Activity Alerts**: Set up notifications for suspicious activity\n- **Immediate Revocation**: Disable compromised keys immediately\n\n**Secure**: [Manage your keys securely](/sidekick-studio/apikey) and [configure global variables](/sidekick-studio/variables)"
+        },
+        {
+            "id": "api-key-features",
+            "question": "What features are available for API Key management?",
+            "answer": "AnswerAgent provides comprehensive API Key management features:\n\n**Tracking and Monitoring:**\n- **Activity Tracking**: See when keys were last used\n- **Usage Statistics**: Monitor API calls and request volumes\n- **Success/Error Rates**: Track API call success rates\n- **Geographic Usage**: Monitor where keys are being used\n\n**Security Features:**\n- **Encrypted Storage**: All keys are encrypted at rest\n- **Secure Comparison**: Keys are securely hashed for authentication\n- **Access Logging**: Detailed logs of key usage\n- **Anomaly Detection**: Alerts for unusual usage patterns\n\n**Management Tools:**\n- **Bulk Operations**: Manage multiple keys at once\n- **Key Naming**: Use descriptive names for organization\n- **Status Management**: Enable/disable without deletion\n- **Export Capabilities**: Export usage data for analysis\n\n**Monitor**: [Track API key usage](/sidekick-studio/apikey) and [review execution history](/sidekick-studio/executions)"
+        },
+        {
+            "id": "api-troubleshooting",
+            "question": "How do I troubleshoot API Key issues?",
+            "answer": "Common API Key issues and their solutions:\n\n**Authentication Errors:**\n- **401 Unauthorized**: Verify key is correct and active\n- **403 Forbidden**: Check key permissions and scope\n- **Invalid Format**: Ensure proper Authorization header format\n- **Expired Keys**: Verify key hasn't been disabled or deleted\n\n**Usage Issues:**\n- **Rate Limiting**: Check if you've exceeded API rate limits\n- **Quota Exceeded**: Verify account usage limits\n- **Endpoint Errors**: Confirm you're using correct API endpoints\n- **Request Format**: Verify request body and headers are correct\n\n**Debugging Steps:**\n1. **Verify Key Status**: Check if key is active in the dashboard\n2. **Test with Curl**: Use simple curl commands to test\n3. **Check Logs**: Review API access logs for error details\n4. **Validate Permissions**: Ensure key has necessary permissions\n5. **Monitor Usage**: Check for any usage anomalies\n\n**Best Practices for Debugging:**\n- **Use Test Keys**: Create separate keys for testing\n- **Log Responses**: Capture full API responses for analysis\n- **Error Handling**: Implement proper error handling in your code\n- **Status Monitoring**: Regularly check key health and usage\n\n**Debug**: [Check execution history](/sidekick-studio/executions) and [verify API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "api-key-limits",
+            "question": "Are there any limits or quotas for API Keys?",
+            "answer": "API Keys have various limits and considerations:\n\n**Usage Limits:**\n- **Rate Limiting**: API calls per minute/hour limits\n- **Concurrent Requests**: Maximum simultaneous API calls\n- **Data Transfer**: Limits on request/response payload sizes\n- **Monthly Quotas**: Overall usage limits based on your plan\n\n**Key Limits:**\n- **Maximum Keys**: Limit on total number of API keys per account\n- **Key Length**: Generated keys follow standard formats\n- **Naming**: Restrictions on key names and descriptions\n- **Scope Limitations**: Some features may require specific permissions\n\n**Plan-Based Differences:**\n- **Free Tier**: Basic limits with reduced quotas\n- **Paid Plans**: Higher limits and advanced features\n- **Enterprise**: Custom limits and dedicated support\n- **Volume Discounts**: Reduced rates for high-volume usage\n\nCheck your account dashboard for specific limits based on your current plan.\n\n**Monitor**: [Check your billing](/billing) and [review usage limits](/sidekick-studio/apikey)"
+        }
+    ]
+}

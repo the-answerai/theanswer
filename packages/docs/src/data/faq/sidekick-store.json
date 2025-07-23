@@ -1,0 +1,42 @@
+{
+    "title": "Sidekick Store",
+    "description": "Browse and install pre-built AI agents from the marketplace",
+    "icon": "🏪",
+    "faqs": [
+        {
+            "id": "what-is-sidekick-store",
+            "question": "What is the Sidekick Store?",
+            "answer": "The Sidekick Store is a marketplace where you can browse and install pre-built AI sidekicks created by AnswerAgent and the community. It's like an app store for AI agents.\n\n**Explore**: [Browse the Sidekick Store](/sidekick-studio/marketplaces) and [discover new sidekicks](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "how-to-browse",
+            "question": "How do I browse the Sidekick Store?",
+            "answer": "1. Navigate to the [Sidekick Store](/sidekick-studio/marketplaces) from the main menu\n2. Browse by categories such as:\n   - Business & Productivity\n   - Content & Writing\n   - Data & Analytics\n   - Development & Code\n   - Education & Research\n   - Marketing & Sales\n\n**Browse**: [Explore categories](/sidekick-studio/marketplaces) and [find sidekicks](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "how-to-install",
+            "question": "How do I install a Sidekick from the Store?",
+            "answer": "1. Find a Sidekick you want to use\n2. Click on it to view details and preview\n3. If it's a personal sidekick you own, click to use it directly\n4. If it's a marketplace template, you'll be taken to a preview page where you can:\n   - View the sidekick's capabilities\n   - See example conversations\n   - Clone it to your account for customization\n\n**Install**: [Browse sidekicks](/sidekick-studio/marketplaces) and [clone templates](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "personal-vs-marketplace",
+            "question": "What's the difference between Personal Sidekicks and Marketplace Sidekicks?",
+            "answer": "- **Personal Sidekicks**: Sidekicks you own and can use directly in [chat](/chat)\n- **Marketplace Sidekicks**: Templates created by others that you can preview and clone\n\n**Manage**: [View your sidekicks](/sidekick-studio/chatflows) and [browse marketplace](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "sharing-sidekicks",
+            "question": "Can I share my own Sidekicks in the Store?",
+            "answer": "This feature depends on your organization's settings and permissions. Contact your administrator or check the documentation for publishing guidelines.\n\n**Create**: [Build your own sidekicks](/sidekick-studio/chatflows) and [learn about sharing](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "sidekick-categories",
+            "question": "What types of Sidekicks are available?",
+            "answer": "The store contains sidekicks across various categories:\n\n**Business & Productivity:**\n- Project managers\n- Meeting assistants\n- Email drafters\n- Report generators\n\n**Content & Writing:**\n- Blog post creators\n- Social media managers\n- Technical writers\n- Creative storytellers\n\n**Data & Analytics:**\n- Data analysts\n- Chart creators\n- Report builders\n- Trend analyzers\n\n**Development & Code:**\n- Code reviewers\n- API assistants\n- Debug helpers\n- Documentation writers\n\n**Browse**: [Explore categories](/sidekick-studio/marketplaces) and [find your perfect sidekick](/sidekick-studio/marketplaces)"
+        },
+        {
+            "id": "customizing-sidekicks",
+            "question": "Can I customize Sidekicks from the Store?",
+            "answer": "Yes! When you clone a marketplace sidekick:\n\n- It becomes your personal copy\n- You can modify the workflow in [Sidekick Studio](/sidekick-studio/chatflows)\n- Add your own knowledge bases\n- Adjust prompts and settings\n- Connect your own tools and APIs\n\nThe original marketplace sidekick remains unchanged.\n\n**Customize**: [Clone sidekicks](/sidekick-studio/marketplaces) and [modify in Studio](/sidekick-studio/chatflows)"
+        }
+    ]
+}

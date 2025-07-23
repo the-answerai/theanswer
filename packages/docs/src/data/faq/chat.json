@@ -1,0 +1,42 @@
+{
+    "title": "Chat Interface",
+    "description": "Learn how to use the chat interface and sidekicks",
+    "icon": "💬",
+    "faqs": [
+        {
+            "id": "how-to-start-chat",
+            "question": "How do I start using the Chat Interface?",
+            "answer": "1. Log into AnswerAgent\n2. Navigate to the [Chat section](/chat)\n3. Select a Sidekick from the dropdown menu at the top\n4. Type your question or request and press Enter\n\n**Get Started**: [Start a chat](/chat) and [explore sidekicks](/chat)"
+        },
+        {
+            "id": "what-are-sidekicks",
+            "question": "What are Sidekicks?",
+            "answer": "Sidekicks are specialized AI assistants designed for specific tasks or areas of expertise, such as:\n\n- **Data Analysts**: Help interpret and visualize complex datasets\n- **Content Creators**: Assist in generating articles, blog posts, or marketing copy\n- **Code Assistants**: Provide programming help and code reviews\n- **Research Aids**: Support literature reviews and academic research\n- **Business Strategists**: Offer insights on market trends and business planning\n\n**Explore**: [Browse sidekicks](/sidekick-studio/marketplaces) and [start chatting](/chat)"
+        },
+        {
+            "id": "conversation-memory",
+            "question": "Can Sidekicks remember our conversation?",
+            "answer": "Sidekicks maintain context throughout conversations in a single chat thread. However, conversation continuity across multiple sessions is on the roadmap.\n\n**Chat**: [Start a conversation](/chat) and [experience context awareness](/chat)"
+        },
+        {
+            "id": "file-uploads",
+            "question": "Can I upload files to Sidekicks?",
+            "answer": "Many Sidekicks support file uploads for analysis or processing. Supported file types typically include:\n\n- Documents (PDF, Word, TXT)\n- Spreadsheets (CSV, Excel)\n- Images (PNG, JPG, WebP)\n- Code files\n\n**Note**: If you have large files to analyze, we recommend setting up a [document store](/sidekick-studio/document-stores).\n\n**Upload**: [Share files in chat](/chat) or [set up document stores](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "switch-sidekicks",
+            "question": "How do I switch between different Sidekicks?",
+            "answer": "Use the dropdown menu at the top of the chat interface to select different Sidekicks. Each Sidekick is optimized for specific tasks and has access to different tools and knowledge bases.\n\n**Switch**: [Change sidekicks](/chat) and [explore different capabilities](/chat)"
+        },
+        {
+            "id": "multimodal-support",
+            "question": "What types of content can I share with Sidekicks?",
+            "answer": "AnswerAgent supports various input types across 40+ file formats:\n\n**Text & Documents:**\n- **Plain Text**: TXT, MD, HTML files\n- **Office Documents**: PDF, DOCX, DOC files\n- **Structured Data**: JSON, JSONL, CSV, XLS, XLSX\n\n**Code & Development:**\n- **Programming Languages**: JS, TS, PY, CPP, C, CS, JAVA, GO, PHP, SQL, SWIFT\n- **Web Technologies**: HTML, CSS, SCSS, LESS\n- **Specialized**: Proto, Rust, Scala, Solidity, LaTeX, XML\n\n**Media:**\n- **Images**: PNG, JPG, WebP (upload and analyze)\n- **Audio**: Speech-to-text capabilities (where supported)\n\n**Share**: [Upload files in chat](/chat) or [use document stores](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "chat-history",
+            "question": "How do I access my chat history?",
+            "answer": "Your chat history is automatically saved and accessible through:\n\n- **Chat Drawer**: Left sidebar shows recent conversations\n- **Conversation Threads**: Each conversation maintains its own thread\n- **Search**: Find specific conversations by content or date\n\nChat history is organized by sidekick and conversation session.\n\n**Access**: [View chat history](/chat) and [search conversations](/chat)"
+        }
+    ]
+}

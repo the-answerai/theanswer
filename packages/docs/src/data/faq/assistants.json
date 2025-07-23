@@ -1,0 +1,42 @@
+{
+    "title": "Assistants",
+    "description": "AI-powered helpers that integrate into your workflows with OpenAI Assistant capabilities",
+    "icon": "👥",
+    "faqs": [
+        {
+            "id": "what-are-assistants",
+            "question": "What are Assistants in AnswerAgent?",
+            "answer": "Assistants are AI-powered helpers that can be integrated into your workflows. The most common type is the OpenAI Assistant integration, which allows you to bring existing OpenAI assistants into AnswerAgent or create new ones.\n\nAssistants can:\n- **Execute Code**: Run Python code and analyze data\n- **Process Files**: Upload and analyze documents\n- **Call Functions**: Execute custom tools and integrations\n- **Maintain Memory**: Keep context across interactions through OpenAI's Thread system\n\n**Get Started**: [Manage your assistants](/sidekick-studio/assistants) and [set up credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "openai-integration",
+            "question": "How does the OpenAI Assistant integration work?",
+            "answer": "AnswerAgent provides seamless integration with OpenAI Assistants:\n- **Import Existing**: Bring your existing OpenAI assistants into AnswerAgent\n- **Tool Integration**: Assistants can use Code Interpreter, File Search, and Function calling\n- **Persistent Conversations**: Conversations are maintained through OpenAI's Thread system\n- **Custom Configuration**: Adjust settings specific to your use case\n\nThis allows you to leverage the full power of OpenAI's assistant capabilities within your AnswerAgent workflows.\n\n**Configure**: [Set up your API keys](/sidekick-studio/apikey) and [manage assistants](/sidekick-studio/assistants)"
+        },
+        {
+            "id": "setup-assistant",
+            "question": "How do I set up an Assistant?",
+            "answer": "Setting up an Assistant is straightforward:\n1. **Create OpenAI Assistant**: Create or have an existing OpenAI Assistant ready\n2. **Import to AnswerAgent**: In [Sidekick Studio → Assistants](/sidekick-studio/assistants), import your assistant\n3. **Configure Assistant Node**: Set up the Assistant node in your workflows\n4. **Connect Inputs/Outputs**: Link necessary data flows\n5. **Test and Deploy**: Verify functionality before going live\n\nYou'll need valid OpenAI API credentials configured in your account.\n\n**Prerequisites**: [Configure your credentials](/sidekick-studio/credentials) and [set up API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "assistant-capabilities",
+            "question": "What can Assistants do that regular chat models can't?",
+            "answer": "Assistants offer several advanced capabilities:\n\n**Code Execution:**\n- Run Python code in a secure environment\n- Perform data analysis and calculations\n- Generate visualizations and charts\n\n**File Processing:**\n- Upload and analyze documents, spreadsheets, images\n- Extract information from various file formats\n- Maintain file context across conversations\n\n**Function Calling:**\n- Execute custom tools and integrations\n- Connect to external APIs and services\n- Perform complex multi-step operations\n\n**Stateful Conversations:**\n- Remember context across multiple interactions\n- Maintain conversation threads over time\n- Build complex, ongoing workflows\n\n**Explore Tools**: [Browse available tools](/sidekick-studio/tools) and [set up document stores](/sidekick-studio/document-stores)"
+        },
+        {
+            "id": "assistant-vs-chatflow",
+            "question": "When should I use an Assistant vs a regular Chatflow?",
+            "answer": "Choose based on your specific needs:\n\n**Use Assistants for:**\n- **Complex Analysis**: Data analysis, code execution, file processing\n- **Stateful Interactions**: Long-running conversations that need memory\n- **Advanced Reasoning**: Tasks requiring sophisticated problem-solving\n- **File-Heavy Workflows**: Scenarios involving document analysis and processing\n\n**Use Regular Chatflows for:**\n- **Simple Conversations**: Basic Q&A or information retrieval\n- **Embedded Chatbots**: Website integration and customer support\n- **API Endpoints**: Simple request-response patterns\n- **Cost Efficiency**: When advanced features aren't needed\n\n**Choose Your Path**: [Create a chatflow](/sidekick-studio/chatflows) or [set up an assistant](/sidekick-studio/assistants)"
+        },
+        {
+            "id": "assistant-pricing",
+            "question": "How does Assistant pricing work?",
+            "answer": "Assistant pricing follows OpenAI's pricing model:\n- **Model Usage**: Charged based on tokens used by the underlying model (GPT-4, GPT-3.5, etc.)\n- **Tool Usage**: Additional charges for Code Interpreter and File Search usage\n- **File Storage**: Storage costs for uploaded files\n- **API Calls**: Standard API request pricing\n\nAnswerAgent doesn't add additional charges on top of OpenAI's pricing - you pay OpenAI's standard rates through your configured API keys.\n\n**Monitor Usage**: [Check your billing](/billing) and [review API keys](/sidekick-studio/apikey)"
+        },
+        {
+            "id": "assistant-troubleshooting",
+            "question": "Common Assistant issues and solutions?",
+            "answer": "Here are solutions to common Assistant problems:\n\n**Assistant Not Responding:**\n- Verify OpenAI API key is valid and has sufficient credits\n- Check that the Assistant ID exists in your OpenAI account\n- Ensure proper permissions are set\n\n**File Upload Issues:**\n- Verify file format is supported by OpenAI\n- Check file size limits (typically 512MB max)\n- Ensure File Search is enabled for the Assistant\n\n**Code Execution Problems:**\n- Verify Code Interpreter is enabled\n- Check for syntax errors in generated code\n- Monitor token limits for complex operations\n\n**Memory Issues:**\n- Understand that thread history has token limits\n- Consider starting new threads for unrelated conversations\n- Monitor context window usage\n\n**Get Help**: [Check execution history](/sidekick-studio/executions) and [verify credentials](/sidekick-studio/credentials)"
+        }
+    ]
+}

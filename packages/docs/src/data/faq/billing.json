@@ -1,0 +1,47 @@
+{
+    "title": "Billing",
+    "description": "Subscription plans, usage tracking, and payment management",
+    "icon": "💳",
+    "faqs": [
+        {
+            "id": "how-billing-works",
+            "question": "How does AnswerAgent billing work?",
+            "answer": "AnswerAgent offers flexible billing options based on your usage and needs:\n\n**Billing Models:**\n- **Trial Plans**: Free usage for new users to explore the platform\n- **Paid Plans**: Organization-based subscriptions with enhanced features\n- **Usage-Based**: Pay for what you use with execution credits\n- **Enterprise**: Custom pricing for large organizations with specific needs\n\nBilling is managed at the organization level, giving administrators control over subscription and usage.\n\n**Manage**: [Access your billing dashboard](/billing) and [review your plan](/billing)"
+        },
+        {
+            "id": "whats-included",
+            "question": "What's included in my plan?",
+            "answer": "AnswerAgent plans include various components:\n\n**Core Features:**\n- **Execution Credits**: For running workflows and chatflows\n- **Storage**: For documents, data, and workflow configurations\n- **API Calls**: For external integrations and services\n- **Support**: Technical assistance and guidance\n\n**Plan Tiers:**\n- **Free Tier**: Basic features with limited credits and storage\n- **Starter**: Enhanced limits with priority support\n- **Professional**: Advanced features and higher limits\n- **Enterprise**: Unlimited usage with dedicated support\n\n**Monitor**: [Check your usage](/billing) and [review your plan](/billing)"
+        },
+        {
+            "id": "managing-billing",
+            "question": "How do I manage billing and subscriptions?",
+            "answer": "Billing management requires admin access and is available through the AnswerAgent interface:\n\n**Accessing Billing:**\n1. **Admin Access**: Only organization administrators can manage billing\n2. **Navigate**: Go to [Account → Billing](/billing)\n3. **View Dashboard**: See current plan, usage, and billing history\n\n**Management Features:**\n- **Plan Overview**: Current subscription details and features\n- **Usage Tracking**: Monitor credits, storage, and API usage\n- **Billing History**: Review past invoices and payments\n- **Plan Changes**: Upgrade or downgrade subscriptions\n- **Payment Methods**: Update credit cards and billing information\n\n**Manage**: [Access billing dashboard](/billing) and [update payment methods](/billing)"
+        },
+        {
+            "id": "usage-tracking",
+            "question": "How do I track my usage and costs?",
+            "answer": "AnswerAgent provides comprehensive usage tracking and cost analysis:\n\n**Usage Monitoring:**\n- **Execution Tracking**: Monitor workflow runs and their costs\n- **Credit Usage**: See remaining credits and consumption rate\n- **Storage Usage**: Track document storage and data usage\n- **API Call Monitoring**: Monitor external service calls and costs\n\n**Cost Analysis:**\n- **Real-time Tracking**: See usage as it happens\n- **Historical Reports**: Analyze usage patterns over time\n- **Cost Breakdown**: Understand where credits are being spent\n- **Usage Alerts**: Get notified when approaching limits\n\n**Optimization:**\n- **Usage Insights**: Identify opportunities to optimize costs\n- **Workflow Efficiency**: Find and improve resource-heavy workflows\n- **Plan Recommendations**: Suggestions for optimal plan selection\n\n**Track**: [Monitor usage](/billing) and [analyze costs](/billing)"
+        },
+        {
+            "id": "plan-changes",
+            "question": "How do I upgrade or downgrade my plan?",
+            "answer": "Plan changes can be made through the billing dashboard:\n\n**Upgrading Plans:**\n- **Immediate Effect**: Upgrades take effect immediately\n- **Prorated Billing**: You're charged the difference for the current period\n- **Enhanced Features**: Access to new features and higher limits\n- **Credit Addition**: Additional credits added to your account\n\n**Downgrading Plans:**\n- **End of Period**: Downgrades typically take effect at the end of billing cycle\n- **Feature Restrictions**: Some features may become unavailable\n- **Usage Limits**: Lower limits on executions and storage\n- **Data Retention**: Existing data is preserved but may have access restrictions\n\n**Enterprise Plans:**\n- **Custom Pricing**: Tailored to your organization's needs\n- **Dedicated Support**: Personal account management\n- **SLA Options**: Service level agreements available\n- **Volume Discounts**: Reduced rates for high-volume usage\n\n**Change Plans**: [Upgrade or downgrade](/billing) and [review options](/billing)"
+        },
+        {
+            "id": "payment-methods",
+            "question": "What payment methods are accepted?",
+            "answer": "AnswerAgent accepts various payment methods for your convenience:\n\n**Accepted Payment Types:**\n- **Credit Cards**: Visa, MasterCard, American Express, Discover\n- **Debit Cards**: Major debit card providers\n- **Digital Wallets**: PayPal, Apple Pay, Google Pay (where available)\n- **Bank Transfers**: Available for enterprise customers\n\n**Payment Processing:**\n- **Secure Processing**: PCI-compliant payment handling\n- **Automatic Billing**: Monthly or annual subscription billing\n- **Invoice Options**: Available for enterprise customers\n- **Multiple Currencies**: Support for various currencies\n\n**Payment Management:**\n- **Update Methods**: Change payment information anytime\n- **Backup Cards**: Add multiple payment methods\n- **Billing Alerts**: Notifications for payment issues\n- **Receipt Access**: Download invoices and receipts\n\n**Manage**: [Update payment methods](/billing) and [view billing history](/billing)"
+        },
+        {
+            "id": "billing-troubleshooting",
+            "question": "How do I resolve billing issues?",
+            "answer": "Common billing issues and their solutions:\n\n**Payment Failures:**\n- **Card Declined**: Check with your bank or try a different payment method\n- **Expired Cards**: Update your payment information with current card details\n- **Insufficient Funds**: Ensure adequate balance or credit limit\n- **Bank Restrictions**: Contact your bank about international or online payment restrictions\n\n**Usage Issues:**\n- **Unexpected Charges**: Review usage reports and execution logs\n- **Credit Depletion**: Monitor usage patterns and optimize workflows\n- **Billing Discrepancies**: Contact support with specific details\n- **Refund Requests**: Follow the refund policy guidelines\n\n**Account Access:**\n- **Suspended Service**: Resolve outstanding payments to restore access\n- **Plan Limitations**: Upgrade plan or optimize usage to stay within limits\n- **Feature Restrictions**: Verify your plan includes the features you're trying to use\n\n**Getting Help:**\n- **Support Tickets**: Submit detailed billing inquiries\n- **Documentation**: Review billing documentation and FAQs\n- **Account Managers**: Available for enterprise customers\n- **Community Forums**: Get help from other users\n\n**Resolve**: [Check billing status](/billing) and [contact support](/billing)"
+        },
+        {
+            "id": "enterprise-billing",
+            "question": "What billing options are available for enterprises?",
+            "answer": "Enterprise customers have access to additional billing options and features:\n\n**Custom Pricing:**\n- **Volume Discounts**: Reduced rates for high usage volumes\n- **Custom Plans**: Tailored pricing based on specific needs\n- **Annual Contracts**: Discounted rates for yearly commitments\n- **Multi-year Agreements**: Additional savings for longer commitments\n\n**Enterprise Features:**\n- **Invoice Billing**: Net-30, Net-60 payment terms available\n- **Purchase Orders**: Support for PO-based procurement\n- **Multiple Payment Methods**: Wire transfers, ACH, checks\n- **Custom Billing Cycles**: Quarterly or annual billing options\n\n**Support and Management:**\n- **Dedicated Account Manager**: Personal point of contact\n- **Priority Support**: Faster response times and escalation\n- **Custom SLAs**: Service level agreements tailored to your needs\n- **Training and Onboarding**: Comprehensive team training programs\n\n**Compliance and Security:**\n- **SOC 2 Compliance**: Enterprise security standards\n- **GDPR Compliance**: Data protection regulation compliance\n- **Custom Data Agreements**: Tailored data processing agreements\n- **Audit Support**: Assistance with security and compliance audits\n\n**Enterprise**: [Contact sales](/billing) and [learn about enterprise options](/billing)"
+        }
+    ]
+}

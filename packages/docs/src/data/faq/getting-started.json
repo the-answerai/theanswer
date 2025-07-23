@@ -1,0 +1,32 @@
+{
+    "title": "Getting Started",
+    "description": "Learn the basics of AnswerAgent and how to get started",
+    "icon": "🚀",
+    "faqs": [
+        {
+            "id": "what-is-answeragent",
+            "question": "What is AnswerAgent?",
+            "answer": "AnswerAgent is a comprehensive, privacy-first platform for building and managing intelligent agent workforces. It's designed to democratize AI, making powerful AI capabilities accessible to everyone, not just large corporations.\n\nAnswerAgent consists of several key components:\n\n- **[Chat Interface](https://studio.theanswer.ai/chat)**: Main conversation interface with AI sidekicks\n- **[Sidekick Store](https://studio.theanswer.ai/sidekick-studio/marketplaces)**: Marketplace for pre-built AI agents\n- **[Sidekick Studio](https://studio.theanswer.ai/sidekick-studio)**: Visual development environment for building AI workflows\n- **[Apps](https://studio.theanswer.ai/sidekick-studio/apps)**: Pre-built AI applications for specific use cases\n- **Browser Extension**: AI assistance integrated into your web browsing"
+        },
+        {
+            "id": "how-to-access",
+            "question": "How do I access AnswerAgent?",
+            "answer": "You can access AnswerAgent through multiple ways:\n\n- **Web Interface**: Visit [studio.theanswer.ai](https://studio.theanswer.ai)\n- **Browser Extension**: Install the [AnswerAgent Sidekick browser extension](https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim)\n- **API**: Use our comprehensive API for programmatic access - [Read the Docs](https://docs.theanswer.ai/docs/api)"
+        },
+        {
+            "id": "main-components",
+            "question": "What are the main components I should know about?",
+            "answer": "AnswerAgent has several core areas you'll use:\n\n#### For End Users:\n- **[Chat Interface](https://studio.theanswer.ai/chat)**: Talk with AI sidekicks\n- **[Sidekick Store](https://studio.theanswer.ai/sidekick-studio/marketplaces)**: Browse and install pre-built agents\n- **[Apps](https://studio.theanswer.ai/sidekick-studio/apps)**: Use specialized AI applications\n\n#### For Builders:\n- **[Sidekick Studio](https://studio.theanswer.ai/sidekick-studio)**: Visual workflow builder\n- **[Document Stores](https://studio.theanswer.ai/sidekick-studio/document-stores)**: Knowledge management\n- **[Tools](https://studio.theanswer.ai/sidekick-studio/tools)**: Custom integrations\n- **[Credentials](https://studio.theanswer.ai/sidekick-studio/credentials)**: Secure API key storage"
+        },
+        {
+            "id": "first-steps",
+            "question": "What should I do first when I sign up?",
+            "answer": "Here's a recommended getting started sequence:\n\n1. **[Explore Chat](https://studio.theanswer.ai/chat)**: Start by chatting with existing sidekicks to understand capabilities\n2. **[Browse Store](https://studio.theanswer.ai/sidekick-studio/marketplaces)**: Visit the Sidekick Store to see what's available\n3. **[Try Apps](https://studio.theanswer.ai/sidekick-studio/apps)**: Use pre-built apps like CSV Transformer or Image Creator\n4. **[Build Simple](https://studio.theanswer.ai/sidekick-studio/chatflows)**: Create your first simple chatflow in Sidekick Studio\n5. **[Add Knowledge](https://studio.theanswer.ai/sidekick-studio/document-stores)**: Set up a document store with your own content\n6. **Customize**: Build more advanced workflows as you learn"
+        },
+        {
+            "id": "user-roles",
+            "question": "What are the different user roles and permissions?",
+            "answer": "AnswerAgent has role-based access control:\n\n#### Member (Basic User):\n- Use [chat interface](https://studio.theanswer.ai/chat)\n- Browse [Sidekick Store](https://studio.theanswer.ai/sidekick-studio/marketplaces)\n- Access shared sidekicks\n\n#### Builder:\n- All member permissions\n- Create and edit [workflows](https://studio.theanswer.ai/sidekick-studio/chatflows)\n- Manage [document stores](https://studio.theanswer.ai/sidekick-studio/document-stores)\n- Create [custom tools](https://studio.theanswer.ai/sidekick-studio/tools)\n\n#### Admin:\n- All builder permissions\n- Manage [organization billing](https://studio.theanswer.ai/billing)\n- User management\n- Organization settings"
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+{
+    "title": "Executions",
+    "description": "Monitor and track workflow runs, debugging, and performance insights",
+    "icon": "▶️",
+    "faqs": [
+        {
+            "id": "what-are-executions",
+            "question": "What are Executions?",
+            "answer": "Executions are records of workflow runs in AnswerAgent. They provide comprehensive monitoring, tracking, and debugging capabilities for your agentflows and chatflows.\n\nExecutions help you:\n- **Monitor Progress**: Watch workflows as they run in real-time\n- **Debug Issues**: Identify and fix problems in your workflows\n- **Track Performance**: Monitor execution time and resource usage\n- **Maintain History**: Review past runs and their outcomes\n- **Analyze Patterns**: Understand usage and success rates\n\n**Monitor**: [View your executions](/sidekick-studio/executions) and [track performance](/sidekick-studio/executions)"
+        },
+        {
+            "id": "execution-states",
+            "question": "What are the different execution states?",
+            "answer": "Executions can be in several different states:\n- **INPROGRESS**: The workflow is currently running\n- **FINISHED**: The workflow completed successfully\n- **ERROR**: The workflow failed with an error\n- **STOPPED**: The workflow was manually stopped or interrupted\n- **TERMINATED**: The workflow was terminated due to external factors (timeout, resource limits, etc.)\n\nEach state provides different information and available actions for troubleshooting or management.\n\n**Track**: [Monitor execution states](/sidekick-studio/executions) and [debug issues](/sidekick-studio/executions)"
+        },
+        {
+            "id": "viewing-executions",
+            "question": "How do I view and filter Executions?",
+            "answer": "Access executions through [Sidekick Studio → Executions](/sidekick-studio/executions):\n\n**Filtering Options:**\n- **Agentflow ID**: View executions for specific workflows\n- **Session ID**: Track executions within a conversation session\n- **Date Range**: Filter by time period\n- **Execution State**: Show only failed, successful, or running executions\n- **User Context**: See who triggered specific executions\n\n**Viewing Details:**\n- Click on any execution to see detailed step-by-step information\n- Review node outputs and data flow\n- Examine error messages and stack traces\n- Analyze timing and performance metrics\n\n**Explore**: [Browse executions](/sidekick-studio/executions) and [filter results](/sidekick-studio/executions)"
+        },
+        {
+            "id": "execution-details",
+            "question": "What information is available in execution details?",
+            "answer": "Each execution provides comprehensive details:\n\n**Execution Data:**\n- **Step-by-step Progress**: See how the workflow moved through each node\n- **Node Outputs**: Review the results from each workflow component\n- **Data Transformations**: Understand how data changed through the flow\n\n**Performance Metrics:**\n- **Timing Information**: How long each step took to complete\n- **Resource Usage**: Memory, CPU, and API call consumption\n- **Token Consumption**: For AI model interactions\n\n**Error Information:**\n- **Detailed Error Messages**: Specific error descriptions\n- **Stack Traces**: Technical debugging information\n- **Failed Node Context**: Which node failed and why\n\n**Context Data:**\n- **User Information**: Who triggered the execution\n- **Input Parameters**: What data was provided to start the workflow\n- **Environment Details**: System state and configuration\n\n**Analyze**: [Review execution details](/sidekick-studio/executions) and [debug issues](/sidekick-studio/executions)"
+        },
+        {
+            "id": "debugging-executions",
+            "question": "How do I debug failed executions?",
+            "answer": "Use executions for effective debugging:\n\n**Error Analysis:**\n1. **Check Error State**: Look for executions in ERROR or TERMINATED state\n2. **Review Error Messages**: Read detailed error descriptions\n3. **Identify Failed Node**: Find which specific node caused the failure\n4. **Examine Input Data**: Verify the data that reached the failed node\n\n**Common Debugging Steps:**\n- **Validate Inputs**: Ensure proper data format and content\n- **Check Credentials**: Verify API keys and authentication\n- **Review Node Configuration**: Confirm settings are correct\n- **Test Isolation**: Run individual nodes separately\n- **Monitor Resource Limits**: Check for timeout or memory issues\n\n**Performance Debugging:**\n- Identify slow-running nodes\n- Optimize data processing steps\n- Review API call efficiency\n- Check for unnecessary loops or recursion\n\n**Debug**: [Check execution history](/sidekick-studio/executions) and [verify credentials](/sidekick-studio/credentials)"
+        },
+        {
+            "id": "execution-monitoring",
+            "question": "How can I monitor executions in real-time?",
+            "answer": "AnswerAgent provides several monitoring capabilities:\n\n**Real-time Tracking:**\n- **Live Status Updates**: See execution progress as it happens\n- **Node-by-Node Progress**: Watch each step complete\n- **Current State Display**: Know exactly where the execution is\n- **Resource Usage Monitoring**: Track memory and processing consumption\n\n**Alerts and Notifications:**\n- **Failure Alerts**: Get notified when executions fail\n- **Long-running Warnings**: Alerts for executions taking too long\n- **Resource Limit Warnings**: Notifications about resource consumption\n\n**Dashboard Views:**\n- **Execution Overview**: See all running and recent executions\n- **Success/Failure Rates**: Monitor overall system health\n- **Performance Trends**: Track execution times over time\n\n**Monitor**: [Track executions in real-time](/sidekick-studio/executions) and [set up alerts](/sidekick-studio/executions)"
+        },
+        {
+            "id": "execution-optimization",
+            "question": "How do I optimize workflow performance using execution data?",
+            "answer": "Use execution insights to improve workflow performance:\n\n**Performance Analysis:**\n- **Identify Bottlenecks**: Find the slowest nodes in your workflow\n- **Resource Optimization**: Optimize memory and CPU usage\n- **API Efficiency**: Reduce unnecessary external calls\n- **Data Flow Optimization**: Minimize data transformations\n\n**Optimization Strategies:**\n- **Parallel Processing**: Use agentflows for concurrent operations\n- **Caching**: Implement memory nodes to avoid recomputation\n- **Node Efficiency**: Choose appropriate nodes for specific tasks\n- **Data Chunking**: Process large datasets in smaller pieces\n\n**Scaling Considerations:**\n- **Execution Limits**: Monitor concurrent execution limits\n- **Resource Planning**: Plan for peak usage periods\n- **Error Rate Management**: Maintain acceptable failure rates\n\n**Optimize**: [Analyze performance](/sidekick-studio/executions) and [improve workflows](/sidekick-studio/chatflows)"
+        },
+        {
+            "id": "execution-best-practices",
+            "question": "What are the best practices for managing executions?",
+            "answer": "Follow these best practices for optimal execution management:\n\n**Monitoring:**\n- **Regular Review**: Check execution logs regularly\n- **Set Up Alerts**: Configure notifications for critical failures\n- **Track Trends**: Monitor performance patterns over time\n- **Document Issues**: Keep records of common problems and solutions\n\n**Debugging:**\n- **Test Thoroughly**: Use test environments before production deployment\n- **Isolate Problems**: Test individual nodes when debugging\n- **Version Control**: Track workflow changes and their impact\n- **Gradual Rollouts**: Deploy changes incrementally\n\n**Performance:**\n- **Optimize Early**: Address performance issues promptly\n- **Monitor Resources**: Keep track of system resource usage\n- **Plan Capacity**: Anticipate scaling needs\n- **Regular Maintenance**: Clean up old executions and optimize workflows\n\n**Manage**: [Review execution best practices](/sidekick-studio/executions) and [optimize workflows](/sidekick-studio/chatflows)"
+        }
+    ]
+}

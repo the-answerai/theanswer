@@ -21,7 +21,7 @@ The component offers the following visibility options:
 
 1. **Private**: Only visible to the workflow creator
 2. **Organization**: Visible to all members of the creator's organization
-3. **AnswerAI**: Visible to AnswerAI users
+3. **AnswerAgent Sidekick**: Visible to AnswerAgent Sidekick users
 4. **Marketplace**: Available in the public marketplace
 5. **Browser Extension**: Accessible via browser extension
 

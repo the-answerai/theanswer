@@ -1,0 +1,328 @@
+.faqCard {
+    background: var(--ifm-card-background-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.faqCard:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.titleSection {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex: 1;
+}
+
+.icon {
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+    color: var(--ifm-color-primary);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ifm-color-content);
+}
+
+.description {
+    margin: 0.5rem 0 0 0;
+    color: var(--ifm-color-content-secondary);
+    line-height: 1.5;
+}
+
+.toggleAll {
+    background: var(--ifm-color-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toggleAll:hover {
+    background: var(--ifm-color-primary-dark);
+}
+
+.content {
+    border-top: 1px solid var(--ifm-color-emphasis-200);
+    padding-top: 1rem;
+}
+
+.faqItem {
+    border-bottom: 1px solid var(--ifm-color-emphasis-100);
+}
+
+.faqItem:last-child {
+    border-bottom: none;
+}
+
+.question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    gap: 1rem;
+}
+
+.question:hover {
+    color: var(--ifm-color-primary);
+}
+
+.questionText {
+    font-weight: 500;
+    font-size: 1.1rem;
+    flex: 1;
+}
+
+.chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: var(--ifm-color-content-secondary);
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.answerOpen {
+    max-height: 1000px;
+    padding-bottom: 1rem;
+}
+
+.answerContent {
+    line-height: 1.6;
+    color: var(--ifm-color-content-secondary);
+}
+
+/* Markdown Element Styles */
+.markdownP {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.markdownP:last-child {
+    margin-bottom: 0;
+}
+
+.markdownH1 {
+    color: var(--ifm-color-content);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--ifm-color-primary);
+    padding-bottom: 0.5rem;
+}
+
+.markdownH2 {
+    color: var(--ifm-color-content);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.markdownH3 {
+    color: var(--ifm-color-content);
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.markdownH4 {
+    color: var(--ifm-color-content);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.markdownUl,
+.markdownOl {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    padding-left: 0;
+}
+
+.markdownLi {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.markdownLi:last-child {
+    margin-bottom: 0;
+}
+
+.markdownStrong {
+    color: var(--ifm-color-content);
+    font-weight: 600;
+}
+
+.markdownCode {
+    background: var(--ifm-color-emphasis-100);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    color: var(--ifm-color-content);
+}
+
+.markdownPre {
+    background: var(--ifm-color-emphasis-100);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.markdownPre .markdownCode {
+    background: none;
+    padding: 0;
+    font-size: 0.875rem;
+}
+
+/* Link Styles */
+.internalLink {
+    color: var(--ifm-color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.internalLink:hover {
+    color: var(--ifm-color-primary-dark);
+    border-bottom-color: var(--ifm-color-primary-dark);
+    text-decoration: none;
+}
+
+.externalLink {
+    color: var(--ifm-color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.externalLink:hover {
+    color: var(--ifm-color-primary-dark);
+    border-bottom-color: var(--ifm-color-primary-dark);
+    text-decoration: none;
+}
+
+.externalLink::after {
+    content: ' ↗';
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+/* Legacy styles for backwards compatibility */
+.answerContent h4 {
+    color: var(--ifm-color-content);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.answerContent ul,
+.answerContent ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.answerContent li {
+    margin-bottom: 0.5rem;
+}
+
+.answerContent pre {
+    background: var(--ifm-color-emphasis-100);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.answerContent code {
+    background: var(--ifm-color-emphasis-100);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.answerContent strong {
+    color: var(--ifm-color-content);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .faqCard {
+        padding: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .titleSection {
+        margin-bottom: 1rem;
+    }
+
+    .question {
+        padding: 0.75rem 0;
+    }
+
+    .questionText {
+        font-size: 1rem;
+    }
+
+    .markdownH1 {
+        font-size: 1.3rem;
+    }
+
+    .markdownH2 {
+        font-size: 1.2rem;
+    }
+
+    .markdownH3 {
+        font-size: 1.1rem;
+    }
+
+    .markdownUl,
+    .markdownOl {
+        margin-left: 1rem;
+    }
+}
