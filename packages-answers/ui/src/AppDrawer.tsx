@@ -211,7 +211,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
             })
         }
 
-        // Account section - everyone sees credentials, only admins see billing
+        // Account section - everyone sees credentials, only admins see billing and admin
         const accountSubMenu: MenuConfig[] = [
             {
                 id: 'credentials',
@@ -221,8 +221,14 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
             }
         ]
 
-        // Only admins see billing
+        // Only admins see billing and admin dashboard
         if (userRole === 'admin') {
+            accountSubMenu.push({
+                id: 'admin',
+                text: 'Admin',
+                link: '/sidekick-studio/admin',
+                icon: <AssessmentOutlinedIcon color='primary' />
+            })
             accountSubMenu.push({
                 id: 'billing',
                 text: 'Billing',
@@ -564,6 +570,8 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                                         return 'Set up variables for reuse across sidekicks'
                                                     case 'apikey':
                                                         return 'Manage authentication keys for external services'
+                                                    case 'admin':
+                                                        return 'Access admin dashboard and organization management'
                                                     case 'billing':
                                                         return 'View and manage your subscription and payments'
                                                     case 'credentials':
