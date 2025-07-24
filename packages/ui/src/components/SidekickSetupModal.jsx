@@ -1,5 +1,5 @@
 'use client'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 import dynamic from 'next/dynamic'
@@ -21,6 +21,9 @@ import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 const UnifiedCredentialsModal = dynamic(() => import('@/ui-component/dialog/UnifiedCredentialsModal'), { ssr: false })
 
 const SidekickSetupModal = ({ sidekickId, onComplete }) => {
+    // Local state to track if user has skipped setup for this instance
+    const [hasSkipped, setHasSkipped] = useState(false)
+
     // Get search params to check for QuickSetup
     const searchParams = useSearchParams()
     const isQuickSetup = searchParams.get('QuickSetup') === 'true'
@@ -32,32 +35,25 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const dispatch = useDispatch()
     useNotifier()
     const enqueueSnackbar = useCallback((...args) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
-    const closeSnackbar = useCallback((...args) => dispatch(closeSnackbarAction(...args)), [dispatch])
 
-    // Notification helper function
-    const createNotification = useCallback(
-        (message, variant, persist = false) => ({
-            message,
-            options: {
-                key: new Date().getTime() + Math.random(),
-                variant,
-                ...(persist && { persist: true }),
-                action: (key) => (
-                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                        <IconX />
-                    </Button>
-                )
-            }
-        }),
-        [closeSnackbar]
-    )
-
-    // Error handler for modal
+    // Simplified error handler
     const handleModalError = useCallback(
         (errorMessage) => {
-            enqueueSnackbar(createNotification(errorMessage, 'error', true))
+            enqueueSnackbar({
+                message: errorMessage,
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'error',
+                    persist: true,
+                    action: (key) => (
+                        <Button style={{ color: 'white' }} onClick={() => dispatch(closeSnackbarAction(key))}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
         },
-        [enqueueSnackbar, createNotification]
+        [enqueueSnackbar, dispatch]
     )
 
     // Handle credential assignment
@@ -65,40 +61,44 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         async (credentialAssignments) => {
             try {
                 if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
-                    // Use the helper function to update flow data with credentials
                     const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
-
                     await updateSidekick({
                         flowData: JSON.stringify(updatedFlowData)
                     })
-                    enqueueSnackbar(createNotification('Credentials saved successfully!', 'success'))
+                    enqueueSnackbar({
+                        message: 'Credentials saved successfully!',
+                        options: { variant: 'success' }
+                    })
                 }
-
-                if (onComplete) {
-                    onComplete()
-                }
+                onComplete?.()
             } catch (error) {
                 console.error('Error assigning credentials:', error)
-                enqueueSnackbar(createNotification('Error assigning credentials. Please try again.', 'error', true))
+                handleModalError('Error assigning credentials. Please try again.')
             }
         },
-        [sidekick, updateSidekick, enqueueSnackbar, createNotification, onComplete]
+        [sidekick, updateSidekick, enqueueSnackbar, onComplete, handleModalError]
     )
 
     const handleModalSkip = useCallback(() => {
-        if (onComplete) {
-            onComplete()
+        const userConfirmed = window.confirm(
+            'Warning: The chat flow will not work properly without credentials. Are you sure you want to skip setup?'
+        )
+
+        if (userConfirmed) {
+            setHasSkipped(true)
+            onComplete?.()
         }
     }, [onComplete])
 
     const handleModalCancel = useCallback(() => {
-        if (onComplete) {
-            onComplete()
-        }
+        onComplete?.()
     }, [onComplete])
 
-    // Only show modal if sidekick needs setup and has credentials to show
-    if (!sidekick || !needsSetup || credentialsToShow.length === 0) {
+    // Only show modal if:
+    // 1. Sidekick exists and needs setup
+    // 2. Has credentials to show
+    // 3. User hasn't skipped setup for this instance
+    if (!sidekick || !needsSetup || credentialsToShow.length === 0 || hasSkipped) {
         return null
     }
 

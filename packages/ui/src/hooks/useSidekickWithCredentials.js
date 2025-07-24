@@ -1,29 +1,18 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import useSWR from 'swr'
+import useSidekickDetails from '@ui/SidekickSelect/hooks/useSidekickDetails'
 import chatflowsApi from '@/api/chatflows'
-import { extractMissingCredentials, extractAllCredentials } from '@/utils/flowCredentialsHelper'
 
 export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) => {
+    const { fetchSidekickDetails } = useSidekickDetails()
     const {
         data: sidekick,
         error,
         mutate
-    } = useSWR(sidekickId ? `/api/v1/chatflows/${sidekickId}` : null, () => chatflowsApi.getSpecificChatflow(sidekickId), {
+    } = useSWR(sidekickId ? `/api/v1/sidekicks/${sidekickId}` : null, () => fetchSidekickDetails(sidekickId), {
         revalidateOnFocus: false,
         dedupingInterval: 10000
     })
-
-    const credentialInfo = useMemo(() => {
-        if (!sidekick) return { credentialsToShow: [], needsSetup: false }
-
-        const extractFn = forceQuickSetup ? extractAllCredentials : extractMissingCredentials
-        const credentials = extractFn(sidekick)
-
-        return {
-            credentialsToShow: credentials,
-            needsSetup: credentials.length > 0
-        }
-    }, [sidekick, forceQuickSetup])
 
     const updateSidekick = useCallback(
         async (updateData) => {
@@ -41,12 +30,13 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
         [sidekickId, mutate]
     )
 
+    console.log('[useSidekickWithCredentials] sidekick', { sidekickId, sidekick, forceQuickSetup, error })
     return {
         sidekick,
         isLoading: !error && !sidekick && sidekickId !== null,
         error,
         updateSidekick,
-        needsSetup: credentialInfo.needsSetup,
-        credentialsToShow: credentialInfo.credentialsToShow
+        needsSetup: sidekick?.needsSetup,
+        credentialsToShow: sidekick?.credentialsToShow
     }
 }

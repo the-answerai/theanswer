@@ -5,7 +5,9 @@ import {
     StarBorder as StarBorderIcon,
     Visibility as VisibilityIcon,
     Edit as EditIcon,
-    ContentCopy as IconCopy
+    ContentCopy as IconCopy,
+    WarningAmber as WarningAmberIcon,
+    CheckCircle as CheckCircleIcon
 } from '@mui/icons-material'
 import { useCallback, useState } from 'react'
 import { Sidekick } from './SidekickSelect.types'
@@ -47,6 +49,10 @@ const SidekickCard = ({
     const [isProcessing, setIsProcessing] = useState(false)
 
     const theme = useTheme()
+
+    // Get validation status from the sidekick data
+    const needsSetup = sidekick?.needsSetup || false
+    const hasValidation = sidekick?.needsSetup !== undefined
 
     const handleClone = useCallback(
         async (sidekick: Sidekick, e: React.MouseEvent) => {
@@ -263,6 +269,26 @@ const SidekickCard = ({
                                 </Tooltip>
                             </>
                         ) : null}
+                        {/* Validation Status Button */}
+                        {sidekick.isExecutable && hasValidation && (
+                            <Tooltip title={needsSetup ? 'Configuration required - Missing credentials' : 'Sidekick is fully configured'}>
+                                <WhiteIconButton
+                                    size='small'
+                                    sx={{
+                                        color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                        '&:hover': {
+                                            backgroundColor: alpha(
+                                                needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                                0.08
+                                            ),
+                                            color: needsSetup ? theme.palette.warning.dark : theme.palette.success.dark
+                                        }
+                                    }}
+                                >
+                                    {needsSetup ? <WarningAmberIcon /> : <CheckCircleIcon />}
+                                </WhiteIconButton>
+                            </Tooltip>
+                        )}
                         {sidekick.isExecutable ? (
                             <Tooltip title='Clone this sidekick'>
                                 <WhiteIconButton

@@ -253,6 +253,17 @@ export const ChatDetail = ({
                                 <iframe src={embeddedUrl} style={{ flex: 1, border: 'none' }} title='Embedded Form' allowFullScreen />
                             </Box>
                         )}
+                        {selectedSidekick?.id && (
+                            <SidekickSetupModal
+                                sidekickId={selectedSidekick.id}
+                                onComplete={() => {
+                                    const searchParams = new URLSearchParams(window.location.search)
+                                    if (searchParams.get('QuickSetup') === 'true' && chat?.id) {
+                                        router.replace(`/chat/${chat.id}`)
+                                    }
+                                }}
+                            />
+                        )}
                     </Box>
                 </Box>
 
@@ -288,18 +299,6 @@ export const ChatDetail = ({
                     ) : null}
                 </Drawer>
             </Box>
-
-            {selectedSidekick?.id && (
-                <SidekickSetupModal
-                    sidekickId={selectedSidekick.id}
-                    onComplete={() => {
-                        const searchParams = new URLSearchParams(window.location.search)
-                        if (searchParams.get('QuickSetup') === 'true' && chat?.id) {
-                            router.replace(`/chat/${chat.id}`)
-                        }
-                    }}
-                />
-            )}
         </>
     )
 }

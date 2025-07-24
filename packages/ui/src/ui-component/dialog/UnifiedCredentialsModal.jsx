@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { createPortal } from 'react-dom'
 
 // material-ui
 import {
@@ -16,7 +15,6 @@ import {
     FormControl,
     IconButton,
     Stack,
-    useTheme,
     CircularProgress,
     Paper,
     Avatar,
@@ -44,10 +42,8 @@ import { baseURL } from '@/store/constant'
 
 // ==============================|| UnifiedCredentialsModal ||============================== //
 
-const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, flowData, onError }) => {
-    const theme = useTheme()
+const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, onError }) => {
     const portalElement = document.getElementById('portal')
-
     const [credentialAssignments, setCredentialAssignments] = useState({})
     const [availableCredentials, setAvailableCredentials] = useState({})
     const [loading, setLoading] = useState(false)
@@ -209,6 +205,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }
 
     const handleAssignCredentials = async () => {
+        console.log('[UnifiedCredentialsModal] handleAssignCredentials', credentialAssignments)
         if (onAssign) {
             setAssigningCredentials(true)
             try {
@@ -372,6 +369,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             onClose={handleCancel}
             maxWidth='md'
             fullWidth
+            sx={{
+                position: 'absolute'
+            }}
             PaperProps={{
                 sx: {
                     borderRadius: 2
@@ -531,7 +531,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         </Dialog>
     )
 
-    return portalElement ? createPortal(component, portalElement) : component
+    return component
 }
 
 UnifiedCredentialsModal.propTypes = {

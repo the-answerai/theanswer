@@ -2,6 +2,7 @@ import { parseChatbotConfig, parseFlowData } from './normalizeSidekick'
 import { User } from 'types'
 import auth0 from '@utils/auth/auth0'
 import { INodeParams } from '@flowise/components'
+import { extractMissingCredentials } from './extractMissingCredentials'
 
 export async function findSidekickById(user: User, id: string) {
     let token
@@ -82,6 +83,10 @@ export async function findSidekickById(user: User, id: string) {
         .map((c: string) => c.trim().split(';'))
         .flat()
 
+    const missingCredentials = extractMissingCredentials(chatflow.flowData)
+
+    const needsSetup = missingCredentials.length > 0
+
     return {
         id: chatflow.id || '',
         label: chatflow.name || '',
@@ -90,12 +95,14 @@ export async function findSidekickById(user: User, id: string) {
         answersConfig: chatflow.answersConfig,
         chatflowId: chatflow.id || '',
         chatflowDomain: user.chatflowDomain,
-        chatbotConfig: parseChatbotConfig(chatflow.chatbotConfig),
-        flowData: parseFlowData(chatflow.flowData),
+        // chatbotConfig: parseChatbotConfig(chatflow.chatbotConfig),
+        // flowData: parseFlowData(chatflow.flowData),
         category: chatflow.category,
         categories,
         isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
         isFavorite: false,
+        needsSetup,
+        credentialsToShow: missingCredentials,
         constraints: {
             isSpeechToTextEnabled,
             isImageUploadAllowed,

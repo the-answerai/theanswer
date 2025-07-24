@@ -6,7 +6,9 @@ import {
     StarBorder as StarBorderIcon,
     Edit as EditIcon,
     ExpandMore as ExpandMoreIcon,
-    ContentCopy as ContentCopyIcon
+    ContentCopy as ContentCopyIcon,
+    WarningAmber as WarningAmberIcon,
+    CheckCircle as CheckCircleIcon
 } from '@mui/icons-material'
 import { styled } from '@mui/system'
 import { useSelector } from 'react-redux'
@@ -70,6 +72,10 @@ const AssistantInfoCard = ({
     const [localIsFavorite, setLocalIsFavorite] = useState(false)
 
     const [_showCopyMessage, setShowCopyMessage] = useState(false)
+
+    // Get validation status from the sidekick data
+    const needsSetup = sidekick?.needsSetup || false
+    const hasValidation = sidekick?.needsSetup !== undefined
 
     // Initialize favorite status from localStorage
     useEffect(() => {
@@ -305,6 +311,27 @@ const AssistantInfoCard = ({
                             <Tooltip title='Edit this sidekick'>
                                 <WhiteIconButton size='small' onClick={handleEdit}>
                                     <EditIcon />
+                                </WhiteIconButton>
+                            </Tooltip>
+                        )}
+
+                        {/* Validation Status Button */}
+                        {sidekick?.isExecutable && hasValidation && (
+                            <Tooltip title={needsSetup ? 'Configuration required - Missing credentials' : 'Sidekick is fully configured'}>
+                                <WhiteIconButton
+                                    size='small'
+                                    sx={{
+                                        color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                        '&:hover': {
+                                            backgroundColor: alpha(
+                                                needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                                0.08
+                                            ),
+                                            color: needsSetup ? theme.palette.warning.dark : theme.palette.success.dark
+                                        }
+                                    }}
+                                >
+                                    {needsSetup ? <WarningAmberIcon /> : <CheckCircleIcon />}
                                 </WhiteIconButton>
                             </Tooltip>
                         )}
