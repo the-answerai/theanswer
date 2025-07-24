@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import useSidekickDetails from '@ui/SidekickSelect/hooks/useSidekickDetails'
+import { useSidekickFetcher } from '@ui/SidekickSelect/hooks/useSidekickDetails'
 
 /**
  * Custom hook for checking and managing missing credentials in sidekicks
@@ -9,7 +9,7 @@ export const useCredentialChecker = () => {
     const [missingCredentials, setMissingCredentials] = useState([])
     const [onCredentialsAssigned, setOnCredentialsAssigned] = useState(null)
 
-    const { fetchSidekickDetails } = useSidekickDetails()
+    const { fetchDetails } = useSidekickFetcher()
 
     /**
      * Check if a sidekick has missing credentials and show modal if needed
@@ -22,7 +22,7 @@ export const useCredentialChecker = () => {
         async (sidekickId, onAssign, forceShow = false) => {
             try {
                 console.log('[useCredentialChecker] checking credentials for sidekick', sidekickId)
-                const sidekick = await fetchSidekickDetails(sidekickId)
+                const sidekick = await fetchDetails(sidekickId)
 
                 if (!sidekick) {
                     console.error('Failed to fetch sidekick details')
@@ -56,7 +56,7 @@ export const useCredentialChecker = () => {
                 return false
             }
         },
-        [fetchSidekickDetails]
+        [fetchDetails]
     )
 
     /**

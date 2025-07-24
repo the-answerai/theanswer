@@ -1,18 +1,9 @@
 import { useCallback } from 'react'
-import useSWR from 'swr'
-import useSidekickDetails from '@ui/SidekickSelect/hooks/useSidekickDetails'
+import { useSidekickDetails } from '@ui/SidekickSelect/hooks/useSidekickDetails'
 import chatflowsApi from '@/api/chatflows'
 
 export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) => {
-    const { fetchSidekickDetails } = useSidekickDetails()
-    const {
-        data: sidekick,
-        error,
-        mutate
-    } = useSWR(sidekickId ? `/api/v1/sidekicks/${sidekickId}` : null, () => fetchSidekickDetails(sidekickId), {
-        revalidateOnFocus: false,
-        dedupingInterval: 10000
-    })
+    const { data: sidekick, error, mutate, loading } = useSidekickDetails(sidekickId)
 
     const updateSidekick = useCallback(
         async (updateData) => {
@@ -33,7 +24,7 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
     console.log('[useSidekickWithCredentials] sidekick', { sidekickId, sidekick, forceQuickSetup, error })
     return {
         sidekick,
-        isLoading: !error && !sidekick && sidekickId !== null,
+        isLoading: loading,
         error,
         updateSidekick,
         needsSetup: sidekick?.needsSetup,

@@ -21,7 +21,7 @@ import {
     WhiteButton
 } from './StyledComponents'
 import Link from 'next/link'
-import useSidekickDetails from './hooks/useSidekickDetails'
+import { useSidekickFetcher } from './hooks/useSidekickDetails'
 import type { NavigateFn } from './hooks/useSidekickSelectionHandlers'
 
 const SidekickCard = ({
@@ -44,7 +44,7 @@ const SidekickCard = ({
     toggleFavorite: any
 }) => {
     const [, setNavigationState] = useNavigationState()
-    const { fetchSidekickDetails } = useSidekickDetails()
+    const { fetchDetails } = useSidekickFetcher()
     const [loadingAction, setLoadingAction] = useState<'clone' | 'preview' | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
 
@@ -67,7 +67,7 @@ const SidekickCard = ({
             // Fetch full sidekick details if we don't have flowData
             let fullSidekick = sidekick
             if (!sidekick.flowData) {
-                const details = await fetchSidekickDetails(sidekick.id)
+                const details = await fetchDetails(sidekick.id)
                 if (details) {
                     fullSidekick = details
                 } else {
@@ -102,7 +102,7 @@ const SidekickCard = ({
             }
             setIsProcessing(false)
         },
-        [navigate, user, setNavigationState, fetchSidekickDetails, isProcessing]
+        [navigate, user, setNavigationState, fetchDetails, isProcessing]
     )
 
     const handleEdit = useCallback((sidekick: Sidekick, e: React.MouseEvent) => {
@@ -124,7 +124,7 @@ const SidekickCard = ({
         setIsProcessing(true)
         // For executable sidekicks, fetch full details before selection
         if (sidekick.isExecutable && !sidekick.flowData) {
-            const fullSidekick = await fetchSidekickDetails(sidekick.id)
+            const fullSidekick = await fetchDetails(sidekick.id)
             if (fullSidekick) {
                 handleSidekickSelect(fullSidekick)
             }
@@ -143,7 +143,7 @@ const SidekickCard = ({
 
         // Fetch full details if needed
         if (!sidekick.flowData) {
-            const fullSidekick = await fetchSidekickDetails(sidekick.id)
+            const fullSidekick = await fetchDetails(sidekick.id)
             if (fullSidekick) {
                 sidekick = fullSidekick
             }
