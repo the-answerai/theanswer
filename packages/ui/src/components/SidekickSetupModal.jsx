@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 import dynamic from 'next/dynamic'
@@ -35,6 +35,13 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const dispatch = useDispatch()
     useNotifier()
     const enqueueSnackbar = useCallback((...args) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
+
+    // Reset hasSkipped when QuickSetup is true
+    useEffect(() => {
+        if (isQuickSetup && hasSkipped) {
+            setHasSkipped(false)
+        }
+    }, [isQuickSetup])
 
     // Simplified error handler
     const handleModalError = useCallback(
@@ -97,8 +104,8 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     // Only show modal if:
     // 1. Sidekick exists and needs setup
     // 2. Has credentials to show
-    // 3. User hasn't skipped setup for this instance
-    if (!sidekick || !needsSetup || credentialsToShow.length === 0 || hasSkipped) {
+    // 3. User hasn't skipped setup for this instance (unless QuickSetup is true)
+    if (!sidekick || !needsSetup || credentialsToShow.length === 0 || (hasSkipped && !isQuickSetup)) {
         return null
     }
 

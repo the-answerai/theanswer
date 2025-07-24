@@ -320,6 +320,15 @@ const AssistantInfoCard = ({
                             <Tooltip title={needsSetup ? 'Configuration required - Missing credentials' : 'Sidekick is fully configured'}>
                                 <WhiteIconButton
                                     size='small'
+                                    onClick={() => {
+                                        if (needsSetup) {
+                                            const currentUrl = new URL(window.location.href)
+                                            currentUrl.searchParams.set('QuickSetup', 'true')
+                                            window.history.pushState({}, '', currentUrl.toString())
+                                            // Trigger a re-render to show the modal
+                                            window.dispatchEvent(new Event('popstate'))
+                                        }
+                                    }}
                                     sx={{
                                         color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
                                         '&:hover': {

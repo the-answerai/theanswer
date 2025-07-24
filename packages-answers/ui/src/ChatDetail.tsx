@@ -258,8 +258,12 @@ export const ChatDetail = ({
                                 sidekickId={selectedSidekick.id}
                                 onComplete={() => {
                                     const searchParams = new URLSearchParams(window.location.search)
-                                    if (searchParams.get('QuickSetup') === 'true' && chat?.id) {
-                                        router.replace(`/chat/${chat.id}`)
+                                    if (searchParams.get('QuickSetup') === 'true') {
+                                        searchParams.delete('QuickSetup')
+                                        const newUrl = chat?.id
+                                            ? `/chat/${chat.id}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+                                            : `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+                                        router.replace(newUrl)
                                     }
                                 }}
                             />
