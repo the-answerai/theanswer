@@ -1,22 +1,9 @@
 'use client'
 import useSWR, { mutate, useSWRConfig } from 'swr'
 import { Sidekick } from '../SidekickSelect.types'
+import axios from 'axios'
 
-const fetcher = async (url: string): Promise<Sidekick> => {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10000)
-
-    try {
-        const response = await fetch(url, { signal: controller.signal })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch sidekick details: ${response.statusText}`)
-        }
-        return response.json()
-    } finally {
-        clearTimeout(timeout)
-    }
-}
-
+const fetcher = async (url: string): Promise<Sidekick> => axios.get(url).then((res) => res.data)
 const swrConfig = {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
