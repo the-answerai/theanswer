@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 import dynamic from 'next/dynamic'
 import PropTypes from 'prop-types'
@@ -24,8 +24,9 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     // Local state to track if user has skipped setup for this instance
     const [hasSkipped, setHasSkipped] = useState(false)
 
-    // Get search params to check for QuickSetup
+    // Get search params to check for QuickSetup and router for URL manipulation
     const searchParams = useSearchParams()
+    const router = useRouter()
     const isQuickSetup = searchParams.get('QuickSetup') === 'true'
 
     // Fetch sidekick data with credentials
@@ -35,6 +36,18 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const dispatch = useDispatch()
     useNotifier()
     const enqueueSnackbar = useCallback((...args) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
+
+    // Handle URL cleanup when modal closes
+    const handleURLCleanup = useCallback(() => {
+        const currentSearchParams = new URLSearchParams(window.location.search)
+        if (currentSearchParams.get('QuickSetup') === 'true') {
+            currentSearchParams.delete('QuickSetup')
+            const newUrl = `${window.location.pathname}${currentSearchParams.toString() ? '?' + currentSearchParams.toString() : ''}`
+            router.replace(newUrl)
+        }
+        // Call the optional external onComplete callback
+        onComplete?.()
+    }, [router, onComplete])
 
     // Reset hasSkipped when QuickSetup is true
     useEffect(() => {
@@ -77,13 +90,13 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                         options: { variant: 'success' }
                     })
                 }
-                onComplete?.()
+                handleURLCleanup()
             } catch (error) {
                 console.error('Error assigning credentials:', error)
                 handleModalError('Error assigning credentials. Please try again.')
             }
         },
-        [sidekick, updateSidekick, enqueueSnackbar, onComplete, handleModalError]
+        [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError]
     )
 
     const handleModalSkip = useCallback(() => {
@@ -93,19 +106,23 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
 
         if (userConfirmed) {
             setHasSkipped(true)
-            onComplete?.()
+            handleURLCleanup()
         }
-    }, [onComplete])
+    }, [handleURLCleanup])
 
     const handleModalCancel = useCallback(() => {
-        onComplete?.()
-    }, [onComplete])
+        handleURLCleanup()
+    }, [handleURLCleanup])
 
     // Only show modal if:
-    // 1. Sidekick exists and needs setup
-    // 2. Has credentials to show
-    // 3. User hasn't skipped setup for this instance (unless QuickSetup is true)
-    if (!sidekick || !needsSetup || credentialsToShow.length === 0 || (hasSkipped && !isQuickSetup)) {
+    // 1. Sidekick exists
+    // 2. User hasn't skipped setup for this instance (unless QuickSetup is true)
+    if (!sidekick || (hasSkipped && !isQuickSetup)) {
+        return null
+    }
+
+    // For non-QuickSetup mode, only show if there are credentials to show and setup is needed
+    if (!isQuickSetup && (!needsSetup || credentialsToShow.length === 0)) {
         return null
     }
 

@@ -11,12 +11,14 @@ const fetcher = async (url) => {
 }
 
 export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) => {
+    const apiUrl = sidekickId ? `/api/sidekicks/${sidekickId}${forceQuickSetup ? '?QuickSetup=true' : ''}` : null
+
     const {
         data: sidekick,
         error,
         mutate,
         isLoading
-    } = useSWR(sidekickId ? `/api/sidekicks/${sidekickId}` : null, fetcher, {
+    } = useSWR(apiUrl, fetcher, {
         revalidateOnFocus: false,
         dedupingInterval: 10000
     })
@@ -44,6 +46,6 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
         error,
         updateSidekick,
         needsSetup: sidekick?.needsSetup,
-        credentialsToShow: sidekick?.credentialsToShow
+        credentialsToShow: sidekick?.credentialsToShow || []
     }
 }

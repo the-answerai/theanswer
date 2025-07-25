@@ -20,7 +20,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     if (!session?.user?.email) return respond401()
 
     try {
-        const sidekick = await findSidekickById(user, params.id)
+        // Parse URL to get query parameters
+        const url = new URL(req.url)
+        const isQuickSetup = url.searchParams.get('QuickSetup') === 'true'
+
+        const sidekick = await findSidekickById(user, params.id, isQuickSetup)
 
         if (!sidekick) {
             return NextResponse.json({ error: 'Sidekick not found' }, { status: 404 })

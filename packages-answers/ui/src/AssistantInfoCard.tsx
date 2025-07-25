@@ -16,6 +16,7 @@ import { useTheme } from '@mui/material/styles'
 import { baseURL } from '@/store/constant'
 import { useNavigate, useNavigationState } from '@/utils/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
+import { useRouter } from 'next/navigation'
 
 interface AssistantInfoCardProps {
     sidekick?: Sidekick
@@ -65,6 +66,7 @@ const AssistantInfoCard = ({
     const navigate = useNavigate()
     const [, setNavigationState] = useNavigationState()
     const { user } = useUser()
+    const router = useRouter()
 
     const [images, setImages] = useState<string[]>([])
     const [nodeTypes, setNodeTypes] = useState<string[]>([])
@@ -321,13 +323,10 @@ const AssistantInfoCard = ({
                                 <WhiteIconButton
                                     size='small'
                                     onClick={() => {
-                                        if (needsSetup) {
-                                            const currentUrl = new URL(window.location.href)
-                                            currentUrl.searchParams.set('QuickSetup', 'true')
-                                            window.history.pushState({}, '', currentUrl.toString())
-                                            // Trigger a re-render to show the modal
-                                            window.dispatchEvent(new Event('popstate'))
-                                        }
+                                        const searchParams = new URLSearchParams(window.location.search)
+                                        searchParams.set('QuickSetup', 'true')
+                                        const newUrl = `${window.location.pathname}?${searchParams.toString()}`
+                                        router.replace(newUrl)
                                     }}
                                     sx={{
                                         color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,

@@ -63,7 +63,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
     // Load available credentials when modal opens
     useEffect(() => {
-        if (show && missingCredentials.length > 0) {
+        if (show && (missingCredentials.length > 0 || isQuickSetupMode)) {
             const loadCredentials = async () => {
                 setLoading(true)
                 const credentialsData = {}

@@ -484,12 +484,10 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 }
                             }}
                             onClick={() => {
-                                if (needsSetup) {
-                                    const currentUrl = new URL(window.location.href)
-                                    currentUrl.searchParams.set('QuickSetup', 'true')
-                                    window.history.pushState({}, '', currentUrl.toString())
-                                    window.dispatchEvent(new Event('popstate'))
-                                }
+                                const currentUrl = new URL(window.location.href)
+                                currentUrl.searchParams.set('QuickSetup', 'true')
+                                window.history.pushState({}, '', currentUrl.toString())
+                                window.dispatchEvent(new Event('popstate'))
                             }}
                         >
                             {needsSetup ? <IconAlertCircle stroke={1.5} size='1.3rem' /> : <IconCircleCheck stroke={1.5} size='1.3rem' />}

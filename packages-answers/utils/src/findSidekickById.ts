@@ -3,8 +3,9 @@ import { User } from 'types'
 import auth0 from '@utils/auth/auth0'
 import { INodeParams } from '@flowise/components'
 import { extractMissingCredentials } from './extractMissingCredentials'
+import { extractAllCredentials } from './extractAllCredentials'
 
-export async function findSidekickById(user: User, id: string) {
+export async function findSidekickById(user: User, id: string, isQuickSetup: boolean = false) {
     let token
     try {
         const { accessToken } = await auth0.getAccessToken({
@@ -84,8 +85,11 @@ export async function findSidekickById(user: User, id: string) {
         .flat()
 
     const missingCredentials = extractMissingCredentials(chatflow.flowData)
+    const allCredentials = extractAllCredentials(chatflow.flowData)
 
-    const needsSetup = missingCredentials.length > 0
+    // In QuickSetup mode, show all credentials; otherwise show only missing ones
+    const credentialsToShow = isQuickSetup ? allCredentials : missingCredentials
+    const needsSetup = isQuickSetup ? allCredentials.length > 0 : missingCredentials.length > 0
 
     return {
         id: chatflow.id || '',
@@ -102,7 +106,8 @@ export async function findSidekickById(user: User, id: string) {
         isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
         isFavorite: false,
         needsSetup,
-        credentialsToShow: missingCredentials,
+        credentialsToShow,
+        allCredentials,
         constraints: {
             isSpeechToTextEnabled,
             isImageUploadAllowed,
