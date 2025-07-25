@@ -39,7 +39,9 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
         [sidekickId, mutate]
     )
 
-    console.log('[useSidekickWithCredentials] sidekick', { sidekickId, sidekick, forceQuickSetup, error })
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('[useSidekickWithCredentials] sidekick', { sidekickId, sidekick, forceQuickSetup, error })
+    }
     return {
         sidekick,
         isLoading,
