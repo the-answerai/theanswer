@@ -1,11 +1,12 @@
 import { INodeParams } from '@flowise/components'
+import { CredentialInfo } from 'types'
 
 /**
  * Extract all credentials (assigned and unassigned) from flow data
  * @param {string|object} flowData - Flow data as JSON string or object
- * @returns {any[]} Array of all credentials with assignment status
+ * @returns {CredentialInfo[]} Array of all credentials with assignment status
  */
-export const extractAllCredentials = (flowData: string | any) => {
+export const extractAllCredentials = (flowData: string | any): CredentialInfo[] => {
     try {
         // Parse flow data if it's a string
         const flow = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
@@ -14,7 +15,7 @@ export const extractAllCredentials = (flowData: string | any) => {
             return []
         }
 
-        const allCredentials: any[] = []
+        const allCredentials: CredentialInfo[] = []
         const credentialTypes = new Set<string>()
 
         // Define commonly needed optional credentials that should be offered

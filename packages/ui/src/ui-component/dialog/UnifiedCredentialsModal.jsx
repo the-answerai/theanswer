@@ -396,6 +396,11 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             </DialogTitle>
 
             <DialogContent sx={{ padding: 3, minHeight: '400px' }}>
+                {isQuickSetupMode && (
+                    <Typography variant='caption' color='text.secondary' sx={{ mb: 2 }}>
+                        Quick Setup mode enabled - all credentials are shown
+                    </Typography>
+                )}
                 {loading ? (
                     <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
                         <CircularProgress />
