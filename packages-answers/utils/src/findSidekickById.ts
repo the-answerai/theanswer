@@ -2,10 +2,9 @@ import { parseChatbotConfig, parseFlowData } from './normalizeSidekick'
 import { User } from 'types'
 import auth0 from '@utils/auth/auth0'
 import { INodeParams } from '@flowise/components'
-import { extractMissingCredentials } from './extractMissingCredentials'
 import { extractAllCredentials } from './extractAllCredentials'
 
-export async function findSidekickById(user: User, id: string, isQuickSetup: boolean = false) {
+export async function findSidekickById(user: User, id: string) {
     let token
     try {
         const { accessToken } = await auth0.getAccessToken({
@@ -84,12 +83,8 @@ export async function findSidekickById(user: User, id: string, isQuickSetup: boo
         .map((c: string) => c.trim().split(';'))
         .flat()
 
-    const missingCredentials = extractMissingCredentials(chatflow.flowData)
     const allCredentials = extractAllCredentials(chatflow.flowData)
-
-    // In QuickSetup mode, show all credentials; otherwise show only missing ones
-    const credentialsToShow = isQuickSetup ? allCredentials : missingCredentials
-    const needsSetup = isQuickSetup ? allCredentials.length > 0 : missingCredentials.length > 0
+    const needsSetup = allCredentials.some((cred) => !cred.isAssigned)
 
     return {
         id: chatflow.id || '',
@@ -106,7 +101,7 @@ export async function findSidekickById(user: User, id: string, isQuickSetup: boo
         isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
         isFavorite: false,
         needsSetup,
-        credentialsToShow,
+        credentialsToShow: allCredentials,
         allCredentials,
         constraints: {
             isSpeechToTextEnabled,

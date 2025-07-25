@@ -396,11 +396,6 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             </DialogTitle>
 
             <DialogContent sx={{ padding: 3, minHeight: '400px' }}>
-                {isQuickSetupMode && (
-                    <Typography variant='caption' color='text.secondary' sx={{ mb: 2 }}>
-                        Quick Setup mode enabled - all credentials are shown
-                    </Typography>
-                )}
                 {loading ? (
                     <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
                         <CircularProgress />
@@ -408,103 +403,225 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     </Box>
                 ) : (
                     <Stack spacing={3}>
-                        {Object.entries(groupedCredentials).map(([groupKey, group]) => {
-                            const credentialsForGroup = availableCredentials[groupKey] || []
-                            const hasMultipleNodes = group.nodes.length > 1
+                        {/* First show unassigned credentials */}
+                        {Object.entries(groupedCredentials)
+                            .filter(([_, group]) => !group.isAssigned)
+                            .map(([groupKey, group]) => {
+                                const credentialsForGroup = availableCredentials[groupKey] || []
+                                const hasMultipleNodes = group.nodes.length > 1
 
-                            return (
-                                <Paper key={groupKey} elevation={1} sx={{ p: 2, borderRadius: 2 }}>
-                                    <Stack spacing={2}>
-                                        {/* Credential Header */}
-                                        <Box display='flex' alignItems='center' gap={2}>
-                                            <Avatar
-                                                src={`${baseURL}/api/v1/components-credentials-icon/${
-                                                    group.credentialTypes?.[0] || group.credentialName
-                                                }`}
-                                                sx={{ width: 32, height: 32 }}
-                                            >
-                                                <IconLock />
-                                            </Avatar>
-                                            <Box flex={1}>
-                                                <Box display='flex' alignItems='center' gap={1}>
-                                                    <Typography variant='h6' fontWeight='bold'>
-                                                        {group.label}
-                                                    </Typography>
-                                                    {isQuickSetupMode && group.isAssigned && (
+                                return (
+                                    <Paper
+                                        key={groupKey}
+                                        elevation={1}
+                                        sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'warning.main' }}
+                                    >
+                                        <Stack spacing={2}>
+                                            {/* Credential Header */}
+                                            <Box display='flex' alignItems='center' gap={2}>
+                                                <Avatar
+                                                    src={`${baseURL}/api/v1/components-credentials-icon/${
+                                                        group.credentialTypes?.[0] || group.credentialName
+                                                    }`}
+                                                    sx={{ width: 32, height: 32 }}
+                                                >
+                                                    <IconLock />
+                                                </Avatar>
+                                                <Box flex={1}>
+                                                    <Box display='flex' alignItems='center' gap={1}>
+                                                        <Typography variant='h6' fontWeight='bold'>
+                                                            {group.label}
+                                                        </Typography>
                                                         <Chip
-                                                            label='Assigned'
+                                                            label='Setup Required'
                                                             size='small'
-                                                            color='success'
-                                                            variant='outlined'
+                                                            color='warning'
+                                                            variant='filled'
                                                             sx={{ fontSize: '0.7rem', height: 20 }}
                                                         />
-                                                    )}
+                                                    </Box>
+                                                    <Typography variant='body2' color='text.secondary'>
+                                                        {hasMultipleNodes
+                                                            ? `Required by ${group.nodes.length} nodes`
+                                                            : `Required by ${group.nodes[0].nodeName}`}
+                                                    </Typography>
                                                 </Box>
-                                                <Typography variant='body2' color='text.secondary'>
-                                                    {hasMultipleNodes
-                                                        ? `Required by ${group.nodes.length} nodes`
-                                                        : `Required by ${group.nodes[0].nodeName}`}
-                                                </Typography>
                                             </Box>
-                                        </Box>
 
-                                        {/* Credential Selector */}
-                                        <Box>
-                                            <FormControl fullWidth>
-                                                <InputLabel>Select Credential</InputLabel>
-                                                <Select
-                                                    value={group.nodes.length > 0 ? credentialAssignments[group.nodes[0].nodeId] || '' : ''}
-                                                    onChange={(e) => {
-                                                        // Apply the same credential to all nodes in this group
-                                                        group.nodes.forEach((node) => {
-                                                            handleCredentialChange(node.nodeId, e.target.value)
-                                                        })
-                                                    }}
-                                                    label='Select Credential'
-                                                    disabled={loading || assigningCredentials}
-                                                    sx={{ mb: 1 }}
-                                                >
-                                                    {credentialsForGroup.map((credential) => (
-                                                        <MenuItem key={credential.id} value={credential.id}>
-                                                            <Box display='flex' alignItems='center' gap={1}>
-                                                                <Typography>{credential.name}</Typography>
-                                                                <Typography variant='caption' color='text.secondary'>
-                                                                    ({credential.credentialName})
-                                                                </Typography>
-                                                            </Box>
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-
-                                            {/* Add new credential button */}
-                                            <Button
-                                                startIcon={<IconPlus />}
-                                                onClick={() => handleCreateCredential(group.credentialTypes?.[0] || group.credentialName)}
-                                                size='small'
-                                                sx={{ mt: 1 }}
-                                            >
-                                                Add New {group.label}
-                                            </Button>
-                                        </Box>
-
-                                        {/* Show affected nodes if multiple */}
-                                        {hasMultipleNodes && (
+                                            {/* Credential Selector */}
                                             <Box>
-                                                <Typography variant='caption' color='text.secondary' gutterBottom>
-                                                    Affected nodes:
-                                                </Typography>
-                                                <Box display='flex' flexWrap='wrap' gap={0.5}>
-                                                    {group.nodes.map((node) => (
-                                                        <Chip key={node.nodeId} label={node.nodeName} size='small' variant='outlined' />
-                                                    ))}
-                                                </Box>
+                                                <FormControl fullWidth>
+                                                    <InputLabel>Select Credential</InputLabel>
+                                                    <Select
+                                                        value={
+                                                            group.nodes.length > 0 ? credentialAssignments[group.nodes[0].nodeId] || '' : ''
+                                                        }
+                                                        onChange={(e) => {
+                                                            // Apply the same credential to all nodes in this group
+                                                            group.nodes.forEach((node) => {
+                                                                handleCredentialChange(node.nodeId, e.target.value)
+                                                            })
+                                                        }}
+                                                        label='Select Credential'
+                                                        disabled={loading || assigningCredentials}
+                                                        sx={{ mb: 1 }}
+                                                    >
+                                                        {credentialsForGroup.map((credential) => (
+                                                            <MenuItem key={credential.id} value={credential.id}>
+                                                                <Box display='flex' alignItems='center' gap={1}>
+                                                                    <Typography>{credential.name}</Typography>
+                                                                    <Typography variant='caption' color='text.secondary'>
+                                                                        ({credential.credentialName})
+                                                                    </Typography>
+                                                                </Box>
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+
+                                                {/* Add new credential button */}
+                                                <Button
+                                                    startIcon={<IconPlus />}
+                                                    onClick={() =>
+                                                        handleCreateCredential(group.credentialTypes?.[0] || group.credentialName)
+                                                    }
+                                                    size='small'
+                                                    sx={{ mt: 1 }}
+                                                >
+                                                    Add New {group.label}
+                                                </Button>
                                             </Box>
-                                        )}
-                                    </Stack>
-                                </Paper>
-                            )
-                        })}
+
+                                            {/* Show affected nodes if multiple */}
+                                            {hasMultipleNodes && (
+                                                <Box>
+                                                    <Typography variant='caption' color='text.secondary' gutterBottom>
+                                                        Affected nodes:
+                                                    </Typography>
+                                                    <Box display='flex' flexWrap='wrap' gap={0.5}>
+                                                        {group.nodes.map((node) => (
+                                                            <Chip key={node.nodeId} label={node.nodeName} size='small' variant='outlined' />
+                                                        ))}
+                                                    </Box>
+                                                </Box>
+                                            )}
+                                        </Stack>
+                                    </Paper>
+                                )
+                            })}
+
+                        {/* Then show assigned credentials if in QuickSetup mode */}
+                        {isQuickSetupMode &&
+                            Object.entries(groupedCredentials)
+                                .filter(([_, group]) => group.isAssigned)
+                                .map(([groupKey, group]) => {
+                                    const credentialsForGroup = availableCredentials[groupKey] || []
+                                    const hasMultipleNodes = group.nodes.length > 1
+
+                                    return (
+                                        <Paper key={groupKey} elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+                                            <Stack spacing={2}>
+                                                {/* Credential Header */}
+                                                <Box display='flex' alignItems='center' gap={2}>
+                                                    <Avatar
+                                                        src={`${baseURL}/api/v1/components-credentials-icon/${
+                                                            group.credentialTypes?.[0] || group.credentialName
+                                                        }`}
+                                                        sx={{ width: 32, height: 32 }}
+                                                    >
+                                                        <IconLock />
+                                                    </Avatar>
+                                                    <Box flex={1}>
+                                                        <Box display='flex' alignItems='center' gap={1}>
+                                                            <Typography variant='h6' fontWeight='bold'>
+                                                                {group.label}
+                                                            </Typography>
+                                                            {isQuickSetupMode && group.isAssigned && (
+                                                                <Chip
+                                                                    label='Assigned'
+                                                                    size='small'
+                                                                    color='success'
+                                                                    variant='outlined'
+                                                                    sx={{ fontSize: '0.7rem', height: 20 }}
+                                                                />
+                                                            )}
+                                                        </Box>
+                                                        <Typography variant='body2' color='text.secondary'>
+                                                            {hasMultipleNodes
+                                                                ? `Required by ${group.nodes.length} nodes`
+                                                                : `Required by ${group.nodes[0].nodeName}`}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                {/* Credential Selector */}
+                                                <Box>
+                                                    <FormControl fullWidth>
+                                                        <InputLabel>Select Credential</InputLabel>
+                                                        <Select
+                                                            value={
+                                                                group.nodes.length > 0
+                                                                    ? credentialAssignments[group.nodes[0].nodeId] || ''
+                                                                    : ''
+                                                            }
+                                                            onChange={(e) => {
+                                                                // Apply the same credential to all nodes in this group
+                                                                group.nodes.forEach((node) => {
+                                                                    handleCredentialChange(node.nodeId, e.target.value)
+                                                                })
+                                                            }}
+                                                            label='Select Credential'
+                                                            disabled={loading || assigningCredentials}
+                                                            sx={{ mb: 1 }}
+                                                        >
+                                                            {credentialsForGroup.map((credential) => (
+                                                                <MenuItem key={credential.id} value={credential.id}>
+                                                                    <Box display='flex' alignItems='center' gap={1}>
+                                                                        <Typography>{credential.name}</Typography>
+                                                                        <Typography variant='caption' color='text.secondary'>
+                                                                            ({credential.credentialName})
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+
+                                                    {/* Add new credential button */}
+                                                    <Button
+                                                        startIcon={<IconPlus />}
+                                                        onClick={() =>
+                                                            handleCreateCredential(group.credentialTypes?.[0] || group.credentialName)
+                                                        }
+                                                        size='small'
+                                                        sx={{ mt: 1 }}
+                                                    >
+                                                        Add New {group.label}
+                                                    </Button>
+                                                </Box>
+
+                                                {/* Show affected nodes if multiple */}
+                                                {hasMultipleNodes && (
+                                                    <Box>
+                                                        <Typography variant='caption' color='text.secondary' gutterBottom>
+                                                            Affected nodes:
+                                                        </Typography>
+                                                        <Box display='flex' flexWrap='wrap' gap={0.5}>
+                                                            {group.nodes.map((node) => (
+                                                                <Chip
+                                                                    key={node.nodeId}
+                                                                    label={node.nodeName}
+                                                                    size='small'
+                                                                    variant='outlined'
+                                                                />
+                                                            ))}
+                                                        </Box>
+                                                    </Box>
+                                                )}
+                                            </Stack>
+                                        </Paper>
+                                    )
+                                })}
                     </Stack>
                 )}
             </DialogContent>

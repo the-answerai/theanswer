@@ -11,7 +11,7 @@ const fetcher = async (url) => {
 }
 
 export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) => {
-    const apiUrl = sidekickId ? `/api/sidekicks/${sidekickId}${forceQuickSetup ? '?QuickSetup=true' : ''}` : null
+    const apiUrl = sidekickId ? `/api/sidekicks/${sidekickId}` : null
 
     const {
         data: sidekick,
@@ -39,9 +39,6 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
         [sidekickId, mutate]
     )
 
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('[useSidekickWithCredentials] sidekick', { sidekickId, sidekick, forceQuickSetup, error })
-    }
     return {
         sidekick,
         isLoading,

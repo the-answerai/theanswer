@@ -121,8 +121,8 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         return null
     }
 
-    // For non-QuickSetup mode, only show if there are credentials to show and setup is needed
-    if (!isQuickSetup && (!needsSetup || credentialsToShow.length === 0)) {
+    // For non-QuickSetup mode, only show if there are unassigned credentials
+    if (!isQuickSetup && !needsSetup) {
         return null
     }
 
