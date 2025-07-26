@@ -31,6 +31,10 @@ const getAllowChatflowUploads = (id) => client.get(`/chatflows-uploads/${id}`)
 
 const generateAgentflow = (body) => client.post(`/agentflowv2-generator/generate`, body)
 
+const getDefaultChatflowTemplate = () => client.get('/admin/chatflows/default-template')
+
+const bulkUpdateChatflows = (chatflowIds) => client.put('/admin/chatflows/bulk-update', { chatflowIds })
+
 export default {
     getAllChatflows,
     getAllAgentflows,
@@ -43,5 +47,7 @@ export default {
     deleteChatflow,
     getIsChatflowStreaming,
     getAllowChatflowUploads,
-    generateAgentflow
+    generateAgentflow,
+    getDefaultChatflowTemplate,
+    bulkUpdateChatflows
 }

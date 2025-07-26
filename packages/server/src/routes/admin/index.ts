@@ -7,6 +7,9 @@ const router = express.Router()
 // CHATFLOWS
 // READ
 router.get('/chatflows', enforceAbility('ChatFlow'), chatflowsController.getAdminChatflows)
+router.get('/chatflows/default-template', enforceAbility('ChatFlow'), chatflowsController.getDefaultChatflowTemplate)
+// UPDATE
+router.put('/chatflows/bulk-update', enforceAbility('ChatFlow'), chatflowsController.bulkUpdateChatflows)
 
 // ORGANIZATIONS
 // READ - temporarily without enforceAbility for debugging

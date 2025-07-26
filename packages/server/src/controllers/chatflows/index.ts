@@ -267,6 +267,29 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
     }
 }
 
+const getDefaultChatflowTemplate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const apiResponse = await chatflowsService.getDefaultChatflowTemplate(req.user!)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const bulkUpdateChatflows = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { chatflowIds } = req.body
+        if (!Array.isArray(chatflowIds) || chatflowIds.length === 0) {
+            return res.status(400).json({ error: 'chatflowIds must be a non-empty array' })
+        }
+
+        const apiResponse = await chatflowsService.bulkUpdateChatflows(chatflowIds, req.user!)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -279,5 +302,7 @@ export default {
     updateChatflow,
     getSinglePublicChatflow,
     getSinglePublicChatbotConfig,
-    getAdminChatflows
+    getAdminChatflows,
+    getDefaultChatflowTemplate,
+    bulkUpdateChatflows
 }

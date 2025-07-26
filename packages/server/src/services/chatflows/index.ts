@@ -1,6 +1,6 @@
 import { ICommonObject, removeFolderFromStorage } from 'flowise-components'
 import { StatusCodes } from 'http-status-codes'
-import { QueryRunner } from 'typeorm'
+import { QueryRunner, In } from 'typeorm'
 import { ChatflowType, IReactFlowObject, IUser } from '../../Interface'
 import { FLOWISE_COUNTER_STATUS, FLOWISE_METRIC_COUNTERS } from '../../Interface.Metrics'
 import { ChatFlow, ChatflowVisibility } from '../../database/entities/ChatFlow'
@@ -207,13 +207,17 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: Cha
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions } = user ?? {}
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
-        const queryBuilder = chatFlowRepository.createQueryBuilder('chatFlow')
+        const queryBuilder = chatFlowRepository
+            .createQueryBuilder('chatFlow')
+            .leftJoin('User', 'user', 'user.id = chatFlow.userId')
+            .addSelect(['user.id', 'user.name', 'user.email'])
 
         // Apply field selection if specified
         if (filter?.select && filter.select.length > 0) {
             // Always include id for proper entity mapping
             const selectFields = ['chatFlow.id', ...filter.select.map((field) => `chatFlow.${field}`)]
             queryBuilder.select(selectFields)
+            queryBuilder.addSelect(['user.id', 'user.name', 'user.email'])
         }
 
         // Handle auth0_org_id filter for cross-org access
@@ -232,9 +236,11 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: Cha
             queryBuilder.where('chatFlow.organizationId = :organizationId', { organizationId: targetOrgId })
         }
 
-        // PERFORMANCE: Always only return user's own chatflows for better performance
-        // Even admins only see their own chatflows in the sidekick selector
-        queryBuilder.andWhere('chatFlow.userId = :userId', { userId })
+        // ADMIN ACCESS: Admins can see all chatflows in their organization, regular users only see their own
+        const isAdmin = user?.roles?.includes('Admin')
+        if (!isAdmin) {
+            queryBuilder.andWhere('chatFlow.userId = :userId', { userId })
+        }
 
         // Apply additional visibility filtering if specified
         if (filter?.visibility) {
@@ -246,17 +252,56 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: Cha
 
             queryBuilder.andWhere(`(${visibilityConditions})`)
         }
-        const response = await queryBuilder.getMany()
-        const dbResponse = response.map((chatflow) => ({
-            ...chatflow,
-            badge: chatflow?.visibility?.includes(ChatflowVisibility.MARKETPLACE)
-                ? 'SHARED'
-                : chatflow?.visibility?.includes(ChatflowVisibility.ORGANIZATION)
-                ? 'ORGANIZATION'
-                : '',
-            isOwner: chatflow.userId === userId,
-            canEdit: (chatflow.userId === userId && permissions?.includes('chatflow:manage')) || permissions?.includes('org:manage')
-        }))
+
+        // Get default template information for comparison
+        const defaultTemplate = user ? await getDefaultChatflowTemplate(user) : null
+        let templateChatflow = null
+        if (defaultTemplate) {
+            templateChatflow = await chatFlowRepository.findOne({
+                where: { id: defaultTemplate.id },
+                select: ['id', 'updatedDate']
+            })
+        }
+
+        const rawResults = await queryBuilder.getRawAndEntities()
+        const dbResponse = rawResults.entities.map((chatflow, index) => {
+            const rawData = rawResults.raw[index]
+
+            // Determine template derivation status
+            const isFromTemplate = defaultTemplate && chatflow.parentChatflowId === defaultTemplate.id
+            let templateStatus = 'not_from_template' // 'up_to_date', 'outdated', 'not_from_template'
+
+            if (isFromTemplate && templateChatflow) {
+                // Compare template's updatedDate with chatflow's updatedDate
+                templateStatus = new Date(templateChatflow.updatedDate) > new Date(chatflow.updatedDate) ? 'outdated' : 'up_to_date'
+            }
+
+            return {
+                ...chatflow,
+                user: {
+                    id: rawData.user_id,
+                    name: rawData.user_name,
+                    email: rawData.user_email
+                },
+                badge: chatflow?.visibility?.includes(ChatflowVisibility.MARKETPLACE)
+                    ? 'SHARED'
+                    : chatflow?.visibility?.includes(ChatflowVisibility.ORGANIZATION)
+                    ? 'ORGANIZATION'
+                    : '',
+                isOwner: chatflow.userId === userId,
+                canEdit: chatflow.userId === userId || permissions?.includes('org:manage'),
+                parentTemplate:
+                    isFromTemplate && defaultTemplate && templateChatflow
+                        ? {
+                              id: defaultTemplate.id,
+                              name: defaultTemplate.name,
+                              lastUpdated: templateChatflow.updatedDate
+                          }
+                        : null,
+                templateStatus,
+                isFromTemplate
+            }
+        })
 
         if (!(await checkOwnership(dbResponse, user))) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
@@ -333,16 +378,6 @@ const getChatflowById = async (chatflowId: string, user?: IUser): Promise<any> =
             if (!(isUsersChatflow || isChatflowPublic || isUserOrgAdmin || (hasChatflowOrgVisibility && isUserInSameOrg))) {
                 throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized to access this chatflow`)
             }
-            // Add permission properties to response
-            const enhancedResponse = {
-                ...dbResponse,
-                isOwner: dbResponse.userId === user.id,
-                canEdit:
-                    (dbResponse.userId === user.id && user.permissions?.includes('chatflow:manage')) ||
-                    user.permissions?.includes('org:manage')
-            }
-
-            return enhancedResponse
         }
 
         return dbResponse
@@ -748,6 +783,124 @@ const upsertChat = async ({
     }
 }
 
+const getDefaultChatflowTemplate = async (user: IUser): Promise<{ id: string; name: string } | null> => {
+    try {
+        // Get the default template ID from environment variable
+        const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? ''
+        const ids = rawIds
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean)
+
+        if (!ids.length) {
+            return null
+        }
+
+        // Use the first ID as the default template
+        const templateId = ids[0]
+
+        const appServer = getRunningExpressApp()
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get the template chatflow
+        const template = await chatFlowRepository.findOne({
+            where: { id: templateId },
+            select: ['id', 'name']
+        })
+
+        return template ? { id: template.id, name: template.name } : null
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.getDefaultChatflowTemplate - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<{ updated: number; errors: string[] }> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const { id: userId, organizationId } = user
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get default template
+        const defaultTemplate = await getDefaultChatflowTemplate(user)
+        if (!defaultTemplate) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No default template found')
+        }
+
+        // Get template chatflow with full data
+        const templateChatflow = await chatFlowRepository.findOne({
+            where: { id: defaultTemplate.id }
+        })
+
+        if (!templateChatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, 'Template chatflow not found')
+        }
+
+        // Get target chatflows that belong to the admin's organization and are outdated
+        const targetChatflows = await chatFlowRepository.find({
+            where: {
+                id: In(chatflowIds),
+                organizationId,
+                parentChatflowId: defaultTemplate.id
+            }
+        })
+
+        if (targetChatflows.length === 0) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No valid chatflows found for update')
+        }
+
+        const results = { updated: 0, errors: [] as string[] }
+
+        // Use transaction for bulk updates
+        const queryRunner = appServer.AppDataSource.createQueryRunner()
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
+
+        try {
+            for (const targetChatflow of targetChatflows) {
+                try {
+                    // Create updated chatflow by copying template data but preserving key fields
+                    const updatedChatflow = {
+                        ...templateChatflow,
+                        id: targetChatflow.id,
+                        name: targetChatflow.name, // Preserve original name
+                        description: targetChatflow.description, // Preserve original description
+                        userId: targetChatflow.userId, // Preserve original owner
+                        organizationId: targetChatflow.organizationId, // Preserve original organization
+                        parentChatflowId: targetChatflow.parentChatflowId, // Preserve parent relationship
+                        createdDate: targetChatflow.createdDate // Preserve creation date
+                        // updatedDate will be set automatically by TypeORM
+                    }
+
+                    // Remove template-specific fields that shouldn't be copied
+                    delete (updatedChatflow as any).templateId
+
+                    await queryRunner.manager.save(ChatFlow, updatedChatflow)
+                    results.updated++
+                } catch (error) {
+                    results.errors.push(`Failed to update chatflow ${targetChatflow.id}: ${getErrorMessage(error)}`)
+                }
+            }
+
+            await queryRunner.commitTransaction()
+        } catch (error) {
+            await queryRunner.rollbackTransaction()
+            throw error
+        } finally {
+            await queryRunner.release()
+        }
+
+        return results
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.bulkUpdateChatflows - ${getErrorMessage(error)}`
+        )
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -761,5 +914,7 @@ export default {
     updateChatflow,
     getSinglePublicChatflow,
     getSinglePublicChatbotConfig,
-    upsertChat
+    upsertChat,
+    getDefaultChatflowTemplate,
+    bulkUpdateChatflows
 }

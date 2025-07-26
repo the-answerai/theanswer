@@ -21,9 +21,13 @@ import {
     Button,
     Dialog,
     DialogTitle,
-    DialogContent
+    DialogContent,
+    Switch,
+    FormControlLabel,
+    Checkbox
 } from '@mui/material'
 import FilterListIcon from '@mui/icons-material/FilterList'
+import TemplateIcon from '@mui/icons-material/AccountTree'
 import chatflowsApi from '@/api/chatflows'
 import useApi from '@ui/hooks/useApi'
 import { format } from 'date-fns'
@@ -70,15 +74,24 @@ const AdminChatflows = () => {
     const [keywordFilter, setKeywordFilter] = useState('')
     const [metricsModalOpen, setMetricsModalOpen] = useState(false)
     const [selectedChatflowId, setSelectedChatflowId] = useState<string>('')
+    const [showTemplateOnly, setShowTemplateOnly] = useState(false)
+    const [templateStatusFilter, setTemplateStatusFilter] = useState<string[]>([])
+    const [selectedForUpdate, setSelectedForUpdate] = useState<string[]>([])
     const {
         data: chatflowsData,
         isLoading: getAllChatflowsApiLoading,
         isError: getAllChatflowsApiError
     } = useApi('/api/chatflows', () =>
         chatflowsApi.getAdminChatflows({
-            select: ['name', 'description', 'category', 'userId', 'createdDate', 'updatedDate']
+            select: ['name', 'description', 'category', 'userId', 'createdDate', 'updatedDate', 'parentChatflowId']
         })
     )
+
+    const {
+        data: defaultTemplateData,
+        isLoading: defaultTemplateLoading,
+        isError: defaultTemplateError
+    } = useApi('/api/admin/default-template', () => chatflowsApi.getDefaultChatflowTemplate())
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage)
@@ -132,9 +145,8 @@ const AdminChatflows = () => {
 
             // Owner filter
             if (selectedOwners.length > 0) {
-                const owner = chatflow.isOwner ? 'Me' : chatflow.userId
-                const hasMatchingOwner = selectedOwners.some((selectedOwner) => owner.toLowerCase().includes(selectedOwner.toLowerCase()))
-                if (!hasMatchingOwner) return false
+                const ownerId = chatflow.isOwner ? 'me' : chatflow.userId
+                if (!selectedOwners.includes(ownerId)) return false
             }
 
             // Keyword filter
@@ -143,6 +155,16 @@ const AdminChatflows = () => {
                 const nameMatch = chatflow.name.toLowerCase().includes(searchText)
                 const descriptionMatch = chatflow.description?.toLowerCase().includes(searchText) || false
                 if (!nameMatch && !descriptionMatch) return false
+            }
+
+            // Template-only filter
+            if (showTemplateOnly && !chatflow.isFromTemplate) {
+                return false
+            }
+
+            // Template status filter
+            if (templateStatusFilter.length > 0 && !templateStatusFilter.includes(chatflow.templateStatus)) {
+                return false
             }
 
             return true
@@ -164,13 +186,25 @@ const AdminChatflows = () => {
     const getAllOwners = () => {
         if (!chatflowsData) return []
 
-        const owners = new Set<string>()
+        const ownersMap = new Map<string, string>()
         chatflowsData.forEach((chatflow) => {
-            const owner = chatflow.isOwner ? 'Me' : chatflow.userId
-            owners.add(owner)
+            if (chatflow.isOwner) {
+                ownersMap.set('me', 'Me')
+            } else if (chatflow.user?.name) {
+                ownersMap.set(chatflow.userId, chatflow.user.name)
+            } else if (chatflow.user?.email) {
+                ownersMap.set(chatflow.userId, chatflow.user.email)
+            } else {
+                ownersMap.set(chatflow.userId, chatflow.userId)
+            }
         })
 
-        return Array.from(owners).sort()
+        return Array.from(ownersMap.entries())
+            .map(([id, name]) => ({
+                label: name,
+                value: id
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label))
     }
 
     const handleOpenMetrics = (chatflowId: string) => {
@@ -225,6 +259,52 @@ const AdminChatflows = () => {
                     <FilterListIcon />
                 </IconButton>
             </Box>
+
+            {/* Default Template Link */}
+            {defaultTemplateData && (
+                <Box sx={{ mb: 3 }}>
+                    <Box
+                        sx={{
+                            p: 2,
+                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                            borderRadius: '8px',
+                            bgcolor: 'rgba(255, 193, 7, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <TemplateIcon sx={{ color: 'rgba(255, 193, 7, 0.9)', fontSize: '1.5rem' }} />
+                            <Box>
+                                <Typography variant='body2' sx={{ color: 'rgba(255, 193, 7, 0.9)', fontWeight: 600, mb: 0.5 }}>
+                                    Organization Default Template
+                                </Typography>
+                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+                                    This is the template used for all new user chatflows
+                                </Typography>
+                            </Box>
+                        </Box>
+                        <Button
+                            component={Link}
+                            to={`/canvas/${defaultTemplateData.id}`}
+                            target='_blank'
+                            variant='outlined'
+                            size='small'
+                            sx={{
+                                color: 'rgba(255, 193, 7, 0.9)',
+                                borderColor: 'rgba(255, 193, 7, 0.3)',
+                                '&:hover': {
+                                    borderColor: 'rgba(255, 193, 7, 0.5)',
+                                    bgcolor: 'rgba(255, 193, 7, 0.1)'
+                                }
+                            }}
+                        >
+                            View Template: {defaultTemplateData.name}
+                        </Button>
+                    </Box>
+                </Box>
+            )}
 
             <Box
                 sx={{
@@ -342,9 +422,10 @@ const AdminChatflows = () => {
                                     multiple
                                     size='small'
                                     options={getAllOwners()}
-                                    value={selectedOwners}
+                                    getOptionLabel={(option) => option.label}
+                                    value={getAllOwners().filter((owner) => selectedOwners.includes(owner.value))}
                                     onChange={(event, newValue) => {
-                                        setSelectedOwners(newValue)
+                                        setSelectedOwners(newValue.map((owner) => owner.value))
                                         setPage(0)
                                     }}
                                     renderInput={(params) => (
@@ -384,12 +465,242 @@ const AdminChatflows = () => {
                                 />
                             </Box>
                         </Box>
+
+                        {/* Template Filters */}
+                        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                            <Typography variant='h6' sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
+                                Template Management
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, alignItems: 'start' }}>
+                                {/* Template Only Toggle */}
+                                <Box>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={showTemplateOnly}
+                                                onChange={(e) => {
+                                                    setShowTemplateOnly(e.target.checked)
+                                                    setPage(0)
+                                                }}
+                                                sx={{
+                                                    '& .MuiSwitch-switchBase.Mui-checked': {
+                                                        color: 'rgba(255, 193, 7, 0.9)',
+                                                        '&:hover': {
+                                                            backgroundColor: 'rgba(255, 193, 7, 0.1)'
+                                                        }
+                                                    },
+                                                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                                        backgroundColor: 'rgba(255, 193, 7, 0.5)'
+                                                    }
+                                                }}
+                                            />
+                                        }
+                                        label={
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                                Show only template-derived chatflows
+                                            </Typography>
+                                        }
+                                    />
+                                </Box>
+
+                                {/* Template Status Filter */}
+                                <Box>
+                                    <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                        Template Status
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                        {[
+                                            { value: 'up_to_date', label: 'Up-to-date', color: 'rgba(76, 175, 80, 0.7)' },
+                                            { value: 'outdated', label: 'Outdated', color: 'rgba(255, 152, 0, 0.7)' },
+                                            { value: 'not_from_template', label: 'Not from template', color: 'rgba(158, 158, 158, 0.7)' }
+                                        ].map((status) => (
+                                            <FormControlLabel
+                                                key={status.value}
+                                                control={
+                                                    <Checkbox
+                                                        checked={templateStatusFilter.includes(status.value)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setTemplateStatusFilter([...templateStatusFilter, status.value])
+                                                            } else {
+                                                                setTemplateStatusFilter(
+                                                                    templateStatusFilter.filter((s) => s !== status.value)
+                                                                )
+                                                            }
+                                                            setPage(0)
+                                                        }}
+                                                        sx={{
+                                                            color: status.color,
+                                                            '&.Mui-checked': {
+                                                                color: status.color
+                                                            }
+                                                        }}
+                                                    />
+                                                }
+                                                label={
+                                                    <Typography
+                                                        variant='body2'
+                                                        sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.8rem' }}
+                                                    >
+                                                        {status.label}
+                                                    </Typography>
+                                                }
+                                            />
+                                        ))}
+                                    </Box>
+                                </Box>
+                            </Box>
+                        </Box>
                     </Box>
                 </Box>
+
+                {/* Bulk Update Actions */}
+                {chatflowsData && chatflowsData.some((chatflow) => chatflow.templateStatus === 'outdated') && (
+                    <Box
+                        sx={{
+                            mb: 2,
+                            p: 3,
+                            border: '1px solid rgba(255, 152, 0, 0.3)',
+                            borderRadius: '8px',
+                            bgcolor: 'rgba(255, 152, 0, 0.1)'
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Box>
+                                <Typography variant='body1' sx={{ color: 'rgba(255, 152, 0, 0.9)', fontWeight: 600, mb: 0.5 }}>
+                                    Template Updates Available
+                                </Typography>
+                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                                    {chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length} chatflows are
+                                    outdated and can be updated to the latest template
+                                </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Button
+                                    variant='outlined'
+                                    size='small'
+                                    onClick={() => {
+                                        const outdatedIds = chatflowsData
+                                            .filter((chatflow) => chatflow.templateStatus === 'outdated')
+                                            .map((chatflow) => chatflow.id)
+                                        setSelectedForUpdate(selectedForUpdate.length === outdatedIds.length ? [] : outdatedIds)
+                                    }}
+                                    sx={{
+                                        color: 'rgba(255, 152, 0, 0.9)',
+                                        borderColor: 'rgba(255, 152, 0, 0.3)',
+                                        '&:hover': {
+                                            borderColor: 'rgba(255, 152, 0, 0.5)',
+                                            bgcolor: 'rgba(255, 152, 0, 0.1)'
+                                        }
+                                    }}
+                                >
+                                    {selectedForUpdate.length ===
+                                    chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length
+                                        ? 'Deselect All'
+                                        : 'Select All Outdated'}
+                                </Button>
+                                <Button
+                                    variant='contained'
+                                    size='small'
+                                    disabled={selectedForUpdate.length === 0}
+                                    onClick={async () => {
+                                        try {
+                                            const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate)
+                                            console.log('Bulk update completed:', response)
+
+                                            // Show success message and refresh data
+                                            if (response.updated > 0) {
+                                                // Refresh the chatflows data
+                                                window.location.reload() // Simple refresh for now
+                                            }
+
+                                            // Clear selections
+                                            setSelectedForUpdate([])
+                                        } catch (error) {
+                                            console.error('Bulk update failed:', error)
+                                            // TODO: Show error message to user
+                                        }
+                                    }}
+                                    sx={{
+                                        bgcolor: 'rgba(255, 152, 0, 0.8)',
+                                        color: '#fff',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(255, 152, 0, 0.9)'
+                                        },
+                                        '&:disabled': {
+                                            bgcolor: 'rgba(255, 152, 0, 0.3)',
+                                            color: 'rgba(255, 255, 255, 0.3)'
+                                        }
+                                    }}
+                                >
+                                    Update Selected ({selectedForUpdate.length})
+                                </Button>
+                            </Box>
+                        </Box>
+
+                        {selectedForUpdate.length > 0 && (
+                            <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: '4px' }}>
+                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)', fontWeight: 600, mb: 1 }}>
+                                    What will be updated:
+                                </Typography>
+                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.8rem' }}>
+                                    • Flow configuration and settings will be synced with the latest template
+                                    <br />
+                                    • API settings, starter prompts, and system configuration will be updated
+                                    <br />
+                                    • Name, description, owner, and organization will remain unchanged
+                                    <br />• User customizations in flow logic may be overwritten
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
+                )}
+
                 <TableContainer>
                     <Table size='small'>
                         <TableHead>
                             <TableRow>
+                                <TableCell
+                                    sx={{
+                                        color: 'rgba(255, 255, 255, 0.7)',
+                                        textAlign: 'center',
+                                        fontSize: '0.75rem',
+                                        py: 1,
+                                        width: '40px'
+                                    }}
+                                >
+                                    <Checkbox
+                                        size='small'
+                                        checked={
+                                            chatflowsData &&
+                                            selectedForUpdate.length ===
+                                                chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length &&
+                                            chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length > 0
+                                        }
+                                        indeterminate={
+                                            selectedForUpdate.length > 0 &&
+                                            chatflowsData &&
+                                            selectedForUpdate.length <
+                                                chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length
+                                        }
+                                        onChange={(e) => {
+                                            if (!chatflowsData) return
+                                            const outdatedIds = chatflowsData
+                                                .filter((chatflow) => chatflow.templateStatus === 'outdated')
+                                                .map((chatflow) => chatflow.id)
+                                            setSelectedForUpdate(e.target.checked ? outdatedIds : [])
+                                        }}
+                                        sx={{
+                                            color: 'rgba(255, 152, 0, 0.7)',
+                                            '&.Mui-checked': {
+                                                color: 'rgba(255, 152, 0, 0.9)'
+                                            },
+                                            '&.MuiCheckbox-indeterminate': {
+                                                color: 'rgba(255, 152, 0, 0.9)'
+                                            }
+                                        }}
+                                    />
+                                </TableCell>
                                 <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontSize: '0.75rem', py: 1 }}>
                                     <TableSortLabel
                                         active={orderBy === 'name'}
@@ -454,6 +765,9 @@ const AdminChatflows = () => {
                                     </TableSortLabel>
                                 </TableCell>
                                 <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontSize: '0.75rem', py: 1 }}>
+                                    Template Status
+                                </TableCell>
+                                <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontSize: '0.75rem', py: 1 }}>
                                     Actions
                                 </TableCell>
                             </TableRow>
@@ -464,7 +778,7 @@ const AdminChatflows = () => {
                                 Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)
                             ) : !chatflowsData || chatflowsData.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} align='center' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                    <TableCell colSpan={7} align='center' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                                         No chatflows found.
                                     </TableCell>
                                 </TableRow>
@@ -473,23 +787,60 @@ const AdminChatflows = () => {
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((chatflow: any) => (
                                         <TableRow key={chatflow.id} hover sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.03)' } }}>
-                                            <TableCell sx={{ py: 1, px: 1 }}>
-                                                <Box>
-                                                    <Typography
-                                                        sx={{
-                                                            color: 'rgba(255, 255, 255, 0.9)',
-                                                            cursor: 'pointer',
-                                                            fontSize: '0.875rem',
-                                                            '&:hover': {
-                                                                color: 'rgba(255, 255, 255, 1)',
-                                                                textDecoration: 'underline'
+                                            <TableCell sx={{ py: 1, px: 1, width: '40px' }}>
+                                                {chatflow.templateStatus === 'outdated' && (
+                                                    <Checkbox
+                                                        size='small'
+                                                        checked={selectedForUpdate.includes(chatflow.id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedForUpdate([...selectedForUpdate, chatflow.id])
+                                                            } else {
+                                                                setSelectedForUpdate(selectedForUpdate.filter((id) => id !== chatflow.id))
                                                             }
                                                         }}
-                                                    >
-                                                        <Link to={`/canvas/${chatflow.id}`} target='_blank' rel='noopener noreferrer'>
-                                                            {chatflow.name}
-                                                        </Link>
-                                                    </Typography>
+                                                        sx={{
+                                                            color: 'rgba(255, 152, 0, 0.7)',
+                                                            '&.Mui-checked': {
+                                                                color: 'rgba(255, 152, 0, 0.9)'
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell sx={{ py: 1, px: 1 }}>
+                                                <Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                                                        <Typography
+                                                            sx={{
+                                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.875rem',
+                                                                '&:hover': {
+                                                                    color: 'rgba(255, 255, 255, 1)',
+                                                                    textDecoration: 'underline'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Link to={`/canvas/${chatflow.id}`} target='_blank' rel='noopener noreferrer'>
+                                                                {chatflow.name}
+                                                            </Link>
+                                                        </Typography>
+                                                        {defaultTemplateData && chatflow.id === defaultTemplateData.id && (
+                                                            <Chip
+                                                                label='DEFAULT TEMPLATE'
+                                                                size='small'
+                                                                sx={{
+                                                                    bgcolor: 'rgba(255, 193, 7, 0.2)',
+                                                                    color: 'rgba(255, 193, 7, 0.9)',
+                                                                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                                    fontSize: '0.65rem',
+                                                                    height: '18px',
+                                                                    fontWeight: 600
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Box>
                                                     {chatflow.description && (
                                                         <Typography
                                                             variant='body2'
@@ -537,7 +888,7 @@ const AdminChatflows = () => {
                                                     px: 1
                                                 }}
                                             >
-                                                {chatflow.isOwner ? 'Me' : chatflow.userId}
+                                                {chatflow.isOwner ? 'Me' : chatflow.user?.name || chatflow.user?.email || chatflow.userId}
                                             </TableCell>
                                             <TableCell
                                                 sx={{
@@ -560,6 +911,60 @@ const AdminChatflows = () => {
                                                 }}
                                             >
                                                 {format(new Date(chatflow.updatedDate), 'MMM d, yyyy')}
+                                            </TableCell>
+                                            <TableCell sx={{ textAlign: 'center', py: 1, px: 1 }}>
+                                                {chatflow.templateStatus === 'up_to_date' && (
+                                                    <Chip
+                                                        label='Up-to-date'
+                                                        size='small'
+                                                        sx={{
+                                                            bgcolor: 'rgba(76, 175, 80, 0.2)',
+                                                            color: 'rgba(76, 175, 80, 0.9)',
+                                                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                                                            fontSize: '0.65rem',
+                                                            height: '20px'
+                                                        }}
+                                                    />
+                                                )}
+                                                {chatflow.templateStatus === 'outdated' && (
+                                                    <Chip
+                                                        label='Outdated'
+                                                        size='small'
+                                                        sx={{
+                                                            bgcolor: 'rgba(255, 152, 0, 0.2)',
+                                                            color: 'rgba(255, 152, 0, 0.9)',
+                                                            border: '1px solid rgba(255, 152, 0, 0.3)',
+                                                            fontSize: '0.65rem',
+                                                            height: '20px'
+                                                        }}
+                                                    />
+                                                )}
+                                                {chatflow.templateStatus === 'not_from_template' && (
+                                                    <Chip
+                                                        label='Not from template'
+                                                        size='small'
+                                                        sx={{
+                                                            bgcolor: 'rgba(158, 158, 158, 0.2)',
+                                                            color: 'rgba(158, 158, 158, 0.9)',
+                                                            border: '1px solid rgba(158, 158, 158, 0.3)',
+                                                            fontSize: '0.65rem',
+                                                            height: '20px'
+                                                        }}
+                                                    />
+                                                )}
+                                                {chatflow.parentTemplate && (
+                                                    <Typography
+                                                        variant='caption'
+                                                        sx={{
+                                                            display: 'block',
+                                                            color: 'rgba(255, 255, 255, 0.5)',
+                                                            fontSize: '0.6rem',
+                                                            mt: 0.5
+                                                        }}
+                                                    >
+                                                        From: {chatflow.parentTemplate.name}
+                                                    </Typography>
+                                                )}
                                             </TableCell>
                                             <TableCell sx={{ textAlign: 'center', py: 1, px: 1 }}>
                                                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
