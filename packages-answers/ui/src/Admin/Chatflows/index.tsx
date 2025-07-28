@@ -501,7 +501,9 @@ const AdminChatflows = () => {
                                                 <Tooltip title='View Template' placement='top'>
                                                     <IconButton
                                                         size='small'
-                                                        onClick={() => window.open(`/canvas/${fullDefaultTemplate.id}`, '_blank')}
+                                                        onClick={() =>
+                                                            window.open(`/sidekick-studio/canvas/${fullDefaultTemplate.id}`, '_blank')
+                                                        }
                                                         sx={{
                                                             color: 'rgba(255, 193, 7, 0.8)',
                                                             bgcolor: 'rgba(255, 193, 7, 0.1)',
