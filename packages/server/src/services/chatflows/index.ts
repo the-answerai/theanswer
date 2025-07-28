@@ -19,6 +19,7 @@ import { validate } from 'uuid'
 import checkOwnership from '../../utils/checkOwnership'
 import { Organization } from '../../database/entities/Organization'
 import { Chat } from '../../database/entities/Chat'
+import chatflowStorageService from '../chatflow-storage'
 
 // Check if chatflow valid for streaming
 const checkIfChatflowIsValidForStreaming = async (chatflowId: string): Promise<any> => {
@@ -144,6 +145,8 @@ const deleteChatflow = async (chatflowId: string, user: IUser | undefined): Prom
         try {
             await removeFolderFromStorage(chatflowId)
             await documentStoreService.updateDocumentStoreUsage(chatflowId, undefined)
+            // Clean up S3 versioned storage
+            await chatflowStorageService.deleteChatflowStorage(chatflowId)
         } catch (e) {
             logger.error(`[server]: Error deleting file storage for chatflow ${chatflowId}: ${e}`)
         }
@@ -349,7 +352,7 @@ const getChatflowByApiKey = async (apiKeyId: string, keyonly?: unknown): Promise
     }
 }
 
-const getChatflowById = async (chatflowId: string, user?: IUser): Promise<any> => {
+const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         const dbResponse = await appServer.AppDataSource.getRepository(ChatFlow)
@@ -377,6 +380,19 @@ const getChatflowById = async (chatflowId: string, user?: IUser): Promise<any> =
 
             if (!(isUsersChatflow || isChatflowPublic || isUserOrgAdmin || (hasChatflowOrgVisibility && isUserInSameOrg))) {
                 throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized to access this chatflow`)
+            }
+        }
+
+        // Try to get the current version from S3 storage
+        if (user && useDraft && (dbResponse.userId === user.id || user.permissions?.includes('org:manage'))) {
+            try {
+                const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
+                if (currentRecord) {
+                    return currentRecord
+                }
+            } catch (error) {
+                // If S3 version fails, fall back to database version
+                logger.error(`Error getting S3 version for chatflow ${chatflowId}: ${getErrorMessage(error)}`)
             }
         }
 
@@ -439,6 +455,12 @@ const saveChatflow = async (newChatFlow: ChatFlow): Promise<ChatFlow> => {
             newChatFlow.visibility = Array.from(new Set([...newChatFlow.visibility, ChatflowVisibility.PRIVATE]))
         }
 
+        // Initialize versioning fields for new chatflows
+        if (!newChatFlow.id) {
+            newChatFlow.currentVersion = 1
+            newChatFlow.s3Location = `ChatFlows/${newChatFlow.id || 'temp'}/`
+        }
+
         if (containsBase64File(newChatFlow)) {
             // we need a 2-step process, as we need to save the chatflow first and then update the file paths
             // this is because we need the chatflow id to create the file paths
@@ -462,8 +484,18 @@ const saveChatflow = async (newChatFlow: ChatFlow): Promise<ChatFlow> => {
 
             // step 2 - convert base64 to file paths and update the chatflow
             step1Results.flowData = await updateFlowDataWithFilePaths(step1Results.id, incomingFlowData)
+
+            // Update S3 location with actual ID
+            step1Results.s3Location = `ChatFlows/${step1Results.id}/`
+
             await _checkAndUpdateDocumentStoreUsage(step1Results)
             dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(step1Results)
+
+            // Set initial version and save to S3 storage
+            dbResponse.currentVersion = 1
+            dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
+            await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
         } else {
             // Handle marketplace template IDs - capture as templateId before clearing parentChatflowId
             if (
@@ -478,6 +510,12 @@ const saveChatflow = async (newChatFlow: ChatFlow): Promise<ChatFlow> => {
 
             const chatflow = appServer.AppDataSource.getRepository(ChatFlow).create(newChatFlow)
             dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(chatflow)
+
+            // Update S3 location with actual ID, set initial version and save to S3
+            dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
+            dbResponse.currentVersion = 1
+            await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
         }
 
         await appServer.telemetry.sendTelemetry('chatflow_created', {
@@ -651,7 +689,28 @@ const updateChatflow = async (chatflow: ChatFlow, updateChatFlow: ChatFlow, user
 
         await _checkAndUpdateDocumentStoreUsage(newDbChatflow)
 
+        // Auto-increment version if flowData was updated
+        if (updateChatFlow.flowData) {
+            newDbChatflow.currentVersion = (newDbChatflow.currentVersion || 1) + 1
+        }
+
         const dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(newDbChatflow)
+
+        // Save new version to S3 if flowData was updated
+        if (updateChatFlow.flowData) {
+            // Create version record with the actual user who made the change
+            const versionRecord = {
+                ...dbResponse,
+                // Override userId to track who actually made this change
+                versionMetadata: {
+                    originalUserId: dbResponse.userId, // Preserve original owner
+                    editedByUserId: user.id, // Track who made this change
+                    editedByName: user.name || 'Unknown User',
+                    editedByEmail: user.email
+                }
+            }
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion || 1, versionRecord)
+        }
 
         return dbResponse
     } catch (error) {
@@ -852,6 +911,7 @@ const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<
         }
 
         const results = { updated: 0, errors: [] as string[] }
+        const updatedChatflows: any[] = []
 
         // Use transaction for bulk updates
         const queryRunner = appServer.AppDataSource.createQueryRunner()
@@ -870,14 +930,17 @@ const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<
                         userId: targetChatflow.userId, // Preserve original owner
                         organizationId: targetChatflow.organizationId, // Preserve original organization
                         parentChatflowId: targetChatflow.parentChatflowId, // Preserve parent relationship
-                        createdDate: targetChatflow.createdDate // Preserve creation date
+                        createdDate: targetChatflow.createdDate, // Preserve creation date
+                        currentVersion: (targetChatflow.currentVersion || 1) + 1, // Increment version
+                        s3Location: targetChatflow.s3Location || `ChatFlows/${targetChatflow.id}/`
                         // updatedDate will be set automatically by TypeORM
                     }
 
                     // Remove template-specific fields that shouldn't be copied
                     delete (updatedChatflow as any).templateId
 
-                    await queryRunner.manager.save(ChatFlow, updatedChatflow)
+                    const savedChatflow = await queryRunner.manager.save(ChatFlow, updatedChatflow)
+                    updatedChatflows.push(savedChatflow)
                     results.updated++
                 } catch (error) {
                     results.errors.push(`Failed to update chatflow ${targetChatflow.id}: ${getErrorMessage(error)}`)
@@ -885,6 +948,26 @@ const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<
             }
 
             await queryRunner.commitTransaction()
+
+            // Save updated chatflows to S3 storage after successful database transaction
+            for (const chatflow of updatedChatflows) {
+                try {
+                    // Create version record with the admin who made the bulk update
+                    const versionRecord = {
+                        ...chatflow,
+                        versionMetadata: {
+                            originalUserId: chatflow.userId, // Preserve original owner
+                            editedByUserId: user.id, // Track who made this change
+                            editedByName: user.name || 'Unknown User',
+                            editedByEmail: user.email
+                        }
+                    }
+                    await chatflowStorageService.saveVersionedChatflow(chatflow.id, chatflow.currentVersion || 1, versionRecord)
+                } catch (s3Error) {
+                    // Log S3 errors but don't fail the entire operation
+                    results.errors.push(`Failed to save chatflow ${chatflow.id} to S3: ${getErrorMessage(s3Error)}`)
+                }
+            }
         } catch (error) {
             await queryRunner.rollbackTransaction()
             throw error
@@ -897,6 +980,175 @@ const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: chatflowsService.bulkUpdateChatflows - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const getChatflowVersions = async (chatflowId: string, user: IUser): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get the chatflow
+        const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
+        if (!chatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
+        }
+
+        // Check ownership
+        if (!(await checkOwnership(chatflow, user))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+
+        // Get versions from S3
+        const versions = await chatflowStorageService.listChatflowVersions(chatflowId)
+
+        // Get user information for each version
+        const userRepository = appServer.AppDataSource.getRepository('User')
+        const versionsWithUserInfo = []
+
+        for (const v of versions) {
+            let userName = 'Unknown User'
+            let userEmail = ''
+
+            // Check for version metadata first (tracks who actually made the change)
+            if (v.record && v.record.versionMetadata) {
+                // Use the metadata if available (new format)
+                userName = v.record.versionMetadata.editedByName || 'Unknown User'
+                userEmail = v.record.versionMetadata.editedByEmail || ''
+            } else if (v.record && v.record.userId) {
+                // Fall back to original user lookup (backward compatibility)
+                try {
+                    const user = await userRepository.findOne({ where: { id: v.record.userId } })
+                    if (user) {
+                        userName = user.name || 'Unknown User'
+                        userEmail = user.email || ''
+                    }
+                } catch (error) {
+                    // If user lookup fails, use fallback
+                    userName = 'Unknown User'
+                }
+            }
+
+            versionsWithUserInfo.push({
+                version: v.version,
+                timestamp: v.timestamp,
+                metadata: {
+                    ...v.metadata,
+                    // Include rollback information if available
+                    isRollback: v.record?.versionMetadata?.isRollback,
+                    rolledBackFromVersion: v.record?.versionMetadata?.rolledBackFromVersion
+                },
+                user: {
+                    name: userName,
+                    email: userEmail
+                }
+            })
+        }
+
+        return {
+            chatflowId,
+            currentVersion: chatflow.currentVersion,
+            versions: versionsWithUserInfo
+        }
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.getChatflowVersions - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const getChatflowVersion = async (chatflowId: string, version: number | undefined, user: IUser): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get the chatflow
+        const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
+        if (!chatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
+        }
+
+        // Check ownership
+        if (!(await checkOwnership(chatflow, user))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+
+        // Get specific version or published version from S3
+        const flowData = await chatflowStorageService.getChatflowVersion(chatflowId, version)
+        if (!flowData) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Version ${version || 'published'} not found`)
+        }
+
+        return {
+            ...chatflow,
+            flowData
+        }
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.getChatflowVersion - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const rollbackChatflowToVersion = async (chatflowId: string, version: number, user: IUser): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get the chatflow
+        const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
+        if (!chatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
+        }
+
+        // Check ownership
+        if (!(await checkOwnership(chatflow, user))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        }
+
+        // Rollback to specified version (this creates a new version with the rollback content)
+        await chatflowStorageService.rollbackToVersion(chatflowId, version, user)
+
+        // Update database with the new version number from rollback
+        const newVersion = (chatflow.currentVersion || 1) + 1
+        chatflow.currentVersion = newVersion
+
+        const dbResponse = await chatFlowRepository.save(chatflow)
+        return dbResponse
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.rollbackChatflowToVersion - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const getChatflowForPrediction = async (chatflowId: string): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Get the chatflow
+        const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
+        if (!chatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
+        }
+
+        // Get current version from S3 for production use
+        const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
+        if (currentRecord) {
+            return currentRecord
+        }
+
+        // Fallback to database version if no version in S3
+        return chatflow
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatflowsService.getChatflowForPrediction - ${getErrorMessage(error)}`
         )
     }
 }
@@ -916,5 +1168,9 @@ export default {
     getSinglePublicChatbotConfig,
     upsertChat,
     getDefaultChatflowTemplate,
-    bulkUpdateChatflows
+    bulkUpdateChatflows,
+    getChatflowVersions,
+    getChatflowVersion,
+    rollbackChatflowToVersion,
+    getChatflowForPrediction
 }

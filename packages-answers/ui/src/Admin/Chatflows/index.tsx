@@ -22,12 +22,15 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogActions,
     Switch,
     FormControlLabel,
     Checkbox
 } from '@mui/material'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import TemplateIcon from '@mui/icons-material/AccountTree'
+import HistoryIcon from '@mui/icons-material/History'
+import RestoreIcon from '@mui/icons-material/Restore'
 import chatflowsApi from '@/api/chatflows'
 import useApi from '@ui/hooks/useApi'
 import { format } from 'date-fns'
@@ -58,6 +61,9 @@ const SkeletonRow = () => {
             <TableCell>
                 <Skeleton variant='text' width={80} height={24} />
             </TableCell>
+            <TableCell>
+                <Skeleton variant='text' width={60} height={24} />
+            </TableCell>
         </TableRow>
     )
 }
@@ -77,20 +83,28 @@ const AdminChatflows = () => {
     const [showTemplateOnly, setShowTemplateOnly] = useState(false)
     const [templateStatusFilter, setTemplateStatusFilter] = useState<string[]>([])
     const [selectedForUpdate, setSelectedForUpdate] = useState<string[]>([])
+
+    // Versioning state
+    const [versionModalOpen, setVersionModalOpen] = useState(false)
+    const [selectedChatflowForVersions, setSelectedChatflowForVersions] = useState<string>('')
+    const [rollbackConfirmOpen, setRollbackConfirmOpen] = useState(false)
+    const [selectedVersionForRollback, setSelectedVersionForRollback] = useState<number | null>(null)
+    const [chatflowVersions, setChatflowVersions] = useState<any[]>([])
+
     const {
         data: chatflowsData,
         isLoading: getAllChatflowsApiLoading,
         isError: getAllChatflowsApiError
     } = useApi('/api/chatflows', () =>
         chatflowsApi.getAdminChatflows({
-            select: ['name', 'description', 'category', 'userId', 'createdDate', 'updatedDate', 'parentChatflowId']
+            select: ['name', 'description', 'category', 'userId', 'createdDate', 'updatedDate', 'parentChatflowId', 'currentVersion']
         })
     )
 
     const {
         data: defaultTemplateData,
-        isLoading: defaultTemplateLoading,
-        isError: defaultTemplateError
+        isLoading: _defaultTemplateLoading,
+        isError: _defaultTemplateError
     } = useApi('/api/admin/default-template', () => chatflowsApi.getDefaultChatflowTemplate())
 
     const handleChangePage = (event: unknown, newPage: number) => {
@@ -217,6 +231,50 @@ const AdminChatflows = () => {
         setSelectedChatflowId('')
     }
 
+    // Versioning functions
+    const handleOpenVersions = async (chatflowId: string) => {
+        try {
+            const response = await chatflowsApi.getChatflowVersions(chatflowId)
+            const versionsData = response.data || {}
+
+            // Sort versions in descending order (newest first) and add currentVersion info
+            const sortedVersions = (versionsData.versions || []).sort((a: any, b: any) => b.version - a.version)
+
+            // Add current version indicator to each version
+            const versionsWithCurrentInfo = sortedVersions.map((version: any) => ({
+                ...version,
+                isCurrent: version.version === versionsData.currentVersion
+            }))
+
+            setChatflowVersions(versionsWithCurrentInfo)
+            setSelectedChatflowForVersions(chatflowId)
+            setVersionModalOpen(true)
+        } catch (error) {
+            console.error('Failed to load versions:', error)
+        }
+    }
+
+    const handleCloseVersions = () => {
+        setVersionModalOpen(false)
+        setSelectedChatflowForVersions('')
+        setChatflowVersions([])
+    }
+
+    const handleRollbackConfirm = async () => {
+        if (selectedChatflowForVersions && selectedVersionForRollback !== null) {
+            try {
+                await chatflowsApi.rollbackChatflowToVersion(selectedChatflowForVersions, selectedVersionForRollback)
+                setRollbackConfirmOpen(false)
+                setSelectedVersionForRollback(null)
+                handleCloseVersions()
+                // Refresh data
+                window.location.reload()
+            } catch (error) {
+                console.error('Failed to rollback chatflow:', error)
+            }
+        }
+    }
+
     useEffect(() => {
         if (getAllChatflowsApiError) {
             setError('Failed to load chatflows.')
@@ -260,51 +318,248 @@ const AdminChatflows = () => {
                 </IconButton>
             </Box>
 
-            {/* Default Template Link */}
-            {defaultTemplateData && (
-                <Box sx={{ mb: 3 }}>
-                    <Box
-                        sx={{
-                            p: 2,
-                            border: '1px solid rgba(255, 193, 7, 0.3)',
-                            borderRadius: '8px',
-                            bgcolor: 'rgba(255, 193, 7, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <TemplateIcon sx={{ color: 'rgba(255, 193, 7, 0.9)', fontSize: '1.5rem' }} />
-                            <Box>
-                                <Typography variant='body2' sx={{ color: 'rgba(255, 193, 7, 0.9)', fontWeight: 600, mb: 0.5 }}>
-                                    Organization Default Template
-                                </Typography>
-                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
-                                    This is the template used for all new user chatflows
-                                </Typography>
+            {/* Default Template Details */}
+            {defaultTemplateData &&
+                chatflowsData &&
+                (() => {
+                    // Find the full chatflow data for the default template
+                    const fullDefaultTemplate = chatflowsData.find((chatflow: any) => chatflow.id === defaultTemplateData.id)
+                    if (!fullDefaultTemplate) return false
+
+                    return (
+                        <Box sx={{ mb: 3 }}>
+                            <Box
+                                sx={{
+                                    p: 3,
+                                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                                    borderRadius: '12px',
+                                    bgcolor: 'rgba(255, 193, 7, 0.1)',
+                                    backdropFilter: 'blur(20px)'
+                                }}
+                            >
+                                {/* Header Section */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <TemplateIcon sx={{ color: 'rgba(255, 193, 7, 0.9)', fontSize: '2rem' }} />
+                                        <Box>
+                                            <Typography variant='h6' sx={{ color: 'rgba(255, 193, 7, 0.9)', fontWeight: 600, mb: 0.5 }}>
+                                                Organization Default Template
+                                            </Typography>
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                                                This is the template used for all new user chatflows
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Chip
+                                        label='DEFAULT TEMPLATE'
+                                        sx={{
+                                            bgcolor: 'rgba(255, 193, 7, 0.3)',
+                                            color: 'rgba(255, 193, 7, 0.9)',
+                                            border: '1px solid rgba(255, 193, 7, 0.5)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600
+                                        }}
+                                    />
+                                </Box>
+
+                                {/* Template Details Grid */}
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, mb: 3 }}>
+                                    {/* Left Column */}
+                                    <Box>
+                                        {/* Name */}
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                NAME
+                                            </Typography>
+                                            <Typography variant='body1' sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+                                                {fullDefaultTemplate.name}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Description */}
+                                        {fullDefaultTemplate.description && (
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                >
+                                                    DESCRIPTION
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                    {fullDefaultTemplate.description}
+                                                </Typography>
+                                            </Box>
+                                        )}
+
+                                        {/* Category */}
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                CATEGORY
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                                {(fullDefaultTemplate.category || 'Uncategorized')
+                                                    .split(';')
+                                                    .map((category: string, index: number) => (
+                                                        <Chip
+                                                            key={index}
+                                                            label={category.trim()}
+                                                            size='small'
+                                                            sx={{
+                                                                height: 20,
+                                                                fontSize: '0.65rem',
+                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
+                                                                color: 'rgba(255, 193, 7, 0.9)',
+                                                                border: '1px solid rgba(255, 193, 7, 0.4)',
+                                                                '& .MuiChip-label': {
+                                                                    px: 0.75,
+                                                                    py: 0.25
+                                                                }
+                                                            }}
+                                                        />
+                                                    ))}
+                                            </Box>
+                                        </Box>
+
+                                        {/* Owner */}
+                                        <Box>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                OWNER
+                                            </Typography>
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                {fullDefaultTemplate.isOwner
+                                                    ? 'Me'
+                                                    : fullDefaultTemplate.user?.name ||
+                                                      fullDefaultTemplate.user?.email ||
+                                                      fullDefaultTemplate.userId}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+
+                                    {/* Right Column */}
+                                    <Box>
+                                        {/* Created Date */}
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                CREATED
+                                            </Typography>
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                {fullDefaultTemplate.createdDate
+                                                    ? format(new Date(fullDefaultTemplate.createdDate), 'MMM d, yyyy h:mm a')
+                                                    : 'N/A'}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Updated Date */}
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                UPDATED
+                                            </Typography>
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                {fullDefaultTemplate.updatedDate
+                                                    ? format(new Date(fullDefaultTemplate.updatedDate), 'MMM d, yyyy h:mm a')
+                                                    : 'N/A'}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Version */}
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                            >
+                                                VERSION
+                                            </Typography>
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                v{fullDefaultTemplate.currentVersion || 1}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Actions */}
+                                        <Box>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 1 }}
+                                            >
+                                                ACTIONS
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                                <Tooltip title='View Template' placement='top'>
+                                                    <IconButton
+                                                        size='small'
+                                                        onClick={() => window.open(`/canvas/${fullDefaultTemplate.id}`, '_blank')}
+                                                        sx={{
+                                                            color: 'rgba(255, 193, 7, 0.8)',
+                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
+                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            '&:hover': {
+                                                                color: 'rgba(255, 193, 7, 0.9)',
+                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
+                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <VisibilityIcon fontSize='small' />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title='View Metrics' placement='top'>
+                                                    <IconButton
+                                                        size='small'
+                                                        onClick={() => handleOpenMetrics(fullDefaultTemplate.id)}
+                                                        sx={{
+                                                            color: 'rgba(255, 193, 7, 0.8)',
+                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
+                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            '&:hover': {
+                                                                color: 'rgba(255, 193, 7, 0.9)',
+                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
+                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <BarChartIcon fontSize='small' />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title='Version History' placement='top'>
+                                                    <IconButton
+                                                        size='small'
+                                                        onClick={() => handleOpenVersions(fullDefaultTemplate.id)}
+                                                        sx={{
+                                                            color: 'rgba(255, 193, 7, 0.8)',
+                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
+                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            '&:hover': {
+                                                                color: 'rgba(255, 193, 7, 0.9)',
+                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
+                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <HistoryIcon fontSize='small' />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                </Box>
                             </Box>
                         </Box>
-                        <Button
-                            component={Link}
-                            to={`/canvas/${defaultTemplateData.id}`}
-                            target='_blank'
-                            variant='outlined'
-                            size='small'
-                            sx={{
-                                color: 'rgba(255, 193, 7, 0.9)',
-                                borderColor: 'rgba(255, 193, 7, 0.3)',
-                                '&:hover': {
-                                    borderColor: 'rgba(255, 193, 7, 0.5)',
-                                    bgcolor: 'rgba(255, 193, 7, 0.1)'
-                                }
-                            }}
-                        >
-                            View Template: {defaultTemplateData.name}
-                        </Button>
-                    </Box>
-                </Box>
-            )}
+                    )
+                })()}
 
             <Box
                 sx={{
@@ -606,7 +861,6 @@ const AdminChatflows = () => {
                                     onClick={async () => {
                                         try {
                                             const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate)
-                                            console.log('Bulk update completed:', response)
 
                                             // Show success message and refresh data
                                             if (response.updated > 0) {
@@ -768,6 +1022,9 @@ const AdminChatflows = () => {
                                     Template Status
                                 </TableCell>
                                 <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontSize: '0.75rem', py: 1 }}>
+                                    Version
+                                </TableCell>
+                                <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontSize: '0.75rem', py: 1 }}>
                                     Actions
                                 </TableCell>
                             </TableRow>
@@ -778,7 +1035,7 @@ const AdminChatflows = () => {
                                 Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)
                             ) : !chatflowsData || chatflowsData.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} align='center' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                    <TableCell colSpan={8} align='center' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
                                         No chatflows found.
                                     </TableCell>
                                 </TableRow>
@@ -967,6 +1224,17 @@ const AdminChatflows = () => {
                                                 )}
                                             </TableCell>
                                             <TableCell sx={{ textAlign: 'center', py: 1, px: 1 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: 'rgba(255, 255, 255, 0.7)',
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                >
+                                                    v{chatflow.currentVersion || 1}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ textAlign: 'center', py: 1, px: 1 }}>
                                                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                                                     <Tooltip title='View Chatflow' placement='top'>
                                                         <IconButton
@@ -993,6 +1261,18 @@ const AdminChatflows = () => {
                                                             }}
                                                         >
                                                             <BarChartIcon fontSize='small' />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title='Version History' placement='top'>
+                                                        <IconButton
+                                                            size='small'
+                                                            onClick={() => handleOpenVersions(chatflow.id)}
+                                                            sx={{
+                                                                color: 'rgba(255, 255, 255, 0.7)',
+                                                                '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }
+                                                            }}
+                                                        >
+                                                            <HistoryIcon fontSize='small' />
                                                         </IconButton>
                                                     </Tooltip>
                                                 </Box>
@@ -1080,6 +1360,183 @@ const AdminChatflows = () => {
                         </Box>
                     )}
                 </DialogContent>
+            </Dialog>
+
+            {/* Version History Modal */}
+            <Dialog
+                open={versionModalOpen}
+                onClose={handleCloseVersions}
+                maxWidth='md'
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'rgba(0, 0, 0, 0.9)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }
+                }}
+            >
+                <DialogTitle
+                    sx={{
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                        bgcolor: 'rgba(0, 0, 0, 0.2)'
+                    }}
+                >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant='h6'>Version History</Typography>
+                        <Button
+                            onClick={handleCloseVersions}
+                            sx={{
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }
+                            }}
+                        >
+                            Close
+                        </Button>
+                    </Box>
+                </DialogTitle>
+                <DialogContent sx={{ p: 3 }}>
+                    {chatflowVersions.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {chatflowVersions.map((version: any) => (
+                                <Box
+                                    key={version.version}
+                                    sx={{
+                                        p: 2,
+                                        border: version.isCurrent
+                                            ? '2px solid rgba(76, 175, 80, 0.6)'
+                                            : '1px solid rgba(255, 255, 255, 0.2)',
+                                        borderRadius: '8px',
+                                        bgcolor: version.isCurrent ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                            <Typography variant='body1' sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>
+                                                Version {version.version}
+                                            </Typography>
+                                            {version.isCurrent && (
+                                                <Box
+                                                    sx={{
+                                                        px: 1,
+                                                        py: 0.25,
+                                                        bgcolor: 'rgba(76, 175, 80, 0.8)',
+                                                        borderRadius: '12px',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 600,
+                                                        color: 'white'
+                                                    }}
+                                                >
+                                                    CURRENT
+                                                </Box>
+                                            )}
+                                        </Box>
+                                        <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                            {version.timestamp && format(new Date(version.timestamp), 'MMM d, yyyy h:mm a')}
+                                        </Typography>
+                                        {version.user && (
+                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.6)', mt: 0.5 }}>
+                                                By: {version.user.name}
+                                                {version.user.email && ` (${version.user.email})`}
+                                            </Typography>
+                                        )}
+                                        {version.metadata?.isRollback && (
+                                            <Typography
+                                                variant='caption'
+                                                sx={{
+                                                    color: 'rgba(255, 193, 7, 0.8)',
+                                                    mt: 0.5,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.5,
+                                                    fontStyle: 'italic'
+                                                }}
+                                            >
+                                                ↩ Rolled back from version {version.metadata.rolledBackFromVersion}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    <Button
+                                        variant='outlined'
+                                        size='small'
+                                        startIcon={<RestoreIcon />}
+                                        disabled={version.isCurrent}
+                                        onClick={() => {
+                                            setSelectedVersionForRollback(version.version)
+                                            setRollbackConfirmOpen(true)
+                                        }}
+                                        sx={{
+                                            color: version.isCurrent ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.7)',
+                                            borderColor: version.isCurrent ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+                                            '&:hover': version.isCurrent
+                                                ? {}
+                                                : {
+                                                      borderColor: 'rgba(255, 255, 255, 0.5)',
+                                                      bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                                  },
+                                            '&.Mui-disabled': {
+                                                color: 'rgba(255, 255, 255, 0.3)',
+                                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                                            }
+                                        }}
+                                    >
+                                        {version.isCurrent ? 'Current' : 'Rollback'}
+                                    </Button>
+                                </Box>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', py: 4 }}>
+                            No versions found for this chatflow.
+                        </Typography>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Rollback Confirmation Dialog */}
+            <Dialog
+                open={rollbackConfirmOpen}
+                onClose={() => setRollbackConfirmOpen(false)}
+                maxWidth='sm'
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'rgba(0, 0, 0, 0.9)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>Confirm Rollback</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Are you sure you want to rollback to version {selectedVersionForRollback}? This action cannot be undone and will
+                        create a new version with the selected version&apos;s content.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRollbackConfirmOpen(false)} sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleRollbackConfirm}
+                        variant='contained'
+                        sx={{
+                            bgcolor: 'rgba(244, 67, 54, 0.8)',
+                            color: '#fff',
+                            '&:hover': {
+                                bgcolor: 'rgba(244, 67, 54, 0.9)'
+                            }
+                        }}
+                    >
+                        Rollback
+                    </Button>
+                </DialogActions>
             </Dialog>
         </Box>
     )

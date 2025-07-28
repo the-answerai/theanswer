@@ -35,6 +35,13 @@ const getDefaultChatflowTemplate = () => client.get('/admin/chatflows/default-te
 
 const bulkUpdateChatflows = (chatflowIds) => client.put('/admin/chatflows/bulk-update', { chatflowIds })
 
+// Versioning API methods
+const getChatflowVersions = (id) => client.get(`/chatflows/${id}/versions`)
+
+const getChatflowVersion = (id, version) => client.get(`/chatflows/${id}/versions/${version}`)
+
+const rollbackChatflowToVersion = (id, version) => client.post(`/chatflows/${id}/rollback/${version}`)
+
 export default {
     getAllChatflows,
     getAllAgentflows,
@@ -49,5 +56,8 @@ export default {
     getAllowChatflowUploads,
     generateAgentflow,
     getDefaultChatflowTemplate,
-    bulkUpdateChatflows
+    bulkUpdateChatflows,
+    getChatflowVersions,
+    getChatflowVersion,
+    rollbackChatflowToVersion
 }

@@ -290,6 +290,59 @@ const bulkUpdateChatflows = async (req: Request, res: Response, next: NextFuncti
     }
 }
 
+const getChatflowVersions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (typeof req.params === 'undefined' || !req.params.id) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.getChatflowVersions - id not provided!`)
+        }
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: chatflowsRouter.getChatflowVersions - Unauthorized!`)
+        }
+
+        const apiResponse = await chatflowsService.getChatflowVersions(req.params.id, req.user)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getChatflowVersion = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (typeof req.params === 'undefined' || !req.params.id) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.getChatflowVersion - id not provided!`)
+        }
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: chatflowsRouter.getChatflowVersion - Unauthorized!`)
+        }
+
+        const version = req.params.version ? parseInt(req.params.version) : undefined
+        const apiResponse = await chatflowsService.getChatflowVersion(req.params.id, version, req.user)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const rollbackChatflowToVersion = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (typeof req.params === 'undefined' || !req.params.id || !req.params.version) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                `Error: chatflowsRouter.rollbackChatflowToVersion - id or version not provided!`
+            )
+        }
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: chatflowsRouter.rollbackChatflowToVersion - Unauthorized!`)
+        }
+
+        const version = parseInt(req.params.version)
+        const apiResponse = await chatflowsService.rollbackChatflowToVersion(req.params.id, version, req.user)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -304,5 +357,8 @@ export default {
     getSinglePublicChatbotConfig,
     getAdminChatflows,
     getDefaultChatflowTemplate,
-    bulkUpdateChatflows
+    bulkUpdateChatflows,
+    getChatflowVersions,
+    getChatflowVersion,
+    rollbackChatflowToVersion
 }

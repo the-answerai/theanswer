@@ -60,6 +60,7 @@ import { AddTemplateIdToChatFlow1752780175000 } from './1752780175000-AddTemplat
 import { AddSettingsToCustomTemplate1752780175001 } from './1752780175001-AddSettingsToCustomTemplate'
 import { AddPgvectorExtension1752614575000 } from './1752614575000-AddPgvectorExtension'
 import { AddEnabledIntegrationsToOrganization1752614576000 } from './1752614576000-AddEnabledIntegrationsToOrganization'
+import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -123,5 +124,6 @@ export const postgresMigrations = [
     AddTemplateIdToChatFlow1752780175000,
     AddSettingsToCustomTemplate1752780175001,
     AddPgvectorExtension1752614575000,
-    AddEnabledIntegrationsToOrganization1752614576000
+    AddEnabledIntegrationsToOrganization1752614576000,
+    AddVersioningToChatFlow1753000000000
 ]
