@@ -31,6 +31,7 @@ import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
@@ -206,18 +207,24 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                         text: 'API Keys',
                         link: '/sidekick-studio/apikey',
                         icon: <VpnKeyOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'credentials',
+                        text: 'Credentials',
+                        link: '/sidekick-studio/credentials',
+                        icon: <PasswordIcon color='primary' />
                     }
                 ]
             })
         }
 
-        // Account section - everyone sees credentials, only admins see billing and admin
+        // Account section - everyone sees profile, only admins see billing and admin
         const accountSubMenu: MenuConfig[] = [
             {
-                id: 'credentials',
-                text: 'Credentials',
-                link: '/sidekick-studio/credentials',
-                icon: <PasswordIcon color='primary' />
+                id: 'profile',
+                text: 'Profile',
+                link: '/profile',
+                icon: <AccountCircleIcon color='primary' />
             }
         ]
 
@@ -323,6 +330,12 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                   link: '/sidekick-studio/apikey',
                                   icon: <VpnKeyOutlinedIcon color='primary' />
                               },
+                              {
+                                  id: 'credentials',
+                                  text: 'Credentials',
+                                  link: '/sidekick-studio/credentials',
+                                  icon: <PasswordIcon color='primary' />
+                              },
                               ...(userRole === 'admin'
                                   ? [
                                         {
@@ -343,7 +356,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                       }
                   ]
                 : []),
-            // Account section (collapsible) with Credentials moved in
+            // Account section (collapsible) with Profile
             ...(flags['chatflow:use'].enabled
                 ? [
                       {
@@ -358,10 +371,10 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                   icon: <AssessmentOutlinedIcon color='primary' />
                               },
                               {
-                                  id: 'credentials',
-                                  text: 'Credentials',
-                                  link: '/sidekick-studio/credentials',
-                                  icon: <PasswordIcon color='primary' />
+                                  id: 'profile',
+                                  text: 'Profile',
+                                  link: '/profile',
+                                  icon: <AccountCircleIcon color='primary' />
                               }
                           ]
                       }
@@ -576,6 +589,8 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                                         return 'View and manage your subscription and payments'
                                                     case 'credentials':
                                                         return 'Store and manage API credentials securely'
+                                                    case 'profile':
+                                                        return 'View and manage your personal profile information'
                                                     default:
                                                         return subItem.text || ''
                                                 }
