@@ -53,47 +53,45 @@ const MarketplaceCanvas = () => {
     }, [flowData])
 
     const proceedWithTemplate = (updatedFlowData) => {
-        // console.log('🚀 MarketplaceCanvas proceedWithTemplate called with:', {
-        //     updatedFlowData: typeof updatedFlowData,
-        //     hasNodes: !!updatedFlowData?.nodes,
-        //     nodeCount: updatedFlowData?.nodes?.length || 0
-        // })
+        /**
+         * Processes template data and stores it in localStorage for the Canvas component.
+         * Preserves critical metadata like chatbotConfig, visibility, type, and category
+         * to ensure proper functionality when the template is copied.
+         */
 
         const isAgentCanvas = (updatedFlowData?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
-
-        // console.log('🚀 Canvas type determined:', { isAgentCanvas })
 
         const flowDataParsed = typeof updatedFlowData === 'string' ? JSON.parse(updatedFlowData) : updatedFlowData
 
         // Store the data in the format Canvas component expects
         const chatflowData = {
             name: name || 'Copied Template',
-            description: 'Copied from marketplace',
+            description: state?.description || 'Copied from marketplace', // Preserve original description
             nodes: flowDataParsed.nodes || [],
             edges: flowDataParsed.edges || [],
             flowData: JSON.stringify(flowDataParsed),
-            parentChatflowId: state?.parentChatflowId
+            parentChatflowId: state?.parentChatflowId,
+            // Preserve critical template metadata
+            chatbotConfig: state?.chatbotConfig,
+            visibility: state?.visibility,
+            type: state?.type,
+            category: state?.category
         }
 
-        // console.log('🚀 Storing duplicated flow data:', {
-        //     name: chatflowData.name,
-        //     nodeCount: chatflowData.nodes.length,
-        //     edgeCount: chatflowData.edges.length,
-        //     hasFlowDataString: !!chatflowData.flowData
-        // })
-
-        localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
+        try {
+            localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
+        } catch (error) {
+            console.error('Failed to store template data in localStorage:', error)
+            // Continue with navigation even if localStorage fails
+        }
 
         const targetPath = `/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`
-        // console.log('🚀 Navigating to:', targetPath)
         navigate(targetPath)
     }
 
     const onChatflowCopy = (flowData) => {
-        // console.log('🎯 MarketplaceCanvas onChatflowCopy called with flowData:', typeof flowData)
-
         // Check for missing credentials before proceeding
         checkCredentials(flowData, proceedWithTemplate)
     }
