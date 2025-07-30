@@ -52,22 +52,13 @@ const MarketplaceCanvas = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
-    const proceedWithTemplate = (updatedFlowData) => {
-        // console.log('🚀 MarketplaceCanvas proceedWithTemplate called with:', {
-        //     updatedFlowData: typeof updatedFlowData,
-        //     hasNodes: !!updatedFlowData?.nodes,
-        //     nodeCount: updatedFlowData?.nodes?.length || 0
-        // })
-
-        const isAgentCanvas = (updatedFlowData?.nodes || []).some(
+    const onChatflowCopy = (flowData) => {
+        const isAgentCanvas = (flowData?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
 
-        // console.log('🚀 Canvas type determined:', { isAgentCanvas })
+        const flowDataParsed = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
 
-        const flowDataParsed = typeof updatedFlowData === 'string' ? JSON.parse(updatedFlowData) : updatedFlowData
-
-        // Store the data in the format Canvas component expects
         const chatflowData = {
             name: name || 'Copied Template',
             description: 'Copied from marketplace',
@@ -77,25 +68,10 @@ const MarketplaceCanvas = () => {
             parentChatflowId: state?.parentChatflowId
         }
 
-        // console.log('🚀 Storing duplicated flow data:', {
-        //     name: chatflowData.name,
-        //     nodeCount: chatflowData.nodes.length,
-        //     edgeCount: chatflowData.edges.length,
-        //     hasFlowDataString: !!chatflowData.flowData
-        // })
-
         localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
 
         const targetPath = `/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`
-        // console.log('🚀 Navigating to:', targetPath)
         navigate(targetPath)
-    }
-
-    const onChatflowCopy = (flowData) => {
-        // console.log('🎯 MarketplaceCanvas onChatflowCopy called with flowData:', typeof flowData)
-
-        // Check for missing credentials before proceeding
-        checkCredentials(flowData, proceedWithTemplate)
     }
 
     return (
