@@ -5,8 +5,6 @@ import { TypeORMVectorStore, TypeORMVectorStoreArgs, TypeORMVectorStoreDocument 
 import { VectorStore } from '@langchain/core/vectorstores'
 import { Document } from '@langchain/core/documents'
 import { Pool } from 'pg'
-<<<<<<< HEAD
-=======
 import { generateSecureNamespace } from '../../../../src/aaiUtils'
 
 // Security helper functions
@@ -31,7 +29,6 @@ function addSecurityMetadata(doc: Document, options: ICommonObject, namespace: s
     }
     return doc
 }
->>>>>>> staging
 
 export class AAITypeORMDriver extends AAIVectorStoreDriver {
     protected _postgresConnectionOptions: DataSourceOptions
@@ -79,9 +76,6 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
     async instanciate(metadataFilters?: any) {
         try {
-<<<<<<< HEAD
-            return this.adaptInstance(await TypeORMVectorStore.fromDataSource(this.getEmbeddings(), await this.getArgs()), metadataFilters)
-=======
             // Generate namespace and create security filters
             const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
             const securityFilters = createSecurityFilters(this.options, namespace)
@@ -94,7 +88,6 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
             }
 
             return this.adaptInstance(await TypeORMVectorStore.fromDataSource(this.getEmbeddings(), await this.getArgs()), combinedFilters)
->>>>>>> staging
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
 
@@ -138,15 +131,11 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
     async fromDocuments(documents: Document[]) {
         try {
-<<<<<<< HEAD
-            return this.adaptInstance(await TypeORMVectorStore.fromDocuments(documents, this.getEmbeddings(), await this.getArgs()))
-=======
             // Generate namespace and add security metadata to documents
             const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
             const secureDocuments = documents.map((doc) => addSecurityMetadata(new Document(doc), this.options, namespace))
 
             return this.adaptInstance(await TypeORMVectorStore.fromDocuments(secureDocuments, this.getEmbeddings(), await this.getArgs()))
->>>>>>> staging
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
 
@@ -222,11 +211,6 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
             if (ids?.length) {
                 try {
-<<<<<<< HEAD
-                    instance.appDataSource.getRepository(instance.documentEntity).delete(ids)
-                } catch (e) {
-                    console.error('Failed to delete')
-=======
                     // Generate namespace for filtering
                     const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
                     const tableName = this.getTableName()
@@ -256,7 +240,6 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
                 } catch (e) {
                     console.error('Failed to delete:', e)
                     throw e
->>>>>>> staging
                 }
             }
         }
@@ -264,15 +247,11 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
         const baseAddVectorsFn = instance.addVectors.bind(instance)
 
         instance.addVectors = async (vectors, documents) => {
-<<<<<<< HEAD
-            return baseAddVectorsFn(vectors, this.sanitizeDocuments(documents))
-=======
             // Generate namespace and add security metadata to documents
             const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
             const secureDocuments = documents.map((doc) => addSecurityMetadata(new Document(doc), this.options, namespace))
 
             return baseAddVectorsFn(vectors, this.sanitizeDocuments(secureDocuments))
->>>>>>> staging
         }
 
         return instance

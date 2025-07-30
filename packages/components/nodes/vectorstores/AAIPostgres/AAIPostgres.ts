@@ -91,8 +91,6 @@ class AAIPostgres_VectorStores implements INode {
                 optional: true
             },
             {
-<<<<<<< HEAD
-=======
                 label: 'Namespace',
                 name: 'namespace',
                 type: 'string',
@@ -102,7 +100,6 @@ class AAIPostgres_VectorStores implements INode {
                 optional: true
             },
             {
->>>>>>> staging
                 label: 'Distance Strategy',
                 name: 'distanceStrategy',
                 description: 'Strategy for calculating distances between vectors',
@@ -182,10 +179,6 @@ class AAIPostgres_VectorStores implements INode {
             const docs = nodeData.inputs?.document as Document[]
             const recordManager = nodeData.inputs?.recordManager
             const isFileUploadEnabled = nodeData.inputs?.fileUpload as boolean
-<<<<<<< HEAD
-            const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
-
-=======
             const namespace = nodeData.inputs?.namespace as string
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
 
