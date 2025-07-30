@@ -24,6 +24,7 @@ import dynamic from 'next/dynamic'
 import { FileUpload } from '../types'
 import isArray from 'lodash/isArray'
 import { SimpleMarkdown } from './SimpleMarkdown'
+import { LoadingAnimation } from './LoadingAnimation'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -653,7 +654,9 @@ export const MessageCard = ({
                 )}
 
                 {/* Message content bubble */}
-                {hasContent && content && typeof content === 'string' && content !== '[object Object]' ? (
+                {isLoading && !isUserMessage && (!content || content === '' || content === '...') && role !== 'assistant' ? (
+                    <LoadingAnimation duration={1200} />
+                ) : hasContent && content && typeof content === 'string' && content !== '[object Object]' ? (
                     <Box
                         sx={{
                             display: 'flex',
@@ -1078,9 +1081,9 @@ export const MessageCard = ({
                 </>
             ) : null}
             {/* Tools used section - Enhanced bubble UI */}
-            Tools Used
             {usedTools && usedTools.length > 0 && (
                 <Box sx={{ mt: 2, mb: 1 }}>
+                    Tools Used
                     <Box
                         sx={{
                             display: 'flex',
