@@ -186,8 +186,6 @@ class AAIPostgres_VectorStores implements INode {
             if (!options.chatflowid) {
                 throw new Error('Chatflow ID is required for AAI Postgres Vector Store')
             }
-
->>>>>>> staging
             const flattenDocs = docs && docs.length ? flatten(docs) : []
             const finalDocs = []
 
@@ -231,15 +229,12 @@ class AAIPostgres_VectorStores implements INode {
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
             const tableName = getTableName()
             const recordManager = nodeData.inputs?.recordManager
-<<<<<<< HEAD
-=======
             const namespace = nodeData.inputs?.namespace as string
 
             // Verify required options
             if (!options.chatflowid) {
                 throw new Error('Chatflow ID is required for AAI Postgres Vector Store')
             }
->>>>>>> staging
 
             const vectorStore = await vectorStoreDriver.instanciate()
 
@@ -268,15 +263,12 @@ class AAIPostgres_VectorStores implements INode {
         const k = topK ? parseFloat(topK) : 4
         const _pgMetadataFilter = nodeData.inputs?.pgMetadataFilter
         const isFileUploadEnabled = nodeData.inputs?.fileUpload as boolean
-<<<<<<< HEAD
-=======
         const namespace = nodeData.inputs?.namespace as string
 
         // Verify required options
         if (!options.chatflowid) {
             throw new Error('Chatflow ID is required for AAI Postgres Vector Store')
         }
->>>>>>> staging
 
         let pgMetadataFilter: any
         if (_pgMetadataFilter) {
