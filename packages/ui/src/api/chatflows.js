@@ -2,9 +2,9 @@ import client from './client'
 
 const getAllChatflows = () => client.get('/chatflows?type=CHATFLOW')
 
-const getAdminChatflows = (filter) => {
+const getAdminChatflows = (filter, type = 'CHATFLOW') => {
     const params = new URLSearchParams()
-    params.append('type', 'CHATFLOW')
+    params.append('type', type)
     if (filter) {
         params.append('filter', JSON.stringify(filter))
     }

@@ -36,6 +36,7 @@ import useSidekickData from './hooks/useSidekickData'
 import useSidekickCategories from './hooks/useSidekickCategories'
 import useSidekickSelectionHandlers from './hooks/useSidekickSelectionHandlers'
 import SidekickDialogContent from './components/SidekickDialogContent'
+import SidekickSearchPanel from './SidekickSearchPanel'
 
 // Add marketplace dialog type definition
 interface MarketplaceDialogProps {
@@ -53,6 +54,7 @@ interface SidekickSelectProps {
     onSidekickSelected?: (sidekick: Sidekick) => void
     sidekicks?: Sidekick[]
     noDialog?: boolean
+    variant?: 'dropdown' | 'modal' | 'inline'
 }
 
 // New simplified card component
@@ -223,7 +225,7 @@ const SimpleSidekickCard: React.FC<{
     )
 }
 
-const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidekicks = [], noDialog = false }) => {
+const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidekicks = [], noDialog = false, variant = 'modal' }) => {
     // Add render counter for debugging
     const renderCountRef = useRef(0)
     renderCountRef.current++
@@ -331,7 +333,23 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
     const { personal } = organizeSidekicks()
 
     if (enablePerformanceLogs) {
-        console.log(`[SidekickSelect] Before final render, noDialog: ${noDialog}, render #${renderCountRef.current}`)
+        console.log(`[SidekickSelect] Before final render, noDialog: ${noDialog}, variant: ${variant}, render #${renderCountRef.current}`)
+    }
+
+    // Handle dropdown variant - simple typeahead search
+    if (variant === 'dropdown') {
+        return (
+            <SidekickSearchPanel
+                sidekicks={combinedSidekicks || []}
+                isLoading={isLoading}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+                handleSidekickSelect={handleSidekickSelect}
+                enablePerformanceLogs={enablePerformanceLogs}
+                shouldAutoFocus={false}
+                autoOpen={false}
+            />
+        )
     }
 
     if (noDialog) {

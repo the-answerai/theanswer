@@ -25,7 +25,9 @@ import {
     DialogActions,
     Switch,
     FormControlLabel,
-    Checkbox
+    Checkbox,
+    ToggleButtonGroup,
+    ToggleButton
 } from '@mui/material'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import TemplateIcon from '@mui/icons-material/AccountTree'
@@ -91,15 +93,34 @@ const AdminChatflows = () => {
     const [selectedVersionForRollback, setSelectedVersionForRollback] = useState<number | null>(null)
     const [chatflowVersions, setChatflowVersions] = useState<any[]>([])
 
+    // Flow type and version state
+    const [flowType, setFlowType] = useState<string>(localStorage.getItem('adminFlowType') || 'CHATFLOW')
+    const [agentflowVersion, setAgentflowVersion] = useState<string>(localStorage.getItem('agentFlowVersion') || 'v2')
+
     const {
         data: chatflowsData,
         isLoading: getAllChatflowsApiLoading,
-        isError: getAllChatflowsApiError
-    } = useApi('/api/chatflows', () =>
-        chatflowsApi.getAdminChatflows({
-            select: ['name', 'description', 'category', 'userId', 'createdDate', 'updatedDate', 'parentChatflowId', 'currentVersion']
-        })
-    )
+        isError: getAllChatflowsApiError,
+        refresh: refreshChatflows
+    } = useApi('/api/chatflows', () => {
+        const type = flowType === 'AGENTFLOW' ? (agentflowVersion === 'v2' ? 'AGENTFLOW' : 'MULTIAGENT') : 'CHATFLOW'
+        return chatflowsApi.getAdminChatflows(
+            {
+                select: [
+                    'name',
+                    'type',
+                    'description',
+                    'category',
+                    'userId',
+                    'createdDate',
+                    'updatedDate',
+                    'parentChatflowId',
+                    'currentVersion'
+                ]
+            },
+            type
+        )
+    })
 
     const {
         data: defaultTemplateData,
@@ -121,6 +142,36 @@ const AdminChatflows = () => {
         setOrder(isAsc ? 'desc' : 'asc')
         setOrderBy(property)
         setPage(0)
+    }
+
+    const handleFlowTypeChange = (event: any, nextValue: string) => {
+        if (nextValue === null) return
+        localStorage.setItem('adminFlowType', nextValue)
+        setFlowType(nextValue)
+        setPage(0)
+        refreshChatflows()
+    }
+
+    const handleVersionChange = (event: any, nextValue: string) => {
+        if (nextValue === null) return
+        localStorage.setItem('agentFlowVersion', nextValue)
+        setAgentflowVersion(nextValue)
+        setPage(0)
+        refreshChatflows()
+    }
+
+    const getCanvasRoute = (chatflow: any) => {
+        // Check the actual flow type, not the filter selection
+        console.log('🤖id', chatflow.id)
+        console.log('type', chatflow)
+        if (chatflow.type === 'AGENTFLOW') {
+            return `/sidekick-studio/v2/agentcanvas/${chatflow.id}`
+        } else if (chatflow.type === 'MULTIAGENT') {
+            return `/sidekick-studio/agentcanvas/${chatflow.id}`
+        } else {
+            // Default to regular chatflow canvas
+            return `/sidekick-studio/canvas/${chatflow.id}`
+        }
     }
 
     const sortData = (data: any[]) => {
@@ -281,6 +332,10 @@ const AdminChatflows = () => {
         }
     }, [getAllChatflowsApiError])
 
+    useEffect(() => {
+        refreshChatflows()
+    }, [flowType, agentflowVersion])
+
     if (error) {
         return (
             <Box sx={{ p: { xs: 1, md: 4 } }}>
@@ -301,9 +356,11 @@ const AdminChatflows = () => {
             <Box sx={{ pb: 4 }} display='flex' alignItems='center' justifyContent='space-between'>
                 <Box>
                     <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
-                        All Chatflows
+                        All {flowType === 'CHATFLOW' ? 'Chatflows' : 'Agent Flows'}
                     </Typography>
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>Manage chatflow configurations</Typography>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                        Manage {flowType === 'CHATFLOW' ? 'chatflow' : 'agent flow'} configurations
+                    </Typography>
                 </Box>
                 <IconButton
                     onClick={() => setIsFilterExpanded(!isFilterExpanded)}
@@ -316,6 +373,81 @@ const AdminChatflows = () => {
                 >
                     <FilterListIcon />
                 </IconButton>
+            </Box>
+
+            {/* Flow Type and Version Filters */}
+            <Box sx={{ mb: 3, display: 'flex', gap: 3, alignItems: 'center' }}>
+                <Box>
+                    <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1, fontSize: '0.875rem' }}>
+                        Flow Type
+                    </Typography>
+                    <ToggleButtonGroup
+                        value={flowType}
+                        exclusive
+                        onChange={handleFlowTypeChange}
+                        sx={{
+                            borderRadius: 2,
+                            '& .MuiToggleButton-root': {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                '&.Mui-selected': {
+                                    bgcolor: 'rgba(33, 150, 243, 0.3)',
+                                    color: 'rgba(33, 150, 243, 0.9)',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(33, 150, 243, 0.4)'
+                                    }
+                                }
+                            }
+                        }}
+                    >
+                        <ToggleButton value='CHATFLOW' sx={{ px: 3, py: 1 }}>
+                            Chatflows
+                        </ToggleButton>
+                        <ToggleButton value='AGENTFLOW' sx={{ px: 3, py: 1 }}>
+                            Agent Flows
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                </Box>
+
+                {flowType === 'AGENTFLOW' && (
+                    <Box>
+                        <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1, fontSize: '0.875rem' }}>
+                            Agent Flow Version
+                        </Typography>
+                        <ToggleButtonGroup
+                            value={agentflowVersion}
+                            exclusive
+                            onChange={handleVersionChange}
+                            sx={{
+                                borderRadius: 2,
+                                '& .MuiToggleButton-root': {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    '&.Mui-selected': {
+                                        bgcolor: 'rgba(76, 175, 80, 0.3)',
+                                        color: 'rgba(76, 175, 80, 0.9)',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(76, 175, 80, 0.4)'
+                                        }
+                                    }
+                                }
+                            }}
+                        >
+                            <ToggleButton value='v2' sx={{ px: 3, py: 1 }}>
+                                V2 (Current)
+                            </ToggleButton>
+                            <ToggleButton value='v1' sx={{ px: 3, py: 1 }}>
+                                V1 (Legacy)
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                    </Box>
+                )}
             </Box>
 
             {/* Default Template Details */}
@@ -501,9 +633,7 @@ const AdminChatflows = () => {
                                                 <Tooltip title='View Template' placement='top'>
                                                     <IconButton
                                                         size='small'
-                                                        onClick={() =>
-                                                            window.open(`/sidekick-studio/canvas/${fullDefaultTemplate.id}`, '_blank')
-                                                        }
+                                                        onClick={() => window.open(getCanvasRoute(fullDefaultTemplate), '_blank')}
                                                         sx={{
                                                             color: 'rgba(255, 193, 7, 0.8)',
                                                             bgcolor: 'rgba(255, 193, 7, 0.1)',
@@ -1081,7 +1211,7 @@ const AdminChatflows = () => {
                                                                 }
                                                             }}
                                                         >
-                                                            <Link to={`/canvas/${chatflow.id}`} target='_blank' rel='noopener noreferrer'>
+                                                            <Link to={getCanvasRoute(chatflow)} target='_blank' rel='noopener noreferrer'>
                                                                 {chatflow.name}
                                                             </Link>
                                                         </Typography>
@@ -1241,10 +1371,7 @@ const AdminChatflows = () => {
                                                     <Tooltip title='View Chatflow' placement='top'>
                                                         <IconButton
                                                             size='small'
-                                                            component={Link}
-                                                            to={`/canvas/${chatflow.id}`}
-                                                            target='_blank'
-                                                            rel='noopener noreferrer'
+                                                            onClick={() => window.open(getCanvasRoute(chatflow), '_blank')}
                                                             sx={{
                                                                 color: 'rgba(255, 255, 255, 0.7)',
                                                                 '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }

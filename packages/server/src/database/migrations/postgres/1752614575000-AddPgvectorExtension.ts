@@ -55,11 +55,8 @@ export class AddPgvectorExtension1752614575000 implements MigrationInterface {
             console.warn('📋 Manual installation required:')
             console.warn('   1. Ensure pgvector is installed on your PostgreSQL server')
             console.warn('   2. Connect as a superuser and run: CREATE EXTENSION IF NOT EXISTS vector;')
-<<<<<<< HEAD
             console.warn('   3. Or use: node packages/components/nodes/vectorstores/AAIPostgres/scripts/install_pgvector_extension.js')
-=======
             console.warn('   3. Or use the install_pgvector_extension.js script')
->>>>>>> e513c427a (added vector store part 1)
 
             // Don't throw the error - let the migration continue
             // The AAI Vector node will handle the missing extension gracefully
