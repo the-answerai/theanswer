@@ -287,31 +287,6 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
         enablePerformanceLogs
     })
 
-    // DEBUG: Log data flow
-    React.useEffect(() => {
-        if (enablePerformanceLogs) {
-            console.log('=== SIDEKICK DEBUG INFO ===')
-            console.log('defaultSidekicks:', defaultSidekicks)
-            console.log('data from API:', data)
-            console.log('combinedSidekicks:', combinedSidekicks)
-            console.log('allCategories:', allCategories)
-
-            if (combinedSidekicks?.length > 0) {
-                const personalSidekicks = combinedSidekicks.filter((s) => s.chatflow.isOwner)
-                const marketplaceSidekicks = combinedSidekicks.filter((s) => !s.chatflow.isOwner)
-                console.log('Personal sidekicks:', personalSidekicks)
-                console.log('Marketplace sidekicks:', marketplaceSidekicks)
-
-                // Check isExecutable property
-                const executableSidekicks = combinedSidekicks.filter((s) => s.isExecutable)
-                const nonExecutableSidekicks = combinedSidekicks.filter((s) => !s.isExecutable)
-                console.log('Executable sidekicks:', executableSidekicks)
-                console.log('Non-executable sidekicks:', nonExecutableSidekicks)
-            }
-            console.log('========================')
-        }
-    }, [defaultSidekicks, data, combinedSidekicks, allCategories, enablePerformanceLogs])
-
     const handleSidekickSelect = (sidekick: Sidekick) => {
         handleSidekickSelectFromSidekickSelect(sidekick)
         setOpen(false)

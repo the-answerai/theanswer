@@ -5,18 +5,8 @@ import organizationService from '../../services/organizations'
 
 const getOrganizationById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log('=== DEBUG: Organization Controller GET ===', {
-            hasUser: !!req.user,
-            userId: req.user?.id,
-            userEmail: req.user?.email,
-            userOrganizationId: req.user?.organizationId,
-            userRoles: req.user?.roles,
-            requestedId: req.params.id,
-            authHeader: req.headers.authorization?.substring(0, 20) + '...'
-        })
-
         if (!req.user) {
-            console.log('=== DEBUG: No req.user found ===')
+            console.log('=== INFO: No req.user found ===')
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
         }
 
@@ -27,19 +17,7 @@ const getOrganizationById = async (req: Request, res: Response, next: NextFuncti
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
         }
 
-        console.log('=== DEBUG: Using organization ID ===', {
-            userOrgId: organizationId,
-            requestedId: req.params.id,
-            usingUserOrgId: true
-        })
-
         const apiResponse = await organizationService.getOrganizationById(organizationId, req.user)
-
-        console.log('=== DEBUG: Organization found ===', {
-            orgId: apiResponse.id,
-            orgName: apiResponse.name,
-            hasEnabledIntegrations: !!apiResponse.enabledIntegrations
-        })
 
         return res.json(apiResponse)
     } catch (error) {
@@ -50,13 +28,6 @@ const getOrganizationById = async (req: Request, res: Response, next: NextFuncti
 
 const updateOrganizationEnabledIntegrations = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log('=== DEBUG: Organization Controller PUT ===', {
-            hasUser: !!req.user,
-            userId: req.user?.id,
-            requestedId: req.params.id,
-            hasBody: !!req.body.enabledIntegrations
-        })
-
         if (!req.body.enabledIntegrations) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'Enabled integrations data required')
         }

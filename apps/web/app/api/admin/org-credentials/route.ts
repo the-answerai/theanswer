@@ -6,17 +6,7 @@ import auth0 from '@utils/auth/auth0'
 
 export async function GET(req: Request) {
     try {
-        console.log('=== DEBUG: org-credentials GET request started ===')
-
         const session = await getCachedSession()
-        console.log('=== DEBUG: Session check ===', {
-            hasSession: !!session,
-            hasUser: !!session?.user,
-            userEmail: session?.user?.email,
-            userId: session?.user?.id,
-            organizationId: session?.user?.organizationId,
-            roles: session?.user?.roles
-        })
 
         if (!session?.user?.email) {
             console.log('=== DEBUG: No session/user, returning 401 ===')
@@ -27,14 +17,8 @@ export async function GET(req: Request) {
 
         // Check if user is admin
         const isAdmin = Array.isArray(user?.roles) && user.roles.includes('Admin')
-        console.log('=== DEBUG: Admin check ===', {
-            userRoles: user?.roles,
-            isAdmin,
-            rolesIsArray: Array.isArray(user?.roles)
-        })
 
         if (!isAdmin) {
-            console.log('=== DEBUG: User is not admin, returning 403 ===')
             return NextResponse.json({ error: 'Unauthorized - Admin access required' }, { status: 403 })
         }
 
@@ -49,10 +33,6 @@ export async function GET(req: Request) {
                 authorizationParams: { organization: user.organizationId }
             })
             accessToken = tokenResponse.accessToken
-            console.log('=== DEBUG: Auth0 token result ===', {
-                hasAccessToken: !!accessToken,
-                tokenLength: accessToken?.length
-            })
         } catch (tokenError) {
             console.error('=== DEBUG: Auth0 token error ===', tokenError)
             return NextResponse.json({ error: 'Failed to get access token' }, { status: 500 })
@@ -65,12 +45,6 @@ export async function GET(req: Request) {
 
         // Use the same domain resolution as other API routes
         const flowiseDomain = user.chatflowDomain || process.env.CHATFLOW_DOMAIN_OVERRIDE || process.env.DOMAIN || 'http://localhost:4000'
-
-        console.log('=== DEBUG: Making request to Flowise ===', {
-            domain: flowiseDomain,
-            url: `${flowiseDomain}/api/v1/admin/organizations/${user.organizationId}`,
-            hasAuthHeader: !!accessToken
-        })
 
         try {
             const response = await fetch(`${flowiseDomain}/api/v1/admin/organizations/${user.organizationId}`, {
@@ -104,11 +78,6 @@ export async function GET(req: Request) {
             }
 
             const organization = await response.json()
-            console.log('=== DEBUG: Organization data ===', {
-                hasData: !!organization,
-                hasEnabledIntegrations: !!organization.enabledIntegrations,
-                enabledIntegrationsLength: organization.enabledIntegrations?.length
-            })
 
             let enabledIntegrationsData: EnabledIntegrationsData = { integrations: [] }
 
@@ -119,10 +88,6 @@ export async function GET(req: Request) {
                     console.error('Failed to parse enabledIntegrations:', error)
                 }
             }
-
-            console.log('=== DEBUG: Returning success ===', {
-                integrationsCount: enabledIntegrationsData.integrations?.length
-            })
 
             return NextResponse.json({
                 integrations: enabledIntegrationsData.integrations || []
