@@ -5,7 +5,6 @@ import {
     Typography,
     Card,
     CardContent,
-    Button,
     Box,
     CircularProgress,
     Alert,
@@ -16,17 +15,13 @@ import {
     Switch,
     Collapse,
     IconButton,
-    TextField,
-    Tooltip
+    Tooltip,
+    Button,
+    Chip,
+    Stack
 } from '@mui/material'
-import {
-    Settings as SettingsIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon,
-    Add as AddIcon,
-    Delete as DeleteIcon
-} from '@mui/icons-material'
-import { EnabledIntegration, OrganizationCredentialEnvironmentVariable } from 'types'
+import { Settings as SettingsIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Add as AddIcon } from '@mui/icons-material'
+import { EnabledIntegration } from 'types'
 
 // API
 // @ts-ignore
@@ -55,9 +50,11 @@ const OrgCredentialsManager: React.FC = () => {
     const [error, setError] = useState<string | null>(null)
     const [integrations, setIntegrations] = useState<EnabledIntegration[]>([])
     const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+    const [organizationCredentials, setOrganizationCredentials] = useState<any[]>([])
 
     // Use the same API hooks as the existing credential system
     const getAllComponentsCredentialsApi = useApi(credentialsApi.getAllComponentsCredentials)
+    const getAllCredentialsApi = useApi(credentialsApi.getAllCredentials)
 
     // Fetch current org credentials settings
     const fetchOrgCredentials = async () => {
@@ -76,7 +73,16 @@ const OrgCredentialsManager: React.FC = () => {
     useEffect(() => {
         fetchOrgCredentials()
         getAllComponentsCredentialsApi.request()
-    }, [])
+        getAllCredentialsApi.request()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (getAllCredentialsApi.data) {
+            // Filter for organization credentials only (not user-owned)
+            const orgCreds = getAllCredentialsApi.data.filter((cred: any) => !cred.isOwner)
+            setOrganizationCredentials(orgCreds)
+        }
+    }, [getAllCredentialsApi.data])
 
     const handleToggleIntegration = async (credentialName: string, enabled: boolean) => {
         try {
@@ -95,7 +101,6 @@ const OrgCredentialsManager: React.FC = () => {
                     label: credentialInfo.label,
                     description: credentialInfo.description,
                     enabled: true,
-                    environmentVariables: [],
                     organizationCredentialIds: []
                 }
 
@@ -118,7 +123,7 @@ const OrgCredentialsManager: React.FC = () => {
             }
 
             const data = await response.json()
-            setIntegrations(data.integrations)
+            setIntegrations(data.integrations || [])
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -138,59 +143,27 @@ const OrgCredentialsManager: React.FC = () => {
         })
     }
 
-    const handleAddEnvironmentVariable = (credentialName: string) => {
-        const updatedIntegrations = integrations.map((integration) => {
-            if (integration.credentialName === credentialName) {
-                const newVar: OrganizationCredentialEnvironmentVariable = {
-                    key: '',
-                    value: '',
-                    description: ''
-                }
-                return {
-                    ...integration,
-                    environmentVariables: [...(integration.environmentVariables || []), newVar]
-                }
-            }
-            return integration
-        })
-        setIntegrations(updatedIntegrations)
-    }
-
-    const handleUpdateEnvironmentVariable = (
-        credentialName: string,
-        index: number,
-        field: keyof OrganizationCredentialEnvironmentVariable,
-        value: string
-    ) => {
-        const updatedIntegrations = integrations.map((integration) => {
-            if (integration.credentialName === credentialName && integration.environmentVariables) {
-                const updatedVars = [...integration.environmentVariables]
-                updatedVars[index] = { ...updatedVars[index], [field]: value }
-                return { ...integration, environmentVariables: updatedVars }
-            }
-            return integration
-        })
-        setIntegrations(updatedIntegrations)
-    }
-
-    const handleDeleteEnvironmentVariable = (credentialName: string, index: number) => {
-        const updatedIntegrations = integrations.map((integration) => {
-            if (integration.credentialName === credentialName && integration.environmentVariables) {
-                const updatedVars = integration.environmentVariables.filter((_, i) => i !== index)
-                return { ...integration, environmentVariables: updatedVars }
-            }
-            return integration
-        })
-        setIntegrations(updatedIntegrations)
-    }
-
     const getIntegrationStatus = (credentialName: string): boolean => {
+        if (!integrations || !Array.isArray(integrations)) return false
         const integration = integrations.find((i) => i.credentialName === credentialName)
         return integration ? integration.enabled : false
     }
 
     const getIntegrationDetails = (credentialName: string): EnabledIntegration | undefined => {
+        if (!integrations || !Array.isArray(integrations)) return undefined
         return integrations.find((i) => i.credentialName === credentialName)
+    }
+
+    const getCredentialsForIntegration = (credentialName: string) => {
+        return organizationCredentials.filter((cred: any) => cred.credentialName === credentialName)
+    }
+
+    const handleCreateNewCredential = (credentialName: string) => {
+        window.open(`/sidekick-studio/credentials?cred=${credentialName}`, '_blank')
+    }
+
+    const handleEditCredential = (credentialId: string) => {
+        window.open(`/sidekick-studio/credentials?cred=${credentialId}`, '_blank')
     }
 
     const groupCredentialsByCategory = (credentials: ComponentCredential[]) => {
@@ -321,113 +294,65 @@ const OrgCredentialsManager: React.FC = () => {
                                                 <Collapse in={isExpanded} timeout='auto' unmountOnExit>
                                                     <Box sx={{ pl: 8, pr: 2, pb: 2 }}>
                                                         <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 'bold' }}>
-                                                            Organization Settings
+                                                            Organization Credentials
                                                         </Typography>
 
-                                                        {/* Environment Variables Section */}
+                                                        {/* Create New Credential Button */}
                                                         <Box sx={{ mb: 3 }}>
-                                                            <Box display='flex' alignItems='center' justifyContent='space-between' mb={2}>
-                                                                <Typography variant='body2' fontWeight='medium'>
-                                                                    Environment Variables
-                                                                </Typography>
-                                                                <Button
-                                                                    size='small'
-                                                                    variant='outlined'
-                                                                    startIcon={<AddIcon />}
-                                                                    onClick={() => handleAddEnvironmentVariable(credential.name)}
-                                                                >
-                                                                    Add Variable
-                                                                </Button>
-                                                            </Box>
-
-                                                            {integrationDetails.environmentVariables?.map((envVar, index) => (
-                                                                <Box
-                                                                    key={index}
-                                                                    sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'flex-start' }}
-                                                                >
-                                                                    <TextField
-                                                                        size='small'
-                                                                        label='Key'
-                                                                        value={envVar.key}
-                                                                        onChange={(e) =>
-                                                                            handleUpdateEnvironmentVariable(
-                                                                                credential.name,
-                                                                                index,
-                                                                                'key',
-                                                                                e.target.value
-                                                                            )
-                                                                        }
-                                                                        sx={{ flex: 1 }}
-                                                                    />
-                                                                    <TextField
-                                                                        size='small'
-                                                                        label='Value'
-                                                                        type='password'
-                                                                        value={envVar.value}
-                                                                        onChange={(e) =>
-                                                                            handleUpdateEnvironmentVariable(
-                                                                                credential.name,
-                                                                                index,
-                                                                                'value',
-                                                                                e.target.value
-                                                                            )
-                                                                        }
-                                                                        sx={{ flex: 1 }}
-                                                                    />
-                                                                    <TextField
-                                                                        size='small'
-                                                                        label='Description (optional)'
-                                                                        value={envVar.description || ''}
-                                                                        onChange={(e) =>
-                                                                            handleUpdateEnvironmentVariable(
-                                                                                credential.name,
-                                                                                index,
-                                                                                'description',
-                                                                                e.target.value
-                                                                            )
-                                                                        }
-                                                                        sx={{ flex: 1 }}
-                                                                    />
-                                                                    <IconButton
-                                                                        size='small'
-                                                                        color='error'
-                                                                        onClick={() =>
-                                                                            handleDeleteEnvironmentVariable(credential.name, index)
-                                                                        }
-                                                                    >
-                                                                        <DeleteIcon />
-                                                                    </IconButton>
-                                                                </Box>
-                                                            ))}
-
-                                                            {(!integrationDetails.environmentVariables ||
-                                                                integrationDetails.environmentVariables.length === 0) && (
-                                                                <Typography
-                                                                    variant='body2'
-                                                                    color='text.secondary'
-                                                                    sx={{ fontStyle: 'italic' }}
-                                                                >
-                                                                    No environment variables configured
-                                                                </Typography>
-                                                            )}
-                                                        </Box>
-
-                                                        {/* Organization Credentials Section */}
-                                                        <Box>
-                                                            <Typography variant='body2' fontWeight='medium' sx={{ mb: 1 }}>
-                                                                Organization Shared Credentials
-                                                            </Typography>
-                                                            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-                                                                Create shared credentials that can be used across your organization
-                                                            </Typography>
                                                             <Button
-                                                                size='small'
                                                                 variant='outlined'
                                                                 startIcon={<AddIcon />}
-                                                                disabled // TODO: Implement organization credential creation
+                                                                onClick={() => handleCreateNewCredential(credential.name)}
+                                                                size='small'
                                                             >
-                                                                Add Shared Credential (Coming Soon)
+                                                                Create New {credential.label} Credential
                                                             </Button>
+                                                        </Box>
+
+                                                        {/* Existing Credentials List */}
+                                                        <Box>
+                                                            <Typography variant='body2' fontWeight='medium' sx={{ mb: 1 }}>
+                                                                Existing Credentials
+                                                            </Typography>
+
+                                                            {(() => {
+                                                                const credentials = getCredentialsForIntegration(credential.name)
+                                                                if (credentials.length === 0) {
+                                                                    return (
+                                                                        <Typography
+                                                                            variant='body2'
+                                                                            color='text.secondary'
+                                                                            sx={{ fontStyle: 'italic', mb: 2 }}
+                                                                        >
+                                                                            No organization credentials configured yet
+                                                                        </Typography>
+                                                                    )
+                                                                }
+
+                                                                return (
+                                                                    <Stack spacing={1} sx={{ mb: 2 }}>
+                                                                        {credentials.map((cred: any) => (
+                                                                            <Chip
+                                                                                key={cred.id}
+                                                                                label={cred.name || cred.id}
+                                                                                onClick={() => handleEditCredential(cred.id)}
+                                                                                clickable
+                                                                                variant='outlined'
+                                                                                size='small'
+                                                                                sx={{
+                                                                                    justifyContent: 'flex-start',
+                                                                                    '&:hover': {
+                                                                                        backgroundColor: 'action.hover'
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                        ))}
+                                                                    </Stack>
+                                                                )
+                                                            })()}
+                                                            <Typography variant='caption' color='text.secondary'>
+                                                                Click on a credential to edit it, or create a new one to add more options.
+                                                            </Typography>
                                                         </Box>
                                                     </Box>
                                                 </Collapse>

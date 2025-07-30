@@ -9,7 +9,6 @@ export async function GET(req: Request) {
         const session = await getCachedSession()
 
         if (!session?.user?.email) {
-            console.log('=== DEBUG: No session/user, returning 401 ===')
             return respond401()
         }
 
@@ -21,10 +20,6 @@ export async function GET(req: Request) {
         if (!isAdmin) {
             return NextResponse.json({ error: 'Unauthorized - Admin access required' }, { status: 403 })
         }
-
-        console.log('=== DEBUG: Getting Auth0 access token ===', {
-            organizationId: user.organizationId
-        })
 
         // Get user's access token for Flowise authentication
         let accessToken: string | undefined
@@ -39,12 +34,11 @@ export async function GET(req: Request) {
         }
 
         if (!accessToken) {
-            console.log('=== DEBUG: No access token received ===')
             return NextResponse.json({ error: 'Failed to get access token' }, { status: 500 })
         }
 
         // Use the same domain resolution as other API routes
-        const flowiseDomain = user.chatflowDomain || process.env.CHATFLOW_DOMAIN_OVERRIDE || process.env.DOMAIN || 'http://localhost:4000'
+        const flowiseDomain = process.env.CHATFLOW_DOMAIN_OVERRIDE || user.chatflowDomain || process.env.DOMAIN
 
         try {
             const response = await fetch(`${flowiseDomain}/api/v1/admin/organizations/${user.organizationId}`, {
@@ -52,12 +46,6 @@ export async function GET(req: Request) {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
-            })
-
-            console.log('=== DEBUG: Flowise response ===', {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
             })
 
             if (!response.ok) {
@@ -81,7 +69,11 @@ export async function GET(req: Request) {
 
             let enabledIntegrationsData: EnabledIntegrationsData = { integrations: [] }
 
-            if (organization.enabledIntegrations) {
+            if (
+                organization?.enabledIntegrations &&
+                typeof organization.enabledIntegrations === 'string' &&
+                organization.enabledIntegrations.length > 0
+            ) {
                 try {
                     enabledIntegrationsData = JSON.parse(organization.enabledIntegrations)
                 } catch (error) {
@@ -127,7 +119,74 @@ export async function POST(req: Request) {
         // Use the same domain resolution as other API routes
         const flowiseDomain = user.chatflowDomain || process.env.CHATFLOW_DOMAIN_OVERRIDE || process.env.DOMAIN || 'http://localhost:4000'
 
-        // Prepare the data structure for the Flowise server
+        // Validate and prepare the data structure for the Flowise server
+        if (!Array.isArray(integrations)) {
+            return NextResponse.json({ error: 'Integrations must be an array' }, { status: 400 })
+        }
+
+        // Validate each integration object
+        for (const integration of integrations) {
+            if (!integration || typeof integration !== 'object') {
+                return NextResponse.json({ error: 'Each integration must be an object' }, { status: 400 })
+            }
+
+            if (typeof integration.credentialName !== 'string' || !integration.credentialName.trim()) {
+                return NextResponse.json(
+                    { error: 'Integration credentialName is required and must be a non-empty string' },
+                    { status: 400 }
+                )
+            }
+
+            if (typeof integration.label !== 'string' || !integration.label.trim()) {
+                return NextResponse.json({ error: 'Integration label is required and must be a non-empty string' }, { status: 400 })
+            }
+
+            if (typeof integration.enabled !== 'boolean') {
+                return NextResponse.json({ error: 'Integration enabled must be a boolean' }, { status: 400 })
+            }
+
+            // Validate optional fields if present
+            if (integration.description !== undefined && typeof integration.description !== 'string') {
+                return NextResponse.json({ error: 'Integration description must be a string if provided' }, { status: 400 })
+            }
+
+            if (integration.environmentVariables !== undefined) {
+                if (!Array.isArray(integration.environmentVariables)) {
+                    return NextResponse.json({ error: 'Integration environmentVariables must be an array if provided' }, { status: 400 })
+                }
+
+                for (const envVar of integration.environmentVariables) {
+                    if (!envVar || typeof envVar !== 'object') {
+                        return NextResponse.json({ error: 'Environment variables must be objects' }, { status: 400 })
+                    }
+                    if (typeof envVar.key !== 'string' || typeof envVar.value !== 'string') {
+                        return NextResponse.json({ error: 'Environment variable key and value must be strings' }, { status: 400 })
+                    }
+                    if (envVar.description !== undefined && typeof envVar.description !== 'string') {
+                        return NextResponse.json(
+                            { error: 'Environment variable description must be a string if provided' },
+                            { status: 400 }
+                        )
+                    }
+                }
+            }
+
+            if (integration.organizationCredentialIds !== undefined) {
+                if (!Array.isArray(integration.organizationCredentialIds)) {
+                    return NextResponse.json(
+                        { error: 'Integration organizationCredentialIds must be an array if provided' },
+                        { status: 400 }
+                    )
+                }
+
+                for (const id of integration.organizationCredentialIds) {
+                    if (typeof id !== 'string') {
+                        return NextResponse.json({ error: 'Organization credential IDs must be strings' }, { status: 400 })
+                    }
+                }
+            }
+        }
+
         const enabledIntegrationsData: EnabledIntegrationsData = {
             integrations: integrations as EnabledIntegration[]
         }
@@ -147,21 +206,11 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'Failed to update organization settings' }, { status: response.status })
             }
 
-            const updatedOrganization = await response.json()
-
-            // Parse the updated enabled integrations
-            let updatedIntegrationsData: EnabledIntegrationsData = { integrations: [] }
-            if (updatedOrganization.enabledIntegrations) {
-                try {
-                    updatedIntegrationsData = JSON.parse(updatedOrganization.enabledIntegrations)
-                } catch (error) {
-                    console.error('Failed to parse updated enabledIntegrations:', error)
-                }
-            }
-
+            // Return the updated integrations data so the frontend can update its state
             return NextResponse.json({
                 success: true,
-                integrations: updatedIntegrationsData.integrations || []
+                message: 'Organization integrations updated successfully',
+                integrations: enabledIntegrationsData.integrations
             })
         } catch (error) {
             console.error('Error updating organization in Flowise:', error)

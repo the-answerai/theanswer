@@ -24,7 +24,9 @@ import {
     DialogActions,
     TextField,
     FormControlLabel,
-    Checkbox
+    Checkbox,
+    Stack,
+    Collapse
 } from '@mui/material'
 import {
     Business as BusinessIcon,
@@ -34,8 +36,16 @@ import {
     Verified as VerifiedIcon,
     Settings as SettingsIcon,
     Add as AddIcon,
-    Cable as IntegrationIcon
+    Cable as IntegrationIcon,
+    ExpandMore as ExpandMoreIcon,
+    ExpandLess as ExpandLessIcon
 } from '@mui/icons-material'
+// API
+// @ts-ignore
+import credentialsApi from '@/api/credentials'
+// @ts-ignore
+import useApi from '@/hooks/useApi'
+
 // Full credential creation modal without Redux dependencies
 const CredentialCreationModal = ({
     open,
@@ -91,7 +101,7 @@ const CredentialCreationModal = ({
     }, [integration, open])
 
     const handleInputChange = (paramName: string, value: any) => {
-        setCredentialData((prev) => ({
+        setCredentialData((prev: any) => ({
             ...prev,
             [paramName]: value
         }))
@@ -343,6 +353,11 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
     const [integrationsError, setIntegrationsError] = useState<string | null>(null)
     const [showCredentialModal, setShowCredentialModal] = useState(false)
     const [selectedIntegration, setSelectedIntegration] = useState<EnabledIntegration | null>(null)
+    const [userCredentials, setUserCredentials] = useState<any[]>([])
+    const [expandedIntegrations, setExpandedIntegrations] = useState<Set<string>>(new Set())
+
+    // API hooks for fetching credentials
+    const getAllCredentialsApi = useApi(credentialsApi.getAllCredentials)
 
     // Fetch enabled integrations from organization
     const fetchOrgIntegrations = async () => {
@@ -363,7 +378,16 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
 
     useEffect(() => {
         fetchOrgIntegrations()
+        getAllCredentialsApi.request()
     }, [])
+
+    useEffect(() => {
+        if (getAllCredentialsApi.data) {
+            // Filter for user-owned credentials only
+            const userCreds = getAllCredentialsApi.data.filter((cred: any) => cred.isOwner)
+            setUserCredentials(userCreds)
+        }
+    }, [getAllCredentialsApi.data])
 
     const handleAddCredential = (credentialName: string) => {
         const integration = integrations.find((i) => i.credentialName === credentialName)
@@ -376,6 +400,32 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
     const handleCredentialModalClose = () => {
         setShowCredentialModal(false)
         setSelectedIntegration(null)
+        // Refresh credentials after modal closes
+        getAllCredentialsApi.request()
+    }
+
+    const getCredentialsForIntegration = (credentialName: string) => {
+        return userCredentials.filter((cred: any) => cred.credentialName === credentialName)
+    }
+
+    const handleCreateNewCredential = (credentialName: string) => {
+        window.open(`/sidekick-studio/credentials?cred=${credentialName}`, '_blank')
+    }
+
+    const handleEditCredential = (credentialId: string) => {
+        window.open(`/sidekick-studio/credentials?cred=${credentialId}`, '_blank')
+    }
+
+    const handleExpandIntegration = (credentialName: string) => {
+        setExpandedIntegrations((prev) => {
+            const newSet = new Set(prev)
+            if (newSet.has(credentialName)) {
+                newSet.delete(credentialName)
+            } else {
+                newSet.add(credentialName)
+            }
+            return newSet
+        })
     }
 
     const getRoleColor = (role: string) => {
@@ -438,7 +488,7 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
                                     >
                                         <PersonIcon sx={{ fontSize: 60 }} />
                                     </Avatar>
-                                    {user?.subscription && (
+                                    {!!user?.subscription && (
                                         <VerifiedIcon
                                             sx={{
                                                 position: 'absolute',
@@ -646,75 +696,199 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
                                     </Box>
                                 ) : (
                                     <List sx={{ p: 0 }}>
-                                        {integrations.map((integration, index) => (
-                                            <ListItem
-                                                key={integration.credentialName}
-                                                sx={{
-                                                    px: 0,
-                                                    py: 1,
-                                                    borderBottom: index < integrations.length - 1 ? '1px solid' : 'none',
-                                                    borderColor: 'grey.200'
-                                                }}
-                                            >
-                                                <ListItemIcon>
-                                                    <Box
+                                        {integrations.map((integration, index) => {
+                                            const isExpanded = expandedIntegrations.has(integration.credentialName)
+                                            const userCreds = getCredentialsForIntegration(integration.credentialName)
+
+                                            return (
+                                                <Box key={integration.credentialName}>
+                                                    <ListItem
                                                         sx={{
-                                                            width: 40,
-                                                            height: 40,
-                                                            borderRadius: '50%',
-                                                            backgroundColor: 'white',
-                                                            border: '1px solid',
-                                                            borderColor: 'grey.200',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
+                                                            px: 0,
+                                                            py: 2,
+                                                            borderBottom: index < integrations.length - 1 ? '1px solid' : 'none',
+                                                            borderColor: 'divider',
+                                                            alignItems: 'flex-start'
                                                         }}
                                                     >
-                                                        <img
-                                                            style={{
-                                                                width: '70%',
-                                                                height: '70%',
-                                                                objectFit: 'contain'
-                                                            }}
-                                                            alt={integration.credentialName}
-                                                            src={`${baseURL}/api/v1/components-credentials-icon/${integration.credentialName}`}
-                                                            onError={(e) => {
-                                                                const target = e.target as HTMLImageElement
-                                                                target.onerror = null
-                                                                target.src = keySVG
-                                                            }}
+                                                        <ListItemIcon>
+                                                            <Box
+                                                                sx={{
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: 'white',
+                                                                    border: '1px solid',
+                                                                    borderColor: 'grey.200',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center'
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    style={{
+                                                                        width: '70%',
+                                                                        height: '70%',
+                                                                        objectFit: 'contain'
+                                                                    }}
+                                                                    alt={integration.credentialName}
+                                                                    src={`${baseURL}/api/v1/components-credentials-icon/${integration.credentialName}`}
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement
+                                                                        target.onerror = null
+                                                                        target.src = keySVG
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            sx={{ pr: 2 }}
+                                                            primary={
+                                                                <Typography
+                                                                    variant='body1'
+                                                                    sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}
+                                                                >
+                                                                    {parser(integration.label)}
+                                                                </Typography>
+                                                            }
+                                                            secondary={
+                                                                <Typography
+                                                                    variant='body2'
+                                                                    sx={{ color: 'text.secondary', lineHeight: 1.4 }}
+                                                                >
+                                                                    {integration.description
+                                                                        ? parser(integration.description)
+                                                                        : `${integration.credentialName} integration`}
+                                                                </Typography>
+                                                            }
                                                         />
-                                                    </Box>
-                                                </ListItemIcon>
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography variant='body1' sx={{ fontWeight: 600, color: 'grey.900' }}>
-                                                            {parser(integration.label)}
-                                                        </Typography>
-                                                    }
-                                                    secondary={
-                                                        <Typography variant='body2' sx={{ color: 'grey.600' }}>
-                                                            {integration.description
-                                                                ? parser(integration.description)
-                                                                : `${integration.credentialName} integration`}
-                                                        </Typography>
-                                                    }
-                                                />
-                                                <Button
-                                                    variant='outlined'
-                                                    size='small'
-                                                    startIcon={<AddIcon />}
-                                                    onClick={() => handleAddCredential(integration.credentialName)}
-                                                    sx={{
-                                                        minWidth: 120,
-                                                        textTransform: 'none',
-                                                        fontWeight: 600
-                                                    }}
-                                                >
-                                                    Add Credential
-                                                </Button>
-                                            </ListItem>
-                                        ))}
+
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'flex-end',
+                                                                gap: 1,
+                                                                flexShrink: 0
+                                                            }}
+                                                        >
+                                                            <Button
+                                                                variant='outlined'
+                                                                size='small'
+                                                                startIcon={<AddIcon />}
+                                                                onClick={() => handleCreateNewCredential(integration.credentialName)}
+                                                                sx={{
+                                                                    minWidth: 140,
+                                                                    height: 32,
+                                                                    textTransform: 'none',
+                                                                    fontWeight: 500,
+                                                                    fontSize: '0.875rem',
+                                                                    borderColor: 'divider',
+                                                                    color: 'text.primary',
+                                                                    '&:hover': {
+                                                                        borderColor: 'primary.main',
+                                                                        backgroundColor: 'primary.50',
+                                                                        color: 'primary.main'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Add Credential
+                                                            </Button>
+                                                            {userCreds.length > 0 && (
+                                                                <Button
+                                                                    variant='outlined'
+                                                                    size='small'
+                                                                    endIcon={
+                                                                        isExpanded ? (
+                                                                            <ExpandLessIcon fontSize='small' />
+                                                                        ) : (
+                                                                            <ExpandMoreIcon fontSize='small' />
+                                                                        )
+                                                                    }
+                                                                    onClick={() => handleExpandIntegration(integration.credentialName)}
+                                                                    sx={{
+                                                                        minWidth: 140,
+                                                                        height: 32,
+                                                                        textTransform: 'none',
+                                                                        fontWeight: 500,
+                                                                        fontSize: '0.875rem',
+                                                                        borderColor: 'divider',
+                                                                        color: 'text.primary',
+                                                                        '&:hover': {
+                                                                            borderColor: 'primary.main',
+                                                                            backgroundColor: 'primary.50',
+                                                                            color: 'primary.main'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {`${userCreds.length} Credential${userCreds.length > 1 ? 's' : ''}`}
+                                                                </Button>
+                                                            )}
+                                                        </Box>
+                                                    </ListItem>
+
+                                                    {/* Expandable credentials section */}
+                                                    {userCreds.length > 0 && (
+                                                        <Collapse in={isExpanded} timeout='auto' unmountOnExit>
+                                                            <Box
+                                                                sx={{
+                                                                    pl: 7,
+                                                                    pr: 2,
+                                                                    pb: 2,
+                                                                    pt: 1,
+                                                                    backgroundColor: 'background.default',
+                                                                    borderRadius: 1,
+                                                                    mx: 1,
+                                                                    mb: 1,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'divider'
+                                                                }}
+                                                            >
+                                                                <Typography
+                                                                    variant='body2'
+                                                                    fontWeight='medium'
+                                                                    sx={{ mb: 2, color: 'text.primary' }}
+                                                                >
+                                                                    Your {parser(integration.label)} Credentials
+                                                                </Typography>
+
+                                                                <Stack spacing={1}>
+                                                                    {userCreds.map((cred: any) => (
+                                                                        <Chip
+                                                                            key={cred.id}
+                                                                            label={cred.name || cred.id}
+                                                                            onClick={() => handleEditCredential(cred.id)}
+                                                                            clickable
+                                                                            variant='outlined'
+                                                                            size='small'
+                                                                            sx={{
+                                                                                justifyContent: 'flex-start',
+                                                                                backgroundColor: 'background.paper',
+                                                                                borderColor: 'divider',
+                                                                                color: 'text.primary',
+                                                                                '&:hover': {
+                                                                                    backgroundColor: 'primary.50',
+                                                                                    borderColor: 'primary.main',
+                                                                                    color: 'primary.main'
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    ))}
+                                                                </Stack>
+
+                                                                <Typography
+                                                                    variant='caption'
+                                                                    color='text.secondary'
+                                                                    sx={{ mt: 2, display: 'block' }}
+                                                                >
+                                                                    Click on a credential to edit it.
+                                                                </Typography>
+                                                            </Box>
+                                                        </Collapse>
+                                                    )}
+                                                </Box>
+                                            )
+                                        })}
                                     </List>
                                 )}
                             </Paper>
