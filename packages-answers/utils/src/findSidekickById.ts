@@ -2,6 +2,7 @@ import { parseChatbotConfig, parseFlowData } from './normalizeSidekick'
 import { User } from 'types'
 import auth0 from '@utils/auth/auth0'
 import { INodeParams } from '@flowise/components'
+import { extractAllCredentials } from './extractAllCredentials'
 
 export async function findSidekickById(user: User, id: string) {
     let token
@@ -82,11 +83,19 @@ export async function findSidekickById(user: User, id: string) {
         .map((c: string) => c.trim().split(';'))
         .flat()
 
+    // Add permission properties to the chatflow object
+    const enhancedChatflow = {
+        ...chatflow,
+        canEdit: (chatflow.isOwner && user.permissions?.includes('chatflow:manage')) || user.permissions?.includes('org:manage')
+    }
+    const allCredentials = extractAllCredentials(chatflow.flowData)
+    const needsSetup = allCredentials.some((cred) => !cred.isAssigned)
+
     return {
         id: chatflow.id || '',
         label: chatflow.name || '',
         visibility: chatflow.visibility || [],
-        chatflow,
+        chatflow: enhancedChatflow,
         answersConfig: chatflow.answersConfig,
         chatflowId: chatflow.id || '',
         chatflowDomain: user.chatflowDomain,
@@ -96,6 +105,9 @@ export async function findSidekickById(user: User, id: string) {
         categories,
         isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
         isFavorite: false,
+        needsSetup,
+        credentialsToShow: allCredentials,
+        allCredentials,
         constraints: {
             isSpeechToTextEnabled,
             isImageUploadAllowed,

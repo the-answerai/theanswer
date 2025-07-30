@@ -340,36 +340,16 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     const duplicatedFlowData = localStorage.getItem('duplicatedFlowData')
                     let newChatflowBody
                     if (duplicatedFlowData) {
-                        try {
-                            const parsedData = JSON.parse(duplicatedFlowData)
-                            // Use preserved template metadata from localStorage
-                            newChatflowBody = {
-                                ...parsedData,
-                                name: chatflowName,
-                                flowData,
-                                deployed: false,
-                                isPublic: false,
-                                parentChatflowId: parsedData.parentChatflowId || parentChatflowId
-                            }
-                            localStorage.removeItem('duplicatedFlowData')
-                        } catch (error) {
-                            console.error('Error parsing stored template data:', error)
-                            // Fallback to default chatflow creation when template data is corrupted
-                            newChatflowBody = {
-                                ...configs,
-                                name: chatflowName,
-                                parentChatflowId,
-                                deployed: false,
-                                isPublic: false,
-                                flowData,
-                                type: isAgentCanvas ? 'MULTIAGENT' : 'CHATFLOW',
-                                description: chatflow.description || configs.description || '',
-                                visibility: chatflow.visibility || configs.visibility || [],
-                                category: chatflow.category || configs.category || '',
-                                chatbotConfig: chatbotConfig || configs.chatbotConfig || ''
-                            }
-                            localStorage.removeItem('duplicatedFlowData')
+                        const parsedData = JSON.parse(duplicatedFlowData)
+                        newChatflowBody = {
+                            ...parsedData,
+                            name: chatflowName,
+                            flowData,
+                            deployed: false,
+                            isPublic: false,
+                            parentChatflowId: parsedData.parentChatflowId || parentChatflowId
                         }
+                        localStorage.removeItem('duplicatedFlowData')
                     } else {
                         newChatflowBody = {
                             ...configs,
@@ -647,10 +627,22 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         } else {
             // console.log('🎨 No chatflowId, checking for duplicated flow data...')
             const duplicatedFlowData = localStorage.getItem('duplicatedFlowData')
+            // console.log('🎨 duplicatedFlowData from localStorage:', {
+            //     exists: !!duplicatedFlowData,
+            //     length: duplicatedFlowData ? duplicatedFlowData.length : 0
+            // })
 
             if (duplicatedFlowData) {
                 try {
                     const parsedData = JSON.parse(duplicatedFlowData)
+                    // console.log('🎨 Parsed duplicated flow data:', {
+                    //     name: parsedData.name,
+                    //     hasNodes: !!parsedData.nodes,
+                    //     nodeCount: parsedData.nodes?.length || 0,
+                    //     hasEdges: !!parsedData.edges,
+                    //     edgeCount: parsedData.edges?.length || 0,
+                    //     hasFlowData: !!parsedData.flowData
+                    // })
 
                     setNodes(parsedData.nodes || [])
                     setEdges(parsedData.edges || [])
@@ -659,11 +651,18 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         ...parsedData,
                         id: undefined,
                         name: `Copy of ${parsedData.name || templateName || 'Untitled Chatflow'}`,
-                        // Preserve original template description and metadata
-                        description: parsedData.description || '',
+                        // Don't inherit marketplace-specific descriptions for file imports
+                        description: parsedData.description === 'Copied from marketplace' ? '' : parsedData.description,
                         deployed: false,
                         isPublic: false
                     }
+
+                    // console.log('🎨 Setting new chatflow:', {
+                    //     name: newChatflow.name,
+                    //     id: newChatflow.id,
+                    //     nodesSet: parsedData.nodes?.length || 0,
+                    //     edgesSet: parsedData.edges?.length || 0
+                    // })
 
                     setChatflow(newChatflow)
                     dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
@@ -672,16 +671,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     setShouldShowSaveDialog(true)
 
                     setTimeout(() => {
+                        // console.log('🎨 Cleaning up localStorage...')
                         localStorage.removeItem('duplicatedFlowData')
                     }, 0)
                 } catch (error) {
-                    console.error('Error parsing duplicated flow data:', error)
-                    // Fallback to empty canvas if parsing fails
-                    setNodes([])
-                    setEdges([])
-                    setChatflow({
-                        name: templateName ? `Copy of ${templateName}` : `Untitled ${canvasTitle}`
-                    })
+                    console.error('🎨 Error parsing duplicated flow data:', error)
                 }
             } else {
                 // console.log('🎨 No duplicated flow data, creating blank canvas')

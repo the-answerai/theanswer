@@ -5,6 +5,33 @@ import { TypeORMVectorStore, TypeORMVectorStoreArgs, TypeORMVectorStoreDocument 
 import { VectorStore } from '@langchain/core/vectorstores'
 import { Document } from '@langchain/core/documents'
 import { Pool } from 'pg'
+<<<<<<< HEAD
+=======
+import { generateSecureNamespace } from '../../../../src/aaiUtils'
+
+// Security helper functions
+function createSecurityFilters(options: ICommonObject, namespace: string): any {
+    const filters: any = {
+        _namespace: namespace,
+        _chatflowId: options.chatflowid
+    }
+    if (options.user?.organizationId || options.organizationId) {
+        filters._organizationId = options.organizationId || options.user?.organizationId
+    }
+    return filters
+}
+
+function addSecurityMetadata(doc: Document, options: ICommonObject, namespace: string): Document {
+    doc.metadata = {
+        ...doc.metadata,
+        _namespace: namespace,
+        _chatflowId: options.chatflowid,
+        ...(options.user?.organizationId ? { _organizationId: options.user.organizationId } : {}),
+        ...(options.organizationId ? { _organizationId: options.organizationId } : {})
+    }
+    return doc
+}
+>>>>>>> staging
 
 export class AAITypeORMDriver extends AAIVectorStoreDriver {
     protected _postgresConnectionOptions: DataSourceOptions
@@ -52,7 +79,22 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
     async instanciate(metadataFilters?: any) {
         try {
+<<<<<<< HEAD
             return this.adaptInstance(await TypeORMVectorStore.fromDataSource(this.getEmbeddings(), await this.getArgs()), metadataFilters)
+=======
+            // Generate namespace and create security filters
+            const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
+            const securityFilters = createSecurityFilters(this.options, namespace)
+
+            // Combine security filters with user filters
+            let combinedFilters = securityFilters
+            if (metadataFilters) {
+                // User filters cannot override security filters
+                combinedFilters = { ...metadataFilters, ...securityFilters }
+            }
+
+            return this.adaptInstance(await TypeORMVectorStore.fromDataSource(this.getEmbeddings(), await this.getArgs()), combinedFilters)
+>>>>>>> staging
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
 
@@ -96,7 +138,15 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
     async fromDocuments(documents: Document[]) {
         try {
+<<<<<<< HEAD
             return this.adaptInstance(await TypeORMVectorStore.fromDocuments(documents, this.getEmbeddings(), await this.getArgs()))
+=======
+            // Generate namespace and add security metadata to documents
+            const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
+            const secureDocuments = documents.map((doc) => addSecurityMetadata(new Document(doc), this.options, namespace))
+
+            return this.adaptInstance(await TypeORMVectorStore.fromDocuments(secureDocuments, this.getEmbeddings(), await this.getArgs()))
+>>>>>>> staging
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
 
@@ -172,9 +222,41 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
 
             if (ids?.length) {
                 try {
+<<<<<<< HEAD
                     instance.appDataSource.getRepository(instance.documentEntity).delete(ids)
                 } catch (e) {
                     console.error('Failed to delete')
+=======
+                    // Generate namespace for filtering
+                    const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
+                    const tableName = this.getTableName()
+
+                    // First, query to find documents that match both the IDs and namespace
+                    const postgresOptions = await this.getPostgresConnectionOptions()
+                    const pool = new Pool(postgresOptions as any)
+                    const conn = await pool.connect()
+
+                    // Build query to find documents with matching IDs and namespace
+                    const placeholders = ids.map((_, index) => `$${index + 2}`).join(', ')
+                    const queryString = `
+                        SELECT id FROM ${tableName}
+                        WHERE id IN (${placeholders})
+                        AND metadata @> $1
+                    `
+
+                    const namespaceFilter = JSON.stringify({ _namespace: namespace })
+                    const result = await conn.query(queryString, [namespaceFilter, ...ids])
+                    conn.release()
+
+                    // Only delete documents that match namespace
+                    const validIds = result.rows.map((row) => row.id)
+                    if (validIds.length > 0) {
+                        await instance.appDataSource.getRepository(instance.documentEntity).delete(validIds)
+                    }
+                } catch (e) {
+                    console.error('Failed to delete:', e)
+                    throw e
+>>>>>>> staging
                 }
             }
         }
@@ -182,7 +264,15 @@ export class AAITypeORMDriver extends AAIVectorStoreDriver {
         const baseAddVectorsFn = instance.addVectors.bind(instance)
 
         instance.addVectors = async (vectors, documents) => {
+<<<<<<< HEAD
             return baseAddVectorsFn(vectors, this.sanitizeDocuments(documents))
+=======
+            // Generate namespace and add security metadata to documents
+            const namespace = generateSecureNamespace(this.options, this.nodeData.inputs?.namespace as string)
+            const secureDocuments = documents.map((doc) => addSecurityMetadata(new Document(doc), this.options, namespace))
+
+            return baseAddVectorsFn(vectors, this.sanitizeDocuments(secureDocuments))
+>>>>>>> staging
         }
 
         return instance
