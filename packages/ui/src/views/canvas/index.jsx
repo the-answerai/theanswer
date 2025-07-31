@@ -328,7 +328,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     typeof chatflow.chatbotConfig === 'object' ? JSON.stringify(chatflow.chatbotConfig) : chatflow.chatbotConfig
 
                 if (!chatflow.id) {
-                    // console.log('💾 Creating new chatflow...')
                     const duplicatedFlowData = localStorage.getItem('duplicatedFlowData')
                     let newChatflowBody
                     if (duplicatedFlowData) {
@@ -345,6 +344,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     } else {
                         newChatflowBody = {
                             ...configs,
+                            ...omit(chatflow, ['edges', 'nodes']),
                             name: chatflowName,
                             parentChatflowId,
                             deployed: false,
