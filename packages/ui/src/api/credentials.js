@@ -18,6 +18,11 @@ const deleteCredential = (id) => client.delete(`/credentials/${id}`)
 
 const refreshAccessToken = (body) => client.post(`/credentials/refresh-token`, body)
 
+// Organization credentials management
+const getOrgCredentials = () => client.get('/admin/org-credentials')
+
+const updateOrgCredentials = (integrations) => client.post('/admin/org-credentials', { integrations })
+
 export default {
     getAllCredentials,
     getCredentialsByName,
@@ -27,5 +32,7 @@ export default {
     createCredential,
     updateCredential,
     deleteCredential,
-    refreshAccessToken
+    refreshAccessToken,
+    getOrgCredentials,
+    updateOrgCredentials
 }

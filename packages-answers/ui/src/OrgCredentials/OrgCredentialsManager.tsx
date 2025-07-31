@@ -55,26 +55,20 @@ const OrgCredentialsManager: React.FC = () => {
     // Use the same API hooks as the existing credential system
     const getAllComponentsCredentialsApi = useApi(credentialsApi.getAllComponentsCredentials)
     const getAllCredentialsApi = useApi(credentialsApi.getAllCredentials)
-
-    // Fetch current org credentials settings
-    const fetchOrgCredentials = async () => {
-        try {
-            const response = await fetch('/api/admin/org-credentials')
-            if (!response.ok) {
-                throw new Error('Failed to fetch org credentials')
-            }
-            const data = await response.json()
-            setIntegrations(data.integrations || [])
-        } catch (err: any) {
-            setError(err.message)
-        }
-    }
+    const getOrgCredentialsApi = useApi(credentialsApi.getOrgCredentials)
+    const updateOrgCredentialsApi = useApi(credentialsApi.updateOrgCredentials)
 
     useEffect(() => {
-        fetchOrgCredentials()
+        getOrgCredentialsApi.request()
         getAllComponentsCredentialsApi.request()
         getAllCredentialsApi.request()
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (getOrgCredentialsApi.data) {
+            setIntegrations(getOrgCredentialsApi.data.integrations || [])
+        }
+    }, [getOrgCredentialsApi.data])
 
     useEffect(() => {
         if (getAllCredentialsApi.data) {
@@ -110,22 +104,13 @@ const OrgCredentialsManager: React.FC = () => {
                 updatedIntegrations = integrations.map((i) => (i.credentialName === credentialName ? { ...i, enabled: false } : i))
             }
 
-            const response = await fetch('/api/admin/org-credentials', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ integrations: updatedIntegrations })
-            })
+            await updateOrgCredentialsApi.request(updatedIntegrations)
 
-            if (!response.ok) {
-                throw new Error('Failed to update integrations')
+            if (updateOrgCredentialsApi.data) {
+                setIntegrations(updateOrgCredentialsApi.data.integrations || [])
             }
-
-            const data = await response.json()
-            setIntegrations(data.integrations || [])
         } catch (err: any) {
-            setError(err.message)
+            setError(updateOrgCredentialsApi.error?.message || err.message || 'Failed to update integrations')
         } finally {
             setSaving(false)
         }
@@ -178,7 +163,7 @@ const OrgCredentialsManager: React.FC = () => {
         return groups
     }
 
-    if (getAllComponentsCredentialsApi.loading) {
+    if (getAllComponentsCredentialsApi.loading || getOrgCredentialsApi.loading) {
         return (
             <Container>
                 <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
@@ -186,6 +171,12 @@ const OrgCredentialsManager: React.FC = () => {
                 </Box>
             </Container>
         )
+    }
+
+    // Handle API errors
+    const apiError = getAllComponentsCredentialsApi.error || getOrgCredentialsApi.error
+    if (apiError) {
+        setError(apiError.message || 'Failed to load credentials data')
     }
 
     // Transform the API data to include category and icon info
