@@ -307,14 +307,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
     const handleSaveFlow = (chatflowName, configs = {}) => {
         try {
-            // console.log('💾 handleSaveFlow called with:', {
-            //     chatflowName,
-            //     hasConfigs: !!configs,
-            //     hasChatflow: !!chatflow,
-            //     chatflowId: chatflow?.id,
-            //     isNewChatflow: !chatflow?.id
-            // })
-
             if (reactFlowInstance) {
                 const nodes = reactFlowInstance.getNodes().map((node) => {
                     const nodeData = cloneDeep(node.data)
@@ -635,14 +627,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             if (duplicatedFlowData) {
                 try {
                     const parsedData = JSON.parse(duplicatedFlowData)
-                    // console.log('🎨 Parsed duplicated flow data:', {
-                    //     name: parsedData.name,
-                    //     hasNodes: !!parsedData.nodes,
-                    //     nodeCount: parsedData.nodes?.length || 0,
-                    //     hasEdges: !!parsedData.edges,
-                    //     edgeCount: parsedData.edges?.length || 0,
-                    //     hasFlowData: !!parsedData.flowData
-                    // })
 
                     setNodes(parsedData.nodes || [])
                     setEdges(parsedData.edges || [])
@@ -657,13 +641,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         isPublic: false
                     }
 
-                    // console.log('🎨 Setting new chatflow:', {
-                    //     name: newChatflow.name,
-                    //     id: newChatflow.id,
-                    //     nodesSet: parsedData.nodes?.length || 0,
-                    //     edgesSet: parsedData.edges?.length || 0
-                    // })
-
                     setChatflow(newChatflow)
                     dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
 
@@ -671,7 +648,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     setShouldShowSaveDialog(true)
 
                     setTimeout(() => {
-                        // console.log('🎨 Cleaning up localStorage...')
                         localStorage.removeItem('duplicatedFlowData')
                     }, 0)
                 } catch (error) {

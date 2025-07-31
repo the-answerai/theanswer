@@ -13,6 +13,7 @@ import { ChatFlow } from '../../database/entities/ChatFlow'
 import { ChatflowVisibility } from '../../database/entities/ChatFlow'
 
 import chatflowsService from '../chatflows'
+import { omit } from 'lodash'
 // import checkOwnership from '../../utils/checkOwnership'
 type ITemplate = {
     badge?: string
@@ -26,6 +27,11 @@ type ITemplate = {
     category?: string
     type?: string
     chatbotConfig?: string
+    apiConfig?: string
+    followUpPrompts?: string
+    userId?: string
+    organizationId?: string
+    browserExtConfig?: string
     visibility?: string[]
 }
 
@@ -34,22 +40,16 @@ const getCategories = (fileDataObj: ITemplate) => {
 }
 
 // Helper function to create template object
+const TEMPLATE_FIELD_BLOCKLIST = ['userId', 'apikeyid', 'deletedDate', '']
 const createTemplate = (fileDataObj: ITemplate, file: string, fileData: string, type: string) => {
     return {
+        ...omit(fileDataObj, TEMPLATE_FIELD_BLOCKLIST),
         id: uuidv4(),
         name: fileDataObj?.name || file.split('.json')[0],
         templateName: file.split('.json')[0],
         flowData: fileData,
-        badge: fileDataObj?.badge,
-        framework: fileDataObj?.framework,
-        usecases: fileDataObj?.usecases,
-        category: fileDataObj?.category || '',
         categories: type === 'Tool' ? [] : getCategories(fileDataObj),
         type,
-        description: fileDataObj?.description || '',
-        chatbotConfig: fileDataObj?.chatbotConfig || '',
-        visibility: fileDataObj?.visibility || [],
-        iconSrc: fileDataObj?.iconSrc || '',
         requiresClone: true
     }
 }
@@ -385,6 +385,13 @@ const saveCustomTemplate = async (body: any, user: IUser): Promise<any> => {
             flowDataStr = JSON.stringify(exportJson)
             customTemplate.framework = framework
             customTemplate.parentId = body.chatflowId
+            customTemplate.chatbotConfig = chatflow.chatbotConfig
+            customTemplate.visibility = chatflow.visibility
+            customTemplate.apiConfig = chatflow.apiConfig
+            customTemplate.speechToText = chatflow.speechToText
+            customTemplate.category = chatflow.category
+            customTemplate.type = chatflow.type
+            customTemplate.description = customTemplate.description || chatflow.description
         } else if (body.tool) {
             const flowData = {
                 iconSrc: body.tool.iconSrc,

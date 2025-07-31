@@ -60,11 +60,11 @@ const MarketplaceCanvas = () => {
         const flowDataParsed = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
 
         const chatflowData = {
+            ...flowDataParsed,
             name: name || 'Copied Template',
             description: 'Copied from marketplace',
             nodes: flowDataParsed.nodes || [],
             edges: flowDataParsed.edges || [],
-            flowData: JSON.stringify(flowDataParsed),
             parentChatflowId: state?.parentChatflowId
         }
 
