@@ -665,8 +665,7 @@ export const buildFlow = async ({
                 logger.debug(`[server]: Initializing ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
 
                 // Check and refresh credentials before node initialization if needed
-                const credentialsService = await import('../services/credentials')
-                await credentialsService.default.refreshCredentialsIfNeeded(reactFlowNode.data, {
+                await checkAndRefreshCredentialsBeforeInit(reactFlowNode, {
                     chatId,
                     sessionId,
                     chatflowid,
@@ -2006,4 +2005,95 @@ export const getAllNodesInPath = (startNode: string, graph: INodeDirectedGraph):
     }
 
     return Array.from(nodes)
+}
+
+/**
+ * Check and refresh credentials before node initialization if needed
+ * This ensures tokens are fresh before the node tries to use them
+ */
+export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReactFlowNode, options: ICommonObject): Promise<void> => {
+    try {
+        // Check if this is an Atlassian MCP node that uses OAuth credentials
+        if (reactFlowNode.data.name !== 'atlassianMCP' || !reactFlowNode.data.credential) {
+            return // No refresh needed
+        }
+
+        const credentialId = reactFlowNode.data.credential
+        const userId = options.userId
+
+        logger.debug(`[CREDENTIAL REFRESH]: Checking tokens for node ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
+
+        const credential = await options.appDataSource.getRepository(Credential).findOneBy({ id: credentialId })
+        if (!credential) {
+            logger.warn(`[CREDENTIAL REFRESH]: Credential ${credentialId} not found`)
+            return
+        }
+
+        const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
+
+        // Validate this is an MCP credential
+        if (!decryptedCredentialData.mcp_client_id || !decryptedCredentialData.mcp_client_secret) {
+            return // Not an MCP credential, skip refresh
+        }
+
+        // Check if token needs refresh (5 minute buffer)
+        const currentTime = Date.now()
+        const expirationTime = parseInt(decryptedCredentialData.expiration_time || '0')
+        const bufferTime = 5 * 60 * 1000 // 5 minutes buffer
+
+        if (currentTime + bufferTime < expirationTime) {
+            return // Token is still valid
+        }
+
+        // Fetch MCP metadata and refresh token
+        const metadataResponse = await fetch('https://mcp.atlassian.com/.well-known/oauth-authorization-server')
+        if (!metadataResponse.ok) {
+            throw new Error(`Failed to fetch MCP OAuth metadata: ${metadataResponse.status}`)
+        }
+        const metadata = await metadataResponse.json()
+
+        const tokenResponse = await fetch(metadata.token_endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json'
+            },
+            body: new URLSearchParams({
+                grant_type: 'refresh_token',
+                client_id: decryptedCredentialData.mcp_client_id,
+                client_secret: decryptedCredentialData.mcp_client_secret,
+                refresh_token: decryptedCredentialData.refresh_token
+            })
+        })
+
+        if (!tokenResponse.ok) {
+            throw new Error(`Token refresh failed: ${tokenResponse.status}`)
+        }
+
+        const tokenData = await tokenResponse.json()
+        const newExpirationTime = Date.now() + (tokenData.expires_in || 3600) * 1000
+
+        // Update credential with new tokens s
+        const updateBody = {
+            name: credential.name,
+            credentialName: credential.credentialName,
+            plainDataObj: {
+                ...decryptedCredentialData,
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token || decryptedCredentialData.refresh_token,
+                expiration_time: newExpirationTime.toString()
+            },
+            userId: credential.userId,
+            organizationId: credential.organizationId
+        }
+
+        const updateCredentialEntity = await transformToCredentialEntity(updateBody)
+        await options.appDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)
+        await options.appDataSource.getRepository(Credential).save(credential)
+
+        logger.debug(`[CREDENTIAL REFRESH]: Successfully refreshed tokens for credential ${credentialId}`)
+    } catch (error) {
+        // Log the error but don't fail the entire flow
+        logger.warn(`[CREDENTIAL REFRESH]: Failed to refresh credentials for node ${reactFlowNode.data.id}: ${getErrorMessage(error)}`)
+    }
 }

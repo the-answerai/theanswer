@@ -68,6 +68,17 @@ class Atlassian_MCP implements INode {
     loadMethods = {
         listActions: async (nodeData: INodeData, options: ICommonObject): Promise<INodeOptionsValue[]> => {
             try {
+                // Check if credential exists first
+                if (!nodeData.credential) {
+                    return [
+                        {
+                            label: 'No Credential Selected',
+                            name: 'no_credential',
+                            description: 'Please select an Atlassian OAuth credential first'
+                        }
+                    ]
+                }
+
                 const toolset = await this.getTools(nodeData, options)
                 toolset.sort((a, b) => a.name.localeCompare(b.name))
 
@@ -78,11 +89,12 @@ class Atlassian_MCP implements INode {
                 }))
             } catch (error) {
                 console.error('Error loading Atlassian MCP actions:', error)
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error'
                 return [
                     {
-                        label: 'No Available Actions',
+                        label: 'Error Loading Actions',
                         name: 'error',
-                        description: 'No available actions, please check your OAuth credential and environment variables'
+                        description: `Failed to load actions: ${errorMessage}. Please check your OAuth credential setup.`
                     }
                 ]
             }
@@ -110,7 +122,7 @@ class Atlassian_MCP implements INode {
         // So we can directly use the access token from credential data
         const credentialData = await getCredentialData(nodeData.credential || '', options)
 
-        if (!credentialData.accessToken) {
+        if (!credentialData.access_token) {
             throw new Error('Access token not found in credential data')
         }
 
@@ -119,7 +131,7 @@ class Atlassian_MCP implements INode {
             url: 'https://mcp.atlassian.com/v1/sse'
         }
 
-        const toolkit = new MCPToolkit(serverParams, 'sse', credentialData.accessToken)
+        const toolkit = new MCPToolkit(serverParams, 'sse', credentialData.access_token)
         await toolkit.initialize()
 
         const tools = toolkit.tools ?? []
