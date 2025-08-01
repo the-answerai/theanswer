@@ -58,8 +58,6 @@ import { usePrompt } from '@/utils/usePrompt'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 
 // credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
-import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 
 const nodeTypes = { customNode: CanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: ButtonEdge }
@@ -110,9 +108,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
     const reactFlowWrapper = useRef(null)
     const canvasHeaderRef = useRef(null)
-
-    // Credential checking hook
-    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
 
     // ==============================|| Chatflow API ||============================== //
 
@@ -179,7 +174,10 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             let existingChatflow = null
             let hasAccess = false
 
-            if (flowData.id) {
+            // For imported chatflows, always treat as new to avoid 403 errors
+            const isImportedChatflow = !!fileName
+
+            if (flowData.id && !isImportedChatflow) {
                 try {
                     existingChatflow = await chatflowsApi.getSpecificChatflow(flowData.id)
                     hasAccess = true
@@ -251,10 +249,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         try {
             const flowData = JSON.parse(file)
 
-            // Check for missing credentials before proceeding
-            checkCredentials(flowData, (updatedFlowData, credentialAssignments) => {
-                proceedWithFlow(updatedFlowData, credentialAssignments, fileName)
-            })
+            // Process flow data directly without credential checking
+            // This follows the same pattern as Max's fix for marketplace
+            proceedWithFlow(flowData, {}, fileName)
         } catch (e) {
             // console.error('handleLoadFlow - Error:', e)
             enqueueSnackbar({
@@ -635,12 +632,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         ...parsedData,
                         id: undefined,
                         name: `Copy of ${parsedData.name || templateName || 'Untitled Chatflow'}`,
-                        // Don't inherit marketplace-specific descriptions for file imports
-                        description: parsedData.description === 'Copied from marketplace' ? '' : parsedData.description,
+                        // Keep the original description from marketplace
+                        description: parsedData.description || '',
                         deployed: false,
                         isPublic: false
                     }
-
                     setChatflow(newChatflow)
                     dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
 
@@ -805,14 +801,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             </Box>
 
             {/* Unified Credentials Modal */}
-            <UnifiedCredentialsModal
-                show={showCredentialModal}
-                missingCredentials={missingCredentials}
-                onAssign={handleAssign}
-                onSkip={handleSkip}
-                onCancel={handleCancel}
-                flowData={null}
-            />
+            {/* Removed useCredentialChecker, so this modal is no longer needed */}
         </>
     )
 }

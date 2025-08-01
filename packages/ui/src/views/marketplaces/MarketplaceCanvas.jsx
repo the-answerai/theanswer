@@ -52,20 +52,21 @@ const MarketplaceCanvas = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
-    const onChatflowCopy = (flowData) => {
-        const isAgentCanvas = (flowData?.nodes || []).some(
+    const onChatflowCopy = (stateData) => {
+        // stateData is now the complete state with all template information
+        const flowDataParsed = stateData.flowData ? JSON.parse(stateData.flowData) : {}
+        
+        const isAgentCanvas = (flowDataParsed?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
 
-        const flowDataParsed = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
-
+        // Use the complete state data which includes all template information
         const chatflowData = {
-            ...flowDataParsed,
+            ...stateData,
             name: name || 'Copied Template',
-            description: 'Copied from marketplace',
             nodes: flowDataParsed.nodes || [],
             edges: flowDataParsed.edges || [],
-            parentChatflowId: state?.parentChatflowId
+            parentChatflowId: stateData?.parentChatflowId
         }
 
         localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
@@ -90,7 +91,10 @@ const MarketplaceCanvas = () => {
                         <MarketplaceCanvasHeader
                             flowName={name}
                             flowData={flowData ? JSON.parse(flowData) : null}
-                            onChatflowCopy={(flowData) => onChatflowCopy(flowData)}
+                            onChatflowCopy={(flowData) => {
+                                // Pass the complete state instead of just flowData
+                                onChatflowCopy(state)
+                            }}
                         />
                     </Toolbar>
                 </AppBar>
