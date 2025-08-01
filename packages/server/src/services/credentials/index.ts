@@ -189,8 +189,8 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
             credentialName: credential.credentialName,
             plainDataObj: {
                 ...decryptedCredentialData,
-                googleAccessToken: access_token,  // ✅ ACTUALIZA el nuevo access token
-                expiresAt: new Date(expiry_date)  // ✅ ACTUALIZA la fecha de expiración
+                googleAccessToken: access_token, // ✅ ACTUALIZA el nuevo access token
+                expiresAt: new Date(expiry_date) // ✅ ACTUALIZA la fecha de expiración
                 // expiresAt: new Date(Date.now() + 1 * 60 * 1000)
             },
             userId: credential.userId,
@@ -208,11 +208,130 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
     }
 }
 
+const updateAndRefreshAtlassianToken = async (credentialId: string, userId?: string): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({ id: credentialId })
+        if (!credential) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found`)
+        }
+
+        const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
+
+        // Validate this is an MCP credential
+        if (!decryptedCredentialData.mcp_client_id || !decryptedCredentialData.mcp_client_secret) {
+            throw new InternalFlowiseError(
+                StatusCodes.BAD_REQUEST,
+                'This credential is not an MCP credential. Missing mcp_client_id or mcp_client_secret.'
+            )
+        }
+
+        // Fetch MCP metadata dynamically
+        const metadataResponse = await fetch('https://mcp.atlassian.com/.well-known/oauth-authorization-server')
+        if (!metadataResponse.ok) {
+            throw new InternalFlowiseError(
+                StatusCodes.BAD_GATEWAY,
+                `Failed to fetch MCP OAuth metadata: ${metadataResponse.status} ${metadataResponse.statusText}`
+            )
+        }
+        const metadata = await metadataResponse.json()
+
+        // Refresh tokens using MCP endpoint
+        const tokenResponse = await fetch(metadata.token_endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json'
+            },
+            body: new URLSearchParams({
+                grant_type: 'refresh_token',
+                client_id: decryptedCredentialData.mcp_client_id,
+                client_secret: decryptedCredentialData.mcp_client_secret,
+                refresh_token: decryptedCredentialData.refresh_token
+            })
+        })
+
+        if (!tokenResponse.ok) {
+            const errorText = await tokenResponse.text()
+            throw new InternalFlowiseError(
+                StatusCodes.BAD_REQUEST,
+                `Atlassian token refresh failed: ${tokenResponse.status} ${tokenResponse.statusText}: ${errorText}`
+            )
+        }
+
+        const tokenData = await tokenResponse.json()
+
+        // Calculate new expiration time
+        const expiresIn = tokenData.expires_in || 3600 // Default to 1 hour
+        const expirationTime = Date.now() + expiresIn * 1000
+
+        const updateBody = {
+            name: credential.name,
+            credentialName: credential.credentialName,
+            plainDataObj: {
+                ...decryptedCredentialData,
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token || decryptedCredentialData.refresh_token,
+                expiration_time: expirationTime.toString()
+            },
+            userId: credential.userId,
+            organizationId: credential.organizationId
+        }
+
+        const updateCredentialEntity = await transformToCredentialEntity(updateBody)
+        await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)
+        const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
+        return dbResponse
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: credentialsService.updateAndRefreshAtlassianToken - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+/**
+ * Check if a node needs credential refresh before initialization
+ * Currently supports Atlassian MCP nodes
+ */
+const needsCredentialRefresh = (nodeData: any): boolean => {
+    // Check if this is an Atlassian MCP node that uses OAuth credentials
+    return nodeData.name === 'atlassianMCP' && nodeData.credential
+}
+
+/**
+ * Check and refresh credentials before node initialization if needed
+ * This ensures tokens are fresh before the node tries to use them
+ */
+const refreshCredentialsIfNeeded = async (nodeData: any, options: any): Promise<void> => {
+    try {
+        if (!needsCredentialRefresh(nodeData)) {
+            return // No refresh needed
+        }
+
+        const credentialId = nodeData.credential
+        if (!credentialId) {
+            return // No credential to refresh
+        }
+
+        const userId = options.userId
+
+        // Call the existing token refresh function
+        await updateAndRefreshAtlassianToken(credentialId, userId)
+    } catch (error) {
+        // Log the error but don't fail the entire flow
+        // The node init will handle credential errors appropriately
+        console.warn(`[CREDENTIAL REFRESH]: Failed to refresh credentials for node ${nodeData.id}: ${getErrorMessage(error)}`)
+    }
+}
+
 export default {
     createCredential,
     deleteCredentials,
     getAllCredentials,
     getCredentialById,
     updateCredential,
-    updateAndRefreshToken
+    updateAndRefreshToken,
+    updateAndRefreshAtlassianToken,
+    refreshCredentialsIfNeeded
 }

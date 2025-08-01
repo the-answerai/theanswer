@@ -663,6 +663,20 @@ export const buildFlow = async ({
                 initializedNodes.add(nodeId)
             } else {
                 logger.debug(`[server]: Initializing ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
+
+                // Check and refresh credentials before node initialization if needed
+                const credentialsService = await import('../services/credentials')
+                await credentialsService.default.refreshCredentialsIfNeeded(reactFlowNode.data, {
+                    chatId,
+                    sessionId,
+                    chatflowid,
+                    appDataSource,
+                    databaseEntities,
+                    logger,
+                    userId: user?.id,
+                    organizationId: user?.organizationId
+                })
+
                 const finalQuestion = uploadedFilesContent ? `${uploadedFilesContent}\n\n${question}` : question
                 let outputResult = await newNodeInstance.init(reactFlowNodeData, finalQuestion, {
                     chatId,
