@@ -58,7 +58,8 @@ import { usePrompt } from '@/utils/usePrompt'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 
 // credential checking
-
+import { useCredentialChecker } from '@/hooks/useCredentialChecker'
+import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 const nodeTypes = { customNode: CanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: ButtonEdge }
 
@@ -108,6 +109,8 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
     const reactFlowWrapper = useRef(null)
     const canvasHeaderRef = useRef(null)
+
+    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
 
     // ==============================|| Chatflow API ||============================== //
 
@@ -250,7 +253,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             const flowData = JSON.parse(file)
 
             // Process flow data directly without credential checking
-            // This follows the same pattern as Max's fix for marketplace
+            // This follows the same pattern as marketplace fix
             proceedWithFlow(flowData, {}, fileName)
         } catch (e) {
             // console.error('handleLoadFlow - Error:', e)
@@ -801,7 +804,15 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             </Box>
 
             {/* Unified Credentials Modal */}
-            {/* Removed useCredentialChecker, so this modal is no longer needed */}
+
+            <UnifiedCredentialsModal
+                show={showCredentialModal}
+                missingCredentials={missingCredentials}
+                onAssign={handleAssign}
+                onSkip={handleSkip}
+                onCancel={handleCancel}
+                flowData={null}
+            />
         </>
     )
 }
