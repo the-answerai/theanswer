@@ -100,9 +100,9 @@ class AnswerAgent_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
-        // Get API base URL from environment variable
-        const apiBaseUrl = process.env.API_HOST
-        if (!apiBaseUrl) {
+        // Get API host from environment variable
+        const apiHost = process.env.API_HOST
+        if (!apiHost) {
             throw new Error('API_HOST environment variable is not set')
         }
 
@@ -119,7 +119,7 @@ class AnswerAgent_MCP implements INode {
             command: process.execPath,
             args: [packagePath],
             env: {
-                ANSWERAGENT_AI_API_BASE_URL: apiBaseUrl,
+                ANSWERAGENT_AI_API_HOST: apiHost,
                 ANSWERAGENT_AI_API_TOKEN: apiKey
             }
         }
