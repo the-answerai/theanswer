@@ -36,6 +36,8 @@ There are two main ways to get started with TheAnswer: local development setup a
 
     - Create a `.env` file in the root directory
     - If `.env.example` files are not available, contact The AnswerAI team for required environment variables
+    - Use `API_HOST` to specify your API server host. All API requests automatically include the `/api/v1` prefix.
+    - `API_BASE_URL` is deprecated and should not be used.
     - **Note:** For local development, you'll need Auth0 development team access (Member role or above)
 
 3. **Initialize git submodules:**
