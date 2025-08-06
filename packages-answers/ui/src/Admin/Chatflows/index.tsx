@@ -245,7 +245,7 @@ const AdminChatflows = () => {
             chatflowCategories.forEach((cat) => categories.add(cat))
         })
 
-        return Array.from(categories).sort()
+        return Array.from(categories).sort((a, b) => a.localeCompare(b))
     }
 
     const getAllOwners = () => {
