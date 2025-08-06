@@ -54,7 +54,7 @@
         "react-color": "^2.19.3",
         "react-datepicker": "^4.25.0",
         "react-device-detect": "^2.2.3",
-        "react-dom": "18.2.0",
+        "react-dom": "19.1.1",
         "react-markdown": "^8.0.7",
         "react-perfect-scrollbar": "^1.5.8",
         "react-redux": "^8.1.3",
