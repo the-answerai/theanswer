@@ -1,0 +1,46 @@
+name: SonarCloud analysis
+
+on:
+    push:
+        branches: ['production', 'enterprise', 'staging']
+    pull_request:
+        branches: ['production', 'enterprise', 'staging']
+    workflow_dispatch:
+
+permissions:
+    pull-requests: read
+    contents: read
+
+jobs:
+    Analysis:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code (with submodules)
+              uses: actions/checkout@v3
+              with:
+                  submodules: recursive # ✅ important for git submodules
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '18' # or your project’s version
+                  cache: 'pnpm'
+
+            - name: Install dependencies with pnpm
+              run: pnpm install
+
+            - name: Run tests with coverage
+              run: pnpm test -- --coverage # Adjust to your test command
+
+            - name: Analyze with SonarCloud
+              uses: SonarSource/sonarcloud-github-action@v2.2.0
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                  args: >
+                      -Dsonar.projectKey=the-answerai_theanswer
+                      -Dsonar.organization=the-answerai
+                      -Dsonar.sources=src
+                      -Dsonar.tests=tests
+                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
