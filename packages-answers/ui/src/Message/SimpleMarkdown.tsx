@@ -89,9 +89,21 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                     if (node?.children?.[0]?.tagName === 'img') {
                         const image = node.children[0]
                         const metastring = image.properties?.alt
-                        // Fix regex vulnerabilities by using more specific patterns and limiting input length
+                        // Fix regex vulnerabilities by using string manipulation instead of regex
                         const safeMeta = metastring?.slice(0, 1000) || '' // Limit length to prevent DoS
-                        const alt = safeMeta.replace(/\s*\{[^}]{0,50}\}\s*/g, '') // Limit quantifier and use specific bounds
+                        // Remove metadata patterns by finding and removing {...} blocks safely
+                        let alt = safeMeta
+                        let startIndex = alt.indexOf('{')
+                        while (startIndex !== -1) {
+                            const endIndex = alt.indexOf('}', startIndex)
+                            if (endIndex !== -1) {
+                                alt = alt.slice(0, startIndex) + alt.slice(endIndex + 1)
+                                startIndex = alt.indexOf('{', startIndex)
+                            } else {
+                                break
+                            }
+                        }
+                        alt = alt.trim()
                         const metaWidth = safeMeta.match(/\{([^}]{1,10})x/)
                         const metaHeight = safeMeta.match(/x([^}]{1,10})\}/)
                         const width = metaWidth ? metaWidth[1] : undefined
