@@ -1,4 +1,4 @@
 [submodule "packages/embed"]
 	path = packages/embed
 	url = https://github.com/the-answerai/chat-embed.git
-	branch = ct/staging-pnpm-recursive-updates
+	branch = a-main
