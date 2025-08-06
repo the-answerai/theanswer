@@ -4,7 +4,7 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/go/dockerfile-reference/
 
-FROM --platform=linux/amd64 node:20-alpine AS base
+FROM --platform=linux/amd64 node:20-alpine as base
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ RUN turbo prune --scope=flowise --docker
 ################################################################################
 
 # Create a stage for building the application.
-FROM base AS build
+FROM base as build
 
 # Copy package.json files and patches directory first
 COPY --from=pruner /app/out/json/ .
