@@ -131,7 +131,10 @@
             "esbuild": ">=0.25.0",
             "send": ">=0.19.0",
             "serve-static": ">=1.16.0",
-            "cookie": ">=0.7.0"
+            "cookie": ">=0.7.0",
+            "postcss": ">=8.4.31",
+            "tsup": ">=8.3.5",
+            "jsforce": "^3.10.0"
         }
     },
     "engines": {
