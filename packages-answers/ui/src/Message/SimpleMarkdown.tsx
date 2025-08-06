@@ -89,14 +89,17 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                     if (node?.children?.[0]?.tagName === 'img') {
                         const image = node.children[0]
                         const metastring = image.properties?.alt
-                        const alt = metastring?.replace(/ *\{[^)]*\} */g, '')
-                        const metaWidth = metastring?.match(/{([^}]+)x/)
-                        const metaHeight = metastring?.match(/x([^}]+)}/)
+                        // Fix regex vulnerabilities by using more specific patterns and limiting input length
+                        const safeMeta = metastring?.slice(0, 1000) || '' // Limit length to prevent DoS
+                        const alt = safeMeta.replace(/\s*\{[^}]{0,50}\}\s*/g, '') // Limit quantifier and use specific bounds
+                        const metaWidth = safeMeta.match(/\{([^}]{1,10})x/)
+                        const metaHeight = safeMeta.match(/x([^}]{1,10})\}/)
                         const width = metaWidth ? metaWidth[1] : undefined
                         const height = metaHeight ? metaHeight[1] : undefined
-                        const isPriority = metastring?.toLowerCase().match('{priority}')
-                        const hasCaption = metastring?.toLowerCase().includes('{caption:')
-                        const caption = metastring?.match(/{caption: (.*?)}/)?.pop()
+                        const isPriority = safeMeta.toLowerCase().includes('{priority}')
+                        const hasCaption = safeMeta.toLowerCase().includes('{caption:')
+                        const captionMatch = safeMeta.match(/\{caption:\s*([^}]{0,200})\}/)
+                        const caption = captionMatch ? captionMatch[1].trim() : undefined
 
                         return (
                             <Box
