@@ -55,6 +55,16 @@ function sleep(ms) {
 }
 
 /**
+ * Synchronous sleep using busy wait
+ */
+function sleepSync(ms) {
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    // Busy-wait until delay time has elapsed
+  }
+}
+
+/**
  * Log retry attempts with proper formatting
  */
 function logRetryAttempt(attempt, maxRetries, delaySeconds, operation) {
@@ -74,6 +84,24 @@ function logRetryAttempt(attempt, maxRetries, delaySeconds, operation) {
   console.log(`${yellow}║  will continue after the delay.                    ║${reset}`);
   console.log(`${yellow}║${' '.repeat(60)}║${reset}`);
   console.log(`${yellow}╚${'═'.repeat(60)}╝${reset}`);
+}
+
+/**
+ * Handle rate limit error and determine if retry should continue
+ */
+function handleRateLimitError(parsedError, attempt, maxRetries, operationName) {
+  if (!isRateLimitError(parsedError)) {
+    return false; // Not a rate limit error, don't retry
+  }
+
+  const delayMs = parsedError.toLowerCase().includes('bitwarden')
+    ? RETRY_DELAYS.BITWARDEN
+    : RETRY_DELAYS.INITIAL;
+  const delaySeconds = Math.floor(delayMs / 1000);
+
+  logRetryAttempt(attempt, maxRetries, delaySeconds, operationName);
+
+  return attempt < maxRetries ? delayMs : false;
 }
 
 /**
@@ -102,22 +130,11 @@ export async function execBwsCommandWithRetry(
         error.stderr?.toString() || error.stdout?.toString() || error.message || '';
       const parsedError = parseBwsErrorMessage(errorOutput);
 
-      // Check if this is a rate limit error
-      if (isRateLimitError(parsedError)) {
-        // Determine delay based on error content
-        const delayMs = parsedError.toLowerCase().includes('bitwarden')
-          ? RETRY_DELAYS.BITWARDEN
-          : RETRY_DELAYS.INITIAL;
-        const delaySeconds = Math.floor(delayMs / 1000);
+      const delayMs = handleRateLimitError(parsedError, attempt, maxRetries, operationName);
 
-        // Log the retry attempt
-        logRetryAttempt(attempt, maxRetries, delaySeconds, operationName);
-
-        // If we haven't exceeded max retries, wait and continue
-        if (attempt < maxRetries) {
-          await sleep(delayMs);
-          continue;
-        }
+      if (delayMs) {
+        await sleep(delayMs);
+        continue;
       }
 
       // If it's not a rate limit error, or we've exceeded max retries, throw error
@@ -152,26 +169,11 @@ export function execBwsCommandWithRetrySync(
         error.stderr?.toString() || error.stdout?.toString() || error.message || '';
       const parsedError = parseBwsErrorMessage(errorOutput);
 
-      // Check if this is a rate limit error
-      if (isRateLimitError(parsedError)) {
-        // Determine delay based on error content
-        const delayMs = parsedError.toLowerCase().includes('bitwarden')
-          ? RETRY_DELAYS.BITWARDEN
-          : RETRY_DELAYS.INITIAL;
-        const delaySeconds = Math.floor(delayMs / 1000);
+      const delayMs = handleRateLimitError(parsedError, attempt, maxRetries, operationName);
 
-        // Log the retry attempt
-        logRetryAttempt(attempt, maxRetries, delaySeconds, operationName);
-
-        // If we haven't exceeded max retries, wait and continue
-        if (attempt < maxRetries) {
-          // Synchronous sleep (busy wait)
-          const start = Date.now();
-          while (Date.now() - start < delayMs) {
-            // Busy-wait until delay time has elapsed
-          }
-          continue;
-        }
+      if (delayMs) {
+        sleepSync(delayMs);
+        continue;
       }
 
       // If it's not a rate limit error, or we've exceeded max retries, throw error
