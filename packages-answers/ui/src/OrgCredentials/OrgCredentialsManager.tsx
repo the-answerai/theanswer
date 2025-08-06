@@ -78,16 +78,35 @@ const OrgCredentialsManager: React.FC = () => {
         }
     }, [getAllCredentialsApi.data])
 
+    // Handle API errors in useEffect to prevent infinite re-renders
+    useEffect(() => {
+        const apiError = getAllComponentsCredentialsApi.error || getOrgCredentialsApi.error
+        if (apiError) {
+            setError(apiError.message || 'Failed to load credentials data')
+        }
+    }, [getAllComponentsCredentialsApi.error, getOrgCredentialsApi.error])
+
+    // Watch for updates from the updateOrgCredentialsApi and update local state
+    useEffect(() => {
+        if (updateOrgCredentialsApi.data?.integrations) {
+            setIntegrations(updateOrgCredentialsApi.data.integrations)
+        }
+    }, [updateOrgCredentialsApi.data])
+
     const handleToggleIntegration = async (credentialName: string, enabled: boolean) => {
         try {
             setSaving(true)
+            setError(null) // Clear any previous errors
 
             let updatedIntegrations: EnabledIntegration[]
 
             if (enabled) {
                 // Find the credential info from available credentials
                 const credentialInfo = getAllComponentsCredentialsApi.data?.find((c: any) => c.name === credentialName)
-                if (!credentialInfo) return
+                if (!credentialInfo) {
+                    setError('Credential information not found')
+                    return
+                }
 
                 // Add to enabled integrations
                 const newIntegration: EnabledIntegration = {
@@ -104,13 +123,17 @@ const OrgCredentialsManager: React.FC = () => {
                 updatedIntegrations = integrations.map((i) => (i.credentialName === credentialName ? { ...i, enabled: false } : i))
             }
 
-            await updateOrgCredentialsApi.request(updatedIntegrations)
+            // Update local state optimistically for immediate UI feedback
+            setIntegrations(updatedIntegrations)
 
-            if (updateOrgCredentialsApi.data) {
-                setIntegrations(updateOrgCredentialsApi.data.integrations || [])
-            }
+            // Make the API call
+            await updateOrgCredentialsApi.request(updatedIntegrations)
         } catch (err: any) {
+            console.error('Failed to update integrations:', err)
             setError(updateOrgCredentialsApi.error?.message || err.message || 'Failed to update integrations')
+
+            // Revert the optimistic update on error by refetching
+            getOrgCredentialsApi.request()
         } finally {
             setSaving(false)
         }
@@ -173,11 +196,7 @@ const OrgCredentialsManager: React.FC = () => {
         )
     }
 
-    // Handle API errors
-    const apiError = getAllComponentsCredentialsApi.error || getOrgCredentialsApi.error
-    if (apiError) {
-        setError(apiError.message || 'Failed to load credentials data')
-    }
+    // API errors are now handled in useEffect above
 
     // Transform the API data to include category and icon info
     const availableCredentials: ComponentCredential[] =
