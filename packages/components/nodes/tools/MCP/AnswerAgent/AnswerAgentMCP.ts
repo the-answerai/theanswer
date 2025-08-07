@@ -119,7 +119,7 @@ class AnswerAgent_MCP implements INode {
             command: process.execPath,
             args: [packagePath],
             env: {
-                ANSWERAGENT_AI_API_BASE_URL: apiHost,
+                ANSWERAGENT_AI_API_HOST: apiHost,
                 ANSWERAGENT_AI_API_TOKEN: apiKey
             }
         }
@@ -139,7 +139,6 @@ class AnswerAgent_MCP implements INode {
      */
     private async getUserApiKey(nodeData: INodeData, options: ICommonObject): Promise<string | null> {
         try {
-
             // Get database connection from options
             const appDataSource = options.appDataSource
             if (!appDataSource) {
@@ -172,13 +171,8 @@ class AnswerAgent_MCP implements INode {
                 return null
             }
 
-            // Check if API key is available directly from user context
-            if (options.user?.openAiCredentialId) {
-                return options.user.openAiCredentialId
-            }
-            
             // Query the database for the user's API keys using the entity from databaseEntities
-            
+
             const apiKeys = await appDataSource.getRepository(databaseEntities['ApiKey']).find({
                 where: {
                     userId: userId,
@@ -190,7 +184,6 @@ class AnswerAgent_MCP implements INode {
                 }
             })
 
-
             if (apiKeys.length === 0) {
                 console.error('No active API keys found for user')
                 return null
@@ -198,7 +191,7 @@ class AnswerAgent_MCP implements INode {
 
             // Return the first (most recent) API key
             const selectedApiKey = apiKeys[0].apiKey
-            
+
             return selectedApiKey
         } catch (error) {
             console.error('Error retrieving user API key:', error)
