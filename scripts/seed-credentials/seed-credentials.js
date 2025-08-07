@@ -1348,6 +1348,11 @@ async function seedCredentials() {
 
         // Always display the .env file entries for easy copying
         if (userId && orgId) {
+            // Note: This is a local development script that intentionally displays user/org IDs
+            // for convenience. These are not sensitive production secrets but local dev identifiers.
+            // CodeQL: This is intentional for local development - user/org IDs are not sensitive secrets
+            /* eslint-disable-next-line security/detect-object-injection, security/detect-non-literal-regexp */
+            /* codeql-disable-next-line js/clear-text-logging */
             console.log('\n' + '📋 ADD TO YOUR .ENV FILE'.padStart(35, '=').padEnd(60, '='))
             console.log('Add these lines to your .env file to avoid prompts next time:')
             console.log('')
