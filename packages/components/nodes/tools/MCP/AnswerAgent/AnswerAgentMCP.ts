@@ -172,17 +172,12 @@ class AnswerAgent_MCP implements INode {
                 return null
             }
 
-            // // Check if API key is available directly from user context
-            // if (options.user?.openAiCredentialId) {
-            //     return options.user.openAiCredentialId
-            // }
+            // Check if API key is available directly from user context
+            if (options.user?.openAiCredentialId) {
+                return options.user.openAiCredentialId
+            }
             
             // Query the database for the user's API keys using the entity from databaseEntities
-            console.log('Querying API keys with params:', {
-                userId,
-                organizationId,
-                entity: databaseEntities['ApiKey']?.name || 'ApiKey'
-            })
             
             const apiKeys = await appDataSource.getRepository(databaseEntities['ApiKey']).find({
                 where: {
@@ -195,17 +190,6 @@ class AnswerAgent_MCP implements INode {
                 }
             })
 
-            console.log('API keys query result:', {
-                count: apiKeys.length,
-                keys: apiKeys.map((key: any) => ({
-                    id: key.id,
-                    userId: key.userId,
-                    organizationId: key.organizationId,
-                    isActive: key.isActive,
-                    updatedDate: key.updatedDate,
-                    apiKeyPreview: key.apiKey ? `${key.apiKey.substring(0, 8)}...` : 'null'
-                }))
-            })
 
             if (apiKeys.length === 0) {
                 console.error('No active API keys found for user')
@@ -214,11 +198,6 @@ class AnswerAgent_MCP implements INode {
 
             // Return the first (most recent) API key
             const selectedApiKey = apiKeys[0].apiKey
-            console.log('Selected API key:', {
-                keyId: apiKeys[0].id,
-                preview: selectedApiKey ? `${selectedApiKey.substring(0, 8)}...` : 'null',
-                updatedDate: apiKeys[0].updatedDate
-            })
             
             return selectedApiKey
         } catch (error) {
