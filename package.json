@@ -48,7 +48,6 @@
         "test:chatflows": "pnpm secure-run \"node ./scripts/testing-chatflows/testingChatflows.js\"",
         "logs": "docker compose logs -f",
         "dev-inngest": "npx inngest-cli@latest dev -u http://localhost:3001/api/inngest --no-discovery > /dev/null 2>&1",
-        "scripts:processCsvRows": "pnpm secure-run \"ts-node ./packages-answers/scripts/processCsvRows.ts\"",
         "scripts:generateCsv": "pnpm secure-run \"ts-node ./packages-answers/scripts/generateCsv.ts\"",
         "scripts:initCsvRun": "pnpm secure-run \"ts-node ./packages-answers/scripts/initCsvRun.ts\"",
         "secure-run": "node ./scripts/bws-secure/secureRun.js",
