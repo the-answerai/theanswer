@@ -7,6 +7,6 @@
     },
     "exclude": ["node_modules"],
     "extends": "tsconfig/node.json",
-    "include": ["src", "prisma/scripts"],
+    "include": ["src", "prisma/scripts", "generated/prisma-client/json-types.d.ts"],
     "types": ["node", "types"]
 }

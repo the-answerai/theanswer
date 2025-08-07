@@ -136,7 +136,8 @@
         },
         "dev": {
             "dependsOn": ["^build"],
-            "cache": false
+            "cache": false,
+            "filter": ["!./packages/api-documentation"]
         },
         "test": {},
         "typeorm:migration-run": {

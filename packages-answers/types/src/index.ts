@@ -510,9 +510,9 @@ export interface SidekickListItem extends Pick<DB.Sidekick, 'id' | 'placeholder'
     sharedWith: string
     tagString: string
     chatflowId: string
-    chatbotConfig: DB.Sidekick['chatflow']['chatbotConfig']
-    flowData: DB.Sidekick['chatflow']['flowData']
-    answersConfig: DB.Sidekick['chatflow']['answersConfig']
+    chatbotConfig: NonNullable<DB.Sidekick['chatflow']>['chatbotConfig']
+    flowData: NonNullable<DB.Sidekick['chatflow']>['flowData']
+    answersConfig: NonNullable<DB.Sidekick['chatflow']>['answersConfig']
     constraints: {
         isSpeechToTextEnabled: boolean
         isImageUploadAllowed: boolean

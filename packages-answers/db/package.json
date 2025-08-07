@@ -22,7 +22,7 @@
         "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
     },
     "dependencies": {
-        "@prisma/client": "^5.22.0",
+        "@prisma/client": "^6.11.0",
         "prisma-json-types-generator": "^3.5.1"
     },
     "devDependencies": {
@@ -32,12 +32,12 @@
         "eslint": "^7.32.0",
         "eslint-config-custom": "workspace:*",
         "jest": "^29.7.0",
-        "prisma": "^5.22.0",
+        "prisma": "^6.11.0",
         "ts-node": "^10.9.2",
         "tsconfig": "workspace:*",
         "typescript": "~5.5.4"
     },
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=18.18"
     }
 }
