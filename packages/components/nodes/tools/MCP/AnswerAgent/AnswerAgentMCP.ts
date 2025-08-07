@@ -101,7 +101,7 @@ class AnswerAgent_MCP implements INode {
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
         // Get API host from environment variable
-        const apiHost = process.env.API_HOST
+        const apiHost = options.user?.chatflowDomain
         if (!apiHost) {
             throw new Error('API_HOST environment variable is not set')
         }
@@ -119,7 +119,7 @@ class AnswerAgent_MCP implements INode {
             command: process.execPath,
             args: [packagePath],
             env: {
-                ANSWERAGENT_AI_API_HOST: apiHost,
+                ANSWERAGENT_AI_API_BASE_URL: apiHost,
                 ANSWERAGENT_AI_API_TOKEN: apiKey
             }
         }
@@ -139,6 +139,7 @@ class AnswerAgent_MCP implements INode {
      */
     private async getUserApiKey(nodeData: INodeData, options: ICommonObject): Promise<string | null> {
         try {
+
             // Get database connection from options
             const appDataSource = options.appDataSource
             if (!appDataSource) {
@@ -164,14 +165,25 @@ class AnswerAgent_MCP implements INode {
                 return null
             }
 
-            // Get database entities from options
+            // Fallback to ApiKey table
             const databaseEntities = options.databaseEntities
             if (!databaseEntities || !databaseEntities['ApiKey']) {
                 console.error('ApiKey entity not available in databaseEntities')
                 return null
             }
 
+            // // Check if API key is available directly from user context
+            // if (options.user?.openAiCredentialId) {
+            //     return options.user.openAiCredentialId
+            // }
+            
             // Query the database for the user's API keys using the entity from databaseEntities
+            console.log('Querying API keys with params:', {
+                userId,
+                organizationId,
+                entity: databaseEntities['ApiKey']?.name || 'ApiKey'
+            })
+            
             const apiKeys = await appDataSource.getRepository(databaseEntities['ApiKey']).find({
                 where: {
                     userId: userId,
@@ -183,13 +195,32 @@ class AnswerAgent_MCP implements INode {
                 }
             })
 
+            console.log('API keys query result:', {
+                count: apiKeys.length,
+                keys: apiKeys.map((key: any) => ({
+                    id: key.id,
+                    userId: key.userId,
+                    organizationId: key.organizationId,
+                    isActive: key.isActive,
+                    updatedDate: key.updatedDate,
+                    apiKeyPreview: key.apiKey ? `${key.apiKey.substring(0, 8)}...` : 'null'
+                }))
+            })
+
             if (apiKeys.length === 0) {
                 console.error('No active API keys found for user')
                 return null
             }
 
             // Return the first (most recent) API key
-            return apiKeys[0].apiKey
+            const selectedApiKey = apiKeys[0].apiKey
+            console.log('Selected API key:', {
+                keyId: apiKeys[0].id,
+                preview: selectedApiKey ? `${selectedApiKey.substring(0, 8)}...` : 'null',
+                updatedDate: apiKeys[0].updatedDate
+            })
+            
+            return selectedApiKey
         } catch (error) {
             console.error('Error retrieving user API key:', error)
             return null
