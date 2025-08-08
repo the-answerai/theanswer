@@ -506,6 +506,17 @@ function reduceSpaceForChatflowFlowData(chatflows: ChatFlow[]) {
     })
 }
 
+function replaceUserIdOrganizationId(user: IUser, importData: ExportData) {
+    return Object.keys(importData).reduce((acc: any, key: string) => {
+        if (Array.isArray(importData[key as keyof ExportData])) {
+            acc[key as keyof ExportData] = importData[key as keyof ExportData].map((item) => {
+                return { ...item, userId: user.id, organizationId: user.organizationId }
+            })
+        }
+        return acc
+    }, {})
+}
+
 const importData = async (user: IUser, importData: ExportData) => {
     // Initialize missing properties with empty arrays to avoid "undefined" errors
     importData.AgentFlow = importData.AgentFlow || []
@@ -528,7 +539,7 @@ const importData = async (user: IUser, importData: ExportData) => {
     try {
         queryRunner = getRunningExpressApp().AppDataSource.createQueryRunner()
         await queryRunner.connect()
-
+        importData = replaceUserIdOrganizationId(user, importData)
         try {
             if (importData.AgentFlow.length > 0) {
                 importData.AgentFlow = reduceSpaceForChatflowFlowData(importData.AgentFlow)
