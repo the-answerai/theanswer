@@ -22,12 +22,16 @@ const sanitizeTool = (Tool) => {
 const sanitizeChatflow = (ChatFlow) => {
     try {
         return ChatFlow.map((chatFlow) => {
-            const sanitizeFlowData = generateExportFlowData(JSON.parse(chatFlow.flowData))
+            console.log('🔄 chatFlow:', chatFlow)
+            const sanitizeFlowData = generateExportFlowData(chatFlow)
+            console.log('🔄 sanitizeFlowData:', sanitizeFlowData)
             return {
                 id: chatFlow.id,
                 name: chatFlow.name,
                 flowData: stringify(sanitizeFlowData),
-                type: chatFlow.type
+                type: chatFlow.type,
+                userId: chatFlow.userId,
+                organizationId: chatFlow.organizationId
             }
         })
     } catch (error) {
