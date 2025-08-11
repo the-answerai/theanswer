@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+// @ts-ignore
 import { stringify, exportData } from '@/utils/exportImport'
 
 // Material UI
 import { Button, Dialog, DialogTitle, DialogContent, Stack, FormControlLabel, Checkbox, DialogActions, Box, MenuItem } from '@mui/material'
 
-// Assets
-import ExportingGIF from '@/assets/images/Exporting.gif'
-
 // API
+// @ts-ignore
 import exportImportApi from '@/api/exportimport'
 
 // Hooks
+// @ts-ignore
 import useApi from '@/hooks/useApi'
+// @ts-ignore
 import { getErrorMessage } from '@/utils/errorHandler'
+
+//Assets
+import ExportingGIF from '../../../../packages/ui/src/assets/images/Exporting.gif'
 
 interface ExportDialogProps {
     show: boolean
@@ -25,10 +30,24 @@ interface ExportImportComponentProps {
     onSuccess?: () => void
 }
 
-const dataToExport = ['Chatflows', 'Agentflows', 'Tools', 'Variables', 'Assistants']
+const dataToExport = [
+    'Agentflows',
+    'Agentflows V2',
+    'Assistants Custom',
+    'Assistants OpenAI',
+    'Assistants Azure',
+    'Chatflows',
+    'Chat Messages',
+    'Chat Feedbacks',
+    'Custom Templates',
+    'Document Stores',
+    'Executions',
+    'Tools',
+    'Variables'
+]
 
 const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
-    const [selectedData, setSelectedData] = useState(['Chatflows', 'Agentflows', 'Tools', 'Variables', 'Assistants'])
+    const [selectedData, setSelectedData] = useState(dataToExport)
     const [isExporting, setIsExporting] = useState(false)
 
     useEffect(() => {
@@ -78,14 +97,16 @@ const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
                 {isExporting && (
                     <Box sx={{ height: 'auto', display: 'flex', justifyContent: 'center', mb: 3 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <img
+                            <Image
                                 style={{
                                     objectFit: 'cover',
                                     height: 'auto',
                                     width: 'auto'
                                 }}
                                 src={ExportingGIF}
-                                alt='ExportingGIF'
+                                alt="ExportingGIF"
+                                width={100}
+                                height={100}
                             />
                             <span>Exporting data might take a while</span>
                         </div>
@@ -119,18 +140,31 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     const exportAllApi = useApi(exportImportApi.exportData)
 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return
+        if (!e.target.files) {
+            return
+        }
 
         const file = e.target.files[0]
-
         const reader = new FileReader()
         reader.onload = (evt) => {
             if (!evt?.target?.result) {
                 return
             }
-            const body = JSON.parse(evt.target.result as string)
-            importAllApi.request(body)
+            
+            try {
+                const fileContent = evt.target.result as string
+                const body = JSON.parse(fileContent)
+                importAllApi.request(body)
+            } catch (error) {
+                console.error('❌ Error parsing JSON file:', error)
+                console.error('📄 File content that failed:', evt.target.result)
+            }
         }
+        
+        reader.onerror = (error) => {
+            console.error('❌ FileReader error:', error)
+        }
+        
         reader.readAsText(file)
     }
 
@@ -143,23 +177,58 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
 
     const onExport = (data: string[]) => {
         const body: Record<string, boolean> = {}
-        if (data.includes('Chatflows')) body.chatflow = true
+        // Usar exactamente los mismos parámetros que ProfileSection
         if (data.includes('Agentflows')) body.agentflow = true
+        if (data.includes('Agentflows V2')) body.agentflowv2 = true
+        if (data.includes('Assistants Custom')) body.assistantCustom = true
+        if (data.includes('Assistants OpenAI')) body.assistantOpenAI = true
+        if (data.includes('Assistants Azure')) body.assistantAzure = true
+        if (data.includes('Chatflows')) body.chatflow = true
+        if (data.includes('Chat Messages')) body.chat_message = true
+        if (data.includes('Chat Feedbacks')) body.chat_feedback = true
+        if (data.includes('Custom Templates')) body.custom_template = true
+        if (data.includes('Document Stores')) body.document_store = true
+        if (data.includes('Executions')) body.execution = true
         if (data.includes('Tools')) body.tool = true
         if (data.includes('Variables')) body.variable = true
-        if (data.includes('Assistants')) body.assistant = true
-
+    
         exportAllApi.request(body)
     }
 
+    // Import success effect
     useEffect(() => {
-        if (importAllApi.data && onSuccess) {
-            onSuccess()
-            if (onClose) onClose()
+        if (importAllApi.data) {
+            if (onSuccess) {
+                onSuccess()
+            }
+            if (onClose) {
+                onClose()
+            }
             window.location.href = '/'
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [importAllApi.data])
+
+    // Import error effect
+    useEffect(() => {
+        if (importAllApi.error) {
+            let errMsg = 'Invalid Imported File'
+            let error = importAllApi.error
+            if (error?.response?.data) {
+                errMsg = typeof error.response.data === 'object' ? 
+                    error.response.data.message : error.response.data
+            }
+            console.error(`❌ Import error: ${errMsg}`)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [importAllApi.error])
+
+    // Import loading effect
+    useEffect(() => {
+        if (importAllApi.loading) {
+            // Loading state can be handled by UI components
+        }
+    }, [importAllApi.loading])
 
     useEffect(() => {
         if (exportAllApi.data) {
@@ -181,6 +250,21 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.data])
+
+    // Agregar manejo de errores para export
+    useEffect(() => {
+        if (exportAllApi.error) {
+            setExportDialogOpen(false)
+            let errMsg = 'Internal Server Error'
+            let error = exportAllApi.error
+            if (error?.response?.data) {
+                errMsg = typeof error.response.data === 'object' ? 
+                    error.response.data.message : error.response.data
+            }
+            console.error(`Failed to export: ${errMsg}`)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [exportAllApi.error])
 
     return (
         <>
