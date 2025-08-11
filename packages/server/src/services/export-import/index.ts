@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes'
-import { In, QueryRunner } from 'typeorm'
+import { EntityTarget, In, QueryRunner } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { Assistant } from '../../database/entities/Assistant'
 import { ChatFlow } from '../../database/entities/ChatFlow'
@@ -158,14 +158,21 @@ const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ File
     }
 }
 
-async function replaceDuplicateIdsForChatFlow(queryRunner: QueryRunner, user: IUser, originalData: ExportData, chatflows: ChatFlow[]) {
+async function replaceDuplicateIds<T extends { id: string }>(
+    queryRunner: QueryRunner,
+    user: IUser,
+    originalData: ExportData,
+    items: T[],
+    entity: EntityTarget<T>,
+    entityName: string
+) {
     try {
-        const ids = chatflows.map((chatflow) => chatflow.id)
-        const records = await queryRunner.manager.find(ChatFlow, {
+        const ids = items.map((item) => item.id)
+        const records = await queryRunner.manager.find(entity, {
             where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
         })
-        if (records.length < 0) return originalData
-        for (let record of records) {
+        if (records.length === 0) return originalData
+        for (const record of records) {
             const oldId = record.id
             const newId = uuidv4()
             originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
@@ -174,28 +181,7 @@ async function replaceDuplicateIdsForChatFlow(queryRunner: QueryRunner, user: IU
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForChatflow - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForAssistant(queryRunner: QueryRunner, user: IUser, originalData: ExportData, assistants: Assistant[]) {
-    try {
-        const ids = assistants.map((assistant) => assistant.id)
-        const records = await queryRunner.manager.find(Assistant, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForAssistant - ${getErrorMessage(error)}`
+            `Error: exportImportService.replaceDuplicateIdsFor${entityName} - ${getErrorMessage(error)}`
         )
     }
 }
@@ -407,147 +393,6 @@ async function replaceDuplicateIdsForChatMessageFeedback(
     }
 }
 
-async function replaceDuplicateIdsForCustomTemplate(
-    queryRunner: QueryRunner,
-    user: IUser,
-    originalData: ExportData,
-    customTemplates: CustomTemplate[]
-) {
-    try {
-        const ids = customTemplates.map((customTemplate) => customTemplate.id)
-        const records = await queryRunner.manager.find(CustomTemplate, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForCustomTemplate - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForDocumentStore(
-    queryRunner: QueryRunner,
-    user: IUser,
-    originalData: ExportData,
-    documentStores: DocumentStore[]
-) {
-    try {
-        const ids = documentStores.map((documentStore) => documentStore.id)
-        const records = await queryRunner.manager.find(DocumentStore, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForDocumentStore - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForDocumentStoreFileChunk(
-    queryRunner: QueryRunner,
-    user: IUser,
-    originalData: ExportData,
-    documentStoreFileChunks: DocumentStoreFileChunk[]
-) {
-    try {
-        const ids = documentStoreFileChunks.map((documentStoreFileChunk) => documentStoreFileChunk.id)
-        const records = await queryRunner.manager.find(DocumentStoreFileChunk, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForDocumentStoreFileChunk - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForTool(queryRunner: QueryRunner, user: IUser, originalData: ExportData, tools: Tool[]) {
-    try {
-        const ids = tools.map((tool) => tool.id)
-        const records = await queryRunner.manager.find(Tool, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForTool - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForVariable(queryRunner: QueryRunner, user: IUser, originalData: ExportData, variables: Variable[]) {
-    try {
-        const ids = variables.map((variable) => variable.id)
-        const records = await queryRunner.manager.find(Variable, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForVariable - ${getErrorMessage(error)}`
-        )
-    }
-}
-
-async function replaceDuplicateIdsForExecution(queryRunner: QueryRunner, user: IUser, originalData: ExportData, executions: Execution[]) {
-    try {
-        const ids = executions.map((execution) => execution.id)
-        const records = await queryRunner.manager.find(Execution, {
-            where: { id: In(ids), userId: user.id, organizationId: user.organizationId }
-        })
-        if (records.length < 0) return originalData
-        for (let record of records) {
-            const oldId = record.id
-            const newId = uuidv4()
-            originalData = JSON.parse(JSON.stringify(originalData).replaceAll(oldId, newId))
-        }
-        return originalData
-    } catch (error) {
-        throw new InternalFlowiseError(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: exportImportService.replaceDuplicateIdsForExecution - ${getErrorMessage(error)}`
-        )
-    }
-}
-
 function reduceSpaceForChatflowFlowData(chatflows: ChatFlow[]) {
     return chatflows.map((chatflow) => {
         return { ...chatflow, flowData: JSON.stringify(JSON.parse(chatflow.flowData)) }
@@ -591,25 +436,25 @@ const importData = async (user: IUser, importData: ExportData) => {
         try {
             if (importData.AgentFlow.length > 0) {
                 importData.AgentFlow = reduceSpaceForChatflowFlowData(importData.AgentFlow)
-                importData = await replaceDuplicateIdsForChatFlow(queryRunner, user, importData, importData.AgentFlow)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AgentFlow, ChatFlow, 'ChatFlow')
             }
             if (importData.AgentFlowV2.length > 0) {
                 importData.AgentFlowV2 = reduceSpaceForChatflowFlowData(importData.AgentFlowV2)
-                importData = await replaceDuplicateIdsForChatFlow(queryRunner, user, importData, importData.AgentFlowV2)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AgentFlowV2, ChatFlow, 'ChatFlow')
             }
             if (importData.AssistantCustom.length > 0)
-                importData = await replaceDuplicateIdsForAssistant(queryRunner, user, importData, importData.AssistantCustom)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AssistantCustom, Assistant, 'Assistant')
             if (importData.AssistantFlow.length > 0) {
                 importData.AssistantFlow = reduceSpaceForChatflowFlowData(importData.AssistantFlow)
-                importData = await replaceDuplicateIdsForChatFlow(queryRunner, user, importData, importData.AssistantFlow)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AssistantFlow, ChatFlow, 'ChatFlow')
             }
             if (importData.AssistantOpenAI.length > 0)
-                importData = await replaceDuplicateIdsForAssistant(queryRunner, user, importData, importData.AssistantOpenAI)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AssistantOpenAI, Assistant, 'Assistant')
             if (importData.AssistantAzure.length > 0)
-                importData = await replaceDuplicateIdsForAssistant(queryRunner, user, importData, importData.AssistantAzure)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.AssistantAzure, Assistant, 'Assistant')
             if (importData.ChatFlow.length > 0) {
                 importData.ChatFlow = reduceSpaceForChatflowFlowData(importData.ChatFlow)
-                importData = await replaceDuplicateIdsForChatFlow(queryRunner, user, importData, importData.ChatFlow)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.ChatFlow, ChatFlow, 'ChatFlow')
             }
             if (importData.ChatMessage.length > 0) {
                 importData = await replaceDuplicateIdsForChatMessage(queryRunner, user, importData, importData.ChatMessage)
@@ -618,21 +463,38 @@ const importData = async (user: IUser, importData: ExportData) => {
             if (importData.ChatMessageFeedback.length > 0)
                 importData = await replaceDuplicateIdsForChatMessageFeedback(queryRunner, user, importData, importData.ChatMessageFeedback)
             if (importData.CustomTemplate.length > 0)
-                importData = await replaceDuplicateIdsForCustomTemplate(queryRunner, user, importData, importData.CustomTemplate)
-            if (importData.DocumentStore.length > 0)
-                importData = await replaceDuplicateIdsForDocumentStore(queryRunner, user, importData, importData.DocumentStore)
-            if (importData.DocumentStoreFileChunk.length > 0)
-                importData = await replaceDuplicateIdsForDocumentStoreFileChunk(
+                importData = await replaceDuplicateIds(
                     queryRunner,
                     user,
                     importData,
-                    importData.DocumentStoreFileChunk
+                    importData.CustomTemplate,
+                    CustomTemplate,
+                    'CustomTemplate'
                 )
-            if (importData.Tool.length > 0) importData = await replaceDuplicateIdsForTool(queryRunner, user, importData, importData.Tool)
+            if (importData.DocumentStore.length > 0)
+                importData = await replaceDuplicateIds(
+                    queryRunner,
+                    user,
+                    importData,
+                    importData.DocumentStore,
+                    DocumentStore,
+                    'DocumentStore'
+                )
+            if (importData.DocumentStoreFileChunk.length > 0)
+                importData = await replaceDuplicateIds(
+                    queryRunner,
+                    user,
+                    importData,
+                    importData.DocumentStoreFileChunk,
+                    DocumentStoreFileChunk,
+                    'DocumentStoreFileChunk'
+                )
+            if (importData.Tool.length > 0)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.Tool, Tool, 'Tool')
             if (importData.Execution.length > 0)
-                importData = await replaceDuplicateIdsForExecution(queryRunner, user, importData, importData.Execution)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.Execution, Execution, 'Execution')
             if (importData.Variable.length > 0)
-                importData = await replaceDuplicateIdsForVariable(queryRunner, user, importData, importData.Variable)
+                importData = await replaceDuplicateIds(queryRunner, user, importData, importData.Variable, Variable, 'Variable')
 
             await queryRunner.startTransaction()
 
