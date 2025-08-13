@@ -28,21 +28,54 @@ There are two main ways to get started with TheAnswer: local development setup a
 1. **Clone the repository:**
 
     ```bash
+    # Recommended: Clone with submodules included
+    git clone --recursive https://github.com/the-answerai/theanswer.git
+    cd theanswer
+    ```
+
+    **Alternative:** If you already cloned without submodules:
+
+    ```bash
     git clone https://github.com/the-answerai/theanswer.git
     cd theanswer
+    git submodule update --init
     ```
 
 2. **Set up environment variables:**
 
     - Create a `.env` file in the root directory
     - If `.env.example` files are not available, contact The AnswerAI team for required environment variables
+    - Use `API_HOST` to specify your API server host. All API requests automatically include the `/api/v1` prefix.
+    - `API_BASE_URL` is deprecated and should not be used.
     - **Note:** For local development, you'll need Auth0 development team access (Member role or above)
 
-3. **Initialize git submodules:**
+3. **Verify submodules are initialized:**
 
     ```bash
-    git submodule update --init
+    git submodule status
     ```
+
+    You should see output like:
+
+    ```
+    +050ca236891420946884c68ff8d74cbeb0cbe7ef packages/embed (aai-embed@3.0.3-23-g050ca23)
+    ```
+
+    **If submodules are not initialized** (empty directories or missing files), or if you need to update to the correct version, run:
+
+    ```bash
+    # This will initialize, update, and force reset submodules to the correct commits
+    pnpm submodule:init
+    ```
+
+    **For a complete reset** (if you're having persistent issues):
+
+    ```bash
+    # Remove and reinitialize all submodules
+    pnpm submodule:reset
+    ```
+
+    **Note:** This repository uses git submodules. The `packages/embed` submodule contains the chat embed functionality. See [CONTRIBUTING.md](CONTRIBUTING.md#git-submodules) for detailed submodule management instructions.
 
 4. **Install dependencies:**
 
@@ -348,6 +381,47 @@ pnpm seed-credentials:write
 ```
 
 The script supports a wide range of credential types and includes robust safety checks. For more details, troubleshooting, and environment variable examples, refer to the [seed-credentials README](./scripts/seed-credentials/README.md).
+
+## 🔒 Lacework Security Integration
+
+TheAnswer supports optional Lacework FortiCNAPP Agent integration for runtime security monitoring and anomaly detection in AWS Fargate deployments.
+
+### Quick Setup
+
+**Enable Lacework:**
+
+1. Add `LaceworkAccessToken=your_token_here` to your `copilot.{environment}.env` file
+2. Deploy with `copilot deploy --env your-environment`
+
+**Disable Lacework:**
+
+1. Remove or comment out `LaceworkAccessToken` from your environment file
+2. Deploy with `copilot deploy --env your-environment`
+
+### Key Features
+
+-   **Optional Integration**: Controlled by presence of `LaceworkAccessToken`
+-   **Graceful Fallback**: Application runs normally if Lacework token is not provided
+-   **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
+-   **AWS Fargate Optimized**: Designed for Copilot deployments
+
+### Verification
+
+```bash
+# Connect to container
+copilot svc exec --env your-environment
+
+# Check Lacework status
+ps aux | grep datacollector
+tail -f /var/log/lacework/datacollector.log
+
+# Check environment variables (WARNING: Do not screenshare - contains sensitive tokens)
+env | grep -i lacework
+```
+
+**⚠️ Security Note**: Never screenshare or share output from commands that display Lacework tokens.
+
+For detailed configuration, troubleshooting, and advanced setup, see [Lacework Integration Documentation](./packages/docs/docs/integrations/lacework.md).
 
 <!-- BWS-SECURE-DOCS-START -->
 
