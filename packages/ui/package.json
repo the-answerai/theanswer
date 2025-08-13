@@ -105,7 +105,7 @@
         "@testing-library/react": "^14.3.1",
         "@testing-library/user-event": "^12.8.3",
         "@vitejs/plugin-react": "^4.7.0",
-        "pretty-quick": "^3.3.1",
+        "pretty-quick": "^4.2.2",
         "rimraf": "^5.0.10",
         "sass": "^1.89.2",
         "typescript": "~5.5.4",

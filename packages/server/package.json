@@ -50,7 +50,8 @@
         "test:api": "jest test/api",
         "test:api:watch": "jest test/api --watch",
         "test:billing": "jest src/services/billing/__tests__/*.test.ts",
-        "test:billing:watch": "jest src/services/billing/__tests__/*.test.ts --watch"
+        "test:billing:watch": "jest src/services/billing/__tests__/*.test.ts --watch",
+        "lint": "eslint \"src/**/*.{ts,tsx}\""
     },
     "keywords": [],
     "homepage": "https://flowiseai.com",

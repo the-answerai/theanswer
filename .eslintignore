@@ -25,3 +25,15 @@ packages/docs/openapi/**
 # Ignore compiled components package source files (they have complex inheritance patterns)
 packages/components/nodes/**/*.ts
 packages/components/src/**/*.ts
+
+# Ignore docs package (Docusaurus documentation site with its own build process)
+packages/docs/**/*
+
+# Ignore embed package (separate repo with its own linting)
+packages/embed/**/*
+
+# Ignore script files and utilities that are not critical for code quality
+packages-answers/scripts/**/*.ts
+packages-answers/db/prisma/scripts/**/*.ts
+packages-answers/db/prisma/seed.ts
+packages-answers/experimental-prisma-webpack-plugin/**/*.js
