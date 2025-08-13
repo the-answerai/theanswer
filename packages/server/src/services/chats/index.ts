@@ -11,8 +11,8 @@ const getAllChats = async (user: IUser) => {
         const appServer = getRunningExpressApp()
         const chats = await appServer.AppDataSource.getRepository(Chat).find({
             where: {
-                owner: { id: user.id },
-                organization: { id: user.organizationId },
+                ownerId: user.id,
+                organizationId: user.organizationId,
                 chatflowChatId: Not(IsNull())
             },
             order: {
@@ -31,8 +31,8 @@ const getChatById = async (chatId: string, user: IUser) => {
         const chat = await appServer.AppDataSource.getRepository(Chat).findOne({
             where: {
                 id: chatId,
-                owner: { id: user.id },
-                organization: { id: user.organizationId }
+                ownerId: user.id,
+                organizationId: user.organizationId
             },
             relations: {
                 chatflow: true

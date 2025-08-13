@@ -26,6 +26,10 @@ import exportImportApi from '@/api/exportimport'
 // Hooks
 import useApi from '@/hooks/useApi'
 import { useNavigate } from '@/utils/navigation'
+import { useAuth0 } from '@auth0/auth0-react'
+import useNotifier from '@/utils/useNotifier'
+import { getErrorMessage } from '@/utils/errorHandler'
+import { stringify, exportData } from '@/utils/exportImport'
 
 const dataToExport = [
     'Agentflows',
@@ -34,6 +38,7 @@ const dataToExport = [
     'Assistants OpenAI',
     'Assistants Azure',
     'Chatflows',
+    'Chats',
     'Chat Messages',
     'Chat Feedbacks',
     'Custom Templates',
@@ -108,7 +113,7 @@ export const ExportDialog = ({ show, onCancel, onExport }) => {
                                 src={ExportingGIF}
                                 alt='ExportingGIF'
                             />
-                            <span>Exporting data might takes a while</span>
+                            <span>Exporting data might take a while</span>
                         </div>
                     </Box>
                 )}
@@ -143,7 +148,7 @@ ExportDialog.propTypes = {
 // ==============================|| PROFILE MENU ||============================== //
 
 const ProfileSection = ({ username, handleLogout }) => {
-    const { user } = useUser()
+    const { user } = useAuth0()
     const customization = useSelector((state) => state.customization)
 
     const [open, setOpen] = useState(false)
@@ -177,11 +182,42 @@ const ProfileSection = ({ username, handleLogout }) => {
     }
 
     const errorFailed = (message) => {
-        showErrorNotification(message, enqueueSnackbar, closeSnackbar)
+        enqueueSnackbar({
+            message,
+            options: {
+                key: new Date().getTime() + Math.random(),
+                variant: 'error',
+                action: (key) => (
+                    <Button onClick={() => closeSnackbar(key)} style={{ color: 'white' }}>
+                        <span>✕</span>
+                    </Button>
+                )
+            }
+        })
     }
 
     const fileChange = (e) => {
-        handleFileChange(e, importAllApi)
+        if (!e.target.files) return
+        
+        const file = e.target.files[0]
+        const reader = new FileReader()
+        reader.onload = (evt) => {
+            if (!evt?.target?.result) return
+            
+            try {
+                const fileContent = evt.target.result
+                const body = JSON.parse(fileContent)
+                importAllApi.request(body)
+            } catch (error) {
+                errorFailed('Invalid JSON file format')
+            }
+        }
+        
+        reader.onerror = () => {
+            errorFailed('Error reading file')
+        }
+        
+        reader.readAsText(file)
     }
 
     const importAll = () => {
@@ -196,6 +232,7 @@ const ProfileSection = ({ username, handleLogout }) => {
         if (data.includes('Assistants OpenAI')) body.assistantOpenAI = true
         if (data.includes('Assistants Azure')) body.assistantAzure = true
         if (data.includes('Chatflows')) body.chatflow = true
+        if (data.includes('Chats')) body.chat = true
         if (data.includes('Chat Messages')) body.chat_message = true
         if (data.includes('Chat Feedbacks')) body.chat_feedback = true
         if (data.includes('Custom Templates')) body.custom_template = true
@@ -210,7 +247,16 @@ const ProfileSection = ({ username, handleLogout }) => {
     // Import success effect
     useEffect(() => {
         if (importAllApi.data) {
-            handleImportSuccess(dispatch, enqueueSnackbar, closeSnackbar, navigate)
+            enqueueSnackbar({
+                message: 'Import completed successfully!',
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'success'
+                }
+            })
+            setTimeout(() => {
+                window.location.href = '/'
+            }, 1000)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [importAllApi.data])
@@ -232,7 +278,26 @@ const ProfileSection = ({ username, handleLogout }) => {
     useEffect(() => {
         if (exportAllApi.data) {
             setExportDialogOpen(false)
-            processExportedData(exportAllApi.data, errorFailed)
+            try {
+                const dataStr = stringify(exportData(exportAllApi.data))
+                const blob = new Blob([dataStr], { type: 'application/json' })
+                const dataUri = URL.createObjectURL(blob)
+                
+                const linkElement = document.createElement('a')
+                linkElement.setAttribute('href', dataUri)
+                linkElement.setAttribute('download', exportAllApi.data.FileDefaultName || 'export.json')
+                linkElement.click()
+                
+                enqueueSnackbar({
+                    message: 'Export completed successfully!',
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'success'
+                    }
+                })
+            } catch (error) {
+                errorFailed(`Export failed: ${getErrorMessage(error)}`)
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.data])

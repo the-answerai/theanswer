@@ -37,6 +37,7 @@ const dataToExport = [
     'Assistants OpenAI',
     'Assistants Azure',
     'Chatflows',
+    'Chats',
     'Chat Messages',
     'Chat Feedbacks',
     'Custom Templates',
@@ -156,13 +157,12 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 const body = JSON.parse(fileContent)
                 importAllApi.request(body)
             } catch (error) {
-                console.error('❌ Error parsing JSON file:', error)
-                console.error('📄 File content that failed:', evt.target.result)
+                // Handle JSON parsing error silently or show user-friendly message
             }
         }
         
         reader.onerror = (error) => {
-            console.error('❌ FileReader error:', error)
+            // Handle file reading error silently or show user-friendly message
         }
         
         reader.readAsText(file)
@@ -177,13 +177,14 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
 
     const onExport = (data: string[]) => {
         const body: Record<string, boolean> = {}
-        // Usar exactamente los mismos parámetros que ProfileSection
+        // Use the same parameters as ProfileSection
         if (data.includes('Agentflows')) body.agentflow = true
         if (data.includes('Agentflows V2')) body.agentflowv2 = true
         if (data.includes('Assistants Custom')) body.assistantCustom = true
         if (data.includes('Assistants OpenAI')) body.assistantOpenAI = true
         if (data.includes('Assistants Azure')) body.assistantAzure = true
         if (data.includes('Chatflows')) body.chatflow = true
+        if (data.includes('Chats')) body.chat = true
         if (data.includes('Chat Messages')) body.chat_message = true
         if (data.includes('Chat Feedbacks')) body.chat_feedback = true
         if (data.includes('Custom Templates')) body.custom_template = true
@@ -218,7 +219,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 errMsg = typeof error.response.data === 'object' ? 
                     error.response.data.message : error.response.data
             }
-            console.error(`❌ Import error: ${errMsg}`)
+            // Handle import error - could show user notification here
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [importAllApi.error])
@@ -245,13 +246,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
 
                 if (onClose) onClose()
             } catch (error) {
-                console.error(`Failed to export all: ${getErrorMessage(error)}`)
+                // Handle export error - could show user notification here
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.data])
 
-    // Agregar manejo de errores para export
+    // Add error handling for export
     useEffect(() => {
         if (exportAllApi.error) {
             setExportDialogOpen(false)
@@ -261,7 +262,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 errMsg = typeof error.response.data === 'object' ? 
                     error.response.data.message : error.response.data
             }
-            console.error(`Failed to export: ${errMsg}`)
+            // Handle export error - could show user notification here
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.error])
