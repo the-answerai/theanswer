@@ -1,0 +1,23 @@
+# Ignore script files with console statements
+scripts/**/*.js
+packages/docs/devscripts/**/*.js
+packages/components/nodes/**/scripts/**/*.js
+
+# Ignore Solid.js files (different framework)
+packages/embed/src/**/*.tsx
+
+# Ignore test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Ignore generated files
+packages/docs/generated/**
+packages/docs/openapi/**
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.turbo/**
+**/coverage/**

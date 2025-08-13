@@ -32,9 +32,21 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         'no-unused-vars': 'off',
         'unused-imports/no-unused-imports': 'warn',
-        'unused-imports/no-unused-vars': ['warn', { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' }],
+        'unused-imports/no-unused-vars': [
+            'warn',
+            {
+                vars: 'all',
+                varsIgnorePattern: '^_',
+                args: 'after-used',
+                argsIgnorePattern: '^_',
+                ignoreRestSiblings: true,
+                destructuredArrayIgnorePattern: '^_'
+            }
+        ],
         'no-undef': 'off',
-        'no-console': [process.env.CI ? 'warn' : 'warn', { allow: ['warn', 'error', 'info'] }]
+        'no-console': [process.env.CI ? 'warn' : 'warn', { allow: ['warn', 'error', 'info'] }],
+        'react-hooks/exhaustive-deps': 'warn',
+        '@typescript-eslint/no-unused-vars': 'off'
         // 'prettier/prettier': 'error'
     }
 }

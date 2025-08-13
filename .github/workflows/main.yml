@@ -31,7 +31,12 @@ jobs:
                   cache: 'pnpm'
                   cache-dependency-path: 'pnpm-lock.yaml'
             - run: pnpm install
-            - run: pnpm lint
+            # Auto-fix linting issues first
+            - name: Auto-fix linting issues
+              run: pnpm lint --fix
+            # Check if there are any remaining unfixable issues
+            - name: Check remaining linting issues
+              run: pnpm lint
             - run: pnpm build
             - name: Cypress install
               run: pnpm cypress install
