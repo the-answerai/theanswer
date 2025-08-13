@@ -46,7 +46,8 @@ module.exports = {
         'no-undef': 'off',
         'no-console': [process.env.CI ? 'warn' : 'warn', { allow: ['warn', 'error', 'info'] }],
         'react-hooks/exhaustive-deps': 'warn',
-        '@typescript-eslint/no-unused-vars': 'off'
+        '@typescript-eslint/no-unused-vars': 'off',
+        'constructor-super': 'warn'
         // 'prettier/prettier': 'error'
     }
 }

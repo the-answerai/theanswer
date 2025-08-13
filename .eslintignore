@@ -21,3 +21,7 @@ packages/docs/openapi/**
 **/.next/**
 **/.turbo/**
 **/coverage/**
+
+# Ignore compiled components package source files (they have complex inheritance patterns)
+packages/components/nodes/**/*.ts
+packages/components/src/**/*.ts
