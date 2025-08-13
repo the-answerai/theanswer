@@ -6,10 +6,10 @@ This document describes the Lacework Fargate sidecar integration for TheAnswer d
 
 ## Architecture
 
-- **Sidecar Pattern**: Lacework datacollector runs alongside the main TheAnswer container
-- **Optional Integration**: Controlled by presence of `LaceworkAccessToken` in environment file
-- **Graceful Fallback**: Application runs normally if Lacework token is not provided
-- **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
+-   **Sidecar Pattern**: Lacework datacollector runs alongside the main TheAnswer container
+-   **Optional Integration**: Controlled by presence of `LaceworkAccessToken` in environment file
+-   **Graceful Fallback**: Application runs normally if Lacework token is not provided
+-   **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
 
 ## Configuration
 
@@ -51,13 +51,13 @@ sidecars:
 taskdef_overrides:
     # Override main container entrypoint to use Lacework sidecar script and then start the app
     - path: ContainerDefinitions[0].EntryPoint
-      value: ["/bin/sh", "-c", "/var/lib/lacework-backup/lacework-sidecar.sh; exec node dist/index.js"]
-    
+      value: ['/bin/sh', '-c', '/var/lib/lacework-backup/lacework-sidecar.sh; exec node dist/index.js']
+
     # Add volume mount from sidecar to main container
     - path: ContainerDefinitions[0].VolumesFrom
       value:
-        - sourceContainer: datacollector-sidecar
-          readOnly: true
+          - sourceContainer: datacollector-sidecar
+            readOnly: true
 ```
 
 ## Deployment
@@ -66,17 +66,17 @@ taskdef_overrides:
 
 1. Add `LaceworkAccessToken` to your environment file
 2. Deploy with Copilot:
-   ```bash
-   copilot deploy --env your-environment
-   ```
+    ```bash
+    copilot deploy --env your-environment
+    ```
 
 ### Disable Lacework
 
 1. Remove or comment out `LaceworkAccessToken` from environment file
 2. Deploy with Copilot:
-   ```bash
-   copilot deploy --env your-environment
-   ```
+    ```bash
+    copilot deploy --env your-environment
+    ```
 
 ## Verification Commands
 
@@ -118,17 +118,17 @@ copilot svc logs --env your-environment --since 5m | grep -i lacework
 
 ### ✅ Working Integration
 
-- Multiple datacollector processes running
-- Logs showing "Payload Total" messages
-- Environment variables set (LaceworkAccessToken, etc.)
-- Active data collection in logs
+-   Multiple datacollector processes running
+-   Logs showing "Payload Total" messages
+-   Environment variables set (LaceworkAccessToken, etc.)
+-   Active data collection in logs
 
 ### ❌ Non-Working Integration
 
-- No datacollector processes
-- No Lacework logs or empty log file
-- Missing environment variables
-- Application runs normally without Lacework
+-   No datacollector processes
+-   No Lacework logs or empty log file
+-   Missing environment variables
+-   Application runs normally without Lacework
 
 ## Troubleshooting
 
@@ -147,35 +147,37 @@ copilot svc logs --env your-environment --since 5m | grep -i lacework
 
 ## Security Considerations
 
-- LaceworkAccessToken should be stored securely
-- Consider using AWS Secrets Manager for production
-- Monitor Lacework agent resource usage
-- Review Lacework data collection policies
-- **⚠️ IMPORTANT**: Never screenshare or share output from `env | grep lacework` commands as they contain sensitive access tokens
-- **⚠️ IMPORTANT**: Be cautious when using `cat` commands on log files that may contain sensitive information
+-   LaceworkAccessToken should be stored securely
+-   Consider using AWS Secrets Manager for production
+-   Monitor Lacework agent resource usage
+-   Review Lacework data collection policies
+-   **⚠️ IMPORTANT**: Never screenshare or share output from `env | grep lacework` commands as they contain sensitive access tokens
+-   **⚠️ IMPORTANT**: Be cautious when using `cat` commands on log files that may contain sensitive information
 
 ## Resource Impact
 
-- **With Lacework**: Additional ~100MB memory, minimal CPU impact
-- **Without Lacework**: No additional resource usage
-- **Sidecar**: Non-essential container, won't break main application if it fails
+-   **With Lacework**: Additional ~100MB memory, minimal CPU impact
+-   **Without Lacework**: No additional resource usage
+-   **Sidecar**: Non-essential container, won't break main application if it fails
 
 ## Configuration Details
 
 ### Dependency Management
 
 The current configuration uses `depends_on: start` which:
-- Ensures the sidecar starts before the main container
-- Allows the main container to start even if the sidecar fails
-- Maintains proper volume mounting order
-- Provides graceful fallback when Lacework is not configured
+
+-   Ensures the sidecar starts before the main container
+-   Allows the main container to start even if the sidecar fails
+-   Maintains proper volume mounting order
+-   Provides graceful fallback when Lacework is not configured
 
 ### Entrypoint Behavior
 
 The entrypoint uses `;` instead of `&&` to:
-- Ensure the main application starts regardless of Lacework script success/failure
-- Provide fault tolerance for environments without Lacework configuration
-- Maintain consistent startup behavior across all environments
+
+-   Ensure the main application starts regardless of Lacework script success/failure
+-   Provide fault tolerance for environments without Lacework configuration
+-   Maintain consistent startup behavior across all environments
 
 ## Optional Enhancements
 
@@ -192,4 +194,4 @@ depends_on:
 
 ## References
 
-- [Lacework Implementation Documentation](https://docs.fortinet.com/document/lacework-forticnapp/25.2.0/administration-guide/943410/install-on-aws-ecs-fargate)
+-   [Lacework Implementation Documentation](https://docs.fortinet.com/document/lacework-forticnapp/25.2.0/administration-guide/943410/install-on-aws-ecs-fargate)

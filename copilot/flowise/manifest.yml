@@ -23,7 +23,7 @@ image:
 
     # Port exposed through your container to route traffic to it.
     port: 4000
-    
+
     # Container dependencies - main container depends on Lacework sidecar
     depends_on:
         datacollector-sidecar: start
@@ -56,13 +56,13 @@ sidecars:
 taskdef_overrides:
     # Override main container entrypoint to use Lacework sidecar script and then start the app
     - path: ContainerDefinitions[0].EntryPoint
-      value: ["/bin/sh", "-c", "/var/lib/lacework-backup/lacework-sidecar.sh; exec node dist/index.js"]
-    
+      value: ['/bin/sh', '-c', '/var/lib/lacework-backup/lacework-sidecar.sh; exec node dist/index.js']
+
     # Add volume mount from sidecar to main container
     - path: ContainerDefinitions[0].VolumesFrom
       value:
-        - sourceContainer: datacollector-sidecar
-          readOnly: true
+          - sourceContainer: datacollector-sidecar
+            readOnly: true
 
 # Optional fields for more advanced use-cases.
 #

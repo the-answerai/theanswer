@@ -74,6 +74,7 @@ git submodule update --init
 ```
 
 **Using pnpm scripts (recommended):**
+
 ```bash
 # Initialize and update submodules
 pnpm submodule:init
@@ -83,6 +84,7 @@ pnpm submodule:reset
 ```
 
 **Important:** Always run pnpm scripts from the **main repository root** (not from inside submodule directories):
+
 ```bash
 # ✅ Correct - run from main repo root
 cd /path/to/theanswer
