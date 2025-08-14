@@ -31,6 +31,7 @@ import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
@@ -206,23 +207,35 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                         text: 'API Keys',
                         link: '/sidekick-studio/apikey',
                         icon: <VpnKeyOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'credentials',
+                        text: 'Credentials',
+                        link: '/sidekick-studio/credentials',
+                        icon: <PasswordIcon color='primary' />
                     }
                 ]
             })
         }
 
-        // Account section - everyone sees credentials, only admins see billing
+        // Account section - everyone sees profile, only admins see billing and admin
         const accountSubMenu: MenuConfig[] = [
             {
-                id: 'credentials',
-                text: 'Credentials',
-                link: '/sidekick-studio/credentials',
-                icon: <PasswordIcon color='primary' />
+                id: 'profile',
+                text: 'Profile',
+                link: '/profile',
+                icon: <AccountCircleIcon color='primary' />
             }
         ]
 
-        // Only admins see billing
+        // Only admins see billing and admin dashboard
         if (userRole === 'admin') {
+            accountSubMenu.push({
+                id: 'admin',
+                text: 'Admin',
+                link: '/sidekick-studio/admin',
+                icon: <AssessmentOutlinedIcon color='primary' />
+            })
             accountSubMenu.push({
                 id: 'billing',
                 text: 'Billing',
@@ -316,12 +329,34 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                   text: 'API Keys',
                                   link: '/sidekick-studio/apikey',
                                   icon: <VpnKeyOutlinedIcon color='primary' />
-                              }
+                              },
+                              {
+                                  id: 'credentials',
+                                  text: 'Credentials',
+                                  link: '/sidekick-studio/credentials',
+                                  icon: <PasswordIcon color='primary' />
+                              },
+                              ...(userRole === 'admin'
+                                  ? [
+                                        {
+                                            id: 'admin',
+                                            text: 'Admin',
+                                            link: '/sidekick-studio/admin',
+                                            icon: <AssessmentOutlinedIcon color='primary' />
+                                        },
+                                        {
+                                            id: 'apps',
+                                            text: 'Apps',
+                                            link: '/sidekick-studio/apps',
+                                            icon: <AppsOutlinedIcon color='primary' />
+                                        }
+                                    ]
+                                  : [])
                           ]
                       }
                   ]
                 : []),
-            // Account section (collapsible) with Credentials moved in
+            // Account section (collapsible) with Profile
             ...(flags['chatflow:use'].enabled
                 ? [
                       {
@@ -336,10 +371,10 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                   icon: <AssessmentOutlinedIcon color='primary' />
                               },
                               {
-                                  id: 'credentials',
-                                  text: 'Credentials',
-                                  link: '/sidekick-studio/credentials',
-                                  icon: <PasswordIcon color='primary' />
+                                  id: 'profile',
+                                  text: 'Profile',
+                                  link: '/profile',
+                                  icon: <AccountCircleIcon color='primary' />
                               }
                           ]
                       }
@@ -548,10 +583,14 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                                         return 'Set up variables for reuse across sidekicks'
                                                     case 'apikey':
                                                         return 'Manage authentication keys for external services'
+                                                    case 'admin':
+                                                        return 'Access admin dashboard and organization management'
                                                     case 'billing':
                                                         return 'View and manage your subscription and payments'
                                                     case 'credentials':
                                                         return 'Store and manage API credentials securely'
+                                                    case 'profile':
+                                                        return 'View and manage your personal profile information'
                                                     default:
                                                         return subItem.text || ''
                                                 }

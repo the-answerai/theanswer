@@ -136,7 +136,13 @@ export const authenticationHandlerMiddleware =
                         user.defaultChatflowId = defaultChatflowId
                     }
 
-                    req.user = { ...authUser, ...user, roles }
+                    // Set permissions based on roles
+                    const permissions: string[] = []
+                    if (roles?.includes('Admin')) {
+                        permissions.push('org:manage')
+                    }
+
+                    req.user = { ...authUser, ...user, roles, permissions }
                 } catch (error) {
                     console.error('Authentication error:', error)
                     return res.status(500).send('Internal Server Error during authentication')
