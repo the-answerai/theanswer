@@ -26,7 +26,6 @@ interface SidekickTypeaheadSearchProps {
     enablePerformanceLogs?: boolean
     onClose?: () => void
     shouldAutoFocus?: boolean
-    autoOpen?: boolean
 }
 
 interface SidekickOptionProps {
@@ -190,11 +189,10 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
     placeholder = 'Search for a sidekick...',
     enablePerformanceLogs = false,
     onClose,
-    shouldAutoFocus = false,
-    autoOpen = true
+    shouldAutoFocus = false
 }) => {
     const [inputValue, setInputValue] = useState('')
-    const [open, setOpen] = useState(autoOpen) // Start open based on autoOpen prop
+    const [open, setOpen] = useState(true) // Start open immediately
     const theme = useTheme()
     const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -242,6 +240,11 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
             }, 50)
         }
     }, [shouldAutoFocus])
+
+    // Ensure dropdown opens immediately when component mounts
+    React.useEffect(() => {
+        setOpen(true)
+    }, [])
 
     // Handle escape key
     React.useEffect(() => {
@@ -325,23 +328,16 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
                         }}
                     />
                 )}
-                renderOption={(props, sidekick) => {
-                    return (
-                        <Box
-                            component='li'
-                            key={sidekick.id}
-                            {...props}
-                            sx={{ p: 0, px: '5px', '&:hover': { backgroundColor: 'transparent' } }}
-                        >
-                            <SidekickOption
-                                sidekick={sidekick}
-                                favorites={favorites}
-                                toggleFavorite={toggleFavorite}
-                                onSelect={onSidekickSelect}
-                            />
-                        </Box>
-                    )
-                }}
+                renderOption={(props, sidekick) => (
+                    <Box component='li' {...props} sx={{ p: 0, px: '5px', '&:hover': { backgroundColor: 'transparent' } }}>
+                        <SidekickOption
+                            sidekick={sidekick}
+                            favorites={favorites}
+                            toggleFavorite={toggleFavorite}
+                            onSelect={onSidekickSelect}
+                        />
+                    </Box>
+                )}
                 ListboxProps={{
                     sx: {
                         maxHeight: 400,

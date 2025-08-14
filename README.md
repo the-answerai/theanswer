@@ -389,21 +389,19 @@ TheAnswer supports optional Lacework FortiCNAPP Agent integration for runtime se
 ### Quick Setup
 
 **Enable Lacework:**
-
 1. Add `LaceworkAccessToken=your_token_here` to your `copilot.{environment}.env` file
 2. Deploy with `copilot deploy --env your-environment`
 
 **Disable Lacework:**
-
 1. Remove or comment out `LaceworkAccessToken` from your environment file
 2. Deploy with `copilot deploy --env your-environment`
 
 ### Key Features
 
--   **Optional Integration**: Controlled by presence of `LaceworkAccessToken`
--   **Graceful Fallback**: Application runs normally if Lacework token is not provided
--   **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
--   **AWS Fargate Optimized**: Designed for Copilot deployments
+- **Optional Integration**: Controlled by presence of `LaceworkAccessToken`
+- **Graceful Fallback**: Application runs normally if Lacework token is not provided
+- **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
+- **AWS Fargate Optimized**: Designed for Copilot deployments
 
 ### Verification
 

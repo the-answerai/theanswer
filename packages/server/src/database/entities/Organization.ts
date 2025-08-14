@@ -29,7 +29,4 @@ export class Organization implements IOrganization {
 
     @Column({ nullable: true })
     stripeCustomerId?: string
-
-    @Column({ type: 'jsonb', nullable: true })
-    enabledIntegrations?: string
 }

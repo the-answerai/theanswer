@@ -2,7 +2,6 @@ import React from 'react'
 import Chat from '@ui/Chat'
 import getCachedSession from '@ui/getCachedSession'
 import { findSidekicksForChat } from '@utils/findSidekicksForChat'
-import { redirect } from 'next/navigation'
 
 export const metadata = {
     title: 'Chats | Answer Agent',
@@ -13,8 +12,7 @@ const ChatDetailPage = async ({ params }: any) => {
     const session = await getCachedSession()
 
     if (!session?.user?.email) {
-        // Redirect to login with return URL to come back to chat page
-        redirect(`/api/auth/login?redirect_uri=${encodeURIComponent('/chat')}`)
+        return <Chat {...params} />
     }
 
     const user = session.user

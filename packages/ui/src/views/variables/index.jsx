@@ -42,7 +42,6 @@ import variablesApi from '@/api/variables'
 // Hooks
 import useApi from '@/hooks/useApi'
 import useConfirm from '@/hooks/useConfirm'
-import { useFlags } from 'flagsmith/react'
 
 // utils
 import useNotifier from '@/utils/useNotifier'

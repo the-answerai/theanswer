@@ -1,49 +1,26 @@
 'use client'
 import React, { useState } from 'react'
-import NextLink from 'next/link'
+import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import CardActions from '@mui/material/CardActions'
-import Button from '@mui/material/Button'
-import Grid from '@mui/material/Grid'
-import Box from '@mui/material/Box'
-import Avatar from '@mui/material/Avatar'
-import Chip from '@mui/material/Chip'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import { alpha, useTheme } from '@mui/material'
-
-// Button style objects for reusability - following existing codebase patterns
-const appButtonBaseStyles = {
-    borderRadius: 2,
-    textTransform: 'none',
-    fontWeight: 600,
-    py: 1.5
-}
-
-const launchAppButtonStyles = (theme: any) => ({
-    ...appButtonBaseStyles,
-    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-    '&:hover': {
-        background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`
-    }
-})
-
-const getAgentButtonStyles = (theme: any) => ({
-    ...appButtonBaseStyles,
-    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-    color: theme.palette.primary.main,
-    '&:hover': {
-        border: `2px solid ${theme.palette.primary.main}`,
-        backgroundColor: alpha(theme.palette.primary.main, 0.05)
-    }
-})
+import {
+    Container,
+    Typography,
+    Card,
+    CardContent,
+    CardActions,
+    Button,
+    Grid,
+    Box,
+    Avatar,
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    alpha,
+    useTheme
+} from '@mui/material'
 
 // App interface
 interface App {
@@ -486,11 +463,42 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
             {/* Actions */}
             <CardActions sx={{ p: 3, pt: 0 }}>
                 {app.available ? (
-                    <Button component={NextLink} href={app.href!} variant='contained' fullWidth sx={launchAppButtonStyles(theme)}>
+                    <Button
+                        component={Link}
+                        href={app.href!}
+                        variant='contained'
+                        fullWidth
+                        sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            py: 1.5,
+                            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                            '&:hover': {
+                                background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`
+                            }
+                        }}
+                    >
                         Launch App
                     </Button>
                 ) : (
-                    <Button onClick={() => onGetAgent(app)} variant='outlined' fullWidth sx={getAgentButtonStyles(theme)}>
+                    <Button
+                        onClick={() => onGetAgent(app)}
+                        variant='outlined'
+                        fullWidth
+                        sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            py: 1.5,
+                            border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                            color: theme.palette.primary.main,
+                            '&:hover': {
+                                border: `2px solid ${theme.palette.primary.main}`,
+                                bgcolor: alpha(theme.palette.primary.main, 0.05)
+                            }
+                        }}
+                    >
                         Get Agent
                     </Button>
                 )}
@@ -500,7 +508,7 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
 }
 
 const Apps = () => {
-    const { isLoading } = useUser()
+    const { user, isLoading } = useUser()
     const theme = useTheme()
     const [getAgentModalOpen, setGetAgentModalOpen] = useState(false)
     const [selectedApp, setSelectedApp] = useState<App | null>(null)
@@ -553,7 +561,7 @@ const Apps = () => {
 
             {/* Apps Grid */}
             <Grid container spacing={4} sx={{ mb: 4 }}>
-                {apps?.map((app) => (
+                {apps.map((app) => (
                     <Grid item xs={12} md={6} key={app.id}>
                         <AppCard app={app} onGetAgent={handleGetAgent} />
                     </Grid>
