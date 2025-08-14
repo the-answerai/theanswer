@@ -26,12 +26,12 @@
         "prisma-json-types-generator": "^3.5.1"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.14",
+        "@types/jest": "^30.0.0",
         "@types/node": "18.15.11",
         "concurrently": "^7.6.0",
         "eslint": "^7.32.0",
         "eslint-config-custom": "workspace:*",
-        "jest": "^29.7.0",
+        "jest": "^30.0.5",
         "prisma": "^5.22.0",
         "ts-node": "^10.9.2",
         "tsconfig": "workspace:*",
