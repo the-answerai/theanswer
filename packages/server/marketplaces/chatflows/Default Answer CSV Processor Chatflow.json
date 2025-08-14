@@ -1,0 +1,827 @@
+{
+  "id": "cfa29666-324b-4d56-94a3-2ccde24899a6",
+  "name": "Answer CSV Processor",
+  "framework": ["Answer Agent"],
+  "usecases": ["CSV"],
+  "description": "",
+  "flowData": "{\"nodes\":[{\"id\":\"llmChain_0\",\"position\":{\"x\":1072.7390744962727,\"y\":539.5523789450416},\"type\":\"customNode\",\"data\":{\"id\":\"llmChain_0\",\"label\":\"LLM Chain\",\"version\":3,\"name\":\"llmChain\",\"type\":\"LLMChain\",\"baseClasses\":[\"LLMChain\",\"BaseChain\",\"Runnable\"],\"category\":\"Chains\",\"description\":\"Chain to run queries against LLMs\",\"inputParams\":[{\"label\":\"Chain Name\",\"name\":\"chainName\",\"type\":\"string\",\"placeholder\":\"Name Your Chain\",\"optional\":true,\"id\":\"llmChain_0-input-chainName-string\"}],\"inputAnchors\":[{\"label\":\"Language Model\",\"name\":\"model\",\"type\":\"BaseLanguageModel\",\"id\":\"llmChain_0-input-model-BaseLanguageModel\"},{\"label\":\"Prompt\",\"name\":\"prompt\",\"type\":\"BasePromptTemplate\",\"id\":\"llmChain_0-input-prompt-BasePromptTemplate\"},{\"label\":\"Output Parser\",\"name\":\"outputParser\",\"type\":\"BaseLLMOutputParser\",\"optional\":true,\"id\":\"llmChain_0-input-outputParser-BaseLLMOutputParser\"},{\"label\":\"Input Moderation\",\"description\":\"Detect text that could generate harmful output and prevent it from being sent to the language model\",\"name\":\"inputModeration\",\"type\":\"Moderation\",\"optional\":true,\"list\":true,\"id\":\"llmChain_0-input-inputModeration-Moderation\"}],\"inputs\":{\"model\":\"{{aaiChatOpenAI_0.data.instance}}\",\"prompt\":\"{{chatPromptTemplate_0.data.instance}}\",\"outputParser\":\"{{advancedStructuredOutputParser_0.data.instance}}\",\"inputModeration\":\"\",\"chainName\":\"\"},\"outputAnchors\":[{\"name\":\"output\",\"label\":\"Output\",\"type\":\"options\",\"description\":\"\",\"options\":[{\"id\":\"llmChain_0-output-llmChain-LLMChain|BaseChain|Runnable\",\"name\":\"llmChain\",\"label\":\"LLM Chain\",\"description\":\"\",\"type\":\"LLMChain | BaseChain | Runnable\"},{\"id\":\"llmChain_0-output-outputPrediction-string|json\",\"name\":\"outputPrediction\",\"label\":\"Output Prediction\",\"description\":\"\",\"type\":\"string | json\"}],\"default\":\"llmChain\"}],\"outputs\":{\"output\":\"llmChain\"},\"selected\":false},\"width\":300,\"height\":514,\"selected\":false,\"positionAbsolute\":{\"x\":1072.7390744962727,\"y\":539.5523789450416},\"dragging\":false},{\"id\":\"chatPromptTemplate_0\",\"position\":{\"x\":345.933938624775,\"y\":25.88296528210509},\"type\":\"customNode\",\"data\":{\"label\":\"Chat Prompt Template\",\"name\":\"chatPromptTemplate\",\"version\":2,\"type\":\"ChatPromptTemplate\",\"icon\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/prompts/ChatPromptTemplate/prompt.svg\",\"category\":\"Prompts\",\"description\":\"Schema to represent a chat prompt\",\"baseClasses\":[\"ChatPromptTemplate\",\"BaseChatPromptTemplate\",\"BasePromptTemplate\",\"Runnable\"],\"inputs\":{\"systemMessagePrompt\":\"#### Objective\\nYou map keywords to their best-matched IAS Contextual Control Avoidance Segments (CCA), ensuring each connection is logical, relevant, and comprehensive. Your goal is to align each keyword with the most appropriate segment based on direct mentions and broader thematic connections within the segment descriptions.  You will return the most appropriate segment name related to teh keyword, the id, and your reasoning in a bullet point list. The user will give you a keyword you will analyze this list of available segments\\n\\n<cca_segments>\\n{cca_segments}\\n</cca_segments>\\n\\n---\\n\\n#### Steps for Mapping Keywords to Segments\\n\\n1. **Understanding the Keyword**\\n\\n    - **Definition and Context**\\n        - **Trigger:** User submits a keyword.\\n        - **Instruction:** Define the keyword and understand its primary meanings and uses. Consider various contexts (medical, legal, technological, social, political).\\n        - **Example:** For the keyword \\\"virus,\\\" consider contexts like medical (diseases), technological (computer viruses), etc.\\n\\n    - **Related Concepts**\\n        - **Trigger:** Keyword is defined.\\n        - **Instruction:** Identify related concepts, scenarios, and synonyms linked to the keyword. This broadens the scope to catch related segments.\\n        - **Example:** For \\\"virus,\\\" related concepts include \\\"infection,\\\" \\\"malware,\\\" \\\"epidemic,\\\" etc.\\n\\n---\\n\\n2. **Analyzing Segment Descriptions**\\n\\n    - **Direct Match**\\n        - **Trigger:** Keyword context is understood.\\n        - **Instruction:** Look for segments where the keyword or its synonyms are explicitly mentioned.\\n        - **Example:** If the keyword is \\\"cybersecurity,\\\" find segments mentioning \\\"cyber attacks\\\" or \\\"digital security.\\\"\\n\\n    - **Implications and Thematic Connections**\\n        - **Trigger:** No direct match found.\\n        - **Instruction:** Analyze descriptions for implications or related themes. Broaden the search if necessary.\\n        - **Example:** For \\\"nuclear weapons,\\\" consider segments on military conflicts or defense issues.\\n\\n    - **Broad vs. Specific Matches**\\n        - **Trigger:** Potential matches identified.\\n        - **Instruction:** Prioritize specificity when it offers a clear connection to the keyword but consider broader segments if the keyword spans multiple issues.\\n        - **Example:** Prefer a specific segment on \\\"Cyber Security\\\" over a broad \\\"Technology\\\" segment if it directly covers the keyword.\\n\\n---\\n\\n3. **Evaluating Relevance and Exclusion Criteria**\\n\\n    - **Relevance of the Segment**\\n        - **Trigger:** Potential matches identified.\\n        - **Instruction:** Judge each segment’s relevance based on how closely it aligns with the keyword’s meaning and related concepts.\\n        - **Example:** Ensure a segment on \\\"Healthcare\\\" is relevant for the keyword \\\"pandemic.\\\"\\n\\n    - **Segment’s Purpose**\\n        - **Trigger:** Relevance evaluated.\\n        - **Instruction:** Understand each segment’s purpose, especially those designed to exclude or highlight specific content.\\n        - **Example:** For \\\"terrorism,\\\" ensure the segment excludes violent content if applicable.\\n\\n---\\n\\n4. **Cross-Checking Against Multiple Segments**\\n\\n    - **Comparing Segments**\\n        - **Trigger:** Multiple segments could match.\\n        - **Instruction:** Compare segments to decide the best fit based on content coverage depth and direct connection to the keyword.\\n        - **Example:** Choose a segment that covers \\\"data breaches\\\" comprehensively over one that only tangentially mentions them.\\n\\n    - **Prioritization**\\n        - **Trigger:** Segments compared.\\n        - **Instruction:** Prefer segments offering comprehensive keyword coverage over those with weak connections.\\n        - **Example:** Prioritize a detailed \\\"Financial Fraud\\\" segment for the keyword \\\"scam\\\" over a general \\\"Crime\\\" segment.\\n\\n---\\n\\n5. **Logical Deductions and Inferences**\\n\\n    - **Making Inferences**\\n        - **Trigger:** Segment descriptions lack detail.\\n        - **Instruction:** Make logical inferences about what each segment covers based on the descriptions.\\n        - **Example:** Infer that a segment on \\\"Online Safety\\\" includes topics like \\\"phishing\\\" even if not explicitly mentioned.\\n\\n---\\n\\n6. **Final Selection**\\n\\n    - **Best Fit**\\n        - **Trigger:** Analysis complete.\\n        - **Instruction:** Select the segment that most comprehensively and directly relates to the keyword.\\n        - **Example:** Choose \\\"Environmental Disasters\\\" for the keyword \\\"earthquake.\\\"\\n\\n    - **Documentation**\\n        - **Trigger:** Best fit selected.\\n        - **Instruction:** Log the keyword alongside the matching segment’s name and ID in an organized list.\\n        - **Example:** Document \\\"cybersecurity\\\" with the segment \\\"Digital Security\\\" and its ID.\\n\\n---\\n\\n#### Tips\\n\\n- **Granular Steps:** Break down each step into smaller actions where possible.\\n- **Attention to Detail:** Be thorough and double-check your work.\\n\\n---\\n\\nBy following these detailed instructions, you ensure that each keyword is mapped to its best-matched segment effectively and accurately.\\n\\n\\n\\nyour response should be in the following format\\n{\\n\\t\\\"keyword\\\": \\\"\\\",\\n    \\\"reasoning\\\" :\\\"\\\",\\n    \\\"segmentName\\\":\\\"\\\",\\n    \\\"segmentId\\\": \\\"\\\"\\n}\",\"humanMessagePrompt\":\"{keyword}\",\"promptValues\":\"{\\\"cca_segments\\\":\\\"{{documentStore_0.data.instance}}\\\",\\\"keyword\\\":\\\"{{question}}\\\"}\",\"messageHistory\":\"messageHistoryCode\",\"selectedMessagesTab_chatPromptTemplate_0\":\"messageHistoryCode\"},\"filePath\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/prompts/ChatPromptTemplate/ChatPromptTemplate.js\",\"inputAnchors\":[],\"inputParams\":[{\"label\":\"System Message\",\"name\":\"systemMessagePrompt\",\"type\":\"string\",\"rows\":4,\"placeholder\":\"You are a helpful assistant that translates {input_language} to {output_language}.\",\"id\":\"chatPromptTemplate_0-input-systemMessagePrompt-string\"},{\"label\":\"Human Message\",\"name\":\"humanMessagePrompt\",\"description\":\"This prompt will be added at the end of the messages as human message\",\"type\":\"string\",\"rows\":4,\"placeholder\":\"{text}\",\"id\":\"chatPromptTemplate_0-input-humanMessagePrompt-string\"},{\"label\":\"Format Prompt Values\",\"name\":\"promptValues\",\"type\":\"json\",\"optional\":true,\"acceptVariable\":true,\"list\":true,\"id\":\"chatPromptTemplate_0-input-promptValues-json\"},{\"label\":\"Messages History\",\"name\":\"messageHistory\",\"description\":\"Add messages after System Message. This is useful when you want to provide few shot examples\",\"type\":\"tabs\",\"tabIdentifier\":\"selectedMessagesTab\",\"additionalParams\":true,\"default\":\"messageHistoryCode\",\"tabs\":[{\"label\":\"Add Messages (Code)\",\"name\":\"messageHistoryCode\",\"type\":\"code\",\"hideCodeExecute\":true,\"codeExample\":\"const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\\n\\nreturn [\\n    new HumanMessage(\\\"What is 333382 🦜 1932?\\\"),\\n    new AIMessage({\\n        content: \\\"\\\",\\n        tool_calls: [\\n        {\\n            id: \\\"12345\\\",\\n            name: \\\"calulator\\\",\\n            args: {\\n                number1: 333382,\\n                number2: 1932,\\n                operation: \\\"divide\\\",\\n            },\\n        },\\n        ],\\n    }),\\n    new ToolMessage({\\n        tool_call_id: \\\"12345\\\",\\n        content: \\\"The answer is 172.558.\\\",\\n    }),\\n    new AIMessage(\\\"The answer is 172.558.\\\"),\\n]\",\"optional\":true,\"additionalParams\":true}],\"id\":\"chatPromptTemplate_0-input-messageHistory-tabs\"}],\"outputs\":{},\"outputAnchors\":[{\"id\":\"chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable\",\"name\":\"chatPromptTemplate\",\"label\":\"ChatPromptTemplate\",\"description\":\"Schema to represent a chat prompt\",\"type\":\"ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable\"}],\"id\":\"chatPromptTemplate_0\",\"selected\":false},\"width\":300,\"height\":748,\"selected\":false,\"positionAbsolute\":{\"x\":345.933938624775,\"y\":25.88296528210509},\"dragging\":false},{\"id\":\"documentStore_0\",\"position\":{\"x\":11.583080941506637,\"y\":282.3433858746503},\"type\":\"customNode\",\"data\":{\"id\":\"documentStore_0\",\"label\":\"Document Store\",\"version\":1,\"name\":\"documentStore\",\"type\":\"Document\",\"baseClasses\":[\"Document\"],\"category\":\"Document Loaders\",\"description\":\"Load data from pre-configured document stores\",\"inputParams\":[{\"label\":\"Select Store\",\"name\":\"selectedStore\",\"type\":\"asyncOptions\",\"loadMethod\":\"listStores\",\"id\":\"documentStore_0-input-selectedStore-asyncOptions\",\"display\":true}],\"inputAnchors\":[],\"inputs\":{\"selectedStore\":\"cc92f7c4-03c3-43e3-9730-95451fd1ce00\"},\"outputAnchors\":[{\"name\":\"output\",\"label\":\"Output\",\"type\":\"options\",\"description\":\"Array of document objects containing metadata and pageContent\",\"options\":[{\"id\":\"documentStore_0-output-document-Document|json\",\"name\":\"document\",\"label\":\"Document\",\"description\":\"Array of document objects containing metadata and pageContent\",\"type\":\"Document | json\"},{\"id\":\"documentStore_0-output-text-string|json\",\"name\":\"text\",\"label\":\"Text\",\"description\":\"Concatenated string from pageContent of documents\",\"type\":\"string | json\"}],\"default\":\"document\"}],\"outputs\":{\"output\":\"text\"},\"selected\":false},\"width\":300,\"height\":318,\"selected\":true,\"positionAbsolute\":{\"x\":11.583080941506637,\"y\":282.3433858746503},\"dragging\":false},{\"id\":\"structuredOutputParser_0\",\"position\":{\"x\":516.3141239144453,\"y\":824.2503681026624},\"type\":\"customNode\",\"data\":{\"id\":\"structuredOutputParser_0\",\"label\":\"Structured Output Parser\",\"version\":1,\"name\":\"structuredOutputParser\",\"type\":\"StructuredOutputParser\",\"baseClasses\":[\"StructuredOutputParser\",\"BaseLLMOutputParser\",\"Runnable\"],\"category\":\"Output Parsers\",\"description\":\"Parse the output of an LLM call into a given (JSON) structure.\",\"inputParams\":[{\"label\":\"Autofix\",\"name\":\"autofixParser\",\"type\":\"boolean\",\"optional\":true,\"description\":\"In the event that the first call fails, will make another call to the model to fix any errors.\",\"id\":\"structuredOutputParser_0-input-autofixParser-boolean\"},{\"label\":\"JSON Structure\",\"name\":\"jsonStructure\",\"type\":\"datagrid\",\"description\":\"JSON structure for LLM to return\",\"datagrid\":[{\"field\":\"property\",\"headerName\":\"Property\",\"editable\":true},{\"field\":\"type\",\"headerName\":\"Type\",\"type\":\"singleSelect\",\"valueOptions\":[\"string\",\"number\",\"boolean\"],\"editable\":true},{\"field\":\"description\",\"headerName\":\"Description\",\"editable\":true,\"flex\":1}],\"default\":[{\"property\":\"answer\",\"type\":\"string\",\"description\":\"answer to the user's question\"},{\"property\":\"source\",\"type\":\"string\",\"description\":\"sources used to answer the question, should be websites\"}],\"additionalParams\":true,\"id\":\"structuredOutputParser_0-input-jsonStructure-datagrid\"}],\"inputAnchors\":[],\"inputs\":{\"autofixParser\":\"\",\"jsonStructure\":\"[{\\\"property\\\":\\\"keyword\\\",\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The keyword the user input\\\",\\\"id\\\":0},{\\\"property\\\":\\\"reasoning\\\",\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The reason the keyword matches the segment\\\",\\\"id\\\":1},{\\\"property\\\":\\\"segmentName\\\",\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The name of the segment\\\",\\\"actions\\\":\\\"\\\",\\\"id\\\":2},{\\\"property\\\":\\\"segmentId\\\",\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The ID of the segment\\\",\\\"actions\\\":\\\"\\\",\\\"id\\\":3}]\"},\"outputAnchors\":[{\"id\":\"structuredOutputParser_0-output-structuredOutputParser-StructuredOutputParser|BaseLLMOutputParser|Runnable\",\"name\":\"structuredOutputParser\",\"label\":\"StructuredOutputParser\",\"description\":\"Parse the output of an LLM call into a given (JSON) structure.\",\"type\":\"StructuredOutputParser | BaseLLMOutputParser | Runnable\"}],\"outputs\":{},\"selected\":false},\"width\":300,\"height\":335,\"selected\":false,\"positionAbsolute\":{\"x\":516.3141239144453,\"y\":824.2503681026624},\"dragging\":false},{\"id\":\"advancedStructuredOutputParser_0\",\"position\":{\"x\":136.45718457804523,\"y\":763.1949920397973},\"type\":\"customNode\",\"data\":{\"id\":\"advancedStructuredOutputParser_0\",\"label\":\"Advanced Structured Output Parser\",\"version\":1,\"name\":\"advancedStructuredOutputParser\",\"type\":\"AdvancedStructuredOutputParser\",\"baseClasses\":[\"AdvancedStructuredOutputParser\",\"BaseLLMOutputParser\",\"Runnable\"],\"category\":\"Output Parsers\",\"description\":\"Parse the output of an LLM call into a given structure by providing a Zod schema.\",\"inputParams\":[{\"label\":\"Autofix\",\"name\":\"autofixParser\",\"type\":\"boolean\",\"optional\":true,\"description\":\"In the event that the first call fails, will make another call to the model to fix any errors.\",\"id\":\"advancedStructuredOutputParser_0-input-autofixParser-boolean\"},{\"label\":\"Example JSON\",\"name\":\"exampleJson\",\"type\":\"string\",\"description\":\"Zod schema for the output of the model\",\"rows\":10,\"default\":\"z.object({\\n    title: z.string(), // Title of the movie as a string\\n    yearOfRelease: z.number().int(), // Release year as an integer number,\\n    genres: z.enum([\\n        \\\"Action\\\", \\\"Comedy\\\", \\\"Drama\\\", \\\"Fantasy\\\", \\\"Horror\\\",\\n        \\\"Mystery\\\", \\\"Romance\\\", \\\"Science Fiction\\\", \\\"Thriller\\\", \\\"Documentary\\\"\\n    ]).array().max(2), // Array of genres, max of 2 from the defined enum\\n    shortDescription: z.string().max(500) // Short description, max 500 characters\\n})\",\"id\":\"advancedStructuredOutputParser_0-input-exampleJson-string\"}],\"inputAnchors\":[],\"inputs\":{\"autofixParser\":true,\"exampleJson\":\"z.object({\\n    keyword: z.string(),\\n    reasoning: z.string(),\\n    segmentName: z.string(),\\n    segmentId: z.string()\\n})\"},\"outputAnchors\":[{\"id\":\"advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable\",\"name\":\"advancedStructuredOutputParser\",\"label\":\"AdvancedStructuredOutputParser\",\"description\":\"Parse the output of an LLM call into a given structure by providing a Zod schema.\",\"type\":\"AdvancedStructuredOutputParser | BaseLLMOutputParser | Runnable\"}],\"outputs\":{},\"selected\":false},\"width\":300,\"height\":460,\"selected\":false,\"dragging\":false,\"positionAbsolute\":{\"x\":136.45718457804523,\"y\":763.1949920397973}},{\"id\":\"aaiChatOpenAI_0\",\"position\":{\"x\":733.562147335633,\"y\":-158.58616149293283},\"type\":\"customNode\",\"data\":{\"loadMethods\":{},\"label\":\"Answer ChatOpenAI\",\"name\":\"aaiChatOpenAI\",\"version\":1,\"type\":\"AAIChatOpenAI\",\"icon\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/chatmodels/ChatOpenAI/openai.svg\",\"category\":\"Chat Models\",\"description\":\"OpenAI GPT models • Zero configuration required\",\"baseClasses\":[\"AAIChatOpenAI\",\"BaseChatModel\",\"BaseLanguageModel\",\"Runnable\"],\"tags\":[\"AAI\"],\"inputs\":{\"cache\":\"\",\"modelName\":\"gpt-4o-mini\",\"temperature\":0.9,\"streaming\":true,\"maxTokens\":\"\",\"topP\":\"\",\"frequencyPenalty\":\"\",\"presencePenalty\":\"\",\"timeout\":\"\",\"strictToolCalling\":\"\",\"stopSequence\":\"\",\"basepath\":\"\",\"proxyUrl\":\"\",\"baseOptions\":\"\",\"allowImageUploads\":\"\",\"imageResolution\":\"low\",\"reasoningEffort\":\"medium\"},\"filePath\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/chatmodels/ChatOpenAI/AAIChatOpenAI.js\",\"inputAnchors\":[{\"label\":\"Cache\",\"name\":\"cache\",\"type\":\"BaseCache\",\"optional\":true,\"id\":\"aaiChatOpenAI_0-input-cache-BaseCache\",\"display\":true}],\"inputParams\":[{\"label\":\"Model Name\",\"name\":\"modelName\",\"type\":\"asyncOptions\",\"loadMethod\":\"listModels\",\"default\":\"gpt-4o-mini\",\"id\":\"aaiChatOpenAI_0-input-modelName-asyncOptions\",\"display\":true},{\"label\":\"Temperature\",\"name\":\"temperature\",\"type\":\"number\",\"step\":0.1,\"default\":0.9,\"optional\":true,\"id\":\"aaiChatOpenAI_0-input-temperature-number\",\"display\":true},{\"label\":\"Streaming\",\"name\":\"streaming\",\"type\":\"boolean\",\"default\":true,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-streaming-boolean\",\"display\":true},{\"label\":\"Max Tokens\",\"name\":\"maxTokens\",\"type\":\"number\",\"step\":1,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-maxTokens-number\",\"display\":true},{\"label\":\"Top Probability\",\"name\":\"topP\",\"type\":\"number\",\"step\":0.1,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-topP-number\",\"display\":true},{\"label\":\"Frequency Penalty\",\"name\":\"frequencyPenalty\",\"type\":\"number\",\"step\":0.1,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-frequencyPenalty-number\",\"display\":true},{\"label\":\"Presence Penalty\",\"name\":\"presencePenalty\",\"type\":\"number\",\"step\":0.1,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-presencePenalty-number\",\"display\":true},{\"label\":\"Timeout\",\"name\":\"timeout\",\"type\":\"number\",\"step\":1,\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-timeout-number\",\"display\":true},{\"label\":\"Strict Tool Calling\",\"name\":\"strictToolCalling\",\"type\":\"boolean\",\"description\":\"Whether the model supports the `strict` argument when passing in tools. If not specified, the `strict` argument will not be passed to OpenAI.\",\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-strictToolCalling-boolean\",\"display\":true},{\"label\":\"Stop Sequence\",\"name\":\"stopSequence\",\"type\":\"string\",\"rows\":4,\"optional\":true,\"description\":\"List of stop words to use when generating. Use comma to separate multiple stop words.\",\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-stopSequence-string\",\"display\":true},{\"label\":\"BasePath\",\"name\":\"basepath\",\"type\":\"string\",\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-basepath-string\",\"display\":true},{\"label\":\"Proxy Url\",\"name\":\"proxyUrl\",\"type\":\"string\",\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-proxyUrl-string\",\"display\":true},{\"label\":\"BaseOptions\",\"name\":\"baseOptions\",\"type\":\"json\",\"optional\":true,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-baseOptions-json\",\"display\":true},{\"label\":\"Allow Image Uploads\",\"name\":\"allowImageUploads\",\"type\":\"boolean\",\"description\":\"Allow image input. Refer to the <a href=\\\"https://docs.flowiseai.com/using-flowise/uploads#image\\\" target=\\\"_blank\\\">docs</a> for more details.\",\"default\":false,\"optional\":true,\"id\":\"aaiChatOpenAI_0-input-allowImageUploads-boolean\",\"display\":true},{\"label\":\"Image Resolution\",\"description\":\"This parameter controls the resolution in which the model views the image.\",\"name\":\"imageResolution\",\"type\":\"options\",\"options\":[{\"label\":\"Low\",\"name\":\"low\"},{\"label\":\"High\",\"name\":\"high\"},{\"label\":\"Auto\",\"name\":\"auto\"}],\"default\":\"low\",\"optional\":false,\"show\":{\"allowImageUploads\":true},\"id\":\"aaiChatOpenAI_0-input-imageResolution-options\",\"display\":false},{\"label\":\"Reasoning Effort\",\"description\":\"Constrains effort on reasoning for reasoning models. Only applicable for o1 and o3 models.\",\"name\":\"reasoningEffort\",\"type\":\"options\",\"options\":[{\"label\":\"Low\",\"name\":\"low\"},{\"label\":\"Medium\",\"name\":\"medium\"},{\"label\":\"High\",\"name\":\"high\"}],\"default\":\"medium\",\"optional\":false,\"additionalParams\":true,\"id\":\"aaiChatOpenAI_0-input-reasoningEffort-options\",\"display\":true}],\"outputs\":{},\"outputAnchors\":[{\"id\":\"aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable\",\"name\":\"aaiChatOpenAI\",\"label\":\"AAIChatOpenAI\",\"description\":\"OpenAI GPT models • Zero configuration required\",\"type\":\"AAIChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable\"}],\"id\":\"aaiChatOpenAI_0\",\"selected\":false},\"width\":300,\"height\":581,\"positionAbsolute\":{\"x\":733.562147335633,\"y\":-158.58616149293283},\"selected\":false,\"dragging\":false},{\"id\":\"stickyNote_0\",\"position\":{\"x\":-414.8675229027257,\"y\":282.42523225063746},\"type\":\"stickyNote\",\"data\":{\"label\":\"Sticky Note\",\"name\":\"stickyNote\",\"version\":2,\"type\":\"StickyNote\",\"icon\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/utilities/StickyNote/stickyNote.svg\",\"category\":\"Utilities\",\"tags\":[\"Utilities\"],\"description\":\"Add a sticky note\",\"inputs\":{\"note\":\"Add a new Document Store and give it a clear name.\"},\"baseClasses\":[\"StickyNote\"],\"filePath\":\"/app/packages/server/node_modules/flowise-components/dist/nodes/utilities/StickyNote/StickyNote.js\",\"inputAnchors\":[],\"inputParams\":[{\"label\":\"\",\"name\":\"note\",\"type\":\"string\",\"rows\":1,\"placeholder\":\"Type something here\",\"optional\":true,\"id\":\"stickyNote_0-input-note-string\",\"display\":true}],\"outputs\":{},\"outputAnchors\":[{\"id\":\"stickyNote_0-output-stickyNote-StickyNote\",\"name\":\"stickyNote\",\"label\":\"StickyNote\",\"description\":\"Add a sticky note\",\"type\":\"StickyNote\"}],\"id\":\"stickyNote_0\",\"selected\":false},\"width\":300,\"height\":62,\"selected\":false,\"positionAbsolute\":{\"x\":-414.8675229027257,\"y\":282.42523225063746},\"dragging\":false}],\"edges\":[{\"source\":\"chatPromptTemplate_0\",\"sourceHandle\":\"chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable\",\"target\":\"llmChain_0\",\"targetHandle\":\"llmChain_0-input-prompt-BasePromptTemplate\",\"type\":\"buttonedge\",\"id\":\"chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-llmChain_0-llmChain_0-input-prompt-BasePromptTemplate\"},{\"source\":\"documentStore_0\",\"sourceHandle\":\"documentStore_0-output-document-Document|json\",\"target\":\"chatPromptTemplate_0\",\"targetHandle\":\"chatPromptTemplate_0-input-promptValues-json\",\"type\":\"buttonedge\",\"id\":\"documentStore_0-documentStore_0-output-document-Document|json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json\"},{\"source\":\"advancedStructuredOutputParser_0\",\"sourceHandle\":\"advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable\",\"target\":\"llmChain_0\",\"targetHandle\":\"llmChain_0-input-outputParser-BaseLLMOutputParser\",\"type\":\"buttonedge\",\"id\":\"advancedStructuredOutputParser_0-advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable-llmChain_0-llmChain_0-input-outputParser-BaseLLMOutputParser\"},{\"source\":\"aaiChatOpenAI_0\",\"sourceHandle\":\"aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable\",\"target\":\"llmChain_0\",\"targetHandle\":\"llmChain_0-input-model-BaseLanguageModel\",\"type\":\"buttonedge\",\"id\":\"aaiChatOpenAI_0-aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-llmChain_0-llmChain_0-input-model-BaseLanguageModel\"}],\"viewport\":{\"x\":327.489633233077,\"y\":123.12766137118251,\"zoom\":0.5408039654920844}}",
+  "isPublic": false,
+  "chatbotConfig": "{\"chatFeedback\":{\"status\":true},\"displayMode\":\"embeddedForm\",\"embeddedUrl\":\"https://n8n-3la0.onrender.com/form/cca-avoid\"}",
+  "visibility": [
+    "Private"
+  ],
+  "answersConfig": null,
+  "apiConfig": null,
+  "analytic": null,
+  "speechToText": null,
+  "followUpPrompts": null,
+  "category": "csv",
+  "type": "CHATFLOW",
+  "browserExtConfig": null,
+  "parentChatflowId": null,
+  "userId": "5c4a7d5b-b24f-488c-837b-015d42c2fbf1",
+  "organizationId": "9249f747-f8cf-44aa-acc5-94c654902262",
+  "templateId": null,
+  "currentVersion": 1,
+  "s3Location": null,
+  "nodes": [
+    {
+      "id": "llmChain_0",
+      "position": {
+        "x": 1072.7390744962727,
+        "y": 539.5523789450416
+      },
+      "type": "customNode",
+      "data": {
+        "id": "llmChain_0",
+        "label": "LLM Chain",
+        "version": 3,
+        "name": "llmChain",
+        "type": "LLMChain",
+        "baseClasses": [
+          "LLMChain",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Chains",
+        "description": "Chain to run queries against LLMs",
+        "inputParams": [
+          {
+            "label": "Chain Name",
+            "name": "chainName",
+            "type": "string",
+            "placeholder": "Name Your Chain",
+            "optional": true,
+            "id": "llmChain_0-input-chainName-string"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Language Model",
+            "name": "model",
+            "type": "BaseLanguageModel",
+            "id": "llmChain_0-input-model-BaseLanguageModel"
+          },
+          {
+            "label": "Prompt",
+            "name": "prompt",
+            "type": "BasePromptTemplate",
+            "id": "llmChain_0-input-prompt-BasePromptTemplate"
+          },
+          {
+            "label": "Output Parser",
+            "name": "outputParser",
+            "type": "BaseLLMOutputParser",
+            "optional": true,
+            "id": "llmChain_0-input-outputParser-BaseLLMOutputParser"
+          },
+          {
+            "label": "Input Moderation",
+            "description": "Detect text that could generate harmful output and prevent it from being sent to the language model",
+            "name": "inputModeration",
+            "type": "Moderation",
+            "optional": true,
+            "list": true,
+            "id": "llmChain_0-input-inputModeration-Moderation"
+          }
+        ],
+        "inputs": {
+          "model": "{{aaiChatOpenAI_0.data.instance}}",
+          "prompt": "{{chatPromptTemplate_0.data.instance}}",
+          "outputParser": "{{advancedStructuredOutputParser_0.data.instance}}",
+          "inputModeration": "",
+          "chainName": ""
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "",
+            "options": [
+              {
+                "id": "llmChain_0-output-llmChain-LLMChain|BaseChain|Runnable",
+                "name": "llmChain",
+                "label": "LLM Chain",
+                "description": "",
+                "type": "LLMChain | BaseChain | Runnable"
+              },
+              {
+                "id": "llmChain_0-output-outputPrediction-string|json",
+                "name": "outputPrediction",
+                "label": "Output Prediction",
+                "description": "",
+                "type": "string | json"
+              }
+            ],
+            "default": "llmChain"
+          }
+        ],
+        "outputs": {
+          "output": "llmChain"
+        },
+        "selected": false
+      },
+      "width": 300,
+      "height": 514,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1072.7390744962727,
+        "y": 539.5523789450416
+      },
+      "dragging": false
+    },
+    {
+      "id": "chatPromptTemplate_0",
+      "position": {
+        "x": 345.933938624775,
+        "y": 25.88296528210509
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chatPromptTemplate_0",
+        "label": "Chat Prompt Template",
+        "version": 2,
+        "name": "chatPromptTemplate",
+        "type": "ChatPromptTemplate",
+        "baseClasses": [
+          "ChatPromptTemplate",
+          "BaseChatPromptTemplate",
+          "BasePromptTemplate",
+          "Runnable"
+        ],
+        "category": "Prompts",
+        "description": "Schema to represent a chat prompt",
+        "inputParams": [
+          {
+            "label": "System Message",
+            "name": "systemMessagePrompt",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "You are a helpful assistant that translates {input_language} to {output_language}.",
+            "id": "chatPromptTemplate_0-input-systemMessagePrompt-string"
+          },
+          {
+            "label": "Human Message",
+            "name": "humanMessagePrompt",
+            "description": "This prompt will be added at the end of the messages as human message",
+            "type": "string",
+            "rows": 4,
+            "placeholder": "{text}",
+            "id": "chatPromptTemplate_0-input-humanMessagePrompt-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chatPromptTemplate_0-input-promptValues-json"
+          },
+          {
+            "label": "Messages History",
+            "name": "messageHistory",
+            "description": "Add messages after System Message. This is useful when you want to provide few shot examples",
+            "type": "tabs",
+            "tabIdentifier": "selectedMessagesTab",
+            "additionalParams": true,
+            "default": "messageHistoryCode",
+            "tabs": [
+              {
+                "label": "Add Messages (Code)",
+                "name": "messageHistoryCode",
+                "type": "code",
+                "hideCodeExecute": true,
+                "codeExample": "const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');\n\nreturn [\n    new HumanMessage(\"What is 333382 🦜 1932?\"),\n    new AIMessage({\n        content: \"\",\n        tool_calls: [\n        {\n            id: \"12345\",\n            name: \"calulator\",\n            args: {\n                number1: 333382,\n                number2: 1932,\n                operation: \"divide\",\n            },\n        },\n        ],\n    }),\n    new ToolMessage({\n        tool_call_id: \"12345\",\n        content: \"The answer is 172.558.\",\n    }),\n    new AIMessage(\"The answer is 172.558.\"),\n]",
+                "optional": true,
+                "additionalParams": true
+              }
+            ],
+            "id": "chatPromptTemplate_0-input-messageHistory-tabs"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "systemMessagePrompt": "#### Objective\nYou map keywords to their best-matched IAS Contextual Control Avoidance Segments (CCA), ensuring each connection is logical, relevant, and comprehensive. Your goal is to align each keyword with the most appropriate segment based on direct mentions and broader thematic connections within the segment descriptions.  You will return the most appropriate segment name related to teh keyword, the id, and your reasoning in a bullet point list. The user will give you a keyword you will analyze this list of available segments\n\n<cca_segments>\n{cca_segments}\n</cca_segments>\n\n---\n\n#### Steps for Mapping Keywords to Segments\n\n1. **Understanding the Keyword**\n\n    - **Definition and Context**\n        - **Trigger:** User submits a keyword.\n        - **Instruction:** Define the keyword and understand its primary meanings and uses. Consider various contexts (medical, legal, technological, social, political).\n        - **Example:** For the keyword \"virus,\" consider contexts like medical (diseases), technological (computer viruses), etc.\n\n    - **Related Concepts**\n        - **Trigger:** Keyword is defined.\n        - **Instruction:** Identify related concepts, scenarios, and synonyms linked to the keyword. This broadens the scope to catch related segments.\n        - **Example:** For \"virus,\" related concepts include \"infection,\" \"malware,\" \"epidemic,\" etc.\n\n---\n\n2. **Analyzing Segment Descriptions**\n\n    - **Direct Match**\n        - **Trigger:** Keyword context is understood.\n        - **Instruction:** Look for segments where the keyword or its synonyms are explicitly mentioned.\n        - **Example:** If the keyword is \"cybersecurity,\" find segments mentioning \"cyber attacks\" or \"digital security.\"\n\n    - **Implications and Thematic Connections**\n        - **Trigger:** No direct match found.\n        - **Instruction:** Analyze descriptions for implications or related themes. Broaden the search if necessary.\n        - **Example:** For \"nuclear weapons,\" consider segments on military conflicts or defense issues.\n\n    - **Broad vs. Specific Matches**\n        - **Trigger:** Potential matches identified.\n        - **Instruction:** Prioritize specificity when it offers a clear connection to the keyword but consider broader segments if the keyword spans multiple issues.\n        - **Example:** Prefer a specific segment on \"Cyber Security\" over a broad \"Technology\" segment if it directly covers the keyword.\n\n---\n\n3. **Evaluating Relevance and Exclusion Criteria**\n\n    - **Relevance of the Segment**\n        - **Trigger:** Potential matches identified.\n        - **Instruction:** Judge each segment’s relevance based on how closely it aligns with the keyword’s meaning and related concepts.\n        - **Example:** Ensure a segment on \"Healthcare\" is relevant for the keyword \"pandemic.\"\n\n    - **Segment’s Purpose**\n        - **Trigger:** Relevance evaluated.\n        - **Instruction:** Understand each segment’s purpose, especially those designed to exclude or highlight specific content.\n        - **Example:** For \"terrorism,\" ensure the segment excludes violent content if applicable.\n\n---\n\n4. **Cross-Checking Against Multiple Segments**\n\n    - **Comparing Segments**\n        - **Trigger:** Multiple segments could match.\n        - **Instruction:** Compare segments to decide the best fit based on content coverage depth and direct connection to the keyword.\n        - **Example:** Choose a segment that covers \"data breaches\" comprehensively over one that only tangentially mentions them.\n\n    - **Prioritization**\n        - **Trigger:** Segments compared.\n        - **Instruction:** Prefer segments offering comprehensive keyword coverage over those with weak connections.\n        - **Example:** Prioritize a detailed \"Financial Fraud\" segment for the keyword \"scam\" over a general \"Crime\" segment.\n\n---\n\n5. **Logical Deductions and Inferences**\n\n    - **Making Inferences**\n        - **Trigger:** Segment descriptions lack detail.\n        - **Instruction:** Make logical inferences about what each segment covers based on the descriptions.\n        - **Example:** Infer that a segment on \"Online Safety\" includes topics like \"phishing\" even if not explicitly mentioned.\n\n---\n\n6. **Final Selection**\n\n    - **Best Fit**\n        - **Trigger:** Analysis complete.\n        - **Instruction:** Select the segment that most comprehensively and directly relates to the keyword.\n        - **Example:** Choose \"Environmental Disasters\" for the keyword \"earthquake.\"\n\n    - **Documentation**\n        - **Trigger:** Best fit selected.\n        - **Instruction:** Log the keyword alongside the matching segment’s name and ID in an organized list.\n        - **Example:** Document \"cybersecurity\" with the segment \"Digital Security\" and its ID.\n\n---\n\n#### Tips\n\n- **Granular Steps:** Break down each step into smaller actions where possible.\n- **Attention to Detail:** Be thorough and double-check your work.\n\n---\n\nBy following these detailed instructions, you ensure that each keyword is mapped to its best-matched segment effectively and accurately.\n\n\n\nyour response should be in the following format\n{\n\t\"keyword\": \"\",\n    \"reasoning\" :\"\",\n    \"segmentName\":\"\",\n    \"segmentId\": \"\"\n}",
+          "humanMessagePrompt": "{keyword}",
+          "promptValues": "{\"cca_segments\":\"{{documentStore_0.data.instance}}\",\"keyword\":\"{{question}}\"}",
+          "messageHistory": "messageHistoryCode",
+          "selectedMessagesTab_chatPromptTemplate_0": "messageHistoryCode"
+        },
+        "outputAnchors": [
+          {
+            "id": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+            "name": "chatPromptTemplate",
+            "label": "ChatPromptTemplate",
+            "description": "Schema to represent a chat prompt",
+            "type": "ChatPromptTemplate | BaseChatPromptTemplate | BasePromptTemplate | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 748,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 345.933938624775,
+        "y": 25.88296528210509
+      },
+      "dragging": false
+    },
+    {
+      "id": "documentStore_0",
+      "position": {
+        "x": 11.583080941506637,
+        "y": 282.3433858746503
+      },
+      "type": "customNode",
+      "data": {
+        "id": "documentStore_0",
+        "label": "Document Store",
+        "version": 1,
+        "name": "documentStore",
+        "type": "Document",
+        "baseClasses": [
+          "Document"
+        ],
+        "category": "Document Loaders",
+        "description": "Load data from pre-configured document stores",
+        "inputParams": [
+          {
+            "label": "Select Store",
+            "name": "selectedStore",
+            "type": "asyncOptions",
+            "loadMethod": "listStores",
+            "id": "documentStore_0-input-selectedStore-asyncOptions",
+            "display": true
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "selectedStore": "cc92f7c4-03c3-43e3-9730-95451fd1ce00"
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "description": "Array of document objects containing metadata and pageContent",
+            "options": [
+              {
+                "id": "documentStore_0-output-document-Document|json",
+                "name": "document",
+                "label": "Document",
+                "description": "Array of document objects containing metadata and pageContent",
+                "type": "Document | json"
+              },
+              {
+                "id": "documentStore_0-output-text-string|json",
+                "name": "text",
+                "label": "Text",
+                "description": "Concatenated string from pageContent of documents",
+                "type": "string | json"
+              }
+            ],
+            "default": "document"
+          }
+        ],
+        "outputs": {
+          "output": "text"
+        },
+        "selected": false
+      },
+      "width": 300,
+      "height": 318,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 11.583080941506637,
+        "y": 282.3433858746503
+      },
+      "dragging": false
+    },
+    {
+      "id": "structuredOutputParser_0",
+      "position": {
+        "x": 516.3141239144453,
+        "y": 824.2503681026624
+      },
+      "type": "customNode",
+      "data": {
+        "id": "structuredOutputParser_0",
+        "label": "Structured Output Parser",
+        "version": 1,
+        "name": "structuredOutputParser",
+        "type": "StructuredOutputParser",
+        "baseClasses": [
+          "StructuredOutputParser",
+          "BaseLLMOutputParser",
+          "Runnable"
+        ],
+        "category": "Output Parsers",
+        "description": "Parse the output of an LLM call into a given (JSON) structure.",
+        "inputParams": [
+          {
+            "label": "Autofix",
+            "name": "autofixParser",
+            "type": "boolean",
+            "optional": true,
+            "description": "In the event that the first call fails, will make another call to the model to fix any errors.",
+            "id": "structuredOutputParser_0-input-autofixParser-boolean"
+          },
+          {
+            "label": "JSON Structure",
+            "name": "jsonStructure",
+            "type": "datagrid",
+            "description": "JSON structure for LLM to return",
+            "datagrid": [
+              {
+                "field": "property",
+                "headerName": "Property",
+                "editable": true
+              },
+              {
+                "field": "type",
+                "headerName": "Type",
+                "type": "singleSelect",
+                "valueOptions": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "editable": true
+              },
+              {
+                "field": "description",
+                "headerName": "Description",
+                "editable": true,
+                "flex": 1
+              }
+            ],
+            "default": [
+              {
+                "property": "answer",
+                "type": "string",
+                "description": "answer to the user's question"
+              },
+              {
+                "property": "source",
+                "type": "string",
+                "description": "sources used to answer the question, should be websites"
+              }
+            ],
+            "additionalParams": true,
+            "id": "structuredOutputParser_0-input-jsonStructure-datagrid"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "autofixParser": "",
+          "jsonStructure": "[{\"property\":\"keyword\",\"type\":\"string\",\"description\":\"The keyword the user input\",\"id\":0},{\"property\":\"reasoning\",\"type\":\"string\",\"description\":\"The reason the keyword matches the segment\",\"id\":1},{\"property\":\"segmentName\",\"type\":\"string\",\"description\":\"The name of the segment\",\"actions\":\"\",\"id\":2},{\"property\":\"segmentId\",\"type\":\"string\",\"description\":\"The ID of the segment\",\"actions\":\"\",\"id\":3}]"
+        },
+        "outputAnchors": [
+          {
+            "id": "structuredOutputParser_0-output-structuredOutputParser-StructuredOutputParser|BaseLLMOutputParser|Runnable",
+            "name": "structuredOutputParser",
+            "label": "StructuredOutputParser",
+            "description": "Parse the output of an LLM call into a given (JSON) structure.",
+            "type": "StructuredOutputParser | BaseLLMOutputParser | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 335,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 516.3141239144453,
+        "y": 824.2503681026624
+      },
+      "dragging": false
+    },
+    {
+      "id": "advancedStructuredOutputParser_0",
+      "position": {
+        "x": 136.45718457804523,
+        "y": 763.1949920397973
+      },
+      "type": "customNode",
+      "data": {
+        "id": "advancedStructuredOutputParser_0",
+        "label": "Advanced Structured Output Parser",
+        "version": 1,
+        "name": "advancedStructuredOutputParser",
+        "type": "AdvancedStructuredOutputParser",
+        "baseClasses": [
+          "AdvancedStructuredOutputParser",
+          "BaseLLMOutputParser",
+          "Runnable"
+        ],
+        "category": "Output Parsers",
+        "description": "Parse the output of an LLM call into a given structure by providing a Zod schema.",
+        "inputParams": [
+          {
+            "label": "Autofix",
+            "name": "autofixParser",
+            "type": "boolean",
+            "optional": true,
+            "description": "In the event that the first call fails, will make another call to the model to fix any errors.",
+            "id": "advancedStructuredOutputParser_0-input-autofixParser-boolean"
+          },
+          {
+            "label": "Example JSON",
+            "name": "exampleJson",
+            "type": "string",
+            "description": "Zod schema for the output of the model",
+            "rows": 10,
+            "default": "z.object({\n    title: z.string(), // Title of the movie as a string\n    yearOfRelease: z.number().int(), // Release year as an integer number,\n    genres: z.enum([\n        \"Action\", \"Comedy\", \"Drama\", \"Fantasy\", \"Horror\",\n        \"Mystery\", \"Romance\", \"Science Fiction\", \"Thriller\", \"Documentary\"\n    ]).array().max(2), // Array of genres, max of 2 from the defined enum\n    shortDescription: z.string().max(500) // Short description, max 500 characters\n})",
+            "id": "advancedStructuredOutputParser_0-input-exampleJson-string"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "autofixParser": true,
+          "exampleJson": "z.object({\n    keyword: z.string(),\n    reasoning: z.string(),\n    segmentName: z.string(),\n    segmentId: z.string()\n})"
+        },
+        "outputAnchors": [
+          {
+            "id": "advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable",
+            "name": "advancedStructuredOutputParser",
+            "label": "AdvancedStructuredOutputParser",
+            "description": "Parse the output of an LLM call into a given structure by providing a Zod schema.",
+            "type": "AdvancedStructuredOutputParser | BaseLLMOutputParser | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 460,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 136.45718457804523,
+        "y": 763.1949920397973
+      }
+    },
+    {
+      "id": "aaiChatOpenAI_0",
+      "position": {
+        "x": 733.562147335633,
+        "y": -158.58616149293283
+      },
+      "type": "customNode",
+      "data": {
+        "id": "aaiChatOpenAI_0",
+        "label": "Answer ChatOpenAI",
+        "version": 1,
+        "name": "aaiChatOpenAI",
+        "type": "AAIChatOpenAI",
+        "baseClasses": [
+          "AAIChatOpenAI",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "tags": [
+          "AAI"
+        ],
+        "category": "Chat Models",
+        "description": "OpenAI GPT models • Zero configuration required",
+        "inputParams": [
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "asyncOptions",
+            "loadMethod": "listModels",
+            "default": "gpt-4o-mini",
+            "id": "aaiChatOpenAI_0-input-modelName-asyncOptions",
+            "display": true
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "step": 0.1,
+            "default": 0.9,
+            "optional": true,
+            "id": "aaiChatOpenAI_0-input-temperature-number",
+            "display": true
+          },
+          {
+            "label": "Streaming",
+            "name": "streaming",
+            "type": "boolean",
+            "default": true,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-streaming-boolean",
+            "display": true
+          },
+          {
+            "label": "Max Tokens",
+            "name": "maxTokens",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-maxTokens-number",
+            "display": true
+          },
+          {
+            "label": "Top Probability",
+            "name": "topP",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-topP-number",
+            "display": true
+          },
+          {
+            "label": "Frequency Penalty",
+            "name": "frequencyPenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-frequencyPenalty-number",
+            "display": true
+          },
+          {
+            "label": "Presence Penalty",
+            "name": "presencePenalty",
+            "type": "number",
+            "step": 0.1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-presencePenalty-number",
+            "display": true
+          },
+          {
+            "label": "Timeout",
+            "name": "timeout",
+            "type": "number",
+            "step": 1,
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-timeout-number",
+            "display": true
+          },
+          {
+            "label": "Strict Tool Calling",
+            "name": "strictToolCalling",
+            "type": "boolean",
+            "description": "Whether the model supports the `strict` argument when passing in tools. If not specified, the `strict` argument will not be passed to OpenAI.",
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-strictToolCalling-boolean",
+            "display": true
+          },
+          {
+            "label": "Stop Sequence",
+            "name": "stopSequence",
+            "type": "string",
+            "rows": 4,
+            "optional": true,
+            "description": "List of stop words to use when generating. Use comma to separate multiple stop words.",
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-stopSequence-string",
+            "display": true
+          },
+          {
+            "label": "BasePath",
+            "name": "basepath",
+            "type": "string",
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-basepath-string",
+            "display": true
+          },
+          {
+            "label": "Proxy Url",
+            "name": "proxyUrl",
+            "type": "string",
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-proxyUrl-string",
+            "display": true
+          },
+          {
+            "label": "BaseOptions",
+            "name": "baseOptions",
+            "type": "json",
+            "optional": true,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-baseOptions-json",
+            "display": true
+          },
+          {
+            "label": "Allow Image Uploads",
+            "name": "allowImageUploads",
+            "type": "boolean",
+            "description": "Allow image input. Refer to the <a href=\"https://docs.flowiseai.com/using-flowise/uploads#image\" target=\"_blank\">docs</a> for more details.",
+            "default": false,
+            "optional": true,
+            "id": "aaiChatOpenAI_0-input-allowImageUploads-boolean",
+            "display": true
+          },
+          {
+            "label": "Image Resolution",
+            "description": "This parameter controls the resolution in which the model views the image.",
+            "name": "imageResolution",
+            "type": "options",
+            "options": [
+              {
+                "label": "Low",
+                "name": "low"
+              },
+              {
+                "label": "High",
+                "name": "high"
+              },
+              {
+                "label": "Auto",
+                "name": "auto"
+              }
+            ],
+            "default": "low",
+            "optional": false,
+            "show": {
+              "allowImageUploads": true
+            },
+            "id": "aaiChatOpenAI_0-input-imageResolution-options",
+            "display": false
+          },
+          {
+            "label": "Reasoning Effort",
+            "description": "Constrains effort on reasoning for reasoning models. Only applicable for o1 and o3 models.",
+            "name": "reasoningEffort",
+            "type": "options",
+            "options": [
+              {
+                "label": "Low",
+                "name": "low"
+              },
+              {
+                "label": "Medium",
+                "name": "medium"
+              },
+              {
+                "label": "High",
+                "name": "high"
+              }
+            ],
+            "default": "medium",
+            "optional": false,
+            "additionalParams": true,
+            "id": "aaiChatOpenAI_0-input-reasoningEffort-options",
+            "display": true
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Cache",
+            "name": "cache",
+            "type": "BaseCache",
+            "optional": true,
+            "id": "aaiChatOpenAI_0-input-cache-BaseCache",
+            "display": true
+          }
+        ],
+        "inputs": {
+          "cache": "",
+          "modelName": "gpt-4o-mini",
+          "temperature": 0.9,
+          "streaming": true,
+          "maxTokens": "",
+          "topP": "",
+          "frequencyPenalty": "",
+          "presencePenalty": "",
+          "timeout": "",
+          "strictToolCalling": "",
+          "stopSequence": "",
+          "basepath": "",
+          "proxyUrl": "",
+          "baseOptions": "",
+          "allowImageUploads": "",
+          "imageResolution": "low",
+          "reasoningEffort": "medium"
+        },
+        "outputAnchors": [
+          {
+            "id": "aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "aaiChatOpenAI",
+            "label": "AAIChatOpenAI",
+            "description": "OpenAI GPT models • Zero configuration required",
+            "type": "AAIChatOpenAI | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 581,
+      "positionAbsolute": {
+        "x": 733.562147335633,
+        "y": -158.58616149293283
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "stickyNote_0",
+      "position": {
+        "x": -414.8675229027257,
+        "y": 282.42523225063746
+      },
+      "type": "stickyNote",
+      "data": {
+        "id": "stickyNote_0",
+        "label": "Sticky Note",
+        "version": 2,
+        "name": "stickyNote",
+        "type": "StickyNote",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "tags": [
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Add a sticky note",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNote_0-input-note-string",
+            "display": true
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "Add a new Document Store and give it a clear name."
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNote_0-output-stickyNote-StickyNote",
+            "name": "stickyNote",
+            "label": "StickyNote",
+            "description": "Add a sticky note",
+            "type": "StickyNote"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 300,
+      "height": 62,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -414.8675229027257,
+        "y": 282.42523225063746
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "chatPromptTemplate_0",
+      "sourceHandle": "chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable",
+      "target": "llmChain_0",
+      "targetHandle": "llmChain_0-input-prompt-BasePromptTemplate",
+      "type": "buttonedge",
+      "id": "chatPromptTemplate_0-chatPromptTemplate_0-output-chatPromptTemplate-ChatPromptTemplate|BaseChatPromptTemplate|BasePromptTemplate|Runnable-llmChain_0-llmChain_0-input-prompt-BasePromptTemplate"
+    },
+    {
+      "source": "documentStore_0",
+      "sourceHandle": "documentStore_0-output-document-Document|json",
+      "target": "chatPromptTemplate_0",
+      "targetHandle": "chatPromptTemplate_0-input-promptValues-json",
+      "type": "buttonedge",
+      "id": "documentStore_0-documentStore_0-output-document-Document|json-chatPromptTemplate_0-chatPromptTemplate_0-input-promptValues-json"
+    },
+    {
+      "source": "advancedStructuredOutputParser_0",
+      "sourceHandle": "advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable",
+      "target": "llmChain_0",
+      "targetHandle": "llmChain_0-input-outputParser-BaseLLMOutputParser",
+      "type": "buttonedge",
+      "id": "advancedStructuredOutputParser_0-advancedStructuredOutputParser_0-output-advancedStructuredOutputParser-AdvancedStructuredOutputParser|BaseLLMOutputParser|Runnable-llmChain_0-llmChain_0-input-outputParser-BaseLLMOutputParser"
+    },
+    {
+      "source": "aaiChatOpenAI_0",
+      "sourceHandle": "aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "llmChain_0",
+      "targetHandle": "llmChain_0-input-model-BaseLanguageModel",
+      "type": "buttonedge",
+      "id": "aaiChatOpenAI_0-aaiChatOpenAI_0-output-aaiChatOpenAI-AAIChatOpenAI|BaseChatModel|BaseLanguageModel|Runnable-llmChain_0-llmChain_0-input-model-BaseLanguageModel"
+    }
+  ]
+}
