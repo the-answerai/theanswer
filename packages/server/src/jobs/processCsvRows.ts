@@ -45,10 +45,14 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
         throw new Error(`User ${csvParseRun.userId} not found`)
     }
 
+    // Build question from row data and optional run context
+    const additionalContext = (csvParseRun.configuration as any)?.context || ''
+    const combinedQuestion = `### ${JSON.stringify(row.rowData)} ### ${additionalContext}`.trim()
+
     const response = await executeFlow({
         user: user,
         incomingInput: {
-            question: JSON.stringify(row.rowData),
+            question: combinedQuestion,
             user: user
         },
         chatflow,
