@@ -30,6 +30,7 @@ import { User } from 'types'
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
 import FilePresentOutlined from '@mui/icons-material/FilePresentOutlined'
+import CsvNoticeCard from './CsvNoticeCard'
 
 async function createCsvParseRun({
     name,
@@ -111,7 +112,12 @@ interface IFormInput {
     includeOriginalColumns: boolean
 }
 
-const ProcessCsv = ({ chatflows, user, onNavigateToHistory }: { chatflows: any[]; user: User; onNavigateToHistory?: () => void }) => {
+const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }: { 
+    chatflows: any[]; 
+    user: User; 
+    onNavigateToHistory?: () => void;
+    onRefreshChatflows?: () => Promise<void>;
+}) => {
     const theme = useTheme()
     const [headers, setHeaders] = useState<string[]>([])
     const [rows, setRows] = useState<string[][]>([])
@@ -421,6 +427,11 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory }: { chatflows: any[]
                                         )}
                                     />
                                 </FormControl>
+
+                                {/* Show CSV notice card when no CSV chatflows are available */}
+                                {chatflows.length === 0 && (
+                                    <CsvNoticeCard onRefresh={onRefreshChatflows} />
+                                )}
 
                                 <FormControl required error={!!errors.rowsRequested}>
                                     <Controller
