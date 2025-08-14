@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
@@ -38,13 +38,37 @@ const CsvTransformer = () => {
         router.push('/sidekick-studio/csv-transformer?tab=history')
     }
 
-    useEffect(() => {
-        const fetchChatflows = async () => {
+    const fetchChatflows = useCallback(async () => {
+        try {
             const { data } = await chatflowsApi.getAllChatflows()
             setChatflows((data ?? []).filter((chatflow: any) => chatflow.category?.toLowerCase()?.split(';')?.includes('csv')))
+        } catch (error) {
+            console.error('Failed to fetch chatflows:', error)
+            setChatflows([])
         }
-        fetchChatflows()
     }, [])
+
+    useEffect(() => {
+        fetchChatflows()
+    }, [fetchChatflows])
+
+    // Auto-refresh when user returns from marketplace (only if no CSV chatflows currently)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            // Only refresh if document becomes visible and we currently have no CSV chatflows
+            if (!document.hidden && chatflows.length === 0) {
+                console.log('Document became visible with no CSV chatflows, refreshing...')
+                fetchChatflows()
+            }
+        }
+
+        // Listen for visibility changes (user switching tabs/windows)
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [chatflows.length, fetchChatflows])
 
     if (isLoading) {
         return (
@@ -79,7 +103,7 @@ const CsvTransformer = () => {
                     </Tabs>
                 </Box>
                 <TabPanel currentValue={tab} value='process'>
-                    <ProcessCsv chatflows={chatflows} user={user} onNavigateToHistory={navigateToHistory} />
+                    <ProcessCsv chatflows={chatflows} user={user} onNavigateToHistory={navigateToHistory} onRefreshChatflows={fetchChatflows} />
                 </TabPanel>
                 <TabPanel currentValue={tab} value='history'>
                     <ProcessingHistory user={user} />
