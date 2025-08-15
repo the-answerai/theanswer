@@ -103,7 +103,7 @@
         "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
         "@testing-library/jest-dom": "^5.17.0",
         "@testing-library/react": "^14.3.1",
-        "@testing-library/user-event": "^12.8.3",
+        "@testing-library/user-event": "^14.6.1",
         "@vitejs/plugin-react": "^4.7.0",
         "pretty-quick": "^3.3.1",
         "rimraf": "^5.0.10",
