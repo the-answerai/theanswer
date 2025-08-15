@@ -50,7 +50,7 @@
         "react-dom": "18.2.0",
         "react-hook-form": "^7.62.0",
         "serpapi": "^1.1.1",
-        "sharp": "^0.33.5",
+        "sharp": "^0.34.3",
         "stripe": "^17.7.0",
         "typeorm": "^0.3.25",
         "ui": "workspace:*",
