@@ -28,7 +28,7 @@
         "typescript": "~5.5.4"
     },
     "dependencies": {
-        "@auth0/auth0-react": "2.3.0",
+        "@auth0/auth0-react": "2.4.0",
         "@auth0/nextjs-auth0": "3.5.0",
         "@emotion/cache": "^11.14.0",
         "@emotion/react": "^11.14.0",
