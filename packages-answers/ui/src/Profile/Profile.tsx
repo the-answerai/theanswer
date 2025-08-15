@@ -149,7 +149,7 @@ const CredentialCreationModal = ({
             setComponentCredential(null)
 
             // Show success message (you could pass this up to parent)
-            console.log('Credential created successfully!')
+            // console.log('Credential created successfully!')
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -349,7 +349,6 @@ interface EnabledIntegration {
 const Profile: React.FC<ProfileProps> = ({ userData }) => {
     const user = userData
     const [integrations, setIntegrations] = useState<EnabledIntegration[]>([])
-    const [integrationsLoading, setIntegrationsLoading] = useState(true)
     const [integrationsError, setIntegrationsError] = useState<string | null>(null)
     const [showCredentialModal, setShowCredentialModal] = useState(false)
     const [selectedIntegration, setSelectedIntegration] = useState<EnabledIntegration | null>(null)
@@ -358,28 +357,24 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
 
     // API hooks for fetching credentials
     const getAllCredentialsApi = useApi(credentialsApi.getAllCredentials)
-
-    // Fetch enabled integrations from organization
-    const fetchOrgIntegrations = async () => {
-        try {
-            setIntegrationsLoading(true)
-            const response = await fetch('/api/admin/org-credentials')
-            if (!response.ok) {
-                throw new Error('Failed to fetch organization integrations')
-            }
-            const data = await response.json()
-            setIntegrations(data.integrations?.filter((i: EnabledIntegration) => i.enabled) || [])
-        } catch (err: any) {
-            setIntegrationsError(err.message)
-        } finally {
-            setIntegrationsLoading(false)
-        }
-    }
+    const getOrgCredentialsApi = useApi(credentialsApi.getOrgCredentials)
 
     useEffect(() => {
-        fetchOrgIntegrations()
+        getOrgCredentialsApi.request()
         getAllCredentialsApi.request()
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (getOrgCredentialsApi.data) {
+            setIntegrations(getOrgCredentialsApi.data.integrations?.filter((i: EnabledIntegration) => i.enabled) || [])
+        }
+    }, [getOrgCredentialsApi.data])
+
+    useEffect(() => {
+        if (getOrgCredentialsApi.error) {
+            setIntegrationsError(getOrgCredentialsApi.error.message || 'Failed to fetch organization integrations')
+        }
+    }, [getOrgCredentialsApi.error])
 
     useEffect(() => {
         if (getAllCredentialsApi.data) {
@@ -389,7 +384,7 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
         }
     }, [getAllCredentialsApi.data])
 
-    const handleAddCredential = (credentialName: string) => {
+    const _handleAddCredential = (credentialName: string) => {
         const integration = integrations.find((i) => i.credentialName === credentialName)
         if (integration) {
             setSelectedIntegration(integration)
@@ -684,7 +679,7 @@ const Profile: React.FC<ProfileProps> = ({ userData }) => {
                                     </Alert>
                                 )}
 
-                                {integrationsLoading ? (
+                                {getOrgCredentialsApi.loading ? (
                                     <Box display='flex' justifyContent='center' alignItems='center' py={4}>
                                         <CircularProgress />
                                     </Box>

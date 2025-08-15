@@ -117,20 +117,8 @@ const Credentials = () => {
         return data.credentialName.toLowerCase().indexOf(search.toLowerCase()) > -1
     }
 
-    // Fetch organization credentials settings
-    const fetchOrgCredentialsSettings = async () => {
-        try {
-            const response = await fetch('/api/admin/org-credentials')
-            if (response.ok) {
-                const data = await response.json()
-                setOrgCredentialsSettings(data.credentials || [])
-            }
-        } catch (error) {
-            console.error('Failed to fetch org credentials settings:', error)
-            // Fallback to empty array if fetch fails
-            setOrgCredentialsSettings([])
-        }
-    }
+    // Use organization credentials API
+    const getOrgCredentialsApi = useApi(credentialsApi.getOrgCredentials)
 
     // Filter component credentials based on org settings
     const getFilteredComponentsCredentials = () => {
@@ -285,9 +273,21 @@ const Credentials = () => {
     useEffect(() => {
         getAllCredentialsApi.request()
         getAllComponentsCredentialsApi.request()
-        fetchOrgCredentialsSettings()
+        getOrgCredentialsApi.request()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    useEffect(() => {
+        if (getOrgCredentialsApi.data) {
+            // Transform the integrations data to match the expected format
+            const orgSettings =
+                getOrgCredentialsApi.data.integrations?.map((integration) => ({
+                    name: integration.credentialName,
+                    enabled: integration.enabled
+                })) || []
+            setOrgCredentialsSettings(orgSettings)
+        }
+    }, [getOrgCredentialsApi.data])
 
     useEffect(() => {
         setLoading(getAllCredentialsApi.loading)
