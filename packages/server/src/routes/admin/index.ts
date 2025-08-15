@@ -14,10 +14,10 @@ router.put('/chatflows/bulk-update', enforceAbility('ChatFlow'), chatflowsContro
 router.post('/chatflows/:id/rollback/:version', enforceAbility('ChatFlow'), chatflowsController.rollbackChatflowToVersion)
 
 // ORGANIZATIONS
-// READ - temporarily without enforceAbility for debugging
-router.get('/organizations/:id', organizationsController.getOrganizationById)
+// READ
+router.get('/organizations/credentials', enforceAbility('Organization'), organizationsController.getOrganizationCredentials)
 
-// UPDATE - temporarily without enforceAbility for debugging
-router.put('/organizations/:id/enabled-integrations', organizationsController.updateOrganizationEnabledIntegrations)
+// UPDATE
+router.put('/organizations/credentials', enforceAbility('Organization'), organizationsController.updateOrganizationCredentials)
 
 export default router

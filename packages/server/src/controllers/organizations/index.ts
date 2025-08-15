@@ -58,7 +58,58 @@ const updateOrganizationEnabledIntegrations = async (req: Request, res: Response
     }
 }
 
+const getOrganizationCredentials = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        const apiResponse = await organizationService.getOrganizationCredentials(organizationId, req.user)
+        return res.json(apiResponse)
+    } catch (error) {
+        console.error('=== DEBUG: Organization credentials get controller error ===', error)
+        next(error)
+    }
+}
+
+const updateOrganizationCredentials = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.body.integrations) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'Integrations data required')
+        }
+
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        // Check if user is admin
+        const isAdmin = req.user.roles?.includes('Admin')
+        if (!isAdmin) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Admin access required')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        const apiResponse = await organizationService.updateOrganizationCredentials(organizationId, req.body.integrations, req.user)
+
+        return res.json(apiResponse)
+    } catch (error) {
+        console.error('=== DEBUG: Organization credentials update controller error ===', error)
+        next(error)
+    }
+}
+
 export default {
     getOrganizationById,
-    updateOrganizationEnabledIntegrations
+    updateOrganizationEnabledIntegrations,
+    getOrganizationCredentials,
+    updateOrganizationCredentials
 }

@@ -18,41 +18,10 @@ const deleteCredential = (id) => client.delete(`/credentials/${id}`)
 
 const refreshAccessToken = (body) => client.post(`/credentials/refresh-token`, body)
 
-// Organization credentials management - use Next.js API routes instead of direct Flowise calls
-const getOrgCredentials = () => {
-    // Call Next.js API route which proxies to Flowise server
-    return fetch('/api/admin/org-credentials', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }).then(async (response) => {
-        if (!response.ok) {
-            const error = await response.json()
-            throw new Error(error.error || 'Failed to fetch org credentials')
-        }
-        const data = await response.json()
-        return { data }
-    })
-}
+// Organization credentials management - use server-side admin routes
+const getOrgCredentials = () => client.get('/admin/organizations/credentials')
 
-const updateOrgCredentials = (integrations) => {
-    // Call Next.js API route which proxies to Flowise server
-    return fetch('/api/admin/org-credentials', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ integrations })
-    }).then(async (response) => {
-        if (!response.ok) {
-            const error = await response.json()
-            throw new Error(error.error || 'Failed to update org credentials')
-        }
-        const data = await response.json()
-        return { data }
-    })
-}
+const updateOrgCredentials = (integrations) => client.put('/admin/organizations/credentials', { integrations })
 
 export default {
     getAllCredentials,

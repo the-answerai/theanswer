@@ -458,7 +458,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                         {drawerOpen ? (
                             <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
                                 <Button
-                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/chat'}
+                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
                                     variant='outlined'
                                     component={NextLink}
                                     onClick={handleNewChat}
@@ -477,7 +477,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                             <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
                                 <IconButton
                                     component={NextLink}
-                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/chat'}
+                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
                                     onClick={handleNewChat}
                                 >
                                     <RateReviewIcon sx={{ color: 'primary.main' }} />
