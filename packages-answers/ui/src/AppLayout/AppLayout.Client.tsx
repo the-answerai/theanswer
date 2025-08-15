@@ -23,10 +23,12 @@ const SubscriptionDialogProvider = dynamic(() => import('../SubscriptionDialogCo
 })
 
 import React from 'react'
-import { useFlagsmith } from 'flagsmith/react'
+import { useFlagsmith, useFlags } from 'flagsmith/react'
 
 function FlagsmithDebug({ session }: { session?: Session }) {
     const flagsmithClient = useFlagsmith()
+    const flags = useFlags(['flagsmith_debug'])
+
     React.useEffect(() => {
         if (typeof window === 'undefined') return
         try {
@@ -57,20 +59,33 @@ function FlagsmithDebug({ session }: { session?: Session }) {
             }
 
             ;(window as any).__flagsmith = flagsmithClient
-            if (process.env.NODE_ENV === 'development') {
+
+            // Check if debug flag is enabled OR if in development mode (fallback)
+            const shouldShowDebug = flags.flagsmith_debug?.enabled || process.env.NODE_ENV === 'development'
+
+            if (shouldShowDebug) {
                 const all = flagsmithClient.getAllFlags()
                 const enabled = Object.entries(all)
                     .filter(([, f]: any) => f?.enabled)
                     .map(([k, f]: any) => ({ flag: k, value: f?.value ?? true }))
+
                 // eslint-disable-next-line no-console
-                console.log('Flagsmith identity:', (flagsmithClient as any).identity)
+                console.log('🚩 Flagsmith Debug Information')
+                // eslint-disable-next-line no-console
+                console.log('Environment ID:', process.env.FLAGSMITH_ENVIRONMENT_ID)
+                // eslint-disable-next-line no-console
+                console.log('Identity:', (flagsmithClient as any).identity)
+                // eslint-disable-next-line no-console
+                console.log('Environment:', process.env.NODE_ENV)
+                // eslint-disable-next-line no-console
+                console.log('Debug enabled by flag:', !!flags.flagsmith_debug?.enabled)
                 // eslint-disable-next-line no-console
                 console.table(enabled)
             }
         } catch (e) {
             // noop
         }
-    }, [flagsmithClient, session])
+    }, [flagsmithClient, session, flags.flagsmith_debug])
     return null
 }
 
