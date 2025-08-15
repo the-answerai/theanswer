@@ -14,11 +14,11 @@ export async function GET(req: Request) {
 
         const { user } = session
 
-        // Check if user is admin
-        const isAdmin = Array.isArray(user?.roles) && user.roles.includes('Admin')
-
-        if (!isAdmin) {
-            return NextResponse.json({ error: 'Unauthorized - Admin access required' }, { status: 403 })
+        // Allow any authenticated organization member (Admin/Builder/Member) to read integrations
+        const allowedViewerRoles = ['Admin', 'Builder', 'Member']
+        const hasViewAccess = Array.isArray(user?.roles) && user.roles.some((r: string) => allowedViewerRoles.includes(r))
+        if (!hasViewAccess) {
+            return NextResponse.json({ error: 'Unauthorized - Organization membership required' }, { status: 403 })
         }
 
         // Get user's access token for Flowise authentication

@@ -23,6 +23,56 @@ const SubscriptionDialogProvider = dynamic(() => import('../SubscriptionDialogCo
 })
 
 import React from 'react'
+import { useFlagsmith } from 'flagsmith/react'
+
+function FlagsmithDebug({ session }: { session?: Session }) {
+    const flagsmithClient = useFlagsmith()
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return
+        try {
+            // derive identity same as server
+            const email = session?.user?.email || ''
+            const orgId = (session as any)?.user?.organizationId
+            const hash = email
+                ? email.split('').reduce((a: any, b: any) => {
+                      a = (a << 5) - a + b.charCodeAt(0)
+                      return a & a
+                  }, 0)
+                : ''
+            const identity = `user_${orgId}_${hash}`
+
+            const currentIdentity = (flagsmithClient as any).identity
+            if (!currentIdentity || currentIdentity !== identity) {
+                const traits = (session as any)?.user?.roles
+                    ? {
+                          env: 'production',
+                          organization: orgId,
+                          roles: ((session as any)?.user?.roles || []).join(',') ?? '',
+                          invited: !!(session as any)?.user?.invited,
+                          domain: email.split('@')[1] || ''
+                      }
+                    : undefined
+                // identify will refetch flags for this identity
+                flagsmithClient.identify(identity as any, traits as any)
+            }
+
+            ;(window as any).__flagsmith = flagsmithClient
+            if (process.env.NODE_ENV === 'development') {
+                const all = flagsmithClient.getAllFlags()
+                const enabled = Object.entries(all)
+                    .filter(([, f]: any) => f?.enabled)
+                    .map(([k, f]: any) => ({ flag: k, value: f?.value ?? true }))
+                // eslint-disable-next-line no-console
+                console.log('Flagsmith identity:', (flagsmithClient as any).identity)
+                // eslint-disable-next-line no-console
+                console.table(enabled)
+            }
+        } catch (e) {
+            // noop
+        }
+    }, [flagsmithClient, session])
+    return null
+}
 
 export default function AppLayout({
     session,
@@ -59,6 +109,7 @@ export default function AppLayout({
                     }}
                     flagsmith={flagsmith}
                 >
+                    <FlagsmithDebug session={session} />
                     {/* <Auth0Provider
                         domain={process.env.VITE_AUTH_DOMAIN!}
                         clientId={process.env.VITE_AUTH_CLIENT_ID!}
