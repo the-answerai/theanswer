@@ -101,12 +101,9 @@ export const authenticationHandlerMiddleware =
 
                 // Check for organization match if required
                 const userOrgId = req?.auth?.payload?.org_id
-                if (requireAuth) {
-                    const validOrgs = process.env.AUTH0_ORGANIZATION_ID?.split(',') || []
-                    const isInvalidOrg = validOrgs?.length > 0 && !validOrgs.includes(userOrgId)
-                    if (isInvalidOrg) {
-                        return res.status(401).send("Unauthorized: Organization doesn't match")
-                    }
+                const isValidOrg = userOrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userOrgId)
+                if (requireAuth && !isValidOrg) {
+                    return res.status(401).send("Unauthorized: Organization doesn't match")
                 }
 
                 // Get user from auth payload
@@ -120,29 +117,34 @@ export const authenticationHandlerMiddleware =
                 }
 
                 try {
-                    // Get or create organization using transaction-safe method
-                    const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name)
+                    if (isValidOrg) {
+                        // Get or create organization using transaction-safe method
+                        const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name)
 
-                    // Get or create user using transaction-safe method
-                    let user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
+                        // Get or create user using transaction-safe method
+                        let user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
 
-                    // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
-                    user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
+                        // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
+                        user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
 
-                    // Find or create default chatflows for the user
-                    const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
-                    // Update user with the latest defaultChatflowId
-                    if (defaultChatflowId) {
-                        user.defaultChatflowId = defaultChatflowId
+                        // Find or create default chatflows for the user
+                        const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
+                        // Update user with the latest defaultChatflowId
+                        if (defaultChatflowId) {
+                            user.defaultChatflowId = defaultChatflowId
+                        }
+
+                        // Set permissions based on roles
+                        const permissions: string[] = []
+                        if (roles?.includes('Admin')) {
+                            permissions.push('org:manage')
+                        }
+
+                        req.user = { ...authUser, ...user, roles, permissions }
+                    } else {
+                        // For public routes, allow public cross-org access by removing the user from the request
+                        req.user = undefined
                     }
-
-                    // Set permissions based on roles
-                    const permissions: string[] = []
-                    if (roles?.includes('Admin')) {
-                        permissions.push('org:manage')
-                    }
-
-                    req.user = { ...authUser, ...user, roles, permissions }
                 } catch (error) {
                     console.error('Authentication error:', error)
                     return res.status(500).send('Internal Server Error during authentication')
@@ -152,6 +154,11 @@ export const authenticationHandlerMiddleware =
             // Handle /auth/me endpoint directly in middleware
             if (req.url === '/api/v1/auth/me' && req.method === 'GET') {
                 if (!req.user) {
+                    return res.status(401).json({ error: 'Unauthorized' })
+                }
+                const isValidOrg =
+                    req.user.organizationId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(req.user.organizationId)
+                if (!isValidOrg) {
                     return res.status(401).json({ error: 'Unauthorized' })
                 }
 
