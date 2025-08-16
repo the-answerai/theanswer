@@ -524,7 +524,7 @@ const config: Config = {
         image: 'img/answer-angent-ai-ogimage.png',
         colorMode: {
             defaultMode: 'dark',
-            disableSwitch: false,
+            disableSwitch: true,
             respectPrefersColorScheme: false
         },
         navbar: {

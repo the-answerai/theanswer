@@ -20,7 +20,7 @@ function HomepageHeader() {
                 <p className={styles.heroSubtitle}>Building a decentralized, open, and creative future you can trust.</p>
                 <div className={styles.heroCTAs}>
                     <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Join Alpha
+                        Start Building
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a
@@ -164,34 +164,6 @@ function FeaturesSection() {
         <section className={styles.featuresSection}>
             <div className='container'>
                 <h2 className='text--center'>The complete AI Agent solution</h2>
-                <div
-                    style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        padding: '1.5rem',
-                        marginBottom: '2rem',
-                        borderRadius: '8px',
-                        textAlign: 'center'
-                    }}
-                >
-                    <h3 style={{ color: 'white', margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>
-                        🚀 Introducing Alpha 0.42 - Our Complete AI Workforce Platform
-                    </h3>
-                    <a
-                        href='/blog/what-we-are-building'
-                        style={{
-                            background: 'white',
-                            color: '#667eea',
-                            fontWeight: 'bold',
-                            textDecoration: 'none',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            fontSize: '0.9rem'
-                        }}
-                    >
-                        Read Our Full Story →
-                    </a>
-                </div>
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.commandment)}>
@@ -298,7 +270,7 @@ function PricingSection() {
                             <div className={styles.pricingIcon}>💳</div>
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                 <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Usage-Based</h3>
-                                <div className={styles.pricingHighlight}>$20+ to start</div>
+                                <div className={styles.pricingHighlight}>$20 to start</div>
                                 <p style={{ marginBottom: '1.5rem', flex: '1' }}>
                                     Pay only for what you use with transparent, real-time cost tracking. No subscriptions, no hidden fees,
                                     just honest usage-based pricing.
@@ -310,7 +282,7 @@ function PricingSection() {
                                 </div>
                                 <div style={{ marginTop: 'auto' }}>
                                     <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Get Started
+                                        Get Started for Free
                                     </a>
                                 </div>
                             </div>
@@ -332,8 +304,11 @@ function PricingSection() {
                                     <div style={{ marginBottom: '0.5rem' }}>✓ Enhanced security controls</div>
                                 </div>
                                 <div style={{ marginTop: 'auto' }}>
-                                    <a href='/developers' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Contact Sales
+                                    <a
+                                        href='https://calendly.com/lastrev/answeragent-demo'
+                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                                    >
+                                        Request Demo
                                     </a>
                                 </div>
                             </div>
@@ -357,7 +332,10 @@ function PricingSection() {
                                     <div style={{ marginBottom: '0.5rem' }}>✓ Custom integrations & training</div>
                                 </div>
                                 <div style={{ marginTop: '1.5rem' }}>
-                                    <a href='/developers' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                    <a
+                                        href='https://calendly.com/lastrev/answeragent-demo'
+                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                                    >
                                         Talk to Us
                                     </a>
                                 </div>
@@ -476,7 +454,7 @@ export default function Home(): JSX.Element {
                 <main>
                     <FeaturesSection />
                     <MacAppTeaser />
-                    <MissionSection />
+                    {/* <MissionSection /> */}
                     <PricingSection />
                 </main>
             </LayoutComponent>
