@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
+import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 
 import styles from './index.module.css'
@@ -12,7 +13,7 @@ function HomepageHeader() {
                 <ThreeJsScene className={styles.threeJsCanvas} />
             </div>
             <div className={styles.heroContent}>
-                <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAI Logo' className={styles.heroLogo} />
+                <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAgentAI Logo' className={styles.heroLogo} />
                 <h1 className={styles.heroTitle}>
                     AI for ALL, <em>not for the few.</em>{' '}
                 </h1>
@@ -43,6 +44,8 @@ function HomepageHeader() {
     )
 }
 
+const LayoutComponent: any = Layout
+
 function MissionSection() {
     return (
         <section className={styles.missionSection}>
@@ -56,8 +59,8 @@ function MissionSection() {
                             most powerful technology ever created is being used not to uplift, but to manipulate. <br />
                             <br />
                             Our mission is to create a decentralized, open, and creative future where individuals can own their digital
-                            identity, run autonomous agents, and share, monetize, or protect their data as they choose. We're just getting
-                            started, will you join us?
+                            identity, run autonomous agents, and share, monetize, or protect their data as they choose. We&apos;re just
+                            getting started, will you join us?
                         </p>
                         <div style={{ marginTop: '2rem' }}>
                             <a href='/blog/what-is-the-answer-ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
@@ -71,7 +74,7 @@ function MissionSection() {
                                 width='100%'
                                 height='315'
                                 src='https://www.youtube.com/embed/2HVcHMaaMM0'
-                                title='AnswerAI Vision'
+                                title='AnswerAgentAI Vision'
                                 frameBorder='0'
                                 allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                                 allowFullScreen
@@ -345,7 +348,7 @@ function PricingSection() {
                                 <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Enterprise</h3>
                                 <div className={styles.pricingHighlight}>Fully Local</div>
                                 <p style={{ marginBottom: '1.5rem' }}>
-                                    Complete enterprise solution with full self-hosted licensing and services. Deploy AnswerAI entirely
+                                    Complete enterprise solution with full self-hosted licensing and services. Deploy AnswerAgentAI entirely
                                     within your infrastructure for maximum security and control.
                                 </p>
                                 <div style={{ marginBottom: '1.5rem' }}>
@@ -377,7 +380,12 @@ function PricingSection() {
                                     <div style={{ marginBottom: '0.5rem' }}>✓ Training & ongoing support</div>
                                 </div>
                                 <div style={{ marginTop: '1.5rem' }}>
-                                    <a href='https://lastrev.com' target='_blank' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                    <a
+                                        href='https://lastrev.com'
+                                        target='_blank'
+                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                                        rel='noreferrer'
+                                    >
                                         Contact Last Rev
                                     </a>
                                 </div>
@@ -393,7 +401,7 @@ function PricingSection() {
                                 <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
                                     We provide completely transparent metrics and cost calculators inside the app. See exactly what
                                     you&apos;re spending, when, and why. We take only a small nominal fee on commercial AI tools and
-                                    licensed AnswerAI versions to keep the platform running.
+                                    licensed AnswerAgentAI versions to keep the platform running.
                                 </p>
                                 <div style={{ marginTop: '2rem' }}>
                                     <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
@@ -448,13 +456,22 @@ function MacAppTeaser() {
 }
 
 export default function Home(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title={'Answer Agent AI: Build your AI-Agent Workforce'}
                 description='Orchestrate secure AI agents across your business.'
             >
+                <JsonLd
+                    data={{
+                        '@context': 'https://schema.org',
+                        '@type': 'WebSite',
+                        name: 'AnswerAgent',
+                        url: 'https://answeragent.ai',
+                        description: 'AnswerAgent: AI agents, chat, and workflows for teams.'
+                    }}
+                />
                 <HomepageHeader />
                 <main>
                     <FeaturesSection />
@@ -462,7 +479,7 @@ export default function Home(): JSX.Element {
                     <MissionSection />
                     <PricingSection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

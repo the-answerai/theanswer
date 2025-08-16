@@ -2,6 +2,9 @@
 title: Your Guide to AnswerAgent Sidekick
 sidebar_label: Introduction
 slug: /browser
+jsonld:
+    type: TechArticle
+    headline: AnswerAgent Sidekick Browser Extension
 ---
 
 import Tabs from '@theme/Tabs';
