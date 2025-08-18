@@ -65,6 +65,7 @@
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "^3.859.0",
         "@aws-sdk/s3-request-presigner": "^3.859.0",
+        "@braintree/sanitize-url": "^7.1.1",
         "@contentful/rich-text-from-markdown": "^15.18.10",
         "@google-cloud/logging-winston": "^6.0.1",
         "@oclif/core": "4.0.7",
