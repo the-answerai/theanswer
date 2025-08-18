@@ -19,11 +19,11 @@ export const File = ({ value, formDataUpload, fileType, onChange, onFormDataChan
 
             const reader = new FileReader()
             reader.onload = (evt) => {
-                if (!evt?.target?.result) {
+                const { result } = evt.target || {}
+                if (typeof result !== 'string') {
+                    console.error('[File] FileReader result is not a string')
                     return
                 }
-                const { result } = evt.target
-
                 const value = result + `,filename:${name}`
 
                 setMyValue(value)
@@ -35,15 +35,17 @@ export const File = ({ value, formDataUpload, fileType, onChange, onFormDataChan
                 const reader = new FileReader()
                 const { name } = file
 
-                return new Promise((resolve) => {
+                return new Promise((resolve, reject) => {
                     reader.onload = (evt) => {
-                        if (!evt?.target?.result) {
+                        const { result } = evt.target || {}
+                        if (typeof result !== 'string') {
+                            reject(new Error('[File] FileReader result is not a string'))
                             return
                         }
-                        const { result } = evt.target
                         const value = result + `,filename:${name}`
                         resolve(value)
                     }
+                    reader.onerror = (e) => reject(e)
                     reader.readAsDataURL(file)
                 })
             })

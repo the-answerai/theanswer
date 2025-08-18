@@ -317,12 +317,13 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                     uploadedFiles.push({ file, type: fullFileUpload ? 'file:full' : 'file:rag' })
                 }
                 files.push(
-                    new Promise((resolve) => {
+                    new Promise((resolve, reject) => {
                         reader.onload = (evt) => {
-                            if (!evt?.target?.result) {
+                            const { result } = evt.target || {}
+                            if (typeof result !== 'string') {
+                                reject(new Error('[handleDrop] FileReader result is not a string'))
                                 return
                             }
-                            const { result } = evt.target
                             let previewUrl
                             if (file.type.startsWith('audio/')) {
                                 previewUrl = audioUploadSVG
@@ -337,6 +338,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                                 mime: file.type
                             })
                         }
+                        reader.onerror = (e) => reject(e)
                         reader.readAsDataURL(file)
                     })
                 )
@@ -398,12 +400,13 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
             const reader = new FileReader()
             const { name } = file
             files.push(
-                new Promise((resolve) => {
+                new Promise((resolve, reject) => {
                     reader.onload = (evt) => {
-                        if (!evt?.target?.result) {
+                        const { result } = evt.target || {}
+                        if (typeof result !== 'string') {
+                            reject(new Error('[handleFileChange] FileReader result is not a string'))
                             return
                         }
-                        const { result } = evt.target
                         resolve({
                             data: result,
                             preview: URL.createObjectURL(file),
@@ -412,6 +415,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                             mime: file.type
                         })
                     }
+                    reader.onerror = (e) => reject(e)
                     reader.readAsDataURL(file)
                 })
             )
@@ -437,6 +441,10 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
         reader.readAsDataURL(blob)
         reader.onloadend = () => {
             const base64data = reader.result
+            if (typeof base64data !== 'string') {
+                console.error('[addRecordingToPreviews] FileReader result is not a string')
+                return
+            }
             const upload = {
                 data: base64data,
                 preview: audioUploadSVG,

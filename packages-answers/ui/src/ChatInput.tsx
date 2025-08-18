@@ -293,16 +293,20 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
     }
 
     const createFilePreview = (file: File): Promise<FileUpload> => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader()
             const { name } = file
 
             reader.onload = (evt) => {
-                if (!evt?.target?.result) return
-                const { result } = evt.target
+                const { result } = evt.target || {}
+                if (typeof result !== 'string') {
+                    console.error('[createFilePreview] FileReader result is not a string')
+                    reject(new Error('FileReader result is not a string'))
+                    return
+                }
 
                 const base: Omit<FileUpload, 'preview'> = {
-                    data: result as string,
+                    data: result,
                     type: 'file',
                     name,
                     mime: file.type
