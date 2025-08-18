@@ -7,7 +7,7 @@ import {
   Stack, 
   CircularProgress 
 } from '@mui/material'
-import { useRouter } from 'next/navigation'
+
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LaunchIcon from '@mui/icons-material/Launch'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -19,7 +19,6 @@ interface CsvNoticeCardProps {
 }
 
 const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
-  const router = useRouter()
   const [navigating, setNavigating] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   
