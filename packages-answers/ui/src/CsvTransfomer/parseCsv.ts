@@ -85,6 +85,8 @@ export function parseCsvRfc4180(input: string): ParsedCsvResult {
     try {
       return parseWithHeaders(normalizedInput)
     } catch (headerError) {
+      // Log the header parsing error for debugging, then fallback to no-headers parsing
+      console.warn('Header parsing failed, falling back to no-headers parsing:', headerError)
       // Step 4: If headers fail, try without headers (your case)
       return parseWithoutHeaders(normalizedInput)
     }
