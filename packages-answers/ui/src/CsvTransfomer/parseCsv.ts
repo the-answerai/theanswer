@@ -7,6 +7,36 @@ export interface ParsedCsvResult {
 }
 
 /**
+ * Split a CSV line by commas while respecting quoted fields.
+ * This avoids the potentially exponential backtracking of complex regexes.
+ */
+function splitCsvLine(line: string): string[] {
+    const result: string[] = []
+    let current = ''
+    let inQuotes = false
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i]
+
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"'
+                i++
+            } else {
+                inQuotes = !inQuotes
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current)
+            current = ''
+        } else {
+            current += char
+        }
+    }
+    result.push(current)
+    return result
+}
+
+/**
  * Normalize CSV to make it RFC 4180 compliant
  * by quoting individual fields that contain commas
  */
@@ -16,8 +46,8 @@ function normalizeCsv(input: string): string {
         const trimmed = line.trim()
         if (trimmed === '') return trimmed
 
-        // Split by commas not enclosed in quotes
-        const fields = trimmed.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+        // Split by commas not enclosed in quotes using a linear scan
+        const fields = splitCsvLine(trimmed)
         const normalizedFields = fields.map((field) => {
             const clean = field.trim()
             if (clean.includes(',') && !clean.startsWith('"')) {
