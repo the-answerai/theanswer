@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
@@ -27,7 +27,6 @@ import {
     Alert,
     AlertTitle
 } from '@mui/material'
-import { User } from 'types'
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
 import FilePresentOutlined from '@mui/icons-material/FilePresentOutlined'
@@ -116,11 +115,14 @@ interface IFormInput {
     includeOriginalColumns: boolean
 }
 
-const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }: { 
-    chatflows: any[]; 
-    user: User; 
-    onNavigateToHistory?: () => void;
-    onRefreshChatflows?: () => Promise<void>;
+const ProcessCsv = ({
+    chatflows,
+    onNavigateToHistory,
+    onRefreshChatflows
+}: {
+    chatflows: any[]
+    onNavigateToHistory?: () => void
+    onRefreshChatflows?: () => Promise<void>
 }) => {
     const theme = useTheme()
     const [headers, setHeaders] = useState<string[]>([])
@@ -134,6 +136,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
     const [isCloning, setIsCloning] = useState(false)
     const searchParams = useSearchParams()
     const cloneFrom = searchParams.get('cloneFrom')
+    const hasAutoSelected = useRef(false)
 
     const {
         control,
@@ -155,19 +158,21 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
 
     const watchedValues = watch()
 
-    // Auto-select first processor when chatflows appear
+    // Auto-select first processor only once when chatflows appear
     useEffect(() => {
-        if (!watchedValues.processorId && chatflows.length > 0) {
+        if (!hasAutoSelected.current && chatflows.length > 0) {
             setValue('processorId', chatflows[0].id, { shouldValidate: true })
             setToastMessage(`Selected processor: ${chatflows[0].name}`)
+            hasAutoSelected.current = true
         }
-            }, [chatflows, watchedValues.processorId, setValue])
+    }, [chatflows, setValue])
 
     const onDrop = useCallback(
         (acceptedFiles: any) => {
             const file = acceptedFiles[0]
             setFile(file)
             setFileName(file.name)
+            setCsvErrors([])
             const reader = new FileReader()
 
             reader.onload = (event) => {
@@ -204,27 +209,27 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         if (error.includes('Number of columns')) {
             return 'CSV structure error: The number of columns in your header row does not match the number of columns in your data rows. This usually happens when fields contain commas that are not properly enclosed in quotes. The system will automatically fix this for you.'
         }
-        
+
         if (error.includes('no header row')) {
             return 'CSV format error: Your CSV appears to have no header row. The system will automatically create a default structure for single-column CSVs.'
         }
-        
+
         if (error.includes('no data rows')) {
             return 'CSV content error: Your CSV file appears to have no data rows after the header, or the header could not be determined.'
         }
-        
+
         if (error.includes('Unmatched quotes')) {
             return 'CSV format error: Your CSV contains unclosed quotes. Make sure all quoted fields start and end with double quotes ("").'
         }
-        
+
         if (error.includes('Fields containing commas must be enclosed')) {
             return 'CSV format error: Fields containing commas must be enclosed in quotes for proper parsing. The system will automatically fix this for you.'
         }
-        
+
         if (error.includes('Row') && error.includes('columns but expected')) {
             return 'CSV structure error: Some rows have a different number of columns than expected. This usually happens when fields contain commas that are not properly enclosed in quotes. The system will automatically fix this for you.'
         }
-        
+
         return error
     }
 
@@ -330,8 +335,6 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         }
     }
 
-
-
     const handleNext = () => {
         setActiveStep((prevStep) => prevStep + 1)
     }
@@ -370,7 +373,8 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                             Step 1: Upload CSV File
                         </Typography>
                         <Typography variant='body1' gutterBottom>
-                            Upload the CSV file you want to process with AI. Ensure the first row contains headers. Lines starting with '#' are treated as comments.
+                            Upload the CSV file you want to process with AI. Ensure the first row contains headers. Lines starting with #
+                            are treated as comments.
                         </Typography>
                         <Box {...getRootProps({ style })}>
                             <input {...getInputProps()} />
@@ -383,130 +387,135 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                                     </IconButton>
                                 </Stack>
                             ) : (
-                                <Typography>{"Drag 'n' drop a CSV file here, or click to select a file"}</Typography>
+                                <Typography>Drag &apos;n&apos; drop a CSV file here, or click to select a file</Typography>
                             )}
                         </Box>
                     </Stack>
                 )
             case 1:
                 return (
-                    <Stack spacing={3}>
-                        <Typography variant='h4' gutterBottom>
-                            Step 2: Configure Processing
-                        </Typography>
-                        <Typography variant='body1' gutterBottom>
-                            Set up the basic configuration for your CSV processing
-                        </Typography>
-                        <Card variant='outlined' sx={{ p: 2 }}>
-                            <Stack sx={{ gap: 3 }}>
-                                <FormControl required error={!!errors.name}>
-                                    <Controller
-                                        name='name'
-                                        control={control}
-                                        defaultValue=''
-                                        rules={{ required: 'Instance name is required' }}
-                                        render={({ field }) => (
-                                            <>
-                                                <TextField
-                                                    {...field}
-                                                    required
-                                                    label='Instance name'
-                                                    variant='outlined'
-                                                    error={!!errors.name}
-                                                    fullWidth
-                                                />
-                                                <FormHelperText>
-                                                    {errors.name?.message || 'Name to identify this processing run'}
-                                                </FormHelperText>
-                                            </>
-                                        )}
-                                    />
-                                </FormControl>
+                    <>
+                        <Stack spacing={3}>
+                            <Typography variant='h4' gutterBottom>
+                                Step 2: Configure Processing
+                            </Typography>
+                            <Typography variant='body1' gutterBottom>
+                                Set up the basic configuration for your CSV processing
+                            </Typography>
+                            <Card variant='outlined' sx={{ p: 2 }}>
+                                <Stack sx={{ gap: 3 }}>
+                                    <FormControl required error={!!errors.name}>
+                                        <Controller
+                                            name='name'
+                                            control={control}
+                                            defaultValue=''
+                                            rules={{ required: 'Instance name is required' }}
+                                            render={({ field }) => (
+                                                <>
+                                                    <TextField
+                                                        {...field}
+                                                        required
+                                                        label='Instance name'
+                                                        variant='outlined'
+                                                        error={!!errors.name}
+                                                        fullWidth
+                                                    />
+                                                    <FormHelperText>
+                                                        {errors.name?.message || 'Name to identify this processing run'}
+                                                    </FormHelperText>
+                                                </>
+                                            )}
+                                        />
+                                    </FormControl>
 
-                                <FormControl required error={!!errors.processorId}>
-                                    <Controller
-                                        name='processorId'
-                                        control={control}
-                                        defaultValue=''
-                                        rules={{ required: 'AI Processor selection is required' }}
-                                        render={({ field }) => (
-                                            <>
-                                                <InputLabel required id='processor-select-label'>
-                                                    AI Processor
-                                                </InputLabel>
-                                                <Select
-                                                    {...field}
-                                                    labelId='processor-select-label'
-                                                    label='AI Processor'
-                                                    required
-                                                    error={!!errors.processorId}
-                                                    disabled={chatflows.length === 0}
-                                                    fullWidth
-                                                >
-                                                    {chatflows.length === 0 ? (
-                                                        <MenuItem disabled value="">
-                                                            No CSV processors available
-                                                        </MenuItem>
-                                                    ) : (
-                                                        chatflows.map((chatflow) => (
-                                                            <MenuItem key={chatflow.id} value={chatflow.id}>
-                                                                {chatflow.name}
+                                    <FormControl required error={!!errors.processorId}>
+                                        <Controller
+                                            name='processorId'
+                                            control={control}
+                                            defaultValue=''
+                                            rules={{ required: 'AI Processor selection is required' }}
+                                            render={({ field }) => (
+                                                <>
+                                                    <InputLabel required id='processor-select-label'>
+                                                        AI Processor
+                                                    </InputLabel>
+                                                    <Select
+                                                        {...field}
+                                                        labelId='processor-select-label'
+                                                        label='AI Processor'
+                                                        required
+                                                        error={!!errors.processorId}
+                                                        disabled={chatflows.length === 0}
+                                                        fullWidth
+                                                    >
+                                                        {chatflows.length === 0 ? (
+                                                            <MenuItem disabled value=''>
+                                                                No CSV processors available
                                                             </MenuItem>
-                                                        ))
-                                                    )}
-                                                </Select>
-                                                <FormHelperText>
-                                                    {errors.processorId?.message || 
-                                                     (chatflows.length === 0 
-                                                        ? 'Install a CSV processor from the marketplace below to continue' 
-                                                        : 'Select the AI model to process your CSV')}
-                                                </FormHelperText>
-                                            </>
-                                        )}
-                                    />
-                                </FormControl>
+                                                        ) : (
+                                                            chatflows.map((chatflow) => (
+                                                                <MenuItem key={chatflow.id} value={chatflow.id}>
+                                                                    {chatflow.name}
+                                                                </MenuItem>
+                                                            ))
+                                                        )}
+                                                    </Select>
+                                                    <FormHelperText>
+                                                        {errors.processorId?.message ||
+                                                            (chatflows.length === 0
+                                                                ? 'Install a CSV processor from the marketplace below to continue'
+                                                                : 'Select the AI model to process your CSV')}
+                                                    </FormHelperText>
+                                                </>
+                                            )}
+                                        />
+                                    </FormControl>
 
-                                {/* Show CSV notice card when no CSV chatflows are available */}
-                                {chatflows.length === 0 && (
-                                    <CsvNoticeCard onRefresh={onRefreshChatflows} />
-                                )}
-
-                                <FormControl required error={!!errors.rowsRequested || (watchedValues.rowsRequested > (rows?.length || 0))}>
-                                    <Controller
-                                        name='rowsRequested'
-                                        control={control}
-                                        defaultValue={rows?.length ?? 0}
-                                        rules={{
-                                            required: 'Number of rows is required',
-                                            min: { value: 1, message: 'Must process at least 1 row' },
-                                            max: { value: rows?.length ?? 0, message: `Maximum ${rows?.length} rows` }
-                                        }}
-                                        render={({ field: { value, ...field } }) => (
-                                            <>
-                                                <TextField
-                                                    {...field}
-                                                    value={value || rows?.length || 0}
-                                                    required
-                                                    label='Number of rows'
-                                                    type='number'
-                                                    inputProps={{ min: 1, max: rows?.length ?? 0 }}
-                                                    variant='outlined'
-                                                    error={!!errors.rowsRequested || (watchedValues.rowsRequested > (rows?.length || 0))}
-                                                    fullWidth
-                                                />
-                                                <FormHelperText>
-                                                    {errors.rowsRequested?.message || 
-                                                     (watchedValues.rowsRequested > (rows?.length || 0) 
-                                                        ? `Cannot process more rows than available (max: ${rows?.length})`
-                                                        : `How many rows to process (max: ${rows?.length})`)}
-                                                </FormHelperText>
-                                            </>
-                                        )}
-                                    />
-                                </FormControl>
-                            </Stack>
-                        </Card>
-                    </Stack>
+                                    <FormControl
+                                        required
+                                        error={!!errors.rowsRequested || watchedValues.rowsRequested > (rows?.length || 0)}
+                                    >
+                                        <Controller
+                                            name='rowsRequested'
+                                            control={control}
+                                            defaultValue={rows?.length ?? 0}
+                                            rules={{
+                                                required: 'Number of rows is required',
+                                                min: { value: 1, message: 'Must process at least 1 row' },
+                                                max: { value: rows?.length ?? 0, message: `Maximum ${rows?.length} rows` }
+                                            }}
+                                            render={({ field: { value, ...field } }) => (
+                                                <>
+                                                    <TextField
+                                                        {...field}
+                                                        value={value || rows?.length || 0}
+                                                        required
+                                                        label='Number of rows'
+                                                        type='number'
+                                                        inputProps={{ min: 1, max: rows?.length ?? 0 }}
+                                                        variant='outlined'
+                                                        error={!!errors.rowsRequested || watchedValues.rowsRequested > (rows?.length || 0)}
+                                                        fullWidth
+                                                    />
+                                                    <FormHelperText>
+                                                        {errors.rowsRequested?.message ||
+                                                            (watchedValues.rowsRequested > (rows?.length || 0)
+                                                                ? `Cannot process more rows than available (max: ${rows?.length})`
+                                                                : `How many rows to process (max: ${rows?.length})`)}
+                                                    </FormHelperText>
+                                                </>
+                                            )}
+                                        />
+                                    </FormControl>
+                                </Stack>
+                            </Card>
+                        </Stack>
+                        {chatflows.length === 0 && (
+                            <Box mt={2}>
+                                <CsvNoticeCard onRefresh={onRefreshChatflows} />
+                            </Box>
+                        )}
+                    </>
                 )
             case 2:
                 return (
@@ -684,10 +693,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                                     </Typography>
                                 )}
                                 {watchedValues.rowsRequested > 0 && (
-                                    <Typography 
-                                        variant='body2' 
-                                        color={watchedValues.rowsRequested > rows.length ? 'error' : 'inherit'}
-                                    >
+                                    <Typography variant='body2' color={watchedValues.rowsRequested > rows.length ? 'error' : 'inherit'}>
                                         <strong>Rows:</strong> {watchedValues.rowsRequested} of {rows.length}
                                         {watchedValues.rowsRequested > rows.length && (
                                             <span style={{ color: '#F44336', fontWeight: 'light' }}> Exceeds limit</span>
@@ -812,7 +818,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         if (cloneFrom) {
             getData()
         }
-    }, [cloneFrom])
+    }, [cloneFrom, reset])
 
     return (
         <Stack flexDirection='column' sx={{ gap: 4 }} component='form' onSubmit={handleSubmit(handleProcessCsv)}>
@@ -824,38 +830,42 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
 
             {/* CSV validation errors */}
             {csvErrors.length > 0 && (
-                <Alert severity="error" sx={{ 
-                    mb: 3, 
-                    border: '2px solid', 
-                    borderColor: 'error.main',
-                    '& .MuiAlert-message': { width: '100%' }
-                }}>
-                    <AlertTitle sx={{ fontSize: '1.1rem', fontWeight: 'bold', mb: 1 }}>
-                        ⚠️ CSV File Error - Cannot Continue
-                    </AlertTitle>
-                    
-                    <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+                <Alert
+                    severity='error'
+                    sx={{
+                        mb: 3,
+                        border: '2px solid',
+                        borderColor: 'error.main',
+                        '& .MuiAlert-message': { width: '100%' }
+                    }}
+                >
+                    <AlertTitle sx={{ fontSize: '1.1rem', fontWeight: 'bold', mb: 1 }}>⚠️ CSV File Error - Cannot Continue</AlertTitle>
+
+                    <Typography variant='body2' sx={{ mb: 2, fontWeight: 500 }}>
                         Your CSV file has the following issues that must be fixed:
                     </Typography>
-                    
+
                     <ul style={{ margin: 0, paddingLeft: 16, marginBottom: 2 }}>
                         {csvErrors.map((error, i) => (
                             <li key={`csv-error-${i}-${error.substring(0, 20)}`}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                <Typography variant='body2' sx={{ mb: 1 }}>
                                     {error}
                                 </Typography>
                             </li>
                         ))}
                     </ul>
-                    
-                    <Typography variant="body2" sx={{ 
-                        mt: 2, 
-                        fontWeight: 'bold', 
-                        color: 'error.dark',
-                        p: 1,
-                        bgcolor: 'error.light',
-                        borderRadius: 1
-                    }}>
+
+                    <Typography
+                        variant='body2'
+                        sx={{
+                            mt: 2,
+                            fontWeight: 'bold',
+                            color: 'error.dark',
+                            p: 1,
+                            bgcolor: 'error.light',
+                            borderRadius: 1
+                        }}
+                    >
                         Please fix these issues and upload a valid CSV file to continue.
                     </Typography>
                 </Alert>

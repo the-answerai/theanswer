@@ -47,7 +47,10 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
 
     // Build question from row data and optional run context
     const additionalContext = (csvParseRun.configuration as any)?.context || ''
-    const combinedQuestion = `### ${JSON.stringify(row.rowData)} ### ${additionalContext}`.trim()
+    const combinedQuestion = JSON.stringify({
+        rowData: row.rowData,
+        context: additionalContext
+    })
 
     const response = await executeFlow({
         user: user,

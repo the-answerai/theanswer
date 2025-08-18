@@ -58,11 +58,10 @@ const ProcessingHistory = ({ user }: { user: User }) => {
             setCsvParseRuns(csvParseRuns)
         } catch (error) {
             console.error('Error fetching CSV parse runs:', error)
-            throw error
         } finally {
             setLoading(false)
         }
-    }, [user])
+    }, [])
 
     const handleRefresh = async () => {
         try {
@@ -79,9 +78,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
     }, [getData])
 
     useEffect(() => {
-        const hasInProgress = csvParseRuns.some(
-            (r) => r.status !== 'READY' && r.status !== 'COMPLETE_WITH_ERRORS'
-        )
+        const hasInProgress = csvParseRuns.some((r) => r.status !== 'READY' && r.status !== 'COMPLETE_WITH_ERRORS')
         const onVis = () => {
             if (!document.hidden && hasInProgress) {
                 getData()
@@ -247,14 +244,14 @@ const ProcessingHistory = ({ user }: { user: User }) => {
     return (
         <div style={{ width: '100%' }}>
             {/* Header with refresh button */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 2 }}>
                 <div />
                 <Button
-                    variant="outlined"
+                    variant='outlined'
                     startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
                     onClick={handleRefresh}
                     disabled={loading}
-                    sx={{ 
+                    sx={{
                         fontWeight: 500,
                         textTransform: 'none'
                     }}
@@ -262,7 +259,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
                     {loading ? 'Refreshing…' : 'Refresh'}
                 </Button>
             </Stack>
-            
+
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid
                     rows={csvParseRuns}
