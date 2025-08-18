@@ -8,7 +8,6 @@ export interface ParsedCsvResult {
 
 /**
  * Normalize CSV to make it RFC 4180 compliant
- * This fixes the real issue: fields with commas not properly quoted
  */
 function normalizeCsv(input: string): string {
   const lines = input.split('\n')
@@ -31,7 +30,6 @@ function normalizeCsv(input: string): string {
 
 /**
  * Validate CSV structure for RFC 4180 compliance
- * This prevents the "number of columns" error Brad mentioned
  */
 function validateCsvStructure(input: string): string[] {
   const errors: string[] = []
@@ -67,28 +65,26 @@ function validateCsvStructure(input: string): string[] {
 }
 
 /**
- * Parse CSV content using RFC 4180 compliant parser (PapaParse)
- * Now with automatic normalization and header detection
+ * Parse CSV content using RFC 4180 compliant parser
  */
 export function parseCsvRfc4180(input: string): ParsedCsvResult {
   try {
-    // Step 1: Normalize CSV to make it RFC 4180 compliant
-    const normalizedInput = normalizeCsv(input)
-    
-    // Step 2: Validate normalized CSV structure
-    const validationErrors = validateCsvStructure(normalizedInput)
-    if (validationErrors.length > 0) {
-      throw new Error(validationErrors.join('; '))
-    }
-
-    // Step 3: Try parsing with headers first
+    // Step 1: Try parsing with headers first (most common case)
     try {
-      return parseWithHeaders(normalizedInput)
+      return parseWithHeaders(input)
     } catch (headerError) {
-      // Log the header parsing error for debugging, then fallback to no-headers parsing
-      console.warn('Header parsing failed, falling back to no-headers parsing:', headerError)
-      // Step 4: If headers fail, try without headers (your case)
-      return parseWithoutHeaders(normalizedInput)
+      console.warn('Header parsing failed, trying with normalization:', headerError)
+      
+      // Step 2: If headers fail, try with normalized input
+      try {
+        const normalizedInput = normalizeCsv(input)
+        return parseWithHeaders(normalizedInput)
+      } catch (normalizedError) {
+        console.warn('Normalized header parsing also failed, falling back to no-headers parsing:', normalizedError)
+        
+        // Step 3: If both fail, try without headers as last resort
+        return parseWithoutHeaders(input)
+      }
     }
   } catch (error: any) {
     if (error.message) {
@@ -99,18 +95,25 @@ export function parseCsvRfc4180(input: string): ParsedCsvResult {
 }
 
 /**
- * Parse CSV with headers (existing logic)
+ * Parse CSV with headers
  */
 function parseWithHeaders(input: string): ParsedCsvResult {
   const result = Papa.parse<Record<string, string>>(input.trim(), {
     header: true,
     skipEmptyLines: true,
-    comments: '#'
+    comments: '#',
+    transformHeader: (header) => header.trim() // Clean up header names
   })
 
+  // Be more lenient with errors - only fail on critical ones
   if (result.errors && result.errors.length > 0) {
-    const errorMessages = result.errors.slice(0, 3).map((e) => e.message || 'CSV parsing error')
-    throw new Error(errorMessages.join('; '))
+    const criticalErrors = result.errors.filter(e => 
+      e.type === 'Delimiter' || e.type === 'Quotes' || e.type === 'FieldMismatch'
+    )
+    if (criticalErrors.length > 0) {
+      const errorMessages = criticalErrors.slice(0, 3).map((e) => e.message || 'CSV parsing error')
+      throw new Error(errorMessages.join('; '))
+    }
   }
 
   const headers = result.meta.fields || []
@@ -118,23 +121,33 @@ function parseWithHeaders(input: string): ParsedCsvResult {
     throw new Error('CSV has no header row or headers could not be determined.')
   }
 
+  // Filter out empty header names
+  const cleanHeaders = headers.filter(header => header && header.trim() !== '')
+  if (cleanHeaders.length === 0) {
+    throw new Error('CSV has no valid header names.')
+  }
+
   const rowObjects = result.data || []
   if (rowObjects.length === 0) {
     throw new Error('CSV file has no data rows.')
   }
 
-  const rows = rowObjects.map((obj) => headers.map((k) => (obj[k] ?? '').toString()))
+  const rows = rowObjects.map((obj) => cleanHeaders.map((k) => (obj[k] ?? '').toString()))
 
-  const badIndex = rows.findIndex((r) => r.length !== headers.length)
-  if (badIndex !== -1) {
-    throw new Error(`Row ${badIndex + 1} has ${rows[badIndex].length} columns but expected ${headers.length}.`)
-  }
+  // Be more lenient with column count mismatches
+  const maxColumns = Math.max(...rows.map(r => r.length), cleanHeaders.length)
+  const normalizedRows = rows.map(row => {
+    while (row.length < maxColumns) {
+      row.push('') // Pad with empty strings for missing columns
+    }
+    return row.slice(0, maxColumns) // Trim excess columns
+  })
 
-  return { headers, rows, rowObjects }
+  return { headers: cleanHeaders, rows: normalizedRows, rowObjects }
 }
 
 /**
- * Parse CSV without headers (for your real case)
+ * Parse CSV without headers
  */
 function parseWithoutHeaders(input: string): ParsedCsvResult {
   const result = Papa.parse(input.trim(), {
@@ -148,23 +161,22 @@ function parseWithoutHeaders(input: string): ParsedCsvResult {
     throw new Error('CSV file has no data rows.')
   }
 
-  // Create default structure for single-column CSV without headers
-  const headers = ['question']
+  // Detect actual CSV structure from the first row
+  const firstRow = rows[0]
+  if (!firstRow || firstRow.length === 0) {
+    throw new Error('CSV file has no valid data in first row.')
+  }
+
+  // Create headers based on actual column count
+  const headers = firstRow.map((_, index) => `Column ${index + 1}`)
   
-  // Handle the case where some rows might have been split due to commas
-  const rowObjects = rows.map((row, index) => {
-    // If row was split into multiple columns due to commas, join them back
-    // Remove outer quotes: first remove leading quote, then trailing quote
-    let questionText = row.join(', ')
-    if (questionText.startsWith('"')) {
-      questionText = questionText.slice(1)
-    }
-    if (questionText.endsWith('"')) {
-      questionText = questionText.slice(0, -1)
-    }
-    return {
-      question: questionText || `Row ${index + 1}`
-    }
+  // Create row objects with actual column structure
+  const rowObjects = rows.map((row, rowIndex) => {
+    const obj: Record<string, string> = {}
+    headers.forEach((header, colIndex) => {
+      obj[header] = row[colIndex] || ''
+    })
+    return obj
   })
 
   return { headers, rows, rowObjects }
