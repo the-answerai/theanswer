@@ -31,7 +31,7 @@ import { User } from 'types'
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
 import FilePresentOutlined from '@mui/icons-material/FilePresentOutlined'
-import RefreshIcon from '@mui/icons-material/Refresh'
+
 import CsvNoticeCard from './CsvNoticeCard'
 import SnackMessage from '../SnackMessage'
 import { parseCsvRfc4180 } from './parseCsv'
@@ -95,7 +95,7 @@ async function fetchCsvParseRun({ csvParseRunId }: { csvParseRunId: string }) {
     return csvParseRun
 }
 
-const baseStyle = {
+const baseStyle: React.CSSProperties = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
@@ -148,12 +148,11 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
             processorId: '',
             rowsRequested: rows?.length || 0,
             context: '',
-            sourceColumns: headers, // ✅ Cambiar de [] a headers para seleccionar todas por defecto
+            sourceColumns: headers,
             includeOriginalColumns: true
         }
     })
 
-    // Watch form values to enable/disable next button
     const watchedValues = watch()
 
     // Auto-select first processor when chatflows appear
@@ -164,10 +163,8 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         }
             }, [chatflows, watchedValues.processorId, setValue])
 
-    // drag & drop and file input
     const onDrop = useCallback(
         (acceptedFiles: any) => {
-            // Do something with the files
             const file = acceptedFiles[0]
             setFile(file)
             setFileName(file.name)
@@ -179,12 +176,10 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                 } else {
                     const content = event.target?.result as string
                     try {
-                        // Use robust RFC 4180 compliant CSV parsing
                         const { headers: H, rows: R } = parseCsvRfc4180(content)
                         setCsvErrors([])
                         setHeaders(H)
                         setRows(R)
-                        // Set defaults: select all columns and use total rows
                         setValue('sourceColumns', H, { shouldValidate: true })
                         setValue('rowsRequested', R.length, { shouldValidate: true })
                         reader.readAsDataURL(file)
@@ -347,19 +342,20 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
 
     const isStepValid = (step: number) => {
         switch (step) {
-            case 0: // Upload step - must have valid CSV
+            case 0:
                 return !!fileName && csvErrors.length === 0 && headers.length > 0 && rows.length > 0
-            case 1: // Configuration step
+            case 1:
                 return (
                     !!watchedValues.name &&
                     !!watchedValues.processorId &&
-                    chatflows.length > 0 && // Must have CSV chatflows available
-                    (watchedValues.rowsRequested > 0 || (watchedValues.rowsRequested === rows?.length && rows?.length > 0))
+                    chatflows.length > 0 &&
+                    watchedValues.rowsRequested > 0 &&
+                    watchedValues.rowsRequested <= (rows?.length || 0)
                 )
-            case 2: // Column selection step
-                return true // Always valid as it's optional which columns to select
-            case 3: // Context step
-                return true // Context is optional
+            case 2:
+                return true
+            case 3:
+                return true
             default:
                 return false
         }
@@ -376,7 +372,6 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                         <Typography variant='body1' gutterBottom>
                             Upload the CSV file you want to process with AI. Ensure the first row contains headers. Lines starting with '#' are treated as comments.
                         </Typography>
-                        {/* @ts-ignore */}
                         <Box {...getRootProps({ style })}>
                             <input {...getInputProps()} />
                             {fileName ? (
@@ -476,22 +471,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                                     <CsvNoticeCard onRefresh={onRefreshChatflows} />
                                 )}
 
-                                {/* Refresh button for better user experience */}
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                        CSV Processing
-                                    </Typography>
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<RefreshIcon />}
-                                        onClick={() => window.location.reload()}
-                                        sx={{ fontWeight: 500, textTransform: 'none' }}
-                                    >
-                                        Refresh
-                                    </Button>
-                                </Stack>
-
-                                <FormControl required error={!!errors.rowsRequested}>
+                                <FormControl required error={!!errors.rowsRequested || (watchedValues.rowsRequested > (rows?.length || 0))}>
                                     <Controller
                                         name='rowsRequested'
                                         control={control}
@@ -511,11 +491,14 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                                                     type='number'
                                                     inputProps={{ min: 1, max: rows?.length ?? 0 }}
                                                     variant='outlined'
-                                                    error={!!errors.rowsRequested}
+                                                    error={!!errors.rowsRequested || (watchedValues.rowsRequested > (rows?.length || 0))}
                                                     fullWidth
                                                 />
                                                 <FormHelperText>
-                                                    {errors.rowsRequested?.message || `How many rows to process (max: ${rows?.length})`}
+                                                    {errors.rowsRequested?.message || 
+                                                     (watchedValues.rowsRequested > (rows?.length || 0) 
+                                                        ? `Cannot process more rows than available (max: ${rows?.length})`
+                                                        : `How many rows to process (max: ${rows?.length})`)}
                                                 </FormHelperText>
                                             </>
                                         )}
@@ -633,20 +616,17 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         }
     }
 
-    // Get the selected processor name for display in the overview
     const getSelectedProcessorName = () => {
         const selectedProcessor = chatflows.find((cf) => cf.id === watchedValues.processorId)
         return selectedProcessor ? selectedProcessor.name : ''
     }
 
-    // Function to handle clicking on a step in the overview to navigate back
     const handleStepClick = (step: number) => {
         if (step <= activeStep) {
             setActiveStep(step)
         }
     }
 
-    // Overview panel component
     const renderOverview = () => {
         return (
             <Card variant='outlined' sx={{ p: 2, height: '100%' }}>
@@ -704,8 +684,14 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                                     </Typography>
                                 )}
                                 {watchedValues.rowsRequested > 0 && (
-                                    <Typography variant='body2'>
+                                    <Typography 
+                                        variant='body2' 
+                                        color={watchedValues.rowsRequested > rows.length ? 'error' : 'inherit'}
+                                    >
                                         <strong>Rows:</strong> {watchedValues.rowsRequested} of {rows.length}
+                                        {watchedValues.rowsRequested > rows.length && (
+                                            <span style={{ color: '#F44336', fontWeight: 'light' }}> Exceeds limit</span>
+                                        )}
                                     </Typography>
                                 )}
                             </Stack>

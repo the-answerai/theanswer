@@ -58,7 +58,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
             setCsvParseRuns(csvParseRuns)
         } catch (error) {
             console.error('Error fetching CSV parse runs:', error)
-            throw error // Re-throw for manual refresh error handling
+            throw error
         } finally {
             setLoading(false)
         }
@@ -78,7 +78,6 @@ const ProcessingHistory = ({ user }: { user: User }) => {
         getData()
     }, [getData])
 
-    // Optional: Auto-refresh when tab becomes visible and there are in-progress runs
     useEffect(() => {
         const hasInProgress = csvParseRuns.some(
             (r) => r.status !== 'READY' && r.status !== 'COMPLETE_WITH_ERRORS'

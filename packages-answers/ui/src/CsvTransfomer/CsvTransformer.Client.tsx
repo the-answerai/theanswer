@@ -41,7 +41,8 @@ const CsvTransformer = () => {
     const fetchChatflows = useCallback(async () => {
         try {
             const { data } = await chatflowsApi.getAllChatflows()
-            setChatflows((data ?? []).filter((chatflow: any) => chatflow.category?.toLowerCase()?.split(';')?.includes('csv')))
+            const filteredChatflows = (data ?? []).filter((chatflow: any) => chatflow.category?.toLowerCase()?.split(';')?.includes('csv'))
+            setChatflows(filteredChatflows)
         } catch (error) {
             console.error('Failed to fetch chatflows:', error)
             setChatflows([])
@@ -55,9 +56,7 @@ const CsvTransformer = () => {
     // Auto-refresh when user returns from marketplace (only if no CSV chatflows currently)
     useEffect(() => {
         const handleVisibilityChange = () => {
-            // Only refresh if document becomes visible and we currently have no CSV chatflows
             if (!document.hidden && chatflows.length === 0) {
-                console.log('Document became visible with no CSV chatflows, refreshing...')
                 fetchChatflows()
             }
         }
@@ -83,7 +82,7 @@ const CsvTransformer = () => {
         )
     }
 
-    // console.log('CSV Transformer user:', user)
+    
 
     return (
         <Container>
