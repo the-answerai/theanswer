@@ -854,7 +854,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                     
                     <ul style={{ margin: 0, paddingLeft: 16, marginBottom: 2 }}>
                         {csvErrors.map((error, i) => (
-                            <li key={i}>
+                            <li key={`csv-error-${i}-${error.substring(0, 20)}`}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     {error}
                                 </Typography>

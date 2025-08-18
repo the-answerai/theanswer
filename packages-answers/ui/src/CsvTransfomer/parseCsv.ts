@@ -152,7 +152,14 @@ function parseWithoutHeaders(input: string): ParsedCsvResult {
   // Handle the case where some rows might have been split due to commas
   const rowObjects = rows.map((row, index) => {
     // If row was split into multiple columns due to commas, join them back
-    const questionText = row.join(', ').replace(/^"|"$/g, '') // Remove outer quotes
+    // Remove outer quotes: first remove leading quote, then trailing quote
+    let questionText = row.join(', ')
+    if (questionText.startsWith('"')) {
+      questionText = questionText.slice(1)
+    }
+    if (questionText.endsWith('"')) {
+      questionText = questionText.slice(0, -1)
+    }
     return {
       question: questionText || `Row ${index + 1}`
     }
