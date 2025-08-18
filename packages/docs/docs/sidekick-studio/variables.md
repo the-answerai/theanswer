@@ -49,10 +49,10 @@ Variables can be used by the nodes in Flowise. For instance, a variable named **
 
 We can then use this variable as **`$vars.<variable-name>`** in the Function of the following nodes:
 
--   [Custom Tool](sidekick-studio/chatflows/tools/custom-tool.md)
--   [Custom Function](sidekick-studio/chatflows/utilities/custom-js-function)
--   [Custom Loader](sidekick-studio/chatflows/document-loaders/custom-document-loader)
--   [If Else](sidekick-studio/chatflows/utilities/if-else)
+-   [Custom Tool](/docs/sidekick-studio/chatflows/tools/custom-tool)
+-   [Custom Function](/docs/sidekick-studio/chatflows/utilities/custom-js-function)
+-   [Custom Loader](/docs/sidekick-studio/chatflows/document-loaders/custom-document-loader)
+-   [If Else](/docs/sidekick-studio/chatflows/utilities/if-else)
 -   Custom MCP
 
 <img src="https://823733684-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F00tYLwhz5RyR7fJEhrWy%2Fuploads%2Fgit-blob-f39017ccf54d011dc38818c46158aa6e5ce71fef%2Fimage%20(105).png?alt=media" alt="" width="283" />
@@ -71,4 +71,4 @@ In Prompt Template:
 
 ## Resources
 
--   [Pass Variables to Function](sidekick-studio/chatflows/tools/custom-tool.md)
+-   [Pass Variables to Function](/docs/sidekick-studio/chatflows/tools/custom-tool)
