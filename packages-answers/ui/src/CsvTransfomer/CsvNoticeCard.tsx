@@ -58,7 +58,7 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
     // Listen for focus events (when user returns to tab)
     window.addEventListener('focus', checkMarketplaceReturn)
     return () => window.removeEventListener('focus', checkMarketplaceReturn)
-  }, [onRefresh, handleRefresh])
+  }, [handleRefresh])
 
   const handleUseProcessor = () => {
     setNavigating(true)

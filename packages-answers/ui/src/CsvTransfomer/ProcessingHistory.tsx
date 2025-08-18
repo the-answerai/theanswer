@@ -62,7 +62,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
         } finally {
             setLoading(false)
         }
-    }, [user])
+    }, [])
 
     const handleRefresh = async () => {
         try {

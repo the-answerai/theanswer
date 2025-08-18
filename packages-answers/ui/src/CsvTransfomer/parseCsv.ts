@@ -6,36 +6,7 @@ export interface ParsedCsvResult {
   rowObjects: Record<string, string>[]
 }
 
-/**
- * Normalize CSV to make it RFC 4180 compliant
- * Handles field-level normalization instead of line-level to preserve column structure
- */
-function normalizeCsv(input: string): string {
-  const lines = input.split('\n')
-  const normalizedLines = lines.map(line => {
-    const trimmed = line.trim()
-    if (trimmed === '') return trimmed
-    
-    // Split by commas and normalize each field individually
-    const fields = trimmed.split(',')
-    const normalizedFields = fields.map(field => {
-      const trimmedField = field.trim()
-      if (trimmedField === '') return trimmedField
-      
-      // If field contains commas or quotes, it needs proper quoting
-      if (trimmedField.includes(',') || trimmedField.includes('"')) {
-        const escaped = trimmedField.replace(/"/g, '""')
-        return `"${escaped}"`
-      }
-      
-      return trimmedField
-    })
-    
-    return normalizedFields.join(',')
-  })
-  
-  return normalizedLines.join('\n')
-}
+
 
 
 
@@ -48,18 +19,10 @@ export function parseCsvRfc4180(input: string): ParsedCsvResult {
     try {
       return parseWithHeaders(input)
     } catch (headerError) {
-      console.warn('Header parsing failed, trying with normalization:', headerError)
+      console.warn('Header parsing failed, falling back to no-headers parsing:', headerError)
       
-      // Step 2: If headers fail, try with normalized input
-      try {
-        const normalizedInput = normalizeCsv(input)
-        return parseWithHeaders(normalizedInput)
-      } catch (normalizedError) {
-        console.warn('Normalized header parsing also failed, falling back to no-headers parsing:', normalizedError)
-        
-        // Step 3: If both fail, try without headers as last resort
-        return parseWithoutHeaders(input)
-      }
+      // Step 2: If headers fail, try without headers as fallback
+      return parseWithoutHeaders(input)
     }
   } catch (error: any) {
     if (error.message) {

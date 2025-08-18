@@ -165,43 +165,6 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         }
     }, [chatflows, watchedValues.processorId, setValue])
 
-    const onDrop = useCallback(
-        (acceptedFiles: any) => {
-            const file = acceptedFiles[0]
-            setFile(file)
-            setFileName(file.name)
-            setCsvErrors([]) // Clear any previous CSV errors
-            const reader = new FileReader()
-
-            reader.onload = (event) => {
-                if (reader.result?.toString().startsWith('data')) {
-                    setFile(reader.result?.toString())
-                } else {
-                    const content = event.target?.result as string
-                    try {
-                        const { headers: H, rows: R } = parseCsvRfc4180(content)
-                        setCsvErrors([])
-                        setHeaders(H)
-                        setRows(R)
-                        setValue('sourceColumns', H, { shouldValidate: true })
-                        setValue('rowsRequested', R.length, { shouldValidate: true })
-                        reader.readAsDataURL(file)
-                    } catch (e: any) {
-                        const errorMessage = getDetailedCsvError(e.message || 'CSV parsing failed.')
-                        setCsvErrors([errorMessage])
-                        setHeaders([])
-                        setRows([])
-                        setValue('rowsRequested', 0)
-                        setToastMessage('CSV validation failed. Please fix the file format.')
-                        return
-                    }
-                }
-            }
-            reader.readAsText(file)
-        },
-        [setValue]
-    )
-
     // Function to convert technical errors to user-friendly messages
     const getDetailedCsvError = (error: string): string => {
         if (error.includes('Number of columns')) {
@@ -230,6 +193,43 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
         
         return error
     }
+
+    const onDrop = useCallback(
+        (acceptedFiles: any) => {
+            const file = acceptedFiles[0]
+            setFileName(file.name)
+            setCsvErrors([]) // Clear any previous CSV errors
+            const reader = new FileReader()
+
+            reader.onload = (event) => {
+                const content = event.target?.result as string
+                try {
+                    const { headers: H, rows: R } = parseCsvRfc4180(content)
+                    setCsvErrors([])
+                    setHeaders(H)
+                    setRows(R)
+                    setValue('sourceColumns', H, { shouldValidate: true })
+                    setValue('rowsRequested', R.length, { shouldValidate: true })
+                    // Convert file to data URL for storage
+                    const dataUrlReader = new FileReader()
+                    dataUrlReader.onload = () => {
+                        setFile(dataUrlReader.result?.toString() || null)
+                    }
+                    dataUrlReader.readAsDataURL(file)
+                } catch (e: any) {
+                    const errorMessage = getDetailedCsvError(e.message || 'CSV parsing failed.')
+                    setCsvErrors([errorMessage])
+                    setHeaders([])
+                    setRows([])
+                    setValue('rowsRequested', 0)
+                    setToastMessage('CSV validation failed. Please fix the file format.')
+                    setFile(null)
+                }
+            }
+            reader.readAsText(file)
+        },
+        [setValue]
+    )
 
     const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } = useDropzone({
         onDrop,
