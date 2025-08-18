@@ -202,9 +202,15 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
             const reader = new FileReader()
 
             reader.onload = (event) => {
-                const content = event.target?.result as string
+                const result = event.target?.result
+                if (typeof result !== 'string') {
+                    console.error('Failed to read file as text')
+                    setToastMessage('Failed to read CSV file. Please try again.')
+                    return
+                }
+                
                 try {
-                    const { headers: H, rows: R } = parseCsvRfc4180(content)
+                    const { headers: H, rows: R } = parseCsvRfc4180(result)
                     setCsvErrors([])
                     setHeaders(H)
                     setRows(R)
@@ -213,7 +219,12 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
                     // Convert file to data URL for storage
                     const dataUrlReader = new FileReader()
                     dataUrlReader.onload = () => {
-                        setFile(dataUrlReader.result?.toString() || null)
+                        if (dataUrlReader.result && typeof dataUrlReader.result === 'string') {
+                            setFile(dataUrlReader.result)
+                        } else {
+                            console.error('Failed to convert file to data URL')
+                            setFile(null)
+                        }
                     }
                     dataUrlReader.readAsDataURL(file)
                 } catch (e: any) {
