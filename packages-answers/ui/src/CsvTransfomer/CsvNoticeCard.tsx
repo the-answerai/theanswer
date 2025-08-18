@@ -10,6 +10,8 @@ import {
 import { useRouter } from 'next/navigation'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LaunchIcon from '@mui/icons-material/Launch'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import SnackMessage from '../SnackMessage'
 
 
 interface CsvNoticeCardProps {
@@ -19,15 +21,23 @@ interface CsvNoticeCardProps {
 const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
   const router = useRouter()
   const [navigating, setNavigating] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  const [noticeSnack, setNoticeSnack] = useState('')
 
 
   const handleRefresh = async () => {
     if (!onRefresh) return
     
     try {
+      setIsRefreshing(true)
       await onRefresh()
+      setNoticeSnack('Templates refreshed. If a CSV processor was installed, it should now be visible.')
     } catch (error) {
       console.error('Error refreshing chatflows:', error)
+      setNoticeSnack('Failed to refresh templates. Please try again.')
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -57,15 +67,15 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
       // Mark that user is going to install CSV processor
       localStorage.setItem('csv-processor-install-intent', 'true')
       
-      // Navigate to marketplace with CSV usecase filter
-      await router.push('/sidekick-studio/marketplaces?usecase=CSV')
+      // Open marketplace in a new tab with CSV usecase filter
+      window.open('/sidekick-studio/marketplaces?usecase=CSV', '_blank', 'noopener,noreferrer')
     } catch (error) {
       try {
         // Fallback: Go to marketplace with CSV search
-        await router.push('/sidekick-studio/marketplaces?search=csv')
+        window.open('/sidekick-studio/marketplaces?search=csv', '_blank', 'noopener,noreferrer')
       } catch (fallbackError) {
         // Final fallback: Just go to marketplace
-        router.push('/sidekick-studio/marketplaces')
+        window.open('/sidekick-studio/marketplaces', '_blank', 'noopener,noreferrer')
       }
     } finally {
       // Reset loading state after a brief delay to show feedback
@@ -112,9 +122,9 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
             <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
               Click below to install our ready-to-use CSV processor template from the marketplace.
             </Typography>
-                         <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
-               After installation: return to this page and the chatflow list will refresh automatically.
-             </Typography>
+            <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+              After installation: return to this page and click Refresh to load the template.
+            </Typography>
           </Stack>
         </Stack>
           
@@ -136,7 +146,7 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
               )
             }
             onClick={handleUseProcessor}
-                         disabled={navigating}
+            disabled={navigating}
             sx={{ 
               fontWeight: 500,
               textTransform: 'none',
@@ -145,8 +155,30 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
           >
             {navigating ? 'Opening Marketplace...' : 'Install CSV Processor'}
           </Button>
+          
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={
+              isRefreshing ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <RefreshIcon sx={{ fontSize: 16 }} />
+              )
+            }
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            sx={{ 
+              fontWeight: 500,
+              textTransform: 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {isRefreshing ? 'Refreshing…' : 'Refresh'}
+          </Button>
         </Stack>
       </Stack>
+      <SnackMessage message={noticeSnack} />
     </Card>
   )
 }
