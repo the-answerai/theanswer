@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { 
   Card, 
   Typography, 
@@ -25,7 +25,7 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
   const [noticeSnack, setNoticeSnack] = useState('')
 
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (!onRefresh) return
     
     try {
@@ -38,7 +38,7 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [onRefresh])
 
   // Check if user returned from marketplace and auto-refresh
   useEffect(() => {

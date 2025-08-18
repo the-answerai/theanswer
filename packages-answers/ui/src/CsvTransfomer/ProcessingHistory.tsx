@@ -75,7 +75,10 @@ const ProcessingHistory = ({ user }: { user: User }) => {
     }
 
     useEffect(() => {
-        getData()
+        getData().catch(error => {
+            console.error('Error in initial data fetch:', error)
+            // Handle error gracefully without rethrowing
+        })
     }, [getData])
 
     useEffect(() => {

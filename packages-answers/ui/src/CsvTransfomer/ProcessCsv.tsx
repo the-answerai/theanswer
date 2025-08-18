@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
@@ -134,6 +134,7 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
     const [isCloning, setIsCloning] = useState(false)
     const searchParams = useSearchParams()
     const cloneFrom = searchParams.get('cloneFrom')
+    const hasAutoSelected = useRef(false)
 
     const {
         control,
@@ -155,19 +156,21 @@ const ProcessCsv = ({ chatflows, user, onNavigateToHistory, onRefreshChatflows }
 
     const watchedValues = watch()
 
-    // Auto-select first processor when chatflows appear
+    // Auto-select first processor when chatflows appear (only once)
     useEffect(() => {
-        if (!watchedValues.processorId && chatflows.length > 0) {
+        if (!watchedValues.processorId && chatflows.length > 0 && !hasAutoSelected.current) {
             setValue('processorId', chatflows[0].id, { shouldValidate: true })
             setToastMessage(`Selected processor: ${chatflows[0].name}`)
+            hasAutoSelected.current = true
         }
-            }, [chatflows, watchedValues.processorId, setValue])
+    }, [chatflows, watchedValues.processorId, setValue])
 
     const onDrop = useCallback(
         (acceptedFiles: any) => {
             const file = acceptedFiles[0]
             setFile(file)
             setFileName(file.name)
+            setCsvErrors([]) // Clear any previous CSV errors
             const reader = new FileReader()
 
             reader.onload = (event) => {

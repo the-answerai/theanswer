@@ -8,6 +8,7 @@ export interface ParsedCsvResult {
 
 /**
  * Normalize CSV to make it RFC 4180 compliant
+ * Handles field-level normalization instead of line-level to preserve column structure
  */
 function normalizeCsv(input: string): string {
   const lines = input.split('\n')
@@ -15,54 +16,28 @@ function normalizeCsv(input: string): string {
     const trimmed = line.trim()
     if (trimmed === '') return trimmed
     
-    // If line contains commas and is not already quoted, quote it
-    if (trimmed.includes(',') && !trimmed.startsWith('"')) {
-      // Escape any existing quotes and wrap in quotes
-      const escaped = trimmed.replace(/"/g, '""')
-      return `"${escaped}"`
-    }
+    // Split by commas and normalize each field individually
+    const fields = trimmed.split(',')
+    const normalizedFields = fields.map(field => {
+      const trimmedField = field.trim()
+      if (trimmedField === '') return trimmedField
+      
+      // If field contains commas or quotes, it needs proper quoting
+      if (trimmedField.includes(',') || trimmedField.includes('"')) {
+        const escaped = trimmedField.replace(/"/g, '""')
+        return `"${escaped}"`
+      }
+      
+      return trimmedField
+    })
     
-    return trimmed
+    return normalizedFields.join(',')
   })
   
   return normalizedLines.join('\n')
 }
 
-/**
- * Validate CSV structure for RFC 4180 compliance
- */
-function validateCsvStructure(input: string): string[] {
-  const errors: string[] = []
-  
-  if (!input || input.trim() === '') {
-    errors.push('CSV file is empty or contains no data.')
-    return errors
-  }
 
-  const lines = input.split('\n')
-  if (lines.length < 1) {
-    errors.push('CSV file must contain at least one line.')
-    return errors
-  }
-
-  // Check for unmatched quotes in each line
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line.trim() === '') continue
-    
-    const quoteCount = (line.match(/"/g) || []).length
-    if (quoteCount % 2 !== 0) {
-      errors.push(`Line ${i + 1}: Unmatched quotes detected. Ensure all quoted fields start and end with double quotes.`)
-    }
-    
-    // Check that fields with commas are properly quoted
-    if (line.includes(',') && !line.startsWith('"')) {
-      errors.push(`Line ${i + 1}: Fields containing commas must be enclosed in quotes for RFC 4180 compliance.`)
-    }
-  }
-
-  return errors
-}
 
 /**
  * Parse CSV content using RFC 4180 compliant parser
