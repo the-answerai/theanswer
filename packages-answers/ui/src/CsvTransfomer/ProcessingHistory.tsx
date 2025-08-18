@@ -69,6 +69,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
             await getData()
             setHistorySnack('Run statuses updated.')
         } catch (error) {
+            console.error('Error refreshing CSV parse runs:', error)
             setHistorySnack('Failed to refresh run statuses. Please try again.')
         }
     }

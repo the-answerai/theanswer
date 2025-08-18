@@ -60,28 +60,19 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
     return () => window.removeEventListener('focus', checkMarketplaceReturn)
   }, [onRefresh, handleRefresh])
 
-  const handleUseProcessor = async () => {
+  const handleUseProcessor = () => {
     setNavigating(true)
-    try {
-      // Mark that user is going to install CSV processor
-      localStorage.setItem('csv-processor-install-intent', 'true')
-      
-      // Open marketplace in a new tab with CSV usecase filter
-      window.open('/sidekick-studio/marketplaces?usecase=CSV', '_blank', 'noopener,noreferrer')
-    } catch (error) {
-      try {
-        // Fallback: Go to marketplace with CSV search
-        window.open('/sidekick-studio/marketplaces?search=csv', '_blank', 'noopener,noreferrer')
-      } catch (fallbackError) {
-        // Final fallback: Just go to marketplace
-        window.open('/sidekick-studio/marketplaces', '_blank', 'noopener,noreferrer')
-      }
-    } finally {
-      // Reset loading state after a brief delay to show feedback
-      setTimeout(() => {
-        setNavigating(false)
-      }, 1000)
-    }
+    
+    // Mark that user is going to install CSV processor
+    localStorage.setItem('csv-processor-install-intent', 'true')
+    
+    // Open marketplace in a new tab with CSV usecase filter
+    window.open('/sidekick-studio/marketplaces?usecase=CSV', '_blank', 'noopener,noreferrer')
+    
+    // Reset loading state after a brief delay to show feedback
+    setTimeout(() => {
+      setNavigating(false)
+    }, 1000)
   }
 
   return (
