@@ -5,27 +5,53 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { IReactFlowEdge, IReactFlowNode, IUser } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { DeleteResult } from 'typeorm'
+import { DeleteResult, IsNull } from 'typeorm'
 import { CustomTemplate } from '../../database/entities/CustomTemplate'
+import { v4 as uuidv4 } from 'uuid'
+import { validate as isUUID } from 'uuid'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { ChatflowVisibility } from '../../database/entities/ChatFlow'
-import { validate as isUUID } from 'uuid'
 
 import chatflowsService from '../chatflows'
-import checkOwnership from '../../utils/checkOwnership'
-
+import { omit } from 'lodash'
+// import checkOwnership from '../../utils/checkOwnership'
 type ITemplate = {
-    badge: string
+    badge?: string
     description: string
     framework: string[]
     usecases: string[]
     nodes: IReactFlowNode[]
     edges: IReactFlowEdge[]
     iconSrc?: string
+    name?: string
+    category?: string
+    type?: string
+    chatbotConfig?: string
+    apiConfig?: string
+    followUpPrompts?: string
+    userId?: string
+    organizationId?: string
+    browserExtConfig?: string
+    visibility?: string[]
 }
 
 const getCategories = (fileDataObj: ITemplate) => {
-    return Array.from(new Set(fileDataObj?.nodes?.map((node) => node.data.category).filter((category) => category)))
+    return Array.from(new Set(fileDataObj?.nodes?.map((node) => node.data?.category).filter((category) => category)))
+}
+
+// Helper function to create template object
+const TEMPLATE_FIELD_BLOCKLIST = ['userId', 'apikeyid', 'deletedDate', '']
+const createTemplate = (fileDataObj: ITemplate, file: string, fileData: string, type: string) => {
+    return {
+        ...omit(fileDataObj, TEMPLATE_FIELD_BLOCKLIST),
+        id: uuidv4(),
+        name: fileDataObj?.name || file.split('.json')[0],
+        templateName: file.split('.json')[0],
+        flowData: fileData,
+        categories: type === 'Tool' ? [] : getCategories(fileDataObj),
+        type,
+        requiresClone: true
+    }
 }
 
 // Add prefix to file-based template IDs to avoid collisions
@@ -39,126 +65,111 @@ const TEMPLATE_TYPE_PREFIXES = {
 // Get all templates for marketplaces
 const getAllTemplates = async (user: IUser | undefined) => {
     try {
+        // let templates: any[] = []
+
+        // // Database templates (keep existing ID as is since they're UUIDs)
+        // const appServer = getRunningExpressApp()
+        // let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find()
+        // chatflows = chatflows.filter((chatflow) => chatflow.visibility?.includes(ChatflowVisibility.MARKETPLACE))
+        // chatflows = chatflows.filter((chatflow) => checkOwnership(chatflow, user))
+
+        // if (chatflows) {
+        //     chatflows.forEach((chatflow) => {
+        //         const chatbotConfig = JSON.parse(chatflow.chatbotConfig || '{}')
+        //         const template = {
+        //             id: chatflow.id, // UUID from database
+        //             templateName: chatflow.name,
+        //             flowData: chatflow.flowData,
+        //             badge: chatflow.userId === user?.id ? `SHARED BY ME` : `SHARED BY OTHERS`,
+        //             categories: chatflow.category?.includes(';') ? chatflow.category.split(';') : chatflow.category,
+        //             type: chatflow.type === 'MULTIAGENT' ? 'Agent Community' : 'Chatflow Community',
+        //             description: chatflow.description,
+        //             requiresClone: chatbotConfig.requiresClone || false,
+        //             isExecutable:
+        //                 chatflow.userId === user?.id ||
+        //                 (chatflow.visibility?.includes(ChatflowVisibility.ANSWERAI) && chatflow.organizationId === user?.organizationId)
+        //         }
+        //         templates.push(template)
+        //     })
+        // }
+
         let templates: any[] = []
 
-        // Database templates (keep existing ID as is since they're UUIDs)
-        const appServer = getRunningExpressApp()
-        let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find()
-        chatflows = chatflows.filter((chatflow) => chatflow.visibility?.includes(ChatflowVisibility.MARKETPLACE))
-        chatflows = chatflows.filter((chatflow) => checkOwnership(chatflow, user))
-
-        if (chatflows) {
-            chatflows.forEach((chatflow) => {
-                const chatbotConfig = JSON.parse(chatflow.chatbotConfig || '{}')
-                const template = {
-                    id: chatflow.id, // UUID from database
-                    templateName: chatflow.name,
-                    flowData: chatflow.flowData,
-                    badge: chatflow.userId === user?.id ? `SHARED BY ME` : `SHARED BY OTHERS`,
-                    categories: chatflow.category?.includes(';') ? chatflow.category.split(';') : chatflow.category,
-                    type: chatflow.type === 'MULTIAGENT' ? 'Agent Community' : 'Chatflow Community',
-                    description: chatflow.description,
-                    requiresClone: chatbotConfig.requiresClone || false,
-                    isExecutable:
-                        chatflow.userId === user?.id ||
-                        (chatflow.visibility?.includes(ChatflowVisibility.ANSWERAI) && chatflow.organizationId === user?.organizationId)
+        // Helper function to safely read directory
+        const safeReadDir = (dirPath: string): string[] => {
+            try {
+                if (fs.existsSync(dirPath)) {
+                    return fs.readdirSync(dirPath).filter((file) => path.extname(file) === '.json')
                 }
-                templates.push(template)
-            })
+                return []
+            } catch (error) {
+                console.warn(`Directory not found or not accessible: ${dirPath}`)
+                return []
+            }
         }
 
         // Chatflow templates
         let marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows')
-        let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
-        jsonsInDir.forEach((file, index) => {
-            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows', file)
-            const fileData = fs.readFileSync(filePath)
-            const fileDataObj = JSON.parse(fileData.toString()) as ITemplate
-
-            const template = {
-                id: `${TEMPLATE_TYPE_PREFIXES.CHATFLOW}${index}`,
-                templateName: file.split('.json')[0],
-                flowData: fileData.toString(),
-                badge: fileDataObj?.badge,
-                framework: fileDataObj?.framework,
-                usecases: fileDataObj?.usecases,
-                categories: getCategories(fileDataObj),
-                type: 'Chatflow',
-                description: fileDataObj?.description || '',
-                iconSrc: fileDataObj?.iconSrc || '',
-                requiresClone: true // All marketplace templates require cloning
+        let jsonsInDir = safeReadDir(marketplaceDir)
+        jsonsInDir.forEach((file) => {
+            try {
+                const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows', file)
+                const fileData = fs.readFileSync(filePath)
+                const fileDataObj = JSON.parse(fileData.toString()) as ITemplate
+                const template = createTemplate(fileDataObj, file, fileData.toString(), 'Chatflow')
+                templates.push(template)
+            } catch (error) {
+                console.error(`Error processing chatflow template ${file}:`, error)
             }
-            templates.push(template)
         })
 
         // Tool templates
         marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'tools')
-        jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
-        jsonsInDir.forEach((file, index) => {
-            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'tools', file)
-            const fileData = fs.readFileSync(filePath)
-            const fileDataObj = JSON.parse(fileData.toString())
-            const template = {
-                ...fileDataObj,
-                id: `${TEMPLATE_TYPE_PREFIXES.TOOL}${index}`,
-                type: 'Tool',
-                framework: fileDataObj?.framework,
-                badge: fileDataObj?.badge,
-                usecases: fileDataObj?.usecases,
-                categories: [],
-                templateName: file.split('.json')[0],
-                requiresClone: true // All marketplace templates require cloning
+        jsonsInDir = safeReadDir(marketplaceDir)
+        jsonsInDir.forEach((file) => {
+            try {
+                const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'tools', file)
+                const fileData = fs.readFileSync(filePath)
+                const fileDataObj = JSON.parse(fileData.toString()) as ITemplate
+                const template = createTemplate(fileDataObj, file, fileData.toString(), 'Tool')
+                templates.push(template)
+            } catch (error) {
+                console.error(`Error processing tool template ${file}:`, error)
             }
-            templates.push(template)
         })
 
         // Agentflow templates
         marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflows')
-        jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
-        jsonsInDir.forEach((file, index) => {
-            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflows', file)
-            const fileData = fs.readFileSync(filePath)
-            const fileDataObj = JSON.parse(fileData.toString())
-            const template = {
-                id: `${TEMPLATE_TYPE_PREFIXES.AGENTFLOW}${index}`,
-                templateName: file.split('.json')[0],
-                flowData: fileData.toString(),
-                badge: fileDataObj?.badge,
-                framework: fileDataObj?.framework,
-                usecases: fileDataObj?.usecases,
-                categories: fileDataObj?.categories,
-                type: 'Agentflow',
-                description: fileDataObj?.description || '',
-                iconSrc: fileDataObj?.iconSrc || '',
-                requiresClone: true // All marketplace templates require cloning
+        jsonsInDir = safeReadDir(marketplaceDir)
+        jsonsInDir.forEach((file) => {
+            try {
+                const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflows', file)
+                const fileData = fs.readFileSync(filePath)
+                const fileDataObj = JSON.parse(fileData.toString()) as ITemplate
+                const template = createTemplate(fileDataObj, file, fileData.toString(), 'Agentflow')
+                templates.push(template)
+            } catch (error) {
+                console.error(`Error processing agentflow template ${file}:`, error)
             }
-            templates.push(template)
         })
 
-        // AnswerAI templates
-        marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'answerai')
-        jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
-        jsonsInDir.forEach((file, index) => {
-            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'answerai', file)
-            const fileData = fs.readFileSync(filePath)
-            const fileDataObj = JSON.parse(fileData.toString())
-            const template = {
-                id: `${TEMPLATE_TYPE_PREFIXES.ANSWERAI}${index}`,
-                templateName: file.split('.json')[0],
-                flowData: fileData.toString(),
-                badge: fileDataObj?.badge,
-                framework: fileDataObj?.framework,
-                usecases: fileDataObj?.usecases,
-                categories: fileDataObj?.categories,
-                type: 'AnswerAI',
-                description: fileDataObj?.description || '',
-                iconSrc: fileDataObj?.iconSrc || '',
-                requiresClone: true // All marketplace templates require cloning
+        // AgentflowV2 templates
+        marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflowsv2')
+        jsonsInDir = safeReadDir(marketplaceDir)
+        jsonsInDir.forEach((file) => {
+            try {
+                const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflowsv2', file)
+                const fileData = fs.readFileSync(filePath)
+                const fileDataObj = JSON.parse(fileData.toString()) as ITemplate
+                const template = createTemplate(fileDataObj, file, fileData.toString(), 'AgentflowV2')
+                templates.push(template)
+            } catch (error) {
+                console.error(`Error processing agentflowv2 template ${file}:`, error)
             }
-            templates.push(template)
         })
 
-        const sortedTemplates = templates.sort((a, b) => a.templateName.localeCompare(b.templateName))
+        // const sortedTemplates = templates.sort((a, b) => a.templateName?.localeCompare(b.templateName))
+        const sortedTemplates = templates
         const FlowiseDocsQnAIndex = sortedTemplates.findIndex((tmp) => tmp.templateName === 'Flowise Docs QnA')
         if (FlowiseDocsQnAIndex > 0) {
             sortedTemplates.unshift(sortedTemplates.splice(FlowiseDocsQnAIndex, 1)[0])
@@ -283,10 +294,24 @@ const getMarketplaceTemplate = async (templateIdOrName: string, user?: IUser): P
     }
 }
 
-const deleteCustomTemplate = async (templateId: string): Promise<DeleteResult> => {
+const deleteCustomTemplate = async (templateId: string, user: IUser): Promise<DeleteResult> => {
     try {
         const appServer = getRunningExpressApp()
-        return await appServer.AppDataSource.getRepository(CustomTemplate).delete({ id: templateId })
+
+        const template = await appServer.AppDataSource.getRepository(CustomTemplate).findOne({
+            where: {
+                id: templateId,
+                userId: user.id,
+                organizationId: user.organizationId,
+                deletedDate: IsNull()
+            }
+        })
+
+        if (!template) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Template not found or access denied')
+        }
+
+        return await appServer.AppDataSource.getRepository(CustomTemplate).softDelete({ id: templateId })
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -295,30 +320,18 @@ const deleteCustomTemplate = async (templateId: string): Promise<DeleteResult> =
     }
 }
 
-const getAllCustomTemplates = async (): Promise<any> => {
+const getAllCustomTemplates = async (user: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const templates: any[] = await appServer.AppDataSource.getRepository(CustomTemplate).find()
-        templates.map((template) => {
-            template.usecases = template.usecases ? JSON.parse(template.usecases) : ''
-            if (template.type === 'Tool') {
-                template.flowData = JSON.parse(template.flowData)
-                template.iconSrc = template.flowData.iconSrc
-                template.schema = template.flowData.schema
-                template.func = template.flowData.func
-                template.categories = []
-                template.flowData = undefined
-            } else {
-                template.categories = getCategories(JSON.parse(template.flowData))
-            }
-            if (!template.badge) {
-                template.badge = ''
-            }
-            if (!template.framework) {
-                template.framework = ''
+        const templates: any[] = await appServer.AppDataSource.getRepository(CustomTemplate).find({
+            where: {
+                userId: user.id,
+                organizationId: user.organizationId,
+                deletedDate: IsNull()
             }
         })
-        return templates
+
+        return formatTemplateResponse(templates)
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -327,20 +340,58 @@ const getAllCustomTemplates = async (): Promise<any> => {
     }
 }
 
-const saveCustomTemplate = async (body: any): Promise<any> => {
+const getOrganizationTemplates = async (user: IUser): Promise<any> => {
     try {
+        const appServer = getRunningExpressApp()
+
+        // Get templates shared with org
+        const templates: any[] = await appServer.AppDataSource.getRepository(CustomTemplate).find({
+            where: {
+                organizationId: user.organizationId,
+                shareWithOrg: true,
+                deletedDate: IsNull()
+            }
+        })
+
+        return formatTemplateResponse(templates)
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: marketplacesService.getOrganizationTemplates - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const saveCustomTemplate = async (body: any, user: IUser): Promise<any> => {
+    try {
+        if (!user.organizationId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'User must belong to an organization to create templates')
+        }
+
         const appServer = getRunningExpressApp()
         let flowDataStr = ''
         let derivedFramework = ''
         const customTemplate = new CustomTemplate()
         Object.assign(customTemplate, body)
 
+        customTemplate.userId = user.id
+        customTemplate.organizationId = user.organizationId
+        customTemplate.shareWithOrg = body.shareWithOrg || false
+
         if (body.chatflowId) {
-            const chatflow = await chatflowsService.getChatflowById(body.chatflowId)
+            const chatflow = await chatflowsService.getChatflowById(body.chatflowId, user)
             const flowData = JSON.parse(chatflow.flowData)
             const { framework, exportJson } = _generateExportFlowData(flowData)
             flowDataStr = JSON.stringify(exportJson)
             customTemplate.framework = framework
+            customTemplate.parentId = body.chatflowId
+            customTemplate.chatbotConfig = chatflow.chatbotConfig
+            customTemplate.visibility = chatflow.visibility
+            customTemplate.apiConfig = chatflow.apiConfig
+            customTemplate.speechToText = chatflow.speechToText
+            customTemplate.category = chatflow.category
+            customTemplate.type = chatflow.type
+            customTemplate.description = customTemplate.description || chatflow.description
         } else if (body.tool) {
             const flowData = {
                 iconSrc: body.tool.iconSrc,
@@ -351,10 +402,12 @@ const saveCustomTemplate = async (body: any): Promise<any> => {
             customTemplate.type = 'Tool'
             flowDataStr = JSON.stringify(flowData)
         }
+
         customTemplate.framework = derivedFramework
         if (customTemplate.usecases) {
             customTemplate.usecases = JSON.stringify(customTemplate.usecases)
         }
+
         const entity = appServer.AppDataSource.getRepository(CustomTemplate).create(customTemplate)
         entity.flowData = flowDataStr
         const flowTemplate = await appServer.AppDataSource.getRepository(CustomTemplate).save(entity)
@@ -382,6 +435,9 @@ const _generateExportFlowData = (flowData: any) => {
             version: node.data.version,
             name: node.data.name,
             type: node.data.type,
+            color: node.data.color,
+            hideOutput: node.data.hideOutput,
+            hideInput: node.data.hideInput,
             baseClasses: node.data.baseClasses,
             tags: node.data.tags,
             category: node.data.category,
@@ -400,6 +456,17 @@ const _generateExportFlowData = (flowData: any) => {
             }
         }
 
+        // Check for Answer Agent framework
+        if (
+            node.data.category &&
+            (node.data.category.includes('MCP Tools') ||
+                node.data.category.includes('Answer Agent') ||
+                node.data.name?.includes('mcp') ||
+                node.data.name?.includes('answer'))
+        ) {
+            framework = 'Answer Agent'
+        }
+
         // Remove password, file & folder
         if (node.data.inputs && Object.keys(node.data.inputs).length) {
             const nodeDataInputs: any = {}
@@ -413,19 +480,53 @@ const _generateExportFlowData = (flowData: any) => {
             newNodeData.inputs = nodeDataInputs
         }
 
-        nodes[i].data = newNodeData
+        nodes[i] = {
+            ...node,
+            data: newNodeData
+        }
     }
+
     const exportJson = {
         nodes,
         edges
     }
-    return { exportJson, framework }
+
+    return { framework, exportJson }
+}
+
+/**
+ * Helper function to format template response data
+ * Handles JSON parsing of usecases and flowData, and sets default values for missing fields
+ */
+const formatTemplateResponse = (templates: any[]): any[] => {
+    return templates.map((template) => {
+        template.usecases = template.usecases ? JSON.parse(template.usecases) : ''
+        if (template.type === 'Tool') {
+            template.flowData = JSON.parse(template.flowData)
+            template.iconSrc = template.flowData.iconSrc
+            template.schema = template.flowData.schema
+            template.func = template.flowData.func
+            template.categories = []
+            template.flowData = undefined
+        } else {
+            template.categories = getCategories(JSON.parse(template.flowData))
+        }
+        if (!template.badge) {
+            template.badge = ''
+        }
+        if (!template.framework) {
+            template.framework = ''
+        }
+        return template
+    })
 }
 
 export default {
     getAllTemplates,
     getAllCustomTemplates,
+    getOrganizationTemplates,
     saveCustomTemplate,
     deleteCustomTemplate,
-    getMarketplaceTemplate
+    getMarketplaceTemplate,
+    formatTemplateResponse
 }

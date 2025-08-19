@@ -18,6 +18,7 @@ import getUploadFileRouter from './get-upload-file'
 import getUploadPathRouter from './get-upload-path'
 import internalChatmessagesRouter from './internal-chat-messages'
 import internalPredictionRouter from './internal-predictions'
+import langfuseRouter from './langfuse'
 import leadsRouter from './leads'
 import loadPromptRouter from './load-prompts'
 import marketplacesRouter from './marketplaces'
@@ -35,6 +36,7 @@ import predictionRouter from './predictions'
 import promptListsRouter from './prompts-lists'
 import publicChatbotRouter from './public-chatbots'
 import publicChatflowsRouter from './public-chatflows'
+import publicExecutionsRouter from './public-executions'
 import statsRouter from './stats'
 import toolsRouter from './tools'
 import upsertHistoryRouter from './upsert-history'
@@ -45,6 +47,7 @@ import versionRouter from './versions'
 import planRouter from './plan'
 import chatsRouter from './chats'
 import googleAuthRouter from './google-auth'
+import salesforceAuthRouter from './salesforce-auth'
 import billingRouter from './billing'
 import nvidiaNimRouter from './nvidia-nim'
 import gmailRouter from './gmail'
@@ -52,12 +55,18 @@ import csvParserRouter from './csv-parser'
 import browserExtensionRouter from './browser-extension'
 import dalleImageUploadRouter from './dalle-image-upload'
 import dalleImageRouter from './dalle-image'
+import executionsRouter from './executions'
+import validationRouter from './validation'
+import agentflowv2GeneratorRouter from './agentflowv2-generator'
+import adminRouter from './admin'
 
 const router = express.Router()
 
 router.use('/', googleAuthRouter)
+router.use('/salesforce-auth', salesforceAuthRouter)
 router.use('/ping', pingRouter)
 router.use('/apikey', apikeyRouter)
+router.use('/auth', express.Router()) // Auth routes handled by middleware
 router.use('/assistants', assistantsRouter)
 router.use('/attachments', attachmentsRouter)
 router.use('/chatflows', chatflowsRouter)
@@ -74,6 +83,7 @@ router.use('/fetch-links', fetchLinksRouter)
 router.use('/flow-config', flowConfigRouter)
 router.use('/internal-chatmessage', internalChatmessagesRouter)
 router.use('/internal-prediction', internalPredictionRouter)
+router.use('/langfuse', langfuseRouter)
 router.use('/get-upload-file', getUploadFileRouter)
 router.use('/get-upload-path', getUploadPathRouter)
 router.use('/leads', leadsRouter)
@@ -93,6 +103,7 @@ router.use('/prediction', predictionRouter)
 router.use('/prompts-list', promptListsRouter)
 router.use('/public-chatbotConfig', publicChatbotRouter)
 router.use('/public-chatflows', publicChatflowsRouter)
+router.use('/public-executions', publicExecutionsRouter)
 router.use('/stats', statsRouter)
 router.use('/tools', toolsRouter)
 router.use('/upload-dalle-image', dalleImageUploadRouter)
@@ -108,5 +119,9 @@ router.use('/nvidia-nim', nvidiaNimRouter)
 router.use('/gmail', gmailRouter)
 router.use('/csv-parser', csvParserRouter)
 router.use('/browser-extension', browserExtensionRouter)
+router.use('/executions', executionsRouter)
+router.use('/validation', validationRouter)
+router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
+router.use('/admin', adminRouter)
 
 export default router

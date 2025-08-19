@@ -1,0 +1,148 @@
+---
+description: Flowise Resource Implementation Architecture
+globs: 
+alwaysApply: false
+---
+# Server Architecture Pattern
+
+### 1. Routes Layer (`packages/server/src/routes/{resource}/index.ts`)
+- **Purpose**: Express route definitions with authentication middleware
+- **Pattern**: RESTful endpoint mapping to controller methods
+- **Structure**:
+  ```typescript
+  import express from 'express'
+  import {resource}Controller from '../../controllers/{resource}'
+  import enforceAbility from '../../middlewares/authentication/enforceAbility'
+  
+  const router = express.Router()
+  
+  // CREATE
+  router.post('/', enforceAbility('{Resource}'), {resource}Controller.save{Resource})
+  router.post('/import{resource}s', enforceAbility('{Resource}'), {resource}Controller.import{Resource}s)
+  
+  // READ
+  router.get('/', enforceAbility('{Resource}'), {resource}Controller.getAll{Resource}s)
+  router.get(['/', '/:id'], enforceAbility('{Resource}'), {resource}Controller.get{Resource}ById)
+  router.get(['/apikey/', '/apikey/:apikey'], enforceAbility('{Resource}'), {resource}Controller.get{Resource}ByApiKey)
+  
+  // UPDATE
+  router.put(['/', '/:id'], enforceAbility('{Resource}'), {resource}Controller.update{Resource})
+  
+  // DELETE
+  router.delete(['/', '/:id'], enforceAbility('{Resource}'), {resource}Controller.delete{Resource})
+  ```
+
+### 2. Controllers Layer (`packages/server/src/controllers/{resource}/index.ts`)
+- **Purpose**: Request/response handling, validation, error handling
+- **Pattern**: Async functions that delegate to services
+- **Key Responsibilities**:
+  - Request parameter validation
+  - User authentication/authorization checks
+  - Calling service layer methods
+  - Error handling with try/catch
+  - HTTP response formatting
+- **Structure**:
+  ```typescript
+  import { NextFunction, Request, Response } from 'express'
+  import { StatusCodes } from 'http-status-codes'
+  import {resource}Service from '../../services/{resource}'
+  import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+  import checkOwnership from '../../utils/checkOwnership'
+  
+  const get{Resource}ById = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+          if (!req.params.id) {
+              throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'ID required')
+          }
+          const apiResponse = await {resource}Service.get{Resource}ById(req.params.id, req.user)
+          
+          // Authorization checks
+          if (req.user && !(await checkOwnership(apiResponse, req.user, req))) {
+              throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized')
+          }
+          
+          return res.json(apiResponse)
+      } catch (error) {
+          next(error)
+      }
+  }
+  ```
+
+### 3. Services Layer (`packages/server/src/services/{resource}/index.ts`)
+- **Purpose**: Business logic, data processing, database operations
+- **Pattern**: Pure business logic functions with database interactions
+- **Key Responsibilities**:
+  - Database queries and mutations
+  - Business rule validation
+  - Data transformation
+  - Complex operations (file handling, external API calls)
+- **Structure**:
+  ```typescript
+  import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+  import { {Resource} } from '../../database/entities/{Resource}'
+  import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+  import { StatusCodes } from 'http-status-codes'
+  
+  const get{Resource}ById = async (id: string, user?: IUser): Promise<{Resource}> => {
+      try {
+          const appServer = getRunningExpressApp()
+          const dbResponse = await appServer.AppDataSource.getRepository({Resource})
+              .createQueryBuilder('{resource}')
+              .where('{resource}.id = :id', { id })
+              .getOne()
+              
+          if (!dbResponse) {
+              throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `{Resource} not found`)
+          }
+          
+          return dbResponse
+      } catch (error) {
+          throw new InternalFlowiseError(
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              `Error: {resource}Service.get{Resource}ById - ${getErrorMessage(error)}`
+          )
+      }
+  }
+  ```
+
+### 4. Entities Layer (`packages/server/src/database/entities/{Resource}.ts`)
+- **Purpose**: TypeORM database model definitions
+- **Pattern**: Class-based entities with decorators
+- **Key Features**:
+  - UUID primary keys
+  - Audit fields (createdDate, updatedDate, deletedDate)
+  - User/Organization relationships
+  - Soft delete support
+- **Structure**:
+  ```typescript
+  import { Entity, Column, Index, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, DeleteDateColumn } from 'typeorm'
+  
+  @Entity()
+  export class {Resource} {
+      @PrimaryGeneratedColumn('uuid')
+      id: string
+      
+      @Column()
+      name: string
+      
+      @Column({ nullable: true, type: 'text' })
+      description?: string
+      
+      @Index()
+      @Column({ type: 'uuid', nullable: true })
+      userId: string
+      
+      @Index()
+      @Column({ type: 'uuid', nullable: true })
+      organizationId: string
+      
+      @CreateDateColumn()
+      createdDate: Date
+      
+      @UpdateDateColumn()
+      updatedDate: Date
+      
+      @DeleteDateColumn()
+      deletedDate: Date
+  }
+  ```

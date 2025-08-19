@@ -19,6 +19,7 @@ class ChatflowTool_Tools implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
+    tags: string[]
 
     constructor() {
         this.label = 'Chatflow Tool'
@@ -29,6 +30,7 @@ class ChatflowTool_Tools implements INode {
         this.category = 'Tools'
         this.description = 'Use as a tool to execute another chatflow'
         this.baseClasses = [this.type, 'Tool']
+        this.tags = ['AAI']
         this.credential = {
             label: 'Connect Credential',
             name: 'credential',
@@ -122,7 +124,7 @@ class ChatflowTool_Tools implements INode {
                 return returnData
             }
 
-            const chatflows = await appDataSource.getRepository(databaseEntities['ChatFlow']).find()
+            const chatflows = await appDataSource.getRepository(databaseEntities['ChatFlow']).find({ where: { userId: options.userId } })
 
             for (let i = 0; i < chatflows.length; i += 1) {
                 const data = {
@@ -313,6 +315,7 @@ class ChatflowTool extends StructuredTool {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'flowise-tool': 'true',
                 ...this.headers
             },
             body: JSON.stringify(body)

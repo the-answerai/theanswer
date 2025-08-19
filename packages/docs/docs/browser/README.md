@@ -2,6 +2,9 @@
 title: Your Guide to AnswerAgent Sidekick
 sidebar_label: Introduction
 slug: /browser
+jsonld:
+    type: TechArticle
+    headline: AnswerAgent Sidekick Browser Extension
 ---
 
 import Tabs from '@theme/Tabs';
@@ -13,19 +16,15 @@ import TabItem from '@theme/TabItem';
 
 The AnswerAgent Sidekick is a browser extension that integrates your AnswerAgent flows directly into your web browsing experience, enhancing productivity and streamlining workflows across multiple platforms.
 
-### Installing on Google Chrome (Beta)
+### Installing from Chrome Web Store (Recommended)
 
-1. **[Click here to download the beta](https://theanswer.ai/download-browser-extension)** (Chrome Store Coming Soon)
+1. **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim)** - Click the link to go directly to the Chrome Web Store
 
-2. **Install as an unpacked extension:**
+2. **Add to Chrome:** Click the "Add to Chrome" button on the Chrome Web Store page
 
-    - Extract the downloaded ZIP file to a folder on your computer
-    - Open Chrome and navigate to `chrome://extensions/`
-    - Enable "Developer mode" in the top-right corner
-    - Click "Load unpacked" and select the extracted folder
-    - The AnswerAgent Sidekick extension will now be installed
+3. **Confirm Installation:** Click "Add extension" when prompted to confirm the installation
 
-3. **Pin for easy access:** Click the puzzle piece icon in your Chrome toolbar, then click the pin icon next to AnswerAgent Sidekick to keep it visible in your toolbar.
+4. **Pin for easy access:** Click the puzzle piece icon in your Chrome toolbar, then click the pin icon next to AnswerAgent Sidekick to keep it visible in your toolbar.
 
 ## What is AnswerAgent Sidekick?
 
@@ -201,19 +200,17 @@ This is where the AnswerAgent Sidekick truly shines, by talking to the tools you
 Here are some of the tool types you can connect (with more always on the way!):
 
 -   **CRM:**
-    -   Salesforce (SFDC) `[Learn More](#)`
+    -   Salesforce (SFDC) [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/salesforce-mcp)
 -   **Project Management & Collaboration:**
-    -   Jira `[Learn More](#)`
-    -   Notion `[Learn More](#)`
-    -   Confluence `[Learn More](#)`
+    -   Jira [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/jira-mcp)
+    -   Confluence [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/confluence-mcp)
 -   **Communication:**
-    -   Slack `[Learn More](#)`
+    -   Slack [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/slack-mcp)
 -   **Data & Content Management:**
-    -   Airtable `[Learn More](#)`
-    -   PostgreSQL `[Learn More](#)`
-    -   Contentful `[Learn More](#)`
+    -   PostgreSQL [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/postgresql-mcp)
+    -   Contentful [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/contentful-mcp)
 -   **Development:**
-    -   GitHub `[Learn More](#)`
+    -   GitHub [Learn More](/docs/sidekick-studio/chatflows/tools-mcp/github-mcp)
 
 And many more! The setup for each integration might vary slightly, but generally involves authorizing the Sidekick to access your tool's data (securely, of course!).
 

@@ -16,6 +16,11 @@ router.get(['/apikey/', '/apikey/:apikey'], enforceAbility('ChatFlow'), chatflow
 router.put(['/', '/:id'], enforceAbility('ChatFlow'), chatflowsController.updateChatflow)
 
 // DELETE
-router.delete(['/', '/:id'], enforceAbility('ChatFlow'), chatflowsController.deleteChatflow)
+router.delete('/:id', enforceAbility('ChatFlow'), chatflowsController.deleteChatflow)
+
+// VERSIONING
+router.get('/:id/versions', enforceAbility('ChatFlow'), chatflowsController.getChatflowVersions)
+router.get('/:id/versions/:version', enforceAbility('ChatFlow'), chatflowsController.getChatflowVersion)
+router.post('/:id/rollback/:version', enforceAbility('ChatFlow'), chatflowsController.rollbackChatflowToVersion)
 
 export default router

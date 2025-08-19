@@ -15,6 +15,7 @@ class Airtable_DocumentLoaders implements INode {
     type: string
     icon: string
     category: string
+    tags: string[]
     baseClasses: string[]
     credential: INodeParams
     inputs?: INodeParams[]
@@ -28,6 +29,7 @@ class Airtable_DocumentLoaders implements INode {
         this.icon = 'airtable.svg'
         this.category = 'Document Loaders'
         this.description = `Load data from Airtable table`
+        this.tags = ['AAI']
         this.baseClasses = [this.type]
         this.credential = {
             label: 'Connect Credential',
@@ -340,7 +342,7 @@ class AirtableLoader extends BaseDocumentLoader {
             pageContent = JSON.stringify(page.fields, null, 2)
         }
 
-        console.log('Page Content', pageContent)
+        // console.log('Page Content', pageContent)
 
         // Return a langchain document
         return new Document({

@@ -142,7 +142,11 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         }
         try {
             await updateChatflowApi.request(chatflow.id, updateBody)
-            await updateFlowsApi.request()
+            if (isAgentCanvas && localStorage.getItem('agentFlowVersion') === 'v2') {
+                await updateFlowsApi.request('AGENTFLOW')
+            } else {
+                await updateFlowsApi.request(isAgentCanvas ? 'MULTIAGENT' : undefined)
+            }
         } catch (error) {
             if (setError) setError(error)
             enqueueSnackbar({
@@ -181,7 +185,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         }
         try {
             await updateChatflowApi.request(chatflow.id, updateBody)
-            await updateFlowsApi.request()
+            await updateFlowsApi.request(isAgentCanvas ? 'AGENTFLOW' : undefined)
         } catch (error) {
             if (setError) setError(error)
             enqueueSnackbar({
@@ -213,7 +217,11 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         if (isConfirmed) {
             try {
                 await chatflowsApi.deleteChatflow(chatflow.id)
-                await updateFlowsApi.request()
+                if (isAgentCanvas && localStorage.getItem('agentFlowVersion') === 'v2') {
+                    await updateFlowsApi.request('AGENTFLOW')
+                } else {
+                    await updateFlowsApi.request(isAgentCanvas ? 'MULTIAGENT' : undefined)
+                }
             } catch (error) {
                 if (setError) setError(error)
                 enqueueSnackbar({
@@ -238,6 +246,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         try {
             const duplicatedFlow = generateExportFlowData(chatflow)
             delete duplicatedFlow.id
+            duplicatedFlow.visibility = ['Private']
             localStorage.setItem('duplicatedFlowData', JSON.stringify(duplicatedFlow))
             window.open(`${uiBaseURL}/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`, '_blank')
         } catch (e) {

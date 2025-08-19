@@ -41,7 +41,12 @@ export class QueueManager {
             port: parseInt(process.env.REDIS_PORT || '6379'),
             username: process.env.REDIS_USERNAME || undefined,
             password: process.env.REDIS_PASSWORD || undefined,
-            tls: tlsOpts
+            tls: tlsOpts,
+            enableReadyCheck: true,
+            keepAlive:
+                process.env.REDIS_KEEP_ALIVE && !isNaN(parseInt(process.env.REDIS_KEEP_ALIVE, 10))
+                    ? parseInt(process.env.REDIS_KEEP_ALIVE, 10)
+                    : undefined
         }
     }
 
@@ -121,7 +126,10 @@ export class QueueManager {
         })
         this.registerQueue('upsert', upsertionQueue)
 
-        const bullboard = createBullBoard([new BullMQAdapter(predictionQueue.getQueue()), new BullMQAdapter(upsertionQueue.getQueue())])
+        const bullboard = createBullBoard([
+            new BullMQAdapter(predictionQueue.getQueue()) as any,
+            new BullMQAdapter(upsertionQueue.getQueue()) as any
+        ])
         this.bullBoardRouter = bullboard.router
     }
 }

@@ -28,15 +28,16 @@ import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined'
 import PasswordIcon from '@mui/icons-material/Password'
 import IntegrationInstructionsOutlinedIcon from '@mui/icons-material/IntegrationInstructionsOutlined'
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined'
-import ContactSupport from '@mui/icons-material/ContactSupport'
-import AssessmentIcon from '@mui/icons-material/Assessment'
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
-import { useHelpChatContext } from './HelpChatContext' // Import the context
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 
 const drawerWidth = 240
 
@@ -88,105 +89,297 @@ interface AppDrawerProps {
             picture?: string
             email?: string
             org_name?: string
+            org_id?: string
+            roles?: string[]
             subscription?: unknown
+            defaultChatflowId?: string
         }
     }
     flagsmithState: unknown
 }
 
 export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
-    const { helpChatOpen, setHelpChatOpen } = useHelpChatContext()
     const user = session?.user
-    const [drawerOpen, setDrawerOpen] = useState(false)
+    const [drawerOpen, setDrawerOpen] = useState(true) // Changed to true for open by default
     const [submenuOpen, setSubmenuOpen] = useState('')
     const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-    const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage'])
-    const MEMBER_ACTIONS = ['chatflows', 'agentflows', 'documentstores', 'apikey', 'credentials', 'billing', 'apps']
-    const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'documentstores', 'admin', 'apps']
+    const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage', 'enterprise_admin'])
 
-    const filterMenuItems = (items: MenuConfig[]) => {
-        return items.map((item) => {
-            if (!item.subMenu) return item
-            const filteredSubMenu = item.subMenu.filter((subItem) => {
-                const isMemberAction = MEMBER_ACTIONS.includes(subItem.id ?? '')
-                const isBuilderAction = BUILDER_ACTIONS.includes(subItem.id ?? '')
-                return (isMemberAction && flags['chatflow:use'].enabled) || (isBuilderAction && flags['chatflow:manage'].enabled)
-            })
-            return { ...item, subMenu: filteredSubMenu }
-        })
+    // Helper function to determine if this is a public organization
+    // TODO: This should be refined to compare against actual PUBLIC_ORG_ID from backend
+    const isPublicOrg = () => {
+        // For now, we'll implement the new logic for all orgs and refine this later
+        // You can add specific org_id checks here once PUBLIC_ORG_ID is accessible
+        return false // Assume all orgs are private for now to implement the new logic
     }
-    const menuConfig: MenuConfig[] = filterMenuItems([
-        {
-            ...(flags['chatflow:use'].enabled
-                ? {
-                      subMenu: [
-                          {
-                              id: 'chatflows',
-                              text: 'Chatflows',
-                              link: '/sidekick-studio/chatflows',
-                              icon: <AccountTreeIcon color='primary' />
-                          },
-                          {
-                              id: 'agentflows',
-                              text: 'Agentflows',
-                              link: '/sidekick-studio/agentflows',
-                              icon: <GroupsOutlinedIcon color='primary' />
-                          },
-                          {
-                              id: 'documentstores',
-                              text: 'Document Stores',
-                              link: '/sidekick-studio/document-stores',
-                              icon: <MenuBookOutlinedIcon color='primary' />
-                          },
-                          {
-                              id: 'tools',
-                              text: 'Tools',
-                              link: '/sidekick-studio/tools',
-                              icon: <BuildOutlinedIcon color='primary' />
-                          },
-                          {
-                              id: 'credentials',
-                              text: 'Credentials',
-                              link: '/sidekick-studio/credentials',
-                              icon: <PasswordIcon color='primary' />
-                          },
-                          {
-                              id: 'variables',
-                              text: 'Global Variables',
-                              link: '/sidekick-studio/variables',
-                              icon: <IntegrationInstructionsOutlinedIcon color='primary' />
-                          },
-                          {
-                              id: 'apikey',
-                              text: 'API Keys',
-                              link: '/sidekick-studio/apikey',
-                              icon: <VpnKeyOutlinedIcon color='primary' />
-                          },
-                          //   {
-                          //       id: 'admin',
-                          //       text: 'Admin',
-                          //       link: '/sidekick-studio/admin',
-                          //       icon: <AdminOutlinedIcon color='primary' />
-                          //   },
-                          {
-                              id: 'billing',
-                              text: 'Billing',
-                              link: '/billing',
-                              icon: <AssessmentIcon color='primary' />
-                          },
-                          {
-                              id: 'apps',
-                              text: 'Apps',
-                              link: '/sidekick-studio/apps',
-                              icon: <AppsOutlinedIcon color='primary' />
-                          }
-                      ]
-                  }
-                : {})
+
+    // Helper function to determine user role in private organizations
+    const getUserRole = () => {
+        if (isPublicOrg()) {
+            return 'public' // Public org users - different logic would apply
         }
-    ])
+
+        const userRoles = user?.roles || []
+
+        // Check if user is admin (has org:manage permission or Admin role)
+        if (flags['org:manage']?.enabled || userRoles.includes('Admin')) {
+            return 'admin'
+        }
+
+        // Check if user is builder (has chatflow:manage permission)
+        if (flags['chatflow:manage']?.enabled) {
+            return 'builder'
+        }
+
+        // Default to member (has chatflow:use permission)
+        return 'member'
+    }
+
+    const userRole = getUserRole()
+    const isPrivateOrg = !isPublicOrg()
+
+    // Menu configuration
+    let menuConfig: MenuConfig[] = []
+
+    if (isPrivateOrg) {
+        // New logic for private organizations
+        // Sidekick Store moved under Sidekick Studio
+
+        // Builders and Admins see Sidekick Studio
+        if (userRole === 'builder' || userRole === 'admin') {
+            menuConfig.push({
+                id: 'studio',
+                text: 'Sidekick Studio',
+                icon: <BuildOutlinedIcon color='primary' />,
+                subMenu: [
+                    {
+                        id: 'marketplaces',
+                        text: 'Sidekick Store',
+                        link: '/sidekick-studio/marketplaces',
+                        icon: <StorefrontOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'chatflows',
+                        text: 'Chatflows',
+                        link: '/sidekick-studio/chatflows',
+                        icon: <AccountTreeIcon color='primary' />
+                    },
+                    {
+                        id: 'agentflows',
+                        text: 'Agentflows',
+                        link: '/sidekick-studio/agentflows',
+                        icon: <GroupsOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'assistants',
+                        text: 'Assistants',
+                        link: '/sidekick-studio/assistants',
+                        icon: <GroupsOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'documentstores',
+                        text: 'Document Stores',
+                        link: '/sidekick-studio/document-stores',
+                        icon: <MenuBookOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'executions',
+                        text: 'Executions',
+                        link: '/sidekick-studio/executions',
+                        icon: <PlayCircleOutlineIcon color='primary' />
+                    },
+                    {
+                        id: 'tools',
+                        text: 'Tools',
+                        link: '/sidekick-studio/tools',
+                        icon: <BuildOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'variables',
+                        text: 'Global Variables',
+                        link: '/sidekick-studio/variables',
+                        icon: <IntegrationInstructionsOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'apikey',
+                        text: 'API Keys',
+                        link: '/sidekick-studio/apikey',
+                        icon: <VpnKeyOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'credentials',
+                        text: 'Credentials',
+                        link: '/sidekick-studio/credentials',
+                        icon: <PasswordIcon color='primary' />
+                    }
+                ]
+            })
+        }
+
+        // Enterprise Admin - top-level (feature-flagged)
+        if (flags['enterprise_admin']?.enabled && userRole === 'admin') {
+            menuConfig.push({
+                id: 'enterprise_admin',
+                text: 'Enterprise Admin',
+                link: '/sidekick-studio/admin',
+                icon: <AssessmentOutlinedIcon color='primary' />
+            })
+        }
+
+        // Top-level Profile (everyone)
+        menuConfig.push({
+            id: 'profile',
+            text: 'Profile',
+            link: '/profile',
+            icon: <AccountCircleIcon color='primary' />
+        })
+
+        // Top-level Billing (admins only)
+        if (userRole === 'admin') {
+            menuConfig.push({
+                id: 'billing',
+                text: 'Billing',
+                link: '/billing',
+                icon: <AssessmentOutlinedIcon color='primary' />
+            })
+        }
+    } else {
+        // Original logic for public organizations - everyone sees everything
+        const filterMenuItems = (items: MenuConfig[]) => {
+            return items.map((item) => {
+                if (!item.subMenu) return item
+                const filteredSubMenu = item.subMenu.filter((subItem) => {
+                    return flags['chatflow:use'].enabled || flags['chatflow:manage'].enabled
+                })
+                return { ...item, subMenu: filteredSubMenu }
+            })
+        }
+
+        menuConfig = filterMenuItems([
+            // Sidekick Store moved under Sidekick Studio
+            // Enterprise Admin - top-level (feature-flagged)
+            ...(flags['enterprise_admin']?.enabled && userRole === 'admin'
+                ? [
+                      {
+                          id: 'enterprise_admin',
+                          text: 'Enterprise Admin',
+                          link: '/sidekick-studio/admin',
+                          icon: <AssessmentOutlinedIcon color='primary' />
+                      }
+                  ]
+                : []),
+            // Studio section (collapsible) with Assistants and Document Stores moved in
+            ...(flags['chatflow:use'].enabled
+                ? [
+                      {
+                          id: 'studio',
+                          text: 'Sidekick Studio',
+                          icon: <BuildOutlinedIcon color='primary' />,
+                          subMenu: [
+                              {
+                                  id: 'chatflows',
+                                  text: 'Chatflows',
+                                  link: '/sidekick-studio/chatflows',
+                                  icon: <AccountTreeIcon color='primary' />
+                              },
+                              {
+                                  id: 'agentflows',
+                                  text: 'Agentflows',
+                                  link: '/sidekick-studio/agentflows',
+                                  icon: <GroupsOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'assistants',
+                                  text: 'Assistants',
+                                  link: '/sidekick-studio/assistants',
+                                  icon: <GroupsOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'documentstores',
+                                  text: 'Document Stores',
+                                  link: '/sidekick-studio/document-stores',
+                                  icon: <MenuBookOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'executions',
+                                  text: 'Executions',
+                                  link: '/sidekick-studio/executions',
+                                  icon: <PlayCircleOutlineIcon color='primary' />
+                              },
+                              {
+                                  id: 'tools',
+                                  text: 'Tools',
+                                  link: '/sidekick-studio/tools',
+                                  icon: <BuildOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'variables',
+                                  text: 'Global Variables',
+                                  link: '/sidekick-studio/variables',
+                                  icon: <IntegrationInstructionsOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'apikey',
+                                  text: 'API Keys',
+                                  link: '/sidekick-studio/apikey',
+                                  icon: <VpnKeyOutlinedIcon color='primary' />
+                              },
+                              {
+                                  id: 'credentials',
+                                  text: 'Credentials',
+                                  link: '/sidekick-studio/credentials',
+                                  icon: <PasswordIcon color='primary' />
+                              },
+                              ...(userRole === 'admin'
+                                  ? [
+                                        // Show nested Admin only when enterprise admin flag is disabled
+                                        ...(flags['enterprise_admin']?.enabled
+                                            ? []
+                                            : [
+                                                  {
+                                                      id: 'admin',
+                                                      text: 'Admin',
+                                                      link: '/sidekick-studio/admin',
+                                                      icon: <AssessmentOutlinedIcon color='primary' />
+                                                  }
+                                              ]),
+                                        {
+                                            id: 'apps',
+                                            text: 'Apps',
+                                            link: '/sidekick-studio/apps',
+                                            icon: <AppsOutlinedIcon color='primary' />
+                                        }
+                                    ]
+                                  : [])
+                          ]
+                      }
+                  ]
+                : []),
+            // Top-level Profile and Billing for public orgs
+            ...(flags['chatflow:use'].enabled
+                ? [
+                      {
+                          id: 'profile',
+                          text: 'Profile',
+                          link: '/profile',
+                          icon: <AccountCircleIcon color='primary' />
+                      },
+                      ...(userRole === 'admin'
+                          ? [
+                                {
+                                    id: 'billing',
+                                    text: 'Billing',
+                                    link: '/billing',
+                                    icon: <AssessmentOutlinedIcon color='primary' />
+                                }
+                            ]
+                          : [])
+                  ]
+                : [])
+        ])
+    }
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
         setAnchorEl(event.currentTarget)
@@ -198,10 +391,6 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
 
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen)
-    }
-
-    const toggleHelpChat = () => {
-        setHelpChatOpen(!helpChatOpen)
     }
 
     const handleNewChat = () => {
@@ -239,47 +428,65 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                 }}
                             />
                         </IconButton>
-                        <IconButton onClick={toggleHelpChat}>
-                            <ContactSupport
-                                sx={{
-                                    transform: drawerOpen ? 'scaleX(1)' : 'none',
-                                    color: 'primary.main'
-                                }}
-                            />
-                        </IconButton>
+                        {/* Apps button visibility */}
+                        {(isPrivateOrg || flags['chatflow:manage'].enabled) &&
+                            (drawerOpen ? (
+                                <Tooltip title='Manage and configure your applications' placement='right'>
+                                    <Button
+                                        href='/sidekick-studio/apps'
+                                        variant='outlined'
+                                        component={NextLink}
+                                        startIcon={<AppsOutlinedIcon />}
+                                        sx={{
+                                            minWidth: 0,
+                                            textTransform: 'capitalize',
+                                            justifyContent: 'flex-start',
+                                            ml: 1
+                                        }}
+                                    >
+                                        Apps
+                                    </Button>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip title='Manage and configure your applications' placement='right'>
+                                    <IconButton component={NextLink} href='/sidekick-studio/apps'>
+                                        <AppsOutlinedIcon sx={{ color: 'primary.main' }} />
+                                    </IconButton>
+                                </Tooltip>
+                            ))}
+                        {/* Everyone sees Chat button */}
+                        {drawerOpen ? (
+                            <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
+                                <Button
+                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
+                                    variant='outlined'
+                                    component={NextLink}
+                                    onClick={handleNewChat}
+                                    startIcon={<RateReviewIcon />}
+                                    sx={{
+                                        minWidth: 0,
+                                        textTransform: 'capitalize',
+                                        justifyContent: 'flex-start',
+                                        ml: 1
+                                    }}
+                                >
+                                    Chat
+                                </Button>
+                            </Tooltip>
+                        ) : (
+                            <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
+                                <IconButton
+                                    component={NextLink}
+                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
+                                    onClick={handleNewChat}
+                                >
+                                    <RateReviewIcon sx={{ color: 'primary.main' }} />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Box>
-                    <Button
-                        href='/chat'
-                        variant='outlined'
-                        onClick={handleNewChat}
-                        component={NextLink}
-                        endIcon={<RateReviewIcon />}
-                        fullWidth
-                        sx={{
-                            minWidth: 0,
-                            textTransform: 'capitalize',
-                            justifyContent: 'space-between',
-                            '.MuiDrawer-closed & .MuiButton-endIcon': {
-                                margin: 0
-                            }
-                        }}
-                    >
-                        <Box
-                            component='span'
-                            sx={{
-                                overflow: 'hidden',
-                                transition: '.2s',
-                                maxWidth: '240px',
-                                '.MuiDrawer-closed &': {
-                                    maxWidth: '0',
-                                    opacity: 0
-                                }
-                            }}
-                        >
-                            New chat
-                        </Box>
-                    </Button>
                 </Box>
+                {/* Chat History */}
                 <Box
                     sx={{
                         flex: 1,
@@ -300,91 +507,152 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                     <ChatDrawer />
                 </Box>
 
-                <List sx={{ display: 'flex', flexDirection: 'column' }} disablePadding>
-                    {menuConfig.map((item, index) => (
-                        <Box key={item.text || index}>
-                            <ListItem disablePadding>
-                                {item.text && (
-                                    <ListItemButton
-                                        selected={!!item.link && pathname.startsWith(item.link)}
-                                        href={item.link}
-                                        component={item.link ? NextLink : 'button'}
-                                        sx={{ flex: 1, display: 'flex', width: '100%' }}
-                                        onClick={() => setSubmenuOpen(item.text === submenuOpen ? '' : item.text ?? '')}
-                                    >
-                                        <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                                        <Typography
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                textTransform: 'capitalize',
-                                                display: '-webkit-box',
-                                                WebkitBoxOrient: 'vertical',
-                                                WebkitLineClamp: '1',
-                                                flex: '1'
-                                            }}
-                                        >
-                                            {item.text}
-                                        </Typography>
-                                    </ListItemButton>
+                <List sx={{ display: 'flex', flexDirection: 'column', px: 1 }} disablePadding>
+                    {menuConfig.map((item, index) => {
+                        // Define tooltips for main menu items
+                        const getMainMenuTooltip = (itemId: string) => {
+                            switch (itemId) {
+                                case 'marketplaces':
+                                    return 'Browse and install sidekicks from the marketplace'
+                                case 'studio':
+                                    return 'Build and customize your own sidekicks'
+                                case 'enterprise_admin':
+                                    return 'Organization admin and enterprise settings'
+                                case 'account':
+                                    return 'Manage your account settings and preferences'
+                                default:
+                                    return ''
+                            }
+                        }
+
+                        return (
+                            <Box key={item.text || index} sx={{ mb: item.id === 'documentstores' ? 2 : 0 }}>
+                                <ListItem disablePadding>
+                                    {item.text && (
+                                        <Tooltip title={getMainMenuTooltip(item.id || '')} placement='right'>
+                                            <ListItemButton
+                                                selected={!!item.link && pathname.startsWith(item.link)}
+                                                href={item.link}
+                                                component={item.link ? NextLink : 'button'}
+                                                sx={{ flex: 1, display: 'flex', width: '100%' }}
+                                                onClick={() => {
+                                                    if (item.subMenu) {
+                                                        setSubmenuOpen(item.text === submenuOpen ? '' : item.text ?? '')
+                                                    }
+                                                }}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                                                <Typography
+                                                    sx={{
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        textTransform: 'capitalize',
+                                                        display: '-webkit-box',
+                                                        WebkitBoxOrient: 'vertical',
+                                                        WebkitLineClamp: '1',
+                                                        flex: '1'
+                                                    }}
+                                                >
+                                                    {item.text}
+                                                </Typography>
+                                            </ListItemButton>
+                                        </Tooltip>
+                                    )}
+                                </ListItem>
+
+                                {/* Render submenu items if they exist */}
+                                {item.subMenu && (
+                                    <Collapse key={`${item.text}-collapse`} in={submenuOpen === item.text} timeout='auto'>
+                                        {item.subMenu.map((subItem) => {
+                                            // Define tooltips for submenu items
+                                            const getSubmenuTooltip = (subItemId: string) => {
+                                                switch (subItemId) {
+                                                    case 'chatflows':
+                                                        return 'Create conversation flows and logic'
+                                                    case 'agentflows':
+                                                        return 'Design multi-agent workflows'
+                                                    case 'assistants':
+                                                        return 'Manage your AI assistants'
+                                                    case 'documentstores':
+                                                        return 'Organize and manage your knowledge base'
+                                                    case 'executions':
+                                                        return 'Monitor and review execution history'
+                                                    case 'marketplaces':
+                                                        return 'Browse and install sidekicks from the marketplace'
+                                                    case 'tools':
+                                                        return 'Configure tools and integrations'
+                                                    case 'variables':
+                                                        return 'Set up variables for reuse across sidekicks'
+                                                    case 'apikey':
+                                                        return 'Manage authentication keys for external services'
+                                                    case 'admin':
+                                                        return 'Access admin dashboard and organization management'
+                                                    case 'billing':
+                                                        return 'View and manage your subscription and payments'
+                                                    case 'credentials':
+                                                        return 'Store and manage API credentials securely'
+                                                    case 'profile':
+                                                        return 'View and manage your personal profile information'
+                                                    default:
+                                                        return subItem.text || ''
+                                                }
+                                            }
+
+                                            return (
+                                                <ListItem key={subItem.text} disablePadding sx={{ pl: 2 }}>
+                                                    <Tooltip title={getSubmenuTooltip(subItem.id || '')} placement='right'>
+                                                        <ListItemButton
+                                                            component={subItem.link ? NextLink : 'button'}
+                                                            href={subItem.link || '#'}
+                                                            selected={pathname === subItem.link}
+                                                            sx={{ width: '100%' }}
+                                                        >
+                                                            <ListItemIcon sx={{ minWidth: 40 }}>{subItem.icon}</ListItemIcon>
+                                                            <Typography>{subItem.text}</Typography>
+                                                        </ListItemButton>
+                                                    </Tooltip>
+                                                </ListItem>
+                                            )
+                                        })}
+                                    </Collapse>
                                 )}
-                            </ListItem>
+                            </Box>
+                        )
+                    })}
 
-                            <Collapse
-                                key={`${item.text}-collapse`}
-                                in={
-                                    true
-                                    // drawerOpen ||
-                                    // (pathname && item?.link
-                                    //     ? pathname.includes(item?.link)
-                                    //     : item.subMenu
-                                    //     ? item.subMenu?.findIndex((subItem) => pathname.includes(subItem.link)) !== -1
-                                    //     : false)
-                                }
-                                timeout='auto'
-                            >
-                                {item.subMenu?.map((subItem) => (
-                                    <ListItem key={subItem.text} disablePadding>
-                                        <ListItemButton
-                                            component={subItem.link ? NextLink : 'button'}
-                                            href={subItem.link || '#'}
-                                            selected={pathname === subItem.link}
-                                        >
-                                            <Tooltip title={drawerOpen ? null : subItem.text}>
-                                                <ListItemIcon sx={{ minWidth: 40 }}>{subItem.icon}</ListItemIcon>
-                                            </Tooltip>
-                                            <Typography>{subItem.text}</Typography>
-                                        </ListItemButton>
-                                    </ListItem>
-                                ))}
-                            </Collapse>
-                        </Box>
-                    ))}
-
-                    {!user?.subscription && (
+                    {/* Upgrade plan button visibility */}
+                    {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && !user?.subscription && (
                         <ListItem disablePadding>
-                            <ListItemButton
-                                onClick={handleSubscriptionOpen}
-                                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, borderRadius: 1, mb: 1 }}
-                            >
-                                <ListItemIcon>
-                                    <StarIcon sx={{ color: '#fff' }} />
-                                </ListItemIcon>
-                                <Typography
+                            <Tooltip title='Unlock premium features with a subscription' placement='right'>
+                                <ListItemButton
+                                    onClick={handleSubscriptionOpen}
                                     sx={{
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        textTransform: 'capitalize',
-                                        display: '-webkit-box',
-                                        WebkitBoxOrient: 'vertical',
-                                        WebkitLineClamp: '1',
-                                        flex: '1',
-                                        color: '#fff'
+                                        bgcolor: 'primary.main',
+                                        '&:hover': { bgcolor: 'primary.dark' },
+                                        borderRadius: 1,
+                                        mb: 1,
+                                        width: '100%'
                                     }}
                                 >
-                                    Upgrade Plan
-                                </Typography>
-                            </ListItemButton>
+                                    <ListItemIcon>
+                                        <StarIcon sx={{ color: '#fff' }} />
+                                    </ListItemIcon>
+                                    <Typography
+                                        sx={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            textTransform: 'capitalize',
+                                            display: '-webkit-box',
+                                            WebkitBoxOrient: 'vertical',
+                                            WebkitLineClamp: '1',
+                                            flex: '1',
+                                            color: '#fff'
+                                        }}
+                                    >
+                                        Upgrade Plan
+                                    </Typography>
+                                </ListItemButton>
+                            </Tooltip>
                         </ListItem>
                     )}
 
@@ -467,9 +735,16 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                         {user?.org_name}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
+                                {/* Upgrade plan menu item visibility */}
+                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
+                                    <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
+                                )}
 
-                                <ExportImportMenuItems onClose={handleClose} />
+                                {/* Export/Import menu items visibility */}
+                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
+                                    <ExportImportMenuItems onClose={handleClose} />
+                                )}
+
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()

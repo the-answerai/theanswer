@@ -1,13 +1,15 @@
 'use client'
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Sidekick } from '../SidekickSelect.types'
 import { useAnswers } from '../../AnswersContext'
-import { NavigateFunction } from '@/utils/navigation'
+import { Chat, SidekickListItem } from 'types'
+
+export type NavigateFn = (url: string | number, options?: { state?: any; replace?: boolean }) => void
 
 interface UseSidekickSelectionHandlersProps {
-    chat?: any
-    navigate: NavigateFunction
-    enablePerformanceLogs?: boolean
+    chat?: Chat
+    navigate: NavigateFn
 }
 
 interface UseSidekickSelectionHandlersResult {
@@ -21,42 +23,50 @@ interface UseSidekickSelectionHandlersResult {
     handleCreateNewSidekick: () => void
 }
 
-const useSidekickSelectionHandlers = ({
-    chat,
-    navigate,
-    enablePerformanceLogs = false
-}: UseSidekickSelectionHandlersProps): UseSidekickSelectionHandlersResult => {
+const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHandlersProps): UseSidekickSelectionHandlersResult => {
     const { setSidekick, setSidekick: setSelectedSidekick } = useAnswers()
+    const router = useRouter()
     const [isMarketplaceDialogOpen, setIsMarketplaceDialogOpen] = useState(false)
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
     const [showCopyMessage, setShowCopyMessage] = useState(false)
 
     const handleSidekickSelect = useCallback(
         (sidekick: Sidekick) => {
-            console.log('[SidekickSelect] Sidekick selected:', sidekick.id)
-            if (!chat?.id) {
-                // Update local storage first
-                const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
-                sidekickHistory.lastUsed = sidekick
-                localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
+            // Check if this is a personal sidekick (owned by user) vs marketplace template
+            const isPersonalSidekick = sidekick.chatflow.isOwner
 
-                // Update URL without navigation using history API
-                const newUrl = `/chat/${sidekick.id}`
-                window.history.pushState({ sidekick, isClientNavigation: true }, '', newUrl)
+            if (isPersonalSidekick) {
+                // Handle personal sidekicks - these can be used directly in chat
+                if (!chat?.id) {
+                    // Update local storage first
+                    const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
+                    sidekickHistory.lastUsed = sidekick
+                    localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
 
-                // Directly initialize the chat with the sidekick data
-                setSelectedSidekick(sidekick)
-                setSidekick(sidekick)
+                    // Update context first
+                    setSelectedSidekick(sidekick as unknown as SidekickListItem)
+                    setSidekick(sidekick as unknown as SidekickListItem)
+
+                    // Navigate to chat with this sidekick
+                    const newUrl = `/chat/${sidekick.id}`
+                    router.push(newUrl)
+                } else {
+                    // Already in a chat, just switch sidekicks
+                    setSelectedSidekick(sidekick as unknown as SidekickListItem)
+                    setSidekick(sidekick as unknown as SidekickListItem)
+                    const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
+                    sidekickHistory.lastUsed = sidekick
+                    localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
+                    setIsMarketplaceDialogOpen(false)
+                }
             } else {
-                setSelectedSidekick(sidekick)
-                setSidekick(sidekick)
-                const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
-                sidekickHistory.lastUsed = sidekick
-                localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
-                setIsMarketplaceDialogOpen(false)
+                // Handle marketplace sidekicks - these are templates that need to be viewed/cloned
+                // Always navigate to marketplace regardless of current chat state
+                const marketplaceUrl = `/sidekick-studio/marketplace/${sidekick.id}`
+                router.push(marketplaceUrl)
             }
         },
-        [chat, setSidekick, setSelectedSidekick]
+        [chat, setSidekick, setSelectedSidekick, router]
     )
 
     const handleCreateNewSidekick = useCallback(() => {

@@ -14,7 +14,7 @@ Parameters:
         # Naming constraints: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html#RDS_Limits.Constraints
     VPCID:
         Type: String
-        Description: The ID of the VPC in which to create the Aurora Serverless v2 cluster.
+        Description: The ID of the VPC for the environment resources.
         Default: ''
     PublicSubnets:
         Type: String
@@ -92,7 +92,7 @@ Resources:
         Type: 'AWS::RDS::DBClusterParameterGroup'
         Properties:
             Description: !Ref 'AWS::StackName'
-            Family: 'aurora-postgresql14'
+            Family: 'aurora-postgresql16'
             Parameters:
                 client_encoding: 'UTF8'
 
@@ -105,7 +105,7 @@ Resources:
             MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref flowiseclusterAuroraSecret, ':SecretString:password}}']]
             DatabaseName: !Ref flowiseclusterDBName
             Engine: 'aurora-postgresql'
-            EngineVersion: '14.4'
+            EngineVersion: '16.9'
             DBClusterParameterGroupName: !Ref flowiseclusterDBClusterParameterGroup
             DBSubnetGroupName: !Ref flowiseclusterDBSubnetGroup
             Port: 5432
