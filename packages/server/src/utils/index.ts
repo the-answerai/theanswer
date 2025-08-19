@@ -2008,32 +2008,64 @@ export const getAllNodesInPath = (startNode: string, graph: INodeDirectedGraph):
 }
 
 /**
- * Check and refresh credentials before node initialization if needed
- * This ensures tokens are fresh before the node tries to use them
+ * Check if a credential needs OAuth token refresh
+ * @param credentialId - The ID of the credential to check
+ * @param options - Database access options
+ * @returns Promise<boolean> - true if refresh is needed, false otherwise
  */
-export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReactFlowNode, options: ICommonObject): Promise<void> => {
+export const needsCredentialRefresh = async (credentialId: string, options: { appDataSource: DataSource }): Promise<boolean> => {
     try {
-        // Check if this is an Atlassian MCP node that uses OAuth credentials
-        if (reactFlowNode.data.name !== 'atlassianMCP' || !reactFlowNode.data.credential) {
-            return // No refresh needed
+        const credential = await options.appDataSource.getRepository(Credential).findOneBy({ id: credentialId })
+        if (!credential) {
+            return false
         }
 
-        const credentialId = reactFlowNode.data.credential
-        const userId = options.userId
+        const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
 
-        logger.debug(`[CREDENTIAL REFRESH]: Checking tokens for node ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
+        // Check if this is an OAuth credential with expiration time
+        if (!decryptedCredentialData.expiration_time) {
+            return false
+        }
 
+        // Check if token needs refresh (5 minute buffer)
+        const currentTime = Date.now()
+        const expirationTime = parseInt(decryptedCredentialData.expiration_time || '0')
+        const bufferTime = 5 * 60 * 1000 // 5 minutes buffer
+
+        return currentTime + bufferTime >= expirationTime
+    } catch (error) {
+        logger.error(`[CREDENTIAL REFRESH]: Error checking credential refresh need: ${getErrorMessage(error)}`)
+        return false
+    }
+}
+
+/**
+ * Refresh OAuth credential tokens
+ * @param credentialId - The ID of the credential to refresh
+ * @param options - Database access and logging options
+ * @returns Promise<boolean> - true if refresh succeeded, false otherwise
+ */
+export const refreshOAuthCredential = async (
+    credentialId: string,
+    options: { appDataSource: DataSource; logger: any }
+): Promise<boolean> => {
+    try {
         const credential = await options.appDataSource.getRepository(Credential).findOneBy({ id: credentialId })
         if (!credential) {
             logger.warn(`[CREDENTIAL REFRESH]: Credential ${credentialId} not found`)
-            return
+            return false
         }
 
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
 
         // Validate this is an MCP credential
-        if (!decryptedCredentialData.mcp_client_id || !decryptedCredentialData.mcp_client_secret) {
-            return // Not an MCP credential, skip refresh
+        if (
+            !decryptedCredentialData.mcp_client_id ||
+            !decryptedCredentialData.mcp_client_secret ||
+            !decryptedCredentialData.refresh_token
+        ) {
+            logger.debug(`[CREDENTIAL REFRESH]: Not a valid OAuth credential, skipping refresh`)
+            return false
         }
 
         // Check if token needs refresh (5 minute buffer)
@@ -2042,7 +2074,7 @@ export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReact
         const bufferTime = 5 * 60 * 1000 // 5 minutes buffer
 
         if (currentTime + bufferTime < expirationTime) {
-            return // Token is still valid
+            return true // Token is still valid
         }
 
         // Fetch MCP metadata and refresh token
@@ -2091,9 +2123,46 @@ export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReact
         await options.appDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)
         await options.appDataSource.getRepository(Credential).save(credential)
 
-        logger.debug(`[CREDENTIAL REFRESH]: Successfully refreshed tokens for credential ${credentialId}`)
+        return true
+    } catch (error) {
+        logger.error(`[CREDENTIAL REFRESH]: Failed to refresh OAuth credential ${credentialId}: ${getErrorMessage(error)}`)
+        return false
+    }
+}
+
+/**
+ * Check and refresh credentials before node initialization if needed
+ * This ensures tokens are fresh before the node tries to use them
+ */
+export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReactFlowNode, options: ICommonObject): Promise<void> => {
+    try {
+        // Check if this node requires OAuth refresh and has credentials
+        if (!reactFlowNode.data.credential) {
+            return
+        }
+
+        // Get the node instance to check if it requires OAuth refresh
+        const appServer = require('./getRunningExpressApp').getRunningExpressApp()
+        const nodeInstance = appServer.nodesPool.componentNodes[reactFlowNode.data.name]
+
+        if (!nodeInstance || !nodeInstance.requiresOAuthRefresh) {
+            return
+        }
+
+        const credentialId = reactFlowNode.data.credential
+
+        // Use the core refresh function
+        const refreshOptions = {
+            appDataSource: options.appDataSource,
+            logger: options.logger || logger
+        }
+
+        const refreshSuccess = await refreshOAuthCredential(credentialId, refreshOptions)
+        if (!refreshSuccess) {
+            logger.warn(`[CREDENTIAL REFRESH]: Failed to refresh credential for node ${reactFlowNode.data.id}`)
+        }
     } catch (error) {
         // Log the error but don't fail the entire flow
-        logger.warn(`[CREDENTIAL REFRESH]: Failed to refresh credentials for node ${reactFlowNode.data.id}: ${getErrorMessage(error)}`)
+        logger.error(`[CREDENTIAL REFRESH]: Failed to refresh credentials for node ${reactFlowNode.data.id}: ${getErrorMessage(error)}`)
     }
 }

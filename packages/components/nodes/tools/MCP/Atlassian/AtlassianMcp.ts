@@ -35,6 +35,7 @@ class Atlassian_MCP implements INode {
     credential: INodeParams
     inputs: INodeParams[]
     tags: string[]
+    requiresOAuthRefresh: boolean
 
     constructor() {
         this.label = 'Atlassian MCP'
@@ -46,6 +47,7 @@ class Atlassian_MCP implements INode {
         this.tags = ['AAI']
         this.description = 'MCP server that integrates with Atlassian JIRA and Confluence using OAuth authentication'
         this.documentation = 'https://support.atlassian.com/rovo/docs/getting-started-with-the-atlassian-remote-mcp-server/'
+        this.requiresOAuthRefresh = true
         this.credential = {
             label: 'Connect Credential',
             name: 'credential',
