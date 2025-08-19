@@ -1,6 +1,11 @@
 name: Smart Staging Reset
 # Automatically resets staging to match production after staging→production releases
 # Prevents 90+ file change issues in future PRs by keeping staging clean
+
+permissions:
+    contents: write # Needed to push to staging branch
+    pull-requests: read # Needed to read PR information
+
 on:
     pull_request:
         types: [closed]
