@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { useNavigate } from '@/utils/navigation'
 import { useSelector, useDispatch } from 'react-redux'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react'
 
 // material-ui
 import { useTheme } from '@mui/material/styles'
@@ -16,7 +16,9 @@ import {
     IconCheck,
     IconX,
     IconCode,
-    IconAdjustmentsHorizontal
+    IconAdjustmentsHorizontal,
+    IconCircleCheck,
+    IconAlertCircle
 } from '@tabler/icons-react'
 
 // project imports
@@ -35,6 +37,7 @@ import chatflowsApi from '@/api/chatflows'
 // Hooks
 import useApi from '@/hooks/useApi'
 import { useFlags } from 'flagsmith/react'
+import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 
 // utils
 import { generateExportFlowData } from '@/utils/genericHelper'
@@ -43,7 +46,7 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 
 // ==============================|| CANVAS HEADER ||============================== //
 
-const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlow, handleLoadFlow }) => {
+const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, handleDeleteFlow, handleLoadFlow }, ref) => {
     const theme = useTheme()
     const flags = useFlags(['chatflow:share:external'])
     const dispatch = useDispatch()
@@ -75,6 +78,22 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
 
     const updateChatflowApi = useApi(chatflowsApi.updateChatflow)
     const canvas = useSelector((state) => state.canvas)
+
+    // Get needsSetup status from chatflow
+    const { needsSetup } = useSidekickWithCredentials(chatflow?.id)
+
+    // Expose triggerSaveDialog function to parent component
+    useImperativeHandle(
+        ref,
+        () => ({
+            triggerSaveDialog: () => {
+                if (!chatflow.id) {
+                    setFlowDialogOpen(true)
+                }
+            }
+        }),
+        [chatflow]
+    )
 
     const onSettingsItemClick = (setting) => {
         setSettingsOpen(false)
@@ -130,19 +149,24 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
             setChatflowConfigurationDialogOpen(true)
         } else if (setting === 'duplicateChatflow') {
             try {
-                const flowData = generateExportFlowData(chatflow)
-                // Remove the id when duplicating
-                delete flowData.id
-                flowData.name = `Copy of ${flowData.name}`
-                localStorage.setItem('duplicatedFlowData', JSON.stringify(flowData))
-                window.open(`${uiBaseURL}/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`, '_blank')
+                let flowData = chatflow.flowData
+                const parsedFlowData = JSON.parse(flowData)
+                parsedFlowData.name = `${chatflow.name}`
+                flowData = JSON.stringify(parsedFlowData)
+                localStorage.setItem('duplicatedFlowData', flowData)
+                if (isAgentflowV2) {
+                    window.open(`${uiBaseURL}/v2/agentcanvas`, '_blank')
+                } else if (isAgentCanvas) {
+                    window.open(`${uiBaseURL}/agentcanvas`, '_blank')
+                } else {
+                    window.open(`${uiBaseURL}/canvas`, '_blank')
+                }
             } catch (e) {
                 console.error(e)
             }
         } else if (setting === 'exportChatflow') {
             try {
-                const flowData = JSON.parse(chatflow.flowData)
-                let dataStr = JSON.stringify(generateExportFlowData(flowData), null, 2)
+                let dataStr = JSON.stringify(generateExportFlowData(chatflow), null, 2)
                 //let dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
                 const blob = new Blob([dataStr], { type: 'application/json' })
                 const dataUri = URL.createObjectURL(blob)
@@ -224,9 +248,9 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
         }
     }
 
-    const onConfirmSaveName = (newName) => {
+    const onConfirmSaveName = (newName, configs = {}) => {
         setFlowDialogOpen(false)
-        handleSaveFlow(newName)
+        handleSaveFlow(newName, configs)
     }
 
     const onConfigurationButtonClick = () => {
@@ -283,13 +307,10 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
                                 }}
                                 color='inherit'
                                 onClick={() => {
-                                    try {
+                                    if (window.history.state && window.history.state.idx > 0) {
                                         navigate(-1)
-                                        setTimeout(() => {
-                                            navigate('/chatflows')
-                                        }, 100)
-                                    } catch (error) {
-                                        navigate('/chatflows')
+                                    } else {
+                                        navigate('/', { replace: true })
                                     }
                                 }}
                             >
@@ -445,6 +466,33 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
                             </Avatar>
                         </ButtonBase>
                     )}
+                    <ButtonBase
+                        title={needsSetup ? 'Configuration required - Missing credentials' : 'Sidekick is fully configured'}
+                        sx={{ borderRadius: '50%', mr: 2 }}
+                    >
+                        <Avatar
+                            variant='rounded'
+                            sx={{
+                                ...theme.typography.commonAvatar,
+                                ...theme.typography.mediumAvatar,
+                                transition: 'all .2s ease-in-out',
+                                background: needsSetup ? theme.palette.warning.light : theme.palette.success.light,
+                                color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                '&:hover': {
+                                    background: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                    color: theme.palette.common.white
+                                }
+                            }}
+                            onClick={() => {
+                                const currentUrl = new URL(window.location.href)
+                                currentUrl.searchParams.set('QuickSetup', 'true')
+                                window.history.pushState({}, '', currentUrl.toString())
+                                window.dispatchEvent(new Event('popstate'))
+                            }}
+                        >
+                            {needsSetup ? <IconAlertCircle stroke={1.5} size='1.3rem' /> : <IconCircleCheck stroke={1.5} size='1.3rem' />}
+                        </Avatar>
+                    </ButtonBase>
                     <ButtonBase title={`Save ${title}`} sx={{ borderRadius: '50%', mr: 2 }}>
                         <Avatar
                             variant='rounded'
@@ -541,14 +589,17 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, handleSaveFlow, handleDeleteFlo
             />
         </>
     )
-}
+})
+
+CanvasHeader.displayName = 'CanvasHeader'
 
 CanvasHeader.propTypes = {
     chatflow: PropTypes.object,
     handleSaveFlow: PropTypes.func,
     handleDeleteFlow: PropTypes.func,
     handleLoadFlow: PropTypes.func,
-    isAgentCanvas: PropTypes.bool
+    isAgentCanvas: PropTypes.bool,
+    isAgentflowV2: PropTypes.bool
 }
 
 export default CanvasHeader

@@ -4,14 +4,12 @@ info:
     description: API for managing chat messages
     version: 1.0.0
     contact:
-        name: AnswerAI Support
+        name: AnswerAgentAI Support
         url: https://theanswer.ai
         email: support@theanswer.ai
 servers:
-    - url: https://api.theanswer.ai/v1
+    - url: https://prod.studio.theanswer.ai/api/v1
       description: Production server
-    - url: https://staging-api.theanswer.ai/v1
-      description: Staging server
     - url: http://localhost:4000/api/v1
       description: Local development server
 tags:

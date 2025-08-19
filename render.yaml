@@ -4,55 +4,231 @@ services:
       name: theanswer
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
-      branch: staging
-      plan: starter
+      plan: standard
       envVars:
-          - key: APIKEY_STORAGE_TYPE
+          # =========================================
+          # Core Application Configuration
+          # =========================================
+          - key: NODE_ENV
+            value: production
+          - key: PORT
+            value: '4000'
+          - key: DEBUG
+            value: 'false'
+          - key: LOG_LEVEL
+            value: 'info'
+          - key: LOG_PATH
             sync: false
-          - key: MY_APP_VITE_AUTH_ORGANIZATION_ID
+          - key: DISABLE_FLOWISE_TELEMETRY
+            value: 'true'
+
+          # =========================================
+          # Database Configuration
+          # =========================================
+          - key: DATABASE_TYPE
+            value: postgres
+          - key: DATABASE_HOST
+            fromDatabase:
+                name: theanswer
+                property: host
+          - key: DATABASE_PORT
+            fromDatabase:
+                name: theanswer
+                property: port
+          - key: DATABASE_NAME
+            sync: false
+          - key: DATABASE_USER
+            fromDatabase:
+                name: theanswer
+                property: user
+          - key: DATABASE_PASSWORD
+            fromDatabase:
+                name: theanswer
+                property: password
+
+          # =========================================
+          # Auth0 Configuration (Must Match Frontend)
+          # =========================================
+          - key: AUTH0_BASE_URL
+            sync: false
+          - key: AUTH0_SECRET
+            sync: false
+          - key: AUTH0_DOMAIN
+            sync: false
+          - key: AUTH0_CLIENT_ID
+            sync: false
+          - key: AUTH0_CLIENT_SECRET
+            sync: false
+          - key: AUTH0_AUDIENCE
+            sync: false
+          - key: AUTH0_ISSUER_BASE_URL
             sync: false
           - key: AUTH0_ORGANIZATION_ID
             sync: false
-          - key: TRIAL_PLAN_EXECUTIONS
+          - key: AUTH0_TOKEN_SIGN_ALG
+            value: 'RS256'
+          - key: AUTH0_SCOPE
+            value: 'openid profile email'
+          - key: AUTH0_JWKS_URI
             sync: false
-          - key: PUBLIC_ORG_ID
+
+          # =========================================
+          # Domain Configuration
+          # =========================================
+          - key: DOMAIN
             sync: false
-          - key: DEBUG
+          - key: ANSWERAI_DOMAIN
             sync: false
-          - key: LOG_LEVEL
+
+          # =========================================
+          # Security & API Keys
+          # =========================================
+          - key: FLOWISE_SECRETKEY_OVERWRITE
             sync: false
-          - key: DEBUG_LEVEL
+          - key: SECRETKEY_PATH
             sync: false
-          - key: DATABASE_USER
-            sync: false
-          - key: DATABASE_TYPE
-            sync: false
-          - key: AUTH0_BASE_URL
-            sync: false
-          - key: MY_APP_VITE_AUTH_DOMAIN
-            sync: false
-          - key: DATABASE_NAME
-            fromService:
-                name: theanswer
-                type: web
-                property: host
-          - key: DATABASE_PORT
-            sync: false
-          - key: DATABASE_HOST
-            sync: false
-          - key: DATABASE_PASSWORD
-            sync: false
-          - key: LOG_PATH
-            sync: false
+          - key: APIKEY_STORAGE_TYPE
+            value: 'db'
           - key: APIKEY_PATH
             sync: false
-          - key: NODE_VERSION
+
+          # =========================================
+          # CORS & Iframe Settings
+          # =========================================
+          - key: CORS_ORIGINS
+            value: '*'
+          - key: IFRAME_ORIGINS
             sync: false
+
+          # =========================================
+          # Redis Configuration
+          # =========================================
+          - key: REDIS_URL
+            fromService:
+                name: theanswer
+                type: redis
+                property: connectionString
+
+          # =========================================
+          # Storage Configuration
+          # =========================================
+          - key: STORAGE_TYPE
+            value: s3
+          - key: S3_STORAGE_BUCKET_NAME
+            sync: false
+          - key: S3_STORAGE_ACCESS_KEY_ID
+            sync: false
+          - key: S3_STORAGE_SECRET_ACCESS_KEY
+            sync: false
+          - key: S3_STORAGE_REGION
+            sync: false
+          - key: S3_ENDPOINT_URL
+            sync: false
+          - key: S3_FORCE_PATH_STYLE
+            sync: false
+
+          # =========================================
+          # Langfuse Tracing
+          # =========================================
           - key: LANGFUSE_HOST
             sync: false
           - key: LANGFUSE_PUBLIC_KEY
             sync: false
           - key: LANGFUSE_SECRET_KEY
+            sync: false
+
+          # =========================================
+          # External Services
+          # =========================================
+          - key: OPENAI_API_KEY
+            sync: false
+
+          # =========================================
+          # Legacy/Migration Variables (To Remove)
+          # =========================================
+          - key: MY_APP_VITE_AUTH_ORGANIZATION_ID
+            sync: false
+          - key: MY_APP_VITE_AUTH_DOMAIN
+            sync: false
+          - key: MY_APP_VITE_AUTH_AUDIENCE
+            sync: false
+          - key: MY_APP_VITE_AUTH_CLIENT_ID
+            sync: false
+          - key: TRIAL_PLAN_EXECUTIONS
+            sync: false
+          - key: PUBLIC_ORG_ID
+            sync: false
+          - key: DEBUG_LEVEL
+            sync: false
+          - key: NODE_VERSION
+            sync: false
+      region: oregon
+      dockerContext: .
+      dockerfilePath: ./Dockerfile
+      # domains:
+      #     - prod.studio.theanswer.ai
+    - type: web
+      name: theanswer-web
+      runtime: docker
+      repo: https://github.com/the-answerai/theanswer
+      plan: starter
+      envVars:
+          # =========================================
+          # Application Configuration
+          # =========================================
+          - key: NODE_ENV
+            value: production
+          - key: PORT
+            value: '3000'
+          - key: HOSTNAME
+            value: '0.0.0.0'
+          - key: NEXT_TELEMETRY_DISABLED
+            value: '1'
+
+          # =========================================
+          # Database Configuration (Shared)
+          # =========================================
+          - key: DATABASE_URL
+            fromDatabase:
+                name: theanswer
+                property: connectionString
+          - key: DATABASE_TYPE
+            value: postgres
+          - key: DATABASE_HOST
+            fromDatabase:
+                name: theanswer
+                property: host
+          - key: DATABASE_PORT
+            fromDatabase:
+                name: theanswer
+                property: port
+          - key: DATABASE_NAME
+            sync: false
+          - key: DATABASE_USER
+            fromDatabase:
+                name: theanswer
+                property: user
+          - key: DATABASE_PASSWORD
+            fromDatabase:
+                name: theanswer
+                property: password
+
+          # =========================================
+          # Auth0 Configuration (Must Match Backend)
+          # =========================================
+          - key: AUTH0_BASE_URL
+            sync: false
+          - key: AUTH0_DOMAIN
+            sync: false
+          - key: AUTH0_CLIENT_ID
+            sync: false
+          - key: AUTH0_CLIENT_SECRET
+            sync: false
+          - key: AUTH0_AUDIENCE
+            sync: false
+          - key: AUTH0_ISSUER_BASE_URL
+            sync: false
+          - key: AUTH0_ORGANIZATION_ID
             sync: false
           - key: AUTH0_TOKEN_SIGN_ALG
             sync: false
@@ -60,41 +236,52 @@ services:
             sync: false
           - key: AUTH0_JWKS_URI
             sync: false
-          - key: AUTH0_ISSUER_BASE_URL
-            sync: false
-          - key: AUTH0_CLIENT_SECRET
-            sync: false
-          - key: AUTH0_CLIENT_ID
-            sync: false
-          - key: AUTH0_AUDIENCE
-            sync: false
-          - key: ANSWERAI_DOMAIN
+
+          # =========================================
+          # Backend Connection
+          # =========================================
+          - key: CHATFLOW_DOMAIN_OVERRIDE
             sync: false
           - key: DOMAIN
             sync: false
-          - key: MY_APP_VITE_AUTH_AUDIENCE
+
+          # =========================================
+          # Frontend-Specific Services
+          # =========================================
+          - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
-          - key: MY_APP_VITE_AUTH_CLIENT_ID
+          - key: DISABLE_SENTRY
+            value: 'false'
+          - key: ANALYZE
+            value: 'false'
+
+          # =========================================
+          # React App Variables (Client-Side)
+          # =========================================
+          - key: REACT_APP_AUTH0_ORGANIZATION_ID
             sync: false
-          - key: FLOWISE_SECRETKEY_OVERWRITE
+          - key: REACT_APP_AUTH0_AUDIENCE
             sync: false
-          - key: IFRAME_ORIGINS
+          - key: REACT_APP_AUTH0_DOMAIN
             sync: false
-          - key: DISABLE_FLOWISE_TELEMETRY
+          - key: REACT_APP_AUTH0_CLIENT_ID
             sync: false
-          - key: SECRETKEY_PATH
+
+          # =========================================
+          # External Services
+          # =========================================
+          - key: OPENAI_API_KEY
             sync: false
-          - key: PORT
+          - key: REDIS_URL
+            sync: false
+          - key: BILLING_STRIPE_SECRET_KEY
             sync: false
       region: oregon
       dockerContext: .
-      dockerfilePath: ./Dockerfile
+      dockerfilePath: ./apps/web/Dockerfile
       # domains:
-      #     - prod.studio.theanswer.ai
-      disk:
-          name: disk
-          mountPath: /var/data
-          sizeGB: 1
+      #     - app.theanswer.ai
+      # healthCheckPath: /api/auth/session
     - type: redis
       name: theanswer
       plan: standard
@@ -112,3 +299,4 @@ databases:
             description: everywhere
       postgresMajorVersion: '16'
 # Exported from Render on 2024-11-07T15:56:31Z
+

@@ -10,6 +10,7 @@ class VectorStoreToDocument_DocumentLoaders implements INode {
     type: string
     icon: string
     category: string
+    tags: string[]
     baseClasses: string[]
     inputs: INodeParams[]
     outputs: INodeOutputsValue[]
@@ -22,6 +23,7 @@ class VectorStoreToDocument_DocumentLoaders implements INode {
         this.icon = 'vectorretriever.svg'
         this.category = 'Document Loaders'
         this.description = 'Search documents with scores from vector store'
+        this.tags = ['AAI']
         this.baseClasses = [this.type]
         this.inputs = [
             {
@@ -88,9 +90,9 @@ class VectorStoreToDocument_DocumentLoaders implements INode {
 
         const docs = await vectorStore.similaritySearchWithScore(query ?? input, topK, filter)
         // eslint-disable-next-line no-console
-        console.log('\x1b[94m\x1b[1m\n*****VectorStore Documents*****\n\x1b[0m\x1b[0m')
+        // console.log('\x1b[94m\x1b[1m\n*****VectorStore Documents*****\n\x1b[0m\x1b[0m')
         // eslint-disable-next-line no-console
-        console.log(JSON.stringify(docs, null, 2))
+        // console.log(JSON.stringify(docs, null, 2))
 
         if (output === 'document' || isEndingNode) {
             let finaldocs = []

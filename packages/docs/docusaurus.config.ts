@@ -4,19 +4,19 @@ import type * as Preset from '@docusaurus/preset-classic'
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs'
 
 const config: Config = {
-    title: 'AnswerAI',
+    title: 'AnswerAgentAI',
     tagline: 'Intelligent Answers, Instantly',
     favicon: 'img/favicon.png',
 
     // Set the production url of your site here
-    url: 'https://docs.theanswer.ai',
+    url: 'https://answeragent.ai',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: 'AnswerAI', // Usually your GitHub org/user name.
+    organizationName: 'AnswerAgentAI', // Usually your GitHub org/user name.
     projectName: 'answerai', // Usually your repo name.
 
     onBrokenLinks: 'log',
@@ -62,6 +62,22 @@ const config: Config = {
         ]
     ],
     plugins: [
+        [
+            '@docusaurus/plugin-google-gtag',
+            {
+                trackingID: 'G-VD1X9LNG3N',
+                anonymizeIP: true,
+                id: 'gtag-analytics'
+            }
+        ],
+        [
+            '@docusaurus/plugin-google-gtag',
+            {
+                trackingID: 'AW-16804071963',
+                anonymizeIP: true,
+                id: 'gtag-ads'
+            }
+        ],
         [
             'docusaurus-plugin-openapi-docs',
             {
@@ -505,37 +521,100 @@ const config: Config = {
 
     themeConfig: {
         // Replace with your project's social card
-        image: 'img/answerai-social-card.png',
+        image: 'img/answer-angent-ai-ogimage.png',
+        colorMode: {
+            defaultMode: 'dark',
+            disableSwitch: true,
+            respectPrefersColorScheme: false
+        },
         navbar: {
             logo: {
-                alt: 'AnswerAI Logo',
+                alt: 'AnswerAgentAI Logo',
                 src: 'img/answerai-wide-black.png',
                 srcDark: 'img/answerai-logo-600-wide-white.png' // Add this line for dark mode logo
             },
             items: [
                 {
-                    to: '/docs/intro',
+                    to: '/getting-started',
                     label: 'Getting Started',
                     position: 'left'
                 },
                 {
-                    to: '/docs/using-answerai/',
-                    label: 'Chat',
-                    position: 'left'
+                    type: 'dropdown',
+                    label: 'Using Answer',
+                    position: 'left',
+                    items: [
+                        {
+                            to: '/agents',
+                            label: 'Agents'
+                        },
+                        {
+                            to: '/chat',
+                            label: 'Chat'
+                        },
+                        {
+                            to: '/browser-sidekick',
+                            label: 'Browser Sidekick'
+                        },
+                        {
+                            to: '/sidekick-studio',
+                            label: 'Studio'
+                        }
+                    ]
                 },
                 {
-                    to: '/docs/developers',
+                    type: 'dropdown',
                     label: 'Developers',
-                    position: 'left'
+                    position: 'left',
+                    items: [
+                        {
+                            to: '/developers',
+                            label: 'Join the Sprint'
+                        },
+                        {
+                            to: '/docs/developers',
+                            label: 'Developer Guide'
+                        },
+                        {
+                            to: '/docs/api',
+                            label: 'API Reference'
+                        },
+                        {
+                            to: '/docs/developers/embed',
+                            label: 'Embed Chatbot'
+                        },
+                        {
+                            to: '/docs/api/prediction/create-prediction',
+                            label: 'Prediction API'
+                        }
+                    ]
                 },
                 {
-                    to: '/docs/api',
-                    label: 'API Reference',
-                    position: 'left'
+                    type: 'dropdown',
+                    label: 'Resources',
+                    position: 'left',
+                    items: [
+                        {
+                            to: '/learn',
+                            label: 'Learn'
+                        },
+                        {
+                            to: '/ai-workshops',
+                            label: 'AI Workshops'
+                        },
+                        {
+                            to: '/docs/use-cases',
+                            label: 'Use Cases'
+                        },
+                        {
+                            to: '/docs/community',
+                            label: 'Support'
+                        }
+                    ]
                 },
                 {
-                    to: '/docs/community',
-                    label: 'Community',
+                    to: '/blog',
+                    label: 'Blog',
                     position: 'left'
                 },
                 {
@@ -557,25 +636,41 @@ const config: Config = {
                     title: 'Docs',
                     items: [
                         {
-                            to: '/docs/intro',
+                            to: '/getting-started',
                             label: 'Getting Started'
                         },
                         {
-                            to: '/docs/using-answerai/',
+                            to: '/agents',
+                            label: 'Agents'
+                        },
+                        {
+                            to: '/browser-sidekick',
+                            label: 'Browser Sidekick'
+                        },
+                        {
+                            to: '/chat',
                             label: 'Chat'
                         },
                         {
-                            to: '/docs/developers',
-                            label: 'Developers'
+                            to: '/sidekick-studio',
+                            label: 'Studio'
                         },
                         {
-                            to: '/docs/community',
-                            label: 'Community'
+                            to: '/ai-workshops',
+                            label: 'AI Workshops'
+                        },
+                        {
+                            to: '/developers',
+                            label: 'Join the Sprint'
+                        },
+                        {
+                            to: '/docs/developers',
+                            label: 'Developer Docs'
                         }
                     ]
                 },
                 {
-                    title: 'Community',
+                    title: 'Support',
                     items: [
                         {
                             label: 'Discord',

@@ -38,9 +38,9 @@ You'll be able to see a Discord message sent to the channel:
 
 Perfect! We have successfully configured a workflow that is able to pass a message and send to Discord channel [🎉](https://emojiterra.com/party-popper/)[🎉](https://emojiterra.com/party-popper/)
 
-## AnswerAI
+## AnswerAgentAI
 
-In AnswerAI, we are going to create a custom tool that is able to call the Webhook POST request, with the message body.
+In AnswerAgentAI, we are going to create a custom tool that is able to call the Webhook POST request, with the message body.
 
 From the dashboard, click **Tools**, then click **Create**
 
@@ -111,18 +111,18 @@ Go to the Discord channel, and you will be able to see the message:
 
 That's it! OpenAI Function Agent will be able to automatically figure out what to pass as the message and send it over to Discord. This is just a quick example of how to trigger a webhook workflow with dynamic body. The same idea can be applied to workflow that has a webhook and Gmail, GoogleSheets etc.
 
-You can read more on how to pass chat information like `sessionId`, `flowid` and `variables` to custom tool - [#additional](../../using-answerai/sidekick-studio/nodes/tools/custom-tool.md)
+You can read more on how to pass chat information like `sessionId`, `flowid` and `variables` to custom tool - [#additional](../../sidekick-studio/chatflows/tools/custom-tool.md)
 
 ## Tutorials
 
--   Watch a step-by-step instruction video on using Webhooks with AnswerAI custom tools.
+-   Watch a step-by-step instruction video on using Webhooks with AnswerAgentAI custom tools.
 
 <iframe src="https://www.youtube.com/embed/_K9xJqEgnrU"></iframe>
 
--   Watch how to connect AnswerAI to Google Sheets using webhooks
+-   Watch how to connect AnswerAgentAI to Google Sheets using webhooks
 
 <iframe src="https://www.youtube.com/embed/fehXLdRLJFo"></iframe>
 
--   Watch how to connect AnswerAI to Microsoft Excel using webhooks
+-   Watch how to connect AnswerAgentAI to Microsoft Excel using webhooks
 
 <iframe src="https://www.youtube.com/embed/cB2GC8JznJc"></iframe>

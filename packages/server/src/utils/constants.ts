@@ -3,6 +3,7 @@ export const WHITELIST_URLS = [
     '/api/v1/chatflows/apikey/',
     '/api/v1/public-chatflows',
     '/api/v1/public-chatbotConfig',
+    '/api/v1/public-executions',
     '/api/v1/prediction/',
     '/api/v1/vector/upsert/',
     '/api/v1/node-icon/',
@@ -21,6 +22,8 @@ export const WHITELIST_URLS = [
     '/api/v1/nvidia-nim',
     '/api/v1/google-auth',
     process.env.GOOGLE_CALLBACK_URL ?? '/api/v1/google-auth/callback',
+    '/api/v1/salesforce-auth',
+    '/api/v1/salesforce-auth/callback',
     '/api/v1/gmail/labels',
     '/api/v1/gmail/messages',
     '/api/v1/gmail/message',
@@ -41,7 +44,8 @@ export const WHITELIST_URLS = [
     '/api/v1/ip',
     '/api/v1/ping',
     '/api/v1/marketplaces/templates',
-    '/api/v1/billing/usage/sync'
+    '/api/v1/billing/usage/sync',
+    '/api/v1/langfuse/healthcheck'
 ]
 
 export const OMIT_QUEUE_JOB_DATA = ['componentNodes', 'appDataSource', 'sseStreamer', 'telemetry', 'cachePool']
@@ -51,6 +55,7 @@ export const INPUT_PARAMS_TYPE = [
     'asyncMultiOptions',
     'options',
     'multiOptions',
+    'array',
     'datagrid',
     'string',
     'number',

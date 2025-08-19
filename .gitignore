@@ -150,10 +150,14 @@ yarn-error.log*
 .env.production.local
 .env.*
 .env
+!.env.template
 
 # turbo
 .turbo
 .vercel
+
+# TypeScript build info
+**/tsconfig.tsbuildinfo
 
 #cypress
 **/cypress/screenshots
@@ -173,3 +177,19 @@ daisy/preview
 
 **/swagger/yml
 **/swagger/md
+
+# Generated API documentation (auto-generated from OpenAPI specs)
+packages/docs/docs/api/*/*
+packages/docs/static/api/
+
+# Keep manually written API overview files
+!packages/docs/docs/api/index.mdx
+!packages/docs/docs/api/full-api-spec.mdx
+ 
+# BWS Secure
+.env.secure.*
+requiredVars.env
+.env-debug.html
+
+bwsconfig.json
+.bwsconfig.cache

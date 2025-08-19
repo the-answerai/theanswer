@@ -8,11 +8,15 @@ FROM --platform=linux/amd64 node:20-alpine as base
 
 WORKDIR /app
 
-RUN apk add --update libc6-compat python3 make g++
+RUN apk add --update libc6-compat python3 make g++ bash
 # needed for pdfjs-dist
 RUN apk add --no-cache build-base cairo-dev pango-dev
 # Install Chromium
 RUN apk add --no-cache chromium
+
+# Install curl for container-level health checks
+# Fixes: https://github.com/FlowiseAI/Flowise/issues/4126
+RUN apk add --no-cache curl
 
 #install PNPM globaly
 RUN npm install -g pnpm turbo@1
@@ -38,6 +42,9 @@ FROM base as build
 # Copy package.json files and patches directory first
 COPY --from=pruner /app/out/json/ .
 
+# Copy scripts directory before pnpm install since postinstall script needs it
+COPY scripts/ ./scripts/
+
 # First install the dependencies (as they change less often)
 RUN --mount=type=cache,id=pnpm,target=~/.pnpm-store pnpm install 
 
@@ -54,7 +61,7 @@ RUN --mount=type=cache,target=/app/node_modules/.cache pnpm run build --filter f
 
 FROM base AS runner
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 COPY --from=build /app .
 
@@ -63,9 +70,4 @@ WORKDIR /app/packages/server
 # Expose the port that the application listens on.
 EXPOSE 4000
 
-COPY update_ui_env.sh /docker-entrypoint.d/update_ui_env.sh
-RUN chmod +x /docker-entrypoint.d/update_ui_env.sh
-
-# Run the application.
-ENTRYPOINT ["/docker-entrypoint.d/update_ui_env.sh"]
 CMD ["pnpm", "start"]

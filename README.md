@@ -2,54 +2,22 @@
 <!-- TODO: Add banner for answerAI  -->
 <!-- <img width="100%" src="https://github.com/the-answerai/theanswer/blob/main/images/flowise.png?raw=true"></a> -->
 
-# TheAnswer - Build LLM Apps Easily with Flowise
+<!-- <p align="center">
+<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_white.svg#gh-light-mode-only">
+<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_dark.svg#gh-dark-mode-only">
+</p> -->
 
+[![Release Notes](https://img.shields.io/github/release/the-answerai/theanswer)](https://github.com/the-answerai/theanswer/releases)
 [![Discord](https://img.shields.io/discord/1087698854775881778?label=Discord&logo=discord)](https://discord.gg/jbaHfsRVBW)
 [![Twitter Follow](https://img.shields.io/twitter/follow/TheAnswerAI?style=social)](https://twitter.com/TheAnswerAI)
 [![GitHub star chart](https://img.shields.io/github/stars/the-answerai/theanswer?style=social)](https://star-history.com/#the-answerai/theanswer)
 [![GitHub fork](https://img.shields.io/github/forks/the-answerai/theanswer?style=social)](https://github.com/the-answerai/theanswer/fork)
 
-English | [繁體中文](./i18n/README-TW.md) | [簡體中文](./i18n/README-ZH.md) | [日本語](./i18n/README-JA.md) | [한국어](./i18n/README-KR.md)
+English | [繁體中文](./i18n/README-TW.md) | [简体中文](./i18n/README-ZH.md) | [日本語](./i18n/README-JA.md) | [한국어](./i18n/README-KR.md)
 
-<h3>Drag & drop UI to build your customized LLM Flowise with The AnswerAI</h3>
+<h3>Build AI Agents, Visually</h3>
 <a href="https://github.com/the-answerai/theanswer">
-<img width="100%" src="https://github.com/the-answerai/theanswer/blob/main/images/flowise.gif?raw=true"></a>
-
-## 🌟 What is TheAnswer?
-
-TheAnswer is a revolutionary AI-powered productivity suite that empowers individuals and organizations to streamline their workflows, enhance decision-making, and boost creativity. Built on top of the popular open-source project Flowise, TheAnswer extends its capabilities to provide a comprehensive set of tools designed to tackle a wide range of tasks with unprecedented efficiency and intelligence.
-
-### TheAnswer and Flowise
-
-TheAnswer builds upon Flowise, a powerful open-source tool for creating customized LLM flows. While Flowise provides the foundation for AI-powered workflows, TheAnswer extends these capabilities and integrates a wide range of additional services to create a comprehensive productivity suite.
-
-Key aspects of TheAnswer's approach:
-
--   Leverages Flowise's drag-and-drop interface for building AI workflows
--   Extends Flowise's functionality with additional UI components and features
--   Integrates seamlessly with Flowise projects
-
-### Integration with Multiple Services
-
-TheAnswer goes beyond Flowise integration, offering a growing ecosystem of services to enhance your AI-powered workflows:
-
-1. **Langfuse**: For LLM observability and analytics
-2. **Make.com**: To create complex automated workflows
-3. **n8n**: For workflow automation and integration
-4. **Auth0**: For robust user management, organizations, and permissions
-5. **Other AI and Productivity Tools**: Continuously expanding integrations with various services
-
-This multi-service approach allows TheAnswer to offer a more versatile and powerful solution, catering to a wide range of business needs and use cases.
-
-### Key Features
-
-1. **AI Sidekicks (Chatflows)**: Task-specific AI assistants for various purposes, built using Flowise and enhanced with TheAnswer's capabilities.
-2. **Document Stores**: Connect and access data from multiple third-party services.
-3. **Powerful Tools Integration**: Leverage various tools and services to extend AI capabilities beyond Flowise's core functionality.
-4. **Developer-Friendly Platform**: Customizable AI models and workflows with API access, compatible with Flowise and other integrated services.
-5. **Shareable Chatbots**: Easily deploy and share custom AI Sidekicks.
-6. **Composable Architecture**: Mix and match services like Flowise, Langfuse, Make.com, and n8n to create tailored solutions.
-7. **Advanced User Management**: Utilize Auth0 for secure user authentication, organization management, and granular permissions control.
+<img width="100%" src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_agentflow.gif?raw=true"></a>
 
 ## ⚡Quick Start
 
@@ -57,63 +25,103 @@ There are two main ways to get started with TheAnswer: local development setup a
 
 ### Local Development Setup
 
-1. Clone the repository:
+1. **Clone the repository:**
+
+    ```bash
+    # Recommended: Clone with submodules included
+    git clone --recursive https://github.com/the-answerai/theanswer.git
+    cd theanswer
+    ```
+
+    **Alternative:** If you already cloned without submodules:
 
     ```bash
     git clone https://github.com/the-answerai/theanswer.git
     cd theanswer
-    ```
-
-2. Initialize and update git submodules:
-
-    ```bash
     git submodule update --init
     ```
 
-3. Set up environment variables:
+2. **Set up environment variables:**
 
-    - Create `.env` files in the following locations:
-        - `/packages/server/.env`
-        - `/packages/ui/.env`
-        - `/apps/web/.env`
-        - `/.env` (root directory)
+    - Create a `.env` file in the root directory
+    - If `.env.example` files are not available, contact The AnswerAI team for required environment variables
+    - Use `API_HOST` to specify your API server host. All API requests automatically include the `/api/v1` prefix.
+    - `API_BASE_URL` is deprecated and should not be used.
+    - **Note:** For local development, you'll need Auth0 development team access (Member role or above)
 
-    If `.env.example` files are not available, please reach out to The AnswerAI team for the required environment variables. These files contain sensitive configuration details needed for local development.
+3. **Verify submodules are initialized:**
 
-    **Note:** For local development, you'll need to be added to the Auth0 development team with appropriate permissions (Member role or above). Please contact The AnswerAI team to get access.
+    ```bash
+    git submodule status
+    ```
 
-4. Database Setup:
+    You should see output like:
 
-    - Install and open [DBeaver](https://dbeaver.io/)
-    - Connect to your PostgreSQL instance
-    - Create a new database named `flowise`
-    - Configure the database connection in your `.env` files
+    ```
+    +050ca236891420946884c68ff8d74cbeb0cbe7ef packages/embed (aai-embed@3.0.3-23-g050ca23)
+    ```
 
-5. Install dependencies:
+    **If submodules are not initialized** (empty directories or missing files), or if you need to update to the correct version, run:
+
+    ```bash
+    # This will initialize, update, and force reset submodules to the correct commits
+    pnpm submodule:init
+    ```
+
+    **For a complete reset** (if you're having persistent issues):
+
+    ```bash
+    # Remove and reinitialize all submodules
+    pnpm submodule:reset
+    ```
+
+    **Note:** This repository uses git submodules. The `packages/embed` submodule contains the chat embed functionality. See [CONTRIBUTING.md](CONTRIBUTING.md#git-submodules) for detailed submodule management instructions.
+
+4. **Install dependencies:**
 
     ```bash
     pnpm install
     ```
 
-6. Build the project:
+5. **Install Docker Desktop:**
+
+    - Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    - Ensure Docker is running before proceeding
+
+6. **Set up database:**
 
     ```bash
-    pnpm build
+    pnpm dev-docker && sleep 10 && docker exec -it theanswer-postgres-1 psql -U example_user -d example_db -c "CREATE DATABASE flowise;"
     ```
 
-    If you encounter any database or Prisma-related issues:
+7. **Optional: Install database tool**
 
-    - Try rebuilding with force: `pnpm build --force`
-    - If issues persist, run migrations: `pnpm db:migrate`
-    - Then rebuild again: `pnpm build --force`
+    - Install [DBeaver](https://dbeaver.io/) for database management
+    - Connect to PostgreSQL: localhost, example_user, example_password
 
-7. Start the development server:
+8. **Build and migrate the initial database:**
 
+    ```bash
+    pnpm build && pnpm db:migrate
+    ```
+
+9. **Run the application:**
+
+    ```bash
+    pnpm start
+    ```
+
+10. **Access TheAnswer:**
+
+    - After the build completes and the app starts, you should see logs stating that the server started on 'http://localhost:3000'
+    - Open [http://localhost:3000](http://localhost:3000) in your browser
+    - Verify you can login and access the application
+
+11. **For development:**
+    - After initial setup, you can fast reload to test your changes using:
     ```bash
     pnpm dev
     ```
-
-8. Open [http://localhost:3000](http://localhost:3000) in your browser to access TheAnswer.
 
 ### Deploy on Render (Recommended for Easy Setup)
 
@@ -298,9 +306,9 @@ Deploy TheAnswer self-hosted in your existing infrastructure. We support various
 
         [![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/theanswer)
 
-    -   [Sealos](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
+    -   [Sealos](https://template.sealos.io/deploy?templateName=flowise)
 
-        [![](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://cloud.sealos.io/?openapp=system-template%3Dtheanswer)
+        [![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://template.sealos.io/deploy?templateName=flowise)
 
     -   [RepoCloud](https://repocloud.io/details/?app_id=29)
 
@@ -353,3 +361,104 @@ Reach out to us on [Discord](https://discord.gg/jbaHfsRVBW) if you have any ques
 ## 📄 License
 
 Source code in this repository is made available under the [Apache License Version 2.0](LICENSE.md).
+
+## 🔑 Seeding Default Credentials
+
+TheAnswer provides a script to automatically seed default credentials (API keys, service tokens, etc) into the Flowise database from environment variables. This is useful for setting up new environments or automating credential management.
+
+-   **Safe by default:** Running `pnpm seed-credentials` will perform a dry-run (test mode) and show what would be seeded, but will NOT write to the database.
+-   **To actually write credentials:** Use `pnpm seed-credentials:write` to perform the operation and insert/update credentials in the database.
+-   **Full documentation:** See [`scripts/seed-credentials/README.md`](./scripts/seed-credentials/README.md) for detailed instructions, environment variable requirements, and advanced usage.
+
+**Example:**
+
+```bash
+# Test mode (safe, dry-run, default)
+pnpm seed-credentials
+
+# Production mode (actually writes credentials)
+pnpm seed-credentials:write
+```
+
+The script supports a wide range of credential types and includes robust safety checks. For more details, troubleshooting, and environment variable examples, refer to the [seed-credentials README](./scripts/seed-credentials/README.md).
+
+## 🔒 Lacework Security Integration
+
+TheAnswer supports optional Lacework FortiCNAPP Agent integration for runtime security monitoring and anomaly detection in AWS Fargate deployments.
+
+### Quick Setup
+
+**Enable Lacework:**
+
+1. Add `LaceworkAccessToken=your_token_here` to your `copilot.{environment}.env` file
+2. Deploy with `copilot deploy --env your-environment`
+
+**Disable Lacework:**
+
+1. Remove or comment out `LaceworkAccessToken` from your environment file
+2. Deploy with `copilot deploy --env your-environment`
+
+### Key Features
+
+-   **Optional Integration**: Controlled by presence of `LaceworkAccessToken`
+-   **Graceful Fallback**: Application runs normally if Lacework token is not provided
+-   **Non-Essential Sidecar**: Sidecar failure doesn't affect main application startup
+-   **AWS Fargate Optimized**: Designed for Copilot deployments
+
+### Verification
+
+```bash
+# Connect to container
+copilot svc exec --env your-environment
+
+# Check Lacework status
+ps aux | grep datacollector
+tail -f /var/log/lacework/datacollector.log
+
+# Check environment variables (WARNING: Do not screenshare - contains sensitive tokens)
+env | grep -i lacework
+```
+
+**⚠️ Security Note**: Never screenshare or share output from commands that display Lacework tokens.
+
+For detailed configuration, troubleshooting, and advanced setup, see [Lacework Integration Documentation](./packages/docs/docs/integrations/lacework.md).
+
+<!-- BWS-SECURE-DOCS-START -->
+
+## BWS Secure Environmental Variable Integration
+
+This project uses [BWS Secure](https://github.com/last-rev-llc/bws-secure) for managing environment variables across different environments.
+
+### Creating an Access Token
+
+1. Visit your [Bitwarden Machine Accounts](https://vault.bitwarden.com/#/sm/${BWS_ORG_ID:-YOUR_BWS_ORG_ID_HERE}/machine-accounts) section
+    - **Note:** This link requires you to be a member of the Last Rev Bitwarden organization
+    - If you don't have access, please refer to the [BWS Secure documentation](https://github.com/last-rev-llc/bws-secure) or contact your team administrator
+2. After clicking the link, follow these steps:
+    - Select the appropriate Client/Set of Machine Accounts from the list
+    - Click on the "Access Tokens" tab
+    - Click "+ New Access Token" button
+    - Give the token a meaningful name (e.g., "Your Name - Local Development")
+    - Click "Save" to generate the token
+3. Copy the displayed token (you won't be able to see it again after closing)
+4. Add it to your .env file in your project root:
+    ```
+    BWS_ACCESS_TOKEN=your_token_here
+    ```
+5. Never commit this token to version control
+
+### Updating BWS Secure
+
+To update BWS Secure to the latest version, you can use the convenient script that was added to your package.json:
+
+```bash
+npm run bws-update  # Or use your project's package manager: yarn bws-update, pnpm bws-update
+```
+
+Alternatively, you can run the following command manually from your project root:
+
+```bash
+rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh
+```
+
+<!-- BWS-SECURE-DOCS-END -->

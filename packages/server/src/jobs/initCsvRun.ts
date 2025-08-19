@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { parse } from 'csv-parse/sync'
 import logger from '../utils/logger'
 import { getRunningExpressApp } from '../utils/getRunningExpressApp'
@@ -19,16 +19,19 @@ const INIT_CSV_RUN_CRON_SCHEDULE = process.env.INIT_CSV_RUN_CRON_SCHEDULE || '*/
  */
 const ENABLE_INIT_CSV_RUN_CRON = process.env.ENABLE_INIT_CSV_RUN_CRON !== 'false'
 
-const s3 = new S3(getS3Config())
+const { s3Client } = getS3Config()
 
 const initCsvRun = async (csvParseRun: IAppCsvParseRuns) => {
+    const appServer = getRunningExpressApp()
     try {
-        const appServer = getRunningExpressApp()
         // download csv from s3
-        const originalCsv = await s3.send(
+        const bucketName = process.env.S3_STORAGE_BUCKET_NAME ?? ''
+        const key = csvParseRun.originalCsvUrl.replace(`s3://${bucketName}/`, '')
+        logger.info(`Downloading csv ${key} from s3 bucket ${bucketName}`)
+        const originalCsv = await s3Client.send(
             new GetObjectCommand({
-                Bucket: process.env.S3_STORAGE_BUCKET_NAME ?? '',
-                Key: csvParseRun.originalCsvUrl.replace(`s3://${process.env.S3_STORAGE_BUCKET_NAME ?? ''}/`, '')
+                Bucket: bucketName,
+                Key: key
             })
         )
         // Get the CSV content as string
@@ -37,7 +40,9 @@ const initCsvRun = async (csvParseRun: IAppCsvParseRuns) => {
         // parse csv
         const records = parse(originalCsvText, {
             columns: true,
-            skip_empty_lines: true
+            skip_empty_lines: true,
+            comment: '#',
+            comment_no_infix: true
         })
 
         // create csv parse rows
@@ -66,6 +71,12 @@ const initCsvRun = async (csvParseRun: IAppCsvParseRuns) => {
         logger.info(`Csv run ${csvParseRun.id} initialized`)
     } catch (error) {
         logger.error(error)
+        await appServer.AppDataSource.getRepository(AppCsvParseRuns)
+            .createQueryBuilder()
+            .update()
+            .set({ status: AppCsvParseRunsStatus.COMPLETE_WITH_ERRORS, errorMessages: [String(error)] })
+            .where('id = :id', { id: csvParseRun.id })
+            .execute()
     }
 }
 

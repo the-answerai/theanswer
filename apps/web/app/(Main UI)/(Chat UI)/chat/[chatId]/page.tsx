@@ -20,21 +20,6 @@ async function getChat(chatId: string, user: User) {
         console.error('Auth error:', err)
     }
 
-    // // Fetch local chat
-    // const localChatPromise = prisma.chat.findUnique({
-    //     where: {
-    //         id: chatId,
-    //         users: {
-    //             some: {
-    //                 id: user.id
-    //             }
-    //         }
-    //     },
-    //     include: {
-    //         users: { select: { id: true, email: true, image: true, name: true } }
-    //     }
-    // })
-
     // Check if id corresponds to a valid chat
     const chatflowChatPromise = token
         ? fetch(`${user.chatflowDomain}/api/v1/chats/${chatId}`, {
@@ -59,7 +44,8 @@ async function getChat(chatId: string, user: User) {
             chatflowChatId: chatflowChat.id
         }
     }
-    // If no Chat, return a new chat page with the correctly selected Sidekick based on the chatId but as a chatflowid
+
+    // If no Chat, check if it's a chatflow ID
     const chatflow: Chatflow = await (token
         ? fetch(`${user.chatflowDomain}/api/v1/chatflows/${chatId}`, {
               headers: {
@@ -110,7 +96,7 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
         } catch (err) {
             console.error('Error parsing messages:', err)
         }
-        console.log('Messages', messages)
+        // console.log('Messages', messages)
         return messages?.map((m: any) => ({
             ...m,
             // agentReasoning: JSON.parse(m.agentReasoning ?? '[]'),
@@ -140,10 +126,11 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
     }
 
     const user = session.user
+    let sidekicks: any[] = []
 
     try {
-        // Fetch chat, messages and sidekicks in parallel
-        const [chat, { sidekicks } = {}] = await Promise.all([getChat(params.chatId, user), findSidekicksForChat(user)])
+        const [chat] = await Promise.all([getChat(params.chatId, user)])
+
         if (!chat) {
             return <ChatNotFound />
         }
@@ -155,12 +142,15 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
             messages
         }
 
-        console.log('Chat', chat)
+        // console.log('Chat', chat)
 
+        // Chat without credential issues - use regular Chat component
+        // The Chat component will handle credential checking using useCredentialChecker hook
         return <Chat {...params} chat={chatWithMessages} journey={chatWithMessages?.journey} sidekicks={sidekicks} />
     } catch (error) {
-        console.error(error)
-        return <Chat {...params} />
+        console.error('Error loading chat:', error)
+        // Even if there's an error, still pass the sidekicks if we have them
+        return <Chat {...params} sidekicks={sidekicks} />
     }
 }
 

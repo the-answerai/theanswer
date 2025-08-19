@@ -26,24 +26,14 @@ import chatmessagefeedbackApi from '@/api/chatmessagefeedback'
 // } from 'types'
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source'
 
-import {
-    AnswersFilters,
-    AppSettings,
-    Chat,
-    Journey,
-    Message,
-    Prompt,
-    Sidekick,
-    User,
-    MessageFeedback,
-    SidekickListItem,
-    FeedbackPayload
-} from 'types'
+import { AnswersFilters, AppSettings, Chat, Journey, Message, Prompt, Sidekick, User, SidekickListItem, FeedbackPayload } from 'types'
 import { ChatbotConfig } from './types'
 import { FlowData } from './types'
 
 // import { useUserPlans } from './hooks/useUserPlan';
 import { v4 as uuidv4 } from 'uuid'
+import { useSidekickData } from './SidekickSelect'
+import { useSidekickDetails } from './SidekickSelect/hooks/useSidekickDetails'
 
 interface PredictionParams {
     question: string
@@ -183,7 +173,7 @@ interface AnswersProviderProps {
 export function AnswersProvider({
     chat,
     journey: initialJourney,
-    sidekicks,
+    // sidekicks,
     user,
     appSettings,
     children,
@@ -192,6 +182,7 @@ export function AnswersProvider({
     apiUrl = '/api'
 }: AnswersProviderProps) {
     const router = useRouter()
+    const { combinedSidekicks: sidekicks } = useSidekickData()
     const [error, setError] = useState(null)
     const [inputValue, setInputValue] = useState('')
     // const [chat, setChat] = useState<Chat | undefined>(chat);
@@ -210,13 +201,52 @@ export function AnswersProvider({
 
     const [chatId, setChatId] = useState<string | undefined>(chat?.id ?? uuidv4())
 
-    const [sidekick, setSidekick] = useState<SidekickListItem | undefined>(
-        sidekicks?.find((s) => s.id === chat?.messages?.[chat?.messages?.length - 1]?.chatflowid || s.id === chat?.chatflowId)
-    )
-    const chatbotConfig = React.useMemo(() => sidekick?.chatbotConfig, [sidekick])
+    const [sidekick, setSidekick] = useState<SidekickListItem | undefined>()
     const flowData = React.useMemo(() => sidekick?.flowData, [sidekick])
     const [messages, setMessages] = useState<Array<Message>>(chat?.messages ?? [])
     const [filters, setFilters] = useState<AnswersFilters>(deepmerge({}, appSettings?.filters, journey?.filters, chat?.filters))
+    const { data: selectedSidekickData } = useSidekickDetails(sidekick?.id ?? null)
+    const chatbotConfig = React.useMemo(() => selectedSidekickData?.chatbotConfig, [selectedSidekickData])
+    useEffect(() => {
+        if (sidekicks) {
+            // Helper function to transform Sidekick to basic SidekickListItem structure
+            const transformSidekick = (sidekick: any): SidekickListItem =>
+                ({
+                    id: sidekick.id,
+                    chatbotConfig: sidekick.chatflow?.chatbotConfig,
+                    flowData: sidekick.chatflow?.flowData || sidekick.flowData,
+                    // Add minimal required properties
+                    isFavorite: false,
+                    sharedWith: '',
+                    tagString: '',
+                    chatflowId: sidekick.id,
+                    answersConfig: sidekick.chatflow?.answersConfig,
+                    constraints: {
+                        isSpeechToTextEnabled: false,
+                        isImageUploadAllowed: false,
+                        uploadSizeAndTypes: []
+                    },
+                    chatflow: sidekick.chatflow,
+                    placeholder: sidekick.placeholder || '',
+                    tags: sidekick.tags || [],
+                    aiModel: sidekick.aiModel || '',
+                    label: sidekick.label || '',
+                    chatflowDomain: sidekick.chatflowDomain || ''
+                } as SidekickListItem)
+
+            // First, try to find sidekick from existing chat context
+            const existingSidekick = sidekicks.find(
+                (s) => s.id === chat?.messages?.[chat?.messages?.length - 1]?.chatflowid || s.id === chat?.chatflowId
+            )
+
+            if (existingSidekick) {
+                setSidekick(transformSidekick(existingSidekick))
+            } else if (!chat && sidekicks.length > 0) {
+                // If no chat exists, set the first available sidekick to enable starter prompts
+                setSidekick(transformSidekick(sidekicks[0]))
+            }
+        }
+    }, [sidekicks, chat])
 
     const addMessage = useCallback(
         (message: Message) => {
@@ -821,7 +851,7 @@ export function AnswersProvider({
         journeyId,
         setJourneyId,
         messageIdx,
-        sidekick,
+        sidekick: { ...sidekick, ...selectedSidekickData },
         setSidekick,
         chatbotConfig,
         flowData,

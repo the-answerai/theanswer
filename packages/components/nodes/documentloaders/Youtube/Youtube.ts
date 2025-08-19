@@ -12,6 +12,7 @@ class Youtube_DocumentLoaders implements INode {
     type: string
     icon: string
     category: string
+    tags: string[]
     baseClasses: string[]
     credential: INodeParams
     inputs?: INodeParams[]
@@ -24,6 +25,7 @@ class Youtube_DocumentLoaders implements INode {
         this.icon = 'youtube.png'
         this.category = 'Document Loaders'
         this.description = `Memorize, summarize, and chat with Youtube transcripts`
+        this.tags = ['AAI']
         this.baseClasses = [this.type]
         // this.credential = {
         //     label: 'Connect Credential',
@@ -86,7 +88,7 @@ class YoutubeLoader extends BaseDocumentLoader {
         const transcript = await YoutubeTranscript.fetchTranscript(youtubeUrl)
         const concatenatedText = transcript.map((entry: any) => entry.text).join(' ')
         // console.log(concatenatedText)
-        console.log('Video ID:', this.videoId)
+        // console.log('Video ID:', this.videoId)
         return [
             new Document({
                 pageContent: concatenatedText,

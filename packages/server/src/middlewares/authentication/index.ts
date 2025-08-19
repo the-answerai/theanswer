@@ -1,12 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
-import Stripe from 'stripe'
 
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
 import apikeyService from '../../services/apikey'
-import { QueryFailedError } from 'typeorm'
+import { findOrCreateOrganization } from './findOrCreateOrganization'
+import { findOrCreateUser } from './findOrCreateUser'
+import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
+import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
 
 const jwtCheck = auth({
     authRequired: true,
@@ -34,7 +36,6 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
     try {
         const apiKeyData = await apikeyService.verifyApiKey(apiKey)
         if (!apiKeyData) {
-            console.log('[AuthMiddleware] Invalid API key')
             return null
         }
 
@@ -44,7 +45,6 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
         })
 
         if (!user) {
-            console.log(`[AuthMiddleware] No user found for API key userId: ${apiKeyData.userId}`)
             return null
         }
 
@@ -54,144 +54,27 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
     }
 }
 
-/**
- * Safely creates or updates a user with proper transaction handling to prevent race conditions
- */
-const findOrCreateUser = async (
-    AppDataSource: DataSource,
-    auth0Id: string,
-    email: string,
-    name: string,
-    organizationId: string
-): Promise<User> => {
-    const userRepo = AppDataSource.getRepository(User)
-
-    // First, try to find the user
-    let user = await userRepo.findOneBy({ auth0Id })
-    if (user) {
-        // Update user if needed and return
-        if (user.email !== email || user.name !== name || user.organizationId !== organizationId) {
-            user.email = email
-            user.name = name
-            user.organizationId = organizationId
-            await userRepo.save(user)
-        }
-        return user
-    }
-
-    // User not found, try to create with transaction and retry logic
-    let retryCount = 0
-    const maxRetries = 3
-
-    while (retryCount < maxRetries) {
-        const queryRunner = AppDataSource.createQueryRunner()
-        await queryRunner.connect()
-        await queryRunner.startTransaction()
-
-        try {
-            // Check again inside transaction to prevent race condition
-            const existingUser = await queryRunner.manager.findOneBy(User, { auth0Id })
-            if (existingUser) {
-                await queryRunner.release()
-                return existingUser
-            }
-
-            // Create new user
-            const newUser = userRepo.create({ auth0Id, email, name, organizationId })
-            const savedUser = await queryRunner.manager.save(newUser)
-
-            await queryRunner.commitTransaction()
-            await queryRunner.release()
-
-            console.log(`[AuthMiddleware] Successfully created new user: ${savedUser.id}`)
-            return savedUser
-        } catch (error) {
-            await queryRunner.rollbackTransaction()
-            await queryRunner.release()
-
-            // If duplicate key error, retry after a short delay
-            if (error instanceof QueryFailedError && error.message.includes('duplicate key')) {
-                retryCount++
-                console.log(`[AuthMiddleware] Duplicate key error, retrying (${retryCount}/${maxRetries})`)
-                await new Promise((resolve) => setTimeout(resolve, 100 * retryCount)) // Exponential backoff
-
-                // Try to get the user that was created in parallel
-                user = await userRepo.findOneBy({ auth0Id })
-                if (user) {
-                    return user
-                }
-            } else {
-                throw error
-            }
-        }
-    }
-
-    // Last attempt to find user after retries
-    user = await userRepo.findOneBy({ auth0Id })
-    if (user) {
-        return user
-    }
-
-    throw new Error(`Failed to create or find user with auth0Id: ${auth0Id} after ${maxRetries} retries`)
-}
-
-/**
- * Safely creates or updates an organization with proper transaction handling
- */
-const findOrCreateOrganization = async (AppDataSource: DataSource, auth0OrgId: string, orgName: string): Promise<Organization> => {
-    const orgRepo = AppDataSource.getRepository(Organization)
-
-    let organization = await orgRepo.findOneBy({ auth0Id: auth0OrgId })
-
-    if (organization) {
-        if (organization.name !== orgName) {
-            organization.name = orgName
-            await orgRepo.save(organization)
-        }
-        return organization
-    }
-
-    // Organization not found, create with transaction
-    const queryRunner = AppDataSource.createQueryRunner()
-    await queryRunner.connect()
-    await queryRunner.startTransaction()
-
-    try {
-        // Check again inside transaction
-        organization = await queryRunner.manager.findOneBy(Organization, { auth0Id: auth0OrgId })
-        if (organization) {
-            await queryRunner.release()
-            return organization
-        }
-
-        // Create new organization
-        const newOrg = orgRepo.create({ auth0Id: auth0OrgId, name: orgName })
-        organization = await queryRunner.manager.save(newOrg)
-
-        await queryRunner.commitTransaction()
-        await queryRunner.release()
-
-        return organization
-    } catch (error) {
-        await queryRunner.rollbackTransaction()
-        await queryRunner.release()
-
-        if (error instanceof QueryFailedError && error.message.includes('duplicate key')) {
-            // If duplicate key, try to fetch the existing organization
-            organization = await orgRepo.findOneBy({ auth0Id: auth0OrgId })
-            if (organization) {
-                return organization
-            }
-        }
-
-        throw error
-    }
-}
-
 export const authenticationHandlerMiddleware =
     ({ whitelistURLs, AppDataSource }: { whitelistURLs: string[]; AppDataSource: DataSource }) =>
     async (req: Request, res: Response, next: NextFunction) => {
-        const startTime = new Date().getTime()
+        /**
+         * Organization-Based Authentication Security Model:
+         *
+         * 1. Protected Routes (requireAuth = true):
+         *    - Valid org users: Full authentication and user creation
+         *    - Invalid org users: 401 Unauthorized
+         *    - API key with invalid org: 401 Unauthorized
+         *
+         * 2. Public Routes (requireAuth = false):
+         *    - Valid org JWT users: Full authentication and user creation
+         *    - Invalid org JWT users: Treated as anonymous (req.user = undefined)
+         *    - API key users: Full access regardless of org
+         *
+         * This ensures only authorized organization users can access protected
+         * resources while maintaining public access for cross-org scenarios.
+         */
+
+        // const startTime = new Date().getTime()
         const requireAuth = /\/api\/v1\//i.test(req.url) && !whitelistURLs.some((url) => req.url.includes(url))
         const jwtMiddleware = requireAuth ? jwtCheck : jwtCheckPublic
 
@@ -211,22 +94,34 @@ export const authenticationHandlerMiddleware =
         }
 
         if (apiKeyUser) {
-            req.user = apiKeyUser
-            // return next()
+            // For API key users, we need to get the organization's auth0Id
+            const organization = await AppDataSource.getRepository(Organization).findOne({
+                where: { id: apiKeyUser.organizationId }
+            })
+
+            const isValidApiKeyOrg = organization?.auth0Id && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(organization.auth0Id)
+
+            if (requireAuth && !isValidApiKeyOrg) {
+                return res.status(401).send("Unauthorized: API key organization doesn't match")
+            }
+
+            // Store API key user with additional auth0 org info
+            req.user = apiKeyUser as any
+            ;(req.user as any).auth0OrgId = organization?.auth0Id
+            return next()
         }
 
         // Fall back to JWT authentication
         jwtMiddleware(req, res, async (jwtError?: any) => {
             if (!req.user) {
                 if (jwtError) {
-                    console.log('[AuthMiddleware] JWT error:', jwtError)
                     return next(jwtError)
                 }
 
                 // Proceed with user synchronization if user is authenticated
                 if (!req.auth?.payload) {
                     if (apiKeyError) {
-                        console.error('[AuthMiddleware] Error verifying API key:', apiKeyError)
+                        console.error('Error verifying API key:', apiKeyError)
                     }
                     return next()
                 }
@@ -236,13 +131,9 @@ export const authenticationHandlerMiddleware =
 
                 // Check for organization match if required
                 const userOrgId = req?.auth?.payload?.org_id
-                if (requireAuth) {
-                    const validOrgs = process.env.AUTH0_ORGANIZATION_ID?.split(',') || []
-                    const isInvalidOrg = validOrgs?.length > 0 && !validOrgs.includes(userOrgId)
-                    if (isInvalidOrg) {
-                        console.log(`[AuthMiddleware] Organization validation failed for org ID: ${userOrgId}`)
-                        return res.status(401).send("Unauthorized: Organization doesn't match")
-                    }
+                const isValidOrg = userOrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userOrgId)
+                if (requireAuth && !isValidOrg) {
+                    return res.status(401).send("Unauthorized: Organization doesn't match")
                 }
 
                 // Get user from auth payload
@@ -252,73 +143,98 @@ export const authenticationHandlerMiddleware =
                 const name = authUser.name as string
                 const roles = (authUser?.['https://theanswer.ai/roles'] || []) as string[]
                 if (!auth0Id || !email) {
-                    console.log('[AuthMiddleware] Missing required auth fields (auth0Id or email)')
                     return next()
                 }
 
                 try {
-                    // Get or create organization using transaction-safe method
-                    const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name)
+                    if (isValidOrg) {
+                        // Get or create organization using transaction-safe method
+                        const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name)
 
-                    // Get or create user using transaction-safe method
-                    const user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
+                        // Get or create user using transaction-safe method
+                        let user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
 
-                    // Upsert customer on Stripe if no customerId is attached
-                    let stripeCustomerId = user.stripeCustomerId
-                    if (!stripeCustomerId && process.env.BILLING_STRIPE_SECRET_KEY) {
-                        if (
-                            process.env.BILLING_STRIPE_ORGANIZATION_CUSTOMER_ID ||
-                            (organization.stripeCustomerId && organization.billingPoolEnabled == true)
-                        ) {
-                            stripeCustomerId = process.env.BILLING_STRIPE_ORGANIZATION_CUSTOMER_ID ?? organization.stripeCustomerId!
-                        } else {
-                            try {
-                                const stripe = new Stripe(process.env.BILLING_STRIPE_SECRET_KEY ?? '')
+                        // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
+                        user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
 
-                                const existingCustomer = await stripe.customers.list({
-                                    email,
-                                    limit: 1
-                                })
-
-                                if (existingCustomer.data.length > 0) {
-                                    stripeCustomerId = existingCustomer.data[0].id
-                                } else {
-                                    const customer = await stripe.customers.create(
-                                        {
-                                            email,
-                                            name,
-                                            metadata: {
-                                                userId: user.id,
-                                                auth0Id,
-                                                orgId: organization.id
-                                            }
-                                        },
-                                        { idempotencyKey: auth0Id }
-                                    )
-                                    stripeCustomerId = customer.id
-                                }
-                                // Optionally, update the user profile in your database with the new customerId
-                                user.stripeCustomerId = stripeCustomerId
-                            } catch (error) {
-                                console.error('Error creating/updating Stripe customers:', error)
-                                return res.status(500).send('Internal Server Error')
-                            }
-                            await AppDataSource.getRepository(User).save(user)
+                        // Find or create default chatflows for the user
+                        const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
+                        // Update user with the latest defaultChatflowId
+                        if (defaultChatflowId) {
+                            user.defaultChatflowId = defaultChatflowId
                         }
-                        user.stripeCustomerId = stripeCustomerId
+
+                        // Set permissions based on roles
+                        const permissions: string[] = []
+                        if (roles?.includes('Admin')) {
+                            permissions.push('org:manage')
+                        }
+
+                        req.user = { ...authUser, ...user, roles, permissions }
+                    } else {
+                        // User authenticated but from unauthorized organization - treat as anonymous user
+                        console.warn(`Auth: User ${email} from org '${userOrgId}' treated as anonymous - not in allowed orgs`)
+                        req.user = undefined
                     }
-                    req.user = { ...authUser, ...user, roles }
                 } catch (error) {
-                    console.error('[AuthMiddleware] Error during user authentication:', error)
+                    console.error('Authentication error:', error)
                     return res.status(500).send('Internal Server Error during authentication')
                 }
             }
 
-            // console.log(
-            //     `[AuthMiddleware] Auth successful for user: ${req.user?.id} with ${apiKeyUser ? 'APIKEY' : 'JWT'} in ${
-            //         new Date().getTime() - startTime
-            //     }ms`
-            // )
+            // Handle /auth/me endpoint directly in middleware
+            if (req.url === '/api/v1/auth/me' && req.method === 'GET') {
+                if (!req.user) {
+                    return res.status(401).json({ error: 'Unauthorized' })
+                }
+                // For JWT users, org_id comes from auth payload. For API key users, we need to check the organization
+                const userAuth0OrgId = (req.user as any).org_id || (req.user as any).auth0OrgId
+                const isValidOrg = userAuth0OrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userAuth0OrgId)
+                if (!isValidOrg) {
+                    return res.status(401).json({ error: 'Unauthorized' })
+                }
+
+                try {
+                    // Get organization data
+                    const organization = await AppDataSource.getRepository(Organization).findOne({
+                        where: { id: req.user.organizationId }
+                    })
+
+                    // Determine auth method
+                    const authMethod = apiKeyUser ? 'apikey' : 'jwt'
+
+                    return res.json({
+                        user: {
+                            id: req.user.id,
+                            name: req.user.name,
+                            email: req.user.email,
+                            organizationId: req.user.organizationId,
+                            stripeCustomerId: req.user.stripeCustomerId,
+                            defaultChatflowId: req.user.defaultChatflowId,
+                            createdDate: req.user.createdDate,
+                            updatedDate: req.user.updatedDate,
+                            roles: req.user.roles || []
+                        },
+                        organization: organization
+                            ? {
+                                  id: organization.id,
+                                  name: organization.name,
+                                  stripeCustomerId: organization.stripeCustomerId,
+                                  createdDate: organization.createdDate,
+                                  updatedDate: organization.updatedDate
+                              }
+                            : null,
+                        session: {
+                            authenticated: true,
+                            authMethod
+                        }
+                    })
+                } catch (error) {
+                    console.error('Error in /auth/me endpoint:', error)
+                    return res.status(500).json({ error: 'Internal Server Error' })
+                }
+            }
+
             return next()
         })
     }

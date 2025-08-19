@@ -1,4 +1,7 @@
 {
+    "name": "Coding Sidekick",
+    "description": "This coding sidekick, it can help you with code",
+    "usecases": ["Code"],
     "nodes": [
         {
             "id": "chatOpenAI_0",
