@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { INodeData, IUser, MODE } from '../../Interface'
 import { INodeOptionsValue } from 'flowise-components'
-import { databaseEntities, refreshOAuthCredential } from '../../utils'
+import { databaseEntities, refreshStoredCredentialTokens } from '../../utils'
 import logger from '../../utils/logger'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
@@ -108,7 +108,7 @@ const getSingleNodeAsyncOptions = async (
                         logger
                     }
 
-                    const refreshSuccess = await refreshOAuthCredential(nodeData.credential, refreshOptions)
+                    const refreshSuccess = await refreshStoredCredentialTokens(nodeData.credential, refreshOptions.appDataSource)
                     if (!refreshSuccess) {
                         logger.warn(`[OAUTH REFRESH]: Failed to refresh credential for node ${nodeName}, proceeding anyway`)
                     }

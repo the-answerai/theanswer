@@ -77,8 +77,8 @@ export default function (passport: any) {
     }
 
     // Atlassian MCP OAuth Strategy
-    // Import the mcpClientStore from the controller
-    const atlassianAuthController = require('../controllers/atlassian-auth').default
+    // Import the OAuth utilities from utils
+    const { getPendingRegistration, clearPendingRegistration, createCompleteCredentialData } = require('../utils')
 
     passport.use(
         'atlassian-dynamic',
@@ -98,7 +98,7 @@ export default function (passport: any) {
 
                 // Get MCP client info from state parameter (sessionId)
                 const sessionId = state
-                const mcpClientInfo = sessionId ? atlassianAuthController.mcpClientStore.get(sessionId) : null
+                const mcpClientInfo = sessionId ? getPendingRegistration(sessionId) : null
 
                 if (!mcpClientInfo) {
                     return done(null, false, { message: 'MCP client info not found. Please restart the OAuth flow.' })
@@ -134,25 +134,21 @@ export default function (passport: any) {
 
                 const tokenData = await tokenResponse.json()
 
-                // Calculate expiration time (tokens typically expire in 1 hour)
-                const expirationTime = Date.now() + 3600 * 1000 // 1 hour
-
-                const newCredential: any = {
+                // Use the centralized function to create complete credential data
+                const tokens = {
                     access_token: tokenData.access_token,
                     refresh_token: tokenData.refresh_token,
-                    expiration_time: expirationTime.toString(),
+                    expires_in: tokenData.expires_in || 3600
+                }
+
+                const baseCredentialData = {
                     userInfo: {} // We'll skip profile fetching for now
                 }
 
-                // Add MCP client credentials if available (only store what we can't fetch)
-                if (mcpClientInfo) {
-                    newCredential.mcp_client_id = mcpClientInfo.client_id
-                    newCredential.mcp_client_secret = mcpClientInfo.client_secret
-                    // Note: We don't store endpoints/issuer as they can be fetched from metadata
+                const newCredential = createCompleteCredentialData(sessionId, tokens, baseCredentialData)
 
-                    // Clean up the temporary session
-                    atlassianAuthController.mcpClientStore.delete(sessionId)
-                }
+                // Clean up the temporary session
+                clearPendingRegistration(sessionId)
 
                 done(null, newCredential)
             } catch (error) {

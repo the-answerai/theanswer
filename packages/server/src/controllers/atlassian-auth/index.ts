@@ -2,23 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
 import passport from 'passport'
-import { randomBytes } from 'crypto'
+import { registerOAuthClient } from '../../utils'
 
-// MCP OAuth controller - no legacy environment variables needed
-
-// Store for temporary MCP client credentials during OAuth flow
-const mcpClientStore = new Map<
-    string,
-    {
-        client_id: string
-        client_secret: string
-        authorization_endpoint: string
-        token_endpoint: string
-        issuer: string
-        registration_endpoint: string
-        expires: number
-    }
->()
+// MCP OAuth controller - uses centralized OAuth utilities
 
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -73,92 +59,16 @@ const atlassianAuthCallback = async (req: Request, res: Response) => {
 
 const mcpInitialize = async (req: Request, res: Response) => {
     try {
-        // Step 1: Discover MCP OAuth metadata
-        const metadataResponse = await fetch('https://mcp.atlassian.com/.well-known/oauth-authorization-server')
-        if (!metadataResponse.ok) {
-            throw new InternalFlowiseError(
-                StatusCodes.BAD_REQUEST,
-                `Failed to fetch MCP OAuth metadata: ${metadataResponse.status} ${metadataResponse.statusText}`
-            )
-        }
+        const redirectUri = `${process.env.API_HOST}/api/v1/atlassian-auth/callback`
 
-        const metadata = await metadataResponse.json()
+        const registrationResult = await registerOAuthClient(redirectUri)
 
-        // Step 2: Register dynamic client with MCP server
-        const registrationPayload = {
-            redirect_uris: [`${process.env.API_HOST}/api/v1/atlassian-auth/callback`],
-            client_name: 'Flowise Atlassian Integration',
-            client_uri: process.env.API_HOST,
-            grant_types: ['authorization_code', 'refresh_token'],
-            response_types: ['code'],
-            scope: [
-                'offline_access',
-                'read:account',
-                'read:confluence-content.all',
-                'read:confluence-content.summary',
-                'read:confluence-groups',
-                'read:confluence-props',
-                'read:confluence-space.summary',
-                'read:confluence-user',
-                'read:jira-user',
-                'read:jira-work',
-                'read:me',
-                'readonly:content.attachment:confluence',
-                'search:confluence',
-                'write:confluence-content',
-                'write:confluence-file',
-                'write:confluence-props',
-                'write:jira-work'
-            ].join(' ')
-        }
-
-        const registrationResponse = await fetch(metadata.registration_endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json'
-            },
-            body: JSON.stringify(registrationPayload)
-        })
-
-        if (!registrationResponse.ok) {
-            const errorText = await registrationResponse.text()
-            throw new InternalFlowiseError(
-                StatusCodes.BAD_REQUEST,
-                `MCP client registration failed: ${registrationResponse.status} ${registrationResponse.statusText}: ${errorText}`
-            )
-        }
-
-        const clientInfo = await registrationResponse.json()
-
-        // Step 3: Generate session ID and store client credentials temporarily
-        const sessionId = randomBytes(32).toString('hex')
-        const expires = Date.now() + 30 * 60 * 1000 // 30 minutes
-
-        mcpClientStore.set(sessionId, {
-            client_id: clientInfo.client_id,
-            client_secret: clientInfo.client_secret,
-            authorization_endpoint: metadata.authorization_endpoint,
-            token_endpoint: metadata.token_endpoint,
-            issuer: metadata.issuer,
-            registration_endpoint: metadata.registration_endpoint,
-            expires
-        })
-
-        // Clean up expired entries
-        for (const [key, value] of mcpClientStore.entries()) {
-            if (value.expires < Date.now()) {
-                mcpClientStore.delete(key)
-            }
-        }
-
-        // Step 4: Return client info and endpoints to frontend
         res.json({
-            sessionId,
-            client_id: clientInfo.client_id,
-            authorization_endpoint: metadata.authorization_endpoint,
-            redirect_uri: `${process.env.API_HOST}/api/v1/atlassian-auth/callback`,
-            scope: registrationPayload.scope
+            sessionId: registrationResult.sessionId,
+            client_id: registrationResult.client_id,
+            authorization_endpoint: registrationResult.authorization_endpoint,
+            redirect_uri: redirectUri,
+            scope: registrationResult.scope
         })
     } catch (error) {
         console.error('MCP initialization error:', error)
@@ -173,6 +83,5 @@ const mcpInitialize = async (req: Request, res: Response) => {
 export default {
     authenticate,
     atlassianAuthCallback,
-    mcpInitialize,
-    mcpClientStore
+    mcpInitialize
 }
