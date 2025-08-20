@@ -14,7 +14,7 @@ import { Tool } from '../../database/entities/Tool'
 import { Variable } from '../../database/entities/Variable'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
-import { ChatType } from '../../Interface'
+import { ChatType, IUser } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import assistantService from '../assistants'
 import chatMessagesService from '../chat-messages'
@@ -25,7 +25,6 @@ import executionService from '../executions'
 import marketplacesService from '../marketplaces'
 import toolsService from '../tools'
 import variableService from '../variables'
-import { IUser } from '../../Interface'
 
 type ExportInput = {
     agentflow: boolean
@@ -95,11 +94,8 @@ const FileDefaultName = 'ExportData.json'
 const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ FileDefaultName: string } & ExportData> => {
     try {
         // SECURITY: Validate user has proper permissions and is authenticated
-        if (!user || !user.id || !user.organizationId) {
-            throw new InternalFlowiseError(
-                StatusCodes.UNAUTHORIZED,
-                'Error: exportImportService.exportData - User authentication required'
-            )
+        if (!user?.id || !user?.organizationId) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: exportImportService.exportData - User authentication required')
         }
 
         // SECURITY: Validate user has proper permissions and is authenticated
@@ -141,10 +137,16 @@ const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ File
             exportInput.document_store === true ? await documenStoreService.getAllDocumentFileChunks(user) : []
 
         // SECURITY: Only export executions owned by the user
-        const { data: totalExecutions } = exportInput.execution === true ? await executionService.getAllExecutions({}, {
-            userId: user.id,
-            organizationId: user.organizationId
-        }) : { data: [] }
+        const { data: totalExecutions } =
+            exportInput.execution === true
+                ? await executionService.getAllExecutions(
+                      {},
+                      {
+                          userId: user.id,
+                          organizationId: user.organizationId
+                      }
+                  )
+                : { data: [] }
         let Execution: Execution[] = exportInput.execution === true ? totalExecutions : []
         let Tool: Tool[] = exportInput.tool === true ? await toolsService.getAllTools(user, true) : []
 
@@ -179,16 +181,20 @@ const exportData = async (exportInput: ExportInput, user: IUser): Promise<{ File
     }
 }
 
-async function replaceDuplicateIdsForChatFlow(queryRunner: QueryRunner, originalData: ExportData, chatflows: ChatFlow[]): Promise<{ data: ExportData; idMappings: Map<string, string> }> {
+async function replaceDuplicateIdsForChatFlow(
+    queryRunner: QueryRunner,
+    originalData: ExportData,
+    chatflows: ChatFlow[]
+): Promise<{ data: ExportData; idMappings: Map<string, string> }> {
     try {
         const ids = chatflows.map((chatflow) => chatflow.id)
         const records = await queryRunner.manager.find(ChatFlow, {
             where: { id: In(ids) }
         })
         const idMappings = new Map<string, string>()
-        
+
         if (records.length < 0) return { data: originalData, idMappings }
-        
+
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -225,16 +231,20 @@ async function replaceDuplicateIdsForAssistant(queryRunner: QueryRunner, origina
     }
 }
 
-async function replaceDuplicateIdsForChat(queryRunner: QueryRunner, originalData: ExportData, chats: Chat[]): Promise<{ data: ExportData; idMappings: Map<string, string> }> {
+async function replaceDuplicateIdsForChat(
+    queryRunner: QueryRunner,
+    originalData: ExportData,
+    chats: Chat[]
+): Promise<{ data: ExportData; idMappings: Map<string, string> }> {
     try {
         const ids = chats.map((chat) => chat.id)
         const records = await queryRunner.manager.find(Chat, {
             where: { id: In(ids) }
         })
         const idMappings = new Map<string, string>()
-        
+
         if (records.length <= 0) return { data: originalData, idMappings }
-        
+
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -250,7 +260,13 @@ async function replaceDuplicateIdsForChat(queryRunner: QueryRunner, originalData
     }
 }
 
-async function replaceDuplicateIdsForChatMessage(queryRunner: QueryRunner, originalData: ExportData, chatMessages: ChatMessage[], chatflowIdMappings: Map<string, string>, chatIdMappings?: Map<string, string>) {
+async function replaceDuplicateIdsForChatMessage(
+    queryRunner: QueryRunner,
+    originalData: ExportData,
+    chatMessages: ChatMessage[],
+    chatflowIdMappings: Map<string, string>,
+    chatIdMappings?: Map<string, string>
+) {
     try {
         // First, update chatflowid references based on chatflow ID mappings
         chatMessages.forEach((chatMessage) => {
@@ -258,11 +274,11 @@ async function replaceDuplicateIdsForChatMessage(queryRunner: QueryRunner, origi
                 chatMessage.chatflowid = chatflowIdMappings.get(chatMessage.chatflowid)!
             }
             // Update chatId references based on chat ID mappings
-            if (chatIdMappings && chatIdMappings.has(chatMessage.chatId)) {
+            if (chatIdMappings?.has(chatMessage.chatId)) {
                 chatMessage.chatId = chatIdMappings.get(chatMessage.chatId)!
             }
         })
-        
+
         const chatmessageChatflowIds = chatMessages.map((chatMessage) => {
             return { id: chatMessage.chatflowid, qty: 0 }
         })
@@ -582,17 +598,17 @@ function replaceUserIdOrganizationId(user: IUser, importData: ExportData) {
         if (Array.isArray(importData[key as keyof ExportData])) {
             acc[key as keyof ExportData] = importData[key as keyof ExportData].map((item) => {
                 const updatedItem = { ...item, userId: user.id, organizationId: user.organizationId }
-                
+
                 // Set chatType to INTERNAL for all imported chat messages so they appear in UI
                 if (key === 'ChatMessage') {
-                    (updatedItem as any).chatType = ChatType.INTERNAL
+                    ;(updatedItem as any).chatType = ChatType.INTERNAL
                 }
-                
+
                 // Set ownerId for Chat entities so they appear in UI
                 if (key === 'Chat') {
-                    (updatedItem as any).ownerId = user.id
+                    ;(updatedItem as any).ownerId = user.id
                 }
-                
+
                 return updatedItem
             })
         }
@@ -602,11 +618,8 @@ function replaceUserIdOrganizationId(user: IUser, importData: ExportData) {
 
 const importData = async (user: IUser, importData: ExportData) => {
     // SECURITY: Validate user has proper permissions and is authenticated
-    if (!user || !user.id || !user.organizationId) {
-        throw new InternalFlowiseError(
-            StatusCodes.UNAUTHORIZED,
-            'Error: exportImportService.importData - User authentication required'
-        )
+    if (!user?.id || !user?.organizationId) {
+        throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: exportImportService.importData - User authentication required')
     }
 
     // SECURITY: Validate user has proper permissions and is authenticated
@@ -630,9 +643,6 @@ const importData = async (user: IUser, importData: ExportData) => {
     importData.Variable = importData.Variable || []
 
     // Validate import data structure
-    const totalItems = Object.values(importData).reduce((sum, arr) => {
-        return sum + (Array.isArray(arr) ? arr.length : 0)
-    }, 0)
 
     let queryRunner
     try {
@@ -642,7 +652,7 @@ const importData = async (user: IUser, importData: ExportData) => {
         try {
             // Collect all chatflow ID mappings
             const allChatflowIdMappings = new Map<string, string>()
-            
+
             if (importData.AgentFlow.length > 0) {
                 importData.AgentFlow = reduceSpaceForChatflowFlowData(importData.AgentFlow)
                 const result = await replaceDuplicateIdsForChatFlow(queryRunner, importData, importData.AgentFlow)
@@ -673,18 +683,24 @@ const importData = async (user: IUser, importData: ExportData) => {
                 importData = result.data
                 result.idMappings.forEach((newId, oldId) => allChatflowIdMappings.set(oldId, newId))
             }
-            
+
             // Collect chatflow ID mappings for chat message processing
-            
+
             let allChatIdMappings = new Map<string, string>()
             if (importData.Chat.length > 0) {
                 const result = await replaceDuplicateIdsForChat(queryRunner, importData, importData.Chat)
                 importData = result.data
                 result.idMappings.forEach((newId, oldId) => allChatIdMappings.set(oldId, newId))
             }
-            
+
             if (importData.ChatMessage.length > 0) {
-                importData = await replaceDuplicateIdsForChatMessage(queryRunner, importData, importData.ChatMessage, allChatflowIdMappings, allChatIdMappings)
+                importData = await replaceDuplicateIdsForChatMessage(
+                    queryRunner,
+                    importData,
+                    importData.ChatMessage,
+                    allChatflowIdMappings,
+                    allChatIdMappings
+                )
                 importData = await replaceExecutionIdForChatMessage(queryRunner, importData, importData.ChatMessage)
             }
             if (importData.ChatMessageFeedback.length > 0)
@@ -727,7 +743,6 @@ const importData = async (user: IUser, importData: ExportData) => {
             if (importData.Variable.length > 0) await queryRunner.manager.save(Variable, importData.Variable)
 
             await queryRunner.commitTransaction()
-
         } catch (error) {
             if (queryRunner && !queryRunner.isTransactionActive) await queryRunner.rollbackTransaction()
             throw error

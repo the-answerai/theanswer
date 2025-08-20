@@ -25,7 +25,6 @@ import exportImportApi from '@/api/exportimport'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-import { useNavigate } from '@/utils/navigation'
 import { useAuth0 } from '@auth0/auth0-react'
 import useNotifier from '@/utils/useNotifier'
 import { getErrorMessage } from '@/utils/errorHandler'
@@ -158,10 +157,27 @@ const ProfileSection = ({ username, handleLogout }) => {
     const anchorRef = useRef(null)
     const inputRef = useRef()
 
-    const navigate = useNavigate()
     const importAllApi = useApi(exportImportApi.importData)
     const exportAllApi = useApi(exportImportApi.exportData)
     const prevOpen = useRef(open)
+
+    // ==============================|| Secure Random ||============================== //
+    const getSecureRandom = () => {
+        const array = new Uint32Array(1)
+        crypto.getRandomValues(array)
+        return array[0]
+    }
+
+    // ==============================|| Error Notification Action ||============================== //
+    const ErrorAction = ({ snackbarKey }) => (
+        <Button onClick={() => closeSnackbar(snackbarKey)} style={{ color: 'white' }}>
+            <span>✕</span>
+        </Button>
+    )
+
+    ErrorAction.propTypes = {
+        snackbarKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+    }
 
     // ==============================|| Snackbar ||============================== //
 
@@ -185,25 +201,21 @@ const ProfileSection = ({ username, handleLogout }) => {
         enqueueSnackbar({
             message,
             options: {
-                key: new Date().getTime() + Math.random(),
+                key: new Date().getTime() + getSecureRandom(),
                 variant: 'error',
-                action: (key) => (
-                    <Button onClick={() => closeSnackbar(key)} style={{ color: 'white' }}>
-                        <span>✕</span>
-                    </Button>
-                )
+                action: (key) => <ErrorAction snackbarKey={key} />
             }
         })
     }
 
     const fileChange = (e) => {
         if (!e.target.files) return
-        
+
         const file = e.target.files[0]
         const reader = new FileReader()
         reader.onload = (evt) => {
             if (!evt?.target?.result) return
-            
+
             try {
                 const fileContent = evt.target.result
                 const body = JSON.parse(fileContent)
@@ -212,11 +224,12 @@ const ProfileSection = ({ username, handleLogout }) => {
                 errorFailed('Invalid JSON file format')
             }
         }
-        
-        reader.onerror = () => {
+
+        reader.onerror = (error) => {
+            console.error('FileReader error:', error)
             errorFailed('Error reading file')
         }
-        
+
         reader.readAsText(file)
     }
 
@@ -250,7 +263,7 @@ const ProfileSection = ({ username, handleLogout }) => {
             enqueueSnackbar({
                 message: 'Import completed successfully!',
                 options: {
-                    key: new Date().getTime() + Math.random(),
+                    key: new Date().getTime() + getSecureRandom(),
                     variant: 'success'
                 }
             })
@@ -282,16 +295,16 @@ const ProfileSection = ({ username, handleLogout }) => {
                 const dataStr = stringify(exportData(exportAllApi.data))
                 const blob = new Blob([dataStr], { type: 'application/json' })
                 const dataUri = URL.createObjectURL(blob)
-                
+
                 const linkElement = document.createElement('a')
                 linkElement.setAttribute('href', dataUri)
                 linkElement.setAttribute('download', exportAllApi.data.FileDefaultName || 'export.json')
                 linkElement.click()
-                
+
                 enqueueSnackbar({
                     message: 'Export completed successfully!',
                     options: {
-                        key: new Date().getTime() + Math.random(),
+                        key: new Date().getTime() + getSecureRandom(),
                         variant: 'success'
                     }
                 })

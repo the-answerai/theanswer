@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import { useDispatch } from 'react-redux'
 // @ts-ignore
 import { stringify, exportData } from '@/utils/exportImport'
+// @ts-ignore
+import { enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 
 // Material UI
 import { Button, Dialog, DialogTitle, DialogContent, Stack, FormControlLabel, Checkbox, DialogActions, Box, MenuItem } from '@mui/material'
@@ -105,7 +108,7 @@ const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
                                     width: 'auto'
                                 }}
                                 src={ExportingGIF}
-                                alt="ExportingGIF"
+                                alt='ExportingGIF'
                                 width={100}
                                 height={100}
                             />
@@ -137,8 +140,27 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     const [exportDialogOpen, setExportDialogOpen] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
+    const dispatch = useDispatch()
+    const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
     const importAllApi = useApi(exportImportApi.importData)
     const exportAllApi = useApi(exportImportApi.exportData)
+
+    // Secure random function
+    const getSecureRandom = () => {
+        const array = new Uint32Array(1)
+        crypto.getRandomValues(array)
+        return array[0]
+    }
+
+    const showErrorNotification = (message: string) => {
+        enqueueSnackbar({
+            message,
+            options: {
+                key: new Date().getTime() + getSecureRandom(),
+                variant: 'error'
+            }
+        })
+    }
 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) {
@@ -151,20 +173,20 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
             if (!evt?.target?.result) {
                 return
             }
-            
+
             try {
                 const fileContent = evt.target.result as string
                 const body = JSON.parse(fileContent)
                 importAllApi.request(body)
             } catch (error) {
-                // Handle JSON parsing error silently or show user-friendly message
+                showErrorNotification('Invalid JSON file format')
             }
         }
-        
-        reader.onerror = (error) => {
-            // Handle file reading error silently or show user-friendly message
+
+        reader.onerror = () => {
+            showErrorNotification('Error reading file')
         }
-        
+
         reader.readAsText(file)
     }
 
@@ -192,7 +214,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
         if (data.includes('Executions')) body.execution = true
         if (data.includes('Tools')) body.tool = true
         if (data.includes('Variables')) body.variable = true
-    
+
         exportAllApi.request(body)
     }
 
@@ -213,13 +235,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     // Import error effect
     useEffect(() => {
         if (importAllApi.error) {
-            let errMsg = 'Invalid Imported File'
-            let error = importAllApi.error
-            if (error?.response?.data) {
-                errMsg = typeof error.response.data === 'object' ? 
-                    error.response.data.message : error.response.data
-            }
-            // Handle import error - could show user notification here
+            const error = importAllApi.error
+            const errMsg = error?.response?.data
+                ? typeof error.response.data === 'object'
+                    ? error.response.data.message
+                    : error.response.data
+                : 'Invalid Imported File'
+            showErrorNotification(`Failed to import: ${errMsg}`)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [importAllApi.error])
@@ -246,7 +268,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
 
                 if (onClose) onClose()
             } catch (error) {
-                // Handle export error - could show user notification here
+                showErrorNotification(`Export failed: ${getErrorMessage(error)}`)
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -256,13 +278,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     useEffect(() => {
         if (exportAllApi.error) {
             setExportDialogOpen(false)
-            let errMsg = 'Internal Server Error'
-            let error = exportAllApi.error
-            if (error?.response?.data) {
-                errMsg = typeof error.response.data === 'object' ? 
-                    error.response.data.message : error.response.data
-            }
-            // Handle export error - could show user notification here
+            const error = exportAllApi.error
+            const errMsg = error?.response?.data
+                ? typeof error.response.data === 'object'
+                    ? error.response.data.message
+                    : error.response.data
+                : 'Internal Server Error'
+            showErrorNotification(`Failed to export: ${errMsg}`)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.error])
