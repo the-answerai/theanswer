@@ -274,6 +274,53 @@ FLOWISE_PASSWORD=1234
 
 TheAnswer supports different environment variables to configure your instance. You can specify the following variables in the `.env` file inside `packages/server` folder. Read [more](https://github.com/the-answerai/theanswer/blob/main/CONTRIBUTING.md#-env-variables)
 
+## 🧪 Testing
+
+TheAnswer includes comprehensive end-to-end testing with Playwright for critical user journeys.
+
+### Quick Start Testing
+
+```bash
+# Run tests with visual UI interface (recommended)
+pnpm test:e2e
+
+# Debug mode with step-by-step inspection
+pnpm test:e2e:debug
+```
+
+### Testing Features
+
+-   **🎨 Playwright UI Mode**: Visual test execution with real-time screenshots
+-   **🔐 Auth0 Integration**: Automated authentication flow testing
+-   **📊 Organized Output**: Test results, reports, and artifacts in organized folders
+-   **🚀 Auto Dev Server**: Tests automatically start/stop the development server
+-   **🔍 Debug Tools**: Step-by-step debugging with browser inspection
+
+### Test Setup
+
+1. **Copy test environment file:**
+
+    ```bash
+    cp apps/web/e2e/env.example apps/web/.env.test
+    ```
+
+2. **Configure test credentials in `.env.test`:**
+
+    - `TEST_USER_EMAIL`: Your Auth0 test user email
+    - `TEST_USER_PASSWORD`: Your Auth0 test user password
+    - Auth0 configuration (matching your dev environment)
+
+3. **Run tests:**
+    ```bash
+    pnpm test:e2e:dev  # Visual UI mode
+    pnpm test:e2e:debug  # Step-by-step debugging
+    ```
+
+For detailed testing documentation, see:
+
+-   [E2E Testing Guide](apps/web/e2e/README.md)
+-   [Testing Strategy](TESTING_STRATEGY.md)
+
 ## 📖 Documentation
 
 [TheAnswer Docs](https://docs.theanswer.ai/)

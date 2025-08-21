@@ -935,6 +935,9 @@ test.describe('Getting Started Exercise', () => {
 ### Step 5: Run Your Test
 
 ```bash
+# Run with Playwright UI (recommended - visual interface)
+npx playwright test getting-started.spec.ts --ui
+
 # Run in headed mode to see what happens
 npx playwright test getting-started.spec.ts --headed
 
@@ -946,6 +949,14 @@ npx playwright test getting-started.spec.ts --reporter=html
 npx playwright show-report
 ```
 
+**Playwright UI Mode:** The `--ui` flag opens a visual interface where you can:
+
+-   See live test execution with screenshots
+-   Click any step to pause and inspect
+-   View network requests and console logs
+-   Re-run tests with a single click
+-   Debug failures with detailed context
+
 ### Step 6: Set Up CI
 
 Add to your `package.json`:
@@ -953,6 +964,9 @@ Add to your `package.json`:
 ```json
 {
     "scripts": {
+        "test:e2e": "playwright test --ui",
+        "test:e2e:dev": "playwright test --ui",
+        "test:e2e:debug": "playwright test --debug",
         "test:e2e:getting-started": "playwright test getting-started.spec.ts"
     }
 }
@@ -997,6 +1011,111 @@ jobs:
 3. **Practice test data setup** using the factory patterns
 4. **Try API testing** with Playwright's request context
 5. **Join the team** in building out the full test suite!
+
+---
+
+## TheAnswer.ai Playwright Implementation
+
+### Current Setup
+
+The TheAnswer.ai project now has a complete Playwright testing setup with the following features:
+
+#### 📁 **Organized Structure**
+
+```
+apps/web/
+├── e2e/
+│   ├── .auth/               # Authentication state storage
+│   ├── .gitignore          # E2E-specific gitignore
+│   ├── tests/              # Test files
+│   │   └── auth.spec.ts    # Authentication flow tests
+│   ├── auth.setup.ts       # Auth setup with state persistence
+│   ├── playwright-report/  # Test reports (auto-generated)
+│   ├── test-results/       # Screenshots, videos, traces
+│   ├── README.md           # E2E testing guide
+│   └── env.example         # Environment template
+├── playwright.config.ts    # Playwright configuration
+├── .env.test              # Test environment variables
+└── package.json           # Test scripts
+```
+
+#### 🚀 **Available Commands**
+
+**Root Level (from project root):**
+
+```bash
+pnpm test:e2e      # Run tests with Playwright UI
+pnpm test:e2e:dev  # Same as above (explicit)
+pnpm test:e2e:debug # Debug mode with inspector
+```
+
+**Web App Level (from apps/web):**
+
+```bash
+pnpm test:e2e:dev      # Playwright UI mode
+pnpm test:e2e          # Headless run
+pnpm test:e2e:headed   # Browser visible
+pnpm test:e2e:debug    # Step-by-step debugging
+pnpm test:e2e:auth     # Only auth tests
+pnpm test:e2e:report   # View last test report
+```
+
+#### 🎨 **Playwright UI Features**
+
+The `--ui` mode provides:
+
+-   **Visual test execution** with real-time screenshots
+-   **Interactive debugging** - click any step to inspect
+-   **Network monitoring** - see all API calls and responses
+-   **Console logs** for each action
+-   **Time travel** - navigate through test timeline
+-   **Live element inspection** - hover to highlight DOM elements
+-   **Test filtering** - run specific tests or suites
+
+#### 🔐 **Authentication Strategy**
+
+-   **Auth0 Integration**: Robust selectors that work with Auth0's dynamic UI
+-   **State Persistence**: Login once, reuse across test runs
+-   **Environment Isolation**: Dedicated test credentials and configuration
+-   **Flexible Selectors**: Handles multiple Auth0 UI variations
+
+#### 📊 **Test Organization**
+
+-   **Clean Output**: All artifacts organized in `e2e/` folder
+-   **Git-Ignored Artifacts**: Test results, reports, and auth state excluded from version control
+-   **Comprehensive Documentation**: Step-by-step setup and debugging guides
+-   **CI-Ready**: Configuration supports both local development and CI/CD
+
+#### 🛠 **Configuration Highlights**
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+    testDir: './e2e',
+    outputDir: './e2e/test-results', // Organized output
+    reporter: [['html', { outputFolder: './e2e/playwright-report' }]],
+
+    use: {
+        baseURL: 'http://localhost:3000',
+        trace: 'on-first-retry', // Debugging traces
+        screenshot: 'only-on-failure' // Failure screenshots
+    },
+
+    projects: [
+        { name: 'setup', testMatch: /.*\.setup\.ts/ },
+        {
+            name: 'chromium',
+            use: { storageState: './e2e/.auth/user.json' }, // Auth persistence
+            dependencies: ['setup']
+        }
+    ],
+
+    webServer: {
+        command: 'pnpm dev', // Auto-start dev server
+        url: 'http://localhost:3000'
+    }
+})
+```
 
 ---
 
