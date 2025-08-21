@@ -57,7 +57,8 @@
         "seed-credentials": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --test --auto-detect\"",
         "seed-credentials:write": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --auto-detect\"",
         "submodule:init": "git submodule update --init --recursive --force",
-        "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive"
+        "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive",
+        "copilot": "BWS_SUPPRESS_MISSING=true pnpm secure-run copilot"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --fix"

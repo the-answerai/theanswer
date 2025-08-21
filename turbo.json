@@ -33,7 +33,6 @@
         "INNGEST_SERVER_URL",
         "INNGEST_SIGNING_KEY",
         "LANGCHAIN_HANDLER",
-        "NEXT_PUBLIC_DOMAIN",
         "NEXTAUTH_URL",
         "OPENAI_API_KEY",
         "PERCY_TOKEN",
