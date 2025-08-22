@@ -74,25 +74,28 @@ async function main() {
 
     // Run database migration (deploy existing migrations for production)
     console.log('Running database migration...')
-    console.log('ROBUST MIGRATION STRATEGY: Try proper migrations first, fallback to schema sync')
-    console.log('This handles all deployment scenarios:')
+    console.log('COEXISTENCE MIGRATION STRATEGY: Preserve existing Flowise tables')
+    console.log('This handles all deployment scenarios safely:')
     console.log('- Fresh DB: migrate deploy works (creates tables + tracking)')
-    console.log('- Flowise-only DB: migrate deploy fails P3005 → db push creates Prisma tables')
-    console.log('- Existing deployment: migrate deploy applies new migrations')
-    console.log('- Corrupted state: migrate deploy fails → db push fixes schema')
+    console.log('- Flowise+Web DB: migrate deploy applies new migrations alongside existing tables')
+    console.log('- Schema conflicts: non-destructive db push preserves Flowise data')
+    console.log('- IMPORTANT: Never uses --accept-data-loss to protect Flowise tables')
 
     console.log('Attempting Prisma migration deployment...')
 
     try {
         // Try migrate deploy first (pin to specific Prisma version for compatibility)
         await runCommand('npx', ['--yes', 'prisma@^5.22.0', 'migrate', 'deploy'], 'packages-answers/db')
+        console.log('✅ Prisma migration deploy completed successfully')
     } catch (error) {
-        console.log('Migration deploy failed, falling back to schema push...')
+        console.log('Migration deploy failed, trying non-destructive schema push...')
         try {
-            // Fallback to schema push (pin to specific Prisma version for compatibility)
-            await runCommand('npx', ['--yes', 'prisma@^5.22.0', 'db', 'push', '--accept-data-loss'], 'packages-answers/db')
+            // SAFE fallback - NO --accept-data-loss to preserve Flowise tables
+            await runCommand('npx', ['--yes', 'prisma@^5.22.0', 'db', 'push', '--skip-generate'], 'packages-answers/db')
+            console.log('✅ Prisma schema push completed (preserving existing tables)')
         } catch (pushError) {
-            console.error('Both migration deploy and schema push failed:', pushError.message)
+            console.error('❌ Both migration deploy and schema push failed:', pushError.message)
+            console.error('This likely means the database schema conflicts need manual resolution')
             process.exit(1)
         }
     }
