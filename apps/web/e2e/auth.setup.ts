@@ -3,9 +3,11 @@ import { test as setup, expect } from '@playwright/test'
 const authFile = './e2e/.auth/user.json'
 
 setup('authenticate', async ({ page }) => {
-    // Validate environment variables
-    if (!process.env.TEST_USER_EMAIL || !process.env.TEST_USER_PASSWORD) {
-        throw new Error('TEST_USER_EMAIL and TEST_USER_PASSWORD must be set in .env.test file')
+    // Validate environment variables - we'll use the admin user for setup by default
+    const testEmail = process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL
+
+    if (!testEmail || !process.env.TEST_USER_PASSWORD) {
+        throw new Error('TEST_USER_ENTERPRISE_ADMIN_EMAIL and TEST_USER_PASSWORD must be set in .env.test file')
     }
 
     console.log('🔐 Starting authentication setup...')
@@ -55,7 +57,7 @@ setup('authenticate', async ({ page }) => {
             ].join(', ')
         )
         .first()
-    await emailInput.fill(process.env.TEST_USER_EMAIL!)
+    await emailInput.fill(testEmail!)
 
     // Click Continue/Submit to proceed to password step
     console.log('⏭️  Proceeding to password step...')
@@ -102,19 +104,85 @@ setup('authenticate', async ({ page }) => {
     // Step 3: Handle potential organization selection
     console.log('🏢 Checking for organization selection...')
     try {
-        const orgSelector = page.locator(
-            [
-                'button:has-text("local")',
-                'button:has-text("dev")',
-                'button:has-text("development")',
-                '[data-testid="organization-selector"]',
-                '.organization-item'
-            ].join(', ')
-        )
+        const preferredOrgId = process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
+        const preferredOrgName = process.env.TEST_ENTERPRISE_ORG_NAME || 'local'
 
-        if (await orgSelector.first().isVisible({ timeout: 5000 })) {
-            console.log('🎯 Organization selection detected, selecting local dev org')
-            await orgSelector.first().click()
+        if (preferredOrgId) {
+            console.log(`🎯 Looking for organization with ID: ${preferredOrgId}`)
+
+            // Wait for organization selection forms to appear
+            await page.waitForSelector('form', { timeout: 5000 })
+
+            // Look for the form that contains a hidden input with the specific organization ID
+            const targetForm = page.locator(`form:has(input[name="organization"][value="${preferredOrgId}"])`)
+
+            if (await targetForm.isVisible({ timeout: 5000 })) {
+                console.log(`🎯 Found form with organization ID: ${preferredOrgId}`)
+
+                // Find the submit button within this specific form and click it
+                const submitButton = targetForm.locator('button[type="submit"]')
+                if (await submitButton.isVisible({ timeout: 2000 })) {
+                    const buttonText = await submitButton.textContent()
+                    console.log(`🎯 Clicking organization button: "${buttonText}" (ID: ${preferredOrgId})`)
+                    await submitButton.click()
+                } else {
+                    console.log('🎯 Submit button not found in the target form')
+                }
+            } else {
+                console.log(`🎯 Could not find form with organization ID: ${preferredOrgId}`)
+
+                // Debug: Log all available organization IDs
+                const allOrgInputs = page.locator('form input[name="organization"]')
+                const orgCount = await allOrgInputs.count()
+                console.log(`🎯 Found ${orgCount} organization forms. Available organization IDs:`)
+
+                for (let i = 0; i < orgCount; i++) {
+                    const orgInput = allOrgInputs.nth(i)
+                    const orgIdValue = await orgInput.getAttribute('value')
+                    const form = orgInput.locator('..')
+                    const buttonText = await form
+                        .locator('button span')
+                        .textContent()
+                        .catch(() => 'Unknown')
+                    console.log(`   - ID: ${orgIdValue}, Name: "${buttonText}"`)
+                }
+
+                // Fallback to name-based selection
+                console.log(`🎯 Falling back to name-based selection: ${preferredOrgName}`)
+                const nameBasedButton = page.locator(`button:has-text("${preferredOrgName}")`)
+                if (await nameBasedButton.isVisible({ timeout: 2000 })) {
+                    await nameBasedButton.click()
+                } else {
+                    console.log(`🎯 Could not find organization with name: ${preferredOrgName}`)
+                    // Select first available organization as last resort
+                    const firstForm = page.locator('form').first()
+                    const firstButton = firstForm.locator('button[type="submit"]')
+                    if (await firstButton.isVisible({ timeout: 2000 })) {
+                        const firstButtonText = await firstButton.textContent()
+                        console.log(`🎯 Selecting first available organization: "${firstButtonText}"`)
+                        await firstButton.click()
+                    }
+                }
+            }
+        } else {
+            // Fallback to name-based selection
+            console.log(`🎯 No organization ID provided, falling back to name-based selection: ${preferredOrgName}`)
+            const orgSelector = page.locator(
+                [
+                    `button:has-text("${preferredOrgName}")`,
+                    'button:has-text("local")',
+                    'button:has-text("dev")',
+                    'button:has-text("development")',
+                    '[data-testid="organization-selector"]',
+                    '.organization-item',
+                    'form input[name="organization"]'
+                ].join(', ')
+            )
+
+            if (await orgSelector.first().isVisible({ timeout: 5000 })) {
+                console.log(`🎯 Organization selection detected, selecting: ${preferredOrgName}`)
+                await orgSelector.first().click()
+            }
         }
     } catch (error) {
         console.log('ℹ️  No organization selection step detected, proceeding')

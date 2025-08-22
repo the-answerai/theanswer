@@ -1,5 +1,5 @@
 ---
-globs: apps/web/e2e/tests/**
+globs: apps/web/e2e/**
 alwaysApply: false
 ---
 # Playwright E2E Testing Rules for AI Agents
@@ -73,8 +73,12 @@ pnpm test:e2e:report   # View last test report
 ### Required Environment Variables
 ```bash
 # In apps/web/.env.test
-TEST_USER_EMAIL=test-user@example.com
-TEST_USER_PASSWORD=secure-password
+TEST_USER_ENTERPRISE_ADMIN_EMAIL=alpha+enterprise-admin@domain.ai
+TEST_USER_ENTERPRISE_BUILDER_EMAIL=alpha+enterprise-builder@domain.ai  
+TEST_USER_ENTERPRISE_MEMBER_EMAIL=alpha+enterprise-member@domain.ai
+TEST_USER_PASSWORD=your-secure-test-password
+TEST_ENTERPRISE_AUTH0_ORG_ID=org_unQ8OLmTNsxVTJCT
+TEST_ENTERPRISE_ORG_NAME=Local Dev
 AUTH0_SECRET=your-auth0-secret
 AUTH0_ISSUER_BASE_URL=https://your-domain.auth0.com
 AUTH0_BASE_URL=http://localhost:3000
@@ -341,7 +345,11 @@ test('test login', async ({ page }) => {
 - name: Run E2E tests
   run: pnpm test:e2e:headless  # Use headless mode in CI
   env:
-    TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+    TEST_USER_ENTERPRISE_ADMIN_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_ADMIN_EMAIL }}
+    TEST_USER_ENTERPRISE_BUILDER_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_BUILDER_EMAIL }}
+    TEST_USER_ENTERPRISE_MEMBER_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_MEMBER_EMAIL }}
+    TEST_ENTERPRISE_AUTH0_ORG_ID: ${{ secrets.TEST_ENTERPRISE_AUTH0_ORG_ID }}
+    TEST_ENTERPRISE_ORG_NAME: ${{ secrets.TEST_ENTERPRISE_ORG_NAME }}
     TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
 ```
 
@@ -508,8 +516,12 @@ pnpm test:e2e:report   # View last test report
 ### Required Environment Variables
 ```bash
 # In apps/web/.env.test
-TEST_USER_EMAIL=test-user@example.com
-TEST_USER_PASSWORD=secure-password
+TEST_USER_ENTERPRISE_ADMIN_EMAIL=alpha+enterprise-admin@domain.ai
+TEST_USER_ENTERPRISE_BUILDER_EMAIL=alpha+enterprise-builder@domain.ai  
+TEST_USER_ENTERPRISE_MEMBER_EMAIL=alpha+enterprise-member@domain.ai
+TEST_USER_PASSWORD=your-secure-test-password
+TEST_ENTERPRISE_AUTH0_ORG_ID=org_unQ8OLmTNsxVTJCT
+TEST_ENTERPRISE_ORG_NAME=Local Dev
 AUTH0_SECRET=your-auth0-secret
 AUTH0_ISSUER_BASE_URL=https://your-domain.auth0.com
 AUTH0_BASE_URL=http://localhost:3000
@@ -776,7 +788,11 @@ test('test login', async ({ page }) => {
 - name: Run E2E tests
   run: pnpm test:e2e:headless  # Use headless mode in CI
   env:
-    TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+    TEST_USER_ENTERPRISE_ADMIN_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_ADMIN_EMAIL }}
+    TEST_USER_ENTERPRISE_BUILDER_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_BUILDER_EMAIL }}
+    TEST_USER_ENTERPRISE_MEMBER_EMAIL: ${{ secrets.TEST_USER_ENTERPRISE_MEMBER_EMAIL }}
+    TEST_ENTERPRISE_AUTH0_ORG_ID: ${{ secrets.TEST_ENTERPRISE_AUTH0_ORG_ID }}
+    TEST_ENTERPRISE_ORG_NAME: ${{ secrets.TEST_ENTERPRISE_ORG_NAME }}
     TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
 ```
 
