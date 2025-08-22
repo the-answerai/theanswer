@@ -1,40 +1,33 @@
-FROM --platform=linux/amd64 node:20-alpine AS base
+FROM --platform=linux/amd64 node:20-slim AS base
 
 # This Dockerfile is optimized for Next.js standalone mode deployment
 # Make sure you update both files if copying to documentation!
 
 WORKDIR /app
 
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-# Install dependencies required by Prisma ORM for Alpine Linux
-# Ref: https://www.prisma.io/docs/orm/reference/system-requirements#linux-runtime-dependencies
-RUN apk add --no-cache \
-    libc6-compat \
-    openssl \
+# Install essential tools for BWS and build process
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    unzip \
     ca-certificates \
-    zlib \
-    libgcc
-RUN apk update
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install PNPM globally
+# Install pnpm and turbo globally
 RUN npm install -g pnpm turbo@1
+
+# Configure pnpm store
 RUN pnpm config set store-dir ~/.pnpm-store
 
 ################################################################################
 
-# Prune projects
-FROM base AS pruner
-
-COPY . .
-RUN turbo prune web --docker
-
-################################################################################
-
-# Add lockfile and package.json's of isolated subworkspace
 FROM base AS installer
 WORKDIR /app
 
-# Accept build arguments for Auth0 configuration
+# Accept build argument for BWS token
+# ARG BWS_ACCESS_TOKEN
 ARG AUTH0_BASE_URL
 ARG AUTH0_SECRET
 ARG AUTH0_ISSUER_BASE_URL
@@ -46,7 +39,8 @@ ARG AUTH0_DOMAIN
 ARG FLAGSMITH_ENVIRONMENT_ID
 ARG WEB_AUTH0_SECRET
 
-# Set them as environment variables for the build
+# Set environment variables for the build from ARGs
+# ENV BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN
 ENV AUTH0_BASE_URL=$AUTH0_BASE_URL
 ENV AUTH0_SECRET=$AUTH0_SECRET
 ENV AUTH0_ISSUER_BASE_URL=$AUTH0_ISSUER_BASE_URL
@@ -58,43 +52,31 @@ ENV AUTH0_DOMAIN=$AUTH0_DOMAIN
 ENV FLAGSMITH_ENVIRONMENT_ID=$FLAGSMITH_ENVIRONMENT_ID
 ENV WEB_AUTH0_SECRET=$WEB_AUTH0_SECRET
 
-# Copy package.json files first
-COPY --from=pruner /app/out/json/ .
+# Use dummy DATABASE_URL for Prisma client generation during build
+# This is only needed for prisma generate, the real DATABASE_URL comes from runtime secrets
+ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/example_db?schema=public
 
-# Copy scripts directory before pnpm install since postinstall script needs it
-COPY scripts/ ./scripts/
 
-# First install the dependencies with cache mount (as they change less often)
+# Copy the entire project
+COPY . .
+
+# Install dependencies
 RUN --mount=type=cache,id=pnpm,target=~/.pnpm-store pnpm install
 
-# Build the project
-COPY --from=pruner /app/out/full/ .
-
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
-
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
-
-# Set build-time environment variables for standalone mode
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Run the build script with cache mount
-RUN --mount=type=cache,target=/app/node_modules/.cache pnpm turbo build --filter=web
-
+# Build the application with BWS token
+# RUN --mount=type=cache,target=/app/node_modules/.cache pnpm secure-run "turbo build --filter=web"
+RUN --mount=type=cache,target=/app/node_modules/.cache turbo build --filter=web
 
 ################################################################################
 
 FROM base AS runner
 WORKDIR /app
 
-# Install runtime dependencies for Prisma ORM in production stage
-RUN apk add --no-cache \
-    openssl \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
     ca-certificates \
-    zlib \
-    libgcc
+    && rm -rf /var/lib/apt/lists/*
 
 # Set production environment
 ENV NODE_ENV=production
@@ -104,41 +86,36 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy next.config.js for reference (not strictly needed for standalone)
-#COPY --from=installer --chown=nextjs:nodejs /app/apps/web/next.config.js ./
-
-# Copy package.json for reference
-#COPY --from=installer --chown=nextjs:nodejs /app/apps/web/package.json ./
-
-# Automatically leverage output traces to reduce image size 
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-# Log contents of .next directory to verify build output
-
+# Copy built application
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-
-# Copy static folder
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-
-# Copy public folder if it exists 
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Add debug commands to verify .next directory contents
-RUN set -x && \
-    echo "Listing app directory contents:" && \
-    ls -la /app && \
-    echo "Checking static directory:" && \
-    ls -la /app/apps/web/.next/static/ && \
-    echo "Checking public directory:" && \
-    ls -la /app/apps/web/public
-# Switch to nextjs user
+# Copy Prisma schema, migrations and all dependencies for runtime migration deployment
+COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/prisma ./packages-answers/db/prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/node_modules ./packages-answers/db/node_modules
+
+# Copy the pnpm store to resolve symlinks
+# Probably needs to be optimized and reconsidered
+COPY --from=installer --chown=nextjs:nodejs /app/node_modules/.pnpm ./node_modules/.pnpm
+
+# Copy generated Prisma client for runtime
+COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/generated ./packages-answers/db/generated
+
+# Copy root package.json and pnpm-lock.yaml for db:migrate script
+COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=installer --chown=nextjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Copy entrypoint script
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 USER nextjs
 
-# Expose port 3000
 EXPOSE 3000
 
-# Set hostname to 0.0.0.0 to allow connections from outside the container
-ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Start the Next.js server using the standalone server
-CMD ["node", "apps/web/server.js"]
+# Use entrypoint script to parse DATABASE_SECRET, run migration, and start server
+CMD ["./entrypoint.sh"]

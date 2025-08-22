@@ -13,7 +13,7 @@ http:
     path: '/'
     # You can specify a custom health check path. The default is "/".
     healthcheck: '/api/v1/ping'
-    alias: ${COPILOT_ENVIRONMENT_NAME}.flowise.theanswer.ai
+    # Domain aliases configured in environment-specific overrides below
     stickiness: true
 
 # Configuration for your containers and service.
@@ -28,15 +28,14 @@ image:
     depends_on:
         datacollector-sidecar: start
 
-cpu: 2048 # Number of CPU units for the task.
-memory: 4096 # Amount of memory in MiB used by the task.
-count: 1 # Number of tasks that should be running in your service.
+# Resource configuration moved to environment-specific overrides below
 exec: true # Enable running commands in your container.
 network:
     connect: true # Enable Service Connect for intra-environment traffic between services.
     vpc:
         security_groups:
             - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterSecurityGroup
+            - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisWorkloadSecurityGroup
 
 storage:
     volumes:
@@ -44,7 +43,6 @@ storage:
             efs: true
             path: /var/efs
             read_only: false
-# readonly_fs: true       # Limit to read-only access to mounted root filesystems.
 
 # Lacework sidecar configuration
 sidecars:
@@ -65,7 +63,6 @@ taskdef_overrides:
             readOnly: true
 
 # Optional fields for more advanced use-cases.
-#
 variables: # Pass environment variables as key value pairs.
     NUMBER_OF_PROXIES: '1'
     S3_STORAGE_BUCKET_NAME:
@@ -76,15 +73,51 @@ variables: # Pass environment variables as key value pairs.
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     # Lacework configuration variables - will be loaded from env file
     LaceworkVerbose: 'true'
+
 env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
+
 secrets:
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
 
-# You can override any of the values defined above by environment.flowiseSecurityGroup
+# Environment-specific overrides
 environments:
-    ${COPILOT_ENVIRONMENT_NAME}:
-        env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
-#    count: 2               # Number of tasks to run for the "test" environment.
-#    deployment:            # The deployment strategy for the "test" environment.
-#       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.
+    # Default: Same account deployment (staging and prod share account)
+    staging:
+        cpu: 2048 # Number of CPU units for the task.
+        memory: 4096 # Amount of memory in MB used by the task.
+        count: 1 # Number of tasks that should be running in your service.
+        http:
+            alias:
+                # Service aliases for same account strategy
+                - flowise.staging.${CLIENT_DOMAIN}
+                - api.staging.${CLIENT_DOMAIN}
+    prod:
+        cpu: 4096 # Number of CPU units for the task.
+        memory: 8192 # Amount of memory in MB used by the task.
+        count: 1 # Number of tasks that should be running in your service.
+        http:
+            alias:
+                # Service aliases for same account strategy
+                - flowise.prod.${CLIENT_DOMAIN}
+                - api.prod.${CLIENT_DOMAIN}
+
+    # Standalone: Separate account deployment (independent accounts)
+    staging-standalone:
+        cpu: 2048 # Number of CPU units for the task.
+        memory: 4096 # Amount of memory in MB used by the task.
+        count: 1 # Number of tasks that should be running in your service.
+        http:
+            alias:
+                # Service aliases for standalone account strategy
+                - flowise.${CLIENT_DOMAIN}
+                - api.${CLIENT_DOMAIN}
+    prod-standalone:
+        cpu: 4096 # Number of CPU units for the task.
+        memory: 8192 # Amount of memory in MB used by the task.
+        count: 1 # Number of tasks that should be running in your service.
+        http:
+            alias:
+                # Service aliases for standalone account strategy
+                - flowise.${CLIENT_DOMAIN}
+                - api.${CLIENT_DOMAIN}
