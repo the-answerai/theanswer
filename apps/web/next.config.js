@@ -5,17 +5,27 @@ const webpack = require('webpack')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
     enabled: process.env.ANALYZE === 'true'
 })
-if (process.env.DATABASE_SECRET) {
-    const { engine, host, port, dbname, username, password } = JSON.parse(process.env.DATABASE_SECRET)
-    process.env.DATABASE_HOST = host
-    process.env.DATABASE_PORT = port
-    process.env.DATABASE_NAME = dbname
-    process.env.DATABASE_USER = username
-    process.env.DATABASE_PASSWORD = password
-    process.env.DATABASE_TYPE = engine
+// SECURITY: Parse DATABASE_SECRET at runtime if available (fallback mechanism)
+// This ensures DATABASE_URL is available even if shell environment inheritance fails
+if (process.env.DATABASE_SECRET && !process.env.DATABASE_URL) {
+    try {
+        const { engine, host, port, dbname, username, password } = JSON.parse(process.env.DATABASE_SECRET)
+        process.env.DATABASE_HOST = host
+        process.env.DATABASE_PORT = port
+        process.env.DATABASE_NAME = dbname
+        process.env.DATABASE_USER = username
+        process.env.DATABASE_PASSWORD = password
+        process.env.DATABASE_TYPE = engine
 
-    // Construct DATABASE_URL for Prisma
-    process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${dbname}?schema=public&connection_limit=1`
+        // Construct DATABASE_URL for Prisma
+        process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${dbname}?schema=public&connection_limit=1`
+
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('DATABASE_URL parsed from DATABASE_SECRET in next.config.js')
+        }
+    } catch (error) {
+        console.error('Failed to parse DATABASE_SECRET in next.config.js:', error.message)
+    }
 }
 /**
  * @type {import('next').NextConfig}
