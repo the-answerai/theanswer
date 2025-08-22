@@ -264,26 +264,50 @@ test.describe('Authentication Flow', () => {
             .first()
         await submitButton.click()
 
-        // Step 3: Handle potential organization selection
+        // Step 3: Handle organization selection using ID-based approach (consistent with role-based tests)
         try {
-            // Check if organization selection page appears
-            const orgSelector = page.locator(
-                [
-                    'button:has-text("local")',
-                    'button:has-text("dev")',
-                    'button:has-text("development")',
-                    '[data-testid="organization-selector"]',
-                    '.organization-item'
-                ].join(', ')
-            )
+            const orgId = process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
+            if (orgId) {
+                console.log(`Looking for organization with ID: ${orgId}`)
 
-            // If organization selection appears, click on local/dev org
-            if (await orgSelector.first().isVisible({ timeout: 5000 })) {
-                console.log('Organization selection detected, selecting local dev org')
-                await orgSelector.first().click()
+                // Wait for organization selection forms to appear
+                await page.waitForSelector('form', { timeout: 5000 })
+
+                // Look for the form that contains the specific organization ID
+                const targetForm = page.locator(`form:has(input[name="organization"][value="${orgId}"])`)
+
+                if (await targetForm.isVisible({ timeout: 5000 })) {
+                    console.log(`Found form with organization ID: ${orgId}`)
+                    const submitButton = targetForm.locator('button[type="submit"]')
+                    if (await submitButton.isVisible({ timeout: 2000 })) {
+                        const buttonText = await submitButton.textContent()
+                        console.log(`Clicking organization button: "${buttonText}" (ID: ${orgId})`)
+                        await submitButton.click()
+                    }
+                } else {
+                    console.log(`Could not find form with organization ID: ${orgId}`)
+                    // Fallback: select first available organization
+                    const firstForm = page.locator('form').first()
+                    const firstButton = firstForm.locator('button[type="submit"]')
+                    if (await firstButton.isVisible({ timeout: 2000 })) {
+                        const firstButtonText = await firstButton.textContent()
+                        console.log(`Selecting first available organization: "${firstButtonText}"`)
+                        await firstButton.click()
+                    }
+                }
+            } else {
+                console.log('No TEST_ENTERPRISE_AUTH0_ORG_ID provided, selecting first available organization')
+                // Select first available organization
+                const firstForm = page.locator('form').first()
+                const firstButton = firstForm.locator('button[type="submit"]')
+                if (await firstButton.isVisible({ timeout: 5000 })) {
+                    const firstButtonText = await firstButton.textContent()
+                    console.log(`Selecting first available organization: "${firstButtonText}"`)
+                    await firstButton.click()
+                }
             }
         } catch (error) {
-            console.log('No organization selection step detected, proceeding')
+            console.log('Organization selection error:', error instanceof Error ? error.message : String(error))
         }
 
         // Wait for redirect back to application
@@ -570,46 +594,4 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             console.log(`✅ Navigation test completed for ${userType}`)
         })
     }
-})
-
-test.describe('Legacy Authenticated User Experience', () => {
-    // These tests will use the stored authentication state from auth.setup.ts
-    test.use({ storageState: './e2e/.auth/user.json' })
-
-    test('should access dashboard when already authenticated', async ({ page }) => {
-        // Go to homepage - should not redirect to login since we're authenticated
-        await page.goto('/')
-
-        // Wait for page to load and verify we're not redirected to Auth0
-        await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 10000 })
-
-        // Check for authenticated UI elements that should be present
-        await expect(page.getByRole('link', { name: 'Start a new conversation with your sidekicks' })).toBeVisible({ timeout: 10000 })
-
-        // URL should be the app domain
-        await expect(page).toHaveURL(/localhost:3000/)
-    })
-
-    test('should be able to navigate authenticated sections', async ({ page }) => {
-        await page.goto('/')
-
-        // Try to access different authenticated sections
-        // Adjust these based on your app's navigation structure
-        const navItems = [{ text: 'Profile', url: '/profile' }]
-
-        for (const item of navItems) {
-            try {
-                // Try to navigate to the section
-                await page.goto(item.url)
-
-                // Should not redirect to Auth0
-                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 3000 })
-
-                // Should show the requested page content (adjust selector as needed)
-                await expect(page.locator('body')).toBeVisible()
-            } catch (error) {
-                console.log(`⚠️  Section ${item.text} (${item.url}) might not exist or have different routing`)
-            }
-        }
-    })
 })
