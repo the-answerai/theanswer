@@ -107,8 +107,7 @@ COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=installer --chown=nextjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Copy entrypoint script
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.js ./entrypoint.js
 
 USER nextjs
 
@@ -117,5 +116,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Use entrypoint script to parse DATABASE_SECRET, run migration, and start server
-CMD ["./entrypoint.sh"]
+# Use Node.js entrypoint to parse DATABASE_SECRET, run migration, and start server
+CMD ["node", "entrypoint.js"]
