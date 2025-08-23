@@ -160,7 +160,9 @@ export const authenticationHandlerMiddleware =
                         // Find or create default chatflows for the user
                         const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
                         // Update user with the latest defaultChatflowId
-                        if (defaultChatflowId) {
+                        if (defaultChatflowId && user.defaultChatflowId !== defaultChatflowId) {
+                            // Persist the update to the database to prevent race conditions
+                            await AppDataSource.getRepository(User).update(user.id, { defaultChatflowId })
                             user.defaultChatflowId = defaultChatflowId
                         }
 
