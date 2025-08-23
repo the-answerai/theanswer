@@ -129,8 +129,8 @@ export CLIENT_DOMAIN=client.theanswer.ai
 **2. Initialize Environment:**
 
 ```bash
-copilot env init --name staging --profile default --app aai
-copilot env init --name prod --profile default --app aai
+copilot env init --name staging
+copilot env init --name prod
 ```
 
 **3. Deploy Environment Infrastructure:**
@@ -174,10 +174,10 @@ export CLIENT_DOMAIN=client.theanswer.ai
 
 ```bash
 # In staging account
-copilot env init --name staging-standalone --profile default --app aai
+copilot env init --name staging-standalone
 
 # In production account
-copilot env init --name prod-standalone --profile default --app aai
+copilot env init --name prod-standalone
 ```
 
 **3. Deploy Environment Infrastructure:**
