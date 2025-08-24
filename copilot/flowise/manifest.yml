@@ -40,17 +40,13 @@ storage:
             path: /var/efs
             read_only: false
 
-
-
-
-
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
     NUMBER_OF_PROXIES: '1'
-    CHATFLOW_DOMAIN: "http://flowise:4000"
-    DOMAIN: "http://flowise:4000"
-    FLOWISE_DOMAIN: "http://flowise:4000"
-    ANSWERAI_DOMAIN: "http://web:3000"
+    CHATFLOW_DOMAIN: 'http://flowise:4000'
+    DOMAIN: 'http://flowise:4000'
+    FLOWISE_DOMAIN: 'http://flowise:4000'
+    ANSWERAI_DOMAIN: 'http://web:3000'
     S3_STORAGE_BUCKET_NAME:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketName
     AAI_DEFAULT_REDIS_URL:
