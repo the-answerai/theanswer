@@ -38,6 +38,7 @@ ARG AUTH0_ORGANIZATION_ID
 ARG AUTH0_DOMAIN
 ARG FLAGSMITH_ENVIRONMENT_ID
 ARG WEB_AUTH0_SECRET
+ARG AUTH0_TOKEN_SIGN_ALG
 
 # Set environment variables for the build from ARGs
 # ENV BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN
@@ -51,6 +52,7 @@ ENV AUTH0_ORGANIZATION_ID=$AUTH0_ORGANIZATION_ID
 ENV AUTH0_DOMAIN=$AUTH0_DOMAIN
 ENV FLAGSMITH_ENVIRONMENT_ID=$FLAGSMITH_ENVIRONMENT_ID
 ENV WEB_AUTH0_SECRET=$WEB_AUTH0_SECRET
+ENV AUTH0_TOKEN_SIGN_ALG=$AUTH0_TOKEN_SIGN_ALG
 
 # Use dummy DATABASE_URL for Prisma client generation during build
 # This is only needed for prisma generate, the real DATABASE_URL comes from runtime secrets
@@ -106,8 +108,11 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/generated .
 COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=installer --chown=nextjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Copy entrypoint script
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.js ./entrypoint.js
+# Copy entrypoint.sh script
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
+
+# Update permissions for entrypoint.sh
+RUN chmod +x entrypoint.sh
 
 USER nextjs
 
@@ -117,4 +122,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Use Node.js entrypoint to parse DATABASE_SECRET, run migration, and start server
-CMD ["node", "entrypoint.js"]
+CMD ["sh", "entrypoint.sh"]

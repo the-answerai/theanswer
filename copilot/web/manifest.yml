@@ -61,13 +61,18 @@ secrets:
 
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
+    NUMBER_OF_PROXIES: '1'
     NODE_ENV: production
     PORT: '3000'
     HOSTNAME: '0.0.0.0'
     NEXT_TELEMETRY_DISABLED: '1'
+    AUTH0_DEBUG: 'false'  # Disable Auth0 debugging in production
     AUTH0_BASE_URL: ${AUTH0_BASE_URL}
-
-    # Redis connection
+    ANSWERAI_DOMAIN: "http://web:3000"
+    FLOWISE_DOMAIN: "http://flowise:4000"
+    DOMAIN: "http://flowise:4000"
+    # Database separation: Web service uses different database than Flowise
+    WEB_DATABASE_NAME: "web"  # Override flowise database name from shared secret
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
 

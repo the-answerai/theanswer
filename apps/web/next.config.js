@@ -12,13 +12,15 @@ if (process.env.DATABASE_SECRET && !process.env.DATABASE_URL) {
         const { engine, host, port, dbname, username, password } = JSON.parse(process.env.DATABASE_SECRET)
         process.env.DATABASE_HOST = host
         process.env.DATABASE_PORT = port
-        process.env.DATABASE_NAME = dbname
+        // Database separation: Web service uses different database than Flowise
+        const webDatabaseName = process.env.WEB_DATABASE_NAME || dbname
+        process.env.DATABASE_NAME = webDatabaseName
         process.env.DATABASE_USER = username
         process.env.DATABASE_PASSWORD = password
         process.env.DATABASE_TYPE = engine
 
         // Construct DATABASE_URL for Prisma
-        process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${dbname}?schema=public&connection_limit=1`
+        process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${webDatabaseName}?schema=public&connection_limit=1`
 
         if (process.env.NODE_ENV !== 'production') {
             console.log('DATABASE_URL parsed from DATABASE_SECRET in next.config.js')

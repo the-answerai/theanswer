@@ -24,10 +24,6 @@ image:
     # Port exposed through your container to route traffic to it.
     port: 4000
 
-    # Container dependencies - Lacework sidecar is optional
-    depends_on:
-        datacollector-sidecar: start
-
 # Resource configuration moved to environment-specific overrides below
 exec: true # Enable running commands in your container.
 network:
@@ -44,41 +40,33 @@ storage:
             path: /var/efs
             read_only: false
 
-# Lacework sidecar configuration
-sidecars:
-    datacollector-sidecar:
-        image: lacework/datacollector:latest-sidecar
-        essential: false
 
-# Task definition overrides for Lacework integration
-taskdef_overrides:
-    # Override main container entrypoint to use Lacework sidecar script and then start the app
-    - path: ContainerDefinitions[0].EntryPoint
-      value: ['/bin/sh', '-c', '/var/lib/lacework-backup/lacework-sidecar.sh && cd /app/packages/server && exec pnpm start']
 
-    # Add volume mount from sidecar to main container
-    - path: ContainerDefinitions[0].VolumesFrom
-      value:
-          - sourceContainer: datacollector-sidecar
-            readOnly: true
+
 
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
     NUMBER_OF_PROXIES: '1'
+    CHATFLOW_DOMAIN: "http://flowise:4000"
+    DOMAIN: "http://flowise:4000"
+    FLOWISE_DOMAIN: "http://flowise:4000"
+    ANSWERAI_DOMAIN: "http://web:3000"
     S3_STORAGE_BUCKET_NAME:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketName
     AAI_DEFAULT_REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
-    # Lacework configuration variables - will be loaded from env file
-    LaceworkVerbose: 'true'
 
 env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
 
 secrets:
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
+
+# Configure deployment strategy
+deployment:
+    rolling: 'default'
 
 # Environment-specific overrides
 environments:
