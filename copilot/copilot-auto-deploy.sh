@@ -54,21 +54,32 @@ echo "🚀 Bootstrapping Copilot env '$ENV'..."
 pnpm copilot env init --name "$ENV" || true
 pnpm copilot env deploy --name "$ENV" || true   # allow 'no changes' without failing
 
-# --- service selection ---
+# --- service selection (defaults to BOTH after 15s or on blank) ---
 echo ""
 echo "🧩 What do you want to deploy?"
 echo "1) flowise"
 echo "2) web"
 echo "3) both"
 echo "4) exit"
-read -r -p "Enter choice (1-4): " svc_choice
+svc_choice=""
+if read -t 15 -r -p "Enter choice (1-4) [default 3 in 15s]: " svc_choice; then
+  :
+else
+  printf '\n⏭️  No input after 15s — defaulting to "both".\n'
+  svc_choice="3"
+fi
+# Treat blank as default 3
+if [[ -z "${svc_choice// }" ]]; then
+  svc_choice="3"
+fi
+
 SERVICES=()
-case "${svc_choice:-}" in
+case "${svc_choice}" in
   1) SERVICES=("flowise") ;;
   2) SERVICES=("web") ;;
   3) SERVICES=("flowise" "web") ;;  # order preserved: flowise then web
   4) echo "Aborted."; exit 0 ;;
-  *) echo "Invalid choice"; exit 1 ;;
+  *) echo "Invalid choice '$svc_choice'"; exit 1 ;;
 esac
 
 needs_flowise=false
@@ -81,15 +92,15 @@ SHOW_DB=false
 if $needs_flowise; then
   echo ""
   echo "🗄️  Do you need DB/Redis connection details for updating Copilot env files before deploying flowise?"
-  # Auto-skip after 30s with default 'No'
-  if read -t 30 -r -p "Show DB/Redis info? (y/N) [auto-skip in 30s]: " need_db; then
+  # Auto-skip after 15s with default 'No'
+  if read -t 15 -r -p "Show DB/Redis info? (y/N) [auto-skip in 15s]: " need_db; then
     need_db_lc="$(lower "$need_db")"
     case "$need_db_lc" in
       y|yes) SHOW_DB=true ;;
       *) SHOW_DB=false ;;
     esac
   else
-    printf '\n⏭️  No input after 30s — skipping DB/Redis info.\n'
+    printf '\n⏭️  No input after 15s — skipping DB/Redis info.\n'
   fi
 
   if $SHOW_DB; then
