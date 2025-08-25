@@ -27,7 +27,7 @@ function TabPanel(props: any) {
 }
 
 const CsvTransformer = () => {
-    const { isLoading } = useUser()
+    const { user, isLoading } = useUser()
     const [chatflows, setChatflows] = useState([])
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -100,10 +100,15 @@ const CsvTransformer = () => {
                     </Tabs>
                 </Box>
                 <TabPanel currentValue={tab} value='process'>
-                    <ProcessCsv chatflows={chatflows} onNavigateToHistory={navigateToHistory} onRefreshChatflows={fetchChatflows} />
+                    <ProcessCsv
+                        chatflows={chatflows}
+                        user={user}
+                        onNavigateToHistory={navigateToHistory}
+                        onRefreshChatflows={fetchChatflows}
+                    />
                 </TabPanel>
                 <TabPanel currentValue={tab} value='history'>
-                    <ProcessingHistory />
+                    <ProcessingHistory user={user} />
                 </TabPanel>
             </Stack>
         </Container>

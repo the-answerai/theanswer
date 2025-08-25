@@ -4,7 +4,6 @@ import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
 import { InputLabel, Select, MenuItem } from '@mui/material'
 
-// material-ui
 import {
     Stack,
     Box,
@@ -293,7 +292,7 @@ const ProcessCsv = ({
             }
             reader.readAsText(file)
         },
-        [setValue]
+        [setValue, watchedValues.firstRowIsHeaders]
     )
 
     const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } = useDropzone({
