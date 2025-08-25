@@ -15,16 +15,20 @@ function generateColumnName(index: number): string {
 }
 
 /**
- * Parse CSV content using RFC 4180 compliant parser
- * User controls header interpretation via firstRowIsHeaders parameter
+ * Parse CSV content using RFC 4180 compliant parser with headers
  */
-export function parseCsvRfc4180(input: string, firstRowIsHeaders: boolean): ParsedCsvResult {
-    if (firstRowIsHeaders) {
-        return parseWithHeaders(input)
-    } else {
-        return parseWithoutHeaders(input)
-    }
+export function parseCsvWithHeaders(input: string): ParsedCsvResult {
+    return parseWithHeaders(input)
 }
+
+/**
+ * Parse CSV content using RFC 4180 compliant parser without headers
+ */
+export function parseCsvWithoutHeaders(input: string): ParsedCsvResult {
+    return parseWithoutHeaders(input)
+}
+
+
 
 /**
  * Parse CSV with headers

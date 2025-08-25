@@ -33,7 +33,7 @@ import FilePresentOutlined from '@mui/icons-material/FilePresentOutlined'
 
 import CsvNoticeCard from './CsvNoticeCard'
 import SnackMessage from '../SnackMessage'
-import { parseCsvRfc4180 } from './parseCsv'
+import { parseCsvWithHeaders, parseCsvWithoutHeaders } from './parseCsv'
 
 interface ChatFlow {
     id: string
@@ -249,7 +249,9 @@ const ProcessCsv = ({
                     setCsvContent(result)
 
                     // Parse CSV with user-controlled header interpretation
-                    const { headers: H, rows: R } = parseCsvRfc4180(result, watchedValues.firstRowIsHeaders)
+                                                    const { headers: H, rows: R } = watchedValues.firstRowIsHeaders
+                                    ? parseCsvWithHeaders(result)
+                                    : parseCsvWithoutHeaders(result)
                     setCsvErrors([])
                     setHeaders(H)
                     setRows(R)
@@ -554,10 +556,9 @@ const ProcessCsv = ({
                                                             // Re-parse CSV with new header interpretation
                                                             if (csvContent) {
                                                                 try {
-                                                                    const { headers: newH, rows: newR } = parseCsvRfc4180(
-                                                                        csvContent,
-                                                                        newHeaderSetting
-                                                                    )
+                                                                    const { headers: newH, rows: newR } = newHeaderSetting
+                                                                        ? parseCsvWithHeaders(csvContent)
+                                                                        : parseCsvWithoutHeaders(csvContent)
                                                                     setHeaders(newH)
                                                                     setRows(newR)
                                                                     setValue('sourceColumns', newH, { shouldValidate: true })
@@ -565,6 +566,7 @@ const ProcessCsv = ({
                                                                     // Set rowsRequested to new maximum available when toggle changes
                                                                     setValue('rowsRequested', newR.length)
                                                                 } catch (error) {
+                                                                    console.error('CSV re-parsing error:', error)
                                                                     setCsvErrors(['Error re-parsing CSV with new header setting'])
                                                                 }
                                                             }

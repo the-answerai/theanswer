@@ -1,6 +1,6 @@
 import { parse } from 'csv-parse/sync'
 import logger from './logger'
-import { safeParseCsvConfiguration, CsvConfiguration } from '../types/csvTypes'
+import { safeParseCsvConfiguration } from '../types/csvTypes'
 import { ICommonObject } from 'flowise-components'
 
 /**
@@ -174,6 +174,81 @@ export function validateCsvConfiguration(configuration: ICommonObject): { firstR
 }
 
 /**
+ * Parse CSV with headers and normalize records
+ */
+function parseCsvWithHeadersForProcessing(csvText: string): Record<string, string>[] {
+    const records = parse(csvText.trim(), {
+        columns: true,
+        skip_empty_lines: true,
+        comment: '#',
+        comment_no_infix: true
+    }) as Record<string, string>[]
+
+    if (records.length === 0) {
+        throw new Error('CSV file has no data rows')
+    }
+
+    // Clean up headers and normalize records
+    const firstRecord = records[0]
+    const rawHeaders = Object.keys(firstRecord)
+    const cleanHeaders = rawHeaders.map((header) => header.trim()).filter((header) => header !== '')
+
+    if (cleanHeaders.length === 0) {
+        throw new Error('CSV has no valid header names')
+    }
+
+    // Normalize all records to use clean headers and ensure string values
+    const normalizedRecords = records.map((record) => {
+        const normalizedRecord: Record<string, string> = {}
+        cleanHeaders.forEach((header) => {
+            const originalKey = rawHeaders.find((key) => key.trim() === header) || header
+            normalizedRecord[header] = (record[originalKey] ?? '').toString()
+        })
+        return normalizedRecord
+    })
+
+    logger.info(`CSV parsing with headers completed: ${normalizedRecords.length} rows, ${cleanHeaders.length} columns`)
+    return normalizedRecords
+}
+
+/**
+ * Parse CSV without headers and create normalized objects
+ */
+function parseCsvWithoutHeadersForProcessing(csvText: string): Record<string, string>[] {
+    const arrayRecords = parse(csvText.trim(), {
+        columns: false,
+        skip_empty_lines: true,
+        comment: '#',
+        comment_no_infix: true
+    }) as string[][]
+
+    if (arrayRecords.length === 0) {
+        throw new Error('CSV file has no data rows')
+    }
+
+    const firstRow = arrayRecords[0]
+    if (!firstRow || firstRow.length === 0) {
+        throw new Error('CSV file has no valid data in first row')
+    }
+
+    // Generate consistent column names
+    const maxColumns = Math.max(...arrayRecords.map((row) => row.length))
+    const headers = Array.from({ length: maxColumns }, (_, index) => generateColumnName(index))
+
+    // Transform arrays into normalized objects
+    const processedRecords = arrayRecords.map((row: string[]) => {
+        const obj: Record<string, string> = {}
+        headers.forEach((header, colIndex) => {
+            obj[header] = row[colIndex] || ''
+        })
+        return obj
+    })
+
+    logger.info(`CSV parsing without headers completed: ${processedRecords.length} rows, ${headers.length} columns`)
+    return processedRecords
+}
+
+/**
  * Parse CSV for processing with user-driven behavior
  * Respects user choice exactly - no auto-fallback logic
  *
@@ -188,76 +263,12 @@ export function parseCsvForProcessing(csvText: string, userSpecifiedHeaders: boo
 
     try {
         if (userSpecifiedHeaders) {
-            // User specified headers - parse with headers
-            const records = parse(csvText.trim(), {
-                columns: true, // Use first row as headers
-                skip_empty_lines: true,
-                comment: '#',
-                comment_no_infix: true
-            }) as Record<string, string>[]
-
-            if (records.length === 0) {
-                throw new Error('CSV file has no data rows')
-            }
-
-            // Clean up headers and normalize records (matches frontend transformHeader behavior)
-            const firstRecord = records[0]
-            const rawHeaders = Object.keys(firstRecord)
-            const cleanHeaders = rawHeaders.map((header) => header.trim()).filter((header) => header !== '')
-
-            if (cleanHeaders.length === 0) {
-                throw new Error('CSV has no valid header names')
-            }
-
-            // Normalize all records to use clean headers and ensure string values
-            const normalizedRecords = records.map((record) => {
-                const normalizedRecord: Record<string, string> = {}
-                cleanHeaders.forEach((header) => {
-                    // Find the original header key (before trimming)
-                    const originalKey = rawHeaders.find((key) => key.trim() === header) || header
-                    normalizedRecord[header] = (record[originalKey] ?? '').toString()
-                })
-                return normalizedRecord
-            })
-
-            logger.info(`CSV parsing with headers completed: ${normalizedRecords.length} rows, ${cleanHeaders.length} columns`)
-            return normalizedRecords
+            return parseCsvWithHeadersForProcessing(csvText)
         } else {
-            // User specified no headers - parse without headers
-            const arrayRecords = parse(csvText.trim(), {
-                columns: false, // Return arrays instead of objects
-                skip_empty_lines: true,
-                comment: '#',
-                comment_no_infix: true
-            }) as string[][]
-
-            if (arrayRecords.length === 0) {
-                throw new Error('CSV file has no data rows')
-            }
-
-            const firstRow = arrayRecords[0]
-            if (!firstRow || firstRow.length === 0) {
-                throw new Error('CSV file has no valid data in first row')
-            }
-
-            // Generate consistent column names: "Column 1", "Column 2", etc.
-            const maxColumns = Math.max(...arrayRecords.map((row) => row.length))
-            const headers = Array.from({ length: maxColumns }, (_, index) => generateColumnName(index))
-
-            // Transform arrays into normalized objects
-            const processedRecords = arrayRecords.map((row: string[]) => {
-                const obj: Record<string, string> = {}
-                headers.forEach((header, colIndex) => {
-                    obj[header] = row[colIndex] || '' // Pad missing values with empty strings
-                })
-                return obj
-            })
-
-            logger.info(`CSV parsing without headers completed: ${processedRecords.length} rows, ${headers.length} columns`)
-            return processedRecords
+            return parseCsvWithoutHeadersForProcessing(csvText)
         }
-    } catch (error: any) {
-        const errorMessage = error.message || 'Unknown CSV parsing error'
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown CSV parsing error'
         logger.error('CSV parsing failed:', errorMessage)
         throw new Error(`Failed to parse CSV: ${errorMessage}`)
     }

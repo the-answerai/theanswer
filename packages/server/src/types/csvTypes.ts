@@ -114,7 +114,7 @@ export function validateSourceColumns(
 /**
  * Safely extracts and validates CSV configuration from unknown object
  */
-export function safeParseCsvConfiguration(configObject: ICommonObject | any): {
+export function safeParseCsvConfiguration(configObject: ICommonObject | Record<string, unknown>): {
     config: CsvConfiguration | null
     errors: string[]
 } {
