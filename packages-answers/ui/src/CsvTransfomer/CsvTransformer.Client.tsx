@@ -27,7 +27,7 @@ function TabPanel(props: any) {
 }
 
 const CsvTransformer = () => {
-    const { user, isLoading } = useUser()
+    const { isLoading } = useUser()
     const [chatflows, setChatflows] = useState([])
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -63,7 +63,7 @@ const CsvTransformer = () => {
 
         // Listen for visibility changes (user switching tabs/windows)
         document.addEventListener('visibilitychange', handleVisibilityChange)
-        
+
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
@@ -81,8 +81,6 @@ const CsvTransformer = () => {
             </Container>
         )
     }
-
-    
 
     return (
         <Container>
@@ -102,10 +100,10 @@ const CsvTransformer = () => {
                     </Tabs>
                 </Box>
                 <TabPanel currentValue={tab} value='process'>
-                    <ProcessCsv chatflows={chatflows} user={user} onNavigateToHistory={navigateToHistory} onRefreshChatflows={fetchChatflows} />
+                    <ProcessCsv chatflows={chatflows} onNavigateToHistory={navigateToHistory} onRefreshChatflows={fetchChatflows} />
                 </TabPanel>
                 <TabPanel currentValue={tab} value='history'>
-                    <ProcessingHistory user={user} />
+                    <ProcessingHistory />
                 </TabPanel>
             </Stack>
         </Container>

@@ -9,6 +9,9 @@ import { getErrorMessage } from '../../errors/utils'
 import { AppCsvParseRuns } from '../../database/entities/AppCsvParseRuns'
 import { getS3Config } from 'flowise-components'
 
+import { CreateCsvParseRunRequest, validateCreateCsvParseRunRequest, CsvConfiguration } from '../../types/csvTypes'
+import { ICommonObject } from 'flowise-components'
+
 const slugify = (text?: string) =>
     text
         ?.toLowerCase()
@@ -17,6 +20,21 @@ const slugify = (text?: string) =>
 
 const getUniqueDocumentPath = ({ organizationId, title }: { organizationId: string; title: string }) =>
     `${organizationId}/${slugify(title)}-${uuidV4()}`
+
+/**
+ * Converts typed CsvConfiguration to ICommonObject for TypeORM storage
+ * Ensures type safety while maintaining compatibility with database schema
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const configurationToCommonObject = (config: CsvConfiguration): ICommonObject => {
+    return {
+        context: config.context,
+        firstRowIsHeaders: config.firstRowIsHeaders,
+        headers: config.headers,
+        rowsCount: config.rowsCount,
+        sourceColumns: config.sourceColumns
+    }
+}
 
 const getAllCsvParseRuns = async (user: IUser) => {
     try {

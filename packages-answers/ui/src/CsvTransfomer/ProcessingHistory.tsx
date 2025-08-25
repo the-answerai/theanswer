@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { User } from 'types'
 import { Stack, Button, Chip, CircularProgress } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -46,7 +45,7 @@ async function downloadProcessedCsv(csvParseRunId: string) {
     return await response.blob()
 }
 
-const ProcessingHistory = ({ user }: { user: User }) => {
+const ProcessingHistory = () => {
     const [csvParseRuns, setCsvParseRuns] = useState<any[]>([])
     const [loading, setLoading] = useState<boolean>(true)
     const [historySnack, setHistorySnack] = useState('')

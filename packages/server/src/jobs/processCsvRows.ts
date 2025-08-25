@@ -9,6 +9,7 @@ import { AppCsvParseRuns } from '../database/entities/AppCsvParseRuns'
 import { AppCsvParseRows } from '../database/entities/AppCsvParseRows'
 import { ChatFlow } from '../database/entities/ChatFlow'
 import { User } from '../database/entities/User'
+import { safeParseCsvConfiguration } from '../types/csvTypes'
 /**
  * Cron job schedule for processing csv rows
  * Default: Every 15 minutes ('0/15 * * * *')
@@ -45,10 +46,10 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
         throw new Error(`User ${csvParseRun.userId} not found`)
     }
 
-    // Build question from row data and optional run context
-    const additionalContext = (csvParseRun.configuration as any)?.context || ''
+    // Build question from row data and optional run context - with type safety
+    const { config: csvConfig } = safeParseCsvConfiguration(csvParseRun.configuration)
+    const additionalContext = csvConfig?.context || ''
     const combinedQuestion = `### ${JSON.stringify(row.rowData)} ### ${additionalContext}`.trim()
-
     const response = await executeFlow({
         user: user,
         incomingInput: {
