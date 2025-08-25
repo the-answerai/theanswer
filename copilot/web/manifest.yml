@@ -52,14 +52,14 @@ network:
             - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisWorkloadSecurityGroup
 
 # Load environment-specific variables from file
-env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.web.env
+env_file: copilot.${COPILOT_APPLICATION_NAME}.web.env
 
 # Database secret from AWS Secrets Manager
 secrets:
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
 
-# Optional fields for more advanced use-cases.
+# Configuration variables required for the web service
 variables: # Pass environment variables as key value pairs.
     NUMBER_OF_PROXIES: '1'
     NODE_ENV: production

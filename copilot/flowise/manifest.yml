@@ -42,6 +42,8 @@ storage:
 
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
+    PORT: '4000'
+    DATABASE_TYPE: 'postgres'
     NUMBER_OF_PROXIES: '1'
     CHATFLOW_DOMAIN: 'http://flowise:4000'
     DOMAIN: 'http://flowise:4000'
@@ -54,9 +56,11 @@ variables: # Pass environment variables as key value pairs.
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
 
-env_file: copilot.${COPILOT_ENVIRONMENT_NAME}.env
+env_file: copilot.${COPILOT_APPLICATION_NAME}.env
 
 secrets:
+    # Main database secret - parsed by app to extract all database connection details
+    # For individual AAI service management, add: AAI_DEFAULT_POSTGRES_*_SECRET
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
 
