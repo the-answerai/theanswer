@@ -60,7 +60,7 @@
         "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive",
         "precopilot": "BWS_SUPPRESS_ALL=true pnpm secure-run sh copilot/copilot-switch-app.sh && sleep 1",
         "copilot": "BWS_SUPPRESS_ALL=true pnpm secure-run copilot",
-        "copilot:auto": "./copilot/copilot-auto-deploy.sh"
+        "copilot:auto": "bash ./copilot/copilot-auto-deploy.sh"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --fix"
