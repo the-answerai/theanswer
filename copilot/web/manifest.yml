@@ -26,15 +26,15 @@ image:
         context: .
         args:
             AUTH0_BASE_URL: ${AUTH0_BASE_URL}
-            AUTH0_SECRET: ${AUTH0_SECRET}
-            AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL}
-            AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-            AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
-            AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-            AUTH0_ORGANIZATION_ID: ${AUTH0_ORGANIZATION_ID}
-            AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-            FLAGSMITH_ENVIRONMENT_ID: ${FLAGSMITH_ENVIRONMENT_ID}
-            WEB_AUTH0_SECRET: ${WEB_AUTH0_SECRET}
+            # AUTH0_SECRET: ${AUTH0_SECRET}
+            # AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL}
+            # AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+            # AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+            # AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+            # AUTH0_ORGANIZATION_ID: ${AUTH0_ORGANIZATION_ID}
+            # AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+            # FLAGSMITH_ENVIRONMENT_ID: ${FLAGSMITH_ENVIRONMENT_ID}
+            # WEB_AUTH0_SECRET: ${WEB_AUTH0_SECRET}
             # DATABASE_URL: ${DATABASE_URL}
             # BWS_ACCESS_TOKEN: ${BWS_ACCESS_TOKEN}
     # Port exposed through your container to route traffic to it.
@@ -80,29 +80,8 @@ variables: # Pass environment variables as key value pairs.
 
 # Environment-specific overrides
 environments:
-    # Default: Same account deployment (staging and prod share account)
-    staging:
-        cpu: 1024 # Number of CPU units for the task
-        memory: 2048 # Amount of memory in MiB used by the task
-        count: 1 # Number of tasks that should be running in your service
-        http:
-            alias:
-                # Service aliases for same account strategy
-                - web.staging.${CLIENT_DOMAIN}
-                - staging.${CLIENT_DOMAIN}
-    prod:
-        cpu: 2048 # Number of CPU units for the task
-        memory: 4096 # Amount of memory in MiB used by the task
-        count: 1 # Number of tasks that should be running in your service
-        http:
-            alias:
-                # Service aliases for same account strategy
-                - web.prod.${CLIENT_DOMAIN}
-                - prod.${CLIENT_DOMAIN}
-                - ${CLIENT_DOMAIN}
-
     # Standalone: Separate account deployment (independent accounts)
-    staging-standalone:
+    staging:
         cpu: 1024 # Number of CPU units for the task
         memory: 2048 # Amount of memory in MiB used by the task
         count: 1 # Number of tasks that should be running in your service
@@ -111,7 +90,7 @@ environments:
                 # Service aliases for standalone account strategy
                 - web.${CLIENT_DOMAIN}
                 - ${CLIENT_DOMAIN}
-    prod-standalone:
+    prod:
         cpu: 2048 # Number of CPU units for the task
         memory: 4096 # Amount of memory in MiB used by the task
         count: 1 # Number of tasks that should be running in your service

@@ -1,6 +1,6 @@
 # Copilot Deployment Configuration
 
-This directory contains the AWS Copilot configuration for deploying TheAnswerAI services across multiple environments and deployment strategies.
+This directory contains the AWS Copilot configuration for deploying TheAnswerAI services across multiple environments using a **standalone deployment strategy** with separate Copilot applications within the same AWS account for easier domain and context management.
 
 ## 🏗️ Architecture Overview
 
@@ -9,35 +9,59 @@ TheAnswerAI uses AWS Copilot to deploy two main services:
 -   **`flowise`** - Backend API service (Node.js/Express)
 -   **`web`** - Frontend web application (Next.js)
 
-### Deployment Strategies
-
-We support two deployment strategies to accommodate different organizational needs:
-
-#### 1. **Default Strategy (Same Account)**
+### Deployment Strategy: Standalone (Separate Applications)
 
 -   **Environments**: `staging`, `prod`
--   **Account Structure**: Both environments share the same AWS account
--   **Domain Pattern**: `{service}.{environment}.{client-domain}`
--   **Use Case**: Cost-effective deployment for single-tenant or development scenarios
-
-#### 2. **Standalone Strategy (Separate Accounts)**
-
--   **Environments**: `staging-standalone`, `prod-standalone`
--   **Account Structure**: Each environment gets its own AWS account
+-   **Account Structure**: Same AWS account, separate Copilot applications
 -   **Domain Pattern**: `{service}.{client-domain}` (clean domains)
--   **Use Case**: Multi-tenant, compliance, or production isolation scenarios
+-   **Use Case**: Multi-tenant deployments, easier domain management, and simplified context switching
+
+## 🔄 Domain & Context Switching
+
+TheAnswerAI uses a sophisticated domain switching mechanism that automatically configures the correct Copilot application context within the same AWS account based on your `CLIENT_DOMAIN` environment variable.
+
+### Automatic Context Switching
+
+The `precopilot` script runs automatically as a prehook whenever you execute `pnpm copilot` commands. This ensures the correct Copilot application context is always configured before any deployment operations.
+
+### Pnpm Scripts for Easy Deployment
+
+```bash
+# Set your target domain
+export CLIENT_DOMAIN=client.theanswer.ai
+
+# Deploy with automatic context switching
+pnpm copilot deploy
+
+# Or use the full command
+pnpm run copilot deploy
+```
+
+### How Domain Switching Works
+
+1. **`precopilot` prehook**: Automatically runs `copilot/copilot-switch-app.sh` to configure the correct Copilot application context
+2. **`copilot` script**: Executes the actual copilot commands with the configured context
+3. **Automatic naming**: The script automatically generates the correct application name based on your domain
+
+### Domain Examples
+
+| CLIENT_DOMAIN                 | Generated App Name   | Use Case                   |
+| ----------------------------- | -------------------- | -------------------------- |
+| `client.theanswer.ai`         | `client-aai`         | Production deployment      |
+| `staging.client.theanswer.ai` | `staging-client-aai` | Staging deployment         |
+| `abc.theanswer.ai`            | `abc-aai`            | Client-specific deployment |
+| `staging.abc.theanswer.ai`    | `staging-abc-aai`    | Client staging deployment  |
 
 ## 📁 Directory Structure
 
 ```
 copilot/
 ├── README.md                           # This file
-├── .workspace                          # Copilot workspace configuration
+├── .workspace                          # Copilot workspace configuration (auto-generated)
+├── copilot-switch-app.sh               # Domain switching script
 ├── environments/                       # Environment configurations
-│   ├── staging/                        # Default staging environment
-│   ├── prod/                          # Default production environment
-│   ├── staging-standalone/             # Standalone staging environment
-│   ├── prod-standalone/                # Standalone production environment
+│   ├── staging/                        # Staging environment
+│   ├── prod/                          # Production environment
 │   └── addons/                        # Shared infrastructure addons
 │       ├── redis-elasticache.yml      # Redis caching layer
 │       ├── flowise-cluster.yml        # Aurora PostgreSQL database
@@ -59,35 +83,15 @@ copilot/
 
 All environments use a single `CLIENT_DOMAIN` variable for domain configuration:
 
-#### Default Strategy
-
 ```bash
-# copilot.staging.env & copilot.prod.env
-CLIENT_DOMAIN=client.theanswer.ai
-```
+# For staging deployments
+export CLIENT_DOMAIN=staging.client.theanswer.ai
 
-#### Standalone Strategy
-
-```bash
-# copilot.staging-standalone.env
-CLIENT_DOMAIN=staging.client.theanswer.ai
-
-# copilot.prod-standalone.env
-CLIENT_DOMAIN=client.theanswer.ai
+# For production deployments
+export CLIENT_DOMAIN=client.theanswer.ai
 ```
 
 ### Resulting Domains
-
-#### Default Strategy (Same Account)
-
-| Service          | Staging                               | Production                         |
-| ---------------- | ------------------------------------- | ---------------------------------- |
-| **Flowise API**  | `flowise.staging.client.theanswer.ai` | `flowise.prod.client.theanswer.ai` |
-| **API Endpoint** | `api.staging.client.theanswer.ai`     | `api.prod.client.theanswer.ai`     |
-| **Web Frontend** | `web.staging.client.theanswer.ai`     | `web.prod.client.theanswer.ai`     |
-| **Main Domain**  | `staging.client.theanswer.ai`         | `prod.client.theanswer.ai`         |
-
-#### Standalone Strategy (Separate Accounts)
 
 | Service          | Staging                               | Production                    |
 | ---------------- | ------------------------------------- | ----------------------------- |
@@ -103,114 +107,70 @@ CLIENT_DOMAIN=client.theanswer.ai
 1. Install AWS Copilot CLI: `brew install copilot`
 2. Configure AWS credentials: `aws configure`
 3. Ensure you have appropriate AWS permissions
+4. Set your target `CLIENT_DOMAIN`
 
 ### Step-by-Step Deployment Guide
 
 #### Initial Setup (First Time Only)
 
-**1. Initialize Copilot Application:**
-
-```bash
-# Set your client domain
-export CLIENT_DOMAIN=client.theanswer.ai
-
-# Initialize the application
-copilot app init aai --domain client.theanswer.ai
-```
-
-#### Default Strategy (Same Account)
-
 **1. Set Environment Variables:**
 
 ```bash
+# For staging deployment
+export CLIENT_DOMAIN=staging.client.theanswer.ai
+
+# For production deployment
 export CLIENT_DOMAIN=client.theanswer.ai
 ```
 
-**2. Initialize Environment:**
+**2. Initialize Copilot Application:**
 
 ```bash
-copilot env init --name staging
-copilot env init --name prod
+# This will automatically configure the correct app name
+pnpm copilot app init --domain $CLIENT_DOMAIN
 ```
 
-**3. Deploy Environment Infrastructure:**
+**3. Initialize Environment:**
 
 ```bash
-copilot env deploy --name staging
-copilot env deploy --name prod
+# For staging environment
+pnpm copilot env init --name staging
+
+# For production environment
+pnpm copilot env init --name prod
 ```
 
-**4. Deploy Services:**
+**4. Deploy Environment Infrastructure:**
+
+```bash
+# For staging environment
+pnpm copilot env deploy --name staging
+
+# For production environment
+pnpm copilot env deploy --name prod
+```
+
+**5. Deploy Services:**
 
 ```bash
 # Deploy to staging
-copilot deploy --name flowise --env staging
+pnpm copilot deploy --name flowise --env staging
 
 # Deploy web service (requires AUTH0_BASE_URL for build)
 export AUTH0_BASE_URL=https://staging.client.theanswer.ai
-copilot deploy --name web --env staging
+pnpm copilot deploy --name web --env staging
 
 # Deploy to production
-copilot deploy --name flowise --env prod
+pnpm copilot deploy --name flowise --env prod
 
 # Deploy web service (requires AUTH0_BASE_URL for build)
 export AUTH0_BASE_URL=https://client.theanswer.ai
-copilot deploy --name web --env prod
+pnpm copilot deploy --name web --env prod
 ```
 
-#### Standalone Strategy (Separate Accounts)
+#### DNS Setup
 
-**1. Set Environment Variables:**
-
-```bash
-# For staging account
-export CLIENT_DOMAIN=staging.client.theanswer.ai
-
-# For production account
-export CLIENT_DOMAIN=client.theanswer.ai
-```
-
-**2. Initialize Environment:**
-
-```bash
-# In staging account
-copilot env init --name staging-standalone
-
-# In production account
-copilot env init --name prod-standalone
-```
-
-**3. Deploy Environment Infrastructure:**
-
-```bash
-# In staging account
-copilot env deploy --name staging-standalone
-
-# In production account
-copilot env deploy --name prod-standalone
-```
-
-**4. Deploy Services:**
-
-```bash
-# In staging account
-copilot deploy --name flowise --env staging-standalone
-
-# Deploy web service (requires AUTH0_BASE_URL for build)
-export AUTH0_BASE_URL=https://staging.client.theanswer.ai
-copilot deploy --name web --env staging-standalone
-
-# In production account
-copilot deploy --name flowise --env prod-standalone
-
-# Deploy web service (requires AUTH0_BASE_URL for build)
-export AUTH0_BASE_URL=https://client.theanswer.ai
-copilot deploy --name web --env prod-standalone
-```
-
-#### DNS Setup for Standalone Strategy
-
-**1. Create Hosted Zone in Staging Account:**
+**1. Create Hosted Zone:**
 
 ```bash
 aws route53 create-hosted-zone \
@@ -226,7 +186,7 @@ aws route53 get-hosted-zone --id <hosted-zone-id>
 
 **3. Update Parent Zone with NS Delegation:**
 
-````bash
+```bash
 aws route53 change-resource-record-sets \
   --hosted-zone-id <parent-zone-id> \
   --change-batch '{
@@ -245,28 +205,30 @@ aws route53 change-resource-record-sets \
       }
     }]
   }'
+```
 
 ### 🚀 Streamlined Deployment (After Initial Setup)
 
-Once your environments and services are deployed successfully, you can use the interactive `copilot deploy` command for faster deployments:
+Once your environments and services are deployed successfully, you can use the interactive deployment process:
 
 #### Quick Deployment Process
+
 ```bash
 # 1. Set the correct CLIENT_DOMAIN for your target environment
-export CLIENT_DOMAIN=staging.client.theanswer.ai  # For staging-standalone
+export CLIENT_DOMAIN=staging.client.theanswer.ai  # For staging
 # OR
-export CLIENT_DOMAIN=client.theanswer.ai          # For prod-standalone
+export CLIENT_DOMAIN=client.theanswer.ai          # For production
 
-# 2. Run interactive deployment
-copilot deploy
-````
+# 2. Run interactive deployment (precopilot runs automatically)
+pnpm copilot deploy
+```
 
 #### Interactive Deployment Steps
 
 1. **Select Services**: Use spacebar to select both `flowise` and `web` services, then press Enter
 2. **First Deployment Group**: Select `flowise` for the 1st deployment group, press Enter
 3. **Second Deployment Group**: Select `web` for the 2nd deployment group, press Enter
-4. **Select Environment**: Choose your target environment (e.g., `staging-standalone`, `prod`, etc.), press Enter
+4. **Select Environment**: Choose your target environment (e.g., `staging`, `prod`), press Enter
 5. **Confirm Deployment**: Review the deployment plan and confirm
 
 **Note**: This approach creates separate deployment groups for each service, allowing them to deploy simultaneously while maintaining proper separation and control over the deployment process.
@@ -295,17 +257,18 @@ You can also load environment variables from files:
 
 ```bash
 # Load staging environment variables
-source copilot.staging-standalone.env
-source copilot.staging-standalone.web.env
+source copilot.staging.env
+source copilot.staging.web.env
 
 # OR load production environment variables
-source copilot.prod-standalone.env
-source copilot.prod-standalone.web.env
+source copilot.prod.env
+source copilot.prod.web.env
 ```
 
 #### Deployment Tips
 
 -   **Always verify CLIENT_DOMAIN** matches your target environment
+-   **Context switching is automatic** - precopilot runs as a prehook when using pnpm copilot
 -   **Check AUTH0_BASE_URL** is set correctly for web service builds
 -   **Use interactive deployment** for faster service updates
 -   **Deploy to staging first** before production
@@ -330,10 +293,10 @@ export AUTH0_BASE_URL=https://client.theanswer.ai
 You can also set this in your environment files:
 
 ```bash
-# In copilot.staging.web.env or copilot.staging-standalone.web.env
+# In copilot.staging.web.env
 AUTH0_BASE_URL=https://staging.client.theanswer.ai
 
-# In copilot.prod.web.env or copilot.prod-standalone.web.env
+# In copilot.prod.web.env
 AUTH0_BASE_URL=https://client.theanswer.ai
 ```
 
@@ -347,16 +310,16 @@ Error: No valid baseURL found. Set either VERCEL_PREVIEW_URL, VERCEL_URL, or AUT
 
 ```bash
 # View service status
-copilot svc status --name flowise --env staging
+pnpm copilot svc status --name flowise --env staging
 
 # View service logs
-copilot svc logs --name flowise --env staging
+pnpm copilot svc logs --name flowise --env staging
 
 # Scale service
-copilot svc scale --name flowise --env staging --count 2
+pnpm copilot svc scale --name flowise --env staging --count 2
 
 # Delete service
-copilot svc delete --name flowise --env staging
+pnpm copilot svc delete --name flowise --env staging
 ```
 
 ## 💾 Infrastructure Components
@@ -392,14 +355,10 @@ copilot svc delete --name flowise --env staging
 
 ### Environment Files
 
--   `copilot.staging.env` - Default staging environment variables
--   `copilot.prod.env` - Default production environment variables
--   `copilot.staging-standalone.env` - Standalone staging environment variables
--   `copilot.prod-standalone.env` - Standalone production environment variables
+-   `copilot.staging.env` - Staging environment variables
+-   `copilot.prod.env` - Production environment variables
 -   `copilot.staging.web.env` - Web service staging variables
 -   `copilot.prod.web.env` - Web service production variables
--   `copilot.staging-standalone.web.env` - Web service standalone staging variables
--   `copilot.prod-standalone.web.env` - Web service standalone production variables
 
 ### Service Manifests
 
@@ -416,21 +375,17 @@ copilot svc delete --name flowise --env staging
 
 ### Flowise Service (Backend)
 
-| Environment            | CPU  | Memory  | Count | Purpose               |
-| ---------------------- | ---- | ------- | ----- | --------------------- |
-| **staging**            | 2048 | 4096 MB | 1     | Development & Testing |
-| **prod**               | 4096 | 8192 MB | 1     | Production Workloads  |
-| **staging-standalone** | 2048 | 4096 MB | 1     | Isolated Development  |
-| **prod-standalone**    | 4096 | 8192 MB | 1     | Isolated Production   |
+| Environment | CPU  | Memory  | Count | Purpose               |
+| ----------- | ---- | ------- | ----- | --------------------- |
+| **staging** | 2048 | 4096 MB | 1     | Development & Testing |
+| **prod**    | 4096 | 8192 MB | 1     | Production Workloads  |
 
 ### Web Service (Frontend)
 
-| Environment            | CPU  | Memory  | Count | Purpose               |
-| ---------------------- | ---- | ------- | ----- | --------------------- |
-| **staging**            | 1024 | 2048 MB | 1     | Development & Testing |
-| **prod**               | 2048 | 4096 MB | 1     | Production Workloads  |
-| **staging-standalone** | 1024 | 2048 MB | 1     | Isolated Development  |
-| **prod-standalone**    | 2048 | 4096 MB | 1     | Isolated Production   |
+| Environment | CPU  | Memory  | Count | Purpose               |
+| ----------- | ---- | ------- | ----- | --------------------- |
+| **staging** | 1024 | 2048 MB | 1     | Development & Testing |
+| **prod**    | 2048 | 4096 MB | 1     | Production Workloads  |
 
 ## 🔍 Monitoring & Observability
 
@@ -465,8 +420,8 @@ copilot svc delete --name flowise --env staging
 
 ```bash
 # Promote from staging to production
-copilot svc deploy --name flowise --env prod --source staging
-copilot svc deploy --name web --env prod --source staging
+pnpm copilot svc deploy --name flowise --env prod --source staging
+pnpm copilot svc deploy --name web --env prod --source staging
 ```
 
 ## 🔒 Security Considerations
@@ -487,7 +442,7 @@ copilot svc deploy --name web --env prod --source staging
 
 -   IAM roles with least-privilege access
 -   Service-specific security policies
--   Environment isolation through separate accounts (standalone strategy)
+-   Environment isolation through separate Copilot applications
 
 ## 🚨 Troubleshooting
 
@@ -497,13 +452,13 @@ copilot svc deploy --name web --env prod --source staging
 
 ```bash
 # Check service logs
-copilot svc logs --name flowise --env staging
+pnpm copilot svc logs --name flowise --env staging
 
 # Check service status
-copilot svc status --name flowise --env staging
+pnpm copilot svc status --name flowise --env staging
 
 # Check environment variables
-copilot svc show --name flowise --env staging
+pnpm copilot svc show --name flowise --env staging
 ```
 
 #### Database Connection Issues
@@ -526,20 +481,31 @@ nslookup flowise.staging.client.theanswer.ai
 aws acm list-certificates
 ```
 
+#### Context Switching Issues
+
+```bash
+# Check current application context
+cat copilot/.workspace
+
+# Manually set application context (if needed)
+export CLIENT_DOMAIN=your-domain.theanswer.ai
+bash copilot/copilot-switch-app.sh
+```
+
 ### Useful Commands
 
 ```bash
 # List all environments
-copilot env ls
+pnpm copilot env ls
 
 # List all services
-copilot svc ls
+pnpm copilot svc ls
 
 # Show environment details
-copilot env show --name staging
+pnpm copilot env show --name staging
 
 # Show service details
-copilot svc show --name flowise --env staging
+pnpm copilot svc show --name flowise --env staging
 ```
 
 ## 🔍 Getting Database and Redis Information
@@ -547,7 +513,7 @@ copilot svc show --name flowise --env staging
 ### Quick One-Liner (Copy-Paste)
 
 ```bash
-echo "🔍 Select Environment:" && echo "1) staging" && echo "2) prod" && echo "3) staging-standalone" && echo "4) prod-standalone" && echo "" && echo -n "Enter choice (1-4): " && read choice && case $choice in 1) ENV=staging ;; 2) ENV=prod ;; 3) ENV=staging-standalone ;; 4) ENV=prod-standalone ;; *) echo "Invalid choice" && exit 1 ;; esac && STACK=$(aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE --query "StackSummaries[?contains(StackName, 'aai-$ENV-AddonsStack')].StackName" --output text) && echo "🔍 Environment: $ENV" && echo "📋 Stack: $STACK" && echo "" && echo "🗄️  Database:" && DB_SECRET=$(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`flowiseclusterSecret`].OutputValue' --output text) && DB_CREDS=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET" --query 'SecretString' --output text) && echo "   Host: $(echo "$DB_CREDS" | jq -r '.host')" && echo "   Port: $(echo "$DB_CREDS" | jq -r '.port')" && echo "   Database: $(echo "$DB_CREDS" | jq -r '.dbname')" && echo "   Username: $(echo "$DB_CREDS" | jq -r '.username')" && echo "   Password: $(echo "$DB_CREDS" | jq -r '.password')" && echo "" && echo "🔴 Redis:" && echo "   Endpoint: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisEndpoint`].OutputValue' --output text)" && echo "   Port: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisPort`].OutputValue' --output text)" && echo "   URL: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisURL`].OutputValue' --output text)"
+echo "🔍 Select Environment:" && echo "1) staging" && echo "2) prod" && echo "" && echo -n "Enter choice (1-2): " && read choice && case $choice in 1) ENV=staging ;; 2) ENV=prod ;; *) echo "Invalid choice" && exit 1 ;; esac && STACK=$(aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE --query "StackSummaries[?contains(StackName, 'aai-$ENV-AddonsStack')].StackName" --output text) && echo "🔍 Environment: $ENV" && echo "📋 Stack: $STACK" && echo "" && echo "🗄️  Database:" && DB_SECRET=$(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`flowiseclusterSecret`].OutputValue' --output text) && DB_CREDS=$(aws secretsmanager get-secret-value --secret-id "$DB_SECRET" --query 'SecretString' --output text) && echo "   Host: $(echo "$DB_CREDS" | jq -r '.host')" && echo "   Port: $(echo "$DB_CREDS" | jq -r '.port')" && echo "   Database: $(echo "$DB_CREDS" | jq -r '.dbname')" && echo "   Username: $(echo "$DB_CREDS" | jq -r '.username')" && echo "   Password: $(echo "$DB_CREDS" | jq -r '.password')" && echo "" && echo "🔴 Redis:" && echo "   Endpoint: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisEndpoint`].OutputValue' --output text)" && echo "   Port: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisPort`].OutputValue' --output text)" && echo "   URL: $(aws cloudformation describe-stacks --stack-name "$STACK" --query 'Stacks[0].Outputs[?OutputKey==`RedisURL`].OutputValue' --output text)"
 ```
 
 ## 📚 Additional Resources
@@ -566,8 +532,18 @@ When making changes to the Copilot configuration:
 3. **Follow naming conventions** - Use consistent naming across environments
 4. **Review resource allocation** - Ensure appropriate sizing for each environment
 5. **Validate security** - Ensure security groups and policies are correct
+6. **Test domain switching** - Verify the automatic prehook works correctly
 
 ## 📝 Changelog
+
+### Version 2.0.0
+
+-   Simplified to standalone deployment strategy only
+-   Removed "-standalone" suffix from environment names
+-   Added comprehensive domain switching documentation
+-   Integrated pnpm script workflow
+-   Streamlined deployment process
+-   Clarified that separate applications run in the same AWS account
 
 ### Version 1.0.0
 

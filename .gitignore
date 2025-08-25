@@ -112,13 +112,12 @@ daisy
 .sst
 
 # Explicitly ignore all manifest files in the environments directory
+copilot/.workspace
 copilot/environments/**/manifest.yml
 # Manifests to include in the repo:
 !copilot/environments/addons/flowise-cluster.yml
 !copilot/environments/staging/manifest.yml
 !copilot/environments/prod/manifest.yml
-!copilot/environments/staging-standalone/manifest.yml
-!copilot/environments/prod-standalone/manifest.yml
 
 ## AnswerAI
 

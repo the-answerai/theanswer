@@ -16,19 +16,11 @@ Parameters:
 
 Mappings:
     RedisEnvConfigurationMap:
-        # Default environments (same account)
+        # Default environments
         staging:
             'NodeType': 'cache.t3.micro'
             'NumCacheNodes': 1
         prod:
-            'NodeType': 'cache.r6g.large'
-            'NumCacheNodes': 1
-
-        # Standalone environments (separate accounts)
-        staging-standalone:
-            'NodeType': 'cache.t3.micro'
-            'NumCacheNodes': 1
-        prod-standalone:
             'NodeType': 'cache.r6g.large'
             'NumCacheNodes': 1
 

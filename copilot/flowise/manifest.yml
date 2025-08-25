@@ -66,28 +66,8 @@ deployment:
 
 # Environment-specific overrides
 environments:
-    # Default: Same account deployment (staging and prod share account)
+    # Separate account deployments (independent accounts)
     staging:
-        cpu: 2048 # Number of CPU units for the task.
-        memory: 4096 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
-        http:
-            alias:
-                # Service aliases for same account strategy
-                - flowise.staging.${CLIENT_DOMAIN}
-                - api.staging.${CLIENT_DOMAIN}
-    prod:
-        cpu: 4096 # Number of CPU units for the task.
-        memory: 8192 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
-        http:
-            alias:
-                # Service aliases for same account strategy
-                - flowise.prod.${CLIENT_DOMAIN}
-                - api.prod.${CLIENT_DOMAIN}
-
-    # Standalone: Separate account deployment (independent accounts)
-    staging-standalone:
         cpu: 2048 # Number of CPU units for the task.
         memory: 4096 # Amount of memory in MB used by the task.
         count: 1 # Number of tasks that should be running in your service.
@@ -96,7 +76,7 @@ environments:
                 # Service aliases for standalone account strategy
                 - flowise.${CLIENT_DOMAIN}
                 - api.${CLIENT_DOMAIN}
-    prod-standalone:
+    prod:
         cpu: 4096 # Number of CPU units for the task.
         memory: 8192 # Amount of memory in MB used by the task.
         count: 1 # Number of tasks that should be running in your service.
