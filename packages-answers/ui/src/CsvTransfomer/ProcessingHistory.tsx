@@ -75,16 +75,14 @@ const ProcessingHistory = ({ user }: { user: User }) => {
     }
 
     useEffect(() => {
-        getData().catch(error => {
+        getData().catch((error) => {
             console.error('Error in initial data fetch:', error)
             // Handle error gracefully without rethrowing
         })
     }, [getData])
 
     useEffect(() => {
-        const hasInProgress = csvParseRuns.some(
-            (r) => r.status !== 'READY' && r.status !== 'COMPLETE_WITH_ERRORS'
-        )
+        const hasInProgress = csvParseRuns.some((r) => r.status !== 'READY' && r.status !== 'COMPLETE_WITH_ERRORS')
         const onVis = () => {
             if (!document.hidden && hasInProgress) {
                 getData()
@@ -209,6 +207,11 @@ const ProcessingHistory = ({ user }: { user: User }) => {
                 const rowsRequested = params.row.rowsRequested
                 const rowsProcessed = params.row.rowsProcessed
                 const totalRows = params.row.configuration?.rowsCount
+
+                if (rowsRequested === totalRows) {
+                    return `${rowsProcessed ?? 0} of ${totalRows ?? 0}`
+                }
+
                 return `${rowsProcessed ?? 0}/${rowsRequested ?? 0} of ${totalRows ?? 0}`
             }
         },
@@ -250,14 +253,14 @@ const ProcessingHistory = ({ user }: { user: User }) => {
     return (
         <div style={{ width: '100%' }}>
             {/* Header with refresh button */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 2 }}>
                 <div />
                 <Button
-                    variant="outlined"
+                    variant='outlined'
                     startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
                     onClick={handleRefresh}
                     disabled={loading}
-                    sx={{ 
+                    sx={{
                         fontWeight: 500,
                         textTransform: 'none'
                     }}
@@ -265,7 +268,7 @@ const ProcessingHistory = ({ user }: { user: User }) => {
                     {loading ? 'Refreshing…' : 'Refresh'}
                 </Button>
             </Stack>
-            
+
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid
                     rows={csvParseRuns}
