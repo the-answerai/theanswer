@@ -8,6 +8,8 @@ for bin in aws jq pnpm; do
   }
 done
 
+lower() { printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]'; }
+
 # --- choose environment ---
 echo "🔍 Select Environment:"
 echo "1) staging"
@@ -22,7 +24,7 @@ esac
 
 # --- client key / subdomain ---
 read -r -p "Client key/subdomain (e.g., acme): " SUBDOMAIN
-SUBDOMAIN="$(echo "${SUBDOMAIN:-}" | tr '[:upper:]' '[:lower:]')"
+SUBDOMAIN="$(lower "$SUBDOMAIN")"
 if [[ -z "$SUBDOMAIN" || ! "$SUBDOMAIN" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
   echo "Invalid subdomain. Use letters, numbers, and hyphens (no leading/trailing hyphen)."
   exit 1
@@ -50,7 +52,7 @@ echo "   AUTH0_BASE_URL  = $AUTH0_BASE_URL"
 echo ""
 echo "🚀 Bootstrapping Copilot env '$ENV'..."
 pnpm copilot env init --name "$ENV" || true
-pnpm copilot env deploy --name "$ENV"
+pnpm copilot env deploy --name "$ENV" || true   # allow 'no changes' without failing
 
 # --- service selection ---
 echo ""
@@ -81,12 +83,13 @@ if $needs_flowise; then
   echo "🗄️  Do you need DB/Redis connection details for updating Copilot env files before deploying flowise?"
   # Auto-skip after 30s with default 'No'
   if read -t 30 -r -p "Show DB/Redis info? (y/N) [auto-skip in 30s]: " need_db; then
-    case "${need_db,,}" in
+    need_db_lc="$(lower "$need_db")"
+    case "$need_db_lc" in
       y|yes) SHOW_DB=true ;;
       *) SHOW_DB=false ;;
     esac
   else
-    echo -e "\n⏭️  No input after 30s — skipping DB/Redis info."
+    printf '\n⏭️  No input after 30s — skipping DB/Redis info.\n'
   fi
 
   if $SHOW_DB; then
@@ -148,7 +151,8 @@ if $needs_flowise; then
     echo "     AUTH0_BASE_URL=$AUTH0_BASE_URL"
     echo "     # plus any DB/Redis values shown above as needed"
     read -r -p "Type 'done' to continue (or Ctrl+C to abort): " confirmed
-    if [[ "${confirmed,,}" != "done" ]]; then
+    confirmed_lc="$(lower "$confirmed")"
+    if [[ "$confirmed_lc" != "done" ]]; then
       echo "Aborted."; exit 1
     fi
   fi
