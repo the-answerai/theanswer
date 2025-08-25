@@ -58,9 +58,9 @@
         "seed-credentials:write": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --auto-detect\"",
         "submodule:init": "git submodule update --init --recursive --force",
         "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive",
-        "precopilot": "BWS_SUPPRESS_ALL=true pnpm secure-run sh copilot/copilot-switch-app.sh && sleep 1",
+        "precopilot": "BWS_SUPPRESS_ALL=true pnpm secure-run sh copilot/scripts/copilot-switch-app.sh && sleep 1",
         "copilot": "BWS_SUPPRESS_ALL=true pnpm secure-run copilot",
-        "copilot:auto": "bash ./copilot/copilot-auto-deploy.sh"
+        "copilot:auto": "bash ./copilot/scripts/copilot-auto-deploy.sh"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --fix"

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Usage:
-#   CLIENT_DOMAIN=abc.theanswer.ai bash copilot/copilot-switch-app.sh
-#   CLIENT_DOMAIN=staging.abc.theanswer.ai bash copilot/copilot-switch-app.sh
-#   or: bash copilot/copilot-switch-app.sh abc.theanswer.ai
+#   CLIENT_DOMAIN=abc.theanswer.ai bash copilot/scripts/copilot-switch-app.sh
+#   CLIENT_DOMAIN=staging.abc.theanswer.ai bash copilot/scripts/copilot-switch-app.sh
+#   or: bash copilot/scripts/copilot-switch-app.sh abc.theanswer.ai
 
 ARG_DOMAIN="${1:-}"
 RESOLVED_DOMAIN="${ARG_DOMAIN:-${CLIENT_DOMAIN:-}}"
@@ -37,9 +37,25 @@ fi
 if [[ "${RESOLVED_DOMAIN}" == "aai" || "${RESOLVED_DOMAIN}" == "aai.theanswer.ai" ]]; then
   APP_NAME="aai"
 else
-  # Strip .theanswer.ai suffix, replace periods with hyphens, and add -aai suffix
+  # Strip .theanswer.ai suffix, replace periods with hyphens
   # This preserves all parts of the domain including staging prefixes
-  APP_NAME=$(echo "${RESOLVED_DOMAIN}" | sed 's/\.theanswer\.ai$//' | sed 's/\./-/g')-aai
+  # Also ensure the app name doesn't start with a dash
+  PROCESSED_DOMAIN=$(echo "${RESOLVED_DOMAIN}" | sed 's/\.theanswer\.ai$//' | sed 's/\./-/g')
+  
+  # Remove leading dashes if any
+  PROCESSED_DOMAIN=$(echo "${PROCESSED_DOMAIN}" | sed 's/^-*//')
+  
+  # If the processed domain is empty after removing dashes, use "aai"
+  if [[ -z "${PROCESSED_DOMAIN}" ]]; then
+    APP_NAME="aai"
+  else
+    # Check if the processed domain already ends with -aai to avoid duplication
+    if [[ "${PROCESSED_DOMAIN}" == *"-aai" ]]; then
+      APP_NAME="${PROCESSED_DOMAIN}"
+    else
+      APP_NAME="${PROCESSED_DOMAIN}-aai"
+    fi
+  fi
 fi
 
 TARGET_DIR="copilot"

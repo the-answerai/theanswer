@@ -39,7 +39,7 @@ pnpm run copilot deploy
 
 ### How Domain Switching Works
 
-1. **`precopilot` prehook**: Automatically runs `copilot/copilot-switch-app.sh` to configure the correct Copilot application context
+1. **`precopilot` prehook**: Automatically runs `copilot/scripts/copilot-switch-app.sh` to configure the correct Copilot application context
 2. **`copilot` script**: Executes the actual copilot commands with the configured context
 3. **Automatic naming**: The script automatically generates the correct application name based on your domain
 
@@ -58,23 +58,25 @@ pnpm run copilot deploy
 copilot/
 ├── README.md                           # This file
 ├── .workspace                          # Copilot workspace configuration (auto-generated)
-├── copilot-switch-app.sh               # Domain switching script
-├── environments/                       # Environment configurations
-│   ├── staging/                        # Staging environment
-│   ├── prod/                          # Production environment
+├── scripts/                           # Copilot scripts
+│   ├── copilot-switch-app.sh               # Domain switching script
+│   └── copilot-auto-deploy.sh              # Auto deployment script
+├── environments/                      # Environment configurations
+│   ├── staging/                            # Staging environment
+│   ├── prod/                               # Production environment
 │   └── addons/                        # Shared infrastructure addons
-│       ├── redis-elasticache.yml      # Redis caching layer
-│       ├── flowise-cluster.yml        # Aurora PostgreSQL database
-│       ├── theanswerai-server-storage.yml # S3 storage bucket
-│       └── addons.parameters.yml      # Addon parameters
+│       ├── redis-elasticache.yml           # Redis caching layer
+│       ├── flowise-cluster.yml             # Aurora PostgreSQL database
+│       ├── theanswerai-server-storage.yml  # S3 storage bucket
+│       └── addons.parameters.yml           # Addon parameters
 ├── flowise/                           # Backend service configuration
-│   ├── manifest.yml                   # Service manifest
-│   └── addons/                        # Service-specific addons
+│   ├── manifest.yml                        # Service manifest
+│   └── addons/                             # Service-specific addons
 │       └── theanswerai-server-storage-access-policy.yml
 └── web/                               # Frontend service configuration
-    ├── manifest.yml                   # Service manifest
-    └── addons/                        # Service-specific addons
-        └── frontend-access-policy.yml
+    ├── manifest.yml                        # Service manifest
+    └── addons/                             # Service-specific addons
+        └── frontend-access-policy.yml      # Frontend
 ```
 
 ## 🌐 Domain Configuration
@@ -489,7 +491,7 @@ cat copilot/.workspace
 
 # Manually set application context (if needed)
 export CLIENT_DOMAIN=your-domain.theanswer.ai
-bash copilot/copilot-switch-app.sh
+bash copilot/scripts/copilot-switch-app.sh
 ```
 
 ### Useful Commands
