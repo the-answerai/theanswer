@@ -432,6 +432,29 @@ replace_in_file() {
     fi
 }
 
+# Helper function to generate AUTH0 derived variables from domain
+generate_auth0_derived_vars() {
+    local domain="$1"
+    local file="$2"
+    
+    if [[ -n "$domain" ]]; then
+        # Generate AUTH0_ISSUER_BASE_URL
+        local issuer_url="https://${domain}"
+        replace_in_file "$file" "AUTH0_ISSUER_BASE_URL" "$issuer_url"
+        eval "GLOBAL_AUTH0_ISSUER_BASE_URL=\"$issuer_url\""
+        
+        # Generate AUTH0_JWKS_URI
+        local jwks_uri="https://${domain}/.well-known/jwks.json"
+        replace_in_file "$file" "AUTH0_JWKS_URI" "$jwks_uri"
+        eval "GLOBAL_AUTH0_JWKS_URI=\"$jwks_uri\""
+        
+        echo "✅ Auto-generated from domain:"
+        echo "   • AUTH0_ISSUER_BASE_URL = $issuer_url"
+        echo "   • AUTH0_JWKS_URI = $jwks_uri"
+        echo ""
+    fi
+}
+
 # Helper function to prompt and set variable globally + in file
 prompt_and_set() {
     local var_name="$1"
@@ -500,9 +523,14 @@ collect_and_create_flowise_file() {
     echo ""
     
     # Required AUTH0 variables - store globally for web file
-    prompt_and_set "AUTH0_ISSUER_BASE_URL" "Auth0 Issuer Base URL (e.g., https://your-domain.us.auth0.com)" true
+    # Start with domain first to auto-generate derived URLs
+    prompt_and_set "AUTH0_DOMAIN" "Auth0 Domain (e.g., example-ai.us.auth0.com)" true
+    
+    # Auto-generate AUTH0_ISSUER_BASE_URL and AUTH0_JWKS_URI from domain
+    generate_auth0_derived_vars "$GLOBAL_AUTH0_DOMAIN" "$FLOWISE_ENV_FILE"
+    
+    # Continue with remaining AUTH0 variables
     prompt_and_set "AUTH0_BASE_URL" "Auth0 Base URL (should match your deployment domain)" true  
-    prompt_and_set "AUTH0_DOMAIN" "Auth0 Domain (e.g., your-domain.us.auth0.com)" true
     prompt_and_set "AUTH0_AUDIENCE" "Auth0 API Audience (e.g., https://theanswer.ai)" true
     prompt_and_set "AUTH0_ORGANIZATION_ID" "Auth0 Organization ID" true
     prompt_and_set "AUTH0_CLIENT_ID" "Auth0 Client ID" true
@@ -546,14 +574,27 @@ collect_and_create_web_file() {
     if [[ -n "${GLOBAL_AUTH0_ISSUER_BASE_URL:-}" ]]; then
         echo "ℹ️  Using AUTH0 values from Flowise configuration..."
         replace_in_file "$WEB_ENV_FILE" "AUTH0_ISSUER_BASE_URL" "$GLOBAL_AUTH0_ISSUER_BASE_URL"
+        replace_in_file "$WEB_ENV_FILE" "AUTH0_JWKS_URI" "$GLOBAL_AUTH0_JWKS_URI"
         replace_in_file "$WEB_ENV_FILE" "AUTH0_BASE_URL" "$GLOBAL_AUTH0_BASE_URL"
         replace_in_file "$WEB_ENV_FILE" "AUTH0_DOMAIN" "$GLOBAL_AUTH0_DOMAIN"
         replace_in_file "$WEB_ENV_FILE" "AUTH0_AUDIENCE" "$GLOBAL_AUTH0_AUDIENCE"
         replace_in_file "$WEB_ENV_FILE" "AUTH0_ORGANIZATION_ID" "$GLOBAL_AUTH0_ORGANIZATION_ID"
     else
-        prompt_and_set_web "AUTH0_ISSUER_BASE_URL" "Auth0 Issuer Base URL" true
+        # If no flowise config available, prompt for domain first and auto-generate derived URLs
+        while true; do
+            read -p "📝 Auth0 Domain (e.g., example-ai.us.auth0.com): " auth0_domain_value
+            if [[ -n "$auth0_domain_value" ]]; then
+                replace_in_file "$WEB_ENV_FILE" "AUTH0_DOMAIN" "$auth0_domain_value"
+                eval "GLOBAL_AUTH0_DOMAIN=\"$auth0_domain_value\""
+                # Auto-generate derived variables for web file
+                generate_auth0_derived_vars "$auth0_domain_value" "$WEB_ENV_FILE"
+                break
+            else
+                echo "⚠️  This field is required. Please enter a value."
+            fi
+        done
+        
         prompt_and_set_web "AUTH0_BASE_URL" "Auth0 Base URL" true
-        prompt_and_set_web "AUTH0_DOMAIN" "Auth0 Domain" true  
         prompt_and_set_web "AUTH0_AUDIENCE" "Auth0 API Audience (e.g., https://theanswer.ai)" true
         prompt_and_set_web "AUTH0_ORGANIZATION_ID" "Auth0 Organization ID" true
     fi
