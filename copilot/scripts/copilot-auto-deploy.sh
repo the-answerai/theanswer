@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Trap signals for clean exit
+cleanup() {
+  echo ""
+  echo "🛑 Interrupted! Cleaning up..."
+  exit 130
+}
+trap cleanup SIGINT SIGTERM
+
 # --- prerequisites ---
-for bin in aws jq pnpm; do
+for bin in aws jq copilot; do
   command -v "$bin" >/dev/null 2>&1 || {
     echo "Required command '$bin' not found on PATH."; exit 1;
   }
@@ -48,11 +56,41 @@ echo "   ENV             = $ENV"
 echo "   CLIENT_DOMAIN   = $CLIENT_DOMAIN"
 echo "   AUTH0_BASE_URL  = $AUTH0_BASE_URL"
 
+# --- check and setup environment files ---
+echo ""
+echo "🔍 Checking environment files..."
+# First switch to the correct app context
+export CLIENT_DOMAIN
+export AUTH0_BASE_URL
+bash ./copilot/scripts/copilot-switch-app.sh
+
+# Then check/create environment files for this app
+# Pass the environment explicitly since we know it
+# Read the app name from the workspace file created by switch script
+if [[ -f "copilot/.workspace" ]]; then
+  APP_NAME="$(cat copilot/.workspace | grep 'application:' | cut -d':' -f2 | xargs)"
+fi
+
+# Check if app exists in the copilot app list first
+if copilot app ls 2>/dev/null | grep -q "^${APP_NAME}$"; then
+  # App exists - normal interactive flow
+  if ! bash ./copilot/scripts/copilot-check-env-files.sh "$ENV"; then
+    echo "❌ Environment file setup failed or was cancelled"
+    exit 1
+  fi
+else
+  # App doesn't exist - auto-select template creation, then prompt for guided vs empty
+  if ! bash ./copilot/scripts/copilot-check-env-files.sh "$ENV" --auto-templates; then
+    echo "❌ Environment file setup failed or was cancelled"
+    exit 1
+  fi
+fi
+
 # --- check if copilot app exists ---
 echo ""
 echo "🔍 Checking Copilot app status..."
 APP_EXISTS=false
-if pnpm copilot app show >/dev/null 2>&1; then
+if copilot app show >/dev/null 2>&1; then
   APP_EXISTS=true
   echo "✅ Copilot app exists"
 else
@@ -61,7 +99,7 @@ else
   create_app_lc="$(lower "$create_app")"
   if [[ "$create_app_lc" == "y" || "$create_app_lc" == "yes" ]]; then
     echo "🚀 Initializing Copilot app..."
-    pnpm copilot app init --domain "$CLIENT_DOMAIN"
+    copilot app init --domain "$CLIENT_DOMAIN"
     APP_EXISTS=true
   else
     echo "Aborted: Cannot proceed without Copilot app"
@@ -73,7 +111,7 @@ fi
 echo ""
 echo "🔍 Checking environment '$ENV' status..."
 ENV_EXISTS=false
-if pnpm copilot env show --name "$ENV" >/dev/null 2>&1; then
+if copilot env show --name "$ENV" >/dev/null 2>&1; then
   ENV_EXISTS=true
   echo "✅ Environment '$ENV' exists"
 else
@@ -90,12 +128,12 @@ fi
 if [[ "$ENV_EXISTS" == "true" ]]; then
   echo ""
   echo "🔄 Deploying existing environment '$ENV'..."
-  pnpm copilot env deploy --name "$ENV" || true   # allow 'no changes' without failing
+  copilot env deploy --name "$ENV" || true   # allow 'no changes' without failing
 else
   echo ""
   echo "🚀 Creating and bootstrapping environment '$ENV'..."
-  pnpm copilot env init --name "$ENV"
-  pnpm copilot env deploy --name "$ENV"
+  copilot env init --name "$ENV"
+  copilot env deploy --name "$ENV"
 fi
 
 # --- service selection (defaults to BOTH after 15s or on blank) ---
@@ -217,8 +255,8 @@ esac
 echo ""
 echo "🚀 Deploying to '$ENV'..."
 for svc in "${SERVICES[@]}"; do
-  echo "→ pnpm copilot deploy --name $svc --env $ENV"
-  pnpm copilot deploy --name "$svc" --env "$ENV"
+  echo "→ copilot deploy --name $svc --env $ENV"
+  copilot deploy --name "$svc" --env "$ENV"
 done
 
 echo ""
