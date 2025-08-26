@@ -22,13 +22,13 @@ let gcsServerReqStream: any
 if (process.env.STORAGE_TYPE === 's3') {
     const accessKeyId = process.env.S3_STORAGE_ACCESS_KEY_ID
     const secretAccessKey = process.env.S3_STORAGE_SECRET_ACCESS_KEY
-    const region = process.env.S3_STORAGE_REGION
+    const region = process.env.S3_STORAGE_REGION || 'us-east-1'
     const s3Bucket = process.env.S3_STORAGE_BUCKET_NAME
     const customURL = process.env.S3_ENDPOINT_URL
     const forcePathStyle = process.env.S3_FORCE_PATH_STYLE === 'true'
 
-    if (!region || !s3Bucket) {
-        throw new Error('S3 storage configuration is missing')
+    if (!s3Bucket) {
+        throw new Error('S3 storage bucket configuration is missing')
     }
 
     const s3Config: S3ClientConfig = {
