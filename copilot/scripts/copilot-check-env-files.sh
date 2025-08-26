@@ -6,6 +6,17 @@ set -euo pipefail
 # Usage: ./check-env-files.sh [application_name]
 
 # ==================================================
+# COLOR DEFINITIONS
+# ==================================================
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+CYAN='\033[36m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+# ==================================================
 # HELPER FUNCTIONS
 # ==================================================
 
@@ -79,8 +90,6 @@ get_pipeline_artifact_bucket() {
     local app_name="$1"
     local env_name="$2"
     
-    echo "🔍 Looking for Copilot pipeline artifact bucket..." >&2
-    
     # Extract client identifier from app name (e.g., staging-abc123-aai -> abc123)
     local client_id
     if [[ "$app_name" =~ ^${env_name}-(.+)-aai$ ]]; then
@@ -95,14 +104,11 @@ get_pipeline_artifact_bucket() {
     # Search pattern: stackset-{env}-{client}-{suffix}-pipelinebuiltartifactbuc-{hash}
     local search_pattern="stackset-${env_name}-${client_id}"
     
-    echo "🔍 Searching for buckets matching: ${search_pattern}*pipelinebuiltartifactbuc*" >&2
-    
     # List all buckets and find the matching pipeline artifact bucket
     local bucket_name
     bucket_name=$(aws s3 ls | grep -E "${search_pattern}.*pipelinebuiltartifactbuc" | awk '{print $3}' | head -1)
     
     if [[ -n "$bucket_name" ]]; then
-        echo "✅ Found pipeline artifact bucket: $bucket_name" >&2
         echo "$bucket_name"  # Only the bucket name goes to stdout
         return 0
     else
@@ -120,7 +126,7 @@ find_latest_copilot_env_file() {
     # Copilot stores files as: manual/env-files/copilot.{env}.{type}/{hash}.env
     local prefix="manual/env-files/copilot.${env_name}.${file_type}/"
     
-    echo "🔍 Searching for latest file in: ${prefix}" >&2
+    # Search for latest file (silent)
     
     # List objects and find the latest based on last modified date
     local latest_file
@@ -131,11 +137,9 @@ find_latest_copilot_env_file() {
         --output text 2>/dev/null)
     
     if [[ -n "$latest_file" && "$latest_file" != "None" ]]; then
-        echo "✅ Found latest file: $latest_file" >&2
         echo "$latest_file"  # Only the filename goes to stdout
         return 0
     else
-        echo "⚠️  No files found in: $prefix" >&2
         return 1
     fi
 }
@@ -160,7 +164,7 @@ detect_environment_from_app() {
 
 # Function to download existing environment files from S3 (intelligent version)
 download_from_s3() {
-    echo "🔄 Downloading existing environment files from S3..."
+    echo -e "${BOLD}${BLUE}🔄 Downloading environment files from S3...${RESET}"
     echo ""
     
     # Check if AWS CLI is available
@@ -185,8 +189,7 @@ download_from_s3() {
         exit 1
     fi
     
-    echo "🎯 Detected environment: $detected_env"
-    echo "📋 Application: $APP_NAME"
+    echo -e "${CYAN}🎯 Environment: ${BOLD}$detected_env${RESET}"
     echo ""
     
     # Get Copilot pipeline artifact bucket
@@ -197,8 +200,7 @@ download_from_s3() {
         exit 1
     fi
     
-    echo ""
-    echo "📥 Downloading environment files from bucket: $bucket_name"
+    echo -e "${BLUE}📥 Using bucket: ${bucket_name}${RESET}"
     echo ""
     
     # Track download results
@@ -207,72 +209,65 @@ download_from_s3() {
     local files_failed=()
     
     # Try to download flowise env file
-    echo "🔍 Looking for Flowise environment file..."
+    echo -e "${BLUE}🔍 Flowise environment file...${RESET}"
     local latest_flowise_file
     
     if latest_flowise_file=$(find_latest_copilot_env_file "$bucket_name" "$detected_env" "env"); then
-        echo "📥 Downloading: s3://$bucket_name/$latest_flowise_file"
         if aws s3 cp "s3://$bucket_name/$latest_flowise_file" "$FLOWISE_ENV_FILE" 2>/dev/null; then
-            echo "✅ Downloaded $FLOWISE_ENV_FILE"
+            echo -e "${GREEN}✅ Downloaded $FLOWISE_ENV_FILE${RESET}"
             files_downloaded+=("$FLOWISE_ENV_FILE")
             ((download_success++))
         else
-            echo "❌ Failed to download $FLOWISE_ENV_FILE"
+            echo -e "${RED}❌ Failed to download $FLOWISE_ENV_FILE${RESET}"
             files_failed+=("$FLOWISE_ENV_FILE")
         fi
     else
-        echo "⚠️  No Flowise environment files found in S3"
+        echo -e "${YELLOW}⚠️  No Flowise files found${RESET}"
         files_failed+=("$FLOWISE_ENV_FILE (not found)")
     fi
     
     echo ""
     
     # Try to download web env file
-    echo "🔍 Looking for Web environment file..."
+    echo -e "${BLUE}🔍 Web environment file...${RESET}"
     local latest_web_file
     
     if latest_web_file=$(find_latest_copilot_env_file "$bucket_name" "$detected_env" "web.env"); then
-        echo "📥 Downloading: s3://$bucket_name/$latest_web_file"
         if aws s3 cp "s3://$bucket_name/$latest_web_file" "$WEB_ENV_FILE" 2>/dev/null; then
-            echo "✅ Downloaded $WEB_ENV_FILE"
+            echo -e "${GREEN}✅ Downloaded $WEB_ENV_FILE${RESET}"
             files_downloaded+=("$WEB_ENV_FILE")
             ((download_success++))
         else
-            echo "❌ Failed to download $WEB_ENV_FILE"
+            echo -e "${RED}❌ Failed to download $WEB_ENV_FILE${RESET}"
             files_failed+=("$WEB_ENV_FILE")
         fi
     else
-        echo "⚠️  No Web environment files found in S3"
+        echo -e "${YELLOW}⚠️  No Web files found${RESET}"
         files_failed+=("$WEB_ENV_FILE (not found)")
     fi
     
     echo ""
-    echo "📊 Download Summary:"
-    echo "==================="
-    
-    if [[ ${#files_downloaded[@]} -gt 0 ]]; then
-        echo "✅ Successfully downloaded (${#files_downloaded[@]}):"
-        for file in "${files_downloaded[@]}"; do
-            echo "   - $file"
-        done
-    fi
-    
-    if [[ ${#files_failed[@]} -gt 0 ]]; then
-        echo "❌ Failed to download (${#files_failed[@]}):"
-        for file in "${files_failed[@]}"; do
-            echo "   - $file"
-        done
-    fi
-    
-    echo ""
+    echo -e "${BOLD}📊 Summary:${RESET}"
     
     if [[ $download_success -gt 0 ]]; then
-        echo "🎯 S3 download completed. Please verify the downloaded files."
-        echo "💡 Tip: Check file contents to ensure they have the correct configuration."
+        echo -e "${GREEN}✅ Downloaded ${download_success} file(s) successfully${RESET}"
+        for file in "${files_downloaded[@]}"; do
+            echo -e "   ${GREEN}•${RESET} $file"
+        done
+        
+        if [[ ${#files_failed[@]} -gt 0 ]]; then
+            echo -e "${RED}❌ ${#files_failed[@]} file(s) failed${RESET}"
+            for file in "${files_failed[@]}"; do
+                echo -e "   ${RED}•${RESET} $file"
+            done
+        fi
+        
+        echo ""
+        echo -e "${BOLD}${GREEN}🎯 Download completed!${RESET}"
         exit 0
     else
-        echo "❌ No files were successfully downloaded."
-        echo "💡 This may be normal if this is a new deployment. Consider creating new environment files instead."
+        echo -e "${RED}❌ No files were downloaded${RESET}"
+        echo -e "${YELLOW}💡 Consider creating new environment files instead${RESET}"
         exit 1
     fi
 }
@@ -609,13 +604,13 @@ else
     exit 1
 fi
 
-echo "🔍 Checking environment files for application: $APP_NAME"
+echo -e "${BOLD}🔍 Checking environment files for: ${CYAN}$APP_NAME${RESET}"
 echo ""
 
 # Check for main flowise env file
 FLOWISE_ENV_FILE="copilot.$APP_NAME.env"
 if [[ -f "$FLOWISE_ENV_FILE" ]]; then
-    echo "✅ $FLOWISE_ENV_FILE - EXISTS"
+    echo -e "${GREEN}✅ $FLOWISE_ENV_FILE - EXISTS${RESET}"
     # Show file size and last modified
     if command -v stat >/dev/null 2>&1; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -630,13 +625,13 @@ if [[ -f "$FLOWISE_ENV_FILE" ]]; then
         echo "   Size: $SIZE bytes, Modified: $MODIFIED"
     fi
 else
-    echo "❌ $FLOWISE_ENV_FILE - NOT FOUND"
+    echo -e "${RED}❌ $FLOWISE_ENV_FILE - NOT FOUND${RESET}"
 fi
 
 # Check for web env file
 WEB_ENV_FILE="copilot.$APP_NAME.web.env"
 if [[ -f "$WEB_ENV_FILE" ]]; then
-    echo "✅ $WEB_ENV_FILE - EXISTS"
+    echo -e "${GREEN}✅ $WEB_ENV_FILE - EXISTS${RESET}"
     # Show file size and last modified
     if command -v stat >/dev/null 2>&1; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -651,7 +646,7 @@ if [[ -f "$WEB_ENV_FILE" ]]; then
         echo "   Size: $SIZE bytes, Modified: $MODIFIED"
     fi
 else
-    echo "❌ $WEB_ENV_FILE - NOT FOUND"
+    echo -e "${RED}❌ $WEB_ENV_FILE - NOT FOUND${RESET}"
 fi
 
 echo ""
@@ -663,10 +658,10 @@ MISSING_FILES=()
 [[ ! -f "$WEB_ENV_FILE" ]] && ((MISSING_COUNT++)) && MISSING_FILES+=("$WEB_ENV_FILE")
 
 if [[ $MISSING_COUNT -eq 0 ]]; then
-    echo "🎯 All environment files found!"
+    echo -e "${BOLD}${GREEN}🎯 All environment files found!${RESET}"
     exit 0
 else
-    echo "⚠️  $MISSING_COUNT environment file(s) missing: ${MISSING_FILES[*]}"
+    echo -e "${YELLOW}⚠️  $MISSING_COUNT environment file(s) missing${RESET}"
     echo ""
     offer_creation_options
 fi
