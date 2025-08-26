@@ -350,8 +350,8 @@ create_new_env_files() {
     validate_tools
     
     # Check for template files
-    FLOWISE_TEMPLATE="copilot/copilot.applicationName.env.template"
-    WEB_TEMPLATE="copilot/copilot.applicationName.web.env.template"
+    FLOWISE_TEMPLATE="copilot/copilot.appName.env.template"
+    WEB_TEMPLATE="copilot/copilot.appName.web.env.template"
     
     if [[ ! -f "$FLOWISE_TEMPLATE" ]]; then
         echo "❌ Flowise template not found: $FLOWISE_TEMPLATE"
@@ -456,16 +456,24 @@ generate_auth0_derived_vars() {
 }
 
 # Helper function to prompt and set variable globally + in file
+# This function safely sets both the environment file variable and a global variable
+# for use across the script (e.g., sharing AUTH0 values between Flowise and Web configs)
 prompt_and_set() {
     local var_name="$1"
     local description="$2"
     local required="$3"
     
+    # Validate variable name to prevent injection
+    if [[ ! "$var_name" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+        echo "❌ Invalid variable name: $var_name (must be uppercase with underscores only)"
+        return 1
+    fi
+    
     while true; do
         if [[ "$required" == "true" ]]; then
             read -p "📝 $description: " value
             if [[ -n "$value" ]]; then
-                # Set globally and in file
+                # Set globally and in file - using eval with validated variable name
                 eval "GLOBAL_$var_name=\"\$value\""
                 replace_in_file "$FLOWISE_ENV_FILE" "$var_name" "$value"
                 break
@@ -474,7 +482,7 @@ prompt_and_set() {
             fi
         else
             read -p "📝 $description (optional): " value
-            # Set globally and in file  
+            # Set globally and in file - using eval with validated variable name
             eval "GLOBAL_$var_name=\"\$value\""
             replace_in_file "$FLOWISE_ENV_FILE" "$var_name" "$value"
             break
@@ -483,32 +491,68 @@ prompt_and_set() {
 }
 
 # Function to collect and create Flowise file (Bash 3.x compatible)
+# This function handles the complete Flowise environment file creation process:
+# 1. Copies template and sets generated secrets
+# 2. Applies default configuration values (paths, CORS, storage)
+# 3. Prompts for debug configuration with production guidance
+# 4. Collects required authentication and API variables
+# 5. Handles optional service integrations
 collect_and_create_flowise_file() {
     echo "📋 Configuring Flowise Environment Variables"
     echo "=============================================="
     echo ""
     
-    # Start with template
+    # Start with template - copy the base template file
     cp "$FLOWISE_TEMPLATE" "$FLOWISE_ENV_FILE"
     
-    # Set generated secrets
+    # Set generated secrets - these are cryptographically secure values
+    # generated earlier in the script for session and authentication security
     replace_in_file "$FLOWISE_ENV_FILE" "SESSION_SECRET" "$SESSION_SECRET"
     replace_in_file "$FLOWISE_ENV_FILE" "AUTH0_SECRET" "$AUTH0_SECRET"
     
     # Handle variables with defaults
-    echo "🔧 Configuration variables with defaults:"
-    echo "These have sensible defaults but can be customized if needed."
+    echo "🔧 Setting default configuration values:"
+    echo "Applying sensible defaults for debug, logging, and other settings."
+    echo ""
+    
+    # Automatically set default configuration values
+    collect_default_variables_flowise
+    
+    # Debug configuration with production guidance
+    echo "🔧 Debug Configuration for First Run:"
+    echo "===================================="
+    echo ""
+    echo "⚠️  IMPORTANT: These debug settings should be DISABLED in production!"
+    echo "   Production values: DEBUG=false, VERBOSE=false, AUTH_DEBUG=false, LOG_LEVEL=warn"
     echo ""
     
     while true; do
-        read -p "Would you like to customize default configuration values? (y/n): " customize_defaults
-        case $customize_defaults in
+        read -p "Enable debug mode for first run? (y/n): " enable_debug
+        case $enable_debug in
             [Yy]*)
-                collect_default_variables_flowise
+                echo "✅ Enabling debug mode for first run"
+                replace_in_file "$FLOWISE_ENV_FILE" "DEBUG" "true"
+                replace_in_file "$FLOWISE_ENV_FILE" "VERBOSE" "true"
+                replace_in_file "$FLOWISE_ENV_FILE" "AUTH_DEBUG" "true"
+                replace_in_file "$FLOWISE_ENV_FILE" "LOG_LEVEL" "debug"
+                echo "   • DEBUG = true (enabled for debugging)"
+                echo "   • VERBOSE = true (enabled for verbose logging)"
+                echo "   • AUTH_DEBUG = true (enabled for auth debugging)"
+                echo "   • LOG_LEVEL = debug (set to debug level)"
+                echo ""
+                echo "💡 Remember to disable these in production!"
                 break
                 ;;
             [Nn]*)
-                echo "✅ Using default configuration values"
+                echo "✅ Using production-safe debug settings"
+                replace_in_file "$FLOWISE_ENV_FILE" "DEBUG" "false"
+                replace_in_file "$FLOWISE_ENV_FILE" "VERBOSE" "false"
+                replace_in_file "$FLOWISE_ENV_FILE" "AUTH_DEBUG" "false"
+                replace_in_file "$FLOWISE_ENV_FILE" "LOG_LEVEL" "warn"
+                echo "   • DEBUG = false (disabled for production)"
+                echo "   • VERBOSE = false (disabled for production)"
+                echo "   • AUTH_DEBUG = false (disabled for production)"
+                echo "   • LOG_LEVEL = warn (set to warning level)"
                 break
                 ;;
             *)
@@ -554,16 +598,23 @@ collect_and_create_flowise_file() {
 }
 
 # Function to collect and create Web file (Bash 3.x compatible) 
+# This function handles the complete Web application environment file creation:
+# 1. Copies template and sets shared AUTH0 secret
+# 2. Reuses AUTH0 values from Flowise configuration when available
+# 3. Prompts for web-specific authentication variables if needed
+# 4. Handles optional service integrations
+# 5. Prompts for debug configuration with production guidance
 collect_and_create_web_file() {
     echo ""
     echo "📋 Configuring Web Application Environment Variables"
     echo "================================================="
     echo ""
     
-    # Start with template
+    # Start with template - copy the base web template file
     cp "$WEB_TEMPLATE" "$WEB_ENV_FILE"
     
-    # Set generated secret (same as flowise)
+    # Set generated secret - must match Flowise for session consistency
+    # This ensures both services can validate the same session tokens
     replace_in_file "$WEB_ENV_FILE" "AUTH0_SECRET" "$AUTH0_SECRET"
     
     echo "🔑 Required Web Authentication Variables:"
@@ -623,6 +674,54 @@ collect_and_create_web_file() {
     else
         prompt_optional_service_web "Flagsmith" "FLAGSMITH_ENVIRONMENT_ID" "Flagsmith Environment ID"
     fi
+    
+    # Debug configuration for web with production guidance
+    echo ""
+    echo "🔧 Web Debug Configuration for First Run:"
+    echo "========================================="
+    echo ""
+    echo "⚠️  IMPORTANT: These debug settings should be DISABLED in production!"
+    echo "   Production values: DEBUG=false, VERBOSE=false, AUTH_DEBUG=false, LOG_LEVEL=warn"
+    echo ""
+    
+    while true; do
+        read -p "Enable debug mode for web app first run? (y/n): " enable_web_debug
+        case $enable_web_debug in
+            [Yy]*)
+                echo "✅ Enabling debug mode for web app first run"
+                replace_in_file "$WEB_ENV_FILE" "DEBUG" "true"
+                replace_in_file "$WEB_ENV_FILE" "VERBOSE" "true"
+                replace_in_file "$WEB_ENV_FILE" "LOG_LEVEL" "debug"
+                replace_in_file "$WEB_ENV_FILE" "DEBUG_LOG_LEVEL" "debug"
+                replace_in_file "$WEB_ENV_FILE" "AUTH_DEBUG" "true"
+                echo "   • DEBUG = true (enabled for debugging)"
+                echo "   • VERBOSE = true (enabled for verbose logging)"
+                echo "   • LOG_LEVEL = debug (set to debug level)"
+                echo "   • DEBUG_LOG_LEVEL = debug (set to debug level)"
+                echo "   • AUTH_DEBUG = true (enabled for auth debugging)"
+                echo ""
+                echo "💡 Remember to disable these in production!"
+                break
+                ;;
+            [Nn]*)
+                echo "✅ Using production-safe debug settings for web app"
+                replace_in_file "$WEB_ENV_FILE" "DEBUG" "false"
+                replace_in_file "$WEB_ENV_FILE" "VERBOSE" "false"
+                replace_in_file "$WEB_ENV_FILE" "LOG_LEVEL" "warn"
+                replace_in_file "$WEB_ENV_FILE" "DEBUG_LOG_LEVEL" "warn"
+                replace_in_file "$WEB_ENV_FILE" "AUTH_DEBUG" "false"
+                echo "   • DEBUG = false (disabled for production)"
+                echo "   • VERBOSE = false (disabled for production)"
+                echo "   • LOG_LEVEL = warn (set to warning level)"
+                echo "   • DEBUG_LOG_LEVEL = warn (set to warning level)"
+                echo "   • AUTH_DEBUG = false (disabled for production)"
+                break
+                ;;
+            *)
+                echo "Please answer y or n"
+                ;;
+        esac
+    done
     
     echo "✅ Created $WEB_ENV_FILE"
 }
@@ -736,16 +835,41 @@ configure_langfuse_flowise() {
 # Helper function for default variables (Flowise)
 collect_default_variables_flowise() {
     echo ""
-    echo "🔧 Customizing Default Configuration Values:"
-    echo "==========================================="
+    echo "🔧 Setting Default Configuration Values:"
+    echo "======================================="
     echo ""
     
-    # Debug and logging settings
-    prompt_and_set "DEBUG" "Enable debug mode (current: false)" false
-    prompt_and_set "VERBOSE" "Enable verbose logging (current: false)" false  
-    prompt_and_set "AUTH_DEBUG" "Enable auth debugging (current: false)" false
-    prompt_and_set "LOG_LEVEL" "Log level (current: warn, options: error/warn/info/debug)" false
+    # Path and storage configuration with sensible defaults
+    echo "📝 Setting path and storage configuration:"
+    replace_in_file "$FLOWISE_ENV_FILE" "APIKEY_PATH" "/var/efs/"
+    replace_in_file "$FLOWISE_ENV_FILE" "SECRETKEY_PATH" "/var/efs/"
+    replace_in_file "$FLOWISE_ENV_FILE" "LOG_PATH" "/var/efs/logs"
+    replace_in_file "$FLOWISE_ENV_FILE" "DISABLE_FLOWISE_TELEMETRY" "true"
+    replace_in_file "$FLOWISE_ENV_FILE" "IFRAME_ORIGINS" "*"
+    replace_in_file "$FLOWISE_ENV_FILE" "CORS_ORIGINS" "*"
+    replace_in_file "$FLOWISE_ENV_FILE" "APIKEY_STORAGE_TYPE" "db"
+    replace_in_file "$FLOWISE_ENV_FILE" "STORAGE_TYPE" "s3"
     
+    # Set global variables for potential use elsewhere
+    eval "GLOBAL_APIKEY_PATH=\"/var/efs/\""
+    eval "GLOBAL_SECRETKEY_PATH=\"/var/efs/\""
+    eval "GLOBAL_LOG_PATH=\"/var/efs/logs\""
+    eval "GLOBAL_DISABLE_FLOWISE_TELEMETRY=\"true\""
+    eval "GLOBAL_IFRAME_ORIGINS=\"*\""
+    eval "GLOBAL_CORS_ORIGINS=\"*\""
+    eval "GLOBAL_APIKEY_STORAGE_TYPE=\"db\""
+    eval "GLOBAL_STORAGE_TYPE=\"s3\""
+    
+    echo "   • APIKEY_PATH = /var/efs/ (EFS mount for API keys)"
+    echo "   • SECRETKEY_PATH = /var/efs/ (EFS mount for secret keys)"
+    echo "   • LOG_PATH = /var/efs/logs (EFS mount for logs)"
+    echo "   • DISABLE_FLOWISE_TELEMETRY = true (disable telemetry)"
+    echo "   • IFRAME_ORIGINS = * (allow all iframe origins)"
+    echo "   • CORS_ORIGINS = * (allow all CORS origins)"
+    echo "   • APIKEY_STORAGE_TYPE = db (store API keys in database)"
+    echo "   • STORAGE_TYPE = s3 (use S3 for file storage)"
+    echo ""
+    echo "✅ Default configuration values applied successfully"
     echo ""
 }
 
