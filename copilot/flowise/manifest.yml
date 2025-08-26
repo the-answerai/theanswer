@@ -51,13 +51,12 @@ variables: # Pass environment variables as key value pairs.
     DOMAIN: 'http://flowise:4000'
     FLOWISE_DOMAIN: 'http://flowise:4000'
     ANSWERAI_DOMAIN: 'http://web:3000'
-    # STORAGE_TYPE must be set together to avoid startup errors (db, s3, local)
     STORAGE_TYPE: 's3'
     S3_STORAGE_BUCKET_NAME:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketName
     # Optional: S3 region (defaults to us-east-1 if not provided)
-    # S3_STORAGE_REGION:
-    #     from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketRegion
+    S3_STORAGE_REGION:
+        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketRegion
     AAI_DEFAULT_REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     REDIS_URL:
@@ -66,8 +65,6 @@ variables: # Pass environment variables as key value pairs.
 env_file: copilot.${COPILOT_APPLICATION_NAME}.env
 
 secrets:
-    # Main database secret - parsed by app to extract all database connection details
-    # For individual AAI service management, add: AAI_DEFAULT_POSTGRES_*_SECRET or modify the .env file.
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
 

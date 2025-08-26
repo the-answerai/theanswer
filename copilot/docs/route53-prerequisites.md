@@ -4,27 +4,22 @@ Before the `pnpm copilot:auto` will work properly, you must pre-configure your R
 
 ## Base Domain Setup
 
-**Primary Domain:** `example.theanswer.ai`
+** Example Prod Domain:** `example.theanswer.ai`
 
 -   Create the main hosted zone in Route53
--   Must be in the same AWS account as your application
--   This serves as the base domain for all environments
+-   Must be in the same AWS account as your prod deployment
+-   This serves as the base domain for all environments for this example client's production domain
+-   **NS Records:** Copy the info from the Hosted Zone so you can create the NS record in the TLD aka `theanswer.ai`
 
 ## Environment-Specific Hosted Zones
 
-Create separate hosted zones for each environment:
+Create separate hosted zones for each test environment:
 
 ### Staging Environment
 
 -   **Hosted Zone Name:** `staging.example.theanswer.ai`
 -   **Purpose:** Staging/testing deployments
--   **NS Records:** Configure in both `example.theanswer.ai` and `theanswer.ai`
-
-### Production Environment
-
--   **Hosted Zone Name:** `prod.example.theanswer.ai`
--   **Purpose:** Production deployments
--   **NS Records:** Configure in both `example.theanswer.ai` and `theanswer.ai`
+-   **NS Records:** Configure the NS record in `example.theanswer.ai` and `theanswer.ai`
 
 ### Optional Environments
 
