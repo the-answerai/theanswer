@@ -67,3 +67,8 @@ Outputs:
         Value: !GetAtt theansweraiserverstorageBucket.Arn
         Export:
             Name: !Sub ${App}-${Env}-theansweraiserverstorageBucketARN
+    theansweraiserverstorageBucketRegion:
+        Description: 'The AWS region where the theanswerai-server-storage bucket is deployed.'
+        Value: !Ref AWS::Region
+        Export:
+            Name: !Sub ${App}-${Env}-theansweraiserverstorageBucketRegion
