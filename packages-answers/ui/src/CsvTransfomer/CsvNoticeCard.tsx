@@ -35,9 +35,9 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
     // Check if user returned from marketplace and auto-refresh
     useEffect(() => {
         const checkMarketplaceReturn = () => {
-            const installedCsv = localStorage.getItem('csv-processor-installed')
+            const installedCsv = localStorage.getItem('answerai.csv.processor-installed')
             if (installedCsv && onRefresh) {
-                localStorage.removeItem('csv-processor-installed')
+                localStorage.removeItem('answerai.csv.processor-installed')
                 // Auto-refresh after a short delay
                 setTimeout(() => {
                     handleRefresh()
@@ -56,7 +56,7 @@ const CsvNoticeCard: React.FC<CsvNoticeCardProps> = ({ onRefresh }) => {
         setNavigating(true)
 
         // Mark that user is going to install CSV processor
-        localStorage.setItem('csv-processor-install-intent', 'true')
+        localStorage.setItem('answerai.csv.install-intent', 'true')
 
         // Open marketplace in a new tab with CSV usecase filter
         window.open('/sidekick-studio/marketplaces?usecase=CSV', '_blank', 'noopener,noreferrer')

@@ -154,6 +154,7 @@ const ProcessCsv = ({
     const searchParams = useSearchParams()
     const cloneFrom = searchParams.get('cloneFrom')
     const hasAutoSelected = useRef(false)
+    const fileReadersRef = useRef<{ mainReader?: FileReader; dataUrlReader?: FileReader }>({})
 
     const {
         control,
@@ -175,6 +176,66 @@ const ProcessCsv = ({
     })
 
     const watchedValues = watch()
+
+    // Utility function to format file sizes for better UX
+    const formatFileSize = useCallback((bytes: number): string => {
+        if (bytes === 0) return '0 Bytes'
+        const k = 1024
+        const sizes = ['Bytes', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        const size = parseFloat((bytes / Math.pow(k, i)).toFixed(i > 1 ? 2 : 1))
+        return `${size} ${sizes[i]}`
+    }, [])
+
+    // Enhanced file size validation with progressive feedback
+    const validateFileSize = useCallback(
+        (fileSize: number, fileName: string) => {
+            const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+            const WARNING_SIZE = 25 * 1024 * 1024 // 25MB (50% of limit)
+
+            if (fileSize > MAX_FILE_SIZE) {
+                setToastMessage(
+                    `File "${fileName}" is too large (${formatFileSize(fileSize)}). ` +
+                        `Maximum allowed: ${formatFileSize(MAX_FILE_SIZE)}. ` +
+                        `Consider splitting large files or processing a sample of your data.`
+                )
+                return { valid: false, isWarning: false }
+            }
+
+            if (fileSize > WARNING_SIZE) {
+                setToastMessage(
+                    `Large file detected (${formatFileSize(fileSize)}). ` +
+                        `Processing may take longer than usual. Files larger than ${formatFileSize(MAX_FILE_SIZE)} are not supported.`
+                )
+                return { valid: true, isWarning: true }
+            }
+
+            return { valid: true, isWarning: false }
+        },
+        [formatFileSize]
+    )
+
+    // FileReader cleanup function
+    const cleanupFileReaders = useCallback(() => {
+        const readers = fileReadersRef.current
+        if (readers.mainReader) {
+            readers.mainReader.onload = null
+            readers.mainReader.onerror = null
+            readers.mainReader.abort()
+            readers.mainReader = undefined
+        }
+        if (readers.dataUrlReader) {
+            readers.dataUrlReader.onload = null
+            readers.dataUrlReader.onerror = null
+            readers.dataUrlReader.abort()
+            readers.dataUrlReader = undefined
+        }
+    }, [])
+
+    // Cleanup FileReaders on component unmount
+    useEffect(() => {
+        return cleanupFileReaders
+    }, [cleanupFileReaders])
 
     // Auto-select first processor when chatflows appear (only once)
     useEffect(() => {
@@ -218,22 +279,29 @@ const ProcessCsv = ({
         (acceptedFiles: File[]) => {
             const file = acceptedFiles[0]
 
-            // Validate file size - prevent memory issues and provide immediate feedback
-            const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB hardcoded limit
-            if (file.size > MAX_FILE_SIZE) {
-                setToastMessage(`CSV file is too large. Maximum size allowed: 50MB. Your file: ${Math.round(file.size / 1024 / 1024)}MB`)
+            // Enhanced file size validation with progressive feedback
+            const sizeValidation = validateFileSize(file.size, file.name)
+            if (!sizeValidation.valid) {
                 return
             }
             setFileName(file.name)
             setCsvErrors([]) // Clear any previous CSV errors
+
+            // Cleanup any existing readers before starting new ones
+            cleanupFileReaders()
+
             const reader = new FileReader()
-            let dataUrlReader: FileReader | null = null
+            fileReadersRef.current.mainReader = reader
 
             // Add error handler for main reader
             reader.onerror = () => {
                 setToastMessage('Failed to read CSV file. Please ensure the file is not corrupted.')
                 setCsvErrors(['File reading failed: Unable to read file content'])
                 setFileName(null)
+                // Cleanup reader reference
+                if (fileReadersRef.current.mainReader === reader) {
+                    fileReadersRef.current.mainReader = undefined
+                }
             }
 
             reader.onload = (event) => {
@@ -249,9 +317,9 @@ const ProcessCsv = ({
                     setCsvContent(result)
 
                     // Parse CSV with user-controlled header interpretation
-                                                    const { headers: H, rows: R } = watchedValues.firstRowIsHeaders
-                                    ? parseCsvWithHeaders(result)
-                                    : parseCsvWithoutHeaders(result)
+                    const { headers: H, rows: R } = watchedValues.firstRowIsHeaders
+                        ? parseCsvWithHeaders(result)
+                        : parseCsvWithoutHeaders(result)
                     setCsvErrors([])
                     setHeaders(H)
                     setRows(R)
@@ -262,7 +330,9 @@ const ProcessCsv = ({
                     // Set rowsRequested - R.length is data rows based on user decision
                     setValue('rowsRequested', R.length, { shouldValidate: true })
                     // Convert file to data URL for storage
-                    dataUrlReader = new FileReader()
+                    const dataUrlReader = new FileReader()
+                    fileReadersRef.current.dataUrlReader = dataUrlReader
+
                     dataUrlReader.onload = () => {
                         if (dataUrlReader?.result && typeof dataUrlReader.result === 'string') {
                             setFile(dataUrlReader.result)
@@ -270,12 +340,18 @@ const ProcessCsv = ({
                             setToastMessage('Failed to process file for upload. Please try again.')
                             setFile(null)
                         }
-                        dataUrlReader = null // Cleanup reference
+                        // Cleanup reader reference
+                        if (fileReadersRef.current.dataUrlReader === dataUrlReader) {
+                            fileReadersRef.current.dataUrlReader = undefined
+                        }
                     }
                     dataUrlReader.onerror = () => {
                         setToastMessage('Failed to process file for upload. Please try again.')
                         setFile(null)
-                        dataUrlReader = null // Cleanup reference
+                        // Cleanup reader reference
+                        if (fileReadersRef.current.dataUrlReader === dataUrlReader) {
+                            fileReadersRef.current.dataUrlReader = undefined
+                        }
                     }
                     dataUrlReader.readAsDataURL(file)
                 } catch (e: unknown) {
@@ -286,15 +362,13 @@ const ProcessCsv = ({
                     setValue('rowsRequested', 0)
                     setToastMessage('CSV validation failed. Please fix the file format.')
                     setFile(null)
-                    // Cleanup dataUrlReader if it was created
-                    if (dataUrlReader) {
-                        dataUrlReader = null
-                    }
+                    // Cleanup any active readers
+                    cleanupFileReaders()
                 }
             }
             reader.readAsText(file)
         },
-        [setValue, watchedValues.firstRowIsHeaders]
+        [setValue, watchedValues.firstRowIsHeaders, cleanupFileReaders, validateFileSize]
     )
 
     const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } = useDropzone({

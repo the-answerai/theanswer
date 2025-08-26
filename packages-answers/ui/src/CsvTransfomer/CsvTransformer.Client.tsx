@@ -3,7 +3,15 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
-// @ts-ignore
+// Type declaration for the chatflows API module
+declare module '@/api/chatflows' {
+    interface ChatflowsApi {
+        getAllChatflows: () => Promise<{ data: any[] }>
+    }
+    const chatflowsApi: ChatflowsApi
+    export default chatflowsApi
+}
+
 import chatflowsApi from '@/api/chatflows'
 // material-ui
 import { Container, Box, Stack, Tabs, Tab, Typography } from '@mui/material'
