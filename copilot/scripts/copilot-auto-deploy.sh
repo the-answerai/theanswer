@@ -250,7 +250,21 @@ print_info "Deploying services to environment '$ENV'..."
 for svc in "${SERVICES[@]}"; do
   print_step "Deploying service: $svc"
   copilot deploy --name "$svc" --env "$ENV"
-  print_success "Service '$svc' deployed successfully"
+  
+  # Show health check URLs based on service type
+  case "$svc" in
+    "flowise")
+      print_success "Service '$svc' deployed successfully"
+      print_info "Health check: https://api.${CLIENT_DOMAIN}/api/v1/ping"
+      ;;
+    "web")
+      print_success "Service '$svc' deployed successfully"
+      print_info "Health check: https://${CLIENT_DOMAIN}/healthcheck"
+      ;;
+    *)
+      print_success "Service '$svc' deployed successfully"
+      ;;
+  esac
 done
 
 print_header "DEPLOYMENT COMPLETE"
