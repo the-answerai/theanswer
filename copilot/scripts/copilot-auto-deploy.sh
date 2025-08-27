@@ -199,22 +199,7 @@ else
   print_success "Environment created and deployed"
 fi
 
-print_phase "7" "PRE-DEPLOYMENT VALIDATION"
-print_step "Configuration validation..."
-
-# Validation script temporarily disabled due to bash 3.x compatibility issues
-# TODO: Fix bash array handling for macOS compatibility
-# if ! bash ./copilot/scripts/tests/validate-env-files.sh "$ENV" "flowise" "web"; then
-#   print_error "Pre-deployment validation failed"
-#   print_info "Please fix the configuration issues before proceeding"
-#   exit 1
-# fi
-
-print_info "Comprehensive validation coming soon..."
-print_success "Manual verification complete - environment files and manifests configured"
-print_success "Proceeding with deployment..."
-
-print_phase "8" "SERVICE SELECTION"
+print_phase "7" "SERVICE SELECTION"
 print_info "Select services to deploy:"
 echo -e "  ${WHITE}1)${NC} flowise"
 echo -e "  ${WHITE}2)${NC} web"
@@ -244,7 +229,7 @@ esac
 
 print_success "Selected services: ${SERVICES[*]}"
 
-print_phase "9" "SERVICE DEPLOYMENT"
+print_phase "8" "SERVICE DEPLOYMENT"
 print_info "Deploying services to environment '$ENV'..."
 
 for svc in "${SERVICES[@]}"; do
