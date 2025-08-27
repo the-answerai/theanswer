@@ -1,17 +1,25 @@
 // utils/auth0.js
 import { initAuth0 } from '@auth0/nextjs-auth0'
 
-// Debug logging helper
+// Debug logging helper with safety
 const debugLog = (message: string, data?: any) => {
     if (process.env.AUTH0_DEBUG === 'true' || process.env.DEBUG === 'true') {
-        console.log('🔐 AUTH0 DEBUG:', message, data ? JSON.stringify(data, null, 2) : '')
+        let dataStr = ''
+        if (data) {
+            try {
+                dataStr = JSON.stringify(data, null, 2)
+            } catch {
+                dataStr = String(data)
+            }
+        }
+        console.log('🔐 AUTH0 DEBUG:', message, dataStr)
     }
 }
 
 const getBaseUrl = () => {
     let baseURL
     debugLog('Determining base URL...')
-    
+
     if (process.env.VERCEL_PREVIEW_URL) {
         baseURL = `https://${process.env.VERCEL_PREVIEW_URL}`
         debugLog('Using VERCEL_PREVIEW_URL', { baseURL })
@@ -24,12 +32,12 @@ const getBaseUrl = () => {
         baseURL = process.env.AUTH0_BASE_URL
         debugLog('Using AUTH0_BASE_URL', { baseURL })
     }
-    
+
     if (baseURL) {
         debugLog('Final base URL determined', { baseURL })
         return baseURL
     }
-    
+
     const error = 'No valid baseURL found. Set either VERCEL_PREVIEW_URL, VERCEL_URL, or AUTH0_BASE_URL environment variable.'
     debugLog('ERROR: Base URL determination failed', { error })
     throw new Error(error)
