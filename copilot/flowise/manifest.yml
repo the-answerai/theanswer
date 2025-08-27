@@ -2,6 +2,11 @@
 # Read the full specification for the "Load Balanced Web Service" type at:
 #  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
 
+# NOTE: Lacework integration is COMMENTED OUT below. To enable:
+# 1. Uncomment the depends_on, sidecars, taskdef_overrides, and LaceworkVerbose sections
+# 2. Add LaceworkAccessToken to your env file (copilot.{app}.env)
+# 3. Deploy with copilot deploy --env your-environment
+
 # Your service name will be used in naming your resources like log groups, ECS services, etc.
 name: flowise
 type: Load Balanced Web Service
@@ -24,6 +29,10 @@ image:
     # Port exposed through your container to route traffic to it.
     port: 4000
 
+    # Container dependencies - Lacework sidecar is optional (COMMENTED OUT FOR NOW)
+    # depends_on:
+    #     datacollector-sidecar: start
+
 # Resource configuration moved to environment-specific overrides below
 exec: true # Enable running commands in your container.
 network:
@@ -39,6 +48,24 @@ storage:
             efs: true
             path: /var/efs
             read_only: false
+
+# Lacework sidecar configuration (COMMENTED OUT FOR NOW)
+# sidecars:
+#     datacollector-sidecar:
+#         image: lacework/datacollector:latest-sidecar
+#         essential: false
+
+# Task definition overrides for Lacework integration (COMMENTED OUT FOR NOW)
+# taskdef_overrides:
+#     # Override main container entrypoint to use Lacework sidecar script and then start the app
+#     - path: ContainerDefinitions[0].EntryPoint
+#       value: ['/bin/sh', '-c', '/var/lib/lacework-backup/lacework-sidecar.sh && cd /app/packages/server && exec pnpm start']
+#
+#     # Add volume mount from sidecar to main container
+#     - path: ContainerDefinitions[0].VolumesFrom
+#       value:
+#           - sourceContainer: datacollector-sidecar
+#             readOnly: true
 
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
@@ -61,6 +88,8 @@ variables: # Pass environment variables as key value pairs.
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
+    # Lacework configuration variables - will be loaded from env file (COMMENTED OUT FOR NOW)
+    # LaceworkVerbose: 'true'
 
 env_file: copilot.${COPILOT_APPLICATION_NAME}.env
 
