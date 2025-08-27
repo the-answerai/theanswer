@@ -40,6 +40,19 @@ print_success() {
   echo -e "${GREEN}✅ $1${NC}"
 }
 
+print_deployment_success() {
+  local service_name="$1"
+  local health_url="$2"
+  
+  echo -e "\n${GREEN}${BOLD}╔═══════════════════════════════════════════════════════════════╗${NC}"
+  echo -e "${WHITE}${BOLD}  🚀 SERVICE DEPLOYED SUCCESSFULLY${NC}"
+  echo -e "${CYAN}  Service:${NC} ${WHITE}${BOLD}$service_name${NC}"
+  if [[ -n "$health_url" ]]; then
+    echo -e "${GREEN}  Health Check:${NC} ${CYAN}$health_url${NC}"
+  fi
+  echo -e "${GREEN}${BOLD}╚═══════════════════════════════════════════════════════════════╝${NC}\n"
+}
+
 print_warning() {
   echo -e "${YELLOW}⚠️  $1${NC}"
 }
@@ -239,15 +252,13 @@ for svc in "${SERVICES[@]}"; do
   # Show health check URLs based on service type
   case "$svc" in
     "flowise")
-      print_success "Service '$svc' deployed successfully"
-      print_info "Health check: https://api.${CLIENT_DOMAIN}/api/v1/ping"
+      print_deployment_success "$svc" "https://api.${CLIENT_DOMAIN}/api/v1/ping"
       ;;
     "web")
-      print_success "Service '$svc' deployed successfully"
-      print_info "Health check: https://${CLIENT_DOMAIN}/healthcheck"
+      print_deployment_success "$svc" "https://${CLIENT_DOMAIN}/healthcheck"
       ;;
     *)
-      print_success "Service '$svc' deployed successfully"
+      print_deployment_success "$svc" ""
       ;;
   esac
 done
