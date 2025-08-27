@@ -34,6 +34,27 @@ Resources:
                       NoncurrentVersionExpirationInDays: 30
                       AbortIncompleteMultipartUpload:
                           DaysAfterInitiation: 1
+            CorsConfiguration:
+                CorsRules:
+                    - AllowedHeaders:
+                          - '*'
+                      AllowedMethods:
+                          - GET
+                          - PUT
+                          - POST
+                          - DELETE
+                      AllowedOrigins:
+                          - 'http://web:3000'
+                          - 'http://flowise:4000'
+                          - 'https://staging.*.theanswer.ai'
+                          - 'https://api.staging.*.theanswer.ai'
+                          - 'https://web.staging.*.theanswer.ai'
+                          - 'https://flowise.staging.*.theanswer.ai'
+                          - 'https://*.theanswer.ai'
+                          - 'https://api.*.theanswer.ai'
+                          - 'https://web.*.theanswer.ai'
+                          - 'https://flowise.*.theanswer.ai'
+                      ExposedHeaders: []
 
     theansweraiserverstorageBucketPolicy:
         Metadata:
