@@ -660,7 +660,8 @@ class EnvironmentFileCreator {
         try {
             execSync('aws --version', { stdio: 'ignore' })
         } catch (error) {
-            Logger.error('AWS CLI not found. Please install AWS CLI and configure your credentials.')
+            Logger.error(`AWS CLI not found: ${error.message}`)
+            Logger.info('Please install AWS CLI and configure your credentials.')
             Logger.info('Visit: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html')
             process.exit(1)
         }
@@ -669,7 +670,7 @@ class EnvironmentFileCreator {
         try {
             execSync('aws sts get-caller-identity', { stdio: 'ignore' })
         } catch (error) {
-            Logger.error('AWS credentials not configured or expired.')
+            Logger.error(`AWS credentials not configured or expired: ${error.message}`)
             Logger.info('Please run: aws configure')
             process.exit(1)
         }
@@ -709,7 +710,7 @@ class EnvironmentFileCreator {
                 Logger.success(`Downloaded ${flowiseFile}`)
                 downloadedFiles.push(flowiseFile)
             } catch (error) {
-                Logger.error(`Failed to download ${flowiseFile}`)
+                Logger.error(`Failed to download ${flowiseFile}: ${error.message}`)
             }
         } else {
             Logger.warning('No Flowise files found')
@@ -724,7 +725,7 @@ class EnvironmentFileCreator {
                 Logger.success(`Downloaded ${webFile}`)
                 downloadedFiles.push(webFile)
             } catch (error) {
-                Logger.error(`Failed to download ${webFile}`)
+                Logger.error(`Failed to download ${webFile}: ${error.message}`)
             }
         } else {
             Logger.warning('No Web files found')
@@ -770,6 +771,7 @@ class EnvironmentFileCreator {
 
             return bucketOutput !== 'None' ? bucketOutput : null
         } catch (error) {
+            Logger.warning(`Failed to get pipeline artifact bucket: ${error.message}`)
             return null
         }
     }
@@ -784,6 +786,7 @@ class EnvironmentFileCreator {
 
             return output !== 'None' && output !== '' ? output : null
         } catch (error) {
+            Logger.warning(`Failed to find latest ${fileType} file in bucket ${bucketName}: ${error.message}`)
             return null
         }
     }

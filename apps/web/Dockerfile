@@ -3,23 +3,24 @@ FROM --platform=linux/amd64 node:20-slim AS base
 # This Dockerfile is optimized for Next.js standalone mode deployment
 # Make sure you update both files if copying to documentation!
 
+# Add metadata labels
+LABEL maintainer="AnswerAI Team"
+LABEL version="1.0"
+LABEL description="AnswerAI Web Application"
+
 WORKDIR /app
 
-# Install essential tools for BWS and build process
+# Install essential tools for build process, pnpm, turbo, and configure pnpm store
 RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    git \
-    unzip \
     ca-certificates \
+    curl \
+    git \
     openssl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm and turbo globally
-RUN npm install -g pnpm turbo@1
-
-# Configure pnpm store
-RUN pnpm config set store-dir ~/.pnpm-store
+    unzip \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pnpm turbo@1 \
+    && pnpm config set store-dir ~/.pnpm-store
 
 ################################################################################
 
