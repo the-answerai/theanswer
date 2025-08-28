@@ -7,6 +7,7 @@ import { AppCsvParseRunsStatus } from '../Interface'
 import { AppCsvParseRuns } from '../database/entities/AppCsvParseRuns'
 import { AppCsvParseRows } from '../database/entities/AppCsvParseRows'
 import { getS3Config } from 'flowise-components'
+import { generateColumnName } from '../utils/csvUtils'
 
 /**
  * Cron job schedule for generating csv
@@ -83,13 +84,30 @@ const generateCsv = async (csvParseRun: AppCsvParseRuns) => {
             // Get the CSV content as string
             const originalCsvText = (await originalCsv.Body?.transformToString()) ?? ''
 
-            // Parse the CSV content into records
-            records = parse(originalCsvText, {
-                columns: true,
+            // Use user's explicit decision about headers
+            const userSpecifiedHeaders = (csvParseRun.configuration as any)?.firstRowIsHeaders || false
+
+            // Parse CSV using native csv-parse capability - SAME logic as initCsvRun.ts
+            const rawRecords = parse(originalCsvText, {
+                columns: userSpecifiedHeaders, // ✅ Use user decision directly
                 skip_empty_lines: true,
                 comment: '#',
                 comment_no_infix: true
             })
+
+            if (userSpecifiedHeaders) {
+                // csv-parse already created objects with real headers
+                records = rawRecords as Record<string, string>[]
+            } else {
+                // csv-parse returned arrays, create objects with generic column names
+                records = (rawRecords as string[][]).map((row: string[]) => {
+                    const obj: Record<string, string> = {}
+                    row.forEach((value, colIndex) => {
+                        obj[generateColumnName(colIndex)] = value || ''
+                    })
+                    return obj
+                })
+            }
         }
 
         if (csvParseRun.rowsRequested > 0) {
