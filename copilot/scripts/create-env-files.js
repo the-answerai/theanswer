@@ -29,7 +29,7 @@ const CONFIG = {
     CONFIGURATION_VALIDATION_VARS: {
         AUTH0_BASE_URL: ['flowise', 'web'],
         AUTH0_ORGANIZATION_ID: ['flowise', 'web'],
-        AAI_DEFAULT_OPENAI_API_KEY: ['flowise'] // Only required for Flowise
+        AAI_DEFAULT_OPENAI_API_KEY: ['flowise']
     },
 
     // Variabless that should default to these values and only be modified by the user if needed and understanding the implications.
@@ -867,72 +867,23 @@ class EnvironmentFileCreator {
 
             const { allExist } = this.checkExistingFiles()
 
-            if (allExist && !this.autoTemplates) {
-                // Check if files are already configured
-                const flowiseFile = `copilot.${this.appName}.env`
-                if (fs.existsSync(flowiseFile)) {
-                    const content = fs.readFileSync(flowiseFile, 'utf8')
+            // Always validate existing files first, regardless of flags
+            if (allExist) {
+                const validationResult = await this.validateExistingFiles()
 
-                    // Check validation variables and show status for Flowise file
-                    Logger.step('Validating Flowise environment configuration...')
-                    const flowiseRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
-                        .filter(([_, services]) => services.includes('flowise'))
-                        .map(([varName]) => varName)
-
-                    const flowiseValidationResults = flowiseRequiredVars.map((varName) => {
-                        const pattern = new RegExp(`^${varName}=.*$`, 'gm')
-                        const match = content.match(pattern)
-                        const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
-                        return { varName, isValid }
-                    })
-
-                    // Show Flowise validation results
-                    flowiseValidationResults.forEach(({ varName, isValid }) => {
-                        if (isValid) {
-                            Logger.success(`✅ ${varName} - configured (flowise)`)
-                        } else {
-                            Logger.error(`❌ ${varName} - missing or empty (flowise)`)
-                        }
-                    })
-
-                    // Check Web file validation
-                    const webFile = `copilot.${this.appName}.web.env`
-                    let webValidationResults = []
-
-                    if (fs.existsSync(webFile)) {
-                        Logger.step('Validating Web environment configuration...')
-                        const webContent = fs.readFileSync(webFile, 'utf8')
-
-                        const webRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
-                            .filter(([_, services]) => services.includes('web'))
-                            .map(([varName]) => varName)
-
-                        webValidationResults = webRequiredVars.map((varName) => {
-                            const pattern = new RegExp(`^${varName}=.*$`, 'gm')
-                            const match = webContent.match(pattern)
-                            const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
-                            return { varName, isValid }
-                        })
-
-                        // Show Web validation results
-                        webValidationResults.forEach(({ varName, isValid }) => {
-                            if (isValid) {
-                                Logger.success(`✅ ${varName} - configured (web)`)
-                            } else {
-                                Logger.error(`❌ ${varName} - missing or empty (web)`)
-                            }
-                        })
+                if (this.autoTemplates) {
+                    // In auto-templates mode, always proceed if files exist
+                    console.log('')
+                    if (validationResult.allConfigured) {
+                        Logger.success('Environment validation passed - proceeding with deployment.')
                     } else {
-                        Logger.error(`❌ Web environment file not found: ${webFile}`)
+                        Logger.info('Environment files exist - proceeding with deployment.')
+                        Logger.info('Note: Some configuration variables may need manual review (see warnings above).')
                     }
-
-                    // Check overall validation
-                    const flowiseConfigured =
-                        flowiseValidationResults.length > 0 && flowiseValidationResults.every((result) => result.isValid)
-                    const webConfigured = webValidationResults.length > 0 && webValidationResults.every((result) => result.isValid)
-                    const allConfigured = flowiseConfigured && webConfigured
-
-                    if (allConfigured) {
+                    process.exit(0)
+                } else {
+                    // In interactive mode, be strict about validation
+                    if (validationResult.allConfigured) {
                         console.log('')
                         Logger.success('Environment validation passed for both Flowise and Web services!')
                         Logger.info('If you want to reconfigure, please delete the files first or use --auto-templates.')
@@ -940,10 +891,10 @@ class EnvironmentFileCreator {
                     } else {
                         console.log('')
                         Logger.warning('Environment validation failed - some required variables are missing or empty.')
-                        if (!flowiseConfigured) {
+                        if (!validationResult.flowiseConfigured) {
                             Logger.error('❌ Flowise environment file needs configuration')
                         }
-                        if (!webConfigured) {
+                        if (!validationResult.webConfigured) {
                             Logger.error('❌ Web environment file needs configuration')
                         }
                         Logger.info('Please ensure your environment files are properly configured before deployment.')
@@ -957,11 +908,6 @@ class EnvironmentFileCreator {
                 Logger.warning(`Environment file(s) missing`)
                 console.log('')
                 await this.offerCreationOptions()
-            } else {
-                // Files exist but may not be configured
-                Logger.warning('Files exist but may not be fully configured.')
-                console.log('')
-                await this.offerCreationOptions()
             }
 
             process.exit(0)
@@ -971,6 +917,88 @@ class EnvironmentFileCreator {
                 console.error(error.stack)
             }
             process.exit(1)
+        }
+    }
+
+    async validateExistingFiles() {
+        const flowiseFile = `copilot.${this.appName}.env`
+        const webFile = `copilot.${this.appName}.web.env`
+
+        let flowiseConfigured = false
+        let webConfigured = false
+
+        // Validate Flowise file
+        if (fs.existsSync(flowiseFile)) {
+            const content = fs.readFileSync(flowiseFile, 'utf8')
+
+            Logger.step('Validating Flowise environment configuration...')
+            const flowiseRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
+                .filter(([_, services]) => services.includes('flowise'))
+                .map(([varName]) => varName)
+
+            const flowiseValidationResults = flowiseRequiredVars.map((varName) => {
+                const pattern = new RegExp(`^${varName}=.*$`, 'gm')
+                const match = content.match(pattern)
+                const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
+                return { varName, isValid }
+            })
+
+            // Show Flowise validation results
+            flowiseValidationResults.forEach(({ varName, isValid }) => {
+                if (isValid) {
+                    Logger.success(`✅ ${varName} - configured (flowise)`)
+                } else {
+                    if (this.autoTemplates) {
+                        Logger.warning(`⚠️  ${varName} - may need review (flowise)`)
+                    } else {
+                        Logger.error(`❌ ${varName} - missing or empty (flowise)`)
+                    }
+                }
+            })
+
+            flowiseConfigured = flowiseValidationResults.length > 0 && flowiseValidationResults.every((result) => result.isValid)
+        } else {
+            Logger.error(`❌ Flowise environment file not found: ${flowiseFile}`)
+        }
+
+        // Validate Web file
+        if (fs.existsSync(webFile)) {
+            Logger.step('Validating Web environment configuration...')
+            const webContent = fs.readFileSync(webFile, 'utf8')
+
+            const webRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
+                .filter(([_, services]) => services.includes('web'))
+                .map(([varName]) => varName)
+
+            const webValidationResults = webRequiredVars.map((varName) => {
+                const pattern = new RegExp(`^${varName}=.*$`, 'gm')
+                const match = webContent.match(pattern)
+                const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
+                return { varName, isValid }
+            })
+
+            // Show Web validation results
+            webValidationResults.forEach(({ varName, isValid }) => {
+                if (isValid) {
+                    Logger.success(`✅ ${varName} - configured (web)`)
+                } else {
+                    if (this.autoTemplates) {
+                        Logger.warning(`⚠️  ${varName} - may need review (web)`)
+                    } else {
+                        Logger.error(`❌ ${varName} - missing or empty (web)`)
+                    }
+                }
+            })
+
+            webConfigured = webValidationResults.length > 0 && webValidationResults.every((result) => result.isValid)
+        } else {
+            Logger.error(`❌ Web environment file not found: ${webFile}`)
+        }
+
+        return {
+            flowiseConfigured,
+            webConfigured,
+            allConfigured: flowiseConfigured && webConfigured
         }
     }
 }
