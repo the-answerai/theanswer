@@ -98,9 +98,12 @@ RUN chmod +x entrypoint.sh
 
 USER nextjs
 
-EXPOSE 3000
+# Build arguments for port configuration
+ARG PORT=3000
+ENV PORT=$PORT
 
-ENV PORT=3000
+EXPOSE $PORT
+
 ENV HOSTNAME="0.0.0.0"
 
 # Use Node.js entrypoint to parse DATABASE_SECRET, run migration, and start server

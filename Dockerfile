@@ -68,11 +68,15 @@ FROM base AS runner
 
 ENV NODE_ENV=production
 
+# Build arguments for port configuration
+ARG PORT=4000
+ENV PORT=$PORT
+
 COPY --from=build /app .
 
 WORKDIR /app/packages/server
 
 # Expose the port that the application listens on.
-EXPOSE 4000
+EXPOSE $PORT
 
 CMD ["pnpm", "start"]
