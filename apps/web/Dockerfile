@@ -5,7 +5,7 @@ FROM --platform=linux/amd64 node:20-slim AS base
 
 # Add metadata labels
 LABEL maintainer="AnswerAI Team"
-LABEL version="1.0"
+LABEL version="1.0.0"
 LABEL description="AnswerAI Web Application"
 
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm turbo@1 \
-    && pnpm config set store-dir ~/.pnpm-store
+    && pnpm config set store-dir /root/.pnpm-store
 
 ################################################################################
 
@@ -45,7 +45,7 @@ ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/exampl
 COPY . .
 
 # Install dependencies
-RUN --mount=type=cache,id=pnpm,target=~/.pnpm-store pnpm install
+RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store pnpm install
 
 # Build the application with BWS token
 # RUN --mount=type=cache,target=/app/node_modules/.cache pnpm secure-run "turbo build --filter=web"

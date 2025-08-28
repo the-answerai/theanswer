@@ -1,7 +1,6 @@
 const { PrismaPlugin } = require('experimental-prisma-webpack-plugin')
 
 const webpack = require('webpack')
-// const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
     enabled: process.env.ANALYZE === 'true'
 })
@@ -148,12 +147,6 @@ let nextConfig = withBundleAnalyzer({
     }
 })
 
-const disableSentry = process.env.DISABLE_SENTRY
-if (!disableSentry) {
-    // nextConfig = withSentryConfig(nextConfig);
-    console.warn('Sentry is NOT enabled.')
-} else {
-    console.warn('Sentry is disabled.  Please check your environment variables.')
-}
+// Sentry removed completely
 
 module.exports = nextConfig
