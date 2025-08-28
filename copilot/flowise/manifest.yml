@@ -92,10 +92,6 @@ secrets:
     DATABASE_SECRET:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-flowiseclusterAuroraSecret
 
-# Configure deployment strategy
-deployment:
-    rolling: 'default'
-
 # Environment-specific overrides
 environments:
     # Separate account deployments (independent accounts)
@@ -117,3 +113,9 @@ environments:
                 # Service aliases for standalone account strategy
                 - flowise.${CLIENT_DOMAIN}
                 - api.${CLIENT_DOMAIN}
+
+# Configure deployment strategy
+deployment:
+    # Can be 'recreate' for faster deployment but may cause downtime - use only for staging/testing
+    # Default is rolling deployments based on health checks (production-safe)
+    rolling: 'default'

@@ -20,7 +20,19 @@ const { execSync } = require('child_process')
 // ==================================================
 
 const CONFIG = {
-    // Variables that should ALWAYS be set to these values
+    // Variables to check for proper configuration validation
+    // Format: { variable: ['flowise', 'web'] } - specify which services require each variable
+    // Examples:
+    // - ['flowise', 'web'] = required for both services
+    // - ['flowise'] = only required for Flowise
+    // - ['web'] = only required for Web service
+    CONFIGURATION_VALIDATION_VARS: {
+        AUTH0_BASE_URL: ['flowise', 'web'],
+        AUTH0_ORGANIZATION_ID: ['flowise', 'web'],
+        AAI_DEFAULT_OPENAI_API_KEY: ['flowise'] // Only required for Flowise
+    },
+
+    // Variabless that should default to these values and only be modified by the user if needed and understanding the implications.
     FIXED_DEFAULTS: {
         APIKEY_PATH: '/var/efs/',
         SECRETKEY_PATH: '/var/efs/',
@@ -50,19 +62,6 @@ const CONFIG = {
         LOG_LEVEL: 'debug',
         DEBUG_LOG_LEVEL: 'debug'
     },
-
-    // Required variables that must be provided by user
-    REQUIRED_FLOWISE: [
-        'AUTH0_DOMAIN',
-        'AUTH0_BASE_URL',
-        'AUTH0_AUDIENCE',
-        'AUTH0_ORGANIZATION_ID',
-        'AUTH0_CLIENT_ID',
-        'AUTH0_CLIENT_SECRET',
-        'AAI_DEFAULT_OPENAI_API_KEY'
-    ],
-
-    REQUIRED_WEB: ['AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET'],
 
     // Optional services
     OPTIONAL_SERVICES: {
@@ -120,6 +119,10 @@ class SecretGenerator {
 
     static auth0Secret() {
         return crypto.randomBytes(32).toString('hex')
+    }
+
+    static flowiseApiKey() {
+        return crypto.randomBytes(32).toString('base64')
     }
 }
 
@@ -418,9 +421,10 @@ class EnvironmentFileCreator {
         Logger.step('Generating secure secrets...')
         this.sharedSecrets = {
             SESSION_SECRET: SecretGenerator.sessionSecret(),
-            AUTH0_SECRET: SecretGenerator.auth0Secret()
+            AUTH0_SECRET: SecretGenerator.auth0Secret(),
+            FLOWISE_API_KEY: SecretGenerator.flowiseApiKey()
         }
-        Logger.success('Generated SESSION_SECRET and AUTH0_SECRET')
+        Logger.success('Generated SESSION_SECRET, AUTH0_SECRET, and FLOWISE_API_KEY')
     }
 
     async configureDebugSettings() {
@@ -465,13 +469,15 @@ class EnvironmentFileCreator {
             AUTH0_JWKS_URI: `https://${domain}/.well-known/jwks.json`
         }
 
-        Logger.success('Auto-generated from domain:')
+        Logger.success('Auto-generated from AUTH0_DOMAIN:')
         console.log(`   • AUTH0_ISSUER_BASE_URL = ${this.sharedAuth0.AUTH0_ISSUER_BASE_URL}`)
         console.log(`   • AUTH0_JWKS_URI = ${this.sharedAuth0.AUTH0_JWKS_URI}`)
 
         // Collect remaining required variables
-        this.sharedAuth0.AUTH0_BASE_URL = await UserInput.prompt('Auth0 Base URL (should match your deployment domain)', true)
-        this.sharedAuth0.AUTH0_AUDIENCE = await UserInput.prompt('Auth0 API Audience (e.g., https://theanswer.ai)', true)
+        const baseUrl = await UserInput.prompt('Auth0 Base URL (should match your deployment domain)', true)
+        this.sharedAuth0.AUTH0_BASE_URL = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
+        const audience = await UserInput.prompt('Auth0 API Audience (e.g., https://theanswer.ai)', false)
+        this.sharedAuth0.AUTH0_AUDIENCE = audience || 'https://theanswer.ai'
         this.sharedAuth0.AUTH0_ORGANIZATION_ID = await UserInput.prompt('Auth0 Organization ID', true)
         this.sharedAuth0.AUTH0_CLIENT_ID = await UserInput.prompt('Auth0 Client ID', true)
         this.sharedAuth0.AUTH0_CLIENT_SECRET = await UserInput.prompt('Auth0 Client Secret', true)
@@ -603,28 +609,17 @@ class EnvironmentFileCreator {
     }
 
     async promptProceedOrWait(createdFiles) {
-        console.log('\n📝 Do you need to review/modify the environment files before deployment?')
+        Logger.success('Environment files created successfully!')
+        console.log('\n📁 Environment files are located at:')
+        createdFiles.forEach((file) => {
+            console.log(`   • ${file}`)
+        })
+        console.log('\n⏸️  Pausing to allow you to review the files and ensure everything looks correct.')
+        console.log('💡 You can open these files in another terminal/editor to check the configuration.')
+        console.log('💡 Press Enter to continue with deployment, or Ctrl+C to cancel')
 
-        const choice = await UserInput.choiceWithTimeout(
-            'Select an option:',
-            ["Wait - I'll review/edit the files now", 'Proceed - Continue with deployment'],
-            1,
-            15000 // 15 second timeout
-        )
-
-        if (choice === 0) {
-            Logger.info('Pausing for file review/editing...')
-            console.log('\n📁 Environment files are located at:')
-            createdFiles.forEach((file) => {
-                console.log(`   • ${file}`)
-            })
-            console.log('\n💡 Press Enter to continue, or Ctrl+C to cancel deployment')
-
-            await UserInput.prompt('Ready to continue? [Enter to proceed]', false)
-            Logger.success('Resuming deployment process...')
-        } else {
-            Logger.success('Proceeding with deployment...')
-        }
+        await UserInput.prompt('Ready to continue? [Enter to proceed]', false)
+        Logger.success('Proceeding with deployment...')
     }
 
     async offerCreationOptions() {
@@ -877,10 +872,82 @@ class EnvironmentFileCreator {
                 const flowiseFile = `copilot.${this.appName}.env`
                 if (fs.existsSync(flowiseFile)) {
                     const content = fs.readFileSync(flowiseFile, 'utf8')
-                    if (content.includes('AUTH0_DOMAIN=') && !content.match(/AUTH0_DOMAIN=\s*$/)) {
-                        Logger.warning('Files appear to be already configured.')
+
+                    // Check validation variables and show status for Flowise file
+                    Logger.step('Validating Flowise environment configuration...')
+                    const flowiseRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
+                        .filter(([_, services]) => services.includes('flowise'))
+                        .map(([varName]) => varName)
+
+                    const flowiseValidationResults = flowiseRequiredVars.map((varName) => {
+                        const pattern = new RegExp(`^${varName}=.*$`, 'gm')
+                        const match = content.match(pattern)
+                        const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
+                        return { varName, isValid }
+                    })
+
+                    // Show Flowise validation results
+                    flowiseValidationResults.forEach(({ varName, isValid }) => {
+                        if (isValid) {
+                            Logger.success(`✅ ${varName} - configured (flowise)`)
+                        } else {
+                            Logger.error(`❌ ${varName} - missing or empty (flowise)`)
+                        }
+                    })
+
+                    // Check Web file validation
+                    const webFile = `copilot.${this.appName}.web.env`
+                    let webValidationResults = []
+
+                    if (fs.existsSync(webFile)) {
+                        Logger.step('Validating Web environment configuration...')
+                        const webContent = fs.readFileSync(webFile, 'utf8')
+
+                        const webRequiredVars = Object.entries(CONFIG.CONFIGURATION_VALIDATION_VARS)
+                            .filter(([_, services]) => services.includes('web'))
+                            .map(([varName]) => varName)
+
+                        webValidationResults = webRequiredVars.map((varName) => {
+                            const pattern = new RegExp(`^${varName}=.*$`, 'gm')
+                            const match = webContent.match(pattern)
+                            const isValid = match && match[0] && !match[0].match(new RegExp(`^${varName}=\\s*$`))
+                            return { varName, isValid }
+                        })
+
+                        // Show Web validation results
+                        webValidationResults.forEach(({ varName, isValid }) => {
+                            if (isValid) {
+                                Logger.success(`✅ ${varName} - configured (web)`)
+                            } else {
+                                Logger.error(`❌ ${varName} - missing or empty (web)`)
+                            }
+                        })
+                    } else {
+                        Logger.error(`❌ Web environment file not found: ${webFile}`)
+                    }
+
+                    // Check overall validation
+                    const flowiseConfigured =
+                        flowiseValidationResults.length > 0 && flowiseValidationResults.every((result) => result.isValid)
+                    const webConfigured = webValidationResults.length > 0 && webValidationResults.every((result) => result.isValid)
+                    const allConfigured = flowiseConfigured && webConfigured
+
+                    if (allConfigured) {
+                        console.log('')
+                        Logger.success('Environment validation passed for both Flowise and Web services!')
                         Logger.info('If you want to reconfigure, please delete the files first or use --auto-templates.')
                         process.exit(0)
+                    } else {
+                        console.log('')
+                        Logger.warning('Environment validation failed - some required variables are missing or empty.')
+                        if (!flowiseConfigured) {
+                            Logger.error('❌ Flowise environment file needs configuration')
+                        }
+                        if (!webConfigured) {
+                            Logger.error('❌ Web environment file needs configuration')
+                        }
+                        Logger.info('Please ensure your environment files are properly configured before deployment.')
+                        process.exit(1)
                     }
                 }
             }

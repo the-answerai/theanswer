@@ -107,10 +107,10 @@ print_info "Select target environment:"
 echo -e "  ${WHITE}1)${NC} staging"
 echo -e "  ${WHITE}2)${NC} prod"
 echo ""
-read -r -p "$(echo -e "${WHITE}Enter choice (1-2): ${NC}")" choice
+read -r -p "$(echo -e "${WHITE}Enter choice (1-2 or staging/prod): ${NC}")" choice
 case "${choice:-}" in
-  1) ENV="staging" ;;
-  2) ENV="prod" ;;
+  1|staging) ENV="staging" ;;
+  2|prod) ENV="prod" ;;
   *) print_error "Invalid choice"; exit 1 ;;
 esac
 print_success "Selected environment: $ENV"
@@ -179,7 +179,17 @@ else
     APP_EXISTS=true
     print_success "Copilot app created successfully"
   else
-    print_error "Aborted: Cannot proceed without Copilot app"
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════════════════════╗"
+    echo "║                                                                              ║"
+    echo "║  🚫 Deployment Aborted                                                       ║"
+    echo "║                                                                              ║"
+    echo "║  Cannot proceed without a Copilot app.                                       ║"
+    echo "║                                                                              ║"
+    echo "║  Re-run this script when you're ready to proceed.                            ║"
+    echo "║                                                                              ║"
+    echo "╚══════════════════════════════════════════════════════════════════════════════╝"
+    echo ""
     exit 1
   fi
 fi
@@ -214,28 +224,28 @@ fi
 
 print_phase "7" "SERVICE SELECTION"
 print_info "Select services to deploy:"
-echo -e "  ${WHITE}1)${NC} flowise"
-echo -e "  ${WHITE}2)${NC} web"
-echo -e "  ${WHITE}3)${NC} Both (flowise and web) - ${GREEN}default${NC}"
+echo -e "  ${WHITE}1)${NC} Both (flowise and web) - ${GREEN}default${NC}"
+echo -e "  ${WHITE}2)${NC} flowise"
+echo -e "  ${WHITE}3)${NC} web"
 echo -e "  ${WHITE}4)${NC} exit"
 svc_choice=""
-if read -t 15 -r -p "$(echo -e "${WHITE}Enter choice (1-4) [default 3 in 15s]: ${NC}")" svc_choice; then
+if read -t 15 -r -p "$(echo -e "${WHITE}Enter choice (1-4) [default 1 in 15s]: ${NC}")" svc_choice; then
   :
 else
   printf '\n'
   print_warning "No input after 15s — defaulting to \"both\""
-  svc_choice="3"
+  svc_choice="1"
 fi
-# Treat blank as default 3
+# Treat blank as default 1
 if [[ -z "${svc_choice// }" ]]; then
-  svc_choice="3"
+  svc_choice="1"
 fi
 
 SERVICES=()
 case "${svc_choice}" in
-  1) SERVICES=("flowise") ;;
-  2) SERVICES=("web") ;;
-  3) SERVICES=("flowise" "web") ;;  # order preserved: flowise then web
+  1) SERVICES=("flowise" "web") ;;  # order preserved: flowise then web
+  2) SERVICES=("flowise") ;;
+  3) SERVICES=("web") ;;
   4) print_info "Aborted by user choice"; exit 0 ;;
   *) print_error "Invalid choice '$svc_choice'"; exit 1 ;;
 esac

@@ -10,9 +10,9 @@ type: Load Balanced Web Service
 http:
     # Requests to this path will be forwarded to your service.
     path: '/'
-    # Temporarily disabled for testing
+    # Temporarily disabled has issues at this time.
     # healthcheck: '/api/auth/session'
-    # Health check - dead simple endpoint that ALWAYS works
+    # Health check - simple endpoint that ALWAYS works
     healthcheck: '/healthcheck'
     # Domain aliases configured in environment-specific overrides below
     # Disable stickiness for now
@@ -92,4 +92,6 @@ environments:
 
 # Configure deployment strategy
 deployment:
+    # Can be 'recreate' for faster deployment but may cause downtime - use only for staging/testing
+    # Default is rolling deployments based on health checks (production-safe)
     rolling: 'default'
