@@ -27,8 +27,16 @@ const CONFIG = {
     // - ['flowise'] = only required for Flowise
     // - ['web'] = only required for Web service
     CONFIGURATION_VALIDATION_VARS: {
+        AUTH0_JWKS_URI: ['flowise', 'web'],
+        AUTH0_ISSUER_BASE_URL: ['flowise', 'web'],
         AUTH0_BASE_URL: ['flowise', 'web'],
+        AUTH0_AUDIENCE: ['flowise', 'web'],
+        AUTH0_SCOPE: ['flowise', 'web'],
+        AUTH0_TOKEN_SIGN_ALG: ['flowise', 'web'],
+        AUTH0_DOMAIN: ['flowise', 'web'],
         AUTH0_ORGANIZATION_ID: ['flowise', 'web'],
+        AUTH0_CLIENT_ID: ['flowise', 'web'],
+        AUTH0_CLIENT_SECRET: ['flowise', 'web'],
         AAI_DEFAULT_OPENAI_API_KEY: ['flowise']
     },
 
@@ -892,10 +900,10 @@ class EnvironmentFileCreator {
                         console.log('')
                         Logger.warning('Environment validation failed - some required variables are missing or empty.')
                         if (!validationResult.flowiseConfigured) {
-                            Logger.error('❌ Flowise environment file needs configuration')
+                            Logger.error('Flowise environment file needs configuration')
                         }
                         if (!validationResult.webConfigured) {
-                            Logger.error('❌ Web environment file needs configuration')
+                            Logger.error('Web environment file needs configuration')
                         }
                         Logger.info('Please ensure your environment files are properly configured before deployment.')
                         process.exit(1)
@@ -946,19 +954,19 @@ class EnvironmentFileCreator {
             // Show Flowise validation results
             flowiseValidationResults.forEach(({ varName, isValid }) => {
                 if (isValid) {
-                    Logger.success(`✅ ${varName} - configured (flowise)`)
+                    Logger.success(`${varName} - configured (flowise)`)
                 } else {
                     if (this.autoTemplates) {
-                        Logger.warning(`⚠️  ${varName} - may need review (flowise)`)
+                        Logger.warning(`${varName} - may need review (flowise)`)
                     } else {
-                        Logger.error(`❌ ${varName} - missing or empty (flowise)`)
+                        Logger.error(`${varName} - missing or empty (flowise)`)
                     }
                 }
             })
 
             flowiseConfigured = flowiseValidationResults.length > 0 && flowiseValidationResults.every((result) => result.isValid)
         } else {
-            Logger.error(`❌ Flowise environment file not found: ${flowiseFile}`)
+            Logger.error(`Flowise environment file not found: ${flowiseFile}`)
         }
 
         // Validate Web file
@@ -980,19 +988,19 @@ class EnvironmentFileCreator {
             // Show Web validation results
             webValidationResults.forEach(({ varName, isValid }) => {
                 if (isValid) {
-                    Logger.success(`✅ ${varName} - configured (web)`)
+                    Logger.success(`${varName} - configured (web)`)
                 } else {
                     if (this.autoTemplates) {
-                        Logger.warning(`⚠️  ${varName} - may need review (web)`)
+                        Logger.warning(`${varName} - may need review (web)`)
                     } else {
-                        Logger.error(`❌ ${varName} - missing or empty (web)`)
+                        Logger.error(`${varName} - missing or empty (web)`)
                     }
                 }
             })
 
             webConfigured = webValidationResults.length > 0 && webValidationResults.every((result) => result.isValid)
         } else {
-            Logger.error(`❌ Web environment file not found: ${webFile}`)
+            Logger.error(`Web environment file not found: ${webFile}`)
         }
 
         return {
