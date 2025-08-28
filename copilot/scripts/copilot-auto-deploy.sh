@@ -69,6 +69,43 @@ print_step() {
   echo -e "${WHITE}${BOLD}→ $1${NC}"
 }
 
+# AWS account verification function
+verify_aws_account() {
+  print_step "Verifying AWS account..."
+  print_info "Ensure AWS_PROFILE is set correctly (e.g., export AWS_PROFILE=saml or demo-sso or default, etc)"
+  echo -e "   ${CYAN}AWS_SESSION_EXPIRATION:${NC} ${GREEN}${AWS_SESSION_EXPIRATION:-not set}${NC}"
+  echo -e "   ${CYAN}AWS_PROFILE:${NC} ${GREEN}${AWS_PROFILE:-not set}${NC}"
+  echo -e "   ${CYAN}AWS_REGION:${NC} ${GREEN}${AWS_REGION:-not set}${NC}"
+  echo -e "   ${CYAN}AWS_DEFAULT_REGION:${NC} ${GREEN}${AWS_DEFAULT_REGION:-not set}${NC}"
+  print_info "Running 'aws sts get-caller-identity' to check the profile you're logged in with"
+  
+  # Run aws sts get-caller-identity and capture output safely
+  local aws_output
+  aws_output=$(aws sts get-caller-identity 2>&1) || true
+  
+  # Display the output
+  echo -e "$aws_output"
+  
+  # Ask user to confirm
+  read -r -p "$(echo -e "${WHITE}Is this the correct AWS account? (y/N): ${NC}")" confirm
+  if [[ "${confirm:-}" != "y" && "${confirm:-}" != "yes" ]]; then
+    echo ""
+    print_warning "AWS account verification cancelled by user."
+    print_info "To fix your AWS configuration:"
+    echo -e "   ${CYAN}• Docs: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html${NC}"
+    echo -e ""
+    echo -e "   ${CYAN}• Set correct AWS_PROFILE: export AWS_PROFILE=<profile-name>${NC}"
+    echo -e "   ${CYAN}• Login to SSO: aws sso login${NC}"
+    echo -e "   ${CYAN}• Check available profiles: aws configure list-profiles${NC}"
+    echo -e "   ${CYAN}• Configure new profiles: aws configure --profile <profile-name>${NC}"
+    echo ""
+    print_info "Run this script again when ready: ${GREEN}pnpm copilot:auto${NC}"
+    exit 0
+  fi
+  
+  print_success "AWS account verified"
+}
+
 # Trap signals for clean exit
 cleanup() {
   echo ""
@@ -81,6 +118,10 @@ print_header "COPILOT AUTO-DEPLOY SCRIPT"
 print_info "Automated deployment script for TheAnswer Copilot services"
 
 print_phase "1" "PREREQUISITES & SETUP"
+
+# Verify AWS account first
+verify_aws_account
+
 print_step "Checking required tools..."
 for bin in aws jq copilot; do
   command -v "$bin" >/dev/null 2>&1 || {
