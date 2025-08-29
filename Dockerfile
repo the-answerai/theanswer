@@ -72,6 +72,10 @@ ENV NODE_ENV=production
 ARG PORT=4000
 ENV PORT=$PORT
 
+# Set default proxy configuration for reverse-proxied deployments (Render, AWS, etc.)
+# Can be overridden at runtime if needed
+ENV NUMBER_OF_PROXIES=1
+
 COPY --from=build /app .
 
 WORKDIR /app/packages/server
