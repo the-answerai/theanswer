@@ -1,13 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { useDispatch } from 'react-redux'
+// Remove Redux import and replace with local state
+// import { useDispatch } from 'react-redux'
 // @ts-ignore
 import { stringify, exportData } from '@/utils/exportImport'
+// Remove Redux action import
 // @ts-ignore
-import { enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
+// import { enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 
 // Material UI
-import { Button, Dialog, DialogTitle, DialogContent, Stack, FormControlLabel, Checkbox, DialogActions, Box, MenuItem } from '@mui/material'
+import {
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    Stack,
+    FormControlLabel,
+    Checkbox,
+    DialogActions,
+    Box,
+    MenuItem,
+    Snackbar,
+    Alert
+} from '@mui/material'
 
 // API
 // @ts-ignore
@@ -140,26 +155,43 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     const [exportDialogOpen, setExportDialogOpen] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const dispatch = useDispatch()
-    const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
+    // Replace Redux with local state for notifications
+    const [notification, setNotification] = useState<{
+        open: boolean
+        message: string
+        severity: 'error' | 'success' | 'info' | 'warning'
+    }>({
+        open: false,
+        message: '',
+        severity: 'info'
+    })
+
+    // Remove Redux dispatch
+    // const dispatch = useDispatch()
+    // const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
+
     const importAllApi = useApi(exportImportApi.importData)
     const exportAllApi = useApi(exportImportApi.exportData)
 
-    // Secure random function
-    const getSecureRandom = () => {
-        const array = new Uint32Array(1)
-        crypto.getRandomValues(array)
-        return array[0]
+    // Secure random function - no longer needed with local notifications
+    // const getSecureRandom = () => {
+    //     const array = new Uint32Array(1)
+    //     crypto.getRandomValues(array)
+    //     return array[0]
+    // }
+
+    // Replace Redux notification with local state
+    const showErrorNotification = (message: string) => {
+        setNotification({
+            open: true,
+            message,
+            severity: 'error'
+        })
     }
 
-    const showErrorNotification = (message: string) => {
-        enqueueSnackbar({
-            message,
-            options: {
-                key: new Date().getTime() + getSecureRandom(),
-                variant: 'error'
-            }
-        })
+    // Add function to close notification
+    const handleCloseNotification = () => {
+        setNotification((prev) => ({ ...prev, open: false }))
     }
 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +253,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     // Import success effect
     useEffect(() => {
         if (importAllApi.data) {
+            // Show success notification
+            setNotification({
+                open: true,
+                message: 'Data imported successfully!',
+                severity: 'success'
+            })
+
             if (onSuccess) {
                 onSuccess()
             }
@@ -266,6 +305,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 linkElement.setAttribute('download', exportAllApi.data.FileDefaultName)
                 linkElement.click()
 
+                // Show success notification
+                setNotification({
+                    open: true,
+                    message: 'Data exported successfully!',
+                    severity: 'success'
+                })
+
                 if (onClose) onClose()
             } catch (error) {
                 showErrorNotification(`Export failed: ${getErrorMessage(error)}`)
@@ -295,6 +341,11 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
             <MenuItem onClick={importAll}>Import Data</MenuItem>
             <input ref={inputRef} type='file' hidden onChange={fileChange} accept='.json' />
             <ExportDialog show={exportDialogOpen} onCancel={() => setExportDialogOpen(false)} onExport={(data) => onExport(data)} />
+            <Snackbar open={notification.open} autoHideDuration={6000} onClose={handleCloseNotification}>
+                <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
+                    {notification.message}
+                </Alert>
+            </Snackbar>
         </>
     )
 }
