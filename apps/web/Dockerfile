@@ -104,6 +104,8 @@ ENV PORT=$PORT
 
 EXPOSE $PORT
 
+ENV NUMBER_OF_PROXIES="1"
+
 ENV HOSTNAME="0.0.0.0"
 
 # Use Node.js entrypoint to parse DATABASE_SECRET, run migration, and start server
