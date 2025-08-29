@@ -73,6 +73,7 @@ print_step() {
 verify_aws_account() {
   print_step "Verifying AWS account..."
   print_info "Ensure AWS_PROFILE is set correctly (e.g., export AWS_PROFILE=saml or demo-sso or default, etc)"
+  echo -e "   ${PURPLE}Docs: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html${NC}"
   echo -e "   ${CYAN}AWS_SESSION_EXPIRATION:${NC} ${GREEN}${AWS_SESSION_EXPIRATION:-not set}${NC}"
   echo -e "   ${CYAN}AWS_PROFILE:${NC} ${GREEN}${AWS_PROFILE:-not set}${NC}"
   echo -e "   ${CYAN}AWS_REGION:${NC} ${GREEN}${AWS_REGION:-not set}${NC}"
@@ -83,7 +84,27 @@ verify_aws_account() {
   local aws_output
   aws_output=$(aws sts get-caller-identity 2>&1) || true
   
-  # Display the output
+  # Check for SSO token expiration error specifically
+  if [[ "$aws_output" == *"Token has expired and refresh failed"* ]] || \
+     [[ "$aws_output" == *"ExpiredToken"* ]] || \
+     [[ "$aws_output" == *"The security token included in the request is expired"* ]]; then
+    echo -e "$aws_output"
+    echo ""
+    print_error "AWS SSO token has expired"
+    print_info "Please re-authenticate with AWS SSO:"
+    if [[ -n "${AWS_PROFILE:-}" ]]; then
+      echo -e "   ${CYAN}• Login to SSO: aws sso login --profile $AWS_PROFILE${NC}"
+    else
+      echo -e "   ${CYAN}• Login to SSO: aws sso login${NC}"
+    fi
+    echo -e "   ${CYAN}• Check available profiles: aws configure list-profiles${NC}"
+    echo -e "   ${CYAN}• Set correct profile: export AWS_PROFILE=<profile-name>${NC}"
+    echo ""
+    print_info "Run this script again after re-authenticating: ${GREEN}pnpm copilot:auto${NC}"
+    exit 1
+  fi
+  
+  # Display the output for all cases (success or other errors)
   echo -e "$aws_output"
   
   # Ask user to confirm
@@ -92,7 +113,6 @@ verify_aws_account() {
     echo ""
     print_warning "AWS account verification cancelled by user."
     print_info "To fix your AWS configuration:"
-    echo -e "   ${CYAN}• Docs: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html${NC}"
     echo -e ""
     echo -e "   ${CYAN}• Set correct AWS_PROFILE: export AWS_PROFILE=<profile-name>${NC}"
     echo -e "   ${CYAN}• Login to SSO: aws sso login${NC}"
