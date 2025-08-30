@@ -42,7 +42,7 @@ services:
           - key: DATABASE_URL
             value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
           - key: CHATFLOW_DOMAIN
-            value: https://api.subdomain.theanswer.ai
+            value: https://api.${CLIENT_DOMAIN}
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -72,8 +72,8 @@ services:
           - key: AUTH0_BASE_URL
             value: https://${CLIENT_DOMAIN}
           - key: AUTH0_SECRET
-            sync: false
-            # Generate with: openssl rand -hex 32
+            value: '# Generate with: openssl rand -hex 32 - Web and Flowise should use the same secret'
+
           - key: AUTH0_CLIENT_ID
             sync: false
           - key: AUTH0_CLIENT_SECRET
@@ -97,9 +97,9 @@ services:
           - key: DOMAIN
             value: api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
-            value: https://subdomain.theanswer.ai
+            value: https://${CLIENT_DOMAIN}
           - key: FLOWISE_DOMAIN
-            value: https://api.subdomain.theanswer.ai
+            value: https://api.${CLIENT_DOMAIN}
 
           # =========================================
           # Security & API Keys
@@ -249,8 +249,7 @@ services:
           - key: AUTH0_BASE_URL
             value: https://${CLIENT_DOMAIN}
           - key: AUTH0_SECRET
-            sync: false
-            # Generate with: openssl rand -hex 32
+            value: '# Generate with: openssl rand -hex 32 - Web and Flowise should use the same secret'
           - key: AUTH0_CLIENT_ID
             sync: false
           - key: AUTH0_CLIENT_SECRET
@@ -274,15 +273,15 @@ services:
           - key: CLIENT_DOMAIN
             sync: false
           - key: CHATFLOW_DOMAIN_OVERRIDE
-            value: https://api.subdomain.theanswer.ai
+            value: https://api.${CLIENT_DOMAIN}
           - key: DOMAIN
             value: ${CLIENT_DOMAIN}
           - key: FLOWISE_DOMAIN
-            value: https://api.subdomain.theanswer.ai
+            value: https://api.${CLIENT_DOMAIN}
           - key: API_HOST
             value: https://api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
-            value: https://subdomain.theanswer.ai
+            value: https://${CLIENT_DOMAIN}
 
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
