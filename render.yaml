@@ -181,9 +181,9 @@ services:
       dockerContext: .
       dockerfilePath: ./Dockerfile
       healthCheckPath: /api/v1/ping
-      # domains:
-      # - api.subdomain.theanswer.ai
-      # - flowise.subdomain.theanswer.ai
+      domains:
+          - api.subdomain.theanswer.ai
+          - flowise.subdomain.theanswer.ai
     - type: web
       name: aai-unified1-web
       runtime: docker
@@ -301,9 +301,9 @@ services:
       dockerContext: .
       dockerfilePath: ./apps/web/Dockerfile
       healthCheckPath: /healthcheck
-      # domains:
-      # - subdomain.theanswer.ai
-      # - web.subdomain.theanswer.ai
+      domains:
+          - subdomain.theanswer.ai
+          - web.subdomain.theanswer.ai
     - type: redis
       name: aai-unified4-redis
       plan: standard
