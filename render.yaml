@@ -47,8 +47,6 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: connectionString
-          - key: CHATFLOW_DOMAIN
-            value: https://api.${CLIENT_DOMAIN}
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
