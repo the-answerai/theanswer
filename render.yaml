@@ -104,8 +104,9 @@ services:
           # =========================================
           # Security & API Keys
           # =========================================
-          - key: FLOWISE_SECRETKEY_OVERWRITE
-            sync: false
+          # Flowise Encryption Key Override
+          # - key: FLOWISE_SECRETKEY_OVERWRITE
+          #   sync: false
           - key: SECRETKEY_PATH
             value: '/var/efs/'
           - key: APIKEY_STORAGE_TYPE
@@ -183,7 +184,7 @@ services:
           - key: TRIAL_PLAN_EXECUTIONS
             value: '10000'
           - key: DEBUG_LEVEL
-            sync: false
+            value: 'warn'
       region: virginia
       dockerContext: .
       dockerfilePath: ./Dockerfile
