@@ -42,10 +42,7 @@ services:
           - key: DATABASE_URL
             value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
           - key: CHATFLOW_DOMAIN
-            fromService:
-                name: aai-unified2-flowise
-                type: web
-                property: internalUrl
+            value: https://api.subdomain.theanswer.ai
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -100,15 +97,9 @@ services:
           - key: DOMAIN
             value: api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
-            fromService:
-                name: aai-unified1-web
-                type: web
-                property: internalUrl
+            value: https://subdomain.theanswer.ai
           - key: FLOWISE_DOMAIN
-            fromService:
-                name: aai-unified2-flowise
-                type: web
-                property: internalUrl
+            value: https://api.subdomain.theanswer.ai
 
           # =========================================
           # Security & API Keys
@@ -142,7 +133,7 @@ services:
             fromService:
                 name: aai-unified4-redis
                 type: redis
-                property: internalConnectionString
+                property: connectionString
 
           # =========================================
           # Storage Configuration
@@ -283,24 +274,15 @@ services:
           - key: CLIENT_DOMAIN
             sync: false
           - key: CHATFLOW_DOMAIN_OVERRIDE
-            fromService:
-                name: aai-unified2-flowise
-                type: web
-                property: internalUrl
+            value: https://api.subdomain.theanswer.ai
           - key: DOMAIN
             value: ${CLIENT_DOMAIN}
           - key: FLOWISE_DOMAIN
-            fromService:
-                name: aai-unified2-flowise
-                type: web
-                property: internalUrl
+            value: https://api.subdomain.theanswer.ai
           - key: API_HOST
             value: https://api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
-            fromService:
-                name: aai-unified1-web
-                type: web
-                property: internalUrl
+            value: https://subdomain.theanswer.ai
 
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
@@ -322,7 +304,7 @@ services:
             fromService:
                 name: aai-unified4-redis
                 type: redis
-                property: internalConnectionString
+                property: connectionString
           - key: BILLING_STRIPE_SECRET_KEY
             sync: false
       region: virginia
@@ -340,7 +322,6 @@ services:
       ipAllowList: []
 databases:
     - name: aai-unified3-database
-      databaseName: postgres
       user: admin
       plan: basic-256mb
       region: virginia
