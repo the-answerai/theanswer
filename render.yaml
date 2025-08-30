@@ -90,12 +90,26 @@ services:
           # =========================================
           # Domain Configuration
           # =========================================
+          - key: CHATFLOW_DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
           - key: DOMAIN
-            value: https://api.${CLIENT_DOMAIN}
-          - key: ANSWERAI_DOMAIN
-            value: https://${CLIENT_DOMAIN}
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
           - key: FLOWISE_DOMAIN
-            value: https://api.${CLIENT_DOMAIN}
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
+          - key: ANSWERAI_DOMAIN
+            fromService:
+                name: aai-unified1-web
+                type: web
+                property: hostport
 
           # =========================================
           # Security & API Keys
@@ -208,7 +222,7 @@ services:
             value: 'info'
 
           # =========================================
-          # Database Configuration (Shared)
+          # Web Database Configuration
           # =========================================
           - key: DATABASE_TYPE
             value: postgres
@@ -233,7 +247,9 @@ services:
                 name: aai-unified3-database
                 property: password
           - key: DATABASE_URL
-            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1
+            fromDatabase:
+                name: aai-unified3-database
+                property: connectionString
 
           # =========================================
           # Auth0 Configuration (Must Match Backend)
@@ -241,7 +257,7 @@ services:
           - key: AUTH0_DOMAIN
             sync: false
           - key: AUTH0_BASE_URL
-            value: https://${CLIENT_DOMAIN}
+            sync: false
           - key: AUTH0_SECRET
             sync: false
           - key: AUTH0_CLIENT_ID
@@ -264,18 +280,25 @@ services:
           # =========================================
           # Backend Connection
           # =========================================
+          - key: ANSWERAI_DOMAIN
+            fromService:
+                name: aai-unified1-web
+                type: web
+                property: hostport
+          - key: FLOWISE_DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
+          - key: DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
           - key: CLIENT_DOMAIN
             sync: false
-          - key: CHATFLOW_DOMAIN_OVERRIDE
-            value: https://api.${CLIENT_DOMAIN}
-          - key: DOMAIN
-            value: https://api.${CLIENT_DOMAIN}
-          - key: FLOWISE_DOMAIN
-            value: https://api.${CLIENT_DOMAIN}
           - key: API_HOST
             value: https://api.${CLIENT_DOMAIN}
-          - key: ANSWERAI_DOMAIN
-            value: https://${CLIENT_DOMAIN}
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
           - key: ANALYZE
