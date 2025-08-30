@@ -37,8 +37,6 @@ services:
             generateValue: true
           - key: SESSION_SECRET
             generateValue: true
-          - key: CLIENT_DOMAIN
-            sync: false
 
           # =========================================
           # Database Configuration
@@ -228,8 +226,6 @@ services:
             value: 'true'
           - key: LOG_LEVEL
             value: 'debug'
-          - key: CLIENT_DOMAIN
-            sync: false
 
           # =========================================
           # Web Database Configuration
@@ -302,7 +298,7 @@ services:
                 type: web
                 property: hostport
           - key: API_HOST
-            value: https://api.${CLIENT_DOMAIN}
+            sync: false
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
           - key: ANALYZE
