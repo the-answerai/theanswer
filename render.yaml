@@ -173,8 +173,6 @@ services:
           # =========================================
           # External Services
           # =========================================
-          - key: OPENAI_API_KEY
-            sync: false
           - key: AAI_DEFAULT_OPENAI_API_KEY
             sync: false
 
@@ -298,8 +296,6 @@ services:
           # =========================================
           # External Services
           # =========================================
-          - key: AAI_DEFAULT_OPENAI_API_KEY
-            sync: false
           - key: REDIS_URL
             fromService:
                 name: aai-unified4-redis
