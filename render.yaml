@@ -153,7 +153,7 @@ services:
           # Storage Configuration
           # =========================================
           - key: STORAGE_TYPE
-            value: 's3'
+            sync: false
           - key: S3_STORAGE_BUCKET_NAME
             sync: false
           - key: S3_STORAGE_ACCESS_KEY_ID
