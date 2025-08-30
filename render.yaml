@@ -37,7 +37,7 @@ services:
           - key: DATABASE_TYPE
             value: postgres
           - key: DATABASE_URL
-            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
+            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public&connection_limit=1
           - key: CHATFLOW_DOMAIN
             value: https://api.${CLIENT_DOMAIN}
           - key: DATABASE_HOST
@@ -213,7 +213,7 @@ services:
           - key: DATABASE_TYPE
             value: postgres
           - key: DATABASE_URL
-            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
+            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -312,7 +312,8 @@ services:
       ipAllowList: []
 databases:
     - name: aai-unified3-database
-      user: admin
+      databaseName: flowise
+      user: postgres
       plan: basic-256mb
       region: virginia
       postgresMajorVersion: '16'
