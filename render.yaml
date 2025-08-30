@@ -1,7 +1,7 @@
 # Exported from Render on 2024-11-07T15:50:51Z
 services:
     - type: web
-      name: theanswer
+      name: aai-unified2-flowise
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
       plan: standard
@@ -18,51 +18,73 @@ services:
           - key: LOG_LEVEL
             value: 'info'
           - key: LOG_PATH
-            sync: false
+            value: '/var/efs/logs'
           - key: DISABLE_FLOWISE_TELEMETRY
             value: 'true'
+          - key: DEBUG
+            value: 'false'
+          - key: LOG_LEVEL
+            value: 'warn'
+          - key: AUTH0_DEBUG
+            value: 'false'
+          - key: VERBOSE
+            value: 'false'
+          - key: DEBUG_LOG_LEVEL
+            value: 'warn'
+          - key: NUMBER_OF_PROXIES
+            value: '1'
 
           # =========================================
           # Database Configuration
           # =========================================
           - key: DATABASE_TYPE
             value: postgres
+          - key: DATABASE_URL
+            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
+          - key: CHATFLOW_DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: internalUrl
           - key: DATABASE_HOST
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: host
           - key: DATABASE_PORT
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: port
           - key: DATABASE_NAME
-            sync: false
+            value: flowise
           - key: DATABASE_USER
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: user
           - key: DATABASE_PASSWORD
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: password
 
           # =========================================
           # Auth0 Configuration (Must Match Frontend)
           # =========================================
-          - key: AUTH0_BASE_URL
-            sync: false
-          - key: AUTH0_SECRET
+          - key: CLIENT_DOMAIN
             sync: false
           - key: AUTH0_DOMAIN
             sync: false
+          - key: AUTH0_BASE_URL
+            value: https://${CLIENT_DOMAIN}
+          - key: AUTH0_SECRET
+            sync: false
+            # Generate with: openssl rand -hex 32
           - key: AUTH0_CLIENT_ID
             sync: false
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            sync: false
+            value: https://${CLIENT_DOMAIN}
           - key: AUTH0_ISSUER_BASE_URL
-            sync: false
+            value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
             sync: false
           - key: AUTH0_TOKEN_SIGN_ALG
@@ -70,15 +92,23 @@ services:
           - key: AUTH0_SCOPE
             value: 'openid profile email'
           - key: AUTH0_JWKS_URI
-            sync: false
+            value: https://${AUTH0_DOMAIN}/.well-known/jwks.json
 
           # =========================================
           # Domain Configuration
           # =========================================
           - key: DOMAIN
-            sync: false
+            value: api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
-            sync: false
+            fromService:
+                name: aai-unified1-web
+                type: web
+                property: internalUrl
+          - key: FLOWISE_DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: internalUrl
 
           # =========================================
           # Security & API Keys
@@ -86,11 +116,11 @@ services:
           - key: FLOWISE_SECRETKEY_OVERWRITE
             sync: false
           - key: SECRETKEY_PATH
-            sync: false
+            value: '/var/efs/'
           - key: APIKEY_STORAGE_TYPE
             value: 'db'
           - key: APIKEY_PATH
-            sync: false
+            value: '/var/efs/'
 
           # =========================================
           # CORS & Iframe Settings
@@ -98,22 +128,27 @@ services:
           - key: CORS_ORIGINS
             value: '*'
           - key: IFRAME_ORIGINS
-            sync: false
+            value: '*'
 
           # =========================================
           # Redis Configuration
           # =========================================
           - key: REDIS_URL
             fromService:
-                name: theanswer
+                name: aai-unified4-redis
                 type: redis
-                property: connectionString
+                property: internalConnectionString
+          - key: AAI_DEFAULT_REDIS_URL
+            fromService:
+                name: aai-unified4-redis
+                type: redis
+                property: internalConnectionString
 
           # =========================================
           # Storage Configuration
           # =========================================
           - key: STORAGE_TYPE
-            value: s3
+            value: 's3'
           - key: S3_STORAGE_BUCKET_NAME
             sync: false
           - key: S3_STORAGE_ACCESS_KEY_ID
@@ -122,10 +157,10 @@ services:
             sync: false
           - key: S3_STORAGE_REGION
             sync: false
-          - key: S3_ENDPOINT_URL
-            sync: false
           - key: S3_FORCE_PATH_STYLE
-            sync: false
+            value: 'true'
+          - key: NUMBER_OF_PROXIES
+            value: '1'
 
           # =========================================
           # Langfuse Tracing
@@ -138,37 +173,35 @@ services:
             sync: false
 
           # =========================================
+          # Feature Flags
+          # =========================================
+          - key: FLAGSMITH_ENVIRONMENT_ID
+            sync: false
+
+          # =========================================
           # External Services
           # =========================================
           - key: OPENAI_API_KEY
+            sync: false
+          - key: AAI_DEFAULT_OPENAI_API_KEY
             sync: false
 
           # =========================================
           # Legacy/Migration Variables (To Remove)
           # =========================================
-          - key: MY_APP_VITE_AUTH_ORGANIZATION_ID
-            sync: false
-          - key: MY_APP_VITE_AUTH_DOMAIN
-            sync: false
-          - key: MY_APP_VITE_AUTH_AUDIENCE
-            sync: false
-          - key: MY_APP_VITE_AUTH_CLIENT_ID
-            sync: false
           - key: TRIAL_PLAN_EXECUTIONS
-            sync: false
-          - key: PUBLIC_ORG_ID
-            sync: false
+            value: '10000'
           - key: DEBUG_LEVEL
             sync: false
-          - key: NODE_VERSION
-            sync: false
-      region: oregon
+      region: virginia
       dockerContext: .
       dockerfilePath: ./Dockerfile
-      # domains:
-      #     - prod.studio.theanswer.ai
+      healthCheckPath: /api/v1/ping
+      domains:
+          - api.subdomain.theanswer.ai
+          - flowise.subdomain.theanswer.ai
     - type: web
-      name: theanswer-web
+      name: aai-unified1-web
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
       plan: starter
@@ -184,119 +217,132 @@ services:
             value: '0.0.0.0'
           - key: NEXT_TELEMETRY_DISABLED
             value: '1'
+          - key: DEBUG
+            value: 'false'
+          - key: LOG_LEVEL
+            value: 'info'
 
           # =========================================
           # Database Configuration (Shared)
           # =========================================
-          - key: DATABASE_URL
-            fromDatabase:
-                name: theanswer
-                property: connectionString
           - key: DATABASE_TYPE
             value: postgres
+          - key: DATABASE_URL
+            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1&sslmode=require
           - key: DATABASE_HOST
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: host
           - key: DATABASE_PORT
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: port
           - key: DATABASE_NAME
-            sync: false
+            value: web
+          - key: WEB_DATABASE_NAME
+            value: web
           - key: DATABASE_USER
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: user
           - key: DATABASE_PASSWORD
             fromDatabase:
-                name: theanswer
+                name: aai-unified3-database
                 property: password
 
           # =========================================
           # Auth0 Configuration (Must Match Backend)
           # =========================================
-          - key: AUTH0_BASE_URL
-            sync: false
           - key: AUTH0_DOMAIN
             sync: false
+          - key: AUTH0_BASE_URL
+            value: https://${CLIENT_DOMAIN}
+          - key: AUTH0_SECRET
+            sync: false
+            # Generate with: openssl rand -hex 32
           - key: AUTH0_CLIENT_ID
             sync: false
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            sync: false
+            value: https://${CLIENT_DOMAIN}
           - key: AUTH0_ISSUER_BASE_URL
-            sync: false
+            value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
             sync: false
           - key: AUTH0_TOKEN_SIGN_ALG
-            sync: false
+            value: 'RS256'
           - key: AUTH0_SCOPE
-            sync: false
+            value: 'openid profile email'
           - key: AUTH0_JWKS_URI
-            sync: false
+            value: https://${AUTH0_DOMAIN}/.well-known/jwks.json
 
           # =========================================
           # Backend Connection
           # =========================================
+          - key: CLIENT_DOMAIN
+            sync: false
           - key: CHATFLOW_DOMAIN_OVERRIDE
-            sync: false
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: internalUrl
           - key: DOMAIN
-            sync: false
+            value: ${CLIENT_DOMAIN}
+          - key: FLOWISE_DOMAIN
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: internalUrl
+          - key: API_HOST
+            value: https://api.${CLIENT_DOMAIN}
+          - key: ANSWERAI_DOMAIN
+            fromService:
+                name: aai-unified1-web
+                type: web
+                property: internalUrl
 
-          # =========================================
-          # Frontend-Specific Services
-          # =========================================
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
-          - key: DISABLE_SENTRY
-            value: 'false'
           - key: ANALYZE
             value: 'false'
-
-          # =========================================
-          # React App Variables (Client-Side)
-          # =========================================
-          - key: REACT_APP_AUTH0_ORGANIZATION_ID
-            sync: false
-          - key: REACT_APP_AUTH0_AUDIENCE
-            sync: false
-          - key: REACT_APP_AUTH0_DOMAIN
-            sync: false
-          - key: REACT_APP_AUTH0_CLIENT_ID
-            sync: false
+          - key: AUTH0_DEBUG
+            value: 'false'
+          - key: VERBOSE
+            value: 'false'
+          - key: DEBUG_LOG_LEVEL
+            value: 'warn'
 
           # =========================================
           # External Services
           # =========================================
-          - key: OPENAI_API_KEY
+          - key: AAI_DEFAULT_OPENAI_API_KEY
             sync: false
           - key: REDIS_URL
-            sync: false
+            fromService:
+                name: aai-unified4-redis
+                type: redis
+                property: internalConnectionString
           - key: BILLING_STRIPE_SECRET_KEY
             sync: false
-      region: oregon
+      region: virginia
       dockerContext: .
       dockerfilePath: ./apps/web/Dockerfile
-      # domains:
-      #     - app.theanswer.ai
-      # healthCheckPath: /api/auth/session
+      healthCheckPath: /healthcheck
+      domains:
+          - subdomain.theanswer.ai
+          - web.subdomain.theanswer.ai
     - type: redis
-      name: theanswer
+      name: aai-unified4-redis
       plan: standard
-      region: oregon
+      region: virginia
       maxmemoryPolicy: allkeys-lru
       ipAllowList: []
 databases:
-    - name: theanswer
-      databaseName: theanswer
+    - name: aai-unified3-database
+      databaseName: postgres
       user: admin
       plan: basic-256mb
-      region: oregon
-      ipAllowList:
-          - source: 0.0.0.0/0
-            description: everywhere
-      postgresMajorVersion: '16'
-# Exported from Render on 2024-11-07T15:56:31Z
+      region: virginia
 
+      postgresMajorVersion: '16'
