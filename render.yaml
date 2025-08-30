@@ -4,6 +4,7 @@ services:
       name: aai-unified2-flowise
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
+      branch: ct/AAI-554/feature-web-copilot
       plan: standard
       envVars:
           # =========================================
@@ -16,15 +17,11 @@ services:
           - key: DEBUG
             value: 'false'
           - key: LOG_LEVEL
-            value: 'info'
+            value: 'warn'
           - key: LOG_PATH
             value: '/var/efs/logs'
           - key: DISABLE_FLOWISE_TELEMETRY
             value: 'true'
-          - key: DEBUG
-            value: 'false'
-          - key: LOG_LEVEL
-            value: 'warn'
           - key: AUTH0_DEBUG
             value: 'false'
           - key: VERBOSE
@@ -72,7 +69,7 @@ services:
           - key: AUTH0_BASE_URL
             value: https://${CLIENT_DOMAIN}
           - key: AUTH0_SECRET
-            value: '# Generate with: openssl rand -hex 32 - Web and Flowise should use the same secret'
+            sync: false
 
           - key: AUTH0_CLIENT_ID
             sync: false
@@ -95,7 +92,7 @@ services:
           # Domain Configuration
           # =========================================
           - key: DOMAIN
-            value: api.${CLIENT_DOMAIN}
+            value: https://api.${CLIENT_DOMAIN}
           - key: ANSWERAI_DOMAIN
             value: https://${CLIENT_DOMAIN}
           - key: FLOWISE_DOMAIN
@@ -151,8 +148,6 @@ services:
             sync: false
           - key: S3_FORCE_PATH_STYLE
             value: 'true'
-          - key: NUMBER_OF_PROXIES
-            value: '1'
 
           # =========================================
           # Langfuse Tracing
@@ -194,8 +189,8 @@ services:
       name: aai-unified1-web
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
+      branch: ct/AAI-554/feature-web-copilot
       plan: starter
-      startCommand: node apps/web/server.js
       envVars:
           # =========================================
           # Application Configuration
@@ -255,7 +250,7 @@ services:
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            value: https://${CLIENT_DOMAIN}
+            value: https://theanswer.ai
           - key: AUTH0_ISSUER_BASE_URL
             value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
@@ -275,7 +270,7 @@ services:
           - key: CHATFLOW_DOMAIN_OVERRIDE
             value: https://api.${CLIENT_DOMAIN}
           - key: DOMAIN
-            value: ${CLIENT_DOMAIN}
+            value: https://api.${CLIENT_DOMAIN}
           - key: FLOWISE_DOMAIN
             value: https://api.${CLIENT_DOMAIN}
           - key: API_HOST
@@ -322,5 +317,4 @@ databases:
       user: admin
       plan: basic-256mb
       region: virginia
-
       postgresMajorVersion: '16'
