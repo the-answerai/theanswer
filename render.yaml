@@ -22,7 +22,7 @@ services:
           - key: LOG_LEVEL
             value: 'warn'
           - key: LOG_PATH
-            value: '/var/efs/logs'
+            value: '/var/data'
           - key: DISABLE_FLOWISE_TELEMETRY
             value: 'true'
           - key: AUTH0_DEBUG
@@ -121,11 +121,11 @@ services:
           # - key: FLOWISE_SECRETKEY_OVERWRITE
           #   sync: false
           - key: SECRETKEY_PATH
-            value: '/var/efs/'
+            value: '/var/data'
           - key: APIKEY_STORAGE_TYPE
             value: 'db'
           - key: APIKEY_PATH
-            value: '/var/efs/'
+            value: '/var/data'
 
           # =========================================
           # CORS & Iframe Settings
