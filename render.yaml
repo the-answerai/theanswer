@@ -212,8 +212,6 @@ services:
           # =========================================
           - key: DATABASE_TYPE
             value: postgres
-          - key: DATABASE_URL
-            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -234,6 +232,8 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: password
+          - key: DATABASE_URL
+            value: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${WEB_DATABASE_NAME}?schema=public&connection_limit=1
 
           # =========================================
           # Auth0 Configuration (Must Match Backend)
@@ -313,7 +313,7 @@ services:
 databases:
     - name: aai-unified3-database
       databaseName: flowise
-      user: postgres
+      user: admin
       plan: basic-256mb
       region: virginia
       postgresMajorVersion: '16'
