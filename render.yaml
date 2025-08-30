@@ -346,7 +346,7 @@ services:
 # ================================================================
 databases:
     - name: aai-unified3-database
-      databaseName: aaiUnifiedDB
+      databaseName: aai_unified_database
       user: admin
       plan: basic-256mb
       region: virginia
