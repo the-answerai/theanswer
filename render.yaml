@@ -18,7 +18,7 @@ services:
           - key: PORT
             value: '4000'
           - key: DEBUG
-            value: 'false'
+            value: 'true'
           - key: LOG_LEVEL
             value: 'warn'
           - key: LOG_PATH
@@ -26,11 +26,11 @@ services:
           - key: DISABLE_FLOWISE_TELEMETRY
             value: 'true'
           - key: AUTH0_DEBUG
-            value: 'false'
+            value: 'true'
           - key: VERBOSE
-            value: 'false'
+            value: 'true'
           - key: DEBUG_LOG_LEVEL
-            value: 'warn'
+            value: 'debug'
           - key: NUMBER_OF_PROXIES
             value: '1'
           - key: FLOWISE_API_KEY
@@ -43,10 +43,7 @@ services:
           # =========================================
           - key: DATABASE_TYPE
             value: postgres
-          - key: DATABASE_URL
-            fromDatabase:
-                name: aai-unified3-database
-                property: connectionString
+          # DATABASE_URL will be constructed from DATABASE_SECRET
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -55,8 +52,7 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: port
-          - key: DATABASE_NAME
-            value: flowise
+          # Database name will be set from DATABASE_SECRET
           - key: DATABASE_USER
             fromDatabase:
                 name: aai-unified3-database
@@ -65,6 +61,8 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: password
+          - key: DATABASE_SECRET
+            value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"${DATABASE_NAME}","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
 
           # =========================================
           # Auth0 Configuration (Must Match Frontend)
@@ -197,7 +195,7 @@ services:
           - key: TRIAL_PLAN_EXECUTIONS
             value: '10000'
           - key: DEBUG_LEVEL
-            value: 'warn'
+            value: 'debug'
       region: virginia
       dockerContext: .
       dockerfilePath: ./Dockerfile
@@ -227,9 +225,9 @@ services:
           - key: NEXT_TELEMETRY_DISABLED
             value: '1'
           - key: DEBUG
-            value: 'false'
+            value: 'true'
           - key: LOG_LEVEL
-            value: 'info'
+            value: 'debug'
 
           # =========================================
           # Web Database Configuration
@@ -244,10 +242,7 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: port
-          - key: DATABASE_NAME
-            value: web
-          - key: WEB_DATABASE_NAME
-            value: web
+          # Database name will be set from DATABASE_SECRET
           - key: DATABASE_USER
             fromDatabase:
                 name: aai-unified3-database
@@ -256,10 +251,9 @@ services:
             fromDatabase:
                 name: aai-unified3-database
                 property: password
-          - key: DATABASE_URL
-            fromDatabase:
-                name: aai-unified3-database
-                property: connectionString
+          # DATABASE_URL will be constructed by entrypoint.sh from DATABASE_SECRET
+          - key: DATABASE_SECRET
+            value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"flowise","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
 
           # =========================================
           # Auth0 Configuration (Must Match Backend)
@@ -315,11 +309,11 @@ services:
           - key: ANALYZE
             value: 'false'
           - key: AUTH0_DEBUG
-            value: 'false'
+            value: 'true'
           - key: VERBOSE
-            value: 'false'
+            value: 'true'
           - key: DEBUG_LOG_LEVEL
-            value: 'warn'
+            value: 'debug'
 
           # =========================================
           # External Services
@@ -352,7 +346,7 @@ services:
 # ================================================================
 databases:
     - name: aai-unified3-database
-      databaseName: flowise
+      databaseName: aai-unified-database
       user: admin
       plan: basic-256mb
       region: virginia
