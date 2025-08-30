@@ -79,7 +79,7 @@ services:
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            value: https://${CLIENT_DOMAIN}
+            value: https://theanswer.ai
           - key: AUTH0_ISSUER_BASE_URL
             value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
