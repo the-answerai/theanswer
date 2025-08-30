@@ -195,6 +195,7 @@ services:
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
       plan: starter
+      startCommand: node apps/web/server.js
       envVars:
           # =========================================
           # Application Configuration
