@@ -15,11 +15,11 @@ if [ -n "$DATABASE_SECRET" ]; then
             const secret = JSON.parse(process.env.DATABASE_SECRET);
             console.log('export DATABASE_HOST=\"' + secret.host + '\"');
             console.log('export DATABASE_PORT=\"' + secret.port + '\"');
-            console.log('export DATABASE_NAME=\"' + (process.env.WEB_DATABASE_NAME || secret.dbname) + '\"');
+            console.log('export DATABASE_NAME=\"' + secret.dbname + '\"');
             console.log('export DATABASE_USER=\"' + secret.username + '\"');
             console.log('export DATABASE_PASSWORD=\"' + secret.password + '\"');
             console.log('export DATABASE_TYPE=\"' + secret.engine + '\"');
-            console.log('export DATABASE_URL=\"postgresql://' + secret.username + ':' + secret.password + '@' + secret.host + ':' + secret.port + '/' + (process.env.WEB_DATABASE_NAME || secret.dbname) + '?schema=public&connection_limit=1\"');
+            console.log('export DATABASE_URL=\"postgresql://' + secret.username + ':' + secret.password + '@' + secret.host + ':' + secret.port + '/' + secret.dbname + '?schema=web&connection_limit=1\"');
         } catch (error) {
             console.error('Error parsing DATABASE_SECRET:', error.message);
             process.exit(1);

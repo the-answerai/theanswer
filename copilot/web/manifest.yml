@@ -57,8 +57,7 @@ variables: # Pass environment variables as key value pairs.
     DOMAIN: 'http://flowise:4000'
     # External API endpoint for OAuth callbacks, MCP tools, and external integrations
     API_HOST: 'https://api.${CLIENT_DOMAIN}'
-    # Override for Database separation: Web service uses different database than Flowise
-    WEB_DATABASE_NAME: 'web'
+    # Database name will be set from DATABASE_SECRET
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     NUMBER_OF_PROXIES: '1'
