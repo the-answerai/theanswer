@@ -60,25 +60,25 @@ taskdef_overrides:
 
 # Optional fields for more advanced use-cases.
 variables: # Pass environment variables as key value pairs.
-    NODE_ENV: 'production'
-    PORT: '4000'
-    # Database type (required for DataSource initialization)
-    DATABASE_TYPE: 'postgres'
-    NUMBER_OF_PROXIES: '1'
+    ANSWERAI_DOMAIN: 'http://web:3000'
     CHATFLOW_DOMAIN: 'http://flowise:4000'
     DOMAIN: 'http://flowise:4000'
     FLOWISE_DOMAIN: 'http://flowise:4000'
-    ANSWERAI_DOMAIN: 'http://web:3000'
+    NODE_ENV: 'production'
+    PORT: '4000'
+    NUMBER_OF_PROXIES: '1'
     STORAGE_TYPE: 's3'
     S3_STORAGE_BUCKET_NAME:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketName
-    # Optional: S3 region (defaults to us-east-1 if not provided)
-    S3_STORAGE_REGION:
-        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketRegion
     AAI_DEFAULT_REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
+    # Database type (required for DataSource initialization)
+    DATABASE_TYPE: 'postgres'
+    # Optional: S3 region (defaults to us-east-1 if not provided)
+    S3_STORAGE_REGION:
+        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketRegion
     # Lacework configuration variables - will be loaded from env file (COMMENTED OUT FOR NOW)
     LaceworkVerbose: 'true'
 

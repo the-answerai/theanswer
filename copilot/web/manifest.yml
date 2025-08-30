@@ -51,21 +51,21 @@ secrets:
 
 # Configuration variables required for the web service
 variables: # Pass environment variables as key value pairs.
-    NUMBER_OF_PROXIES: '1'
-    NODE_ENV: production
-    PORT: '3000'
-    HOSTNAME: '0.0.0.0'
-    NEXT_TELEMETRY_DISABLED: '1'
     AUTH0_BASE_URL: ${AUTH0_BASE_URL}
     ANSWERAI_DOMAIN: 'http://web:3000'
     FLOWISE_DOMAIN: 'http://flowise:4000'
     DOMAIN: 'http://flowise:4000'
     # External API endpoint for OAuth callbacks, MCP tools, and external integrations
     API_HOST: 'https://api.${CLIENT_DOMAIN}'
-    # Database separation: Web service uses different database than Flowise
-    WEB_DATABASE_NAME: 'web' # Override flowise database name from shared secret
+    # Override for Database separation: Web service uses different database than Flowise
+    WEB_DATABASE_NAME: 'web'
     REDIS_URL:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-RedisURL
+    NUMBER_OF_PROXIES: '1'
+    NODE_ENV: production
+    PORT: '3000'
+    HOSTNAME: '0.0.0.0'
+    NEXT_TELEMETRY_DISABLED: '1'
 
 # Environment-specific overrides
 environments:

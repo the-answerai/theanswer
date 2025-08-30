@@ -1,5 +1,8 @@
 # Exported from Render on 2024-11-07T15:50:51Z
 services:
+    # ================================================================
+    # Flowise Application Configuration (Backend)
+    # ================================================================
     - type: web
       name: aai-unified2-flowise
       runtime: docker
@@ -30,6 +33,10 @@ services:
             value: 'warn'
           - key: NUMBER_OF_PROXIES
             value: '1'
+          - key: FLOWISE_API_KEY
+            generateValue: true
+          - key: SESSION_SECRET
+            generateValue: true
 
           # =========================================
           # Database Configuration
@@ -75,7 +82,7 @@ services:
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            value: https://theanswer.ai
+            sync: false
           - key: AUTH0_ISSUER_BASE_URL
             value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
@@ -198,6 +205,9 @@ services:
       domains:
           - api.subdomain.theanswer.ai
           - flowise.subdomain.theanswer.ai
+    # ================================================================
+    # Web Application Configuration (Frontend)
+    # ================================================================
     - type: web
       name: aai-unified1-web
       runtime: docker
@@ -256,6 +266,7 @@ services:
           # =========================================
           - key: AUTH0_DOMAIN
             sync: false
+          # Auth0 Base URL needs to be set manually here for initial deployment, Flowise will auto-fill it in from the environment variable
           - key: AUTH0_BASE_URL
             sync: false
           - key: AUTH0_SECRET
@@ -265,7 +276,7 @@ services:
           - key: AUTH0_CLIENT_SECRET
             sync: false
           - key: AUTH0_AUDIENCE
-            value: https://theanswer.ai
+            sync: false
           - key: AUTH0_ISSUER_BASE_URL
             value: https://${AUTH0_DOMAIN}
           - key: AUTH0_ORGANIZATION_ID
@@ -327,12 +338,18 @@ services:
       domains:
           - subdomain.theanswer.ai
           - web.subdomain.theanswer.ai
-    - type: redis
+    # ================================================================
+    # Redis Application Configuration (Cache)
+    # ================================================================
+    - type: keyvalue
       name: aai-unified4-redis
       plan: standard
       region: virginia
       maxmemoryPolicy: allkeys-lru
       ipAllowList: []
+# ================================================================
+# Database Application Configuration (Postgres)
+# ================================================================
 databases:
     - name: aai-unified3-database
       databaseName: flowise
@@ -340,3 +357,23 @@ databases:
       plan: basic-256mb
       region: virginia
       postgresMajorVersion: '16'
+      # CURRENT SETTING: Internal-Renderonly access (most secure for Database services)
+      ipAllowList: []
+      # =========================================
+      # SECURITY WARNING - DATABASE ACCESS CONTROL
+      # =========================================
+      # ⚠️  CRITICAL: Never use 0.0.0.0/0 for database access - this opens your database to the entire internet!
+      # ⚠️  ALWAYS use specific IP addresses or internal-only access for production databases
+      #
+      # SECURE CONFIGURATION GUIDELINES:
+      # • Use /32 CIDR notation for single IP addresses (most secure)
+      # • Use /24 CIDR notation only for trusted corporate VPN subnets
+      # • Never use broader ranges like /16 or /8 for database access
+      # • Check your current IP at https://ipchicken.com before adding home office access
+      #
+      # Examples:
+      # ipAllowList:
+      #   - source: 203.0.113.4/32
+      #     description: home-office-single-ip (check ipchicken.com for current IP)
+      #   - source: 198.51.100.0/24
+      #     description: corporate-vpn-subnet (only for trusted VPN ranges)
