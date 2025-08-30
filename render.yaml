@@ -37,6 +37,8 @@ services:
             generateValue: true
           - key: SESSION_SECRET
             generateValue: true
+          - key: CLIENT_DOMAIN
+            sync: false
 
           # =========================================
           # Database Configuration
@@ -67,12 +69,10 @@ services:
           # =========================================
           # Auth0 Configuration (Must Match Frontend)
           # =========================================
-          - key: CLIENT_DOMAIN
-            sync: false
           - key: AUTH0_DOMAIN
             sync: false
           - key: AUTH0_BASE_URL
-            value: https://${CLIENT_DOMAIN}
+            sync: false
           - key: AUTH0_SECRET
             sync: false
           - key: AUTH0_CLIENT_ID
@@ -82,7 +82,7 @@ services:
           - key: AUTH0_AUDIENCE
             sync: false
           - key: AUTH0_ISSUER_BASE_URL
-            value: https://${AUTH0_DOMAIN}
+            sync: false
           - key: AUTH0_ORGANIZATION_ID
             sync: false
           - key: AUTH0_TOKEN_SIGN_ALG
@@ -90,7 +90,7 @@ services:
           - key: AUTH0_SCOPE
             value: 'openid profile email'
           - key: AUTH0_JWKS_URI
-            value: https://${AUTH0_DOMAIN}/.well-known/jwks.json
+            sync: false
 
           # =========================================
           # Domain Configuration
@@ -228,6 +228,8 @@ services:
             value: 'true'
           - key: LOG_LEVEL
             value: 'debug'
+          - key: CLIENT_DOMAIN
+            sync: false
 
           # =========================================
           # Web Database Configuration
@@ -256,11 +258,10 @@ services:
             value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"flowise","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
 
           # =========================================
-          # Auth0 Configuration (Must Match Backend)
+          # Auth0 Configuration (Must Match Frontend)
           # =========================================
           - key: AUTH0_DOMAIN
             sync: false
-          # Auth0 Base URL needs to be set manually here for initial deployment, Flowise will auto-fill it in from the environment variable
           - key: AUTH0_BASE_URL
             sync: false
           - key: AUTH0_SECRET
@@ -272,7 +273,7 @@ services:
           - key: AUTH0_AUDIENCE
             sync: false
           - key: AUTH0_ISSUER_BASE_URL
-            value: https://${AUTH0_DOMAIN}
+            sync: false
           - key: AUTH0_ORGANIZATION_ID
             sync: false
           - key: AUTH0_TOKEN_SIGN_ALG
@@ -280,7 +281,7 @@ services:
           - key: AUTH0_SCOPE
             value: 'openid profile email'
           - key: AUTH0_JWKS_URI
-            value: https://${AUTH0_DOMAIN}/.well-known/jwks.json
+            sync: false
 
           # =========================================
           # Backend Connection
@@ -300,8 +301,6 @@ services:
                 name: aai-unified2-flowise
                 type: web
                 property: hostport
-          - key: CLIENT_DOMAIN
-            sync: false
           - key: API_HOST
             value: https://api.${CLIENT_DOMAIN}
           - key: FLAGSMITH_ENVIRONMENT_ID
