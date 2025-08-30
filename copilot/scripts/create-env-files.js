@@ -57,7 +57,7 @@ const CONFIG = {
     DEBUG_PRODUCTION: {
         DEBUG: 'false',
         VERBOSE: 'false',
-        AUTH_DEBUG: 'false',
+        AUTH0_DEBUG: 'false',
         LOG_LEVEL: 'warn',
         DEBUG_LOG_LEVEL: 'warn'
     },
@@ -66,7 +66,7 @@ const CONFIG = {
     DEBUG_ENABLED: {
         DEBUG: 'true',
         VERBOSE: 'true',
-        AUTH_DEBUG: 'true',
+        AUTH0_DEBUG: 'true',
         LOG_LEVEL: 'debug',
         DEBUG_LOG_LEVEL: 'debug'
     },
@@ -439,7 +439,7 @@ class EnvironmentFileCreator {
         Logger.step('Debug Configuration for Both Services')
         console.log('========================================')
         console.log('⚠️  IMPORTANT: Debug settings should be DISABLED in production!')
-        console.log('   Production values: DEBUG=false, VERBOSE=false, AUTH_DEBUG=false, LOG_LEVEL=warn')
+        console.log('   Production values: DEBUG=false, VERBOSE=false, AUTH0_DEBUG=false, LOG_LEVEL=warn')
         console.log('💡 This setting will be applied to both Flowise and Web services.')
 
         const enableDebug = await UserInput.confirm('Enable debug mode for first run?', false)
@@ -449,7 +449,7 @@ class EnvironmentFileCreator {
             this.debugSettings = { ...CONFIG.DEBUG_ENABLED }
             console.log('   • DEBUG = true (enabled for debugging)')
             console.log('   • VERBOSE = true (enabled for verbose logging)')
-            console.log('   • AUTH_DEBUG = true (enabled for auth debugging)')
+            console.log('   • AUTH0_DEBUG = true (enabled for auth debugging)')
             console.log('   • LOG_LEVEL = debug (set to debug level)')
             console.log('   • DEBUG_LOG_LEVEL = debug (set to debug level)')
             console.log('💡 Remember to disable these in production!')
@@ -458,7 +458,7 @@ class EnvironmentFileCreator {
             this.debugSettings = { ...CONFIG.DEBUG_PRODUCTION }
             console.log('   • DEBUG = false (disabled for production)')
             console.log('   • VERBOSE = false (disabled for production)')
-            console.log('   • AUTH_DEBUG = false (disabled for production)')
+            console.log('   • AUTH0_DEBUG = false (disabled for production)')
             console.log('   • LOG_LEVEL = warn (set to warning level)')
             console.log('   • DEBUG_LOG_LEVEL = warn (set to warning level)')
         }
