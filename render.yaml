@@ -128,7 +128,7 @@ services:
             fromService:
                 name: aai-unified4-redis
                 type: redis
-                property: internalConnectionString
+                property: connectionString
           - key: AAI_DEFAULT_REDIS_URL
             fromService:
                 name: aai-unified4-redis
