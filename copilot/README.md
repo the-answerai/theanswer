@@ -60,7 +60,11 @@ copilot/
 ├── .workspace                          # Copilot workspace configuration (auto-generated)
 ├── scripts/                           # Copilot scripts
 │   ├── copilot-switch-app.sh               # Domain switching script
-│   └── copilot-auto-deploy.sh              # Auto deployment script
+│   ├── copilot-auto-deploy.sh              # Auto deployment script
+│   ├── route53-zone-manager.sh             # Route53 DNS zone management
+│   ├── create-env-files.js                 # Environment file creation
+│   └── tests/                              # Script validation tests
+│       └── test-copilot-auto-deploy.sh     # Auto-deploy script tests
 ├── environments/                      # Environment configurations
 │   ├── staging/                            # Staging environment
 │   ├── prod/                               # Production environment
@@ -208,6 +212,33 @@ aws route53 change-resource-record-sets \
     }]
   }'
 ```
+
+### 🚀 Automated Deployment with Route53 Integration
+
+TheAnswerAI provides a comprehensive automated deployment script that handles DNS configuration, environment setup, and service deployment in a single workflow.
+
+#### Quick Start with Auto-Deploy
+
+```bash
+# Run the automated deployment script
+pnpm copilot:auto
+```
+
+This script will:
+- ✅ Verify AWS credentials and permissions
+- ✅ Guide you through domain and environment selection
+- ✅ Automatically configure Route53 DNS zones
+- ✅ Set up environment files and variables
+- ✅ Deploy Copilot applications and services
+- ✅ Provide health check URLs for verification
+
+#### Auto-Deploy Features
+
+- **DNS Management**: Automatic Route53 zone creation and NS record configuration
+- **Environment Setup**: Guided environment file creation with validation
+- **Service Deployment**: Automated deployment of both Flowise and Web services
+- **Error Recovery**: Graceful handling of failures with user guidance
+- **Health Monitoring**: Automatic health check URL generation
 
 ### 🚀 Streamlined Deployment (After Initial Setup)
 

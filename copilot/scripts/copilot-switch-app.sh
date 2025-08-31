@@ -26,9 +26,16 @@ fi
 
 # Default to "aai" if no domain provided
 if [[ -z "${RESOLVED_DOMAIN}" ]]; then
-  echo "WARNING: CLIENT_DOMAIN environment variable is not set!" >&2
-  echo "This should typically be set to your client's domain (e.g., abc.theanswer.ai)" >&2
-  echo "Defaulting to 'aai' for the application name." >&2
+  echo "WARNING: No domain provided, defaulting to 'aai' for the application name." >&2
+  echo "This should typically be set to your client's domain (e.g., abc.theanswer.ai)" >&2bg
+  echo "" >&2
+  echo "For proper usage:" >&2
+  echo "  CLIENT_DOMAIN=abc.theanswer.ai bash $0" >&2
+  echo "  CLIENT_DOMAIN=staging.abc.theanswer.ai bash $0" >&2
+  echo "  bash $0 abc.theanswer.ai" >&2
+  echo "" >&2
+  echo "Note: This script can be used manually or called by the auto-deploy script." >&2
+  echo "For complete automated deployment, use: pnpm copilot:auto" >&2
   echo "" >&2
   RESOLVED_DOMAIN="aai"
 fi
