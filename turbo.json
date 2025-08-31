@@ -22,7 +22,6 @@
         "DATABASE_URL",
         "DATABASE_URL",
         "DB_STUDIO_SERVER_URL",
-        "DISABLE_SENTRY",
         "FLAGSMITH_ENVIRONMENT_ID",
         "FLOWISE_DOMAIN",
         "GITHUB_ID",
