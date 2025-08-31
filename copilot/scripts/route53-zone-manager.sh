@@ -55,12 +55,15 @@ print_ns_records() {
   ns_records=$(aws route53 list-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --query "ResourceRecordSets[?Type=='NS' && Name=='${domain}.'].ResourceRecords[].Value" \
-    --output text 2>/dev/null || echo "")
+    --output json 2>/dev/null || echo "[]")
   
-  if [[ -n "$ns_records" ]]; then
-    echo "$ns_records" | while read -r ns; do
-      echo -e "  ${GREEN}•${NC} ${WHITE}${ns}${NC}"
+  if [[ "$ns_records" != "[]" ]]; then
+    echo -e "${GREEN}${BOLD}📋 Copy-Paste Friendly NS Records:${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo "$ns_records" | jq -r '.[]' | while read -r ns; do
+      echo -e "${WHITE}${ns}${NC}"
     done
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   else
     print_error "Could not retrieve NS records"
   fi
@@ -69,8 +72,32 @@ print_ns_records() {
   echo -e "${YELLOW}${BOLD}Instructions:${NC}"
   echo -e "  1. Log into your DNS provider for the parent domain"
   echo -e "  2. Create an NS record for: ${CYAN}$domain${NC}"
-  echo -e "  3. Add the name servers listed above"
+  echo -e "  3. Add the name servers listed above (use the copy-paste section)"
   echo -e "  4. Wait for DNS propagation (usually 5-30 minutes)"
+  echo ""
+  echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+}
+
+print_ns_records_placeholder() {
+  local domain="$1"
+  
+  echo ""
+  echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${WHITE}${BOLD}📋 NS Records for Manual Configuration${NC}"
+  echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+  echo -e "${WHITE}Domain:${NC} ${CYAN}$domain${NC}"
+  echo ""
+  echo -e "${WHITE}Name Servers:${NC}"
+  echo -e "  ${YELLOW}⚠️  Zone not yet created - NS records will be available after zone creation${NC}"
+  echo ""
+  echo -e "${YELLOW}${BOLD}Instructions:${NC}"
+  echo -e "  1. Create the hosted zone '${CYAN}$domain${NC}' in your Route53 account"
+  echo -e "  2. Log into your DNS provider for the parent domain"
+  echo -e "  3. Create an NS record for: ${CYAN}$domain${NC}"
+  echo -e "  4. Add the name servers from the newly created zone"
+  echo -e "  5. Wait for DNS propagation (usually 5-30 minutes)"
   echo ""
   echo -e "${CYAN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo ""
@@ -144,42 +171,127 @@ fi
 
 print_step "Route53 Zone Management for: ${CYAN}${TARGET_DOMAIN}${NC}"
 
-# Step 1: List all Route53 zones
-print_step "Analyzing existing Route53 zones..."
+# Get all Route53 zones first
 ZONES_JSON=$(aws route53 list-hosted-zones --output json 2>/dev/null || echo '{"HostedZones":[]}')
 
-# Parse zones into an array for easier processing
-declare -A ZONE_MAP
+# Step 1: Check TLD (BASE_DOMAIN) accessibility
+print_step "Checking TLD (${BASE_DOMAIN}) accessibility..."
+TLD_ZONE_ID=""
+TLD_ACCESSIBLE=false
+
+# Check if TLD zone exists in this account
 while IFS= read -r zone_data; do
   zone_name=$(echo "$zone_data" | jq -r '.Name' | sed 's/\.$//')
   zone_id=$(echo "$zone_data" | jq -r '.Id' | sed 's|/hostedzone/||')
-  ZONE_MAP["$zone_name"]="$zone_id"
+  
+  if [[ "$zone_name" == "$BASE_DOMAIN" ]]; then
+    TLD_ZONE_ID="$zone_id"
+    break
+  fi
+done < <(echo "$ZONES_JSON" | jq -c '.HostedZones[]' 2>/dev/null || echo "")
+
+if [[ -n "$TLD_ZONE_ID" ]]; then
+  print_info "TLD zone found: ${BASE_DOMAIN} (${TLD_ZONE_ID})"
+  
+  # Test write access to TLD zone
+  TEST_RECORD="_route53-test-${RANDOM}.${BASE_DOMAIN}"
+  
+  # Create test TXT record
+  CHANGE_BATCH=$(cat <<EOF
+{
+  "Changes": [{
+    "Action": "CREATE",
+    "ResourceRecordSet": {
+      "Name": "${TEST_RECORD}",
+      "Type": "TXT",
+      "TTL": 60,
+      "ResourceRecords": [{"Value": "\"test\""}]
+    }
+  }]
+}
+EOF
+)
+  
+  if aws route53 change-resource-record-sets \
+    --hosted-zone-id "$TLD_ZONE_ID" \
+    --change-batch "$CHANGE_BATCH" \
+    >/dev/null 2>&1; then
+    
+    # Clean up test record
+    CHANGE_BATCH=$(cat <<EOF
+{
+  "Changes": [{
+    "Action": "DELETE",
+    "ResourceRecordSet": {
+      "Name": "${TEST_RECORD}",
+      "Type": "TXT",
+      "TTL": 60,
+      "ResourceRecords": [{"Value": "\"test\""}]
+    }
+  }]
+}
+EOF
+)
+    aws route53 change-resource-record-sets \
+      --hosted-zone-id "$TLD_ZONE_ID" \
+      --change-batch "$CHANGE_BATCH" \
+      >/dev/null 2>&1 || true
+    
+    TLD_ACCESSIBLE=true
+    print_success "Write access confirmed for TLD zone"
+  else
+    print_warning "No write access to TLD zone - manual NS configuration required"
+    TLD_ACCESSIBLE=false
+  fi
+else
+  print_warning "TLD zone not found in this account: ${BASE_DOMAIN}"
+  TLD_ACCESSIBLE=false
+fi
+
+# Step 2: List all Route53 zones
+print_step "Analyzing existing Route53 zones..."
+
+# Parse zones into variables for easier processing
+TARGET_ZONE_ID=""
+PARENT_ZONE_ID=""
+ZONE_COUNT=0
+
+while IFS= read -r zone_data; do
+  zone_name=$(echo "$zone_data" | jq -r '.Name' | sed 's/\.$//')
+  zone_id=$(echo "$zone_data" | jq -r '.Id' | sed 's|/hostedzone/||')
+  
+  # Store target zone ID if found
+  if [[ "$zone_name" == "$TARGET_DOMAIN" ]]; then
+    TARGET_ZONE_ID="$zone_id"
+  fi
+  
+  # Store parent zone ID if found
+  if [[ "$zone_name" == "$PARENT_DOMAIN" ]]; then
+    PARENT_ZONE_ID="$zone_id"
+  fi
+  
+  ZONE_COUNT=$((ZONE_COUNT + 1))
+  echo -e "  ${CYAN}•${NC} $zone_name"
 done < <(echo "$ZONES_JSON" | jq -c '.HostedZones[]' 2>/dev/null || echo "")
 
 # Display found zones
-if [[ ${#ZONE_MAP[@]} -gt 0 ]]; then
-  print_info "Found ${#ZONE_MAP[@]} existing Route53 zone(s):"
-  for zone in "${!ZONE_MAP[@]}"; do
-    echo -e "  ${CYAN}•${NC} $zone"
-  done
+if [[ $ZONE_COUNT -gt 0 ]]; then
+  print_info "Found $ZONE_COUNT existing Route53 zone(s):"
 else
   print_warning "No existing Route53 zones found"
 fi
 
-# Step 2: Check if target zone exists
-TARGET_ZONE_ID=""
-if [[ -n "${ZONE_MAP[$TARGET_DOMAIN]:-}" ]]; then
-  TARGET_ZONE_ID="${ZONE_MAP[$TARGET_DOMAIN]}"
+# Step 3: Check if target zone exists
+if [[ -n "$TARGET_ZONE_ID" ]]; then
   print_success "Target zone exists: ${TARGET_DOMAIN} (${TARGET_ZONE_ID})"
 else
   print_warning "Target zone does not exist: ${TARGET_DOMAIN}"
 fi
 
-# Step 3: Check parent zone access permissions
-PARENT_ZONE_ID=""
+# Step 4: Check parent zone access permissions
 PARENT_ACCESSIBLE=false
-if [[ -n "${ZONE_MAP[$PARENT_DOMAIN]:-}" ]]; then
-  PARENT_ZONE_ID="${ZONE_MAP[$PARENT_DOMAIN]}"
+MANUAL_NS_HANDLED=false
+if [[ -n "$PARENT_ZONE_ID" ]]; then
   print_info "Parent zone found: ${PARENT_DOMAIN} (${PARENT_ZONE_ID})"
   
   # Test write access to parent zone
@@ -230,7 +342,22 @@ EOF
     PARENT_ACCESSIBLE=true
     print_success "Write access confirmed for parent zone"
   else
-    print_warning "No write access to parent zone (manual NS configuration required)"
+    print_warning "No write access to parent zone - manual NS configuration required"
+    echo ""
+    print_info "Since you don't have write access to the parent zone '${PARENT_DOMAIN}',"
+    print_info "you'll need to manually configure NS records in that zone."
+    echo ""
+    print_info "The following NS records need to be added to '${PARENT_DOMAIN}':"
+    echo ""
+    # We'll show the NS records for the target zone that need to be added to parent
+    if [[ -n "$TARGET_ZONE_ID" ]]; then
+      print_ns_records "$TARGET_ZONE_ID" "$TARGET_DOMAIN"
+    else
+      print_info "Target zone not yet created - NS records will be available after zone creation"
+    fi
+    echo ""
+    read -r -p "$(echo -e "${WHITE}Press Enter when NS records are configured in '${PARENT_DOMAIN}'...${NC}")"
+    MANUAL_NS_HANDLED=true
   fi
 else
   print_warning "Parent zone not found in Route53: ${PARENT_DOMAIN}"
@@ -263,20 +390,55 @@ else
       PARENT_ZONE_ID=$(echo "$PARENT_CREATE_OUTPUT" | jq -r '.HostedZone.Id' | sed 's|/hostedzone/||')
       print_success "Parent zone created successfully: ${PARENT_ZONE_ID}"
       
-      # Update our zone map
-      ZONE_MAP["$PARENT_DOMAIN"]="$PARENT_ZONE_ID"
       PARENT_ACCESSIBLE=true
     else
-      print_info "Manual NS configuration will be required"
+      print_warning "Manual NS configuration required for parent zone"
+      echo ""
+      print_info "Since the parent zone '${PARENT_DOMAIN}' doesn't exist in this account,"
+      print_info "you'll need to create it manually in the account that manages '${BASE_DOMAIN}'."
+      echo ""
+      print_info "Once the parent zone is created, you'll need to add these NS records to '${BASE_DOMAIN}':"
+      echo ""
+      # We'll show placeholder NS records since parent zone doesn't exist yet
+      print_ns_records_placeholder "$PARENT_DOMAIN"
+      echo ""
+      read -r -p "$(echo -e "${WHITE}Press Enter when parent zone '${PARENT_DOMAIN}' is created...${NC}")"
       PARENT_ACCESSIBLE=false
     fi
   else
-    print_info "Manual NS configuration will be required"
+    print_warning "Manual NS configuration required for parent zone"
+    echo ""
+    
+    # If target zone already exists, show its NS records for manual configuration
+    if [[ -n "$TARGET_ZONE_ID" ]]; then
+      print_info "Since the parent zone '${PARENT_DOMAIN}' doesn't exist in this account,"
+      print_info "you'll need to create it manually in the account that manages '${BASE_DOMAIN}'."
+      echo ""
+      print_info "The following NS records need to be added to '${BASE_DOMAIN}' for '${TARGET_DOMAIN}':"
+      echo ""
+      print_ns_records "$TARGET_ZONE_ID" "$TARGET_DOMAIN"
+    else
+      print_info "Since the parent zone '${PARENT_DOMAIN}' doesn't exist in this account,"
+      print_info "you'll need to create it manually in the account that manages '${BASE_DOMAIN}'."
+      echo ""
+      print_info "Once the parent zone is created, you'll need to add these NS records to '${BASE_DOMAIN}':"
+      echo ""
+      # We'll show placeholder NS records since parent zone doesn't exist yet
+      print_ns_records_placeholder "$PARENT_DOMAIN"
+    fi
+    echo ""
+    # For prod environments where PARENT_DOMAIN = BASE_DOMAIN, don't ask about "creating" the TLD
+    if [[ "$PARENT_DOMAIN" == "$BASE_DOMAIN" ]]; then
+      read -r -p "$(echo -e "${WHITE}Press Enter when NS records are configured in '${BASE_DOMAIN}'...${NC}")"
+    else
+      read -r -p "$(echo -e "${WHITE}Press Enter when parent zone '${PARENT_DOMAIN}' is created...${NC}")"
+    fi
+    MANUAL_NS_HANDLED=true
     PARENT_ACCESSIBLE=false
   fi
 fi
 
-# Step 4: Create zone if it doesn't exist
+# Step 5: Create zone if it doesn't exist
 if [[ -z "$TARGET_ZONE_ID" ]]; then
   echo ""
   read -r -p "$(echo -e "${WHITE}Create Route53 hosted zone for '${CYAN}${TARGET_DOMAIN}${WHITE}'? (y/N): ${NC}")" create_zone
@@ -309,8 +471,28 @@ if [[ -z "$TARGET_ZONE_ID" ]]; then
     TARGET_ZONE_ID=$(echo "$CREATE_OUTPUT" | jq -r '.HostedZone.Id' | sed 's|/hostedzone/||')
     print_success "Hosted zone created successfully: ${TARGET_ZONE_ID}"
     
-    # Update our zone map
-    ZONE_MAP["$TARGET_DOMAIN"]="$TARGET_ZONE_ID"
+    # Check if TLD is not accessible and show NS records for manual configuration
+    if [[ "$TLD_ACCESSIBLE" == "false" ]]; then
+      echo ""
+      print_warning "TLD (${BASE_DOMAIN}) is not accessible in this account"
+      print_info "You need to manually configure NS records in the account that manages '${BASE_DOMAIN}'."
+      echo ""
+      
+      # For staging environments, we need to show NS records for the parent zone
+      if [[ "$ENV" == "staging" && -n "$PARENT_ZONE_ID" ]]; then
+        print_info "The following NS records need to be added to '${BASE_DOMAIN}' for '${PARENT_DOMAIN}':"
+        echo ""
+        print_ns_records "$PARENT_ZONE_ID" "$PARENT_DOMAIN"
+      else
+        print_info "The following NS records need to be added to '${BASE_DOMAIN}' for '${TARGET_DOMAIN}':"
+        echo ""
+        print_ns_records "$TARGET_ZONE_ID" "$TARGET_DOMAIN"
+      fi
+      echo ""
+      read -r -p "$(echo -e "${WHITE}Press Enter when NS records are configured in '${BASE_DOMAIN}'...${NC}")"
+    fi
+    
+    # Zone created successfully
   else
     print_error "Cannot proceed without Route53 hosted zone"
     echo ""
@@ -326,7 +508,7 @@ if [[ -z "$TARGET_ZONE_ID" ]]; then
   fi
 fi
 
-# Step 5: Handle NS records
+# Step 6: Handle NS records
 if [[ -n "$TARGET_ZONE_ID" ]]; then
   print_step "Configuring NS records..."
   
@@ -386,15 +568,19 @@ EOF
         fi
       fi
     else
-      # Manual NS configuration required
-      print_warning "Manual NS configuration required"
-      print_ns_records "$TARGET_ZONE_ID" "$TARGET_DOMAIN"
-      read -r -p "$(echo -e "${WHITE}Press Enter when DNS configuration is complete...${NC}")"
+      # Manual NS configuration required - but only if not already handled
+      if [[ "$MANUAL_NS_HANDLED" == "false" ]]; then
+        print_warning "Manual NS configuration required"
+        print_ns_records "$TARGET_ZONE_ID" "$TARGET_DOMAIN"
+        read -r -p "$(echo -e "${WHITE}Press Enter when DNS configuration is complete...${NC}")"
+      else
+        print_info "Manual NS configuration already handled - proceeding with validation"
+      fi
     fi
   fi
 fi
 
-# Step 6: Final validation
+# Step 7: Final validation
 print_step "Validating Route53 configuration..."
 
 # Check if zone exists and is queryable
