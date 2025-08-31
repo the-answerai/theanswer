@@ -38,7 +38,7 @@ ENV AUTH0_BASE_URL=$AUTH0_BASE_URL
 
 # Use dummy DATABASE_URL for Prisma client generation during build
 # This is only needed for prisma generate, the real DATABASE_URL comes from runtime secrets
-ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/example_db?schema=public
+ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/example_db?schema=web
 
 
 # Copy the entire project
