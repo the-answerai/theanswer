@@ -235,6 +235,17 @@ else
   read -r -p "$(echo -e "${WHITE}Create new Copilot app with domain '${CYAN}$CLIENT_DOMAIN${WHITE}'? (y/N): ${NC}")" create_app
   create_app_lc="$(lower "$create_app")"
   if [[ "$create_app_lc" == "y" || "$create_app_lc" == "yes" ]]; then
+    # Ensure Route53 zones are configured before creating the app
+    print_step "Ensuring Route53 zones are configured..."
+    if ! bash ./copilot/scripts/route53-zone-manager.sh "$SUBDOMAIN" "$ENV" "$BASE_DOMAIN"; then
+      print_error "Route53 configuration failed"
+      read -r -p "$(echo -e "${WHITE}Continue without proper DNS setup? (y/N): ${NC}")" continue_anyway
+      continue_anyway_lc="$(lower "$continue_anyway")"
+      if [[ "$continue_anyway_lc" != "y" && "$continue_anyway_lc" != "yes" ]]; then
+        exit 1
+      fi
+    fi
+    
     print_step "Initializing Copilot app..."
     copilot app init --domain "$CLIENT_DOMAIN"
     APP_EXISTS=true

@@ -397,7 +397,26 @@ class EnvironmentFileCreator {
 
         if (!this.appName) {
             Logger.error('No application name provided and no copilot/.workspace file found')
-            Logger.info('Usage: node create-env-files.js [environment|application_name] [--auto-templates]')
+            console.log('')
+            console.log('Environment File Creator Script')
+            console.log('Purpose: Create and validate environment files for TheAnswer Copilot deployments')
+            console.log('')
+            console.log('Usage:')
+            console.log('  node create-env-files.js [environment|application_name] [--auto-templates]')
+            console.log('')
+            console.log('Parameters:')
+            console.log('  environment        - Environment name (staging or prod)')
+            console.log('  application_name   - Copilot application name')
+            console.log('  --auto-templates   - Auto-select template creation for new deployments')
+            console.log('')
+            console.log('Examples:')
+            console.log('  node create-env-files.js staging')
+            console.log('  node create-env-files.js acme-aai')
+            console.log('  node create-env-files.js staging --auto-templates')
+            console.log('')
+            console.log('Note: This script can be used manually or called by the auto-deploy script.')
+            console.log('For complete automated deployment, use: pnpm copilot:auto')
+            console.log('')
             process.exit(1)
         }
 
