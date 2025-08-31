@@ -296,8 +296,9 @@ services:
             sync: false
           - key: S3_STORAGE_REGION
             sync: false
+          # S3_FORCE_PATH_STYLE: false for AWS S3, true for S3-compatible services (MinIO, DigitalOcean, etc.)
           - key: S3_FORCE_PATH_STYLE
-            value: 'true'
+            value: 'false'
 
           # =========================================
           # Flowise Langfuse Tracing
