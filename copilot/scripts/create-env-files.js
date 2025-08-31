@@ -58,8 +58,7 @@ const CONFIG = {
         DEBUG: 'false',
         VERBOSE: 'false',
         AUTH0_DEBUG: 'false',
-        LOG_LEVEL: 'warn',
-        DEBUG_LOG_LEVEL: 'warn'
+        LOG_LEVEL: 'warn'
     },
 
     // Debug mode settings
@@ -67,8 +66,7 @@ const CONFIG = {
         DEBUG: 'true',
         VERBOSE: 'true',
         AUTH0_DEBUG: 'true',
-        LOG_LEVEL: 'debug',
-        DEBUG_LOG_LEVEL: 'debug'
+        LOG_LEVEL: 'debug'
     },
 
     // Optional services
@@ -451,7 +449,6 @@ class EnvironmentFileCreator {
             console.log('   • VERBOSE = true (enabled for verbose logging)')
             console.log('   • AUTH0_DEBUG = true (enabled for auth debugging)')
             console.log('   • LOG_LEVEL = debug (set to debug level)')
-            console.log('   • DEBUG_LOG_LEVEL = debug (set to debug level)')
             console.log('💡 Remember to disable these in production!')
         } else {
             Logger.success('Using production-safe debug settings for both services')
@@ -460,7 +457,6 @@ class EnvironmentFileCreator {
             console.log('   • VERBOSE = false (disabled for production)')
             console.log('   • AUTH0_DEBUG = false (disabled for production)')
             console.log('   • LOG_LEVEL = warn (set to warning level)')
-            console.log('   • DEBUG_LOG_LEVEL = warn (set to warning level)')
         }
     }
 
