@@ -34,29 +34,68 @@ WORKDIR /app
 
 # Active build arguments and environment variables  
 ARG AUTH0_BASE_URL
-ENV AUTH0_BASE_URL=$AUTH0_BASE_URL
+ENV AUTH0_BASE_URL=${AUTH0_BASE_URL:-http://localhost:3000}
 
 # Use dummy DATABASE_URL for Prisma client generation during build
 # This is only needed for prisma generate, the real DATABASE_URL comes from runtime secrets
 ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/example_db?schema=web&connection_limit=1
 
+# Copy package files first for better layer caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages-answers/db/package.json ./packages-answers/db/
+COPY packages-answers/ui/package.json ./packages-answers/ui/
+COPY packages-answers/utils/package.json ./packages-answers/utils/
+COPY packages-answers/types/package.json ./packages-answers/types/
+COPY packages-answers/experimental-prisma-webpack-plugin/package.json ./packages-answers/experimental-prisma-webpack-plugin/
+COPY packages-answers/eslint-config-custom/package.json ./packages-answers/eslint-config-custom/
+COPY packages-answers/tsconfig/package.json ./packages-answers/tsconfig/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/components/package.json ./packages/components/
+COPY packages/embed/package.json ./packages/embed/
 
-# Copy the entire project
+# Install dependencies (skip postinstall scripts for Docker build)
+RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store pnpm install --ignore-scripts
+
+# Copy source code (excluding unnecessary files via .dockerignore)
 COPY . .
 
-# Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store pnpm install
-
-# Build the application with BWS token
-# RUN --mount=type=cache,target=/app/node_modules/.cache pnpm secure-run "turbo build --filter=web"
+# Build the application
 RUN --mount=type=cache,target=/app/node_modules/.cache turbo build --filter=web
+
+# Cleanup build artifacts and unnecessary files
+RUN find /app -name "*.map" -delete 2>/dev/null || true && \
+    find /app -name "*.ts" -not -path "*/node_modules/*" -not -path "*/prisma/*" -delete 2>/dev/null || true && \
+    find /app -name "*.tsx" -not -path "*/node_modules/*" -delete 2>/dev/null || true && \
+    find /app -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /app -name "*.test.*" -delete 2>/dev/null || true && \
+    find /app -name "*.spec.*" -delete 2>/dev/null || true && \
+    find /app -name "*.stories.*" -delete 2>/dev/null || true && \
+    rm -rf /app/.next/cache /app/.turbo /app/docs /app/.git /app/scripts /app/copilot 2>/dev/null || true && \
+    rm -rf /app/packages/docs /app/packages/api-documentation 2>/dev/null || true && \
+    rm -rf /app/packages/components/nodes/*/test 2>/dev/null || true && \
+    rm -rf /app/packages/components/nodes/*/tests 2>/dev/null || true && \
+    find /app -name "README.md" -not -path "*/node_modules/*" -delete 2>/dev/null || true && \
+    find /app -name "CHANGELOG.md" -not -path "*/node_modules/*" -delete 2>/dev/null || true && \
+    find /app -name "LICENSE" -not -path "*/node_modules/*" -delete 2>/dev/null || true && \
+    find /app -name ".eslintrc*" -delete 2>/dev/null || true && \
+    find /app -name ".prettierrc*" -delete 2>/dev/null || true && \
+    find /app -name "tsconfig.json" -not -path "*/node_modules/*" -delete 2>/dev/null || true && \
+    find /app -name "webpack.config.*" -delete 2>/dev/null || true && \
+    find /app -name "gulpfile.*" -delete 2>/dev/null || true && \
+    find /app -name "rollup.config.*" -delete 2>/dev/null || true && \
+    find /app -name "vite.config.*" -delete 2>/dev/null || true && \
+    find /app -name "jest.config.*" -delete 2>/dev/null || true && \
+    find /app -name "cypress.config.*" -delete 2>/dev/null || true && \
+    find /app -name ".babelrc*" -delete 2>/dev/null || true && \
+    find /app -name "babel.config.*" -delete 2>/dev/null || true
 
 ################################################################################
 
-FROM base AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install runtime dependencies
+# Install only runtime dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
@@ -67,28 +106,23 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Don't run production as root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
 # Copy built application
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Copy Prisma schema, migrations and all dependencies for runtime migration deployment
+# Copy Prisma schema and generated client for runtime migrations
 COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/prisma ./packages-answers/db/prisma
-COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/node_modules ./packages-answers/db/node_modules
-
-# Copy the pnpm store to resolve symlinks
-# Probably needs to be optimized and reconsidered
-COPY --from=installer --chown=nextjs:nodejs /app/node_modules/.pnpm ./node_modules/.pnpm
-
-# Copy generated Prisma client for runtime
 COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/generated ./packages-answers/db/generated
 
-# Copy root package.json and pnpm-lock.yaml for db:migrate script
+# Install Prisma CLI globally for runtime migrations
+RUN npm install -g prisma
+
+# Copy minimal package.json for workspace resolution
 COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=installer --chown=nextjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Copy entrypoint.sh script
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
@@ -105,7 +139,6 @@ ENV PORT=$PORT
 EXPOSE $PORT
 
 ENV NUMBER_OF_PROXIES="1"
-
 ENV HOSTNAME="0.0.0.0"
 
 # Use Node.js entrypoint to parse DATABASE_SECRET, run migration, and start server
