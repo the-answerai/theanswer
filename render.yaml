@@ -25,6 +25,12 @@ services:
             value: 'true'
           - key: LOG_LEVEL
             value: 'debug'
+          - key: ANALYZE
+            value: 'false'
+          - key: AUTH0_DEBUG
+            value: 'true'
+          - key: VERBOSE
+            value: 'true'
 
           # =========================================
           # Web Database Configuration
@@ -34,7 +40,7 @@ services:
           - key: DATABASE_NAME
             fromDatabase:
                 name: aai-unified3-database
-                property: dbname
+                property: database
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -107,11 +113,6 @@ services:
                 property: hostport
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
-          - key: ANALYZE
-            value: 'false'
-          - key: AUTH0_DEBUG
-            value: 'true'
-          - key: VERBOSE
 
           # =========================================
           # Web External Services
@@ -176,7 +177,7 @@ services:
           - key: DATABASE_NAME
             fromDatabase:
                 name: aai-unified3-database
-                property: dbname
+                property: database
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
