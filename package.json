@@ -56,6 +56,7 @@
         "bws-update": "rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh",
         "seed-credentials": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --test --auto-detect\"",
         "seed-credentials:write": "pnpm secure-run \"node ./scripts/seed-credentials/seed-credentials.js --auto-detect\"",
+        "export-auth0-users": "pnpm secure-run \"node ./scripts/export-auth0-users.js\"",
         "submodule:init": "git submodule update --init --recursive --force",
         "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive",
         "precopilot": "BWS_SUPPRESS_ALL=true pnpm secure-run sh copilot/scripts/copilot-switch-app.sh && sleep 1",
