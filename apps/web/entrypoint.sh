@@ -38,7 +38,7 @@ echo "Running database migration..."
 # - Fresh DB: migrate deploy works or falls back to db push
 # - Mixed state: db push syncs schema if migrations fail
 echo "Attempting database migration deployment..."
-(cd packages-answers/db && npx prisma migrate deploy)
+(cd packages-answers/db && prisma migrate deploy)
 
 
 # Start the Next.js application
