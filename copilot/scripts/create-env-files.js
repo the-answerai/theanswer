@@ -967,10 +967,12 @@ class EnvironmentFileCreator {
             })
 
             // Show Flowise validation results
+            let flowiseErrors = 0
             flowiseValidationResults.forEach(({ varName, isValid }) => {
                 if (isValid) {
-                    Logger.success(`${varName} - configured (flowise)`)
+                    // Don't show individual success messages
                 } else {
+                    flowiseErrors++
                     if (this.autoTemplates) {
                         Logger.warning(`${varName} - may need review (flowise)`)
                     } else {
@@ -978,6 +980,9 @@ class EnvironmentFileCreator {
                     }
                 }
             })
+            if (flowiseErrors === 0) {
+                Logger.success(`All Flowise environment variables configured`)
+            }
 
             flowiseConfigured = flowiseValidationResults.length > 0 && flowiseValidationResults.every((result) => result.isValid)
         } else {
@@ -1001,10 +1006,12 @@ class EnvironmentFileCreator {
             })
 
             // Show Web validation results
+            let webErrors = 0
             webValidationResults.forEach(({ varName, isValid }) => {
                 if (isValid) {
-                    Logger.success(`${varName} - configured (web)`)
+                    // Don't show individual success messages
                 } else {
+                    webErrors++
                     if (this.autoTemplates) {
                         Logger.warning(`${varName} - may need review (web)`)
                     } else {
@@ -1012,6 +1019,10 @@ class EnvironmentFileCreator {
                     }
                 }
             })
+
+            if (webErrors === 0) {
+                Logger.success(`All Web environment variables configured`)
+            }
 
             webConfigured = webValidationResults.length > 0 && webValidationResults.every((result) => result.isValid)
         } else {
