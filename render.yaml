@@ -11,7 +11,7 @@ services:
       plan: starter
       envVars:
           # =========================================
-          # Application Configuration
+          # Web Application Configuration
           # =========================================
           - key: NODE_ENV
             value: production
@@ -31,6 +31,10 @@ services:
           # =========================================
           - key: DATABASE_TYPE
             value: postgres
+          - key: DATABASE_NAME
+            fromDatabase:
+                name: aai-unified3-database
+                property: dbname
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -50,10 +54,10 @@ services:
                 property: password
           # DATABASE_URL will be constructed by entrypoint.sh from DATABASE_SECRET
           - key: DATABASE_SECRET
-            value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"flowise","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
+            value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"${DATABASE_NAME}","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
 
           # =========================================
-          # Auth0 Configuration (Must Match Frontend)
+          # Web Auth0 Configuration (Must Match Backend)
           # =========================================
           - key: AUTH0_DOMAIN
             sync: false
@@ -79,7 +83,7 @@ services:
             sync: false
 
           # =========================================
-          # Backend Connection
+          # Web Domain Configurations
           # =========================================
           - key: ANSWERAI_DOMAIN
             fromService:
@@ -97,7 +101,10 @@ services:
                 type: web
                 property: hostport
           - key: API_HOST
-            sync: false
+            fromService:
+                name: aai-unified2-flowise
+                type: web
+                property: hostport
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
           - key: ANALYZE
@@ -107,7 +114,7 @@ services:
           - key: VERBOSE
 
           # =========================================
-          # External Services
+          # Web External Services
           # =========================================
           - key: REDIS_URL
             fromService:
@@ -135,7 +142,7 @@ services:
       plan: standard
       envVars:
           # =========================================
-          # Core Application Configuration
+          # Flowise Application Configuration
           # =========================================
           - key: NODE_ENV
             value: production
@@ -161,11 +168,15 @@ services:
             generateValue: true
 
           # =========================================
-          # Database Configuration
+          # Flowise Database Configuration
           # =========================================
+          # DATABASE_URL will be constructed from DATABASE_SECRET
           - key: DATABASE_TYPE
             value: postgres
-          # DATABASE_URL will be constructed from DATABASE_SECRET
+          - key: DATABASE_NAME
+            fromDatabase:
+                name: aai-unified3-database
+                property: dbname
           - key: DATABASE_HOST
             fromDatabase:
                 name: aai-unified3-database
@@ -187,7 +198,7 @@ services:
             value: '{"engine":"postgres","host":"${DATABASE_HOST}","port":"${DATABASE_PORT}","dbname":"${DATABASE_NAME}","username":"${DATABASE_USER}","password":"${DATABASE_PASSWORD}"}'
 
           # =========================================
-          # Auth0 Configuration (Must Match Frontend)
+          # Flowise Auth0 Configuration (Must Match Frontend)
           # =========================================
           - key: AUTH0_DOMAIN
             sync: false
@@ -213,7 +224,7 @@ services:
             sync: false
 
           # =========================================
-          # Domain Configuration
+          # Flowise Domain Configuration
           # =========================================
           - key: CHATFLOW_DOMAIN
             fromService:
@@ -237,7 +248,7 @@ services:
                 property: hostport
 
           # =========================================
-          # Security & API Keys
+          # Flowise Security & API Keys
           # =========================================
           # Flowise Encryption Key Override
           # - key: FLOWISE_SECRETKEY_OVERWRITE
@@ -250,7 +261,7 @@ services:
             value: '/var/data'
 
           # =========================================
-          # CORS & Iframe Settings
+          # Flowise CORS & Iframe Settings
           # =========================================
           - key: CORS_ORIGINS
             value: '*'
@@ -258,7 +269,7 @@ services:
             value: '*'
 
           # =========================================
-          # Redis Configuration
+          # Flowise Redis Configuration
           # =========================================
           - key: REDIS_URL
             fromService:
@@ -272,7 +283,7 @@ services:
                 property: connectionString
 
           # =========================================
-          # Storage Configuration
+          # Flowise Storage Configuration
           # =========================================
           - key: STORAGE_TYPE
             sync: false
@@ -288,7 +299,7 @@ services:
             value: 'true'
 
           # =========================================
-          # Langfuse Tracing
+          # Flowise Langfuse Tracing
           # =========================================
           - key: LANGFUSE_HOST
             value: 'https://cloud.langfuse.com'
@@ -298,13 +309,13 @@ services:
             sync: false
 
           # =========================================
-          # Feature Flags
+          # Flowise Feature Flags
           # =========================================
           - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
 
           # =========================================
-          # External Services
+          # Flowise External Services
           # =========================================
           - key: AAI_DEFAULT_OPENAI_API_KEY
             sync: false
