@@ -29,11 +29,14 @@ Resources:
                     - ObjectOwnership: BucketOwnerEnforced
             LifecycleConfiguration:
                 Rules:
+                    # OPTIMIZED: Maximum aggressive storage cost reduction
                     - Id: ExpireNonCurrentObjects
                       Status: Enabled
-                      NoncurrentVersionExpirationInDays: 30
+                      NoncurrentVersionExpirationInDays: 14 # Minimal retention for maximum savings
                       AbortIncompleteMultipartUpload:
-                          DaysAfterInitiation: 1
+                          DaysAfterInitiation: 7
+                    # 🚀 UPGRADE PATH: 7 → 30 → 90 days for more retention
+                    # 💡 ENTERPRISE: Add Intelligent Tiering, Glacier, Deep Archive for large storage
             CorsConfiguration:
                 CorsRules:
                     - AllowedHeaders:

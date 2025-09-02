@@ -27,19 +27,20 @@ Parameters:
 
 Mappings:
     flowiseclusterEnvScalingConfigurationMap:
-        # Default environments (same account)
         staging:
-            'DBMinCapacity': 0.5 # AllowedValues: from 0.5 through 128
-            'DBMaxCapacity': 8 # AllowedValues: from 0.5 through 128
+            'DBMinCapacity': 0.5
+            'DBMaxCapacity': 1
+            # Upgrade path: 4 → 8 → 16 → 32 → 64 → 128
         prod:
-            'DBMinCapacity': 1 # AllowedValues: from 0.5 through 128
-            'DBMaxCapacity': 16 # AllowedValues: from 0.5 through 128
+            'DBMinCapacity': 0.5
+            'DBMaxCapacity': 4
+            # Upgrade path: 8 → 16 → 32 → 64 → 128
 
 Resources:
     flowiseclusterDBSubnetGroup:
         Type: 'AWS::RDS::DBSubnetGroup'
         Properties:
-            DBSubnetGroupDescription: Group of private subnets for Aurora Serverless v2 cluster.
+            DBSubnetGroupDescription: Private subnet for Aurora Serverless v2 cluster
             SubnetIds: !Split [',', !Ref PrivateSubnets]
 
     flowiseclusterWorkloadSecurityGroup:

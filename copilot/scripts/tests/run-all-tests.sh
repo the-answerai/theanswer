@@ -212,6 +212,7 @@ main() {
     
     # Define test suites to run
     local test_suites=(
+        "copilot/scripts/tests/test-manifest-validation.sh:Manifest Validation"
         "copilot/scripts/tests/test-copilot-auto-deploy.sh:Copilot Auto Deploy"
         "copilot/scripts/tests/test-route53-zone-manager.sh:Route53 Zone Manager"
         "copilot/scripts/tests/test-copilot-switch-app.sh:Copilot Switch App"

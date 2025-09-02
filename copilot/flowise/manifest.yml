@@ -39,8 +39,11 @@ storage:
             efs: true
             path: /var/efs
             read_only: false
+            # 🚀 STARTUP-OPTIMIZED: EFS General Purpose mode (~$10-20/month for typical usage)
+            # 🔧 UPGRADE PATH: Add efs_config for Infrequent Access mode (30-85% cost savings)
+            # 🔧 ENTERPRISE: Configure provisioned throughput for high-performance workloads
 
-# Lacework sidecar configuration
+# Lacework sidecar configuration for security monitoring, won't be used unless LaceworkAccessToken is set
 sidecars:
     datacollector-sidecar:
         image: lacework/datacollector:latest-sidecar
@@ -90,20 +93,38 @@ secrets:
 
 # Environment-specific overrides
 environments:
-    # Separate account deployments (independent accounts)
+    # Cost-optimized configuration with auto-scaling
     staging:
-        cpu: 2048 # Number of CPU units for the task.
-        memory: 4096 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
+        cpu: 512
+        # Minimum required for initial deployment
+        # Upgrade path: 1024 → 2048 → 4096 → 8192
+        memory: 1024
+        # Minimum required for initial deployment
+        # Upgrade path: 2048 → 4096 → 8192 → 16384
+        count:
+            range: 1-10
+            # Can handle processing spikes automatically
+            # Set AWS billing alerts at $150/month for safety
+            cpu_percentage: 90
+            memory_percentage: 95
         http:
             alias:
                 # Service aliases for standalone account strategy
                 - flowise.${CLIENT_DOMAIN}
                 - api.${CLIENT_DOMAIN}
     prod:
-        cpu: 4096 # Number of CPU units for the task.
-        memory: 8192 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
+        cpu: 512
+        # Minimum required for initial deployment (same as staging)
+        # Upgrade path: 1024 → 2048 → 4096 → 8192
+        memory: 1024
+        # Minimum required for initial deployment (same as staging)
+        # Upgrade path: 2048 → 4096 → 8192 → 16384
+        count:
+            range: 1-20
+            # Can handle significant load automatically
+            # Set AWS billing alerts at $300/month for safety
+            cpu_percentage: 90
+            memory_percentage: 95
         http:
             alias:
                 # Service aliases for standalone account strategy

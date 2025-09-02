@@ -326,7 +326,55 @@ esac
 
 print_success "Selected services: ${SERVICES[*]}"
 
-print_phase "8" "SERVICE DEPLOYMENT"
+print_phase "8" "MANIFEST VALIDATION"
+print_info "Validating service manifests for common configuration issues..."
+
+# Source shared validation functions
+source "$(dirname "${BASH_SOURCE[0]}")/lib/validation-functions.sh"
+
+# Initialize validation error counter
+validation_errors=0
+
+# Validate addons first
+if ! validate_addons; then
+  ((validation_errors++))
+fi
+
+echo ""
+
+# Validate each service
+for svc in "${SERVICES[@]}"; do
+  # Use shared validation function
+  if ! validate_service "$svc" "$APP_NAME"; then
+    ((validation_errors+=$?))
+  fi
+  
+  echo ""
+done
+
+# Handle validation results
+if [[ $validation_errors -gt 0 ]]; then
+  print_warning "⚠️  Found $validation_errors validation issue(s)"
+  
+  echo ""
+  print_validation_fixes
+  
+  echo ""
+  read -r -p "$(echo -e "${WHITE}Continue with deployment despite validation issues? (y/N): ${NC}")" continue_anyway
+  continue_anyway_lc="$(lower "$continue_anyway")"
+  if [[ "$continue_anyway_lc" != "y" && "$continue_anyway_lc" != "yes" ]]; then
+    print_error "Deployment aborted due to validation issues"
+    print_info "Please fix the issues above and re-run the script"
+    print_info "💡 Tip: Run 'copilot svc package --name <service> --output-dir /tmp/test' to debug manifest issues"
+    exit 1
+  fi
+  print_warning "Proceeding with deployment despite validation issues..."
+else
+  print_success "✅ All validation checks passed!"
+  print_info "🚀 Your configuration is bulletproof and ready for deployment!"
+fi
+
+print_phase "9" "SERVICE DEPLOYMENT"
 print_info "Deploying services to environment '$ENV'..."
 
 for svc in "${SERVICES[@]}"; do

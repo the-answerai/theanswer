@@ -12,6 +12,14 @@ bash copilot/scripts/tests/run-all-tests.sh
 
 ## Individual Test Scripts
 
+### 🛡️ Manifest Validation
+
+```bash
+bash copilot/scripts/tests/test-manifest-validation.sh
+```
+
+**Tests:** Bulletproof validation of Copilot service manifests, auto-scaling configuration, environment variables, CloudFormation generation, and addon validation. Ensures deployment configurations are production-ready.
+
 ### 🔧 Core Auto-Deploy Script
 
 ```bash

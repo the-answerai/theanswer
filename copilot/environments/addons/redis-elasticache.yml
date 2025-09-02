@@ -16,28 +16,34 @@ Parameters:
 
 Mappings:
     RedisEnvConfigurationMap:
-        # Default environments
+        # Cost-optimized Redis configuration for startup deployments
         staging:
             'NodeType': 'cache.t3.micro'
+            # Single node for cost optimization
             'NumCacheNodes': 1
+            # Upgrade path: Add replicas when traffic increases
+            # Future: Can upgrade to ReplicationGroup for auto-failover
         prod:
-            'NodeType': 'cache.r6g.large'
+            'NodeType': 'cache.t3.micro'
+            # Single node for cost optimization
             'NumCacheNodes': 1
+            # Upgrade path: Add replicas when traffic increases
+            # Future: Can upgrade to ReplicationGroup for auto-failover
 
 Resources:
     RedisSubnetGroup:
         Type: 'AWS::ElastiCache::SubnetGroup'
         Properties:
-            Description: Subnet group for Redis ElastiCache cluster
+            Description: Subnet group for auto-scaling Redis ElastiCache cluster
             SubnetIds: !Split [',', !Ref PrivateSubnets]
             CacheSubnetGroupName: !Sub '${App}-${Env}-redis-subnet-group'
 
     RedisSecurityGroup:
         Type: 'AWS::EC2::SecurityGroup'
         Metadata:
-            'aws:copilot:description': 'A security group for the Redis ElastiCache cluster'
+            'aws:copilot:description': 'Security group for auto-scaling Redis cluster'
         Properties:
-            GroupDescription: 'Security Group for Redis ElastiCache cluster'
+            GroupDescription: 'Security Group for auto-scaling Redis ElastiCache cluster'
             VpcId: !Ref VPCID
             SecurityGroupIngress:
                 - IpProtocol: tcp
@@ -47,11 +53,13 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub 'copilot-${App}-${Env}-Redis'
+                - Key: AutoScaling
+                  Value: 'enabled'
 
     RedisWorkloadSecurityGroup:
         Type: 'AWS::EC2::SecurityGroup'
         Metadata:
-            'aws:copilot:description': 'A security group for workloads to access the Redis cluster'
+            'aws:copilot:description': 'Security group for workloads to access Redis cluster'
         Properties:
             GroupDescription: 'Security Group for workloads to access Redis cluster'
             VpcId: !Ref VPCID
@@ -63,14 +71,15 @@ Resources:
         Type: 'AWS::ElastiCache::ParameterGroup'
         Properties:
             CacheParameterGroupFamily: 'redis7'
-            Description: !Sub 'Parameter group for ${App}-${Env} Redis cluster'
+            Description: !Sub 'Parameter group for ${App}-${Env} auto-scaling Redis cluster'
             Properties:
                 maxmemory-policy: 'allkeys-lru'
 
+    # Cost-optimized Redis cluster for startup deployments
     RedisCluster:
         Type: 'AWS::ElastiCache::CacheCluster'
         Metadata:
-            'aws:copilot:description': 'Redis ElastiCache cluster for caching and session storage'
+            'aws:copilot:description': 'Cost-optimized Redis cluster for startup deployments'
         Properties:
             CacheNodeType: !FindInMap [RedisEnvConfigurationMap, !Ref Env, NodeType]
             Engine: redis
@@ -83,7 +92,11 @@ Resources:
             CacheParameterGroupName: !Ref RedisParameterGroup
             Tags:
                 - Key: Name
-                  Value: !Sub '${App}-${Env}-redis'
+                  Value: !Sub 'copilot-${App}-${Env}-Redis'
+                - Key: Tier
+                  Value: 'startup'
+                - Key: UpgradePath
+                  Value: 'replicas-when-needed'
 
 Outputs:
     RedisEndpoint:
