@@ -70,12 +70,12 @@ variables: # Pass environment variables as key value pairs.
 environments:
     # Cost-optimized configuration with auto-scaling
     staging:
-        cpu: 256
+        cpu: 512
         # Minimum required for initial deployment
-        # Upgrade path: 512 → 1024 → 2048 → 4096 → 8192
-        memory: 512
+        # Upgrade path: 1024 → 2048 → 4096 → 8192
+        memory: 1024
         # Minimum required for initial deployment
-        # Upgrade path: 1024 → 2048 → 4096 → 8192 → 16384
+        # Upgrade path: 2048 → 4096 → 8192 → 16384
         count:
             range: 1-3
             # Can handle traffic spikes automatically
@@ -87,10 +87,10 @@ environments:
                 - web.${CLIENT_DOMAIN}
                 - ${CLIENT_DOMAIN}
     prod:
-        cpu: 256
+        cpu: 512
         # Minimum required for initial deployment
         # Upgrade path: 512 → 1024 → 2048 → 4096 → 8192 → 16384
-        memory: 512
+        memory: 1024
         # Minimum required for initial deployment
         # Upgrade path: 1024 → 2048 → 4096 → 8192 → 16384 → 32768
         count:
