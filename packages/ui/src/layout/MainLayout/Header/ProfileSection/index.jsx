@@ -144,6 +144,19 @@ ExportDialog.propTypes = {
     onExport: PropTypes.func
 }
 
+// ==============================|| ERROR ACTION COMPONENT ||============================== //
+
+const ErrorAction = ({ snackbarKey, onClose }) => (
+    <Button onClick={() => onClose(snackbarKey)} style={{ color: 'white' }}>
+        <span>✕</span>
+    </Button>
+)
+
+ErrorAction.propTypes = {
+    snackbarKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    onClose: PropTypes.func.isRequired
+}
+
 // ==============================|| PROFILE MENU ||============================== //
 
 const ProfileSection = ({ username, handleLogout }) => {
@@ -168,16 +181,7 @@ const ProfileSection = ({ username, handleLogout }) => {
         return array[0]
     }
 
-    // ==============================|| Error Notification Action ||============================== //
-    const ErrorAction = ({ snackbarKey }) => (
-        <Button onClick={() => closeSnackbar(snackbarKey)} style={{ color: 'white' }}>
-            <span>✕</span>
-        </Button>
-    )
 
-    ErrorAction.propTypes = {
-        snackbarKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
-    }
 
     // ==============================|| Snackbar ||============================== //
 
@@ -203,7 +207,7 @@ const ProfileSection = ({ username, handleLogout }) => {
             options: {
                 key: new Date().getTime() + getSecureRandom(),
                 variant: 'error',
-                action: (key) => <ErrorAction snackbarKey={key} />
+                action: (key) => <ErrorAction snackbarKey={key} onClose={closeSnackbar} />
             }
         })
     }
@@ -221,7 +225,13 @@ const ProfileSection = ({ username, handleLogout }) => {
                 const body = JSON.parse(fileContent)
                 importAllApi.request(body)
             } catch (error) {
-                errorFailed('Invalid JSON file format')
+                // Handle specific JSON parsing errors
+                if (error instanceof SyntaxError) {
+                    errorFailed(`Invalid JSON format: ${error.message}`)
+                } else {
+                    // Handle other potential errors (e.g., API request setup)
+                    errorFailed(`Import failed: ${getErrorMessage(error)}`)
+                }
             }
         }
 

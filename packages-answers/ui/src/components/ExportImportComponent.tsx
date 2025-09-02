@@ -194,6 +194,16 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
         setNotification((prev) => ({ ...prev, open: false }))
     }
 
+    // Helper function to extract error message from API response
+    const getApiErrorMessage = (error: any, fallbackMessage: string): string => {
+        if (!error?.response?.data) {
+            return fallbackMessage
+        }
+        
+        const responseData = error.response.data
+        return typeof responseData === 'object' ? responseData.message : responseData
+    }
+
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) {
             return
@@ -211,7 +221,13 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 const body = JSON.parse(fileContent)
                 importAllApi.request(body)
             } catch (error) {
-                showErrorNotification('Invalid JSON file format')
+                // Handle specific JSON parsing errors
+                if (error instanceof SyntaxError) {
+                    showErrorNotification(`Invalid JSON format: ${error.message}`)
+                } else {
+                    // Handle other potential errors (e.g., API request setup)
+                    showErrorNotification(`Import failed: ${getErrorMessage(error)}`)
+                }
             }
         }
 
@@ -275,11 +291,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     useEffect(() => {
         if (importAllApi.error) {
             const error = importAllApi.error
-            const errMsg = error?.response?.data
-                ? typeof error.response.data === 'object'
-                    ? error.response.data.message
-                    : error.response.data
-                : 'Invalid Imported File'
+            const errMsg = getApiErrorMessage(error, 'Invalid Imported File')
             showErrorNotification(`Failed to import: ${errMsg}`)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,11 +337,7 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
         if (exportAllApi.error) {
             setExportDialogOpen(false)
             const error = exportAllApi.error
-            const errMsg = error?.response?.data
-                ? typeof error.response.data === 'object'
-                    ? error.response.data.message
-                    : error.response.data
-                : 'Internal Server Error'
+            const errMsg = getApiErrorMessage(error, 'Internal Server Error')
             showErrorNotification(`Failed to export: ${errMsg}`)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
