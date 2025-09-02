@@ -1,5 +1,28 @@
 # Deploy
 
+## App Initialization
+
+### Staging Environment
+
+```bash
+copilot app init --domain staging.client.theanswer.ai
+```
+
+### Production Environment
+
+```bash
+copilot app init --domain client.theanswer.ai
+```
+
+## Workspace Switching
+
+Use the workspace switching method to align all URLs and Route53 zones:
+
+-   **Staging**: `staging.client.theanswer.ai` → Route53 zone: `staging.client.theanswer.ai`
+-   **Production**: `client.theanswer.ai` → Route53 zone: `client.theanswer.ai`
+
+This ensures consistent domain naming across all services and eliminates URL conflicts.
+
 ## AAI Application Workspace
 
 **Use when**: Working in the main AAI application workspace
@@ -36,3 +59,8 @@ pnpm copilot deploy
 
 -   **AAI workspace**: `copilot deploy` (remove aliases first, set API_HOST)
 -   **Client workspace**: `pnpm copilot deploy` (auto-switching)
+
+## Environment Variables
+
+-   Web: `copilot.appName.web.env`
+-   Flowise: `copilot.appName.env`
