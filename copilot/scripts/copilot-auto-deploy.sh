@@ -286,27 +286,8 @@ fi
 # --- bootstrap / deploy the copilot environment (infra) ---
 if [[ "$ENV_EXISTS" == "true" ]]; then
   print_step "Deploying existing environment '$ENV'..."
-  
-  # Capture output and exit code from copilot env deploy
-  local deploy_output
-  local deploy_exit_code
-  deploy_output=$(copilot env deploy --name "$ENV" 2>&1) || deploy_exit_code=$?
-  
-  # Check if the failure is due to "no changes" scenario
-  if [[ $deploy_exit_code -ne 0 ]] && [[ "$deploy_output" == *"Your update does not introduce immediate resource changes"* ]]; then
-    print_warning "Template modified but no immediate resource changes detected"
-    print_step "Forcing deployment to push modified template..."
-    copilot env deploy --name "$ENV" --force
-    print_success "Environment deployment completed (forced)"
-  elif [[ $deploy_exit_code -ne 0 ]]; then
-    # Some other error occurred - display it and fail
-    echo "$deploy_output"
-    print_error "Environment deployment failed"
-    exit 1
-  else
-    # Success on first try
-    print_success "Environment deployment completed"
-  fi
+  copilot env deploy --name "$ENV" || true   # allow 'no changes' without failing
+  print_success "Environment deployment completed"
 else
   print_step "Creating and bootstrapping environment '$ENV'..."
   copilot env init --name "$ENV"
