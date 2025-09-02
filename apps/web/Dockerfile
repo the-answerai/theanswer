@@ -41,8 +41,13 @@ ENV AUTH0_BASE_URL=${AUTH0_BASE_URL:-http://localhost:3000}
 ENV DATABASE_URL=postgresql://example_user:example_password@postgres:5432/example_db?schema=web&connection_limit=1
 
 # Copy package files first for better layer caching
+# Root workspace configuration
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Main web application
 COPY apps/web/package.json ./apps/web/
+
+# TheAnswer-specific packages
 COPY packages-answers/db/package.json ./packages-answers/db/
 COPY packages-answers/ui/package.json ./packages-answers/ui/
 COPY packages-answers/utils/package.json ./packages-answers/utils/
@@ -50,6 +55,8 @@ COPY packages-answers/types/package.json ./packages-answers/types/
 COPY packages-answers/experimental-prisma-webpack-plugin/package.json ./packages-answers/experimental-prisma-webpack-plugin/
 COPY packages-answers/eslint-config-custom/package.json ./packages-answers/eslint-config-custom/
 COPY packages-answers/tsconfig/package.json ./packages-answers/tsconfig/
+
+# Flowise packages
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/components/package.json ./packages/components/
 COPY packages/embed/package.json ./packages/embed/
