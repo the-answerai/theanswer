@@ -89,10 +89,10 @@ environments:
     prod:
         cpu: 512
         # Minimum required for initial deployment
-        # Upgrade path: 512 → 1024 → 2048 → 4096 → 8192 → 16384
+        # Upgrade path: 1024 → 2048 → 4096 → 8192 → 16384
         memory: 1024
         # Minimum required for initial deployment
-        # Upgrade path: 1024 → 2048 → 4096 → 8192 → 16384 → 32768
+        # Upgrade path: 2048 → 4096 → 8192 → 16384 → 32768
         count:
             range: 1-12
             # Can handle significant growth automatically

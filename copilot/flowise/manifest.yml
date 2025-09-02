@@ -93,9 +93,9 @@ environments:
     # Cost-optimized configuration with auto-scaling
     staging:
         cpu: 1024
-        # Upgrade path: 1024 → 2048 → 4096 → 8192
+        # Upgrade path: 2048 → 4096 → 8192
         memory: 2048
-        # Upgrade path: 2048 → 4096 → 8192 → 16384
+        # Upgrade path: 4096 → 8192 → 16384
         count:
             range: 1-3
             # Can handle processing spikes automatically
