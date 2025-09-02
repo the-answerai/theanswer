@@ -45,6 +45,7 @@ __tests__/
 coverage/
 *.lcov
 .nyc_output
+e2e/
 
 # Documentation
 *.md
