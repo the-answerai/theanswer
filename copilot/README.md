@@ -1,40 +1,38 @@
-# Copilot Deployment
+# Deploy
 
-## Required Environment Variables
+## AAI Application Workspace
 
-Export these locally or add to your `.env` file:
+**Use when**: Working in the main AAI application workspace
+
+**Important**: Remove or comment out aliases in the manifest during deployments and manually set the API_HOST variable
 
 ```bash
-# For staging
+copilot deploy
+```
+
+## Client App Workspace
+
+**Use when**: Working in client-specific workspace (auto-switches app name)
+
+### Environment Setup
+
+```bash
+# Staging environment
 CLIENT_DOMAIN=staging.client.theanswer.ai
 AUTH0_BASE_URL=https://staging.client.theanswer.ai
 
-# For production
+# Production environment
 CLIENT_DOMAIN=client.theanswer.ai
 AUTH0_BASE_URL=https://client.theanswer.ai
 ```
 
-## Deployment Options
-
-**Option 1**: Load dotenv manually
+### Deploy Command
 
 ```bash
-source .env && copilot deploy
+pnpm copilot deploy
 ```
 
-**Option 2**: Use pnpm precopilot (recommended)
+## Quick Reference
 
-```bash
-pnpm precopilot
-copilot deploy
-```
-
-**Option 3**: Auto-deploy with prompts
-
-```bash
-pnpm copilot:auto
-```
-
-## Note
-
-All copilot commands now require either manual dotenv loading or the `pnpm` prefix to ensure the two required environment variables are properly loaded.
+-   **AAI workspace**: `copilot deploy` (remove aliases first, set API_HOST)
+-   **Client workspace**: `pnpm copilot deploy` (auto-switching)

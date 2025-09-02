@@ -33,7 +33,7 @@ Mappings:
             'DBMaxCapacity': 8 # AllowedValues: from 0.5 through 128
         prod:
             'DBMinCapacity': 1 # AllowedValues: from 0.5 through 128
-            'DBMaxCapacity': 16 # AllowedValues: from 0.5 through 128
+            'DBMaxCapacity': 8 # AllowedValues: from 0.5 through 128
 
 Resources:
     flowiseclusterDBSubnetGroup:
