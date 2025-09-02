@@ -27,7 +27,7 @@ fi
 # Default to "aai" if no domain provided
 if [[ -z "${RESOLVED_DOMAIN}" ]]; then
   echo "WARNING: No domain provided, defaulting to 'aai' for the application name." >&2
-  echo "This should typically be set to your client's domain (e.g., abc.theanswer.ai)" >&2bg
+  echo "This should typically be set to your client's domain (e.g., abc.theanswer.ai)" >&2
   echo "" >&2
   echo "For proper usage:" >&2
   echo "  CLIENT_DOMAIN=abc.theanswer.ai bash $0" >&2
