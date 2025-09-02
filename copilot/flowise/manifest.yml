@@ -40,7 +40,7 @@ storage:
             path: /var/efs
             read_only: false
 
-# Lacework sidecar configuration
+# Lacework sidecar configuration for security monitoring, won't be used unless LaceworkAccessToken is set
 sidecars:
     datacollector-sidecar:
         image: lacework/datacollector:latest-sidecar
@@ -90,20 +90,32 @@ secrets:
 
 # Environment-specific overrides
 environments:
-    # Separate account deployments (independent accounts)
+    # Cost-optimized configuration with auto-scaling
     staging:
-        cpu: 2048 # Number of CPU units for the task.
-        memory: 4096 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
+        cpu: 512
+        # Upgrade path: 1024 → 2048 → 4096 → 8192
+        memory: 1024
+        # Upgrade path: 2048 → 4096 → 8192 → 16384
+        count:
+            range: 1-3
+            # Can handle processing spikes automatically
+            cpu_percentage: 85
+            memory_percentage: 90
         http:
             alias:
                 # Service aliases for standalone account strategy
                 - flowise.${CLIENT_DOMAIN}
                 - api.${CLIENT_DOMAIN}
     prod:
-        cpu: 4096 # Number of CPU units for the task.
-        memory: 8192 # Amount of memory in MB used by the task.
-        count: 1 # Number of tasks that should be running in your service.
+        cpu: 512
+        # Upgrade path: 1024 → 2048 → 4096 → 8192 → 16384
+        memory: 1024
+        # Upgrade path: 2048 → 4096 → 8192 → 16384 → 32768
+        count:
+            range: 1-12
+            # Can handle significant load automatically
+            cpu_percentage: 85
+            memory_percentage: 90
         http:
             alias:
                 # Service aliases for standalone account strategy
