@@ -67,7 +67,12 @@ const convertExportInput = (body: any): ExportInput => {
         if (!body || typeof body !== 'object') throw new Error('Invalid ExportInput object in request body')
         if (body.agentflow && typeof body.agentflow !== 'boolean') throw new Error('Invalid agentflow property in ExportInput object')
         if (body.agentflowv2 && typeof body.agentflowv2 !== 'boolean') throw new Error('Invalid agentflowv2 property in ExportInput object')
-        if (body.assistant && typeof body.assistant !== 'boolean') throw new Error('Invalid assistant property in ExportInput object')
+        if (body.assistantCustom && typeof body.assistantCustom !== 'boolean')
+            throw new Error('Invalid assistantCustom property in ExportInput object')
+        if (body.assistantOpenAI && typeof body.assistantOpenAI !== 'boolean')
+            throw new Error('Invalid assistantOpenAI property in ExportInput object')
+        if (body.assistantAzure && typeof body.assistantAzure !== 'boolean')
+            throw new Error('Invalid assistantAzure property in ExportInput object')
         if (body.chatflow && typeof body.chatflow !== 'boolean') throw new Error('Invalid chatflow property in ExportInput object')
         if (body.chat && typeof body.chat !== 'boolean') throw new Error('Invalid chat property in ExportInput object')
         if (body.chat_message && typeof body.chat_message !== 'boolean')
@@ -193,7 +198,7 @@ async function replaceDuplicateIdsForChatFlow(
         })
         const idMappings = new Map<string, string>()
 
-        if (records.length < 0) return { data: originalData, idMappings }
+        if (records.length === 0) return { data: originalData, idMappings }
 
         for (let record of records) {
             const oldId = record.id
@@ -216,7 +221,7 @@ async function replaceDuplicateIdsForAssistant(queryRunner: QueryRunner, origina
         const records = await queryRunner.manager.find(Assistant, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -243,7 +248,7 @@ async function replaceDuplicateIdsForChat(
         })
         const idMappings = new Map<string, string>()
 
-        if (records.length <= 0) return { data: originalData, idMappings }
+        if (records.length === 0) return { data: originalData, idMappings }
 
         for (let record of records) {
             const oldId = record.id
@@ -314,7 +319,7 @@ async function replaceDuplicateIdsForChatMessage(
         const records = await queryRunner.manager.find(ChatMessage, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -442,7 +447,7 @@ async function replaceDuplicateIdsForChatMessageFeedback(
         const records = await queryRunner.manager.find(ChatMessageFeedback, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -463,7 +468,7 @@ async function replaceDuplicateIdsForCustomTemplate(queryRunner: QueryRunner, or
         const records = await queryRunner.manager.find(CustomTemplate, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -484,7 +489,7 @@ async function replaceDuplicateIdsForDocumentStore(queryRunner: QueryRunner, ori
         const records = await queryRunner.manager.find(DocumentStore, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -509,7 +514,7 @@ async function replaceDuplicateIdsForDocumentStoreFileChunk(
         const records = await queryRunner.manager.find(DocumentStoreFileChunk, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -530,7 +535,7 @@ async function replaceDuplicateIdsForTool(queryRunner: QueryRunner, originalData
         const records = await queryRunner.manager.find(Tool, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -551,7 +556,7 @@ async function replaceDuplicateIdsForVariable(queryRunner: QueryRunner, original
         const records = await queryRunner.manager.find(Variable, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -572,7 +577,7 @@ async function replaceDuplicateIdsForExecution(queryRunner: QueryRunner, origina
         const records = await queryRunner.manager.find(Execution, {
             where: { id: In(ids) }
         })
-        if (records.length < 0) return originalData
+        if (records.length === 0) return originalData
         for (let record of records) {
             const oldId = record.id
             const newId = uuidv4()
@@ -744,7 +749,7 @@ const importData = async (user: IUser, importData: ExportData) => {
 
             await queryRunner.commitTransaction()
         } catch (error) {
-            if (queryRunner && !queryRunner.isTransactionActive) await queryRunner.rollbackTransaction()
+            if (queryRunner && queryRunner.isTransactionActive) await queryRunner.rollbackTransaction()
             throw error
         } finally {
             if (queryRunner && !queryRunner.isReleased) await queryRunner.release()
