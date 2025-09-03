@@ -7,7 +7,7 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { AppCsvParseRuns } from '../../database/entities/AppCsvParseRuns'
-import { getS3Config, ICommonObject } from 'flowise-components'
+import { getS3Config } from 'flowise-components'
 
 const slugify = (text?: string) =>
     text
@@ -17,8 +17,6 @@ const slugify = (text?: string) =>
 
 const getUniqueDocumentPath = ({ organizationId, title }: { organizationId: string; title: string }) =>
     `${organizationId}/${slugify(title)}-${uuidV4()}`
-
-
 
 const getAllCsvParseRuns = async (user: IUser) => {
     try {
@@ -82,7 +80,7 @@ const createCsvParseRun = async (user: IUser, body: any) => {
 
             // Upload file to S3
             const s3 = new S3Client({
-                region: process.env.S3_STORAGE_REGION ?? '',
+                region: process.env.S3_STORAGE_REGION ?? 'us-east-1',
                 credentials: {
                     accessKeyId: process.env.S3_STORAGE_ACCESS_KEY_ID ?? '',
                     secretAccessKey: process.env.S3_STORAGE_SECRET_ACCESS_KEY ?? ''

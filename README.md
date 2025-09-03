@@ -88,10 +88,10 @@ There are two main ways to get started with TheAnswer: local development setup a
     - Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
     - Ensure Docker is running before proceeding
 
-6. **Set up database:**
+6. **Set up database and redis locally:**
 
     ```bash
-    pnpm dev-docker && sleep 10 && docker exec -it theanswer-postgres-1 psql -U example_user -d example_db -c "CREATE DATABASE flowise;"
+    pnpm dev-docker
     ```
 
 7. **Optional: Install database tool**

@@ -32,8 +32,6 @@
         "@mui/icons-material": "5.0.3",
         "@mui/material": "5.15.0",
         "@pinecone-database/pinecone": "4.0.0",
-        "@sentry/nextjs": "^7.120.4",
-        "@sentry/node": "^7.120.4",
         "@svgr/webpack": "^8.1.0",
         "@textea/json-viewer": "2.14.1",
         "aai-embed": "workspace:*",
