@@ -7,7 +7,6 @@ services:
       name: aai-unified1-web
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
-      branch: ct/AAI-554/feature-web-copilot
       plan: starter
       envVars:
           # =========================================
@@ -139,7 +138,6 @@ services:
       name: aai-unified2-flowise
       runtime: docker
       repo: https://github.com/the-answerai/theanswer
-      branch: ct/AAI-554/feature-web-copilot
       plan: standard
       envVars:
           # =========================================
