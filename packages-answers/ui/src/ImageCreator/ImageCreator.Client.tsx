@@ -402,7 +402,7 @@ const ImageCreator = () => {
             isGenerating: true
         }
 
-        setMessages((prev) => [...prev, tempMessage])
+        setMessages((prev) => [tempMessage, ...prev])
 
         try {
             // Build request body based on model
@@ -591,7 +591,8 @@ const ImageCreator = () => {
 
             <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                 <Typography variant='body2' color='text.secondary' gutterBottom>
-                    📁 Organization: <strong>{user.org_name || 'Unknown'}</strong> | 👤 User: <strong>{user.email || 'Unknown'}</strong>
+                    📁 Organization: <strong>{(user as any).org_name || 'Unknown'}</strong> | 👤 User:{' '}
+                    <strong>{user.email || 'Unknown'}</strong>
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
                     Images and metadata will be stored in your organization&apos;s secure folder structure.
@@ -628,6 +629,7 @@ const ImageCreator = () => {
                             multiline
                             minRows={3}
                             fullWidth
+                            disabled={loading}
                         />
 
                         <Stack direction='row' spacing={2} flexWrap='wrap'>
@@ -638,6 +640,7 @@ const ImageCreator = () => {
                                     value={model}
                                     label='Model'
                                     onChange={(e) => handleModelChange(e.target.value)}
+                                    disabled={loading}
                                 >
                                     <MenuItem value='dall-e-2'>DALL-E 2</MenuItem>
                                     <MenuItem value='dall-e-3'>DALL-E 3</MenuItem>
@@ -647,7 +650,13 @@ const ImageCreator = () => {
 
                             <FormControl sx={{ minWidth: 120 }}>
                                 <InputLabel id='n-label'>Images</InputLabel>
-                                <Select labelId='n-label' value={n} label='Images' onChange={(e) => setN(Number(e.target.value))}>
+                                <Select
+                                    labelId='n-label'
+                                    value={n}
+                                    label='Images'
+                                    onChange={(e) => setN(Number(e.target.value))}
+                                    disabled={loading}
+                                >
                                     {Array.from({ length: 4 }, (_, i) => i + 1).map((v) => (
                                         <MenuItem key={v} value={v}>
                                             {v}
@@ -658,7 +667,13 @@ const ImageCreator = () => {
 
                             <FormControl sx={{ minWidth: 120 }}>
                                 <InputLabel id='size-label'>Size</InputLabel>
-                                <Select labelId='size-label' value={size} label='Size' onChange={(e) => setSize(e.target.value)}>
+                                <Select
+                                    labelId='size-label'
+                                    value={size}
+                                    label='Size'
+                                    onChange={(e) => setSize(e.target.value)}
+                                    disabled={loading}
+                                >
                                     {getSizeOptions().map((s) => (
                                         <MenuItem key={s} value={s}>
                                             {s}
@@ -674,6 +689,7 @@ const ImageCreator = () => {
                                     value={quality}
                                     label='Quality'
                                     onChange={(e) => setQuality(e.target.value)}
+                                    disabled={loading}
                                 >
                                     {getQualityOptions().map((q) => (
                                         <MenuItem key={q} value={q}>
@@ -689,7 +705,13 @@ const ImageCreator = () => {
                             <Stack direction='row' spacing={2}>
                                 <FormControl sx={{ minWidth: 120 }}>
                                     <InputLabel id='style-label'>Style</InputLabel>
-                                    <Select labelId='style-label' value={style} label='Style' onChange={(e) => setStyle(e.target.value)}>
+                                    <Select
+                                        labelId='style-label'
+                                        value={style}
+                                        label='Style'
+                                        onChange={(e) => setStyle(e.target.value)}
+                                        disabled={loading}
+                                    >
                                         <MenuItem value='vivid'>Vivid</MenuItem>
                                         <MenuItem value='natural'>Natural</MenuItem>
                                     </Select>
@@ -707,6 +729,7 @@ const ImageCreator = () => {
                                         value={format}
                                         label='Format'
                                         onChange={(e) => setFormat(e.target.value)}
+                                        disabled={loading}
                                     >
                                         <MenuItem value='png'>PNG</MenuItem>
                                         <MenuItem value='jpeg'>JPEG</MenuItem>
@@ -720,6 +743,7 @@ const ImageCreator = () => {
                                         value={background}
                                         label='Background'
                                         onChange={(e) => setBackground(e.target.value)}
+                                        disabled={loading}
                                     >
                                         <MenuItem value='auto'>Auto</MenuItem>
                                         <MenuItem value='transparent'>Transparent</MenuItem>
@@ -760,210 +784,213 @@ const ImageCreator = () => {
                                         </Box>
                                     )}
 
-                                    {msg.isGenerating ? (
-                                        <Grid container spacing={2}>
-                                            {msg.images.map((_, i) => (
-                                                <Grid item xs={12} sm={6} md={4} lg={3} key={`placeholder-${msg.id}-${i}`}>
-                                                    {renderImagePlaceholder(i)}
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                    ) : (
-                                        <Grid container spacing={2}>
-                                            {msg.images.map((img, i) => {
-                                                // Determine the image source based on type
-                                                const imageSrc =
-                                                    img.type === 'url'
-                                                        ? `${user.chatflowDomain}${img.data}`
-                                                        : `data:image/png;base64,${img.data}`
+                                    <Grid container spacing={2}>
+                                        {msg.images.map((img, i) => {
+                                            // Determine the image source based on type
+                                            const imageSrc =
+                                                img.type === 'url'
+                                                    ? `${user.chatflowDomain}${img.data}`
+                                                    : `data:image/png;base64,${img.data}`
 
-                                                const fileName = `generated-image-${img.sessionId || Date.now()}-${i + 1}.${
-                                                    format || 'png'
-                                                }`
+                                            const fileName = `generated-image-${img.sessionId || Date.now()}-${i + 1}.${format || 'png'}`
 
-                                                return (
-                                                    <Grid item xs={12} sm={6} md={4} lg={3} key={`image-${msg.id}-${i}`}>
+                                            return (
+                                                <Grid item xs={12} sm={6} md={4} lg={3} key={`image-${msg.id}-${i}`}>
+                                                    <Box
+                                                        sx={{
+                                                            position: 'relative',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            backgroundColor: 'background.paper',
+                                                            borderRadius: 2,
+                                                            overflow: 'hidden',
+                                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                                            transition: 'all 0.3s ease-in-out',
+                                                            '&:hover': {
+                                                                transform: 'translateY(-4px)',
+                                                                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        {/* Image Container */}
                                                         <Box
                                                             sx={{
                                                                 position: 'relative',
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                backgroundColor: 'background.paper',
-                                                                borderRadius: 2,
+                                                                width: '100%',
+                                                                height: 220,
                                                                 overflow: 'hidden',
-                                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                                                transition: 'all 0.3s ease-in-out',
-                                                                '&:hover': {
-                                                                    transform: 'translateY(-4px)',
-                                                                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)'
-                                                                }
+                                                                cursor: 'pointer'
                                                             }}
+                                                            onClick={() => openLightbox(imageSrc, i, 'generate')}
                                                         >
-                                                            {/* Image Container */}
                                                             <Box
+                                                                component='img'
+                                                                src={imageSrc}
+                                                                alt={`Generated image ${i + 1}`}
                                                                 sx={{
-                                                                    position: 'relative',
                                                                     width: '100%',
-                                                                    height: 220,
-                                                                    overflow: 'hidden',
-                                                                    cursor: 'pointer'
+                                                                    height: '100%',
+                                                                    objectFit: 'cover',
+                                                                    transition: 'transform 0.3s ease-in-out',
+                                                                    '&:hover': {
+                                                                        transform: 'scale(1.05)'
+                                                                    }
                                                                 }}
-                                                                onClick={() => openLightbox(imageSrc, i, 'generate')}
-                                                            >
-                                                                <Box
-                                                                    component='img'
-                                                                    src={imageSrc}
-                                                                    alt={`Generated image ${i + 1}`}
-                                                                    sx={{
-                                                                        width: '100%',
-                                                                        height: '100%',
-                                                                        objectFit: 'cover',
-                                                                        transition: 'transform 0.3s ease-in-out',
-                                                                        '&:hover': {
-                                                                            transform: 'scale(1.05)'
-                                                                        }
-                                                                    }}
-                                                                />
+                                                            />
 
-                                                                {/* Hover overlay */}
-                                                                <Box
-                                                                    sx={{
-                                                                        position: 'absolute',
-                                                                        top: 0,
-                                                                        left: 0,
-                                                                        right: 0,
-                                                                        bottom: 0,
-                                                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                                                        opacity: 0,
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        transition: 'opacity 0.3s ease-in-out',
-                                                                        '&:hover': {
-                                                                            opacity: 1
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Typography
-                                                                        variant='body2'
-                                                                        sx={{
-                                                                            color: 'white',
-                                                                            fontWeight: 500,
-                                                                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)'
-                                                                        }}
-                                                                    >
-                                                                        Click to view full size
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Box>
-
-                                                            {/* Action buttons */}
+                                                            {/* Hover overlay */}
                                                             <Box
                                                                 sx={{
                                                                     position: 'absolute',
-                                                                    top: 12,
-                                                                    right: 12,
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    right: 0,
+                                                                    bottom: 0,
+                                                                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                                                    opacity: 0,
                                                                     display: 'flex',
-                                                                    gap: 1,
-                                                                    zIndex: 2
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    transition: 'opacity 0.3s ease-in-out',
+                                                                    '&:hover': {
+                                                                        opacity: 1
+                                                                    }
                                                                 }}
                                                             >
-                                                                {/* Download metadata button - only show if jsonUrl is available */}
-                                                                {img.jsonUrl && img.sessionId && (
-                                                                    <Tooltip title='Download metadata (JSON)'>
-                                                                        <IconButton
-                                                                            size='small'
-                                                                            sx={{
-                                                                                backgroundColor: 'rgba(25, 118, 210, 0.9)',
-                                                                                color: 'white',
-                                                                                width: 32,
-                                                                                height: 32,
-                                                                                '&:hover': {
-                                                                                    backgroundColor: 'rgba(25, 118, 210, 1)',
-                                                                                    transform: 'scale(1.1)'
-                                                                                },
-                                                                                transition: 'all 0.2s ease-in-out'
-                                                                            }}
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation()
-                                                                                if (img.jsonUrl && img.sessionId) {
-                                                                                    downloadMetadata(img.jsonUrl, img.sessionId)
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <IconFileDescription size={16} />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                )}
+                                                                <Typography
+                                                                    variant='body2'
+                                                                    sx={{
+                                                                        color: 'white',
+                                                                        fontWeight: 500,
+                                                                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)'
+                                                                    }}
+                                                                >
+                                                                    Click to view full size
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
 
-                                                                {/* Download image button */}
-                                                                <Tooltip title='Download image'>
+                                                        {/* Action buttons */}
+                                                        <Box
+                                                            sx={{
+                                                                position: 'absolute',
+                                                                top: 12,
+                                                                right: 12,
+                                                                display: 'flex',
+                                                                gap: 1,
+                                                                zIndex: 2
+                                                            }}
+                                                        >
+                                                            {/* Download metadata button - only show if jsonUrl is available */}
+                                                            {img.jsonUrl && img.sessionId && (
+                                                                <Tooltip title='Download metadata (JSON)'>
                                                                     <IconButton
                                                                         size='small'
                                                                         sx={{
-                                                                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                                            backgroundColor: 'rgba(25, 118, 210, 0.9)',
                                                                             color: 'white',
                                                                             width: 32,
                                                                             height: 32,
                                                                             '&:hover': {
-                                                                                backgroundColor: 'rgba(0, 0, 0, 1)',
+                                                                                backgroundColor: 'rgba(25, 118, 210, 1)',
                                                                                 transform: 'scale(1.1)'
                                                                             },
                                                                             transition: 'all 0.2s ease-in-out'
                                                                         }}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation()
-                                                                            downloadImage(imageSrc, fileName)
+                                                                            if (img.jsonUrl && img.sessionId) {
+                                                                                downloadMetadata(img.jsonUrl, img.sessionId)
+                                                                            }
                                                                         }}
                                                                     >
-                                                                        <IconDownload size={16} />
+                                                                        <IconFileDescription size={16} />
                                                                     </IconButton>
                                                                 </Tooltip>
-                                                            </Box>
+                                                            )}
 
-                                                            {/* Metadata */}
-                                                            <Box sx={{ p: 2, pt: 1.5 }}>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                            {/* Download image button */}
+                                                            <Tooltip title='Download image'>
+                                                                <IconButton
+                                                                    size='small'
+                                                                    sx={{
+                                                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                                        color: 'white',
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(0, 0, 0, 1)',
+                                                                            transform: 'scale(1.1)'
+                                                                        },
+                                                                        transition: 'all 0.2s ease-in-out'
+                                                                    }}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        downloadImage(imageSrc, fileName)
+                                                                    }}
+                                                                >
+                                                                    <IconDownload size={16} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Box>
+
+                                                        {/* Metadata */}
+                                                        <Box sx={{ p: 2, pt: 1.5 }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                                <Chip
+                                                                    label={`Image ${i + 1}`}
+                                                                    size='small'
+                                                                    sx={{
+                                                                        fontSize: '0.7rem',
+                                                                        backgroundColor: 'secondary.main',
+                                                                        color: 'white',
+                                                                        fontWeight: 500
+                                                                    }}
+                                                                />
+                                                                {img.sessionId && (
                                                                     <Chip
-                                                                        label={`Image ${i + 1}`}
+                                                                        label={`ID: ${img.sessionId.slice(-8)}`}
                                                                         size='small'
                                                                         sx={{
                                                                             fontSize: '0.7rem',
-                                                                            backgroundColor: 'secondary.main',
+                                                                            backgroundColor: 'primary.main',
                                                                             color: 'white',
                                                                             fontWeight: 500
                                                                         }}
                                                                     />
-                                                                    {img.sessionId && (
-                                                                        <Chip
-                                                                            label={`ID: ${img.sessionId.slice(-8)}`}
-                                                                            size='small'
-                                                                            sx={{
-                                                                                fontSize: '0.7rem',
-                                                                                backgroundColor: 'primary.main',
-                                                                                color: 'white',
-                                                                                fontWeight: 500
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </Box>
-                                                                <Typography
-                                                                    variant='caption'
-                                                                    color='text.secondary'
-                                                                    sx={{
-                                                                        fontSize: '0.75rem',
-                                                                        fontWeight: 500
-                                                                    }}
-                                                                >
-                                                                    Generated with {model} • {size}
-                                                                </Typography>
+                                                                )}
                                                             </Box>
+                                                            <Typography
+                                                                variant='caption'
+                                                                color='text.secondary'
+                                                                sx={{
+                                                                    fontSize: '0.75rem',
+                                                                    fontWeight: 500
+                                                                }}
+                                                            >
+                                                                Generated with {model} • {size}
+                                                            </Typography>
                                                         </Box>
-                                                    </Grid>
-                                                )
-                                            })}
-                                        </Grid>
-                                    )}
+                                                    </Box>
+                                                </Grid>
+                                            )
+                                        })}
+
+                                        {/* Show placeholders for remaining images that are still generating */}
+                                        {msg.isGenerating &&
+                                            Array.from({ length: n - msg.images.length }, (_, i) => (
+                                                <Grid
+                                                    item
+                                                    xs={12}
+                                                    sm={6}
+                                                    md={4}
+                                                    lg={3}
+                                                    key={`placeholder-${msg.id}-${msg.images.length + i}`}
+                                                >
+                                                    {renderImagePlaceholder(msg.images.length + i)}
+                                                </Grid>
+                                            ))}
+                                    </Grid>
                                 </Box>
                             ))}
                         </Stack>
