@@ -115,6 +115,11 @@ const deleteChatflow = async (chatflowId: string, user: IUser | undefined): Prom
             return { affected: 0, message: 'Chatflow not found' }
         }
 
+        // Check if trying to delete user's default chatflow (Chief Sidekick)
+        if (chatflow.id === user.defaultChatflowId) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot delete your Chief Sidekick')
+        }
+
         // Authorization check - user can delete if:
         // 1. They own the chatflow (userId matches)
         // 2. They have org:manage permission and chatflow belongs to their organization
@@ -397,7 +402,10 @@ const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true
             try {
                 const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
                 if (currentRecord) {
-                    return currentRecord
+                    return {
+                        ...currentRecord,
+                        isUserDefault: user.defaultChatflowId === chatflowId
+                    }
                 }
             } catch (error) {
                 // If S3 version fails, fall back to database version
@@ -405,7 +413,10 @@ const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true
             }
         }
 
-        return dbResponse
+        return {
+            ...dbResponse,
+            isUserDefault: user?.defaultChatflowId === chatflowId
+        }
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
