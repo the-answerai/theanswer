@@ -20,7 +20,8 @@ import {
     Tab,
     Grid,
     Pagination,
-    CircularProgress
+    CircularProgress,
+    Checkbox
 } from '@mui/material'
 import {
     IconDownload,
@@ -32,6 +33,7 @@ import {
     IconChevronRight,
     IconCheck
 } from '@tabler/icons-react'
+import JSZip from 'jszip'
 
 interface Message {
     id: string
@@ -92,6 +94,10 @@ const ImageCreator = () => {
         totalPages: 0,
         hasMore: false
     })
+
+    // Selection state for bulk download
+    const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set())
+    const [selectMode, setSelectMode] = useState(false)
 
     // Add/remove keyboard event listener
     useEffect(() => {
@@ -281,6 +287,77 @@ const ImageCreator = () => {
 
     const handleArchivePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
         fetchArchivedImages(page)
+    }
+
+    // Selection helper functions
+    const handleImageSelection = (sessionId: string, checked: boolean) => {
+        setSelectedImages((prev) => {
+            const newSet = new Set(prev)
+            if (checked) {
+                newSet.add(sessionId)
+            } else {
+                newSet.delete(sessionId)
+            }
+            return newSet
+        })
+    }
+
+    const selectAll = () => {
+        setSelectedImages(new Set(archivedImages.map((img) => img.sessionId)))
+    }
+
+    const clearSelection = () => {
+        setSelectedImages(new Set())
+    }
+
+    const downloadSelected = async () => {
+        if (selectedImages.size === 0) return
+
+        try {
+            const zip = new JSZip()
+            const selectedArray = Array.from(selectedImages)
+
+            // Show loading state
+            console.log(`Creating zip file with ${selectedArray.length} images...`)
+
+            // Add each selected image to the zip
+            for (const sessionId of selectedArray) {
+                const img = archivedImages.find((img) => img.sessionId === sessionId)
+                if (img) {
+                    try {
+                        const imageSrc = `${user.chatflowDomain}${img.imageUrl}`
+                        const response = await fetch(imageSrc)
+                        const blob = await response.blob()
+
+                        // Add image to zip with descriptive filename
+                        const fileName = `archived-${img.sessionId}.png`
+                        zip.file(fileName, blob)
+
+                        console.log(`Added to zip: ${fileName}`)
+                    } catch (error) {
+                        console.error(`Failed to add image ${sessionId} to zip:`, error)
+                    }
+                }
+            }
+
+            // Generate and download the zip file
+            const zipBlob = await zip.generateAsync({ type: 'blob' })
+            const zipUrl = window.URL.createObjectURL(zipBlob)
+            const link = document.createElement('a')
+            link.href = zipUrl
+            link.download = `archived-images-${new Date().toISOString().split('T')[0]}.zip`
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(zipUrl)
+
+            console.log('Zip file downloaded successfully!')
+
+            // Clear selection after successful download
+            setSelectedImages(new Set())
+        } catch (error) {
+            console.error('Failed to create zip file:', error)
+        }
     }
 
     // Lightbox navigation functions
@@ -1018,6 +1095,37 @@ const ImageCreator = () => {
                                     <Typography variant='h6' gutterBottom>
                                         Archived Images ({archivePagination.total} total)
                                     </Typography>
+
+                                    {/* Selection controls */}
+                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                                        <Button
+                                            variant={selectMode ? 'contained' : 'outlined'}
+                                            onClick={() => setSelectMode(!selectMode)}
+                                            startIcon={selectMode ? <IconX size={16} /> : <IconCheck size={16} />}
+                                        >
+                                            {selectMode ? 'Exit Select' : 'Select Images'}
+                                        </Button>
+
+                                        {selectMode && (
+                                            <>
+                                                <Button variant='outlined' onClick={selectAll} size='small'>
+                                                    Select All
+                                                </Button>
+                                                <Button variant='outlined' onClick={clearSelection} size='small'>
+                                                    Clear
+                                                </Button>
+                                                <Button
+                                                    variant='contained'
+                                                    onClick={downloadSelected}
+                                                    disabled={selectedImages.size === 0}
+                                                    startIcon={<IconDownload size={16} />}
+                                                    size='small'
+                                                >
+                                                    Download as ZIP ({selectedImages.size})
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Box>
                                     <Grid container spacing={3}>
                                         {archivedImages.map((img) => {
                                             const imageSrc = `${user.chatflowDomain}${img.imageUrl}`
@@ -1041,6 +1149,25 @@ const ImageCreator = () => {
                                                             }
                                                         }}
                                                     >
+                                                        {/* Selection checkbox */}
+                                                        {selectMode && (
+                                                            <Box
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    top: 8,
+                                                                    left: 8,
+                                                                    zIndex: 3,
+                                                                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                                    borderRadius: 1
+                                                                }}
+                                                            >
+                                                                <Checkbox
+                                                                    checked={selectedImages.has(img.sessionId)}
+                                                                    onChange={(e) => handleImageSelection(img.sessionId, e.target.checked)}
+                                                                    size='small'
+                                                                />
+                                                            </Box>
+                                                        )}
                                                         {/* Image Container */}
                                                         <Box
                                                             sx={{
