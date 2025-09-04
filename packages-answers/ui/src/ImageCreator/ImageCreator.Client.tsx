@@ -162,11 +162,6 @@ const ImageCreator = () => {
         }
     }
 
-    const getMaxImages = (modelType?: string) => {
-        const currentModel = modelType || model
-        return currentModel === 'dall-e-3' ? 1 : 10
-    }
-
     const getDefaultQuality = (modelType: string) => {
         switch (modelType) {
             case 'dall-e-2':
