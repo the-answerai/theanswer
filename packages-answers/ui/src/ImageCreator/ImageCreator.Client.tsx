@@ -511,9 +511,11 @@ const ImageCreator = () => {
                 }
             }
 
-            // Final update to mark generation as complete and saved
+            // Final update to mark generation as complete and saved (only if images were actually generated)
             setMessages((prev) =>
-                prev.map((msg) => (msg.id === tempMessageId ? { ...msg, images: allImages, isGenerating: false, saved: true } : msg))
+                prev.map((msg) =>
+                    msg.id === tempMessageId ? { ...msg, images: allImages, isGenerating: false, saved: allImages.length > 0 } : msg
+                )
             )
 
             setPrompt('')
