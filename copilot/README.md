@@ -62,32 +62,3 @@ copilot app init --domain client.theanswer.ai
 ```bash
 pnpm copilot deploy
 ```
-
-## AWS Secrets Manager Integration
-
-For enhanced security, configure AWS Secrets Manager to store the Flowise encryption key:
-
-### Setup Commands
-
-```bash
-# Create the encryption key secret (if it doesn't exist)
-aws secretsmanager create-secret \
-  --name FlowiseEncryptionKey \
-  --secret-string 'your-secure-encryption-key-here'
-
-# Update an existing secret
-aws secretsmanager put-secret-value \
-  --secret-id FlowiseEncryptionKey \
-  --secret-string 'your-new-encryption-key-here'
-```
-
-### Environment Configuration
-
-Add to your `copilot.appName.env` file:
-
-```bash
-# Flowise Encryption Key Override - AWS Secrets Manager
-SECRETKEY_STORAGE_TYPE="aws"
-SECRETKEY_AWS_REGION="us-east-1"
-SECRETKEY_AWS_NAME="FlowiseEncryptionKey"
-```
