@@ -92,7 +92,7 @@ let nextConfig = withBundleAnalyzer({
         AUTH0_BASE_URL:
             process.env.AUTH0_BASE_URL ?? (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined),
         FLAGSMITH_ENVIRONMENT_ID: process.env.FLAGSMITH_ENVIRONMENT_ID,
-        AUTH0_SECRET: process.env.AUTH0_SECRET ?? process.env.WEB_AUTH0_SECRET,
+        AUTH0_SECRET: process.env.AUTH0_SECRET,
         CHATFLOW_DOMAIN_OVERRIDE: process.env.CHATFLOW_DOMAIN_OVERRIDE
     },
     webpack: (config, { isServer }) => {
