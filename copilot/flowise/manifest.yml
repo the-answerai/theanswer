@@ -111,7 +111,7 @@ environments:
         # Upgrade path: 4096 → 8192 → 16384
         memory: 4096
         # Upgrade path: 8192 → 16384 → 32768
-        # count:
+        count: 2
         #     range: 1-12
         #     # Can handle significant load automatically
         #     cpu_percentage: 85
