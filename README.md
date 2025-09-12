@@ -88,10 +88,10 @@ There are two main ways to get started with TheAnswer: local development setup a
     - Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
     - Ensure Docker is running before proceeding
 
-6. **Set up database:**
+6. **Set up database and redis locally:**
 
     ```bash
-    pnpm dev-docker && sleep 10 && docker exec -it theanswer-postgres-1 psql -U example_user -d example_db -c "CREATE DATABASE flowise;"
+    pnpm dev-docker
     ```
 
 7. **Optional: Install database tool**
@@ -274,31 +274,133 @@ FLOWISE_PASSWORD=1234
 
 TheAnswer supports different environment variables to configure your instance. You can specify the following variables in the `.env` file inside `packages/server` folder. Read [more](https://github.com/the-answerai/theanswer/blob/main/CONTRIBUTING.md#-env-variables)
 
+## 🧪 Testing
+
+TheAnswer includes comprehensive end-to-end testing with Playwright for critical user journeys including role-based authentication and menu permissions.
+
+### Quick Start Testing
+
+```bash
+# Install Playwright browsers (required first time)
+pnpm test:e2e:setup
+
+# Run tests with visual UI interface (recommended)
+pnpm test:e2e
+
+# Debug mode with step-by-step inspection
+pnpm test:e2e:debug
+```
+
+### Testing Features
+
+-   **🎨 Playwright UI Mode**: Visual test execution with real-time screenshots
+-   **🔐 Auth0 Integration**: Automated authentication flow testing with organization selection
+-   **👥 Role-Based Testing**: Tests for Admin, Builder, and Member user permissions with menu visibility verification
+-   **🎯 Precise Organization Selection**: Uses Auth0 organization ID for accurate organization matching
+-   **📊 Organized Output**: Test results, reports, and artifacts in organized folders
+-   **🚀 Auto Dev Server**: Tests automatically start/stop the development server
+-   **🔍 Debug Tools**: Step-by-step debugging with browser inspection
+-   **🤖 Auto Browser Setup**: Automatic browser installation when needed
+
+### Test Setup
+
+1. **Install Playwright browsers:**
+
+    ```bash
+    pnpm test:e2e:setup
+    ```
+
+2. **Copy test environment file:**
+
+    ```bash
+    cp apps/web/e2e/env.example apps/web/.env.test
+    ```
+
+3. **Configure test credentials in `.env.test`:**
+
+    - `TEST_USER_ENTERPRISE_ADMIN_EMAIL`: Your Auth0 admin test user email (e.g., `alpha+enterprise-admin@domain.ai`)
+    - `TEST_USER_ENTERPRISE_BUILDER_EMAIL`: Your Auth0 builder test user email (e.g., `alpha+enterprise-builder@domain.ai`)
+    - `TEST_USER_ENTERPRISE_MEMBER_EMAIL`: Your Auth0 member test user email (e.g., `alpha+enterprise-member@domain.ai`)
+    - `TEST_USER_PASSWORD`: Shared password for all test users
+    - `TEST_ENTERPRISE_AUTH0_ORG_ID`: Auth0 organization ID for precise selection (e.g., `org_unQ8OLmTNsxVTJCT`)
+    - `TEST_ENTERPRISE_ORG_NAME`: Organization display name (e.g., "Local Dev")
+    - Auth0 configuration (matching your dev environment)
+
+4. **Run tests:**
+    ```bash
+    pnpm test:e2e:dev  # Visual UI mode
+    pnpm test:e2e:debug  # Step-by-step debugging
+    ```
+
+For detailed testing documentation, see:
+
+-   [E2E Testing Guide](apps/web/e2e/README.md)
+-   [Testing Strategy](TESTING_STRATEGY.md)
+
 ## 📖 Documentation
 
-[TheAnswer Docs](https://docs.theanswer.ai/)
+[AnswerAgent Docs](https://answeragent.ai/docs)
 
 ## 🌐 Self Host
 
-Deploy TheAnswer self-hosted in your existing infrastructure. We support various [deployments](https://docs.theanswer.ai/configuration/deployment)
+Deploy AnswerAgent self-hosted in your existing infrastructure. We support various [deployments](https://answeragent.ai/docs/developers/deployment)
 
--   [AWS](https://docs.theanswer.ai/configuration/deployment/aws)
--   [Azure](https://docs.theanswer.ai/configuration/deployment/azure)
--   [Digital Ocean](https://docs.theanswer.ai/configuration/deployment/digital-ocean)
--   [GCP](https://docs.theanswer.ai/configuration/deployment/gcp)
--   [Alibaba Cloud](https://computenest.console.aliyun.com/service/instance/create/default?type=user&ServiceName=Flowise社区版)
+-   [AWS](https://answeragent.ai/docs/developers/deployment/aws)
+-   [Azure](https://answeragent.ai/docs/developers/deployment/azure)
+-   [GCP](https://answeragent.ai/docs/developers/deployment/gcp)
+-   [Render](https://answeragent.ai/docs/developers/deployment/render)
+
+## 🔐 AWS Secrets Manager Integration
+
+For AWS deployments, AnswerAgent supports using AWS Secrets Manager to securely store the Flowise encryption key instead of environment variables.
+
+### Quick Setup
+
+1. **Create the encryption key secret:**
+
+    ```bash
+    aws secretsmanager create-secret \
+      --name FlowiseEncryptionKey \
+      --secret-string 'your-secure-encryption-key-here'
+    ```
+
+2. **Update an existing secret:**
+
+    ```bash
+    aws secretsmanager put-secret-value \
+      --secret-id FlowiseEncryptionKey \
+      --secret-string 'your-new-encryption-key-here'
+    ```
+
+3. **Add to your environment variables:**
+    ```bash
+    # Flowise Encryption Key Override - AWS Secrets Manager
+    SECRETKEY_STORAGE_TYPE="aws"
+    SECRETKEY_AWS_REGION="us-east-1"
+    SECRETKEY_AWS_NAME="FlowiseEncryptionKey"
+    ```
+
+### Benefits
+
+-   **Enhanced Security**: Keys are encrypted at rest and in transit
+-   **Key Rotation**: Easy rotation without application restarts
+-   **Audit Trail**: Full access logging and monitoring
+-   **IAM Integration**: Fine-grained access control
+
+For detailed AWS deployment instructions, see [AWS Deployment Guide](https://answeragent.ai/docs/developers/deployment/aws).
+
 -   <details>
       <summary>Others</summary>
 
-    -   [Railway](https://docs.theanswer.ai/configuration/deployment/railway)
+    -   [Railway](https://answeragent.ai/docs/developers/deployment/railway)
 
         [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/pn4G8S?referralCode=WVNPD9)
 
-    -   [Render](https://docs.theanswer.ai/configuration/deployment/render)
+    -   [Render](https://answeragent.ai/docs/developers/deployment/render)
 
-        [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://docs.theanswer.ai/configuration/deployment/render)
+        [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://answeragent.ai/docs/developers/deployment/render)
 
-    -   [HuggingFace Spaces](https://docs.theanswer.ai/deployment/hugging-face)
+    -   [HuggingFace Spaces](https://answeragent.ai/docs/deployment/hugging-face)
 
         <a href="https://huggingface.co/spaces/TheAnswer/TheAnswer"><img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="HuggingFace Spaces"></a>
 
@@ -424,28 +526,50 @@ env | grep -i lacework
 For detailed configuration, troubleshooting, and advanced setup, see [Lacework Integration Documentation](./packages/docs/docs/integrations/lacework.md).
 
 <!-- BWS-SECURE-DOCS-START -->
-
-## BWS Secure Environmental Variable Integration
+## 🔒 BWS Secure Environmental Variable Integration
 
 This project uses [BWS Secure](https://github.com/last-rev-llc/bws-secure) for managing environment variables across different environments.
 
-### Creating an Access Token
+### 🔐 Creating an Access Token
 
-1. Visit your [Bitwarden Machine Accounts](https://vault.bitwarden.com/#/sm/${BWS_ORG_ID:-YOUR_BWS_ORG_ID_HERE}/machine-accounts) section
-    - **Note:** This link requires you to be a member of the Last Rev Bitwarden organization
-    - If you don't have access, please refer to the [BWS Secure documentation](https://github.com/last-rev-llc/bws-secure) or contact your team administrator
-2. After clicking the link, follow these steps:
-    - Select the appropriate Client/Set of Machine Accounts from the list
-    - Click on the "Access Tokens" tab
-    - Click "+ New Access Token" button
-    - Give the token a meaningful name (e.g., "Your Name - Local Development")
-    - Click "Save" to generate the token
-3. Copy the displayed token (you won't be able to see it again after closing)
-4. Add it to your .env file in your project root:
-    ```
-    BWS_ACCESS_TOKEN=your_token_here
-    ```
-5. Never commit this token to version control
+📍 **1.** Visit the [Bitwarden Machine Accounts](https://vault.bitwarden.com/#/sm) section within your Vault.
+   - If you login directly to https://vault.bitwarden.com, you will need to navigate to the Machine Accounts section, within the Secrets Manager. The Secrets Manager is located in the left sidebar, typically at the bottom of the page.
+   - If you don't have access, please refer to the [BWS Secure documentation](https://github.com/last-rev-llc/bws-secure) or contact your team administrator
+
+🖱️ **2.** Navigate to the Machine Accounts section, and follow these steps:
+   - Select the appropriate Client/Set of Machine Accounts from the list
+   - Click on the "Access Tokens" tab
+   - Click "+ New Access Token" button
+   - Give the token a meaningful name (e.g., "Your Name - Local Development")
+   - Click "Save" to generate the token
+
+📋 **3.** Copy the displayed token (you won't be able to see it again after closing)
+
+💾 **4.** Add it to your .env file in your project root:
+   ```
+   BWS_ACCESS_TOKEN=your_token_here
+   ```
+
+⚠️ **5.** Never commit this token to version control
+
+### 🎯 Token Usage Options:
+
+- **BWS_ACCESS_TOKEN**: Loads ALL projects associated with that token (recommended for multi-project setups)
+- **BWS_PROJECT_ID**: Loads only a specific project (use for single-project or testing scenarios)
+
+**Example for single project:**
+```
+BWS_PROJECT_ID=00000000-0000-0000-0000-000000000001
+```
+
+The project ID can be found in the Bitwarden Secrets Manager, within the list of projects.
+
+### 🔧 Common Issues & Troubleshooting:
+
+- **"No projects found"**: Verify your token has project access permissions in Bitwarden
+- **"Access denied"**: Check that the Machine Account has read permissions for the target projects  
+- **Token not working**: Ensure no extra spaces when copying from Bitwarden
+- **Multiple projects loading**: This is normal with BWS_ACCESS_TOKEN - use BWS_PROJECT_ID for single project
 
 ### Updating BWS Secure
 
@@ -460,5 +584,4 @@ Alternatively, you can run the following command manually from your project root
 ```bash
 rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh
 ```
-
 <!-- BWS-SECURE-DOCS-END -->

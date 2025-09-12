@@ -16,7 +16,7 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
         return latestUser.defaultChatflowId
     }
 
-    const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? ''
+    const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? process.env.INITIAL_CHATFLOW_ID ?? ''
     const ids = rawIds
         .split(',')
         .map((id) => id.trim())

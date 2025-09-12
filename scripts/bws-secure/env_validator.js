@@ -19,6 +19,15 @@ const colors = {
 };
 
 function log(level, message) {
+  // Progressive quiet mode: suppress ALL messages during secure-run progress bar display
+  // unless DEBUG is explicitly set
+  const progressBarActive = !process.env.DEBUG && process.env.BWS_SUPPRESS_ALL !== 'true';
+
+  if (progressBarActive) {
+    // In progress bar mode, suppress ALL messages to maintain single-line progress
+    return;
+  }
+
   const prefix =
     {
       error: colors.red + 'ERROR:',
@@ -113,7 +122,7 @@ function validateEnvironment() {
   if (missingVars.length > 0) {
     if (!SUPPRESS_MISSING) {
       log('warn', 'The following environment variables are missing:');
-      missingVars.forEach((varName) => {
+      missingVars.sort().forEach((varName) => {
         const inTurbo = turboVars.includes(varName);
         const inRuntime = runtimeVars.includes(varName);
         const source =

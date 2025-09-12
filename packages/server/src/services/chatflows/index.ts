@@ -115,6 +115,11 @@ const deleteChatflow = async (chatflowId: string, user: IUser | undefined): Prom
             return { affected: 0, message: 'Chatflow not found' }
         }
 
+        // Check if trying to delete user's default chatflow (Chief Sidekick)
+        if (chatflow.id === user.defaultChatflowId) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot delete your Chief Sidekick')
+        }
+
         // Authorization check - user can delete if:
         // 1. They own the chatflow (userId matches)
         // 2. They have org:manage permission and chatflow belongs to their organization
@@ -352,6 +357,15 @@ const getChatflowByApiKey = async (apiKeyId: string, keyonly?: unknown): Promise
     }
 }
 
+/**
+ * Get chatflow by ID with flexible data source
+ * @param chatflowId - The chatflow ID to retrieve
+ * @param user - User context for permissions and ownership checks
+ * @param useDraft - Data source selection:
+ *   - true: Include S3 draft versions (for editor UI, flowData editing)
+ *   - false: Database only (for updates, reads, fresh metadata)
+ * @returns Promise<ChatFlow> - The chatflow object
+ */
 const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
@@ -388,7 +402,10 @@ const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true
             try {
                 const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
                 if (currentRecord) {
-                    return currentRecord
+                    return {
+                        ...currentRecord,
+                        isUserDefault: user.defaultChatflowId === chatflowId
+                    }
                 }
             } catch (error) {
                 // If S3 version fails, fall back to database version
@@ -396,7 +413,10 @@ const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true
             }
         }
 
-        return dbResponse
+        return {
+            ...dbResponse,
+            isUserDefault: user?.defaultChatflowId === chatflowId
+        }
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -845,7 +865,7 @@ const upsertChat = async ({
 const getDefaultChatflowTemplate = async (user: IUser): Promise<{ id: string; name: string } | null> => {
     try {
         // Get the default template ID from environment variable
-        const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? ''
+        const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? process.env.INITIAL_CHATFLOW_ID ?? ''
         const ids = rawIds
             .split(',')
             .map((id) => id.trim())
