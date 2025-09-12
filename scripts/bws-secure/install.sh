@@ -348,7 +348,7 @@ try {
 
   // Add dependencies if they don't exist
   packageJson.devDependencies = packageJson.devDependencies || {};
-  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.2.1';
+  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.2.2';
   packageJson.devDependencies['dotenv-cli'] = packageJson.devDependencies['dotenv-cli'] || '^10.0.0';
   
   // Check Node.js version and apply appropriate versions
@@ -364,7 +364,7 @@ try {
     packageJson.devDependencies['glob'] = '^10.3.10';
   }
   
-  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.11.0';
+  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.12.1';
 
   // Detect existing indentation or use prettier config
   const originalContent = fs.readFileSync(packageJsonPath, 'utf8');
