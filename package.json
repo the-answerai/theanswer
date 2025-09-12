@@ -72,7 +72,7 @@
         "*.{js,jsx,ts,tsx}": "eslint --fix"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.28.0",
+        "@babel/preset-env": "^7.28.3",
         "@babel/preset-typescript": "7.21.4",
         "@cypress/react18": "^2.0.1",
         "@types/express": "^4.17.23",
@@ -95,8 +95,8 @@
         "glob": "^11.0.3",
         "husky": "^8.0.3",
         "kill-port": "^2.0.1",
-        "knip": "^5.62.0",
-        "lint-staged": "^15.2.0",
+        "knip": "^5.63.1",
+        "lint-staged": "^15.5.2",
         "prettier": "^2.8.8",
         "pretty-quick": "^3.3.1",
         "rimraf": "^6.0.1",
@@ -137,6 +137,7 @@
             "send": ">=0.19.0",
             "serve-static": ">=1.16.0",
             "set-value": "4.1.0",
+            "sha.js": ">=2.4.12",
             "tar-fs": "3.0.9",
             "tmp": "^0.2.4",
             "tough-cookie": ">=4.1.3",
