@@ -294,7 +294,7 @@ const showSecureRunProgress = (phase, current, total, message = '') => {
   let shortMessage = '';
   if (message) {
     if (message.includes('environments')) {
-      const match = message.match(/(\d+\/\d+)/);
+      const match = message.match(/(\d{1,3}\/\d{1,3})/);
       shortMessage = match ? ` ${match[1]}` : '';
     } else if (message.includes('Connecting')) {
       shortMessage = ' connecting...';
@@ -1134,6 +1134,11 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
         }
       }
 
+      // Show validation progress bar before environment summary (visual timing fix)
+      showSecureRunProgress('Validation', 5, 6, 'Validating environment variables');
+      // Brief pause to show validation progress
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       // Show final completion and keep it visible
       showSecureRunProgress('Ready', 6, 6, 'Environment configured');
       // Brief pause to show 100% completion, then keep it visible
@@ -1529,25 +1534,15 @@ async function handleUploadCommand() {
         process.exit(1);
       }
 
-      // Step 5: Validation phase
-      enableProgressMode();
-      showSecureRunProgress(
-        'Validation',
-        ++currentStep,
-        totalSteps,
-        'Validating environment variables'
-      );
-
-      // 4. Run environment validation regardless (silently)
+      // Step 5: Validation phase (progress bar already shown earlier for visual timing)
+      // Run environment validation regardless (silently)
       const validator = spawnSync('node', [path.join(dirname, 'env_validator.js')], {
         stdio: 'ignore', // Always ignore to prevent interference with progress bar
         env: process.env
       });
 
-      // Add small delay before disabling progress mode to ensure validation completes
+      // Add small delay to ensure validation completes
       await new Promise((resolve) => setTimeout(resolve, 100));
-      clearSecureRunProgress();
-      disableProgressMode();
 
       // 5. IMPORTANT: Restore original environment variables to ensure CLI-provided vars take precedence
       for (const [key, value] of Object.entries(originalEnvironment)) {

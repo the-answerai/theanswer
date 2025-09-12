@@ -257,8 +257,9 @@ EOF
   fi
 fi
 
-# Clean up git repository
+# Clean up git repository and remove .github folder
 rm -rf scripts/bws-secure/.git
+rm -rf scripts/bws-secure/.github
 
 echo "Checking .gitignore configuration..."
 # Update .gitignore
