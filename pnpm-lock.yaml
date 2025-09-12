@@ -1407,8 +1407,8 @@ importers:
                 specifier: ^3.0.3
                 version: 3.0.3
             dotenv:
-                specifier: ^17.2.2
-                version: 17.2.2
+                specifier: ^16.6.1
+                version: 16.6.1
             express:
                 specifier: '>=4.19.2'
                 version: 5.0.1
