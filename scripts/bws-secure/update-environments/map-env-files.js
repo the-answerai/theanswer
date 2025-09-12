@@ -82,6 +82,37 @@ async function mapEnvironmentFiles() {
 
     const currentProject = config.projects.find((p) => p.projectName === process.env.BWS_PROJECT);
     if (!currentProject) {
+      // Handle direct BWS_PROJECT_ID usage for debug display only
+      if (
+        process.env.BWS_PROJECT_ID &&
+        process.env.BWS_PROJECT_ID.match(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        ) &&
+        process.env.DEBUG === 'true' &&
+        process.env.SHOW_DECRYPTED === 'true' &&
+        process.env.BWS_EPHEMERAL_KEY
+      ) {
+        const sourceFile = `.env.secure.${process.env.BWS_PROJECT_ID}`;
+        if (fs.existsSync(sourceFile)) {
+          try {
+            const content = fs.readFileSync(sourceFile, 'utf8');
+            const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+            const lines = decrypted.split('\n');
+            const titleLine = `Decrypted contents of ${sourceFile}`;
+            const maxContentWidth = Math.max(...lines.map((line) => line.length), titleLine.length);
+            const boxWidth = maxContentWidth + 4;
+            console.log(`\n\x1b[36m╔${'═'.repeat(boxWidth - 2)}╗`);
+            console.log(`║ ${titleLine.padEnd(boxWidth - 3)}║`);
+            console.log(`║${'═'.repeat(boxWidth - 2)}║`);
+            lines.forEach((line) => {
+              console.log(`║ ${line.padEnd(boxWidth - 3)}║`);
+            });
+            console.log(`╚${'═'.repeat(boxWidth - 2)}╝\x1b[0m\n`);
+          } catch (error) {
+            log('error', `Error decrypting ${sourceFile}:`, error.message);
+          }
+        }
+      }
       log('warn', `Project ${process.env.BWS_PROJECT} not found in config`);
       return;
     }
@@ -128,15 +159,18 @@ async function mapEnvironmentFiles() {
     }
 
     // Create symlinks for other environments (needed for platform deployments)
-    Object.entries(currentProject.bwsProjectIds).forEach(([envName, id]) => {
-      if (envName !== env) {
-        const otherSource = `.env.secure.${id}`;
-        const otherTarget = `.env.secure.${currentProject.projectName}.${envName}`;
-        if (fs.existsSync(otherSource)) {
-          createSymlink(otherSource, otherTarget);
+    if (currentProject) {
+      Object.entries(currentProject.bwsProjectIds).forEach(([envName, id]) => {
+        const env = process.env.BWS_ENV || 'local';
+        if (envName !== env) {
+          const otherSource = `.env.secure.${id}`;
+          const otherTarget = `.env.secure.${currentProject.projectName}.${envName}`;
+          if (fs.existsSync(otherSource)) {
+            createSymlink(otherSource, otherTarget);
+          }
         }
-      }
-    });
+      });
+    }
   } catch (error) {
     log('error', 'Error mapping environment files:', error.message);
     process.exit(1);
