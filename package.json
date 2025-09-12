@@ -64,8 +64,8 @@
         "export-auth0-users": "pnpm secure-run \"node ./scripts/export-auth0-users.js\"",
         "submodule:init": "git submodule update --init --recursive --force",
         "submodule:reset": "git submodule deinit -f --all && git submodule update --init --recursive",
-        "precopilot": "BWS_SUPPRESS_ALL=true pnpm secure-run sh copilot/scripts/copilot-switch-app.sh && sleep 1",
-        "copilot": "BWS_SUPPRESS_ALL=true pnpm secure-run copilot",
+        "precopilot": "pnpm secure-run sh copilot/scripts/copilot-switch-app.sh && sleep 1",
+        "copilot": "pnpm secure-run copilot",
         "copilot:auto": "bash ./copilot/scripts/copilot-auto-deploy.sh"
     },
     "lint-staged": {
