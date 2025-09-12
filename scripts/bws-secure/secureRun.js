@@ -764,7 +764,12 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
     // 2. If not set, check for project in .env file
     // 3. If still not found, prompt user to select a project (if multiple)
     // 4. Update .env file with selected project
+
+    // Temporarily disable progress mode to allow project selection prompt to display
+    disableProgressMode();
     const selectedProject = await promptForProject(projectsToUse);
+    // Re-enable progress mode after project selection
+    enableProgressMode();
     process.env.BWS_PROJECT = selectedProject.projectName;
 
     // When neither SITE_NAME nor BWS_PROJECT was initially set, we need to filter projects now

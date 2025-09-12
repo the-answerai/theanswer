@@ -865,7 +865,7 @@ const upsertChat = async ({
 const getDefaultChatflowTemplate = async (user: IUser): Promise<{ id: string; name: string } | null> => {
     try {
         // Get the default template ID from environment variable
-        const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? ''
+        const rawIds = process.env.INITIAL_CHATFLOW_IDS ?? process.env.INITIAL_CHATFLOW_ID ?? ''
         const ids = rawIds
             .split(',')
             .map((id) => id.trim())
