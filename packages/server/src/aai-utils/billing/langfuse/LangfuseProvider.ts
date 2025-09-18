@@ -3,11 +3,16 @@ import { langfuse, log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import type { GetLangfuseTraceResponse, GetLangfuseTracesResponse } from 'langfuse-core'
 import { StripeProvider } from '../stripe/StripeProvider'
 import Stripe from 'stripe'
+import { extractCredentialsAndModels } from 'flowise-components'
+import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
 
 type Trace = GetLangfuseTracesResponse['data'][number]
 type FullTrace = GetLangfuseTraceResponse
 
 export class LangfuseProvider {
+    // Cache for flow platform status (resets each sync)
+    private platformNodeCache = new Map<string, boolean>()
+
     async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
         let traces: Trace[] = []
         let creditsDataWithTraces: Array<{ creditsData: CreditsData; fullTrace: any }> = []
@@ -48,6 +53,9 @@ export class LangfuseProvider {
         } catch (error: any) {
             log.error('Error syncing usage data:', error)
             failedTraces = [{ traceId: traceId || 'unknown', error: error.message }]
+        } finally {
+            // Clear cache after sync
+            this.platformNodeCache.clear()
         }
 
         return {
@@ -219,6 +227,29 @@ export class LangfuseProvider {
         }
     }
 
+    private async hasAAIPlatformNodes(chatflowId: string): Promise<boolean> {
+        if (!chatflowId?.trim()) return false
+
+        const cached = this.platformNodeCache.get(chatflowId)
+        if (cached !== undefined) return cached
+
+        try {
+            const appServer = getRunningExpressApp()
+            const result = await appServer.AppDataSource.query('SELECT flow_data FROM chat_flow WHERE id = $1', [chatflowId])
+
+            if (result?.[0]?.flow_data) {
+                const { hasPlatformAINodes } = extractCredentialsAndModels(result[0].flow_data)
+                this.platformNodeCache.set(chatflowId, hasPlatformAINodes)
+                return hasPlatformAINodes
+            }
+        } catch (error) {
+            log.debug('Failed to check AAI nodes', { chatflowId, error })
+        }
+
+        this.platformNodeCache.set(chatflowId, false)
+        return false
+    }
+
     private async calculateCosts(trace: FullTrace): Promise<{
         ai: number
         compute: number
@@ -227,7 +258,19 @@ export class LangfuseProvider {
         withMargin: number
     }> {
         const computeMinutes = trace.latency / (1000 * 60)
-        const aiCost = trace.metadata.aiCredentialsOwnership === 'platform' ? trace.totalCost : 0
+        const metadata = trace.metadata as TraceMetadata
+
+        // Validate ownership
+        let aiCredentialsOwnership = metadata.aiCredentialsOwnership
+
+        if (aiCredentialsOwnership !== 'platform' && metadata.chatflowid) {
+            const hasAAI = await this.hasAAIPlatformNodes(metadata.chatflowid)
+            if (hasAAI) {
+                aiCredentialsOwnership = 'platform'
+            }
+        }
+
+        const aiCost = aiCredentialsOwnership === 'platform' ? trace.totalCost : 0
         const computeCost = computeMinutes * 0.05
         const storageCost = 0
         const totalBase = aiCost + computeCost + storageCost

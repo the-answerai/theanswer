@@ -556,15 +556,20 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         .getRepository(options.databaseEntities['ChatFlow'])
                         .findOneBy({ id: options.chatflowid })
 
-                    const credentialIds = extractCredentialsAndModels(chatflow.flowData)
-                    const credentials = await options.appDataSource
-                        .getRepository(options.databaseEntities['Credential'])
-                        .findBy({ id: In(credentialIds?.credentials?.map((credential) => credential.credentialId) ?? []) })
-
-                    // console.debug('Credentials::::', credentials)
+                    // Default to platform if no chatflow found
                     let aiCredentialsOwnership = 'platform'
-                    if (credentials.every((credential: { visibility: string[] }) => !credential.visibility?.includes('Platform'))) {
-                        aiCredentialsOwnership = 'user'
+
+                    if (chatflow?.flowData) {
+                        const extracted = extractCredentialsAndModels(chatflow.flowData)
+
+                        // Fast path: AAI nodes = platform
+                        if (!extracted.hasPlatformAINodes && extracted.credentials.length > 0) {
+                            const credentials = await options.appDataSource
+                                .getRepository(options.databaseEntities['Credential'])
+                                .findBy({ id: In(extracted.credentials.map((c) => c.credentialId)) })
+
+                            aiCredentialsOwnership = credentials.every((c) => !c.visibility?.includes('Platform')) ? 'user' : 'platform'
+                        }
                     }
 
                     let langFuseOptions = {
