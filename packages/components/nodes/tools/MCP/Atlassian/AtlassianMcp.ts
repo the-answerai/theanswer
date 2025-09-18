@@ -1,7 +1,7 @@
 /**
  * Atlassian Remote MCP Server Node
  *
- * This file implements an Atlassian MCP server node that uses the last rev remote MCP server
+ * This file implements an Atlassian MCP server node that uses a custom remote MCP server
  * with OAuth 2.0 bearer token authentication.
  *
  * Key features:
