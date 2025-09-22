@@ -214,8 +214,8 @@ export class LangfuseProvider {
             }
 
             const metadata = {
-                aiCredentialsOwnership: 'user',
-                ...((trace.metadata || {}) as TraceMetadata)
+                ...((trace.metadata || {}) as TraceMetadata),
+                aiCredentialsOwnership: 'user'
             } as TraceMetadata
             const { data: fullTrace } = await langfuse.fetchTrace(trace.id)
             const costs = await this.calculateCosts(fullTrace)
