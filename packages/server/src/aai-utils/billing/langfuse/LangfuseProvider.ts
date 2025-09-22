@@ -213,9 +213,13 @@ export class LangfuseProvider {
                 return undefined
             }
 
-            const metadata = (trace.metadata || {}) as TraceMetadata
+            const metadata = {
+                aiCredentialsOwnership: 'user',
+                ...((trace.metadata || {}) as TraceMetadata)
+            } as TraceMetadata
             const { data: fullTrace } = await langfuse.fetchTrace(trace.id)
             const costs = await this.calculateCosts(fullTrace)
+            metadata.aiCredentialsOwnership = costs.aiCredentialsOwnership
             const credits = this.convertCostsToCredits(costs)
             const modelUsage = await this.getModelUsage(fullTrace as any)
 
@@ -256,12 +260,13 @@ export class LangfuseProvider {
         storage: number
         total: number
         withMargin: number
+        aiCredentialsOwnership: string
     }> {
         const computeMinutes = trace.latency / (1000 * 60)
-        const metadata = trace.metadata as TraceMetadata
+        const metadata = ((trace.metadata || {}) as TraceMetadata) || ({} as TraceMetadata)
 
         // Validate ownership
-        let aiCredentialsOwnership = metadata.aiCredentialsOwnership
+        let aiCredentialsOwnership = metadata.aiCredentialsOwnership || 'user'
 
         if (aiCredentialsOwnership !== 'platform' && metadata.chatflowid) {
             const hasAAI = await this.hasAAIPlatformNodes(metadata.chatflowid)
@@ -281,7 +286,8 @@ export class LangfuseProvider {
             compute: computeCost,
             storage: storageCost,
             total: totalBase,
-            withMargin
+            withMargin,
+            aiCredentialsOwnership
         }
     }
 
