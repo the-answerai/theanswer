@@ -38,6 +38,7 @@ interface CredentialInfo {
     nodeId: string
     nodeType: string
     credentialId: string
+    visibility?: string[]
 }
 
 /**
@@ -81,7 +82,7 @@ function extractCredentialsAndModels(flowData: FlowData | string): ExtractionRes
 
     // Check for AAI platform AI nodes
     result.hasPlatformAINodes = flow.nodes.some(
-        (node) => node.data?.type?.startsWith('AAI') && ['Chat Models', 'Embeddings'].includes(node.data.category)
+        (node) => node.data?.type?.startsWith('AAI') && ['Chat Models', 'Embeddings'].includes(node.data.category || '')
     )
 
     // Iterate through nodes

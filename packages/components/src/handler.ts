@@ -27,8 +27,7 @@ import { LunaryHandler } from '@langchain/community/callbacks/handlers/lunary'
 import { getCredentialData, getCredentialParam, getEnvironmentVariable } from './utils'
 import { ICommonObject, IDatabaseEntity, INodeData, IServerSideEventStreamer } from './Interface'
 import { LangWatch, LangWatchSpan, LangWatchTrace, autoconvertTypedValues } from 'langwatch'
-import { extractCredentialsAndModels } from './flowCredentialExtractor'
-import { In } from 'typeorm'
+import { CredentialInfo, extractCredentialsAndModels } from './flowCredentialExtractor'
 export interface TraceMetadata {
     stripeCustomerId: string
     subscriptionTier?: string
@@ -37,7 +36,7 @@ export interface TraceMetadata {
     aiCredentialsOwnership: string
     [key: string]: any
 }
-import { DataSource } from 'typeorm'
+import { DataSource, In } from 'typeorm'
 import { ChatGenerationChunk } from '@langchain/core/outputs'
 import { AIMessageChunk, BaseMessageLike } from '@langchain/core/messages'
 import { Serialized } from '@langchain/core/load/serializable'
@@ -568,7 +567,9 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                                 .getRepository(options.databaseEntities['Credential'])
                                 .findBy({ id: In(extracted.credentials.map((c) => c.credentialId)) })
 
-                            aiCredentialsOwnership = credentials.every((c) => !c.visibility?.includes('Platform')) ? 'user' : 'platform'
+                            aiCredentialsOwnership = credentials.every((c: CredentialInfo) => !c.visibility?.includes('Platform'))
+                                ? 'user'
+                                : 'platform'
                         }
                     }
 
