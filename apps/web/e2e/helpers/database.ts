@@ -37,13 +37,13 @@ type SeedOverrides = Omit<SeedPayload, 'user'> & {
     user?: Partial<SeedPayload['user']>
 }
 
-// Use the centralized test user definition from auth.ts
+// Use the centralized test user definition from auth.ts - STRICT .env.test only
 export const DEFAULT_TEST_USER = {
     email: TEST_USERS.admin.email,
-    auth0Id: TEST_USERS.admin.auth0Id || `auth0|seed-${TEST_USERS.admin.email.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`,
+    auth0Id: `auth0|${TEST_USERS.admin.email}`,  // Generated from email
     organizationId: TEST_USERS.admin.organizationId!,
     organizationName: TEST_USERS.admin.organizationName!,
-    name: TEST_USERS.admin.name || TEST_USERS.admin.email
+    name: TEST_USERS.admin.email
 }
 
 const mergeSeedPayload = (overrides: SeedOverrides): SeedPayload => {
@@ -54,7 +54,7 @@ const mergeSeedPayload = (overrides: SeedOverrides): SeedPayload => {
         email: overrides.user?.email ?? baseUser.email,
         name: overrides.user?.name ?? baseUser.name,
         organization: {
-            auth0Id: overrides.user?.organization?.auth0Id ?? baseUser.organizationId,
+            auth0Id: overrides.user?.organization?.auth0Id ?? process.env.TEST_ENTERPRISE_AUTH0_ORG_ID ?? baseUser.organizationId,
             name: overrides.user?.organization?.name ?? baseUser.organizationName
         }
     }

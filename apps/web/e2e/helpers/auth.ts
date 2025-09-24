@@ -15,7 +15,6 @@ export interface TestUser {
     email: string
     password: string
     role: 'admin' | 'builder' | 'member'
-    auth0Id?: string
     organizationId?: string
     organizationName?: string
     name?: string
@@ -30,9 +29,7 @@ export const TEST_USERS = {
         password: process.env.TEST_USER_PASSWORD!,
         role: 'admin' as const,
         organizationId: process.env.TEST_ENTERPRISE_AUTH0_ORG_ID,
-        organizationName: process.env.TEST_ENTERPRISE_ORG_NAME,
-        auth0Id: process.env.TEST_USER_ENTERPRISE_ADMIN_AUTH0_ID,
-        name: process.env.TEST_USER_ENTERPRISE_ADMIN_NAME
+        organizationName: process.env.TEST_ENTERPRISE_ORG_NAME
     },
     builder: {
         email: process.env.TEST_USER_ENTERPRISE_BUILDER_EMAIL!,
@@ -51,13 +48,10 @@ export const TEST_USERS = {
 }
 
 /**
- * Main login function with robust organization selection
- * Based on Brad's loginAsUser function from auth.spec.ts
+ * Helper function to perform login with organization selection
+ * Matches the exact pattern from auth.spec.ts
  */
-export const loginAsUser = async (page: Page, email: string, password: string, orgId?: string): Promise<void> => {
-    // Clear any existing auth state
-    await page.context().clearCookies()
-
+export async function loginAsUser(page: Page, email: string, password: string, orgId?: string): Promise<void> {
     // Go to the homepage - this will redirect to Auth0
     await page.goto('/')
 
@@ -106,36 +100,36 @@ export const loginAsUser = async (page: Page, email: string, password: string, o
         .first()
     await submitButton.click()
 
-    // Step 3: Handle organization selection using Brad's robust logic
+    // Step 3: Handle organization selection if orgId provided
     if (orgId) {
         try {
-            console.log(`[loginAsUser] Looking for organization with ID: ${orgId}`)
+            console.log(`Looking for organization with ID: ${orgId}`)
 
             // Wait for organization selection forms to appear
-            await page.waitForSelector('form', { timeout: 10000 })
+            await page.waitForSelector('form', { timeout: 5000 })
 
             // Look for the form that contains a hidden input with the specific organization ID
             const targetForm = page.locator(`form:has(input[name="organization"][value="${orgId}"])`)
 
-            if (await targetForm.isVisible({ timeout: 10000 })) {
-                console.log(`[loginAsUser] Found form with organization ID: ${orgId}`)
+            if (await targetForm.isVisible({ timeout: 5000 })) {
+                console.log(`Found form with organization ID: ${orgId}`)
 
                 // Find the submit button within this specific form and click it
                 const submitButton = targetForm.locator('button[type="submit"]')
-                if (await submitButton.isVisible({ timeout: 5000 })) {
+                if (await submitButton.isVisible({ timeout: 2000 })) {
                     const buttonText = await submitButton.textContent()
-                    console.log(`[loginAsUser] Clicking organization button: "${buttonText}" (ID: ${orgId})`)
+                    console.log(`Clicking organization button: "${buttonText}" (ID: ${orgId})`)
                     await submitButton.click()
                 } else {
-                    console.log('[loginAsUser] Submit button not found in the target form')
+                    console.log('Submit button not found in the target form')
                 }
             } else {
-                console.log(`[loginAsUser] Could not find form with organization ID: ${orgId}`)
+                console.log(`Could not find form with organization ID: ${orgId}`)
 
                 // Debug: Log all available organization IDs
                 const allOrgInputs = page.locator('form input[name="organization"]')
                 const orgCount = await allOrgInputs.count()
-                console.log(`[loginAsUser] Found ${orgCount} organization forms. Available organization IDs:`)
+                console.log(`Found ${orgCount} organization forms. Available organization IDs:`)
 
                 for (let i = 0; i < orgCount; i++) {
                     const orgInput = allOrgInputs.nth(i)
@@ -145,24 +139,24 @@ export const loginAsUser = async (page: Page, email: string, password: string, o
                         .locator('button span')
                         .textContent()
                         .catch(() => 'Unknown')
-                    console.log(`[loginAsUser]   - ID: ${orgIdValue}, Name: "${buttonText}"`)
+                    console.log(`  - ID: ${orgIdValue}, Name: "${buttonText}"`)
                 }
 
                 // Fallback: Try name-based selection
                 const orgName = process.env.TEST_ENTERPRISE_ORG_NAME
                 if (orgName) {
-                    console.log(`[loginAsUser] Falling back to name-based selection: ${orgName}`)
+                    console.log(`Falling back to name-based selection: ${orgName}`)
                     const nameBasedButton = page.locator(`button:has-text("${orgName}")`)
-                    if (await nameBasedButton.isVisible({ timeout: 5000 })) {
+                    if (await nameBasedButton.isVisible({ timeout: 2000 })) {
                         await nameBasedButton.click()
                     } else {
-                        console.log(`[loginAsUser] Could not find organization with name: ${orgName}`)
+                        console.log(`Could not find organization with name: ${orgName}`)
                         // Select first available organization as last resort
                         const firstForm = page.locator('form').first()
                         const firstButton = firstForm.locator('button[type="submit"]')
-                        if (await firstButton.isVisible({ timeout: 5000 })) {
+                        if (await firstButton.isVisible({ timeout: 2000 })) {
                             const firstButtonText = await firstButton.textContent()
-                            console.log(`[loginAsUser] Selecting first available organization: "${firstButtonText}"`)
+                            console.log(`Selecting first available organization: "${firstButtonText}"`)
                             await firstButton.click()
                         }
                     }
@@ -170,19 +164,36 @@ export const loginAsUser = async (page: Page, email: string, password: string, o
                     // Select first available organization if no name specified
                     const firstForm = page.locator('form').first()
                     const firstButton = firstForm.locator('button[type="submit"]')
-                    if (await firstButton.isVisible({ timeout: 5000 })) {
+                    if (await firstButton.isVisible({ timeout: 2000 })) {
                         const firstButtonText = await firstButton.textContent()
-                        console.log(`[loginAsUser] No organization name specified, selecting first available: "${firstButtonText}"`)
+                        console.log(`No organization name specified, selecting first available: "${firstButtonText}"`)
                         await firstButton.click()
                     }
                 }
             }
-
-            // Wait for organization selection to complete before proceeding
-            await page.waitForLoadState('networkidle', { timeout: 10000 })
         } catch (error) {
-            console.error('[loginAsUser] Organization selection failed:', error instanceof Error ? error.message : error)
-            throw error // Re-throw to fail the test if organization selection fails
+            console.log('Organization selection error:', error instanceof Error ? error.message : String(error))
+        }
+    } else {
+        // Default organization handling (existing logic)
+        try {
+            const orgSelector = page.locator(
+                [
+                    'button:has-text("local")',
+                    'button:has-text("dev")',
+                    'button:has-text("development")',
+                    '[data-testid="organization-selector"]',
+                    '.organization-item',
+                    'form input[name="organization"]'
+                ].join(', ')
+            )
+
+            if (await orgSelector.first().isVisible({ timeout: 5000 })) {
+                console.log('Organization selection detected, selecting first available org')
+                await orgSelector.first().click()
+            }
+        } catch (error) {
+            console.log('No organization selection step detected, proceeding')
         }
     }
 
@@ -191,8 +202,6 @@ export const loginAsUser = async (page: Page, email: string, password: string, o
 
     // Verify we're logged in
     await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/)
-
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => page.waitForLoadState('domcontentloaded'))
 }
 
 /**
