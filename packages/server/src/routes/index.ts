@@ -129,8 +129,9 @@ router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
 router.use('/admin', adminRouter)
 
-if (process.env.NODE_ENV === 'test') {
-    router.use('/__test__/', testControlRouter)
+// Register test endpoints for test mode or development with E2E testing enabled
+if (process.env.NODE_ENV === 'test' || (process.env.NODE_ENV === 'development' && process.env.ENABLE_E2E_ENDPOINTS === 'true')) {
+    router.use('/__test__', testControlRouter)
 }
 
 export default router

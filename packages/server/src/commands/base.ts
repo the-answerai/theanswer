@@ -1,9 +1,18 @@
 import { Command, Flags } from '@oclif/core'
 import path from 'path'
 import dotenv from 'dotenv'
+import fs from 'fs'
 import logger from '../utils/logger'
 
+// Load main .env file
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env'), override: true })
+
+// Load .env.test file if it exists (for E2E testing)
+const testEnvPath = path.join(__dirname, '..', '..', '..', '..', 'apps', 'web', '.env.test')
+if (fs.existsSync(testEnvPath)) {
+    console.log('[base] Loading test environment from apps/web/.env.test')
+    dotenv.config({ path: testEnvPath, override: true })
+}
 
 enum EXIT_CODE {
     SUCCESS = 0,
