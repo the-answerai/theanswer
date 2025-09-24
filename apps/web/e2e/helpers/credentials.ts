@@ -34,7 +34,11 @@ export const waitForLoadingToResolve = async (modal: Locator): Promise<void> => 
 }
 
 export const getCredentialCard = (modal: Locator, label: RegExp): Locator => {
-    return modal.getByRole('heading', { name: label }).locator('xpath=ancestor::div[contains(@class, "MuiPaper-root")]').first()
+    // Find the specific credential heading, then get the closest MuiPaper-root parent (credential card container)
+    return modal
+        .getByRole('heading', { name: label })
+        .locator('xpath=ancestor::div[contains(@class, "MuiPaper-root") and contains(@class, "MuiPaper-elevation1")]')
+        .first()
 }
 
 export const expectCredentialStatus = async (
