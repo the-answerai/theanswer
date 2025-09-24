@@ -48,7 +48,9 @@ export const WHITELIST_URLS = [
     '/api/v1/ping',
     '/api/v1/marketplaces/templates',
     '/api/v1/billing/usage/sync',
-    '/api/v1/langfuse/healthcheck'
+    '/api/v1/langfuse/healthcheck',
+    '/api/v1/__test__/reset',
+    '/api/v1/__test__/seed'
 ]
 
 export const OMIT_QUEUE_JOB_DATA = ['componentNodes', 'appDataSource', 'sseStreamer', 'telemetry', 'cachePool']
