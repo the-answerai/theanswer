@@ -47,7 +47,7 @@ function ThankYouHero() {
                     🎉
                 </span>
                 <p className={styles.heroEyebrow}>Registration confirmed</p>
-                <h1 className={styles.heroHeadline}>You’re locked in for Saturday’s Enterprise AI playbook</h1>
+                <h1 className={styles.heroHeadline}>You're locked in for Wednesday's Enterprise AI playbook</h1>
                 <p className={styles.heroSubhead}>
                     We go live <strong>{localEventTime}</strong>. Take a minute now so the workshop zeroes in on the workflow your leaders
                     care about most.
@@ -376,7 +376,7 @@ function ProgressiveProfileForm() {
                     <div className='col col--8 col--offset-2'>
                         <div className={styles.progressiveCard}>
                             <span className={styles.bonusBadge}>Optional prep</span>
-                            <h2>Shape Saturday around your KPIs</h2>
+                            <h2>Shape Wednesday around your KPIs</h2>
                             <p>
                                 Choose your path: spend two minutes with the AI coach or drop the details below so Bradley can tailor the
                                 live walkthrough to your stack.
@@ -499,7 +499,7 @@ function WhatToExpect() {
     return (
         <section className={styles.featuresSection} id='what-to-expect'>
             <div className='container'>
-                <h2 className='text--center'>What to Expect on Saturday</h2>
+                <h2 className='text--center'>What to Expect on Wednesday</h2>
                 <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
                     A 60-minute working session that shows you exactly how teams like IAS, Palatine Capital, and Moonstruck Medical shipped
                     governed AI agents in four weeks.
@@ -775,7 +775,7 @@ function FinalAssurance() {
                     <div className={styles.finalAssuranceCopy}>
                         <h2>Share as much (or as little) as you like—your data stays with us</h2>
                         <p>
-                            Everything you submit—whether typed or voiced—is used only to personalize Saturday and the optional pilot
+                            Everything you submit—whether typed or voiced—is used only to personalize Wednesday and the optional pilot
                             review. No cold calls, no surprise sequences.
                         </p>
                         <ul className={styles.finalAssuranceList}>

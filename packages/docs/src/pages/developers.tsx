@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
-import Layout from '@theme/Layout'
+import LayoutWithBanner from '@site/src/components/LayoutWithBanner'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 
 import styles from './index.module.css'
@@ -34,7 +34,7 @@ function DevelopersHero() {
     )
 }
 
-const LayoutComponent: any = Layout
+const LayoutComponent: any = LayoutWithBanner
 
 function OpeningHook() {
     return (

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
-import Layout from '@theme/Layout'
+import LayoutWithBanner from '@site/src/components/LayoutWithBanner'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 
 import styles from './index.module.css'
@@ -335,7 +335,7 @@ export default function Creators(): JSX.Element {
     const { siteConfig } = useDocusaurusContext()
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutWithBanner
                 title='Creators - Help Us Build Ethical AI That Respects Your Work'
                 description="Join the Creator Alliance. Help build the world's first 100% ethically curated AI models that pay creators fairly and respect consent. Your art matters. Your voice matters. Your choice matters."
             >
@@ -348,7 +348,7 @@ export default function Creators(): JSX.Element {
                     <JoinWaitlist />
                     <ClosingRally />
                 </main>
-            </Layout>
+            </LayoutWithBanner>
         </div>
     )
 }
