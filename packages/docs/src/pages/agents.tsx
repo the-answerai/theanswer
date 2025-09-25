@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
-import LayoutWithBanner from '@site/src/components/LayoutWithBanner'
+import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
@@ -555,7 +555,7 @@ export default function Agents(): JSX.Element {
 
     return (
         <div data-theme='dark'>
-            <LayoutWithBanner
+            <Layout
                 title='AI Agents - Intelligent Autonomous Assistants'
                 description='Build intelligent AI agents that understand your needs, connect to your tools, and execute complex workflows autonomously.'
             >
@@ -578,7 +578,7 @@ export default function Agents(): JSX.Element {
                     <HowItWorks />
                     <CTASection />
                 </main>
-            </LayoutWithBanner>
+            </Layout>
         </div>
     )
 }

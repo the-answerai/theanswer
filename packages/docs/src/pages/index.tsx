@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
-import LayoutWithBanner from '@site/src/components/LayoutWithBanner'
+import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 
@@ -44,7 +44,7 @@ function HomepageHeader() {
     )
 }
 
-const LayoutComponent: any = LayoutWithBanner
+const LayoutComponent: any = Layout
 
 function MissionSection() {
     return (

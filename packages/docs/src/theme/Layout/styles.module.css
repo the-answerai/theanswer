@@ -1,29 +1,22 @@
 .webinarBanner {
     position: fixed;
-    top: 60px; /* Below the navbar */
+    top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(90deg, rgba(0, 255, 255, 0.15), rgba(255, 0, 255, 0.15));
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0.75rem 1rem;
+    width: 100%;
+    background: linear-gradient(90deg, #00303f, #003545);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    z-index: 9999;
+}
+
+.webinarContent {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    z-index: 100;
-    animation: slideDown 0.5s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .webinarBadge {
@@ -64,10 +57,12 @@
 
 @media (max-width: 768px) {
     .webinarBanner {
-        flex-direction: column;
         padding: 0.5rem;
+    }
+
+    .webinarContent {
+        flex-direction: column;
         gap: 0.5rem;
-        top: 60px; /* Adjust for mobile navbar */
     }
 
     .webinarBadge {
@@ -84,15 +79,7 @@
     }
 }
 
-/* Add padding to the main content to account for the banner */
-:global(.main-wrapper) {
-    padding-top: 60px !important;
-}
-
-:global([class*='docMainContainer']) {
-    padding-top: 60px !important;
-}
-
-:global(.container) {
-    padding-top: 20px;
+/* Push everything down to account for the fixed banner */
+:global(body) {
+    padding-top: 54px !important;
 }
