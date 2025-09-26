@@ -33,7 +33,7 @@ class AAIToolAgent_Agents extends ToolAgentBase {
         ]
     }
 
-    async run(nodeData: INodeData, input: string, options: ICommonObject): Promise<string | ICommonObject> {
+    async init(nodeData: INodeData, input: string, options: ICommonObject): Promise<any> {
         // Initialize output parser if provided
         const llmOutputParser = nodeData.inputs?.outputParser as BaseOutputParser
         this.outputParser = llmOutputParser
@@ -48,10 +48,15 @@ class AAIToolAgent_Agents extends ToolAgentBase {
                 }
             }
 
-            // Inject format instructions into system message
-            this.injectFormatInstructionsIntoSystemMessage(nodeData)
+            // Inject format instructions into system message and Chat Prompt Template
+            this.injectFormatInstructions(nodeData)
         }
 
+        // Call the parent init method
+        return await super.init(nodeData, input, options)
+    }
+
+    async run(nodeData: INodeData, input: string, options: ICommonObject): Promise<string | ICommonObject> {
         // Call the parent run method
         const result = await super.run(nodeData, input, options)
 
@@ -63,19 +68,28 @@ class AAIToolAgent_Agents extends ToolAgentBase {
         return result
     }
 
-    private injectFormatInstructionsIntoSystemMessage(nodeData: INodeData) {
+    private injectFormatInstructions(nodeData: INodeData) {
         if (!this.outputParser || !nodeData.inputs) return
 
         const formatInstructions = this.outputParser.getFormatInstructions()
-        let systemMessage = (nodeData.inputs?.systemMessage as string) || ''
+        if (!formatInstructions) return
 
-        // Inject format instructions into system message
-        if (formatInstructions) {
-            // Escape curly braces to prevent LangChain template parsing issues
-            const escapedInstructions = formatInstructions.replace(/\{/g, '{{').replace(/\}/g, '}}')
+        // Escape curly braces to prevent LangChain template parsing issues
+        const escapedInstructions = formatInstructions.replace(/\{/g, '{{').replace(/\}/g, '}}')
+        const instructionText = `\n\nIMPORTANT: Your final response must follow this exact format:\n${escapedInstructions}`
 
-            const instructionText = `\n\nIMPORTANT: Your final response must follow this exact format:\n${escapedInstructions}`
-
+        // Handle Chat Prompt Template if it exists
+        const chatPromptTemplate = nodeData.inputs?.chatPromptTemplate
+        if (chatPromptTemplate && chatPromptTemplate.promptMessages?.length > 0) {
+            // Inject into the first system message of the Chat Prompt Template
+            const systemMessage = chatPromptTemplate.promptMessages[0]
+            if (systemMessage && (systemMessage as any).prompt?.template) {
+                const currentTemplate = (systemMessage as any).prompt.template
+                ;(systemMessage as any).prompt.template = currentTemplate + instructionText
+            }
+        } else {
+            // Handle regular system message
+            let systemMessage = (nodeData.inputs?.systemMessage as string) || ''
             if (systemMessage) {
                 nodeData.inputs.systemMessage = systemMessage + instructionText
             } else {
