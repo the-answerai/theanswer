@@ -136,14 +136,14 @@ const resolveInitialChatflowId = (): string => {
 const getTestUsers = (): Record<TestUserRole, EnvTestUser> => {
     const requiredEnvVars = [
         'TEST_USER_ENTERPRISE_ADMIN_EMAIL',
-        'TEST_USER_ENTERPRISE_BUILDER_EMAIL', 
+        'TEST_USER_ENTERPRISE_BUILDER_EMAIL',
         'TEST_USER_ENTERPRISE_MEMBER_EMAIL',
         'TEST_USER_PASSWORD',
         'TEST_ENTERPRISE_AUTH0_ORG_ID',
         'TEST_ENTERPRISE_ORG_NAME'
     ]
 
-    const missing = requiredEnvVars.filter(envVar => !process.env[envVar])
+    const missing = requiredEnvVars.filter((envVar) => !process.env[envVar])
     if (missing.length > 0) {
         throw new InternalFlowiseError(
             StatusCodes.PRECONDITION_FAILED,
@@ -262,6 +262,18 @@ const getTestCredentials = (): Record<string, EnvTestCredential> => {
             defaultValues: {
                 botToken: 'xoxb-test-slack-bot-token'
             }
+        },
+        contentful: {
+            name: 'E2E Contentful Credential',
+            credentialName: 'contentfulManagementApi',
+            envKeys: {
+                managementToken: 'TEST_CONTENTFUL_MANAGEMENT_TOKEN',
+                spaceId: 'TEST_CONTENTFUL_SPACE_ID'
+            },
+            defaultValues: {
+                managementToken: 'test-contentful-management-token',
+                spaceId: 'test-space-id'
+            }
         }
     }
 }
@@ -271,11 +283,11 @@ const getTestCredentials = (): Record<string, EnvTestCredential> => {
  */
 const buildCredentialData = (credConfig: EnvTestCredential): Record<string, any> => {
     const data: Record<string, any> = {}
-    
+
     for (const [fieldName, envVarName] of Object.entries(credConfig.envKeys)) {
         data[fieldName] = process.env[envVarName] || credConfig.defaultValues[fieldName]
     }
-    
+
     return data
 }
 
@@ -436,7 +448,7 @@ export async function seedBaseline(providedDataSource?: SupportedDataSource): Pr
 
     const credentialRepo = ds.getRepository(Credential)
     const testCredentials = getTestCredentials()
- 
+
     logger.info('[test-utils] 🔑 Creating baseline credentials (orphaned)...')
     // Create OpenAI and Exa credentials for baseline (orphaned - no user/org assignment)
     const openAICredential = await credentialRepo.save(
@@ -455,7 +467,9 @@ export async function seedBaseline(providedDataSource?: SupportedDataSource): Pr
         })
     )
 
-    logger.info(`[test-utils] ✅ Baseline seed complete - Org: ${organization.id}, Credentials: ${openAICredential.id}, ${exaCredential.id}`)
+    logger.info(
+        `[test-utils] ✅ Baseline seed complete - Org: ${organization.id}, Credentials: ${openAICredential.id}, ${exaCredential.id}`
+    )
 }
 
 export async function createOrphanedTestData(providedDataSource?: SupportedDataSource): Promise<void> {
@@ -525,11 +539,11 @@ export async function seedScenario(scenario: string, providedDataSource?: Suppor
 
         const testUsers = getTestUsers()
         const organization = getTestOrganization()
-        
+
         // Use admin user for all scenarios (can be made configurable later)
         const adminUser = testUsers.admin
         logger.info(`[test-utils] 👤 Using user: ${adminUser.email}`)
-        
+
         const userConfig = {
             auth0Id: adminUser.auth0Id || `auth0|${adminUser.email}`,
             email: adminUser.email,
@@ -589,6 +603,25 @@ export async function seedScenario(scenario: string, providedDataSource?: Suppor
                             jira: { name: 'Seed Jira', assigned: false },
                             confluence: { name: 'Seed Confluence', assigned: false },
                             github: { name: 'Seed GitHub', assigned: false },
+                            contentful: { name: 'Seed Contentful', assigned: false },
+                            slack: { name: 'Seed Slack', assigned: false }
+                        }
+                    },
+                    ds
+                )
+                break
+            case 'user-with-all-but-slack-assigned':
+                logger.info('[test-utils] 🌟 Creating user with all credentials assigned except Slack...')
+                await seedTestData(
+                    {
+                        user: userConfig,
+                        credentials: {
+                            openai: { name: 'Seed OpenAI', assigned: true },
+                            exa: { name: 'Seed Exa', assigned: true },
+                            jira: { name: 'Seed Jira', assigned: true },
+                            confluence: { name: 'Seed Confluence', assigned: true },
+                            github: { name: 'Seed GitHub', assigned: true },
+                            contentful: { name: 'Seed Contentful', assigned: true },
                             slack: { name: 'Seed Slack', assigned: false }
                         }
                     },
@@ -598,7 +631,7 @@ export async function seedScenario(scenario: string, providedDataSource?: Suppor
             default:
                 throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, `Error: test-utils.seedScenario - Unknown scenario: ${scenario}`)
         }
-        
+
         logger.info(`[test-utils] ✅ Scenario "${scenario}" completed successfully`)
     } catch (error) {
         logger.error(`[test-utils] ❌ Scenario "${scenario}" failed: ${getErrorMessage(error)}`)
@@ -616,7 +649,7 @@ type CredentialSeedDefinition = {
 // Legacy credential definitions - now generated from getTestCredentials()
 const getLegacyCredentialDefinitions = (): CredentialSeedDefinition[] => {
     const testCreds = getTestCredentials()
-    
+
     return [
         {
             credentialName: testCreds.openai.credentialName,
@@ -669,6 +702,15 @@ const getLegacyCredentialDefinitions = (): CredentialSeedDefinition[] => {
             defaultName: testCreds.slack.name,
             buildData: (overrides: Record<string, any> = {}) => {
                 const data = buildCredentialData(testCreds.slack)
+                return { ...data, ...overrides }
+            }
+        },
+        {
+            credentialName: testCreds.contentful.credentialName,
+            aliases: ['contentful', 'contentfulapi', 'contentfulmanagement'],
+            defaultName: testCreds.contentful.name,
+            buildData: (overrides: Record<string, any> = {}) => {
+                const data = buildCredentialData(testCreds.contentful)
                 return { ...data, ...overrides }
             }
         }
@@ -727,7 +769,7 @@ const mapCredentialToChatflowVisibility = (values: CredentialVisibility[]): Chat
 const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialId?: string): void => {
     console.log(`[DEBUG] ensureFlowDataAssignment called - credentialName: ${credentialName}, credentialId: ${credentialId}`)
     logger.info(`[test-utils] 🔍 ensureFlowDataAssignment called - credentialName: ${credentialName}, credentialId: ${credentialId}`)
-    
+
     if (!flow?.nodes) {
         console.log(`[DEBUG] No flow nodes found`)
         logger.info(`[test-utils] ❌ No flow nodes found`)
@@ -740,17 +782,17 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
     flow.nodes.forEach((node: any, index: number) => {
         const nodeId = node.id || `node_${index}`
         const nodeName = node.data?.name || node.data?.label || 'Unknown'
-        
+
         const inputParams = Array.isArray(node?.data?.inputParams) ? node.data.inputParams : []
         logger.info(`[test-utils] 🔍 Node ${nodeId} (${nodeName}): ${inputParams.length} input params`)
-        
+
         const credentialParams = inputParams.filter(
             (param: any) =>
                 param?.type === 'credential' && Array.isArray(param.credentialNames) && param.credentialNames.includes(credentialName)
         )
 
         logger.info(`[test-utils] 🎯 Node ${nodeId}: Found ${credentialParams.length} matching credential params for ${credentialName}`)
-        
+
         if (credentialParams.length > 0) {
             credentialParams.forEach((param: any) => {
                 logger.info(`[test-utils] 📝 Credential param: ${param.name}, credentialNames: ${JSON.stringify(param.credentialNames)}`)
@@ -777,13 +819,13 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
                     logger.info(`[test-utils] 🔗 Setting ${param.name} = ${credentialId} in node ${nodeId}`)
                     node.data.inputs[param.name] = credentialId
                 })
-            
+
             // Debug: Show the final node state after assignment
             console.log(`[DEBUG] Node ${nodeId} after assignment:`)
             console.log(`[DEBUG] - node.data.credential: ${node.data.credential}`)
             console.log(`[DEBUG] - node.data.inputs.FLOWISE_CREDENTIAL_ID: ${node.data.inputs.FLOWISE_CREDENTIAL_ID}`)
             console.log(`[DEBUG] - node.data.inputs.credential: ${node.data.inputs.credential}`)
-            
+
             assignmentCount++
         } else {
             logger.info(`[test-utils] 🧹 Clearing credential assignment from node ${nodeId} (${nodeName})`)
@@ -803,7 +845,7 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
             }
         }
     })
-    
+
     logger.info(`[test-utils] 📊 ensureFlowDataAssignment completed - ${assignmentCount} nodes assigned for ${credentialName}`)
 }
 
@@ -865,7 +907,7 @@ export async function seedTestData(config: SeedTestConfig, providedDataSource?: 
         if (config.credentials) {
             const credentialCount = Object.keys(config.credentials).length
             logger.info(`[test-utils] 🔑 Creating ${credentialCount} credential type(s)...`)
-            
+
             for (const [key, rawConfig] of Object.entries(config.credentials)) {
                 const definition = resolveCredentialSeedDefinition(key)
 
@@ -892,7 +934,7 @@ export async function seedTestData(config: SeedTestConfig, providedDataSource?: 
                             `Error: test-utils.seedTestData - Cannot assign credential '${definition.credentialName}' without creating it`
                         )
                     }
- 
+
                     const credentialName = entry.name ?? definition.defaultName
                     const credentialBody = {
                         name: credentialName,
@@ -944,19 +986,19 @@ export async function seedTestData(config: SeedTestConfig, providedDataSource?: 
         console.log(`[DEBUG] assignmentCount: ${assignmentCount}`)
         console.log(`[DEBUG] assignedCredentialByType size: ${assignedCredentialByType.size}`)
         console.log(`[DEBUG] assignedCredentialByType type:`, typeof assignedCredentialByType)
-        
+
         try {
             if (assignmentCount > 0) {
                 console.log(`[DEBUG] About to apply ${assignmentCount} assignments`)
                 logger.info(`[test-utils] 🔗 Applying ${assignmentCount} credential assignment(s)`)
                 console.log(`[DEBUG] After log message, about to process map`)
-                
+
                 logger.info(`[test-utils] 📋 Assignment map contents:`)
                 assignedCredentialByType.forEach((credentialId, credentialName) => {
                     console.log(`[DEBUG] Map entry: ${credentialName} -> ${credentialId}`)
                     logger.info(`[test-utils] 📌 ${credentialName} -> ${credentialId}`)
                 })
-                
+
                 console.log(`[DEBUG] About to start assignment processing`)
                 assignedCredentialByType.forEach((credentialId, credentialName) => {
                     console.log(`[DEBUG] Processing: ${credentialName} = ${credentialId}`)
@@ -973,10 +1015,10 @@ export async function seedTestData(config: SeedTestConfig, providedDataSource?: 
             logger.error(`[test-utils] ❌ Error during credential assignment: ${error}`)
             throw error
         }
- 
+
         const chatflowName = config.chatflow?.name ?? template.name ?? 'Seeded Chatflow'
         logger.info(`[test-utils] 📋 Creating user chatflow: "${chatflowName}"`)
-        
+
         const chatflowEntity = chatflowRepo.create({
             name: chatflowName,
             description: config.chatflow?.description ?? template.description,
@@ -1003,7 +1045,7 @@ export async function seedTestData(config: SeedTestConfig, providedDataSource?: 
 
         user.defaultChatflowId = savedChatflow.id
         await userRepo.save(user)
-        
+
         logger.info(`[test-utils] ✅ Test data seed complete - User: ${user.id}, Org: ${organization.id}, Chatflow: ${savedChatflow.id}`)
     } catch (error) {
         logger.error(`[test-utils] ❌ Test data seed failed: ${getErrorMessage(error)}`)
@@ -1063,7 +1105,7 @@ export async function seedUserWithCredentials(
         const org = await organizationRepo.findOne({ where: { auth0Id: organization.auth0Id } })
         const user = await userRepo.findOne({ where: { email: selectedUser.email } })
         const chatflow = await chatflowRepo.findOne({ where: { userId: user!.id } })
-        
+
         const credentialIds: Record<string, string> = {}
         if (credentialTypes.length > 0) {
             const credentials = await credentialRepo.find({ where: { userId: user!.id } })
@@ -1085,8 +1127,10 @@ export async function seedUserWithCredentials(
             chatflowId: chatflow!.id,
             credentialIds
         }
-        
-        logger.info(`[test-utils] ✅ seedUserWithCredentials complete - User: ${result.userId}, Org: ${result.organizationId}, Chatflow: ${result.chatflowId}`)
+
+        logger.info(
+            `[test-utils] ✅ seedUserWithCredentials complete - User: ${result.userId}, Org: ${result.organizationId}, Chatflow: ${result.chatflowId}`
+        )
         return result
     } catch (error) {
         logger.error(`[test-utils] ❌ seedUserWithCredentials failed: ${getErrorMessage(error)}`)
@@ -1115,16 +1159,16 @@ export function getAvailableTestUsers(): Record<TestUserRole, { email: string; n
 export function getAvailableTestCredentials(): Record<string, { name: string; credentialName: string; hasEnvVars: boolean }> {
     const creds = getTestCredentials()
     const result: Record<string, { name: string; credentialName: string; hasEnvVars: boolean }> = {}
-    
+
     for (const [key, config] of Object.entries(creds)) {
-        const hasEnvVars = Object.values(config.envKeys).some(envVar => !!process.env[envVar])
+        const hasEnvVars = Object.values(config.envKeys).some((envVar) => !!process.env[envVar])
         result[key] = {
             name: config.name,
             credentialName: config.credentialName,
             hasEnvVars
         }
     }
-    
+
     return result
 }
 
