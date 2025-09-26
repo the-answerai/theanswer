@@ -1,31 +1,10 @@
 import { expect, Locator, Page } from '@playwright/test'
-import { loginWithTestUser } from './auth'
 import { MODAL_TITLES, CREDENTIAL_LABELS, TEST_IDS } from './selectors'
 
 /**
  * Credential-specific E2E testing helpers
  * Domain-specific functions for testing credential management flows
  */
-
-export const loginAndOpenCredsModal = async (
-    page: Page,
-    options: { forceQuickSetup?: boolean; userType?: 'admin' | 'builder' | 'member' } = {}
-): Promise<Locator> => {
-    const { forceQuickSetup = false, userType = 'admin' } = options
-
-    await loginWithTestUser(page, userType)
-    await page.waitForURL(/\/chat\//, { timeout: 20000 })
-
-    if (forceQuickSetup) {
-        const current = new URL(page.url())
-        current.searchParams.set('QuickSetup', 'true')
-        await page.goto(current.toString(), { waitUntil: 'networkidle' })
-    }
-
-    const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
-    await expect(modal).toBeVisible({ timeout: 20000 })
-    return modal
-}
 
 export const waitForLoadingToResolve = async (modal: Locator): Promise<void> => {
     const loadingIndicator = modal.getByTestId(TEST_IDS.credentialsLoading)

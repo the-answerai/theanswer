@@ -206,14 +206,44 @@ export async function loginAsUser(page: Page, email: string, password: string, o
 
 /**
  * Convenience function using test user configuration
+ * @param page - Playwright page instance
+ * @param userType - Type of test user to login as (admin/builder/member)
+ * @param fresh - Whether to clear cookies before login for a fresh session
  */
-export const loginWithTestUser = async (page: Page, userType: keyof typeof TEST_USERS = 'admin'): Promise<void> => {
+export const loginWithTestUser = async (
+    page: Page,
+    userType: keyof typeof TEST_USERS = 'admin',
+    fresh: boolean = false
+): Promise<void> => {
     const user = TEST_USERS[userType]
     if (!user.email || !user.password) {
         throw new Error(`Missing environment variables for ${userType} user`)
     }
+
+    if (fresh) {
+        await page.context().clearCookies()
+    }
+
     return loginAsUser(page, user.email, user.password, user.organizationId)
 }
+
+/**
+ * Clears existing auth state and logs in with the requested test user.
+ * @deprecated Use loginWithTestUser(page, userType, true) instead
+ */
+export const loginFreshWithTestUser = async (
+    page: Page,
+    userType: keyof typeof TEST_USERS = 'admin'
+): Promise<void> => {
+    return loginWithTestUser(page, userType, true)
+}
+
+/**
+ * Convenience function for fresh admin login
+ * @deprecated Use loginWithTestUser(page, 'admin', true) instead
+ */
+export const loginFreshAsAdmin = async (page: Page): Promise<void> =>
+    loginWithTestUser(page, 'admin', true)
 
 // Backward compatibility with existing code
 export const loginThroughAuth0 = loginAsUser
