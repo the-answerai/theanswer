@@ -18,7 +18,7 @@ export type CredentialSeedConfig = CredentialSeedEntry | CredentialSeedEntry[]
 
 export type SeedPayload = {
     user: {
-        auth0Id: string
+        auth0Id?: string
         email: string
         name?: string
         organization: {
@@ -40,8 +40,7 @@ type SeedOverrides = Omit<SeedPayload, 'user'> & {
 // Use the centralized test user definition from auth.ts - STRICT .env.test only
 export const DEFAULT_TEST_USER = {
     email: TEST_USERS.admin.email,
-    auth0Id: `auth0|${TEST_USERS.admin.email}`,  // Generated from email
-    organizationId: TEST_USERS.admin.organizationId!,
+    organizationAuth0Id: TEST_USERS.admin.organizationId!,
     organizationName: TEST_USERS.admin.organizationName!,
     name: TEST_USERS.admin.email
 }
@@ -50,11 +49,11 @@ const mergeSeedPayload = (overrides: SeedOverrides): SeedPayload => {
     const baseUser = DEFAULT_TEST_USER
 
     const mergedUser = {
-        auth0Id: overrides.user?.auth0Id ?? baseUser.auth0Id,
+        auth0Id: overrides.user?.auth0Id,
         email: overrides.user?.email ?? baseUser.email,
         name: overrides.user?.name ?? baseUser.name,
         organization: {
-            auth0Id: overrides.user?.organization?.auth0Id ?? process.env.TEST_ENTERPRISE_AUTH0_ORG_ID ?? baseUser.organizationId,
+            auth0Id: overrides.user?.organization?.auth0Id ?? process.env.TEST_ENTERPRISE_AUTH0_ORG_ID ?? baseUser.organizationAuth0Id,
             name: overrides.user?.organization?.name ?? baseUser.organizationName
         }
     }

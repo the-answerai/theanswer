@@ -22,7 +22,10 @@ export const CREDENTIAL_LABELS = {
     openai: /OpenAIApi/i,
     exa: /exaSearchApi/i,
     jira: /JiraApi/i,
-    confluence: /confluenceCloudApi/i
+    confluence: /confluenceCloudApi/i,
+    github: /githubApi/i,
+    contentful: /contentfulManagementApi/i,
+    slack: /slackApi/i
 } as const
 
 export const TEST_IDS = {
@@ -36,7 +39,8 @@ export const BUTTON_TEXTS = {
     next: 'Next',
     logIn: 'Log In',
     signIn: 'Sign In',
-    submit: 'Submit'
+    submit: 'Submit',
+    assignAndContinue: 'Assign & Continue'
 } as const
 
 export const FORM_SELECTORS = {
