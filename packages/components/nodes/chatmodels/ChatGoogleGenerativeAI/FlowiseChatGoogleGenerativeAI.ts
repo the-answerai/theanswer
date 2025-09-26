@@ -545,6 +545,9 @@ class LangchainChatGoogleGenerativeAI
         let prompt = convertBaseMessagesToContent(messages, this._isMultimodalModel)
         prompt = checkIfEmptyContentAndSameRole(prompt)
 
+        // Convert any function response parts in the prompt for compatibility
+        this.convertFunctionResponse(prompt)
+
         // Prepare API request parameters
         const parameters = this.invocationParams(options)
         const request = {
