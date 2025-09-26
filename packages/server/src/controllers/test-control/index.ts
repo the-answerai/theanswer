@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { resetDatabase, seedScenario, createOrphanedTestData, seedTestData } from '../../test-utils/db'
+import { resetDatabase, seedScenario, createOrphanedTestData, seedTestData } from '../../test-utils'
 import { StatusCodes } from 'http-status-codes'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 
@@ -7,7 +7,7 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 const testGuard = (req: Request, res: Response, next: NextFunction) => {
     const isTestMode = process.env.NODE_ENV === 'test'
     const isDevelopmentWithE2E = process.env.NODE_ENV === 'development' && process.env.ENABLE_E2E_ENDPOINTS === 'true'
-    
+
     if (!isTestMode && !isDevelopmentWithE2E) {
         return res.status(StatusCodes.NOT_FOUND).json({ error: 'Not found' })
     }
