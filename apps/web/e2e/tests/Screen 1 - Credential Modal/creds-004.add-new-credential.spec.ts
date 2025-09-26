@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test'
 
 import { resetAndSeed } from '../../helpers/database'
-import { loginAndOpenCredsModal, waitForLoadingToResolve, getCredentialCard } from '../../helpers/credentials'
+import { loginWithTestUser } from '../../helpers/auth'
+import { waitForLoadingToResolve, getCredentialCard, expectModalVisible } from '../../helpers/credentials'
 import { MODAL_TITLES, CREDENTIAL_LABELS } from '../../helpers/selectors'
 
-test.describe('CREDS-004: Add New Credential', () => {
+test.describe('Add New Credential', () => {
     test.beforeEach(async ({ page }) => {
         await resetAndSeed({
             chatflow: { name: 'QA CREDS-004 Add Credential' },
@@ -13,10 +14,12 @@ test.describe('CREDS-004: Add New Credential', () => {
                 confluence: { create: false }
             }
         })
-        await loginAndOpenCredsModal(page)
+        await loginWithTestUser(page, 'admin')
+        await page.waitForURL(/\/chat\//, { timeout: 20000 })
+        await expectModalVisible(page)
     })
 
-    test('creates a new Confluence credential through the modal workflow', async ({ page }) => {
+    test('creates a new Confluence credential', async ({ page }) => {
         const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
         await waitForLoadingToResolve(modal)
 
