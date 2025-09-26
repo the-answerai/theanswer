@@ -165,12 +165,12 @@ const AdminChatflows = () => {
         console.log('🤖id', chatflow.id)
         console.log('type', chatflow)
         if (chatflow.type === 'AGENTFLOW') {
-            return `/sidekick-studio/v2/agentcanvas/${chatflow.id}`
+            return `/v2/agentcanvas/${chatflow.id}`
         } else if (chatflow.type === 'MULTIAGENT') {
-            return `/sidekick-studio/agentcanvas/${chatflow.id}`
+            return `/agentcanvas/${chatflow.id}`
         } else {
             // Default to regular chatflow canvas
-            return `/sidekick-studio/canvas/${chatflow.id}`
+            return `/canvas/${chatflow.id}`
         }
     }
 
