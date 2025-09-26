@@ -5,7 +5,7 @@ import { waitForLoadingToResolve } from '../../helpers/credentials'
 import { loginWithTestUser } from '../../helpers/auth'
 import { MODAL_TITLES } from '../../helpers/selectors'
 
-test.describe('CREDS-001: Popup Auto-load', () => {
+test.describe('Popup Auto-load', () => {
     test.beforeEach(async ({ page }) => {
         // Seed with the default SK Sidekick Chatflow that contains credentials requiring setup
         await resetAndSeed({
@@ -15,7 +15,7 @@ test.describe('CREDS-001: Popup Auto-load', () => {
         })
     })
 
-    test('shows the credentials modal automatically after login when setup is pending', async ({ page }) => {
+    test('shows the credentials modal after login', async ({ page }) => {
         // Step 1: Login with enterprise member user
         await loginWithTestUser(page, 'member')
         
