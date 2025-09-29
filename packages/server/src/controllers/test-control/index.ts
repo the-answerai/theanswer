@@ -45,7 +45,11 @@ const seedTestDatabase = [
                 await seedTestData(req.body, appServer.AppDataSource)
             } else {
                 const scenario = (req.query.scenario as string) || 'baseline'
-                await seedScenario(scenario, appServer.AppDataSource)
+                const userEmail = (req.query.userEmail as string) || undefined
+
+                await seedScenario(scenario, appServer.AppDataSource, {
+                    userEmail
+                })
             }
             res.status(StatusCodes.NO_CONTENT).send()
         } catch (error) {

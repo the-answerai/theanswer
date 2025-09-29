@@ -37,6 +37,9 @@ export type SeedTestConfig = {
     user: SeedUserConfig
     credentials?: Record<string, SeedCredentialConfig>
     chatflow?: SeedChatflowConfig
+    options?: {
+        preserveExistingChatflow?: boolean
+    }
 }
 
 export type TestUserRole = 'admin' | 'builder' | 'member'

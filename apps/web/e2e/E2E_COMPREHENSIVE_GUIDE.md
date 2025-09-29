@@ -161,22 +161,20 @@ await resetAndSeed({
 ```
 
 #### `resetOnly()`
-Clears all test data without seeding.
+Clears all test data without seeding. Use sparingly—most tests should jump straight to one of the combined helpers below.
 
 ```typescript
 await resetOnly()  // Clean slate
 ```
 
-#### `seedOnly(overrides?)`
-Seeds data without resetting (useful for adding data mid-test).
+#### `seedScenario(scenario, userType?)`
+Applies a predefined scenario to the currently logged-in user. Call this *after* `resetOnly()` and logging in so the user record exists.
 
 ```typescript
-await seedOnly({
-    credentials: {
-        github: { assigned: true, name: 'New GitHub Key' }
-    }
-})
+await seedScenario('user-with-both-credentials')
 ```
+
+> **Deprecated:** `seedOnly` still exists for backward compatibility, but new tests should prefer `resetAndSeed` (reset + payload) or the `resetOnly()` + `seedScenario()` flow so the "reset → seed → test" steps stay explicit.
 
 ### Credential Configuration Options
 
@@ -196,7 +194,7 @@ const credentialTypes = [
 
 ### Predefined Scenarios
 ```typescript
-// Use predefined scenarios for common test setups
+// Use predefined scenarios for common test setups (after login)
 await seedScenario('user-with-both-credentials')
 await seedScenario('user-with-openai')
 await seedScenario('user-with-all-but-slack-assigned')

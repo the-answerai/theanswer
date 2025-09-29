@@ -1,4 +1,4 @@
-import { resetTestDb, seedTestData, resetAndSeed as dbResetAndSeed } from './test-db'
+import { resetTestDb, seedTestData, resetAndSeed as dbResetAndSeed, seedScenario as seedScenarioApi } from './test-db'
 import { TEST_USERS } from './auth'
 
 /**
@@ -36,7 +36,6 @@ export type SeedPayload = {
 type SeedOverrides = Omit<SeedPayload, 'user'> & {
     user?: Partial<SeedPayload['user']>
 }
-
 // Use the centralized test user definition from auth.ts - STRICT .env.test only
 export const DEFAULT_TEST_USER = {
     email: TEST_USERS.admin.email,
@@ -65,11 +64,32 @@ const mergeSeedPayload = (overrides: SeedOverrides): SeedPayload => {
     }
 }
 
+/**
+ * Full reset + custom seed. Use when you need to specify exact credential payloads
+ * for a test scenario.
+ */
 export const resetAndSeed = async (overrides: SeedOverrides): Promise<void> => {
     const payload = mergeSeedPayload(overrides)
     await dbResetAndSeed(payload)
 }
 
+export const seedScenario = async (scenario: string, userType: keyof typeof TEST_USERS = 'admin'): Promise<void> => {
+    if (!scenario) {
+        throw new Error('seedScenario requires a scenario name')
+    }
+
+    const user = TEST_USERS[userType]
+
+    await seedScenarioApi(scenario, {
+        userEmail: user.email
+    })
+}
+
+/**
+ * @deprecated Use resetAndSeed for custom payloads or seedScenario for
+ * scenario aliases. This helper remains for backwards compatibility with existing
+ * tests but still performs a full reset under the hood.
+ */
 export const seedOnly = async (overrides: SeedOverrides): Promise<void> => {
     const payload = mergeSeedPayload(overrides)
     await seedTestData(payload)

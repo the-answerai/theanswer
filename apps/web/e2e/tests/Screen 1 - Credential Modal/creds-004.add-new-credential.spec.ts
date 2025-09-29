@@ -1,21 +1,24 @@
 import { test, expect } from '@playwright/test'
-
-import { resetAndSeed } from '../../helpers/database'
+import { resetOnly, seedScenario } from '../../helpers/database'
 import { loginWithTestUser } from '../../helpers/auth'
 import { waitForLoadingToResolve, getCredentialCard, expectModalVisible } from '../../helpers/credentials'
 import { MODAL_TITLES, CREDENTIAL_LABELS } from '../../helpers/selectors'
 
 test.describe('Add New Credential', () => {
     test.beforeEach(async ({ page }) => {
-        await resetAndSeed({
-            chatflow: { name: 'QA CREDS-004 Add Credential' },
-            credentials: {
-                openai: { assigned: true, name: 'QA OpenAI Assigned' },
-                confluence: { create: false }
-            }
-        })
-        await loginWithTestUser(page, 'admin')
-        await page.waitForURL(/\/chat\//, { timeout: 20000 })
+        console.log('🗑️ Resetting database for clean test state...')
+        await resetOnly()
+
+        console.log('🔐 Logging in as admin (creates chatflow)...')
+        await loginWithTestUser(page, 'admin', true)
+
+        await expect(page).toHaveURL(/\/chat\//, { timeout: 20000 })
+
+        console.log('🔧 Applying credential scenario: user-with-openai...')
+        await seedScenario('user-with-openai', 'admin')
+
+        await page.goto('/chat', { waitUntil: 'networkidle' })
+        await expect(page).not.toHaveURL(/auth0\.com/)
         await expectModalVisible(page)
     })
 
@@ -43,6 +46,12 @@ test.describe('Add New Credential', () => {
         await expect(addDialog).toBeHidden({ timeout: 20000 })
 
         const dropdown = confluenceCard.getByRole('combobox')
+        await dropdown.click()
+
+        const newlyCreatedOption = page.getByRole('option', { name: credentialName })
+        await expect(newlyCreatedOption).toBeVisible({ timeout: 10000 })
+        await newlyCreatedOption.click()
+
         await expect(dropdown).toHaveText(new RegExp(credentialName))
     })
 })

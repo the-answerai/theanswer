@@ -8,24 +8,23 @@ import { InternalFlowiseError } from '../errors/internalFlowiseError'
 import { getErrorMessage } from '../errors/utils'
 import logger from '../utils/logger'
 import { transformToCredentialEntity } from '../utils'
-import { createOrphanedTestData, seedBaseline } from './baseline'
+import { seedBaseline } from './baseline'
 import { resolveInitialChatflowId } from './config'
 import { ensureDataSource } from './dataSource'
 import { loadTestEnvironment, validateScenarioAliases, resolveAuth0UserId } from './environment'
 import { ensureTemplateChatflow } from './template'
-import { resetDatabase } from './reset'
 import { SeedCredentialEntry, SeedTestConfig, SupportedDataSource } from './types'
 import { getCredentialSeedDefinitions, normalizeCredentialEntries, resolveCredentialSeedDefinition } from './credentials'
 
 const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialId?: string): void => {
-    logger.info(`[test-utils] 🔍 ensureFlowDataAssignment called - credentialName: ${credentialName}, credentialId: ${credentialId}`)
+    logger.debug(`[test-utils] ensureFlowDataAssignment called - credentialName: ${credentialName}, credentialId: ${credentialId}`)
 
     if (!flow?.nodes) {
-        logger.info('[test-utils] ❌ No flow nodes found')
+        logger.debug('[test-utils] No flow nodes found')
         return
     }
 
-    logger.info(`[test-utils] 📊 Processing ${flow.nodes.length} nodes`)
+    logger.debug(`[test-utils] Processing ${flow.nodes.length} nodes`)
 
     let assignmentCount = 0
     flow.nodes.forEach((node: any, index: number) => {
@@ -33,18 +32,18 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
         const nodeName = node.data?.name || node.data?.label || 'Unknown'
 
         const inputParams = Array.isArray(node?.data?.inputParams) ? node.data.inputParams : []
-        logger.info(`[test-utils] 🔍 Node ${nodeId} (${nodeName}): ${inputParams.length} input params`)
+        logger.debug(`[test-utils] Node ${nodeId} (${nodeName}): ${inputParams.length} input params`)
 
         const credentialParams = inputParams.filter(
             (param: any) =>
                 param?.type === 'credential' && Array.isArray(param.credentialNames) && param.credentialNames.includes(credentialName)
         )
 
-        logger.info(`[test-utils] 🎯 Node ${nodeId}: Found ${credentialParams.length} matching credential params for ${credentialName}`)
+        logger.debug(`[test-utils] Node ${nodeId}: Found ${credentialParams.length} matching credential params for ${credentialName}`)
 
         if (credentialParams.length > 0) {
             credentialParams.forEach((param: any) => {
-                logger.info(`[test-utils] 📝 Credential param: ${param.name}, credentialNames: ${JSON.stringify(param.credentialNames)}`)
+                logger.debug(`[test-utils] Credential param: ${param.name}, credentialNames: ${JSON.stringify(param.credentialNames)}`)
             })
         }
 
@@ -57,7 +56,7 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
         }
 
         if (credentialId) {
-            logger.info(`[test-utils] ✅ Assigning credential ${credentialId} to node ${nodeId} (${nodeName})`)
+            logger.debug(`[test-utils] Assigning credential ${credentialId} to node ${nodeId} (${nodeName})`)
             node.data.credential = credentialId
             node.data.inputs = node.data.inputs ? { ...node.data.inputs } : {}
             node.data.inputs.FLOWISE_CREDENTIAL_ID = credentialId
@@ -65,13 +64,13 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
             credentialParams
                 .filter((param: any) => typeof param?.name === 'string' && param.name.length > 0)
                 .forEach((param: any) => {
-                    logger.info(`[test-utils] 🔗 Setting ${param.name} = ${credentialId} in node ${nodeId}`)
+                    logger.debug(`[test-utils] Setting ${param.name} = ${credentialId} in node ${nodeId}`)
                     node.data.inputs[param.name] = credentialId
                 })
 
             assignmentCount++
         } else {
-            logger.info(`[test-utils] 🧹 Clearing credential assignment from node ${nodeId} (${nodeName})`)
+            logger.debug(`[test-utils] Clearing credential assignment from node ${nodeId} (${nodeName})`)
             if (node.data.credential) {
                 delete node.data.credential
             }
@@ -89,7 +88,7 @@ const ensureFlowDataAssignment = (flow: any, credentialName: string, credentialI
         }
     })
 
-    logger.info(`[test-utils] 📊 ensureFlowDataAssignment completed - ${assignmentCount} nodes assigned for ${credentialName}`)
+    logger.info(`[test-utils] ensureFlowDataAssignment applied ${assignmentCount} assignment(s) for ${credentialName}`)
 }
 
 const reuseOrCreateCredential = async (
@@ -254,10 +253,10 @@ export const seedTestData = async (config: SeedTestConfig, providedDataSource?: 
                     retainedCredentialIds.add(credential.id)
 
                     if (assigned) {
-                        logger.info(`[test-utils] 📌 Credential "${credential.name}" will be assigned to chatflow`)
+                        logger.debug(`[test-utils] Credential "${credential.name}" will be assigned to chatflow`)
                         assignedCredentialByType.set(definition.credentialName, credential.id)
                     } else {
-                        logger.info(`[test-utils] 📋 Credential "${credential.name}" created but not assigned`)
+                        logger.debug(`[test-utils] Credential "${credential.name}" created without assignment`)
                     }
                 }
             }
@@ -268,80 +267,127 @@ export const seedTestData = async (config: SeedTestConfig, providedDataSource?: 
             await credentialRepo.delete({ id: In(credentialsToRemove.map((cred) => cred.id)) })
         }
 
-        await chatflowRepo.delete({ userId: user.id })
+        const preserveExistingChatflow = config.options?.preserveExistingChatflow === true
 
-        const template = await chatflowRepo.findOne({ where: { id: templateId } })
+        let targetChatflow: ChatFlow | null = null
 
-        if (!template) {
-            throw new InternalFlowiseError(
-                StatusCodes.INTERNAL_SERVER_ERROR,
-                `Error: test-utils.seedTestData - Template chatflow ${templateId} not found`
-            )
+        if (preserveExistingChatflow) {
+            if (user.defaultChatflowId) {
+                targetChatflow = await chatflowRepo.findOne({ where: { id: user.defaultChatflowId } })
+            }
+
+            if (!targetChatflow) {
+                targetChatflow = await chatflowRepo.findOne({
+                    where: { userId: user.id },
+                    order: { createdDate: 'DESC' }
+                })
+            }
         }
 
-        logger.info('[test-utils] 🔧 Configuring chatflow with credential assignments...')
-        const flowData = JSON.parse(template.flowData)
+        let template: ChatFlow | null = null
+        let flowData: any
 
-        logger.info('[test-utils] 🧹 Clearing existing credential assignments...')
+        if (!targetChatflow) {
+            await chatflowRepo.delete({ userId: user.id })
+
+            template = await chatflowRepo.findOne({ where: { id: templateId } })
+
+            if (!template) {
+                throw new InternalFlowiseError(
+                    StatusCodes.INTERNAL_SERVER_ERROR,
+                    `Error: test-utils.seedTestData - Template chatflow ${templateId} not found`
+                )
+            }
+
+            logger.debug('[test-utils] Configuring chatflow with credential assignments...')
+            flowData = JSON.parse(template.flowData)
+        } else {
+            logger.debug(`[test-utils] Updating existing chatflow: ${targetChatflow.id}`)
+            flowData = targetChatflow.flowData ? JSON.parse(targetChatflow.flowData) : { nodes: [] }
+
+            logger.debug('[test-utils] Configuring chatflow with credential assignments...')
+        }
+
+        logger.debug('[test-utils] Clearing existing credential assignments...')
         getCredentialSeedDefinitions().forEach((definition) => {
-            logger.info(`[test-utils] 🗑️ Clearing assignments for: ${definition.credentialName}`)
+            logger.debug(`[test-utils] Clearing assignments for: ${definition.credentialName}`)
             ensureFlowDataAssignment(flowData, definition.credentialName, undefined)
         })
 
         const assignmentCount = assignedCredentialByType.size
+        const assignedCredentialNames = Array.from(assignedCredentialByType.keys())
 
         try {
             if (assignmentCount > 0) {
-                logger.info(`[test-utils] 🔗 Applying ${assignmentCount} credential assignment(s)`)
-
-                logger.info('[test-utils] 📋 Assignment map contents:')
+                logger.debug(`[test-utils] Applying ${assignmentCount} credential assignment(s)`)
                 assignedCredentialByType.forEach((credentialId, credentialName) => {
-                    logger.info(`[test-utils] 📌 ${credentialName} -> ${credentialId}`)
-                })
-
-                assignedCredentialByType.forEach((credentialId, credentialName) => {
-                    logger.info(`[test-utils] 🔧 Processing assignment: ${credentialName} = ${credentialId}`)
+                    logger.debug(`[test-utils] Processing assignment: ${credentialName} = ${credentialId}`)
                     ensureFlowDataAssignment(flowData, credentialName, credentialId)
                 })
             } else {
-                logger.info('[test-utils] ❌ No credential assignments to apply')
+                logger.debug('[test-utils] No credential assignments to apply')
             }
         } catch (error) {
             logger.error(`[test-utils] ❌ Error during credential assignment: ${error}`)
             throw error
         }
 
-        const chatflowName = config.chatflow?.name ?? template.name ?? 'Seeded Chatflow'
-        logger.info(`[test-utils] 📋 Creating user chatflow: "${chatflowName}"`)
+        if (assignmentCount > 0) {
+            logger.info(`[test-utils] Applied credential assignments for: ${assignedCredentialNames.join(', ')}`)
+        } else {
+            logger.debug('[test-utils] No credential assignments requested for this seed run')
+        }
 
-        const chatflowEntity = chatflowRepo.create({
-            name: chatflowName,
-            description: config.chatflow?.description ?? template.description,
-            flowData: JSON.stringify(flowData),
-            deployed: template.deployed ?? false,
-            isPublic: template.isPublic ?? false,
-            chatbotConfig: template.chatbotConfig,
-            visibility: template.visibility ?? [ChatflowVisibility.PRIVATE],
-            answersConfig: template.answersConfig,
-            apiConfig: template.apiConfig,
-            analytic: template.analytic,
-            speechToText: template.speechToText,
-            followUpPrompts: template.followUpPrompts,
-            category: template.category,
-            type: template.type,
-            browserExtConfig: template.browserExtConfig,
-            parentChatflowId: templateId,
-            userId: user.id,
-            organizationId: organization.id,
-            currentVersion: template.currentVersion ?? 1
-        })
+        let finalChatflowId: string | undefined
+        if (!targetChatflow) {
+            const chatflowName = config.chatflow?.name ?? template!.name ?? 'Seeded Chatflow'
+            logger.debug(`[test-utils] Creating user chatflow: "${chatflowName}"`)
 
-        const savedChatflow = await chatflowRepo.save(chatflowEntity)
+            const chatflowEntity = chatflowRepo.create({
+                name: chatflowName,
+                description: config.chatflow?.description ?? template!.description,
+                flowData: JSON.stringify(flowData),
+                deployed: template!.deployed ?? false,
+                isPublic: template!.isPublic ?? false,
+                chatbotConfig: template!.chatbotConfig,
+                visibility: template!.visibility ?? [ChatflowVisibility.PRIVATE],
+                answersConfig: template!.answersConfig,
+                apiConfig: template!.apiConfig,
+                analytic: template!.analytic,
+                speechToText: template!.speechToText,
+                followUpPrompts: template!.followUpPrompts,
+                category: template!.category,
+                type: template!.type,
+                browserExtConfig: template!.browserExtConfig,
+                parentChatflowId: templateId,
+                userId: user.id,
+                organizationId: organization.id,
+                currentVersion: template!.currentVersion ?? 1
+            })
 
-        user.defaultChatflowId = savedChatflow.id
-        await userRepo.save(user)
+            const savedChatflow = await chatflowRepo.save(chatflowEntity)
+            finalChatflowId = savedChatflow.id
 
-        logger.info(`[test-utils] ✅ Test data seed complete - User: ${user.id}, Org: ${organization.id}, Chatflow: ${savedChatflow.id}`)
+            user.defaultChatflowId = savedChatflow.id
+            await userRepo.save(user)
+        } else {
+            const chatflowName = config.chatflow?.name
+            if (chatflowName) {
+                targetChatflow.name = chatflowName
+            }
+
+            if (config.chatflow && 'description' in config.chatflow) {
+                targetChatflow.description = config.chatflow.description ?? targetChatflow.description
+            }
+
+            targetChatflow.flowData = JSON.stringify(flowData)
+            await chatflowRepo.save(targetChatflow)
+            finalChatflowId = targetChatflow.id
+        }
+
+        logger.info(
+            `[test-utils] ✅ Test data seed complete - User: ${user.id}, Org: ${organization.id}, Chatflow: ${finalChatflowId ?? 'unknown'}`
+        )
     } catch (error) {
         logger.error(`[test-utils] ❌ Test data seed failed: ${getErrorMessage(error)}`)
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error: test-utils.seedTestData - ${getErrorMessage(error)}`)
@@ -357,7 +403,66 @@ const scenarioCredentialAliases: Record<string, string[]> = {
     'user-with-all-but-slack-assigned': ['openai', 'exa', 'jira', 'confluence', 'github', 'contentful', 'slack']
 }
 
-export const seedScenario = async (scenario: string, providedDataSource?: SupportedDataSource): Promise<void> => {
+const buildScenarioSeedConfig = (scenario: string, user: SeedTestConfig['user']): SeedTestConfig | undefined => {
+    switch (scenario) {
+        case 'user-with-openai':
+            return {
+                user,
+                credentials: {
+                    openai: { name: 'Seed OpenAI', assigned: true }
+                }
+            }
+        case 'user-with-exa':
+            return {
+                user,
+                credentials: {
+                    exa: { name: 'Seed Exa', assigned: true }
+                }
+            }
+        case 'user-with-both-credentials':
+            return {
+                user,
+                credentials: {
+                    openai: { name: 'Seed OpenAI', assigned: true },
+                    exa: { name: 'Seed Exa', assigned: true }
+                }
+            }
+        case 'user-with-all-credentials':
+            return {
+                user,
+                credentials: {
+                    openai: { name: 'Seed OpenAI', assigned: true },
+                    exa: { name: 'Seed Exa', assigned: true },
+                    jira: { name: 'Seed Jira', assigned: false },
+                    confluence: { name: 'Seed Confluence', assigned: false },
+                    github: { name: 'Seed GitHub', assigned: false },
+                    contentful: { name: 'Seed Contentful', assigned: false },
+                    slack: { name: 'Seed Slack', assigned: false }
+                }
+            }
+        case 'user-with-all-but-slack-assigned':
+            return {
+                user,
+                credentials: {
+                    openai: { name: 'Seed OpenAI', assigned: true },
+                    exa: { name: 'Seed Exa', assigned: true },
+                    jira: { name: 'Seed Jira', assigned: true },
+                    confluence: { name: 'Seed Confluence', assigned: true },
+                    github: { name: 'Seed GitHub', assigned: true },
+                    contentful: { name: 'Seed Contentful', assigned: true },
+                    slack: { name: 'Seed Slack', assigned: false }
+                }
+            }
+        default:
+            return undefined
+    }
+}
+
+export const seedScenario = async (
+    scenario: string,
+    providedDataSource?: SupportedDataSource,
+    options: { userEmail?: string } = {}
+): Promise<void> => {
     logger.info(`[test-utils] 🎯 Starting scenario: "${scenario}"`)
     const ds = ensureDataSource(providedDataSource)
 
@@ -366,10 +471,11 @@ export const seedScenario = async (scenario: string, providedDataSource?: Suppor
         const testUsers = env.users
         const organization = env.organization
 
-        const adminUser = testUsers.admin
+        const requestedEmail = options.userEmail
+        const normalizedEmail = requestedEmail ? requestedEmail.replace(/\s+/g, '+') : testUsers.admin.email
 
         const userRepo = ds.getRepository(User)
-        const existingAdmin = await userRepo.findOne({ where: { email: adminUser.email } })
+        const organizationRepo = ds.getRepository(Organization)
 
         const aliases = scenarioCredentialAliases[scenario]
         if (aliases === undefined) {
@@ -380,102 +486,72 @@ export const seedScenario = async (scenario: string, providedDataSource?: Suppor
             validateScenarioAliases(aliases)
         }
 
-        await resetAndSeedBaseline(ds)
-
-        const adminAuth0Id = existingAdmin?.auth0Id ?? (await resolveAuth0UserId(adminUser))
-        logger.info(`[test-utils] 👤 Using user: ${adminUser.email}`)
-
-        const userConfig = {
-            auth0Id: adminAuth0Id,
-            email: adminUser.email,
-            name: adminUser.name || adminUser.email,
-            organization
+        if (scenario === 'baseline') {
+            await seedBaseline(ds)
+            logger.info(`[test-utils] ✅ Baseline scenario completed successfully`)
+            return
         }
 
-        switch (scenario) {
-            case 'baseline':
-                await seedBaseline(ds)
+        const candidateEmails = Array.from(
+            new Set([normalizedEmail, normalizedEmail.replace(/\+/g, ' '), normalizedEmail.replace(/\s+/g, '+')].filter(Boolean))
+        )
+
+        let existingUser: User | null = null
+        for (const candidate of candidateEmails) {
+            // eslint-disable-next-line no-await-in-loop
+            const found = await userRepo.findOne({ where: { email: candidate } })
+            if (found) {
+                existingUser = found
+                if (candidate !== normalizedEmail) {
+                    logger.debug(`[test-utils] Resolved user email "${normalizedEmail}" to stored value "${candidate}"`)
+                }
                 break
-            case 'user-with-openai':
-                await seedTestData(
-                    {
-                        user: userConfig,
-                        credentials: {
-                            openai: { name: 'Seed OpenAI', assigned: true }
-                        }
-                    },
-                    ds
-                )
-                break
-            case 'user-with-exa':
-                await seedTestData(
-                    {
-                        user: userConfig,
-                        credentials: {
-                            exa: { name: 'Seed Exa', assigned: true }
-                        }
-                    },
-                    ds
-                )
-                break
-            case 'user-with-both-credentials':
-                await seedTestData(
-                    {
-                        user: userConfig,
-                        credentials: {
-                            openai: { name: 'Seed OpenAI', assigned: true },
-                            exa: { name: 'Seed Exa', assigned: true }
-                        }
-                    },
-                    ds
-                )
-                break
-            case 'user-with-all-credentials':
-                await seedTestData(
-                    {
-                        user: userConfig,
-                        credentials: {
-                            openai: { name: 'Seed OpenAI', assigned: true },
-                            exa: { name: 'Seed Exa', assigned: true },
-                            jira: { name: 'Seed Jira', assigned: false },
-                            confluence: { name: 'Seed Confluence', assigned: false },
-                            github: { name: 'Seed GitHub', assigned: false },
-                            contentful: { name: 'Seed Contentful', assigned: false },
-                            slack: { name: 'Seed Slack', assigned: false }
-                        }
-                    },
-                    ds
-                )
-                break
-            case 'user-with-all-but-slack-assigned':
-                await seedTestData(
-                    {
-                        user: userConfig,
-                        credentials: {
-                            openai: { name: 'Seed OpenAI', assigned: true },
-                            exa: { name: 'Seed Exa', assigned: true },
-                            jira: { name: 'Seed Jira', assigned: true },
-                            confluence: { name: 'Seed Confluence', assigned: true },
-                            github: { name: 'Seed GitHub', assigned: true },
-                            contentful: { name: 'Seed Contentful', assigned: true },
-                            slack: { name: 'Seed Slack', assigned: false }
-                        }
-                    },
-                    ds
-                )
-                break
+            }
         }
 
-        logger.info(`[test-utils] ✅ Scenario "${scenario}" completed successfully`)
+        if (!existingUser) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                `Error: test-utils.seedScenario - User ${normalizedEmail} not found. Ensure the user has logged in before seeding.`
+            )
+        }
+
+        if (!existingUser.auth0Id) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                `Error: test-utils.seedScenario - User ${normalizedEmail} is missing auth0Id. Ensure login completed successfully.`
+            )
+        }
+
+        const existingOrg = existingUser.organizationId
+            ? await organizationRepo.findOne({ where: { id: existingUser.organizationId } })
+            : undefined
+
+        const userConfig: SeedTestConfig['user'] = {
+            auth0Id: existingUser.auth0Id,
+            email: existingUser.email,
+            name: existingUser.name ?? existingUser.email,
+            organization: {
+                auth0Id: existingOrg?.auth0Id ?? organization.auth0Id,
+                name: existingOrg?.name ?? organization.name
+            }
+        }
+
+        const scenarioConfig = buildScenarioSeedConfig(scenario, userConfig)
+
+        if (!scenarioConfig) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, `Error: test-utils.seedScenario - Unsupported scenario: ${scenario}`)
+        }
+
+        scenarioConfig.options = { preserveExistingChatflow: true }
+
+        await seedTestData(scenarioConfig, ds)
+
+        logger.info(`[test-utils] ✅ Scenario "${scenario}" applied for user ${existingUser.email}`)
     } catch (error) {
         logger.error(`[test-utils] ❌ Scenario "${scenario}" failed: ${getErrorMessage(error)}`)
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error: test-utils.seedScenario - ${getErrorMessage(error)}`)
     }
-}
-
-const resetAndSeedBaseline = async (ds: SupportedDataSource): Promise<void> => {
-    await resetDatabase(ds)
-    await createOrphanedTestData(ds)
 }
 
 export { getAvailableTestUsers, getAvailableTestCredentials } from './environment'
