@@ -1,21 +1,24 @@
 import { test, expect } from '@playwright/test'
-
-import { resetAndSeed } from '../../helpers/database'
+import { resetOnly, seedScenario } from '../../helpers/database'
 import { loginWithTestUser } from '../../helpers/auth'
 import { waitForLoadingToResolve, getCredentialCard, expectModalVisible } from '../../helpers/credentials'
 import { MODAL_TITLES, CREDENTIAL_LABELS, STATUS_CHIP } from '../../helpers/selectors'
 
 test.describe('Cancel behaviour', () => {
     test.beforeEach(async ({ page }) => {
-        await resetAndSeed({
-            chatflow: { name: 'QA CREDS-006 Cancel' },
-            credentials: {
-                openai: { assigned: true, name: 'QA OpenAI Assigned' },
-                jira: { create: false }
-            }
-        })
-        await loginWithTestUser(page, 'admin')
-        await page.waitForURL(/\/chat\//, { timeout: 20000 })
+        console.log('🗑️ Resetting database for clean test state...')
+        await resetOnly()
+
+        console.log('🔐 Logging in as admin (creates chatflow)...')
+        await loginWithTestUser(page, 'admin', true)
+
+        await expect(page).toHaveURL(/\/chat\//, { timeout: 20000 })
+
+        console.log('🔧 Applying credential scenario: user-with-openai...')
+        await seedScenario('user-with-openai', 'admin')
+
+        await page.goto('/chat', { waitUntil: 'networkidle' })
+        await expect(page).not.toHaveURL(/auth0\.com/)
         await expectModalVisible(page)
     })
 
@@ -24,7 +27,7 @@ test.describe('Cancel behaviour', () => {
         await waitForLoadingToResolve(modal)
 
         // Setup handler for the browser alert that appears when clicking Cancel
-        page.on('dialog', async dialog => {
+        page.on('dialog', async (dialog) => {
             console.log(`Dialog type: ${dialog.type()}`)
             console.log(`Dialog message: ${dialog.message()}`)
             // Accept the alert to confirm cancellation

@@ -11,10 +11,20 @@ export async function resetDatabase(): Promise<void> {
     }
 }
 
-export async function seedScenario(scenario: string = 'baseline'): Promise<void> {
+export type SeedScenarioOptions = {
+    userEmail?: string
+}
+
+export async function seedScenario(scenario: string = 'baseline', options: SeedScenarioOptions = {}): Promise<void> {
     const api = await request.newContext({ baseURL: API_URL })
     try {
-        await api.post(`/api/v1/__test__/seed?scenario=${scenario}`)
+        const params = new URLSearchParams({ scenario })
+
+        if (options.userEmail) {
+            params.set('userEmail', options.userEmail)
+        }
+
+        await api.post(`/api/v1/__test__/seed?${params.toString()}`)
     } finally {
         await api.dispose()
     }
