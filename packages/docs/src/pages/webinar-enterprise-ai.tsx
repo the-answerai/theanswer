@@ -443,7 +443,7 @@ function CustomerLogosSection() {
             <div className='container'>
                 <h2 className={styles.sectionTitle}>Trusted by teams shipping enterprise AI in weeks</h2>
                 <p className={styles.sectionSubtitle}>
-                    These teams used the playbook you’ll learn on Saturday to launch compliance-ready AI agents and unlock immediate ROI.
+                    These teams used the playbook you&apos;ll learn on Thursday to launch compliance-ready AI agents and unlock immediate ROI.
                 </p>
                 <div className={styles.customerLogoGrid}>
                     {customers.map((customer) => (
@@ -504,7 +504,7 @@ function ValueStackSection() {
                         </div>
                     ))}
                 </div>
-                <div className={styles.valueTotal}>Total value: $1,035 — access it all free on Saturday.</div>
+                <div className={styles.valueTotal}>Total value: $1,035 — access it all free on Thursday.</div>
             </div>
         </section>
     )
@@ -516,7 +516,7 @@ function MidPageCTA() {
             <div className='container'>
                 <div className={styles.midCtaCard}>
                     <div className={styles.midCtaCopy}>
-                        <h2>Need the playbook before Saturday?</h2>
+                        <h2>Need the playbook before Thursday?</h2>
                         <p>Drop your email to hold your seat and get the Enterprise AI readiness checklist + ROI worksheet immediately.</p>
                     </div>
                     <div className={styles.midCtaForm}>
@@ -578,7 +578,7 @@ function CustomerSuccessSection() {
                 </div>
 
                 <p style={{ textAlign: 'center', marginTop: '3rem', fontSize: '1rem', color: 'rgba(255,255,255,0.75)' }}>
-                    💡 Saturday’s session walks through these playbooks step-by-step so you can replicate them inside your org.
+                    💡 Thursday&apos;s session walks through these playbooks step-by-step so you can replicate them inside your org.
                 </p>
             </div>
         </section>
@@ -821,7 +821,7 @@ function FinalCTA() {
                         <div className={styles.finalCtaCard}>
                             <h2 className={styles.finalCtaHeadline}>Ready to Launch an AI Win in the Next 30 Days?</h2>
                             <p className={styles.finalCtaCopy}>
-                                Save your seat for Saturday’s live workshop and walk away with the exact templates, governance safeguards,
+                                Save your seat for Thursday&apos;s live workshop and walk away with the exact templates, governance safeguards,
                                 and deployment timeline that closed enterprise deals for IAS, Palatine, Moonstruck, and more.
                             </p>
 
@@ -1007,7 +1007,7 @@ export default function WebinarEnterpriseAI(): JSX.Element {
         <div data-theme='dark'>
             <Layout
                 title='Enterprise AI Webinar - Deploy AI Agents in 4 Weeks'
-                description='Free Saturday webinar: From AI Chaos to Enterprise Success. See how IAS, Palatine Capital, and Moonstruck Medical deployed AI in 4 weeks vs 6+ months. Live demo of vendor-free framework.'
+                description='Free Thursday webinar: From AI Chaos to Enterprise Success. See how IAS, Palatine Capital, and Moonstruck Medical deployed AI in 4 weeks vs 6+ months. Live demo of vendor-free framework.'
                 noFooter
                 noNavbar
             >

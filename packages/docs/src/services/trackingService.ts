@@ -190,6 +190,17 @@ export class TrackingService {
 
         this.trackEvent(eventData)
 
+        // Meta/Facebook Pixel - CompleteRegistration standard event
+        if (window.fbq) {
+            window.fbq('track', 'CompleteRegistration', {
+                content_name: 'Enterprise AI Webinar',
+                value: data.value || 100,
+                currency: 'USD',
+                status: 'confirmed',
+                predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
+            })
+        }
+
         // Enhanced conversion tracking for Google Ads
         if (window.gtag) {
             window.gtag('event', 'conversion', {
@@ -220,6 +231,15 @@ export class TrackingService {
 
         if (window.fbq) {
             window.fbq('track', 'PageView')
+
+            // Track ViewContent for webinar pages
+            if (pagePath.includes('webinar')) {
+                window.fbq('track', 'ViewContent', {
+                    content_name: pageTitle || 'Enterprise AI Webinar',
+                    content_category: 'webinar',
+                    content_type: 'product'
+                })
+            }
         }
 
         console.log('Page view tracked:', pagePath)
@@ -233,6 +253,25 @@ export class TrackingService {
             eventLabel: formName,
             value: action === 'complete' ? 1 : 0
         })
+
+        // Meta Pixel tracking for form interactions
+        if (window.fbq) {
+            if (action === 'start') {
+                window.fbq('track', 'InitiateCheckout', {
+                    content_name: formName,
+                    content_category: 'webinar'
+                })
+            } else if (action === 'complete') {
+                window.fbq('track', 'CompleteRegistration', {
+                    content_name: formName,
+                    status: 'success'
+                })
+            } else if (action === 'abandon') {
+                window.fbq('trackCustom', 'FormAbandonment', {
+                    content_name: formName
+                })
+            }
+        }
     }
 
     // Track content engagement
