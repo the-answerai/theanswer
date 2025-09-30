@@ -567,7 +567,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                                 .getRepository(options.databaseEntities['Credential'])
                                 .findBy({ id: In(extracted.credentials.map((c) => c.credentialId)) })
 
-                            aiCredentialsOwnership = credentials.every((c: CredentialInfo) => !c.visibility?.includes('Platform'))
+                            aiCredentialsOwnership = credentials.every((c: any) => !c.visibility?.includes('Platform'))
                                 ? 'user'
                                 : 'platform'
                         }
