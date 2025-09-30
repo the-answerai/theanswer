@@ -14,24 +14,23 @@ function PartnershipHero() {
                 <ThreeJsScene className={styles.threeJsCanvas} />
             </div>
             <div className={styles.heroContent}>
-                <div className={styles.heroEyebrow}>
-                    Strategic Partnership Announcement
-                </div>
-                <h1 className={styles.heroTitle}>
-                    Cryptographically-Verifiable AI Collaboration
-                </h1>
+                <div className={styles.heroEyebrow}>Strategic Partnership Announcement</div>
+                <h1 className={styles.heroTitle}>Cryptographically-Verifiable AI Collaboration</h1>
                 <p className={styles.heroSubtitle} style={{ fontSize: '1.3rem', maxWidth: '800px', margin: '0 auto' }}>
-                    Answer Agents × JLINC brings immutable data provenance to AI agent workflows—finally enabling trustworthy AI adoption in public companies and regulated enterprises.
+                    Answer Agents × JLINC brings immutable data provenance to AI agent workflows—finally enabling trustworthy AI adoption in
+                    public companies and regulated enterprises.
                 </p>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '1rem',
-                    margin: '1.5rem 0',
-                    fontSize: '0.9rem',
-                    opacity: 0.8
-                }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '1rem',
+                        margin: '1.5rem 0',
+                        fontSize: '0.9rem',
+                        opacity: 0.8
+                    }}
+                >
                     <span>SOX</span>
                     <span>•</span>
                     <span>FINRA</span>
@@ -53,15 +52,17 @@ function PartnershipHero() {
                         </a>
                     </div>
                 </div>
-                <div style={{
-                    marginTop: '2rem',
-                    display: 'flex',
-                    gap: '2rem',
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                    fontSize: '0.85rem',
-                    opacity: 0.7
-                }}>
+                <div
+                    style={{
+                        marginTop: '2rem',
+                        display: 'flex',
+                        gap: '2rem',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        fontSize: '0.85rem',
+                        opacity: 0.7
+                    }}
+                >
                     <span>Asynchronous stamping</span>
                     <span>Vendor-neutral</span>
                     <span>W3C DID-compliant</span>
@@ -83,13 +84,19 @@ function VisionSection() {
 
                 <div style={{ maxWidth: '900px', margin: '0 auto 3rem', fontSize: '1.1rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
-                        As AI capabilities accelerate, a critical barrier emerges: <strong>How do you trust what AI produces?</strong> For public companies and regulated industries, this isn't philosophical—it's existential. Boards won't approve AI-assisted 10-Ks without provable lineage. Auditors won't sign off on AI-generated risk reports without tamper-evident trails. Compliance officers won't deploy AI workflows that can't demonstrate complete chain of custody.
+                        As AI capabilities accelerate, a critical barrier emerges: <strong>How do you trust what AI produces?</strong> For
+                        public companies and regulated industries, this isn't philosophical—it's existential. Boards won't approve
+                        AI-assisted 10-Ks without provable lineage. Auditors won't sign off on AI-generated risk reports without
+                        tamper-evident trails. Compliance officers won't deploy AI workflows that can't demonstrate complete chain of
+                        custody.
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
                         <strong>Answer Agents and JLINC are pioneering the solution.</strong>
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
-                        By combining Answer Agents' sophisticated AI orchestration with JLINC's cryptographic provenance protocol, we're creating something unprecedented: AI workflows where every decision is traceable, every contribution is accountable, and every output is auditable.
+                        By combining Answer Agents' sophisticated AI orchestration with JLINC's cryptographic provenance protocol, we're
+                        creating something unprecedented: AI workflows where every decision is traceable, every contribution is accountable,
+                        and every output is auditable.
                     </p>
                 </div>
 
@@ -118,7 +125,17 @@ function VisionSection() {
                     </div>
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '2rem', maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center', fontSize: '1.15rem' }}>
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{
+                        marginTop: '2rem',
+                        maxWidth: '700px',
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        textAlign: 'center',
+                        fontSize: '1.15rem'
+                    }}
+                >
                     <strong>Together:</strong> Verifiable AI Collaboration—where trust is cryptographically guaranteed, not promised.
                 </div>
             </div>
@@ -144,7 +161,7 @@ function ProblemSection() {
         },
         {
             icon: '✍️',
-            title: "Who made the final decision?",
+            title: 'Who made the final decision?',
             pain: 'AI drafts SEC filing, three executives review it. Board asks: "Who signed off on what?"',
             reality: 'Email threads, comments in Google Docs',
             problem: 'Not audit-ready, no cryptographic proof'
@@ -163,14 +180,31 @@ function ProblemSection() {
                     {problems.map((item, idx) => (
                         <div key={idx} className='col col--4'>
                             <div className={styles.featureCard} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>{item.icon}</div>
+                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>
+                                    {item.icon}
+                                </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>{item.title}</h3>
                                 <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>{item.pain}</p>
                                 <div style={{ marginTop: 'auto' }}>
-                                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid rgba(255, 68, 68, 0.3)', borderRadius: '8px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+                                    <div
+                                        style={{
+                                            background: 'rgba(255, 68, 68, 0.1)',
+                                            border: '1px solid rgba(255, 68, 68, 0.3)',
+                                            borderRadius: '8px',
+                                            padding: '0.75rem',
+                                            marginBottom: '0.5rem'
+                                        }}
+                                    >
                                         <strong style={{ fontSize: '0.85rem', color: '#ff9b9b' }}>Current reality:</strong> {item.reality}
                                     </div>
-                                    <div style={{ background: 'rgba(255, 255, 0, 0.1)', border: '1px solid rgba(255, 255, 0, 0.3)', borderRadius: '8px', padding: '0.75rem' }}>
+                                    <div
+                                        style={{
+                                            background: 'rgba(255, 255, 0, 0.1)',
+                                            border: '1px solid rgba(255, 255, 0, 0.3)',
+                                            borderRadius: '8px',
+                                            padding: '0.75rem'
+                                        }}
+                                    >
                                         <strong style={{ fontSize: '0.85rem', color: '#ffff80' }}>Problem:</strong> {item.problem}
                                     </div>
                                 </div>
@@ -179,9 +213,16 @@ function ProblemSection() {
                     ))}
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '3rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                    <strong style={{ fontSize: '1.1rem', display: 'block', marginBottom: '0.5rem' }}>Without verifiable provenance, AI adoption in regulated industries remains limited by trust concerns.</strong>
-                    <span style={{ opacity: 0.9 }}>Boards, auditors, and compliance teams need cryptographic proof—not just logs—to approve AI-assisted workflows.</span>
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '3rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
+                >
+                    <strong style={{ fontSize: '1.1rem', display: 'block', marginBottom: '0.5rem' }}>
+                        Without verifiable provenance, AI adoption in regulated industries remains limited by trust concerns.
+                    </strong>
+                    <span style={{ opacity: 0.9 }}>
+                        Boards, auditors, and compliance teams need cryptographic proof—not just logs—to approve AI-assisted workflows.
+                    </span>
                 </div>
             </div>
         </section>
@@ -239,26 +280,51 @@ function SolutionSection() {
                     {steps.map((step, idx) => (
                         <div key={idx} className='col col--3'>
                             <div className={styles.featureCard} style={{ height: '100%', position: 'relative' }}>
-                                <div className={styles.stepNumber} style={{ marginBottom: '0.5rem' }}>{step.number}</div>
+                                <div className={styles.stepNumber} style={{ marginBottom: '0.5rem' }}>
+                                    {step.number}
+                                </div>
                                 <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>{step.icon}</div>
-                                <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.2rem', marginBottom: '0.5rem' }}>{step.title}</h3>
-                                <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, marginBottom: '1rem' }}>{step.subtitle}</p>
-                                <div style={{ background: 'rgba(0, 255, 255, 0.08)', border: '1px solid rgba(0, 255, 255, 0.25)', borderRadius: '8px', padding: '0.75rem', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
+                                <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                                    {step.title}
+                                </h3>
+                                <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, marginBottom: '1rem' }}>
+                                    {step.subtitle}
+                                </p>
+                                <div
+                                    style={{
+                                        background: 'rgba(0, 255, 255, 0.08)',
+                                        border: '1px solid rgba(0, 255, 255, 0.25)',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem',
+                                        marginBottom: '0.75rem',
+                                        fontSize: '0.85rem'
+                                    }}
+                                >
                                     <strong>Technical:</strong> {step.detail}
                                 </div>
-                                <div style={{ background: 'rgba(0, 255, 123, 0.08)', border: '1px solid rgba(0, 255, 123, 0.25)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.85rem' }}>
+                                <div
+                                    style={{
+                                        background: 'rgba(0, 255, 123, 0.08)',
+                                        border: '1px solid rgba(0, 255, 123, 0.25)',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem',
+                                        fontSize: '0.85rem'
+                                    }}
+                                >
                                     <strong>Result:</strong> {step.result}
                                 </div>
                                 {idx < steps.length - 1 && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        right: '-1rem',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        fontSize: '2rem',
-                                        opacity: 0.3,
-                                        display: 'none'
-                                    }}>
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            right: '-1rem',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            fontSize: '2rem',
+                                            opacity: 0.3,
+                                            display: 'none'
+                                        }}
+                                    >
                                         →
                                     </div>
                                 )}
@@ -267,8 +333,12 @@ function SolutionSection() {
                     ))}
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}>
-                    <strong>Cryptographic Foundation:</strong> Every event is signed using standard public-key cryptography and anchored to your chosen ledger—whether that's a private database, Hyperledger, or public blockchain.
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}
+                >
+                    <strong>Cryptographic Foundation:</strong> Every event is signed using standard public-key cryptography and anchored to
+                    your chosen ledger—whether that's a private database, Hyperledger, or public blockchain.
                 </div>
             </div>
         </section>
@@ -285,29 +355,56 @@ function ComparisonSection() {
                 <h2 className={clsx(styles.sectionHeading, 'text--center')}>Beyond Traditional LLM Operations</h2>
 
                 <div style={{ overflowX: 'auto', marginTop: '3rem' }}>
-                    <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse',
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        border: '1px solid rgba(0, 255, 255, 0.2)',
-                        borderRadius: '12px'
-                    }}>
+                    <table
+                        style={{
+                            width: '100%',
+                            borderCollapse: 'collapse',
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            border: '1px solid rgba(0, 255, 255, 0.2)',
+                            borderRadius: '12px'
+                        }}
+                    >
                         <thead>
                             <tr style={{ background: 'rgba(0, 255, 255, 0.1)' }}>
-                                <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid rgba(0, 255, 255, 0.3)' }}>Capability</th>
-                                <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid rgba(0, 255, 255, 0.3)' }}>Conventional LLM Ops</th>
-                                <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid rgba(0, 255, 255, 0.3)', background: 'rgba(0, 255, 255, 0.08)' }}>Answer Agents + JLINC</th>
+                                <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid rgba(0, 255, 255, 0.3)' }}>
+                                    Capability
+                                </th>
+                                <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid rgba(0, 255, 255, 0.3)' }}>
+                                    Conventional LLM Ops
+                                </th>
+                                <th
+                                    style={{
+                                        padding: '1rem',
+                                        textAlign: 'left',
+                                        borderBottom: '2px solid rgba(0, 255, 255, 0.3)',
+                                        background: 'rgba(0, 255, 255, 0.08)'
+                                    }}
+                                >
+                                    Answer Agents + JLINC
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {[
                                 ['Lineage Granularity', 'Best-effort prompt logs', 'Cryptographic event stream at context-window level'],
                                 ['Proof Standard', 'Screenshot / PDF export', 'Ledger-backed, machine-verifiable receipts'],
-                                ['Human ↔ AI Handshake', 'Informal comments or approval emails', 'Dual-signed cryptographic agreements (W3C DID-compliant)'],
+                                [
+                                    'Human ↔ AI Handshake',
+                                    'Informal comments or approval emails',
+                                    'Dual-signed cryptographic agreements (W3C DID-compliant)'
+                                ],
                                 ['Tamper Detection', 'File modification timestamps', 'Immutable chain-of-custody with hash verification'],
                                 ['Audit Trail', 'Manual log review by auditors', 'Instant, reproducible provenance queries via API'],
-                                ['Compliance', 'Documentation assembled after-the-fact', 'Built-in SOX/FINRA/HIPAA compliance from day one'],
-                                ['Identity Verification', 'Username/password authentication', 'Cryptographic public-key identity (non-repudiable)'],
+                                [
+                                    'Compliance',
+                                    'Documentation assembled after-the-fact',
+                                    'Built-in SOX/FINRA/HIPAA compliance from day one'
+                                ],
+                                [
+                                    'Identity Verification',
+                                    'Username/password authentication',
+                                    'Cryptographic public-key identity (non-repudiable)'
+                                ],
                                 ['Ledger Flexibility', 'Proprietary databases', 'Vendor-neutral: private DB, Hyperledger, or public chain']
                             ].map((row, idx) => (
                                 <tr key={idx} style={{ borderBottom: idx < 7 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}>
@@ -320,8 +417,13 @@ function ComparisonSection() {
                     </table>
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                    This isn't just better logging—it's a <strong style={{ color: '#00ffff' }}>fundamental shift in how AI systems prove their trustworthiness</strong>. From "we logged it" to "it's cryptographically impossible to falsify."
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
+                >
+                    This isn't just better logging—it's a{' '}
+                    <strong style={{ color: '#00ffff' }}>fundamental shift in how AI systems prove their trustworthiness</strong>. From "we
+                    logged it" to "it's cryptographically impossible to falsify."
                 </div>
             </div>
         </section>
@@ -334,7 +436,8 @@ function BenefitsSection() {
             icon: '',
             title: 'Audit-Ready by Default',
             subtitle: 'For Auditors',
-            description: 'Zero-knowledge proofs of data lineage satisfy SOX, FINRA, HIPAA requirements. Verify the entire chain in seconds, not weeks.',
+            description:
+                'Zero-knowledge proofs of data lineage satisfy SOX, FINRA, HIPAA requirements. Verify the entire chain in seconds, not weeks.',
             detail: 'Machine-readable audit trails via API'
         },
         {
@@ -370,7 +473,7 @@ function BenefitsSection() {
             title: 'Scale with Confidence',
             subtitle: 'For Executives',
             description: 'Board members can trust AI-assisted strategic documents. Scale agent workflows without sacrificing governance.',
-            detail: 'Competitive advantage: deploy AI where others can't'
+            detail: "Competitive advantage: deploy AI where others can't"
         }
     ]
 
@@ -386,11 +489,26 @@ function BenefitsSection() {
                     {benefits.map((benefit, idx) => (
                         <div key={idx} className='col col--4' style={{ marginBottom: '2rem' }}>
                             <div className={styles.featureCard} style={{ height: '100%' }}>
-                                {benefit.icon && <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>{benefit.icon}</div>}
-                                <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.15rem', marginBottom: '0.25rem' }}>{benefit.title}</h3>
-                                <p style={{ textAlign: 'center', fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>{benefit.subtitle}</p>
+                                {benefit.icon && (
+                                    <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>{benefit.icon}</div>
+                                )}
+                                <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.15rem', marginBottom: '0.25rem' }}>
+                                    {benefit.title}
+                                </h3>
+                                <p style={{ textAlign: 'center', fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>
+                                    {benefit.subtitle}
+                                </p>
                                 <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>{benefit.description}</p>
-                                <div style={{ background: 'rgba(0, 255, 255, 0.08)', border: '1px solid rgba(0, 255, 255, 0.2)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                                <div
+                                    style={{
+                                        background: 'rgba(0, 255, 255, 0.08)',
+                                        border: '1px solid rgba(0, 255, 255, 0.2)',
+                                        borderRadius: '8px',
+                                        padding: '0.5rem 0.75rem',
+                                        fontSize: '0.85rem',
+                                        fontStyle: 'italic'
+                                    }}
+                                >
                                     {benefit.detail}
                                 </div>
                             </div>
@@ -419,24 +537,14 @@ function IndustryUseCases() {
         {
             icon: '🏥',
             title: 'Healthcare & Life Sciences',
-            useCases: [
-                'Clinical trial data analysis',
-                'Adverse event reporting',
-                'IRB documentation',
-                'Medical research publications'
-            ],
+            useCases: ['Clinical trial data analysis', 'Adverse event reporting', 'IRB documentation', 'Medical research publications'],
             regulations: 'HIPAA, 21 CFR Part 11 (FDA), GDPR Article 9',
             value: 'Demonstrate that AI analysis of protected health information maintains complete chain of custody and consent tracking throughout the research lifecycle.'
         },
         {
             icon: '⚖️',
             title: 'Legal & Professional Services',
-            useCases: [
-                'E-discovery document analysis',
-                'Contract review & redlining',
-                'Due diligence reports',
-                'Attorney work product'
-            ],
+            useCases: ['E-discovery document analysis', 'Contract review & redlining', 'Due diligence reports', 'Attorney work product'],
             regulations: 'Attorney-client privilege, Federal Rules of Evidence',
             value: 'Create defensible AI-assisted legal work product with chain of custody provable in court. Maintain privilege while demonstrating competence.'
         },
@@ -478,12 +586,29 @@ function IndustryUseCases() {
                                     </ul>
                                 </div>
 
-                                <div style={{ background: 'rgba(255, 255, 0, 0.08)', border: '1px solid rgba(255, 255, 0, 0.25)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem' }}>
+                                <div
+                                    style={{
+                                        background: 'rgba(255, 255, 0, 0.08)',
+                                        border: '1px solid rgba(255, 255, 0, 0.25)',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem',
+                                        marginBottom: '1rem'
+                                    }}
+                                >
                                     <strong style={{ fontSize: '0.85rem', color: '#ffff80' }}>Regulatory Frameworks:</strong>
                                     <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>{industry.regulations}</p>
                                 </div>
 
-                                <div style={{ background: 'rgba(0, 255, 255, 0.08)', border: '1px solid rgba(0, 255, 255, 0.25)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                                <div
+                                    style={{
+                                        background: 'rgba(0, 255, 255, 0.08)',
+                                        border: '1px solid rgba(0, 255, 255, 0.25)',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem',
+                                        fontSize: '0.9rem',
+                                        fontStyle: 'italic'
+                                    }}
+                                >
                                     {industry.value}
                                 </div>
                             </div>
@@ -507,23 +632,27 @@ function TechnicalArchitecture() {
                     JLINC's open standard integrates seamlessly with Answer Agents' orchestration layer
                 </p>
 
-                <div style={{
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '1px solid rgba(0, 255, 255, 0.3)',
-                    borderRadius: '12px',
-                    padding: '2rem',
-                    maxWidth: '900px',
-                    margin: '0 auto 3rem'
-                }}>
-                    <pre style={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.85rem',
-                        lineHeight: '1.6',
-                        color: '#00ffff',
-                        margin: 0,
-                        overflow: 'auto'
-                    }}>
-{`┌─────────────────────────────────────────────────────────┐
+                <div
+                    style={{
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(0, 255, 255, 0.3)',
+                        borderRadius: '12px',
+                        padding: '2rem',
+                        maxWidth: '900px',
+                        margin: '0 auto 3rem'
+                    }}
+                >
+                    <pre
+                        style={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.85rem',
+                            lineHeight: '1.6',
+                            color: '#00ffff',
+                            margin: 0,
+                            overflow: 'auto'
+                        }}
+                    >
+                        {`┌─────────────────────────────────────────────────────────┐
 │         ANSWER AGENTS ORCHESTRATION LAYER               │
 │  ┌───────────────────────────────────────────────────┐ │
 │  │  Agent Workflows (LangChain, Custom, Multi-Agent)│ │
@@ -583,18 +712,45 @@ function TechnicalArchitecture() {
                     <div className='col col--12'>
                         <div className={styles.featureCard}>
                             <h3 style={{ color: '#00ffff', marginBottom: '1rem', textAlign: 'center' }}>Deployment Options</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.95rem' }}>
-                                <div style={{ textAlign: 'center' }}><strong>Cloud-hosted</strong><br /><span style={{ fontSize: '0.85rem', opacity: 0.8 }}>AWS, Azure, GCP</span></div>
-                                <div style={{ textAlign: 'center' }}><strong>On-premises</strong><br /><span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Air-gapped supported</span></div>
-                                <div style={{ textAlign: 'center' }}><strong>Hybrid</strong><br /><span style={{ fontSize: '0.85rem', opacity: 0.8 }}>AI cloud, provenance on-prem</span></div>
-                                <div style={{ textAlign: 'center' }}><strong>Custom ledger</strong><br /><span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Your blockchain, your rules</span></div>
+                            <div
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                    gap: '1rem',
+                                    fontSize: '0.95rem'
+                                }}
+                            >
+                                <div style={{ textAlign: 'center' }}>
+                                    <strong>Cloud-hosted</strong>
+                                    <br />
+                                    <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>AWS, Azure, GCP</span>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <strong>On-premises</strong>
+                                    <br />
+                                    <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Air-gapped supported</span>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <strong>Hybrid</strong>
+                                    <br />
+                                    <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>AI cloud, provenance on-prem</span>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <strong>Custom ledger</strong>
+                                    <br />
+                                    <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Your blockchain, your rules</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '2rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
-                    <strong>Performance:</strong> JLINC stamping happens asynchronously—minimal latency added per event. Your workflows run at full speed with cryptographic verification in the background.
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '2rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
+                >
+                    <strong>Performance:</strong> JLINC stamping happens asynchronously—minimal latency added per event. Your workflows run
+                    at full speed with cryptographic verification in the background.
                 </div>
             </div>
         </section>
@@ -612,10 +768,13 @@ function AboutJLINCSection() {
 
                 <div style={{ maxWidth: '900px', margin: '2rem auto', fontSize: '1.05rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
-                        Founded in 2015 by Jim Fournier and Victor Grey, JLINC set out to solve a fundamental problem: <strong>How do you prove where information came from and who touched it?</strong> Not with proprietary databases or vendor-locked platforms, but with an <strong>open protocol</strong> anyone can use.
+                        Founded in 2015 by Jim Fournier and Victor Grey, JLINC set out to solve a fundamental problem:{' '}
+                        <strong>How do you prove where information came from and who touched it?</strong> Not with proprietary databases or
+                        vendor-locked platforms, but with an <strong>open protocol</strong> anyone can use.
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
-                        The result: <strong>Information Sharing Agreements (ISA)</strong>—cryptographically signed contracts between systems that create an immutable record of every data exchange.
+                        The result: <strong>Information Sharing Agreements (ISA)</strong>—cryptographically signed contracts between systems
+                        that create an immutable record of every data exchange.
                     </p>
                 </div>
 
@@ -624,7 +783,8 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Protocol, Not Platform</h3>
                             <p>
-                                JLINC isn't a blockchain company or SaaS vendor. It's an <strong>open protocol specification</strong> that works with any infrastructure. Think of it like SMTP for provenance—a standard anyone can implement.
+                                JLINC isn't a blockchain company or SaaS vendor. It's an <strong>open protocol specification</strong> that
+                                works with any infrastructure. Think of it like SMTP for provenance—a standard anyone can implement.
                             </p>
                         </div>
                     </div>
@@ -632,7 +792,8 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Patent-Protected Innovation</h3>
                             <p>
-                                US Patent "Internet Data Usage Control Systems" issued January 17, 2023 by the US Patent and Trademark Office. Legally protected intellectual property with nearly a decade of R&D.
+                                US Patent "Internet Data Usage Control Systems" issued January 17, 2023 by the US Patent and Trademark
+                                Office. Legally protected intellectual property with nearly a decade of R&D.
                             </p>
                         </div>
                     </div>
@@ -643,7 +804,8 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Standards-Compliant</h3>
                             <p>
-                                JLINC maintains a W3C-compatible Decentralized Identifier (DID) method, ensuring interoperability with emerging digital identity standards.
+                                JLINC maintains a W3C-compatible Decentralized Identifier (DID) method, ensuring interoperability with
+                                emerging digital identity standards.
                             </p>
                         </div>
                     </div>
@@ -651,13 +813,23 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Battle-Tested</h3>
                             <p>
-                                In production since 2015, handling data provenance for enterprise workflows. Proven at scale in regulated environments.
+                                In production since 2015, handling data provenance for enterprise workflows. Proven at scale in regulated
+                                environments.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ marginTop: '3rem', textAlign: 'center', display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div
+                    style={{
+                        marginTop: '3rem',
+                        textAlign: 'center',
+                        display: 'flex',
+                        gap: '1.5rem',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap'
+                    }}
+                >
                     <a href='https://jlinc.com' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
                         Learn more about JLINC
                     </a>
@@ -725,17 +897,37 @@ function ImplementationRoadmap() {
                     {phases.map((phase, idx) => (
                         <div key={idx} className='col col--4'>
                             <div className={styles.featureCard} style={{ height: '100%' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <div
+                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}
+                                >
                                     <h3 style={{ color: '#00ffff', margin: 0, fontSize: '1rem' }}>{phase.phase}</h3>
                                     <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>{phase.duration}</span>
                                 </div>
                                 <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{phase.icon}</div>
-                                <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'grid', gap: '0.5rem', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                <ul
+                                    style={{
+                                        listStyle: 'disc',
+                                        paddingLeft: '1.5rem',
+                                        display: 'grid',
+                                        gap: '0.5rem',
+                                        fontSize: '0.9rem',
+                                        marginBottom: '1rem'
+                                    }}
+                                >
                                     {phase.tasks.map((task, i) => (
                                         <li key={i}>{task}</li>
                                     ))}
                                 </ul>
-                                <div style={{ marginTop: 'auto', background: 'rgba(0, 255, 123, 0.08)', border: '1px solid rgba(0, 255, 123, 0.25)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.85rem' }}>
+                                <div
+                                    style={{
+                                        marginTop: 'auto',
+                                        background: 'rgba(0, 255, 123, 0.08)',
+                                        border: '1px solid rgba(0, 255, 123, 0.25)',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem',
+                                        fontSize: '0.85rem'
+                                    }}
+                                >
                                     <strong>Deliverable:</strong> {phase.deliverable}
                                 </div>
                             </div>
@@ -746,7 +938,15 @@ function ImplementationRoadmap() {
                 <div style={{ marginTop: '3rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}>
                     <div className={styles.featureCard}>
                         <h3 style={{ color: '#00ffff', marginBottom: '1rem', textAlign: 'center' }}>Success Metrics</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.95rem', textAlign: 'center' }}>
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                gap: '1rem',
+                                fontSize: '0.95rem',
+                                textAlign: 'center'
+                            }}
+                        >
                             <div>Minimal latency overhead</div>
                             <div>100% provenance coverage</div>
                             <div>Auditor sign-off achieved</div>
@@ -755,8 +955,12 @@ function ImplementationRoadmap() {
                     </div>
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '2rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
-                    <strong>Support Throughout:</strong> Dedicated integration engineer, JLINC protocol specialist, weekly syncs, and real-time Slack/Teams support.
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '2rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}
+                >
+                    <strong>Support Throughout:</strong> Dedicated integration engineer, JLINC protocol specialist, weekly syncs, and
+                    real-time Slack/Teams support.
                 </div>
             </div>
         </section>
@@ -774,10 +978,13 @@ function PartnershipVisionSection() {
 
                 <div style={{ maxWidth: '900px', margin: '2rem auto 3rem', fontSize: '1.1rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
-                        This partnership represents more than a technical integration. Answer Agents and JLINC are <strong>pioneering a new category: Verifiable AI Collaboration</strong>.
+                        This partnership represents more than a technical integration. Answer Agents and JLINC are{' '}
+                        <strong>pioneering a new category: Verifiable AI Collaboration</strong>.
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
-                        As AI becomes more capable—from writing code to making medical diagnoses to managing investment portfolios—the need for provenance becomes existential. Society can't afford opaque AI systems in critical domains. We need verifiable intelligence.
+                        As AI becomes more capable—from writing code to making medical diagnoses to managing investment portfolios—the need
+                        for provenance becomes existential. Society can't afford opaque AI systems in critical domains. We need verifiable
+                        intelligence.
                     </p>
                     <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '1.2rem', color: '#00ffff' }}>
                         <strong>That's what we're building together.</strong>
@@ -819,8 +1026,20 @@ function PartnershipVisionSection() {
                     </div>
                 </div>
 
-                <div className={clsx(styles.testimonialCard)} style={{ marginTop: '3rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center', fontSize: '1.05rem' }}>
-                    Answer Agents and JLINC are committed to making AI <strong style={{ color: '#00ffff' }}>trustworthy by design</strong>, not by promise. This partnership is the first step toward a future where provenance is as fundamental to AI systems as HTTPS is to web security.
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{
+                        marginTop: '3rem',
+                        maxWidth: '900px',
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        textAlign: 'center',
+                        fontSize: '1.05rem'
+                    }}
+                >
+                    Answer Agents and JLINC are committed to making AI <strong style={{ color: '#00ffff' }}>trustworthy by design</strong>,
+                    not by promise. This partnership is the first step toward a future where provenance is as fundamental to AI systems as
+                    HTTPS is to web security.
                 </div>
             </div>
         </section>
@@ -843,7 +1062,7 @@ function FAQSection() {
         },
         {
             q: 'Can we verify provenance years later?',
-            a: 'Yes. JLINC creates immutable records that can be queried indefinitely. As long as the ledger exists (your responsibility to maintain), provenance is verifiable. Think of it like digital signatures on PDFs—they don't expire.'
+            a: "Yes. JLINC creates immutable records that can be queried indefinitely. As long as the ledger exists (your responsibility to maintain), provenance is verifiable. Think of it like digital signatures on PDFs—they don't expire."
         },
         {
             q: 'How do you protect data privacy?',
@@ -889,19 +1108,34 @@ function DemoCTASection() {
                 </p>
 
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <div className={styles.featureCard} style={{ background: 'rgba(0, 255, 255, 0.08)', border: '2px solid rgba(0, 255, 255, 0.35)' }}>
+                    <div
+                        className={styles.featureCard}
+                        style={{ background: 'rgba(0, 255, 255, 0.08)', border: '2px solid rgba(0, 255, 255, 0.35)' }}
+                    >
                         <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1.5rem' }}>Schedule 30-Minute Demo</h3>
-                        <p style={{ textAlign: 'center', marginBottom: '1.5rem', opacity: 0.9 }}>
-                            What you'll see:
-                        </p>
-                        <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'grid', gap: '0.75rem', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
+                        <p style={{ textAlign: 'center', marginBottom: '1.5rem', opacity: 0.9 }}>What you'll see:</p>
+                        <ul
+                            style={{
+                                listStyle: 'disc',
+                                paddingLeft: '1.5rem',
+                                display: 'grid',
+                                gap: '0.75rem',
+                                marginBottom: '2rem',
+                                maxWidth: '600px',
+                                margin: '0 auto 2rem'
+                            }}
+                        >
                             <li>Live cryptographic stamping of AI workflow</li>
                             <li>Real-time provenance query demonstration</li>
                             <li>Industry-specific use case walkthrough</li>
                             <li>Implementation timeline & pricing discussion</li>
                         </ul>
                         <div style={{ textAlign: 'center' }}>
-                            <a href='https://discord.gg/X54ywt8pzj' className={clsx(styles.ctaButton, styles.ctaPrimary)} style={{ marginBottom: '1rem' }}>
+                            <a
+                                href='https://discord.gg/X54ywt8pzj'
+                                className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                                style={{ marginBottom: '1rem' }}
+                            >
                                 Contact Partnership Team
                             </a>
                         </div>
@@ -918,7 +1152,13 @@ function DemoCTASection() {
                                     <a href='#architecture' className={styles.secondaryLink} style={{ justifyContent: 'center' }}>
                                         Technical Architecture
                                     </a>
-                                    <a href='https://protocol.jlinc.org' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink} style={{ justifyContent: 'center' }}>
+                                    <a
+                                        href='https://protocol.jlinc.org'
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                        className={styles.secondaryLink}
+                                        style={{ justifyContent: 'center' }}
+                                    >
                                         JLINC Protocol Docs
                                     </a>
                                 </div>
@@ -928,10 +1168,18 @@ function DemoCTASection() {
                             <div className={styles.featureCard}>
                                 <h4 style={{ color: '#00ffff', marginBottom: '1rem', textAlign: 'center' }}>For Business Teams</h4>
                                 <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                    <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink} style={{ justifyContent: 'center' }}>
+                                    <a
+                                        href='https://discord.gg/X54ywt8pzj'
+                                        className={styles.secondaryLink}
+                                        style={{ justifyContent: 'center' }}
+                                    >
                                         Request ROI Analysis
                                     </a>
-                                    <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink} style={{ justifyContent: 'center' }}>
+                                    <a
+                                        href='https://discord.gg/X54ywt8pzj'
+                                        className={styles.secondaryLink}
+                                        style={{ justifyContent: 'center' }}
+                                    >
                                         Contact Sales
                                     </a>
                                 </div>
@@ -949,45 +1197,59 @@ function CoFooter() {
         <section style={{ background: 'rgba(0, 0, 0, 0.5)', padding: '3rem 0', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
             <div className='container'>
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '1.5rem',
-                        fontSize: '1.5rem',
-                        marginBottom: '1rem'
-                    }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '1.5rem',
+                            fontSize: '1.5rem',
+                            marginBottom: '1rem'
+                        }}
+                    >
                         <span style={{ color: '#00ffff', fontWeight: 'bold' }}>Answer Agents</span>
                         <span style={{ opacity: 0.5 }}>×</span>
                         <span style={{ color: '#00ffff', fontWeight: 'bold' }}>JLINC</span>
                     </div>
-                    <div style={{
-                        display: 'inline-block',
-                        background: 'rgba(0, 255, 255, 0.1)',
-                        border: '1px solid rgba(0, 255, 255, 0.3)',
-                        borderRadius: '999px',
-                        padding: '0.5rem 1.5rem',
-                        fontSize: '0.9rem',
-                        marginBottom: '1rem'
-                    }}>
+                    <div
+                        style={{
+                            display: 'inline-block',
+                            background: 'rgba(0, 255, 255, 0.1)',
+                            border: '1px solid rgba(0, 255, 255, 0.3)',
+                            borderRadius: '999px',
+                            padding: '0.5rem 1.5rem',
+                            fontSize: '0.9rem',
+                            marginBottom: '1rem'
+                        }}
+                    >
                         Strategic Technology Partnership
                     </div>
                     <p style={{ opacity: 0.7, fontSize: '0.95rem' }}>Building the future of trustworthy AI</p>
                 </div>
 
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '2rem',
-                    flexWrap: 'wrap',
-                    fontSize: '0.9rem',
-                    opacity: 0.7,
-                    marginBottom: '2rem'
-                }}>
-                    <a href='/' style={{ color: 'inherit' }}>About Answer Agents</a>
-                    <a href='https://jlinc.com' target='_blank' rel='noopener noreferrer' style={{ color: 'inherit' }}>About JLINC</a>
-                    <a href='/docs' style={{ color: 'inherit' }}>Documentation</a>
-                    <a href='https://discord.gg/X54ywt8pzj' style={{ color: 'inherit' }}>Contact</a>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '2rem',
+                        flexWrap: 'wrap',
+                        fontSize: '0.9rem',
+                        opacity: 0.7,
+                        marginBottom: '2rem'
+                    }}
+                >
+                    <a href='/' style={{ color: 'inherit' }}>
+                        About Answer Agents
+                    </a>
+                    <a href='https://jlinc.com' target='_blank' rel='noopener noreferrer' style={{ color: 'inherit' }}>
+                        About JLINC
+                    </a>
+                    <a href='/docs' style={{ color: 'inherit' }}>
+                        Documentation
+                    </a>
+                    <a href='https://discord.gg/X54ywt8pzj' style={{ color: 'inherit' }}>
+                        Contact
+                    </a>
                 </div>
 
                 <div style={{ textAlign: 'center', fontSize: '0.85rem', opacity: 0.5 }}>
