@@ -48,6 +48,10 @@ export class AddUniqueConstraintDefaultChatflows1753000000001 implements Migrati
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Remove the unique constraint
+        // NOTE: If rolling back due to production issues with duplicate chatflows:
+        // 1. First run the duplicate cleanup queries from dbeaver-detailed-analysis.sql
+        // 2. Then roll back this migration
+        // 3. Investigate root cause before re-applying
         await queryRunner.query(`DROP INDEX IF EXISTS "idx_unique_user_parent_chatflow"`)
     }
 }

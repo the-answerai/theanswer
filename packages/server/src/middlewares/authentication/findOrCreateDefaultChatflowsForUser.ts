@@ -129,8 +129,14 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
                     return newChatflowId
                 } else {
                     // Another process already set a defaultChatflowId, use that instead
-                    // Clean up the chatflow we just created since it's redundant
-                    await chatFlowRepo.delete(newChatflowId)
+                    // Soft delete the chatflow we just created to maintain referential integrity
+                    const chatflowToDelete = await chatFlowRepo.findOne({ where: { id: newChatflowId } })
+                    if (chatflowToDelete) {
+                        await chatFlowRepo.update(newChatflowId, {
+                            deletedDate: new Date(),
+                            name: `${chatflowToDelete.name} (duplicate-removed)`
+                        })
+                    }
                     await queryRunner.commitTransaction()
                     return finalUserCheck.defaultChatflowId
                 }
