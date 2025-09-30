@@ -1,122 +1,7 @@
-export interface WebinarConfig {
-    // Basic webinar details
-    webinarDate: string
-    webinarTime: string
-    webinarDateTimeISO: string
-    maxSeats: number
-    currentRegistrations: number
-    scarcity?: {
-        totalSeats: number
-        registrationDeadline: string
-        urgencyMessages: string[]
-    }
-    limitedBonus?: {
-        headline: string
-        subhead: string
-        perks: string[]
-    }
-    pressFeatures?: Array<{
-        name: string
-        logo?: string
-        url?: string
-        label?: string
-    }>
-    hostHighlights?: Array<{
-        speaker: string
-        highlight: string
-    }>
-    testimonialQuotes?: Array<{
-        quote: string
-        author: string
-        role?: string
-        company: string
-    }>
-    roadmap?: Array<{
-        phase: string
-        duration: string
-        outcomes: string[]
-    }>
-    toolkitPreview?: Array<{
-        title: string
-        description: string
-        asset?: string
-    }>
-    introVideo?: {
-        url: string
-        caption?: string
-    }
-
-    // Headlines for A/B testing
-    headlines: {
-        primary: string
-        alternate1: string
-        alternate2: string
-    }
-
-    // Customer success stories
-    customerStats: {
-        [key: string]: {
-            saved?: string
-            roi?: string
-            deployment?: string
-            systems?: string
-            reps?: string
-            search?: string
-            [key: string]: string | undefined
-        }
-    }
-
-    // Speaker information
-    speakers: Array<{
-        name: string
-        title: string
-        bio: string
-        image?: string
-    }>
-
-    // Form configuration
-    formFields: {
-        requiredFields: string[]
-        optionalFields: string[]
-    }
-
-    // Content sections
-    problems: Array<{
-        icon: string
-        title: string
-        description: string
-    }>
-
-    framework: Array<{
-        week: number
-        title: string
-        description: string
-        deliverables: string[]
-    }>
-
-    customerStories: Array<{
-        company: string
-        logo: string
-        industry: string
-        challenge: string
-        solution: string
-        results: string[]
-        metrics: string
-    }>
-
-    agenda: Array<{
-        time: string
-        topic: string
-        description: string
-    }>
-
-    faqs: Array<{
-        question: string
-        answer: string
-    }>
-}
-
-export const webinarConfig: WebinarConfig = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getLocalWebinarDateTime = exports.getRegistrationDeadline = exports.getWebinarDateTime = exports.getUrgencyMessage = exports.getAvailableSeats = exports.webinarConfig = void 0;
+exports.webinarConfig = {
     // Basic webinar details - EASY TO UPDATE
     webinarDate: 'Thursday, October 2, 2025',
     webinarTime: '11:00 AM PT',
@@ -217,14 +102,12 @@ export const webinarConfig: WebinarConfig = {
         url: 'https://www.youtube-nocookie.com/embed/TODO_REPLACE_WITH_WEBINAR_INTRO',
         caption: 'Bradley Taylor shares what you’ll accomplish in this 60-minute working session (replace with final video).'
     },
-
     // Headlines - easily A/B testable
     headlines: {
         primary: 'From AI Chaos to Enterprise Success: Deploy AI Agents in 4 Weeks, Not 6 Months',
         alternate1: 'Stop Paying AI Tax: How Enterprises Cut Costs 30% While Scaling AI',
         alternate2: 'The Enterprise AI Playbook: Vendor-Free Implementation in 30 Days'
     },
-
     // Customer success metrics - UPDATE THESE EASILY
     customerStats: {
         palatine: {
@@ -252,7 +135,6 @@ export const webinarConfig: WebinarConfig = {
             roi: '90% of queries handled instantly by AI'
         }
     },
-
     // Speaker info - UPDATE BIOS/IMAGES HERE
     speakers: [
         {
@@ -272,35 +154,29 @@ export const webinarConfig: WebinarConfig = {
             bio: "CTO & Co-Founder, architected the entire AnswerAI platform from the ground up. Director of Engineering at Last Rev where he built the framework powering 10+ enterprise websites. Created the unified GraphQL data layer and AI orchestration system that enables AnswerAI's rapid 4-week deployments. Expert in React, Node.js, and enterprise-scale architectures."
         }
     ],
-
     // Form fields - ADD/REMOVE FIELDS EASILY
     formFields: {
         requiredFields: ['email'],
         optionalFields: []
     },
-
     // Problem section content
     problems: [
         {
             icon: '📉',
             title: '87% of AI Projects Fail',
-            description:
-                'Most enterprises get trapped in vendor lock-in, paying 60% more than needed for AI implementations that take 6+ months and deliver no measurable ROI.'
+            description: 'Most enterprises get trapped in vendor lock-in, paying 60% more than needed for AI implementations that take 6+ months and deliver no measurable ROI.'
         },
         {
             icon: '🔒',
             title: 'Vendor Lock-In Nightmare',
-            description:
-                "Companies spend millions on proprietary AI platforms, then discover they can't switch models, export data, or customize workflows to their actual needs."
+            description: "Companies spend millions on proprietary AI platforms, then discover they can't switch models, export data, or customize workflows to their actual needs."
         },
         {
             icon: '⏰',
             title: '6-Month Implementation Hell',
-            description:
-                'Traditional AI deployments require armies of consultants, endless meetings, and complex integrations that still leave teams frustrated and unproductive.'
+            description: 'Traditional AI deployments require armies of consultants, endless meetings, and complex integrations that still leave teams frustrated and unproductive.'
         }
     ],
-
     // 4-Week framework content
     framework: [
         {
@@ -338,17 +214,14 @@ export const webinarConfig: WebinarConfig = {
             deliverables: ['Company-wide rollout', 'Success metrics tracking', 'Ongoing optimization', 'ROI measurement']
         }
     ],
-
     // Customer success stories with real metrics
     customerStories: [
         {
             company: 'Palatine Capital Partners',
             logo: '/img/customers/palatine-capital.png',
             industry: 'Private Equity / Real Estate Investment',
-            challenge:
-                '50-60 broker-blast emails flooding inbox daily. 120 analyst-hours per week on manual data entry, CA signing, and document processing.',
-            solution:
-                'Smart Intake Agent processes deal emails automatically. Document Extraction Agent reads financial/property data with confidence scoring. ROC Builder Service returns fully-populated models in <60 seconds.',
+            challenge: '50-60 broker-blast emails flooding inbox daily. 120 analyst-hours per week on manual data entry, CA signing, and document processing.',
+            solution: 'Smart Intake Agent processes deal emails automatically. Document Extraction Agent reads financial/property data with confidence scoring. ROC Builder Service returns fully-populated models in <60 seconds.',
             results: [
                 'Automated 50-60 daily broker emails',
                 'Freed 4-5 FTEs for strategic underwriting work',
@@ -362,10 +235,8 @@ export const webinarConfig: WebinarConfig = {
             company: 'Integral Ad Science (IAS)',
             logo: '/img/customers/ias-logo.png',
             industry: 'Digital Advertising Technology',
-            challenge:
-                'Complex legal and compliance workflows. Information scattered across 6 different systems. Need for audit trails and governance in public company environment.',
-            solution:
-                '4-week rapid deployment with enterprise-grade security. Legal department automation for document processing. Multi-system integration with unified AI interface.',
+            challenge: 'Complex legal and compliance workflows. Information scattered across 6 different systems. Need for audit trails and governance in public company environment.',
+            solution: '4-week rapid deployment with enterprise-grade security. Legal department automation for document processing. Multi-system integration with unified AI interface.',
             results: [
                 '4-week deployment vs 6+ month industry standard',
                 'Single AI interface replacing 6 scattered systems',
@@ -378,10 +249,8 @@ export const webinarConfig: WebinarConfig = {
             company: 'Moonstruck Medical',
             logo: '/img/customers/moonstruck-medical.png',
             industry: 'Medical Device / Pharmaceutical',
-            challenge:
-                '9 sales reps (1099 contractors) across locations with info silos. 5-6 new product lines monthly creating nonstop training demands. Documentation chaos across Google Drive, PDFs, emails.',
-            solution:
-                'Sales Cheat-Sheet Bot for instant product & pricing lookups. Rep Role-Play Coach for sales call simulation. Knowledge centralization across all documentation sources.',
+            challenge: '9 sales reps (1099 contractors) across locations with info silos. 5-6 new product lines monthly creating nonstop training demands. Documentation chaos across Google Drive, PDFs, emails.',
+            solution: 'Sales Cheat-Sheet Bot for instant product & pricing lookups. Rep Role-Play Coach for sales call simulation. Knowledge centralization across all documentation sources.',
             results: [
                 'Search time: from minutes to seconds',
                 'Single source of truth across 9 distributed reps',
@@ -395,10 +264,8 @@ export const webinarConfig: WebinarConfig = {
             company: 'WOW! Internet',
             logo: '/img/customers/wow-internet.png',
             industry: 'Telecommunications / Internet Services',
-            challenge:
-                'Customer support bottlenecks. Manual ticket routing and response. Need for scalable automation solution without massive upfront investment.',
-            solution:
-                '3-month $3K POC program with custom support agents. Live voice agents with CRM integration. Chrome extension for agent productivity.',
+            challenge: 'Customer support bottlenecks. Manual ticket routing and response. Need for scalable automation solution without massive upfront investment.',
+            solution: '3-month $3K POC program with custom support agents. Live voice agents with CRM integration. Chrome extension for agent productivity.',
             results: [
                 'Successfully completed POC in 90 days',
                 'Moved to annual Enterprise License ($36K/year)',
@@ -409,7 +276,6 @@ export const webinarConfig: WebinarConfig = {
             metrics: 'POC converted to full implementation with measurable support efficiency gains'
         }
     ],
-
     // Webinar agenda
     agenda: [
         {
@@ -438,7 +304,6 @@ export const webinarConfig: WebinarConfig = {
             description: 'Live objection handling with client proof points, 90-day pilot introduction, clear next steps'
         }
     ],
-
     // FAQ content addressing common objections
     faqs: [
         {
@@ -466,55 +331,54 @@ export const webinarConfig: WebinarConfig = {
             answer: 'No vendor lock-in (swap models instantly), usage-based pricing (not per-seat), 4-week deployment (not 6+ months), and complete customization. While competitors lock you into their ecosystem, we integrate with your existing tools and let you maintain full control.'
         }
     ]
-}
-
+};
 // Helper function to get available seats
-export const getAvailableSeats = () => {
-    return webinarConfig.maxSeats - webinarConfig.currentRegistrations
-}
-
+var getAvailableSeats = function () {
+    return exports.webinarConfig.maxSeats - exports.webinarConfig.currentRegistrations;
+};
+exports.getAvailableSeats = getAvailableSeats;
 // Helper function to get urgency messaging
-export const getUrgencyMessage = () => {
-    const available = getAvailableSeats()
-    if (!webinarConfig.scarcity) {
-        if (available <= 10) return `Only ${available} seats left!`
-        if (available <= 50) return `${available} seats remaining`
-        return `Limited to ${webinarConfig.maxSeats} seats`
+var getUrgencyMessage = function () {
+    var available = (0, exports.getAvailableSeats)();
+    if (!exports.webinarConfig.scarcity) {
+        if (available <= 10)
+            return "Only ".concat(available, " seats left!");
+        if (available <= 50)
+            return "".concat(available, " seats remaining");
+        return "Limited to ".concat(exports.webinarConfig.maxSeats, " seats");
     }
-
-    const messageTemplate = webinarConfig.scarcity.urgencyMessages[0] || '{remainingSeats} seats remaining'
-    return messageTemplate.replace('{remainingSeats}', available.toString())
-}
-
+    var messageTemplate = exports.webinarConfig.scarcity.urgencyMessages[0] || '{remainingSeats} seats remaining';
+    return messageTemplate.replace('{remainingSeats}', available.toString());
+};
+exports.getUrgencyMessage = getUrgencyMessage;
 // Helper to format webinar date/time
-export const getWebinarDateTime = () => {
-    return `${webinarConfig.webinarDate} at ${webinarConfig.webinarTime}`
-}
-
-export const getRegistrationDeadline = () => webinarConfig.scarcity?.registrationDeadline
-
-export const getLocalWebinarDateTime = () => {
+var getWebinarDateTime = function () {
+    return "".concat(exports.webinarConfig.webinarDate, " at ").concat(exports.webinarConfig.webinarTime);
+};
+exports.getWebinarDateTime = getWebinarDateTime;
+var getRegistrationDeadline = function () { var _a; return (_a = exports.webinarConfig.scarcity) === null || _a === void 0 ? void 0 : _a.registrationDeadline; };
+exports.getRegistrationDeadline = getRegistrationDeadline;
+var getLocalWebinarDateTime = function () {
     try {
-        const eventDate = new Date(webinarConfig.webinarDateTimeISO)
+        var eventDate = new Date(exports.webinarConfig.webinarDateTimeISO);
         if (Number.isNaN(eventDate.getTime())) {
-            return getWebinarDateTime()
+            return (0, exports.getWebinarDateTime)();
         }
-
-        const dateFormatter = new Intl.DateTimeFormat(undefined, {
+        var dateFormatter = new Intl.DateTimeFormat(undefined, {
             weekday: 'long',
             month: 'long',
             day: 'numeric'
-        })
-
-        const timeFormatter = new Intl.DateTimeFormat(undefined, {
+        });
+        var timeFormatter = new Intl.DateTimeFormat(undefined, {
             hour: 'numeric',
             minute: '2-digit',
             timeZoneName: 'short'
-        })
-
-        return `${dateFormatter.format(eventDate)} · ${timeFormatter.format(eventDate)}`
-    } catch (error) {
-        console.warn('Unable to format webinar datetime for locale', error)
-        return getWebinarDateTime()
+        });
+        return "".concat(dateFormatter.format(eventDate), " \u00B7 ").concat(timeFormatter.format(eventDate));
     }
-}
+    catch (error) {
+        console.warn('Unable to format webinar datetime for locale', error);
+        return (0, exports.getWebinarDateTime)();
+    }
+};
+exports.getLocalWebinarDateTime = getLocalWebinarDateTime;
