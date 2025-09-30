@@ -118,14 +118,14 @@ export interface WebinarConfig {
 
 export const webinarConfig: WebinarConfig = {
     // Basic webinar details - EASY TO UPDATE
-    webinarDate: 'Thursday, October 2, 2024',
+    webinarDate: 'Thursday, October 16, 2025',
     webinarTime: '11:00 AM PT',
-    webinarDateTimeISO: '2024-10-02T18:00:00Z',
+    webinarDateTimeISO: '2025-10-16T18:00:00Z',
     maxSeats: 200,
     currentRegistrations: 147,
     scarcity: {
         totalSeats: 200,
-        registrationDeadline: '2024-10-02T17:59:59Z',
+        registrationDeadline: '2025-10-16T17:59:59Z',
         urgencyMessages: [
             "Only {remainingSeats} seats left for Thursday's live session",
             'Registration closes Thursday at 11:00 AM PT',

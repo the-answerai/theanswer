@@ -36,7 +36,6 @@ export class TrackingService {
         this.initializeFacebookPixel()
 
         this.initialized = true
-        console.log('Tracking services initialized')
     }
 
     // Google Analytics 4 setup
@@ -67,7 +66,6 @@ export class TrackingService {
                 }
             })
 
-            console.log('Google Analytics initialized:', gaId)
         } catch (error) {
             console.error('Google Analytics initialization failed:', error)
         }
@@ -103,7 +101,6 @@ export class TrackingService {
                     ;(window.lintrk.q = window.lintrk.q || []).push(args)
                 }
 
-            console.log('LinkedIn Pixel initialized:', linkedInPixel)
         } catch (error) {
             console.error('LinkedIn Pixel initialization failed:', error)
         }
@@ -134,8 +131,6 @@ export class TrackingService {
 
             window.fbq('init', facebookPixel)
             window.fbq('track', 'PageView')
-
-            console.log('Facebook Pixel initialized:', facebookPixel)
         } catch (error) {
             console.error('Facebook Pixel initialization failed:', error)
         }
@@ -171,51 +166,46 @@ export class TrackingService {
             })
         }
 
-        console.log('Event tracked:', eventName, { eventCategory, eventLabel, value })
     }
 
     // Track webinar registration conversion
     trackWebinarRegistration(data: ConversionData): void {
-        const eventData = {
-            event: 'webinar_registration',
-            eventCategory: 'engagement',
-            eventLabel: 'enterprise-ai-webinar',
-            value: 1,
-            customParameters: {
+        // Google Analytics 4 event tracking
+        if (window.gtag) {
+            window.gtag('event', 'webinar_registration', {
+                event_category: 'engagement',
+                event_label: 'enterprise-ai-webinar',
+                value: 1,
                 lead_score: data.leadScore,
                 company: data.company,
                 job_title: data.jobTitle
-            }
+            })
         }
-
-        this.trackEvent(eventData)
 
         // Meta/Facebook Pixel - CompleteRegistration standard event
         if (window.fbq) {
-            window.fbq('track', 'CompleteRegistration', {
-                content_name: 'Enterprise AI Webinar',
-                value: data.value || 100,
-                currency: 'USD',
-                status: 'confirmed',
-                predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
-            })
+            try {
+                window.fbq('track', 'CompleteRegistration', {
+                    content_name: 'Enterprise AI Webinar',
+                    value: data.value || 100,
+                    currency: 'USD',
+                    status: 'confirmed',
+                    predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
+                })
+            } catch (error) {
+                console.error('Facebook Pixel tracking failed:', error)
+            }
         }
 
-        // Enhanced conversion tracking for Google Ads
-        if (window.gtag) {
-            window.gtag('event', 'conversion', {
-                send_to: 'AW-CONVERSION_ID/CONVERSION_LABEL', // Replace with actual conversion ID
-                value: data.value || 100, // Estimated lead value
-                currency: 'USD',
-                transaction_id: `webinar_${Date.now()}`,
-                user_data: {
-                    email_address: data.email,
-                    first_name: data.firstName,
-                    last_name: data.lastName,
-                    job_title: data.jobTitle,
-                    company: data.company
-                }
-            })
+        // LinkedIn conversion tracking
+        if (window.lintrk) {
+            try {
+                window.lintrk('track', {
+                    conversion_id: 'webinar_registration'
+                })
+            } catch (error) {
+                console.error('LinkedIn tracking failed:', error)
+            }
         }
     }
 
@@ -242,7 +232,6 @@ export class TrackingService {
             }
         }
 
-        console.log('Page view tracked:', pagePath)
     }
 
     // Track form interactions
@@ -256,20 +245,19 @@ export class TrackingService {
 
         // Meta Pixel tracking for form interactions
         if (window.fbq) {
-            if (action === 'start') {
-                window.fbq('track', 'InitiateCheckout', {
-                    content_name: formName,
-                    content_category: 'webinar'
-                })
-            } else if (action === 'complete') {
-                window.fbq('track', 'CompleteRegistration', {
-                    content_name: formName,
-                    status: 'success'
-                })
-            } else if (action === 'abandon') {
-                window.fbq('trackCustom', 'FormAbandonment', {
-                    content_name: formName
-                })
+            try {
+                if (action === 'start') {
+                    window.fbq('track', 'Lead', {
+                        content_name: formName,
+                        content_category: 'webinar'
+                    })
+                } else if (action === 'abandon') {
+                    window.fbq('trackCustom', 'FormAbandonment', {
+                        content_name: formName
+                    })
+                }
+            } catch (error) {
+                console.error('Facebook Pixel form tracking failed:', error)
             }
         }
     }
@@ -335,7 +323,6 @@ export class TrackingService {
 
         if (hasUtmParams) {
             sessionStorage.setItem('webinar_utm_params', JSON.stringify(utmParams))
-            console.log('UTM parameters stored:', utmParams)
         }
     }
 
