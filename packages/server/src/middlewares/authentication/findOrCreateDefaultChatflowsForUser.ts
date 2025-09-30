@@ -106,6 +106,7 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
                         }
 
                         await queryRunner.commitTransaction()
+                        await queryRunner.release()
                         return existingChatflowAfterConflict.id
                     }
                 }
