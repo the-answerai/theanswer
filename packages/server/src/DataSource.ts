@@ -12,7 +12,31 @@ import logger from './utils/logger'
 
 let appDataSource: DataSource
 
+/**
+ * Ensures database name and user have test prefix when NODE_ENV=test
+ * Prevents accidental production database operations during testing
+ */
+const ensureTestPrefix = (value: string | undefined, defaultName: string): string => {
+    if (!value) return `test_${defaultName}`
+    if (value.startsWith('test_') || value.endsWith('_test')) return value
+    return `test_${value}`
+}
+
 export const init = async (): Promise<void> => {
+    // SECURITY: When running in test mode, ensure database and user have test prefix
+    if (process.env.NODE_ENV === 'test') {
+        const originalDbName = process.env.DATABASE_NAME
+        const originalDbUser = process.env.DATABASE_USER
+
+        process.env.DATABASE_NAME = ensureTestPrefix(originalDbName, 'theanswer')
+        process.env.DATABASE_USER = ensureTestPrefix(originalDbUser, 'user')
+        // Keep DATABASE_PASSWORD as-is from .env
+
+        logger.info('🔒 TEST MODE: Auto-prefixed database credentials')
+        logger.info(`  DATABASE_NAME: ${originalDbName} → ${process.env.DATABASE_NAME}`)
+        logger.info(`  DATABASE_USER: ${originalDbUser} → ${process.env.DATABASE_USER}`)
+    }
+
     // Always log storage configuration at DataSource init (before logger tries to use S3)
     logger.info('DataSource initialization - Storage Configuration:')
     logger.info(`  STORAGE_TYPE: ${process.env.STORAGE_TYPE || 'not set (defaults to local)'}`)
