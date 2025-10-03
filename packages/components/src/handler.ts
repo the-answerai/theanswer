@@ -590,7 +590,12 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         organizationId: options.user?.organizationId,
                         aiCredentialsOwnership: aiCredentialsOwnership,
                         messageId: options.messageId,
-                        sessionId: options.sessionId
+                        sessionId: options.sessionId,
+                        ...(options.trackingMetadata &&
+                            Object.keys(options.trackingMetadata).reduce((acc, key) => {
+                                acc[`tracking_${key}`] = options.trackingMetadata![key]
+                                return acc
+                            }, {} as Record<string, any>))
                     }
                     // const trace = langfuse.trace({
                     //     tags: [`Name:${chatflow.name}`],
