@@ -496,7 +496,7 @@ export function AnswersProvider({
                     socketIOClientId: isChatFlowAvailableToStream ? socketIOClientId : undefined,
                     chatType: 'ANSWERAI',
                     action,
-                    context: {
+                    trackingMetadata: {
                         url: typeof window !== 'undefined' ? window.location.href : undefined,
                         source: 'theanswer'
                     }

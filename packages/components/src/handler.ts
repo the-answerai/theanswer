@@ -591,7 +591,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         aiCredentialsOwnership: aiCredentialsOwnership,
                         messageId: options.messageId,
                         sessionId: options.sessionId,
-                        ...(options.context && { context: options.context })
+                        ...(options.trackingMetadata && { trackingMetadata: options.trackingMetadata })
                     }
                     // const trace = langfuse.trace({
                     //     tags: [`Name:${chatflow.name}`],

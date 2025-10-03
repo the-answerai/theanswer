@@ -565,7 +565,7 @@ export const executeFlow = async ({
                 leadEmail: incomingInput.leadEmail,
                 userId: user?.id ?? agentflow.userId,
                 organizationId: user?.organizationId ?? agentflow.organizationId,
-                context: incomingInput.context ? JSON.stringify(incomingInput.context) : undefined
+                trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
             }
             await utilAddChatMessage(userMessage, appDataSource)
 
@@ -703,7 +703,7 @@ export const executeFlow = async ({
             prependMessages,
             user,
             sessionId,
-            context: incomingInput.context,
+            trackingMetadata: incomingInput.trackingMetadata,
             ...(isStreamValid && { sseStreamer, shouldStreamResponse: isStreamValid })
         }
 
@@ -730,7 +730,7 @@ export const executeFlow = async ({
             leadEmail: incomingInput.leadEmail,
             userId: user?.id,
             organizationId: user?.organizationId,
-            context: incomingInput.context ? JSON.stringify(incomingInput.context) : undefined
+            trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
         }
         await utilAddChatMessage(userMessage, appDataSource)
 

@@ -31,7 +31,7 @@ import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssist
 import { AddExecutionEntity1738090872625 } from './1738090872625-AddExecutionEntity'
 import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
 import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
-import { AddContextToChatMessage1753200000000 } from './1753200000000-AddContextToChatMessage'
+import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 
 export const mariadbMigrations = [
     Init1693840429259,
@@ -67,5 +67,5 @@ export const mariadbMigrations = [
     AddExecutionEntity1738090872625,
     AddUserScopingToExecution1738091000000,
     AddVersioningToChatFlow1753000000000,
-    AddContextToChatMessage1753200000000
+    AddTrackingMetadataToChatMessage1753200000000
 ]
