@@ -1414,8 +1414,8 @@ importers:
                 specifier: ^3.0.3
                 version: 3.0.3
             dotenv:
-                specifier: ^17.2.2
-                version: 17.2.2
+                specifier: ^17.2.3
+                version: 17.2.3
             express:
                 specifier: '>=4.19.2'
                 version: 5.1.0
@@ -11841,6 +11841,10 @@ packages:
 
     dotenv@17.2.2:
         resolution: { integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q== }
+        engines: { node: '>=12' }
+
+    dotenv@17.2.3:
+        resolution: { integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w== }
         engines: { node: '>=12' }
 
     dpop@2.1.1:
@@ -35362,7 +35366,7 @@ snapshots:
     dotenv-cli@10.0.0:
         dependencies:
             cross-spawn: 7.0.6
-            dotenv: 17.2.2
+            dotenv: 17.2.3
             dotenv-expand: 11.0.7
             minimist: 1.2.8
 
@@ -35377,6 +35381,8 @@ snapshots:
     dotenv@16.6.1: {}
 
     dotenv@17.2.2: {}
+
+    dotenv@17.2.3: {}
 
     dpop@2.1.1: {}
 
