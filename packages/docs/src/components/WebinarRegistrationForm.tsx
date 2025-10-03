@@ -269,7 +269,7 @@ export default function WebinarRegistrationForm(): JSX.Element {
             </button>
 
             <div style={{ marginTop: '1rem', textAlign: 'center', opacity: 0.8, fontSize: '0.9rem' }}>
-                <p>🔒 Your information is secure and will never be shared</p>
+                <p style={{ color: 'white' }}>🔒 Your information is secure and will never be shared</p>
             </div>
         </form>
     )

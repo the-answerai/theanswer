@@ -74,7 +74,7 @@ function ThankYouHero() {
                         <WebinarCalendarButtons />
                         <div className={styles.heroActionFooter}>
                             <a
-                                href='mailto:?subject=Enterprise AI Webinar - Deploy AI in 4 Weeks&body=I just registered for this free webinar on enterprise AI deployment. Thought you might be interested: https://theanswer.ai/webinar-enterprise-ai'
+                                href='mailto:?subject=Enterprise AI Webinar - Deploy AI in weeks&body=I just registered for this free webinar on enterprise AI deployment. Thought you might be interested: https://theanswer.ai/webinar-enterprise-ai'
                                 className={clsx(styles.ctaButton, styles.ctaPrimary)}
                             >
                                 Share with your team
@@ -646,7 +646,7 @@ function SocialSharing() {
     const webinarUrl =
         typeof window !== 'undefined' ? `${window.location.origin}/webinar-enterprise-ai` : 'https://theanswer.ai/webinar-enterprise-ai'
     const shareText =
-        'Just booked AnswerAI’s “Deploy AI Agents in 4 Weeks” workshop. Live build, governance checklist, and playbooks from IAS & Palatine. Join me:'
+        'Just booked AnswerAI’s “Deploy AI Agents in weeks” workshop. Live build, governance checklist, and playbooks from IAS & Palatine. Join me:'
     const opsMessage = `Hey team — I locked in our seat for AnswerAI's Enterprise AI workshop (${getLocalWebinarDateTime()}). It shows the exact 4-week rollout we want. Grab a spot here: ${webinarUrl}\n\nPS: Add your workflow so they cover it live: ${webinarUrl}#attendee-prep`
     const execMessage = `Flagging an Enterprise AI session (${getLocalWebinarDateTime()}) that walks through the 4-week deployment model we’ve been evaluating. Includes ROI benchmarks + compliance templates. Register: ${webinarUrl}`
 

@@ -83,3 +83,12 @@
 :global(body) {
     padding-top: 54px !important;
 }
+
+/* Remove padding for webinar pages and hide navbar */
+.webinarPage {
+    margin-top: -54px;
+}
+
+.webinarPage :global(.navbar) {
+    display: none !important;
+}
