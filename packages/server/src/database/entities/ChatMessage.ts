@@ -77,4 +77,7 @@ export class ChatMessage implements IChatMessage {
     deletedDate: Date
     @Column({ nullable: true, type: 'text' })
     followUpPrompts?: string
+
+    @Column({ nullable: true, type: 'text' })
+    context?: string
 }
