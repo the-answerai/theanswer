@@ -1,9 +1,10 @@
-import { DataSource } from 'typeorm'
+import { DataSource, IsNull } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { cloneDeep, get } from 'lodash'
 import TurndownService from 'turndown'
 import {
     AnalyticHandler,
+    additionalCallbacks,
     ICommonObject,
     ICondition,
     IFileUpload,
@@ -122,6 +123,7 @@ interface IExecuteNodeParams {
     abortController?: AbortController
     parentTraceIds?: ICommonObject
     analyticHandlers?: AnalyticHandler
+    analyticsCallbacks?: any[]
     parentExecutionId?: string
     isRecursive?: boolean
     iterationContext?: ICommonObject
@@ -798,6 +800,7 @@ const executeNode = async ({
     abortController,
     parentTraceIds,
     analyticHandlers,
+    analyticsCallbacks = [],
     isInternal,
     isRecursive,
     iterationContext
@@ -832,7 +835,7 @@ const executeNode = async ({
         }
 
         // Get available variables and resolve them
-        const availableVariables = await appDataSource.getRepository(Variable).find({ where: { userId: user.id } })
+        const availableVariables = await appDataSource.getRepository(Variable).find({ where: user ? { userId: user.id } : { userId: IsNull() } })
 
         // Prepare flow config
         let updatedState = cloneDeep(agentflowRuntime.state)
@@ -921,6 +924,7 @@ const executeNode = async ({
             componentNodes,
             cachePool,
             analytic: chatflow.analytic,
+            callbacks: analyticsCallbacks, // Pass callbacks for LangChain automatic propagation
             uploads: fileUploads,
             baseURL,
             isLastNode,
@@ -1437,9 +1441,11 @@ export const executeAgentFlow = async ({
 
     let analyticHandlers: AnalyticHandler | undefined
     let parentTraceIds: ICommonObject | undefined
+    let analyticsCallbacks: any[] = []
 
     try {
         if (chatflow.analytic) {
+            // Initialize AnalyticHandler for manual tracking (onChainStart, onChainEnd, etc.)
             analyticHandlers = AnalyticHandler.getInstance({ inputs: {} } as any, {
                 appDataSource,
                 databaseEntities,
@@ -1452,6 +1458,21 @@ export const executeAgentFlow = async ({
                 'Agentflow',
                 form && Object.keys(form).length > 0 ? JSON.stringify(form) : question || ''
             )
+
+            // Initialize additionalCallbacks for LangChain automatic callback propagation
+            // This will handle all LLM calls, tool calls, etc. automatically
+            const callbacksResult = await additionalCallbacks({ inputs: {} } as any, {
+                appDataSource,
+                databaseEntities,
+                componentNodes,
+                analytic: chatflow.analytic,
+                chatId,
+                chatflowid,
+                sessionId,
+                user
+            })
+            analyticsCallbacks = callbacksResult || []
+            logger.debug(`[server]: Initialized ${analyticsCallbacks.length} analytics callbacks for automatic propagation`)
         }
     } catch (error) {
         logger.error(`[server]: Error initializing analytic handlers: ${getErrorMessage(error)}`)
@@ -1519,6 +1540,7 @@ export const executeAgentFlow = async ({
                 abortController,
                 parentTraceIds,
                 analyticHandlers,
+                analyticsCallbacks,
                 isRecursive,
                 iterationContext
             })
@@ -1755,14 +1777,19 @@ export const executeAgentFlow = async ({
     if (lastNodeOutput?.artifacts) apiMessage.artifacts = JSON.stringify(lastNodeOutput.artifacts)
     if (chatflow.followUpPrompts) {
         const followUpPromptsConfig = JSON.parse(chatflow.followUpPrompts)
+        logger.debug(`[server]: Generating follow-up prompts with config: ${JSON.stringify(followUpPromptsConfig)}`)
         const followUpPrompts = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
             chatId,
             chatflowid,
             appDataSource,
             databaseEntities
         })
+        logger.debug(`[server]: Generated follow-up prompts result: ${JSON.stringify(followUpPrompts)}`)
         if (followUpPrompts?.questions) {
             apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)
+            logger.debug(`[server]: Set apiMessage.followUpPrompts to: ${apiMessage.followUpPrompts}`)
+        } else {
+            logger.debug(`[server]: No questions in follow-up prompts result`)
         }
     }
     if (lastNodeOutput?.humanInputAction && Object.keys(lastNodeOutput.humanInputAction).length)
@@ -1787,11 +1814,13 @@ export const executeAgentFlow = async ({
     result.form = form
     result.chatId = chatId
     result.chatMessageId = chatMessage?.id
-    result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
+    result.followUpPrompts = apiMessage.followUpPrompts
     result.executionId = newExecution.id
     result.agentFlowExecutedData = agentFlowExecutedData
 
     if (sessionId) result.sessionId = sessionId
+
+    logger.debug(`[server]: Returning result with followUpPrompts: ${result.followUpPrompts}`)
 
     return result
 }

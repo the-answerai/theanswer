@@ -206,9 +206,9 @@ class AAIExaSearch_Tools implements INode {
         const endPublishedDate = nodeData.inputs?.endPublishedDate as string
 
         // Use AAI default credentials instead of user-provided credentials
-        const exaSearchApiKey = process.env.AAI_DEFAULT_EXA_SEARCH_API_KEY
+        const exaSearchApiKey = process.env.AAI_DEFAULT_EXASEARCH
         if (!exaSearchApiKey) {
-            throw new Error('AAI_DEFAULT_EXA_SEARCH_API_KEY environment variable is not set')
+            throw new Error('AAI_DEFAULT_EXASEARCH environment variable is not set')
         }
 
         const tool = new ExaSearchResults({

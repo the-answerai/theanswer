@@ -148,7 +148,7 @@ AAI-branded nodes use environment variables with the `AAI_DEFAULT_` prefix to pr
 
 | Variable                                  | Description                    | Used By                    |
 | ----------------------------------------- | ------------------------------ | -------------------------- |
-| `AAI_DEFAULT_EXA_SEARCH_API_KEY`          | Exa search API key             | AAIExaSearch               |
+| `AAI_DEFAULT_EXASEARCH`          | Exa search API key             | AAIExaSearch               |
 | `AAI_DEFAULT_SERPAPI`                     | SerpAPI key for web search     | Various search nodes       |
 | `AAI_DEFAULT_GOOGLE_SEARCH_API`           | Google Custom Search API key   | Google search integrations |
 | `AAI_DEFAULT_GOOGLE_SEARCH_API_ENGINE_ID` | Google Custom Search Engine ID | Google search integrations |

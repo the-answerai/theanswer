@@ -319,7 +319,7 @@ export interface IMessage {
 }
 
 export interface IncomingInput {
-    user: IUser
+    user?: IUser
     question: string
     overrideConfig?: ICommonObject
     chatId?: string
@@ -463,7 +463,7 @@ export interface IExecuteFlowParams extends IPredictionQueueAppServer {
     fileUploads?: IFileUpload[]
     uploadedFilesContent?: string
     isUpsert?: boolean
-    user: IUser
+    user?: IUser
     isRecursive?: boolean
     parentExecutionId?: string
     iterationContext?: ICommonObject
