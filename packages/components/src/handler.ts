@@ -42,6 +42,57 @@ import { AIMessageChunk, BaseMessageLike } from '@langchain/core/messages'
 import { Serialized } from '@langchain/core/load/serializable'
 import { JLINCTracer } from '@jlinc/langchain'
 
+/**
+ * Apply environment variable overrides for analytics providers
+ * This allows global analytics configuration via env vars without UI setup
+ *
+ * @param analyticConfig - Existing analytics config (may be empty, string, or object)
+ * @returns Analytics config with env overrides applied
+ */
+function applyEnvAnalyticsOverrides(analyticConfig?: string | object): any {
+    let analytic: any = {}
+
+    // Parse existing config if provided
+    if (typeof analyticConfig === 'string') {
+        try {
+            analytic = JSON.parse(analyticConfig)
+        } catch {
+            analytic = {}
+        }
+    } else if (analyticConfig && typeof analyticConfig === 'object') {
+        analytic = analyticConfig
+    }
+
+    // Langfuse env override - takes precedence over UI configuration
+    if (process.env.LANGFUSE_SECRET_KEY) {
+        analytic.langFuse = {
+            status: true,
+            release: process.env.LANGFUSE_RELEASE ?? process.env.GIT_COMMIT_HASH,
+            secretKey: process.env.LANGFUSE_SECRET_KEY,
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+            endpoint: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
+            sdkIntegration: 'Flowise'
+        }
+    }
+
+    // Future providers can be added here:
+    // if (process.env.LANGSMITH_API_KEY) { analytic.langSmith = { ... } }
+    // if (process.env.ARIZE_API_KEY) { analytic.arize = { ... } }
+
+    return analytic
+}
+
+/**
+ * Check if analytics is enabled via UI config or environment variables
+ *
+ * @param analyticConfig - Analytics config from chatflow/agentflow
+ * @returns True if any analytics provider is configured
+ */
+export function isAnalyticsEnabled(analyticConfig?: string | object): boolean {
+    const analytic = applyEnvAnalyticsOverrides(analyticConfig)
+    return Object.keys(analytic).length > 0
+}
+
 interface AgentRun extends Run {
     actions: AgentAction[]
 }
@@ -487,19 +538,9 @@ class ExtendedLunaryHandler extends LunaryHandler {
 
 export const additionalCallbacks = async (nodeData: INodeData, options: ICommonObject) => {
     try {
-        if (!options.analytic && !process.env.LANGFUSE_SECRET_KEY) return []
+        const analytic = applyEnvAnalyticsOverrides(options.analytic)
+        if (Object.keys(analytic).length === 0) return []
 
-        const analytic = options.analytic ? JSON.parse(options.analytic) : {}
-        if (process.env.LANGFUSE_SECRET_KEY) {
-            analytic.langFuse = {
-                status: true,
-                release: process.env.LANGFUSE_RELEASE ?? process.env.GIT_COMMIT_HASH,
-                secretKey: process.env.LANGFUSE_SECRET_KEY,
-                publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-                endpoint: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
-                sdkIntegration: 'Flowise'
-            }
-        }
         const callbacks: any = []
 
         for (const provider in analytic) {
@@ -766,7 +807,7 @@ export class AnalyticHandler {
     private constructor(nodeData: INodeData, options: ICommonObject) {
         this.nodeData = nodeData
         this.options = options
-        this.analyticsConfig = options.analytic
+        this.analyticsConfig = JSON.stringify(applyEnvAnalyticsOverrides(options.analytic))
         this.chatId = options.chatId
         this.createdAt = Date.now()
     }
@@ -777,7 +818,8 @@ export class AnalyticHandler {
 
         // Reset instance if analytics config changed for this chat
         const instance = AnalyticHandler.instances.get(chatId)
-        if (instance?.analyticsConfig !== options.analytic) {
+        const currentProcessedConfig = JSON.stringify(applyEnvAnalyticsOverrides(options.analytic))
+        if (instance?.analyticsConfig !== currentProcessedConfig) {
             AnalyticHandler.resetInstance(chatId)
         }
 
@@ -805,9 +847,9 @@ export class AnalyticHandler {
         if (this.initialized) return
 
         try {
-            if (!this.options.analytic) return
+            const analytic = applyEnvAnalyticsOverrides(this.options.analytic)
+            if (Object.keys(analytic).length === 0) return
 
-            const analytic = JSON.parse(this.options.analytic)
             for (const provider in analytic) {
                 const providerStatus = analytic[provider].status as boolean
                 if (providerStatus) {
@@ -841,9 +883,9 @@ export class AnalyticHandler {
             this.handlers['langSmith'] = { client, langSmithProject }
         } else if (provider === 'langFuse') {
             const release = providerConfig.release as string
-            const langFuseSecretKey = getCredentialParam('langFuseSecretKey', credentialData, this.nodeData)
-            const langFusePublicKey = getCredentialParam('langFusePublicKey', credentialData, this.nodeData)
-            const langFuseEndpoint = getCredentialParam('langFuseEndpoint', credentialData, this.nodeData)
+            const langFuseSecretKey = providerConfig?.secretKey ?? getCredentialParam('langFuseSecretKey', credentialData, this.nodeData)
+            const langFusePublicKey = providerConfig?.publicKey ?? getCredentialParam('langFusePublicKey', credentialData, this.nodeData)
+            const langFuseEndpoint = providerConfig?.endpoint ?? getCredentialParam('langFuseEndpoint', credentialData, this.nodeData)
 
             const langfuse = new Langfuse({
                 secretKey: langFuseSecretKey,
