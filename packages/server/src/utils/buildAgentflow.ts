@@ -91,7 +91,7 @@ interface IAgentFlowRuntime {
 }
 
 interface IExecuteNodeParams {
-    user: IUser
+    user?: IUser
     nodeId: string
     reactFlowNode: IReactFlowNode
     nodes: IReactFlowNode[]
@@ -1487,7 +1487,7 @@ export const executeAgentFlow = async ({
 
             // Execute current node
             const executionResult = await executeNode({
-                user: user!,
+                user: user,
                 nodeId: currentNode.nodeId,
                 reactFlowNode,
                 nodes,
