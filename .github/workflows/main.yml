@@ -15,9 +15,32 @@ jobs:
                 platform: [ubuntu-latest]
                 node-version: [20.17.0]
         runs-on: ${{ matrix.platform }}
+        # Add PostgreSQL service for Cypress tests
+        services:
+            postgres:
+                image: pgvector/pgvector:pg16
+                env:
+                    POSTGRES_USER: test_user
+                    POSTGRES_PASSWORD: test_password
+                    POSTGRES_DB: test_flowise_e2e
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
         env:
             PUPPETEER_SKIP_DOWNLOAD: true
             BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+            # Test database environment variables
+            NODE_ENV: test
+            DATABASE_TYPE: postgres
+            DATABASE_HOST: localhost
+            DATABASE_PORT: 5432
+            DATABASE_NAME: test_flowise_e2e
+            DATABASE_USER: test_user
+            DATABASE_PASSWORD: test_password
         steps:
             - uses: actions/checkout@v4
               with:
@@ -31,6 +54,19 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: 'pnpm'
                   cache-dependency-path: 'pnpm-lock.yaml'
+            - name: Setup test database
+              run: |
+                  # Note: postgresql-client is included by default in ubuntu-latest
+                  # Wait for PostgreSQL to be ready
+                  until pg_isready -h localhost -p 5432 -U test_user; do
+                    echo "Waiting for PostgreSQL..."
+                    sleep 2
+                  done
+
+                  # Enable pgvector extension
+                  PGPASSWORD=test_password psql -h localhost -U test_user -d test_flowise_e2e -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+                  echo "✅ Test database ready"
             - run: pnpm install
             - run: pnpm lint
             - run: pnpm build
