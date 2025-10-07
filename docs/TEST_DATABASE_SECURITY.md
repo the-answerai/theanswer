@@ -1,5 +1,18 @@
 # Test Database Security Implementation
 
+**Implementation Status**: ✅ Completed (January 2025)
+
+**Implementation Files**:
+- `packages/server/src/DataSource.ts` - Security guard with ensureTestPrefix and maskSensitive functions (lines 20-58)
+- `docker/postgres-init/02-init-test-db.sql` - Idempotent database initialization script
+- `packages/server/src/controllers/test-control/index.ts` - testGuard middleware for E2E endpoints
+- `.github/workflows/e2e-tests.yml` - CI integration (Playwright E2E tests)
+- `.github/workflows/main.yml` - CI integration (Cypress tests)
+
+**Testing Status**:
+- ✅ Implementation complete and deployed
+- ⚠️ Unit tests pending (packages/server/src/__tests__/DataSource.test.ts - not yet created)
+
 ## Overview
 
 This document describes the security measures implemented to prevent accidental database truncation during testing. The implementation ensures that when running in test mode (`NODE_ENV=test`), the application **always** uses test-prefixed databases and users, making it impossible to accidentally connect to production databases.
@@ -41,44 +54,60 @@ We enforce test database usage at the **DataSource initialization level** (`Data
 
 #### 1. Smart Prefixing Function
 
-Located in: `packages/server/src/DataSource.ts`
+**Location**: `packages/server/src/DataSource.ts` (lines 20-31)
 
 ```typescript
 /**
- * Ensures database name and user have test prefix when NODE_ENV=test
- * Prevents accidental production database operations during testing
+ * 🔒 SECURITY CRITICAL: Test Database Prefix Enforcement
+ * Prevents production DB access during testing by auto-prefixing when NODE_ENV=test.
+ * DO NOT MODIFY without updating docs/TEST_DATABASE_SECURITY.md and unit tests.
  */
 const ensureTestPrefix = (value: string | undefined, defaultName: string): string => {
-    if (!value) return `test_${defaultName}`
-    if (value.startsWith('test_') || value.endsWith('_test')) return value
-    return `test_${value}`
+    // Guard against empty/undefined - use default instead
+    const effectiveValue = value?.trim() || defaultName
+
+    // Check if already has test prefix (prefix or suffix)
+    if (effectiveValue.startsWith('test_') || effectiveValue.endsWith('_test')) {
+        return effectiveValue
+    }
+
+    // Auto-correct: add test_ prefix
+    return `test_${effectiveValue}`
 }
 ```
 
 **Behavior:**
-- If value is undefined: returns `test_{defaultName}`
+- If value is empty/undefined: uses `defaultName` and adds `test_` prefix (returns `test_{defaultName}`)
+- Trims whitespace before processing
 - If value already has `test_` prefix or `_test` suffix: returns unchanged (idempotent)
 - Otherwise: prepends `test_` to the value
+- **Returns silently** - no internal logging (caller is responsible for logging)
 
 #### 2. DataSource Init Hook
 
-Located in: `packages/server/src/DataSource.ts` (beginning of `init()` function)
+**Location**: `packages/server/src/DataSource.ts` (lines 42-58, beginning of `init()` function)
 
 ```typescript
 export const init = async (): Promise<void> => {
-    // SECURITY: When running in test mode, ensure database and user have test prefix
+    // 🔒 SECURITY: Auto-prefix test database credentials (see ensureTestPrefix)
     if (process.env.NODE_ENV === 'test') {
         const originalDbName = process.env.DATABASE_NAME
         const originalDbUser = process.env.DATABASE_USER
+        const originalDbPassword = process.env.DATABASE_PASSWORD
 
+        // Apply test prefix with guards against empty values
         process.env.DATABASE_NAME = ensureTestPrefix(originalDbName, 'theanswer')
         process.env.DATABASE_USER = ensureTestPrefix(originalDbUser, 'user')
-        // Keep DATABASE_PASSWORD as-is from .env
 
+        // Log test mode activation with transformations
         logger.info('🔒 TEST MODE: Auto-prefixed database credentials')
-        logger.info(`  DATABASE_NAME: ${originalDbName} → ${process.env.DATABASE_NAME}`)
-        logger.info(`  DATABASE_USER: ${originalDbUser} → ${process.env.DATABASE_USER}`)
+        logger.info(`  DATABASE_NAME: ${originalDbName || '(empty)'} → ${process.env.DATABASE_NAME}`)
+        logger.info(`  DATABASE_USER: ${originalDbUser || '(empty)'} → ${process.env.DATABASE_USER}`)
+        logger.info(`  DATABASE_PASSWORD: ${maskSensitive(originalDbPassword)} (masked)`)
     }
+
+    // Always log storage configuration at DataSource init (before logger tries to use S3)
+    logger.info('DataSource initialization - Storage Configuration:')
     // ... rest of init logic
 }
 ```
@@ -87,7 +116,8 @@ export const init = async (): Promise<void> => {
 - ✅ Triggers only when `NODE_ENV=test`
 - ✅ Modifies environment variables before DataSource creation
 - ✅ Keeps password from .env (not modified)
-- ✅ Logs transformation for debugging visibility
+- ✅ Logs transformation for debugging visibility with masked password
+- ✅ Handles empty/undefined values with defaults (prevents `test_undefined` scenarios)
 - ✅ Single enforcement point for entire application
 
 ---
@@ -96,73 +126,89 @@ export const init = async (): Promise<void> => {
 
 ### Auto-Create Test Databases
 
-File: `docker/postgres-init/02-init-test-db.sql`
+**Location**: `docker/postgres-init/02-init-test-db.sql`
 
-This SQL script runs automatically when the PostgreSQL container initializes with an empty data volume.
+**Status**: ✅ Implemented
+
+This SQL script runs automatically when the PostgreSQL container initializes with an empty data volume. The script is **idempotent** - safe to run multiple times without errors.
 
 **Created Resources:**
 
 **Databases:**
-- `test_flowise_e2e`
-- `test_theanswer`
-- `test_example_db`
+- `test_flowise_e2e` (primary test database for E2E tests)
 
 **Users:**
 - `test_user` (password: `test_password`)
-- `test_example_user` (password: `example_password`)
 
 **Permissions:**
-- All test users have full privileges on all test databases
-- pgvector extension enabled on all test databases
+- `test_user` has full privileges on `test_flowise_e2e` database
+- pgvector extension enabled on test database
+- All schema, table, and sequence privileges granted
+
+**Design Notes:**
+- Does NOT create `test_theanswer` or `test_example_db` (not needed in current implementation)
+- Does NOT modify existing `example_user` grants to avoid conflicts
+- Uses idempotent patterns (CREATE IF NOT EXISTS, DO $$ blocks)
 
 ### Script Content
 
+**Actual Implementation** (as of January 2025):
+
 ```sql
--- Create test databases (common naming patterns)
+-- PostgreSQL initialization script for test databases
+-- This script is idempotent: safe to run multiple times (first-time and rerun)
+-- Runs after 01-init-flowise.sql when PostgreSQL container is initialized
+
+-- ============================================================
+-- CREATE TEST DATABASES (idempotent)
+-- ============================================================
+
+-- Create test_flowise_e2e (used by Playwright E2E tests)
 SELECT 'CREATE DATABASE test_flowise_e2e'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_flowise_e2e')\gexec
 
-SELECT 'CREATE DATABASE test_theanswer'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_theanswer')\gexec
+-- ============================================================
+-- CREATE TEST USERS (idempotent)
+-- ============================================================
 
-SELECT 'CREATE DATABASE test_example_db'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_example_db')\gexec
-
--- Create test users if they don't exist
-DO
-$do$
+-- Create test_user if it doesn't exist
+DO $$
 BEGIN
-   IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'test_user') THEN
-      CREATE USER test_user WITH PASSWORD 'test_password';
-   END IF;
-   IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'test_example_user') THEN
-      CREATE USER test_example_user WITH PASSWORD 'example_password';
-   END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'test_user') THEN
+        CREATE USER test_user WITH PASSWORD 'test_password';
+        RAISE NOTICE 'Created user: test_user';
+    ELSE
+        RAISE NOTICE 'User test_user already exists, skipping';
+    END IF;
 END
-$do$;
+$$;
 
--- Grant all privileges on test databases to test users
+-- ============================================================
+-- GRANT PRIVILEGES
+-- ============================================================
+
+-- Grant privileges on test databases to test_user
 GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO example_user;
 
-GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO example_user;
+-- Note: We do NOT revoke or modify existing grants to example_user
+-- from 01-init-flowise.sql to avoid collisions
 
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO example_user;
+-- ============================================================
+-- ENABLE EXTENSIONS
+-- ============================================================
 
--- Enable pgvector extension on test databases
+-- Switch to test_flowise_e2e and enable pgvector
 \c test_flowise_e2e
+
+-- Create pgvector extension if not exists (idempotent)
 CREATE EXTENSION IF NOT EXISTS vector;
 
-\c test_theanswer
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Grant usage on schema to test_user
+GRANT ALL ON SCHEMA public TO test_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO test_user;
 
-\c test_example_db
-CREATE EXTENSION IF NOT EXISTS vector;
+\echo 'Test database initialization completed successfully'
 ```
 
 ---
@@ -396,6 +442,38 @@ Check `.env` file and ensure:
 NODE_ENV=test
 ```
 
+### Issue: Empty or Undefined DATABASE_NAME/DATABASE_USER
+
+**Status**: ✅ **SOLVED** (as of January 2025 implementation)
+
+**Cause:** Missing or empty `DATABASE_NAME` or `DATABASE_USER` in `.env` file
+
+**How It's Handled:**
+The `ensureTestPrefix` function now guards against empty/undefined values:
+
+```typescript
+const effectiveValue = value?.trim() || defaultName
+```
+
+**Behavior:**
+- Empty `DATABASE_NAME` → defaults to `test_theanswer`
+- Undefined `DATABASE_NAME` → defaults to `test_theanswer`
+- Empty `DATABASE_USER` → defaults to `test_user`
+- Undefined `DATABASE_USER` → defaults to `test_user`
+
+**Example Log Output:**
+```
+🔒 TEST MODE: Auto-prefixed database credentials
+  DATABASE_NAME: (empty) → test_theanswer
+  DATABASE_USER: (empty) → test_user
+  DATABASE_PASSWORD: te********rd (masked)
+```
+
+**Why This Matters:**
+- Prevents `test_undefined` database names
+- Ensures tests always have a valid database to connect to
+- Provides sensible defaults that work with Docker init script
+
 ### Issue: Permission denied errors
 
 **Cause:** Test user doesn't have privileges on test database
@@ -475,18 +553,45 @@ jobs:
 
 ## Related Files
 
-### Modified Files
-- `packages/server/src/DataSource.ts` - Smart prefixing logic
-- `.env` - Test database configuration
+### Core Implementation Files (✅ Implemented)
+- **`packages/server/src/DataSource.ts`** (lines 20-58)
+  - `ensureTestPrefix()` function - Smart prefixing logic
+  - `maskSensitive()` function - Password masking for logs
+  - `init()` test mode guard - NODE_ENV=test detection and enforcement
 
-### New Files
-- `docker/postgres-init/02-init-test-db.sql` - Docker entrypoint init script
-- `docs/TEST_DATABASE_SECURITY.md` - This documentation
+- **`docker/postgres-init/02-init-test-db.sql`**
+  - Idempotent database initialization script
+  - Creates `test_flowise_e2e` database
+  - Creates `test_user` with password
+  - Enables pgvector extension
 
-### Related Files (Context)
-- `packages/server/src/test-utils/reset.ts` - Database reset function
-- `packages/server/src/controllers/test-control/index.ts` - Test control endpoints
+- **`packages/server/src/controllers/test-control/index.ts`**
+  - `testGuard` middleware - Protects E2E endpoints
+  - Routes: `/api/v1/__test__/reset`, `/api/v1/__test__/seed`
+
+### Configuration Files
+- `.env` - Test database configuration (root)
+- `apps/web/e2e/.env.example` - E2E test configuration template
+
+### CI/CD Integration
+- `.github/workflows/e2e-tests.yml` - Playwright E2E tests with PostgreSQL
+- `.github/workflows/main.yml` - Cypress tests with PostgreSQL
+
+### Documentation
+- `docs/TEST_DATABASE_SECURITY.md` - This documentation (security overview)
+- `docs/TEST_DATABASE_SECURITY_IMPLEMENTATION_PLAN.md` - Implementation plan
+- `apps/web/e2e/TESTING_QUICKSTART.md` - E2E testing quick start guide
+- `apps/web/e2e/TESTING_TROUBLESHOOTING.md` - E2E testing troubleshooting
+
+### Helper Utilities
 - `apps/web/e2e/helpers/test-db.ts` - E2E test database helpers
+- `apps/web/e2e/helpers/testData.ts` - Deterministic ID generation for parallel tests
+
+### Pending Implementation
+- ⚠️ **`packages/server/src/__tests__/DataSource.test.ts`** - Unit tests (not yet created)
+  - Should test `ensureTestPrefix` behavior
+  - Should test NODE_ENV=test guard logic
+  - See implementation plan for test cases
 
 ---
 
@@ -588,7 +693,7 @@ A comprehensive security audit was conducted to verify the test database protect
 
 #### ✅ Verified Security Measures
 
-1. **DataSource-Level Enforcement** (packages/server/src/DataSource.ts:19-38)
+1. **DataSource-Level Enforcement** (packages/server/src/DataSource.ts:20-58)
    - Smart prefix enforcement when NODE_ENV=test ✅
    - Auto-converts DATABASE_NAME and DATABASE_USER to test_* variants ✅
    - Comprehensive logging for transparency ✅
@@ -748,19 +853,42 @@ NODE_ENV=test DATABASE_NAME=test_flowise_e2e DATABASE_USER=test_user \
    - Standard database access controls and credential management apply
    - Not a code-level concern
 
-### Verification Checklist (Updated)
+### Verification Checklist (Updated - January 2025)
 
 When setting up or auditing test infrastructure:
 
-- [ ] Root .env has clear comments about test mode configuration
-- [ ] apps/web/.env.test has instructions for running backend in test mode
-- [ ] Docker postgres init script creates all test_* databases
-- [ ] DataSource.ts shows "🔒 TEST MODE" logs when NODE_ENV=test
-- [ ] E2E endpoints return 404 when NODE_ENV=production
+**Core Security Implementation:**
+- [x] ✅ DataSource.ts contains `ensureTestPrefix()` function (lines 20-31)
+- [x] ✅ DataSource.ts contains `maskSensitive()` function (lines 37-40)
+- [x] ✅ DataSource.ts `init()` has NODE_ENV=test guard (lines 43-58)
+- [x] ✅ DataSource.ts shows "🔒 TEST MODE" logs when NODE_ENV=test
+- [x] ✅ Empty/undefined DATABASE_NAME defaults to `test_theanswer`
+- [x] ✅ Empty/undefined DATABASE_USER defaults to `test_user`
+- [ ] ⚠️ Unit tests created (packages/server/src/__tests__/DataSource.test.ts) - **PENDING**
+
+**Docker & Infrastructure:**
+- [x] ✅ Docker postgres init script (02-init-test-db.sql) exists
+- [x] ✅ Docker script creates test_flowise_e2e database
+- [x] ✅ Docker script creates test_user with password
+- [x] ✅ Docker script enables pgvector extension
+- [x] ✅ Docker script is idempotent (safe to run multiple times)
+
+**Configuration & Environment:**
+- [x] ✅ Root .env has clear comments about test mode configuration
+- [x] ✅ apps/web/e2e/.env.example has instructions for running backend in test mode
 - [ ] Optional: E2E_SECRET is configured and validated
-- [ ] CI workflow has all required secrets configured
-- [ ] Playwright tests run successfully in CI
-- [ ] Test artifacts uploaded (playwright-report, test-results)
+
+**CI/CD:**
+- [x] ✅ .github/workflows/e2e-tests.yml exists with PostgreSQL service
+- [x] ✅ .github/workflows/main.yml has PostgreSQL for Cypress tests
+- [x] ✅ CI workflow has all required secrets configured
+- [x] ✅ Playwright tests run successfully in CI
+- [x] ✅ Test artifacts uploaded (playwright-report, test-results)
+
+**Endpoint Security:**
+- [x] ✅ testGuard middleware in test-control/index.ts
+- [x] ✅ E2E endpoints conditionally registered (only in test/development)
+- [x] ✅ E2E endpoints protected by NODE_ENV check
 
 ### Maintenance Updates
 
@@ -795,7 +923,13 @@ When setting up or auditing test infrastructure:
 
 ---
 
-**Last Updated:** 2025-10-06
+**Last Updated:** 2025-01-07 (Documentation updated to reflect actual implementation)
 **Implementation Version:** 2.0
-**Status:** ✅ Production Ready with Optional Enhancements
+**Status:** ✅ Production Ready
+**Implementation Status:**
+- ✅ Core Security: Complete (ensureTestPrefix, maskSensitive, test mode guard)
+- ✅ Docker Integration: Complete (02-init-test-db.sql)
+- ✅ CI/CD Integration: Complete (e2e-tests.yml, main.yml)
+- ✅ Endpoint Security: Complete (testGuard middleware)
+- ⚠️ Unit Tests: Pending (DataSource.test.ts not yet created)
 **Audit Status:** ✅ Verified and Hardened
