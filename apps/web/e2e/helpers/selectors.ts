@@ -64,3 +64,36 @@ export const AUTH_SELECTORS = {
         'button:has-text("Continue")'
     ].join(', ')
 } as const
+
+export const PROFILE_SELECTORS = {
+    // Profile page sections
+    accountInformation: 'Account Information',
+    organization: 'Organization',
+    subscriptionStatus: 'Subscription Status',
+    availableIntegrations: 'Available Integrations',
+
+    // Profile card elements
+    avatar: '[data-testid="user-avatar"], .MuiAvatar-root, [class*="avatar"]',
+    displayName: 'h5',
+    userEmail: 'p',
+
+    // Account Information fields
+    emailAddressLabel: 'Email Address',
+    displayNameLabel: 'Display Name',
+
+    // Role badges
+    roleBadges: '[data-testid="role-badge"], .MuiChip-root, [class*="role"], [class*="badge"]',
+
+    // Profile cards
+    profileCard: '[class*="gradient"], [class*="profile-card"], .MuiCard-root',
+    infoCards: '.MuiCard-root, [class*="card"]'
+} as const
+
+export const PROFILE_LABELS = {
+    emailAddress: 'Email Address',
+    displayName: 'Display Name',
+    organization: 'Organization',
+    subscriptionStatus: 'Subscription Status',
+    freePlan: 'Free Plan',
+    upgradePlan: 'Upgrade Plan'
+} as const
