@@ -39,7 +39,7 @@ export class AddUniqueConstraintDefaultChatflows1753000000001 implements Migrati
                                        cf.id DESC
                                ) as row_num
                         FROM "chat_flow" cf
-                        LEFT JOIN "user" u ON u.id = cf."userId"
+                        LEFT JOIN "user" u ON u.id::text = cf."userId"::text
                         WHERE cf."parentChatflowId" IS NOT NULL
                           AND cf."deletedDate" IS NULL
                     ) ranked
