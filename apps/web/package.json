@@ -3,6 +3,9 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
+        "db:migrate": "cd ../../packages-answers/db && prisma migrate deploy",
+        "predev": "pnpm db:migrate",
+        "prestart": "pnpm db:migrate",
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
