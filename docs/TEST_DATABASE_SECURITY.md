@@ -11,7 +11,7 @@
 
 **Testing Status**:
 - ✅ Implementation complete and deployed
-- ⚠️ Unit tests pending (packages/server/src/__tests__/DataSource.test.ts - not yet created)
+- ✅ Unit tests complete (packages/server/src/__tests__/DataSource.test.ts - 6 test cases covering all scenarios)
 
 ## Overview
 
@@ -135,18 +135,19 @@ This SQL script runs automatically when the PostgreSQL container initializes wit
 **Created Resources:**
 
 **Databases:**
-- `test_flowise_e2e` (primary test database for E2E tests)
+- `test_flowise` (test database for Flowise backend, matches BWS auto-prefix: flowise → test_flowise)
 
 **Users:**
-- `test_user` (password: `test_password`)
+- `test_example_user` (password: `example_password`, matches BWS auto-prefix: example_user → test_example_user)
 
 **Permissions:**
-- `test_user` has full privileges on `test_flowise_e2e` database
+- `test_example_user` has full privileges on `test_flowise` database
 - pgvector extension enabled on test database
 - All schema, table, and sequence privileges granted
 
 **Design Notes:**
-- Does NOT create `test_theanswer` or `test_example_db` (not needed in current implementation)
+- Database name matches BWS credential auto-prefixing (flowise → test_flowise)
+- User matches BWS credential auto-prefixing (example_user → test_example_user)
 - Does NOT modify existing `example_user` grants to avoid conflicts
 - Uses idempotent patterns (CREATE IF NOT EXISTS, DO $$ blocks)
 
@@ -163,22 +164,23 @@ This SQL script runs automatically when the PostgreSQL container initializes wit
 -- CREATE TEST DATABASES (idempotent)
 -- ============================================================
 
--- Create test_flowise_e2e (used by Playwright E2E tests)
-SELECT 'CREATE DATABASE test_flowise_e2e'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_flowise_e2e')\gexec
+-- Create test_flowise (for Flowise backend tests)
+-- When NODE_ENV=test, BWS provides DATABASE_NAME=flowise which auto-prefixes to test_flowise
+SELECT 'CREATE DATABASE test_flowise'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_flowise')\gexec
 
 -- ============================================================
 -- CREATE TEST USERS (idempotent)
 -- ============================================================
 
--- Create test_user if it doesn't exist
+-- Create test_example_user (matches BWS auto-prefix: example_user → test_example_user)
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'test_user') THEN
-        CREATE USER test_user WITH PASSWORD 'test_password';
-        RAISE NOTICE 'Created user: test_user';
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'test_example_user') THEN
+        CREATE USER test_example_user WITH PASSWORD 'example_password';
+        RAISE NOTICE 'Created user: test_example_user';
     ELSE
-        RAISE NOTICE 'User test_user already exists, skipping';
+        RAISE NOTICE 'User test_example_user already exists, skipping';
     END IF;
 END
 $$;
@@ -187,26 +189,26 @@ $$;
 -- GRANT PRIVILEGES
 -- ============================================================
 
--- Grant privileges on test databases to test_user
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_user;
+-- Grant privileges on test database
+GRANT ALL PRIVILEGES ON DATABASE test_flowise TO test_example_user;
 
 -- Note: We do NOT revoke or modify existing grants to example_user
 -- from 01-init-flowise.sql to avoid collisions
 
 -- ============================================================
--- ENABLE EXTENSIONS
+-- ENABLE EXTENSIONS & PERMISSIONS
 -- ============================================================
 
--- Switch to test_flowise_e2e and enable pgvector
-\c test_flowise_e2e
+-- Switch to test_flowise and setup permissions
+\c test_flowise
 
 -- Create pgvector extension if not exists (idempotent)
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Grant usage on schema to test_user
-GRANT ALL ON SCHEMA public TO test_user;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO test_user;
+-- Grant usage on schema to test_example_user
+GRANT ALL ON SCHEMA public TO test_example_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test_example_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO test_example_user;
 
 \echo 'Test database initialization completed successfully'
 ```
@@ -221,10 +223,9 @@ File: `.env` (project root)
 
 ```bash
 # Test Database Configuration
-# When NODE_ENV=test, database name and user are automatically prefixed with 'test_'
-DATABASE_NAME=test_flowise_e2e
-DATABASE_USER=test_user
-DATABASE_PASSWORD=test_password
+# BWS provides these credentials, which are auto-prefixed when NODE_ENV=test:
+# DATABASE_NAME=flowise → test_flowise
+# DATABASE_USER=example_user → test_example_user
 NODE_ENV=test
 ENABLE_E2E_ENDPOINTS=true
 ```
@@ -587,11 +588,12 @@ jobs:
 - `apps/web/e2e/helpers/test-db.ts` - E2E test database helpers
 - `apps/web/e2e/helpers/testData.ts` - Deterministic ID generation for parallel tests
 
-### Pending Implementation
-- ⚠️ **`packages/server/src/__tests__/DataSource.test.ts`** - Unit tests (not yet created)
-  - Should test `ensureTestPrefix` behavior
-  - Should test NODE_ENV=test guard logic
-  - See implementation plan for test cases
+### Test Coverage
+- ✅ **`packages/server/src/__tests__/DataSource.test.ts`** - Unit tests (complete)
+  - Tests `ensureTestPrefix` behavior for all scenarios
+  - Tests NODE_ENV=test guard logic
+  - Covers empty/undefined value handling
+  - Validates prefix idempotency
 
 ---
 
@@ -863,8 +865,8 @@ When setting up or auditing test infrastructure:
 - [x] ✅ DataSource.ts `init()` has NODE_ENV=test guard (lines 43-58)
 - [x] ✅ DataSource.ts shows "🔒 TEST MODE" logs when NODE_ENV=test
 - [x] ✅ Empty/undefined DATABASE_NAME defaults to `test_theanswer`
-- [x] ✅ Empty/undefined DATABASE_USER defaults to `test_user`
-- [ ] ⚠️ Unit tests created (packages/server/src/__tests__/DataSource.test.ts) - **PENDING**
+- [x] ✅ Empty/undefined DATABASE_USER defaults to `test_example_user`
+- [x] ✅ Unit tests created (packages/server/src/__tests__/DataSource.test.ts) - **COMPLETE**
 
 **Docker & Infrastructure:**
 - [x] ✅ Docker postgres init script (02-init-test-db.sql) exists
@@ -931,5 +933,94 @@ When setting up or auditing test infrastructure:
 - ✅ Docker Integration: Complete (02-init-test-db.sql)
 - ✅ CI/CD Integration: Complete (e2e-tests.yml, main.yml)
 - ✅ Endpoint Security: Complete (testGuard middleware)
-- ⚠️ Unit Tests: Pending (DataSource.test.ts not yet created)
+- ✅ Unit Tests: Complete (DataSource.test.ts with 6 test cases)
 **Audit Status:** ✅ Verified and Hardened
+
+---
+
+## Prisma Database Integration
+
+**Note:** This project uses **two databases** with different ORMs:
+1. **Flowise Database** (TypeORM) - Managed by `packages/server/src/DataSource.ts`
+2. **Prisma Database** (Prisma ORM) - Managed by `packages-answers/db`
+
+Both databases use the **same PostgreSQL instance** but with different schemas.
+
+### DATABASE_URL Configuration
+
+**Prisma Integration**: The Prisma schema (`packages-answers/db/prisma/schema.prisma`) uses `DATABASE_URL` environment variable:
+
+```typescript
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+```
+
+**Format:**
+```bash
+DATABASE_URL=postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=web
+```
+
+**Test Mode Behavior:**
+When `NODE_ENV=test`, the auto-prefixing in DataSource.ts modifies individual credentials (DATABASE_NAME, DATABASE_USER), so you should construct DATABASE_URL using these prefixed values:
+
+```bash
+# .env example
+NODE_ENV=test
+DATABASE_USER=example_user           # Auto-prefixed to test_example_user
+DATABASE_NAME=flowise                # Auto-prefixed to test_flowise
+DATABASE_PASSWORD=example_password   # Not modified
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+
+# Resulting DATABASE_URL (construct manually or via script):
+DATABASE_URL=postgresql://test_example_user:example_password@localhost:5432/test_flowise?schema=web
+```
+
+**Important:** If you set DATABASE_URL explicitly, ensure it uses the test-prefixed database name and user when running in test mode.
+
+### Automated Database Migrations
+
+**Migration Scripts** (`apps/web/package.json`):
+- `db:migrate`: Runs Prisma migrations (`cd ../../packages-answers/db && prisma migrate deploy`)
+- `predev`: Automatically runs migrations before `dev` command
+- `prestart`: Automatically runs migrations before `start` command
+
+**How It Works:**
+1. When you run `pnpm dev` in apps/web, `predev` hook triggers first
+2. `predev` executes `pnpm db:migrate`
+3. Migrations run against the database specified by DATABASE_URL
+4. If NODE_ENV=test, migrations run against test database (test_flowise)
+
+**Benefits:**
+- ✅ Test database schema automatically stays in sync
+- ✅ No manual migration commands needed
+- ✅ Prevents schema mismatch errors in E2E tests
+- ✅ Works in both local development and CI environments
+
+**Example:**
+```bash
+# Starting dev server with test database
+NODE_ENV=test pnpm --filter web dev
+# Output:
+# > predev
+# > pnpm db:migrate
+# Running Prisma migrations on test_flowise...
+# ✅ Migrations complete
+# > dev
+# Starting Next.js dev server...
+```
+
+### Security Considerations
+
+**Prisma Database Protection:**
+- ✅ Uses same credentials as Flowise database
+- ✅ Auto-prefixing applies to DATABASE_NAME and DATABASE_USER
+- ✅ Different schema (`?schema=web`) for isolation
+- ✅ Same test mode protections apply
+
+**Migration Safety:**
+- ✅ Uses `prisma migrate deploy` (production-safe, doesn't create new migrations)
+- ✅ Runs automatically on predev/prestart hooks
+- ✅ Credentials loaded securely via BWS (Bitwarden Secrets)
