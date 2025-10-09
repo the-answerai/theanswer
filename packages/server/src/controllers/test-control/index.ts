@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 
 // Security middleware - ONLY test mode or development with E2E testing
+// Also validates E2E_SECRET header when configured for defense-in-depth
 const testGuard = (req: Request, res: Response, next: NextFunction) => {
     const isTestMode = process.env.NODE_ENV === 'test'
     const isDevelopmentWithE2E = process.env.NODE_ENV === 'development' && process.env.ENABLE_E2E_ENDPOINTS === 'true'
@@ -11,6 +12,17 @@ const testGuard = (req: Request, res: Response, next: NextFunction) => {
     if (!isTestMode && !isDevelopmentWithE2E) {
         return res.status(StatusCodes.NOT_FOUND).json({ error: 'Not found' })
     }
+
+    // Defense-in-depth: validate E2E_SECRET header if configured
+    const expectedSecret = process.env.E2E_SECRET
+    if (expectedSecret) {
+        const providedSecret = req.header('x-e2e-secret')
+        if (providedSecret !== expectedSecret) {
+            console.warn('⚠️ E2E endpoint access denied: invalid or missing X-E2E-SECRET header')
+            return res.status(StatusCodes.FORBIDDEN).json({ error: 'Forbidden' })
+        }
+    }
+
     next()
 }
 
