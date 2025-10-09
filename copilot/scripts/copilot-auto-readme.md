@@ -5,7 +5,7 @@ Automated deployment scripts for AWS Copilot environments.
 ## Install
 
 ```bash
-pnpm secure-run eval "$COPILOT_AUTO_INSTALL"
+pnpm secure-run 'eval "$COPILOT_AUTO_INSTALL"'
 ```
 
 ## Usage
