@@ -159,20 +159,8 @@ const AdminChatflows = () => {
         refreshChatflows()
     }
 
-    const getCanvasRoute = (chatflow: any) => {
-        // For react-router-dom Link component (relative paths - router handles base path)
-        if (chatflow.type === 'AGENTFLOW') {
-            return `/v2/agentcanvas/${chatflow.id}`
-        } else if (chatflow.type === 'MULTIAGENT') {
-            return `/agentcanvas/${chatflow.id}`
-        } else {
-            // Default to regular chatflow canvas
-            return `/canvas/${chatflow.id}`
-        }
-    }
-
     const getCanvasFullUrl = (chatflow: any) => {
-        // For window.open() (full absolute URLs with /sidekick-studio prefix)
+        // Generate full absolute URL with /sidekick-studio prefix for navigation
         if (chatflow.type === 'AGENTFLOW') {
             return `/sidekick-studio/v2/agentcanvas/${chatflow.id}`
         } else if (chatflow.type === 'MULTIAGENT') {
