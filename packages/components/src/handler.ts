@@ -542,6 +542,9 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
         if (Object.keys(analytic).length === 0) return []
 
         const callbacks: any = []
+        const parentLangfuseTrace = options.parentLangfuseTrace as LangfuseTraceClient | undefined
+        const parentLangfuseSpan = options.parentLangfuseSpan as LangfuseSpanClient | undefined
+        const analyticHandlersInstance = options.analyticHandlers as AnalyticHandler | undefined
 
         for (const provider in analytic) {
             const providerStatus = analytic[provider].status as boolean
@@ -654,7 +657,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                     //     metadata: metadata
                     // })
 
-                    const handler = new CallbackHandler({
+                    const handlerConfig: ICommonObject = {
                         ...langFuseOptions,
                         metadata: metadata,
                         userId: options?.user?.id,
@@ -666,7 +669,34 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         // BUT Everything gets updatedon the root trace so the attributes and metadata are inconsistent
                         // root: trace,
                         // updateRoot: true
-                    })
+                    }
+
+                    if (parentLangfuseSpan || parentLangfuseTrace) {
+                        handlerConfig.root = parentLangfuseSpan ?? parentLangfuseTrace
+                        handlerConfig.updateRoot = false
+
+                        try {
+                            if (parentLangfuseTrace) {
+                                parentLangfuseTrace.update({
+                                    tags: [`Name:${chatflow.name}`],
+                                    metadata,
+                                    userId: options?.user?.id,
+                                    sessionId: options.sessionId,
+                                    version: chatflow.updatedDate
+                                })
+                            }
+                        } catch (err) {
+                            if (process.env.DEBUG === 'true') {
+                                console.error('Error updating Langfuse parent trace metadata:', err)
+                            }
+                        }
+
+                        analyticHandlersInstance?.setLangfuseCallbacksActive(true)
+                    } else {
+                        analyticHandlersInstance?.setLangfuseCallbacksActive(false)
+                    }
+
+                    const handler = new CallbackHandler(handlerConfig)
 
                     callbacks.push(handler)
                     //console.debug('Handler added to callbacks.')
@@ -803,6 +833,8 @@ export class AnalyticHandler {
     private analyticsConfig: string | undefined
     private chatId: string
     private createdAt: number
+    private langfuseCallbacksActive = false
+    private useNodeLevelLangfuseSpans = false
 
     private constructor(nodeData: INodeData, options: ICommonObject) {
         this.nodeData = nodeData
@@ -810,6 +842,7 @@ export class AnalyticHandler {
         this.analyticsConfig = JSON.stringify(applyEnvAnalyticsOverrides(options.analytic))
         this.chatId = options.chatId
         this.createdAt = Date.now()
+        this.useNodeLevelLangfuseSpans = Boolean(options.useNodeLevelLangfuseSpans)
     }
 
     static getInstance(nodeData: INodeData, options: ICommonObject): AnalyticHandler {
@@ -867,6 +900,22 @@ export class AnalyticHandler {
     // Add getter for handlers (useful for debugging)
     getHandlers(): ICommonObject {
         return this.handlers
+    }
+
+    setLangfuseCallbacksActive(active: boolean) {
+        this.langfuseCallbacksActive = active
+    }
+
+    isLangfuseCallbacksActive(): boolean {
+        return this.langfuseCallbacksActive
+    }
+
+    getParentTraceClient(provider: 'langFuse', traceId: string): LangfuseTraceClient | undefined {
+        if (!traceId) return undefined
+        const providerHandler = this.handlers[provider] as ICommonObject | undefined
+        const traces = providerHandler?.trace as Record<string, LangfuseTraceClient> | undefined
+        if (!traces) return undefined
+        return traces[traceId]
     }
 
     async initializeProvider(provider: string, providerConfig: any, credentialData: any) {
@@ -1413,15 +1462,21 @@ export class AnalyticHandler {
         }
 
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langFuse')) {
-            const trace: LangfuseTraceClient | undefined = this.handlers['langFuse'].trace[parentIds['langFuse'].trace]
-            if (trace) {
-                const generation = trace.generation({
-                    name,
-                    input: input
-                })
-                this.handlers['langFuse'].generation = { [generation.id]: generation }
-                returnIds['langFuse'].generation = generation.id
-                // console.log(`Langfuse generation created: ${generation.id}`)
+            if (this.langfuseCallbacksActive || this.useNodeLevelLangfuseSpans) {
+                if (parentIds?.['langFuse']?.trace) {
+                    returnIds['langFuse'].trace = parentIds['langFuse'].trace
+                }
+            } else {
+                const trace: LangfuseTraceClient | undefined = this.handlers['langFuse'].trace[parentIds['langFuse'].trace]
+                if (trace) {
+                    const generation = trace.generation({
+                        name,
+                        input: input
+                    })
+                    this.handlers['langFuse'].generation = { [generation.id]: generation }
+                    returnIds['langFuse'].generation = generation.id
+                    // console.log(`Langfuse generation created: ${generation.id}`)
+                }
             }
         }
 
@@ -1528,12 +1583,16 @@ export class AnalyticHandler {
         }
 
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langFuse')) {
-            const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[returnIds['langFuse'].generation]
-            if (generation) {
-                generation.end({
-                    output: output
-                })
-                // console.log(`Langfuse generation ended: ${generation.id}`)
+            if (!this.langfuseCallbacksActive && !this.useNodeLevelLangfuseSpans) {
+                const generationId = returnIds['langFuse'].generation
+                const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[generationId]
+                if (generation) {
+                    generation.end({
+                        output: output
+                    })
+                    delete this.handlers['langFuse'].generation[generationId]
+                    // console.log(`Langfuse generation ended: ${generation.id}`)
+                }
             }
         }
 
@@ -1603,12 +1662,16 @@ export class AnalyticHandler {
         }
 
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langFuse')) {
-            const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[returnIds['langFuse'].generation]
-            if (generation) {
-                generation.end({
-                    output: error
-                })
-                // console.log(`Langfuse generation errored: ${generation.id}`)
+            if (!this.langfuseCallbacksActive && !this.useNodeLevelLangfuseSpans) {
+                const generationId = returnIds['langFuse'].generation
+                const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[generationId]
+                if (generation) {
+                    generation.end({
+                        output: error
+                    })
+                    delete this.handlers['langFuse'].generation[generationId]
+                    // console.log(`Langfuse generation errored: ${generation.id}`)
+                }
             }
         }
 
@@ -1941,6 +2004,74 @@ export class AnalyticHandler {
                 toolSpan.setStatus({ code: SpanStatusCode.ERROR, message: error.toString() })
                 toolSpan.end()
             }
+        }
+    }
+
+    /**
+     * Safely serialize a value for Langfuse trace payload
+     * Handles circular references and unserializable values
+     */
+    safeSerializeForTrace(value: any): any {
+        if (value === undefined || value === null) return value
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+        try {
+            return JSON.parse(JSON.stringify(value))
+        } catch (error) {
+            console.warn(`Failed to serialize payload for Langfuse trace: ${error instanceof Error ? error.message : String(error)}`)
+            return '[Unserializable]'
+        }
+    }
+
+    /**
+     * Create a Langfuse tool span for tracing tool execution
+     * @param parentSpan - Parent Langfuse span to attach this tool span to
+     * @param toolName - Name of the tool being executed
+     * @param args - Tool arguments/input
+     * @param metadata - Additional metadata to attach to the span
+     * @returns LangfuseSpanClient if successful, undefined otherwise
+     */
+    createToolSpan(
+        parentSpan: LangfuseSpanClient | undefined,
+        toolName: string,
+        args: any,
+        metadata?: ICommonObject
+    ): LangfuseSpanClient | undefined {
+        if (!parentSpan) return undefined
+        try {
+            return parentSpan.span({
+                name: `Tool:${toolName}`,
+                metadata: {
+                    toolName,
+                    status: 'IN_PROGRESS',
+                    ...(metadata ?? {})
+                },
+                input: {
+                    args: this.safeSerializeForTrace(args)
+                }
+            })
+        } catch (error) {
+            console.warn(`Failed to create Langfuse tool span for ${toolName}: ${error instanceof Error ? error.message : String(error)}`)
+            return undefined
+        }
+    }
+
+    /**
+     * Finalize a Langfuse tool span with status and output
+     * @param span - The Langfuse span to finalize
+     * @param status - Final status ('FINISHED' or 'ERROR')
+     * @param payload - Output data to attach to the span
+     */
+    finishToolSpan(span: LangfuseSpanClient | undefined, status: 'FINISHED' | 'ERROR', payload: ICommonObject): void {
+        if (!span) return
+        try {
+            span.update({
+                metadata: {
+                    status
+                }
+            })
+            span.end({ output: payload })
+        } catch (error) {
+            console.warn(`Failed to finalize Langfuse tool span: ${error instanceof Error ? error.message : String(error)}`)
         }
     }
 }
