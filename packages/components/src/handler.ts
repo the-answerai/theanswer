@@ -27,8 +27,7 @@ import { LunaryHandler } from '@langchain/community/callbacks/handlers/lunary'
 import { getCredentialData, getCredentialParam, getEnvironmentVariable } from './utils'
 import { ICommonObject, IDatabaseEntity, INodeData, IServerSideEventStreamer } from './Interface'
 import { LangWatch, LangWatchSpan, LangWatchTrace, autoconvertTypedValues } from 'langwatch'
-import { extractCredentialsAndModels } from './flowCredentialExtractor'
-import { In } from 'typeorm'
+import { CredentialInfo, extractCredentialsAndModels } from './flowCredentialExtractor'
 export interface TraceMetadata {
     stripeCustomerId: string
     subscriptionTier?: string
@@ -37,7 +36,7 @@ export interface TraceMetadata {
     aiCredentialsOwnership: string
     [key: string]: any
 }
-import { DataSource } from 'typeorm'
+import { DataSource, In } from 'typeorm'
 import { ChatGenerationChunk } from '@langchain/core/outputs'
 import { AIMessageChunk, BaseMessageLike } from '@langchain/core/messages'
 import { Serialized } from '@langchain/core/load/serializable'
@@ -556,15 +555,22 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         .getRepository(options.databaseEntities['ChatFlow'])
                         .findOneBy({ id: options.chatflowid })
 
-                    const credentialIds = extractCredentialsAndModels(chatflow.flowData)
-                    const credentials = await options.appDataSource
-                        .getRepository(options.databaseEntities['Credential'])
-                        .findBy({ id: In(credentialIds?.credentials?.map((credential) => credential.credentialId) ?? []) })
-
-                    // console.debug('Credentials::::', credentials)
+                    // Default to platform if no chatflow found
                     let aiCredentialsOwnership = 'platform'
-                    if (credentials.every((credential: { visibility: string[] }) => !credential.visibility?.includes('Platform'))) {
-                        aiCredentialsOwnership = 'user'
+
+                    if (chatflow?.flowData) {
+                        const extracted = extractCredentialsAndModels(chatflow.flowData)
+
+                        // Fast path: AAI nodes = platform
+                        if (!extracted.hasPlatformAINodes && extracted.credentials.length > 0) {
+                            const credentials = await options.appDataSource
+                                .getRepository(options.databaseEntities['Credential'])
+                                .findBy({ id: In(extracted.credentials.map((c) => c.credentialId)) })
+
+                            aiCredentialsOwnership = credentials.every((c: any) => !c.visibility?.includes('Platform'))
+                                ? 'user'
+                                : 'platform'
+                        }
                     }
 
                     let langFuseOptions = {
