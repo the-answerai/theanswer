@@ -161,21 +161,8 @@ const AdminChatflows = () => {
     }
 
     const getCanvasRoute = (chatflow: any) => {
-        // For react-router-dom Link component (relative paths)
-        console.log('🤖id', chatflow.id)
-        console.log('type', chatflow)
-        if (chatflow.type === 'AGENTFLOW') {
-            return `/v2/agentcanvas/${chatflow.id}`
-        } else if (chatflow.type === 'MULTIAGENT') {
-            return `/agentcanvas/${chatflow.id}`
-        } else {
-            // Default to regular chatflow canvas
-            return `/canvas/${chatflow.id}`
-        }
-    }
-
-    const getCanvasFullUrl = (chatflow: any) => {
-        // For window.open() (full URLs with base path)
+        // Generate full URL path with /sidekick-studio prefix
+        // Works for both window.open() and react-router-dom Link components
         if (chatflow.type === 'AGENTFLOW') {
             return `/sidekick-studio/v2/agentcanvas/${chatflow.id}`
         } else if (chatflow.type === 'MULTIAGENT') {
@@ -184,6 +171,12 @@ const AdminChatflows = () => {
             // Default to regular chatflow canvas
             return `/sidekick-studio/canvas/${chatflow.id}`
         }
+    }
+
+    const getCanvasFullUrl = (chatflow: any) => {
+        // Alias for getCanvasRoute for backward compatibility
+        // Both now return the same full URL with /sidekick-studio prefix
+        return getCanvasRoute(chatflow)
     }
 
     const sortData = (data: any[]) => {
@@ -330,8 +323,8 @@ const AdminChatflows = () => {
                 setRollbackConfirmOpen(false)
                 setSelectedVersionForRollback(null)
                 handleCloseVersions()
-                // Refresh data
-                window.location.reload()
+                // Refresh data without full page reload
+                refreshChatflows()
             } catch (error) {
                 console.error('Failed to rollback chatflow:', error)
             }
@@ -361,7 +354,7 @@ const AdminChatflows = () => {
     return (
         <Box sx={{ p: { xs: 1, md: 4 } }}>
             <Box sx={{ mb: 2 }}>
-                <Button component={Link} to='/admin' size='small' variant='text'>
+                <Button component={Link} to='/sidekick-studio/admin' size='small' variant='text'>
                     ← Back to admin
                 </Button>
             </Box>
