@@ -57,6 +57,7 @@
         "openai": "4.96.0",
         "react": "18.2.0",
         "react-dom": "18.2.0",
+        "react-easy-crop": "^5.5.3",
         "react-hook-form": "^7.62.0",
         "serpapi": "^1.1.1",
         "sharp": "^0.33.5",

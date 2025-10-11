@@ -68,6 +68,7 @@
         "@braintree/sanitize-url": "^7.1.1",
         "@contentful/rich-text-from-markdown": "^15.18.10",
         "@google-cloud/logging-winston": "^6.0.1",
+        "@google/genai": "^0.7.0",
         "@oclif/core": "4.0.7",
         "@opentelemetry/api": "1.9.0",
         "@opentelemetry/auto-instrumentations-node": "0.60.1",
@@ -137,7 +138,8 @@
         "turndown": "^7.2.1",
         "typeorm": "^0.3.26",
         "uuid": "^9.0.1",
-        "winston": "^3.17.0"
+        "winston": "^3.17.0",
+        "undici": "^6.19.8"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",
