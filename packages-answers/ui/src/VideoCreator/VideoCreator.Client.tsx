@@ -623,8 +623,9 @@ const VideoCreator = () => {
         try {
             // Calculate actual dimensions based on aspect ratio
             // For 9:16, we need to swap width/height from the selected resolution
+            // This ensures Sora receives the correct size parameter (e.g., 720x1280 for portrait)
             let actualSize = size
-            if (aspectRatio === '9:16' && referenceImage) {
+            if (aspectRatio === '9:16') {
                 const [width, height] = size.split('x').map(Number)
                 actualSize = `${height}x${width}` // Swap for portrait
                 console.log(`[Video Creator] Adjusted size for 9:16: ${size} → ${actualSize}`)
@@ -632,6 +633,7 @@ const VideoCreator = () => {
 
             console.log('[Video Creator] Generation params:', {
                 model,
+                provider,
                 size: actualSize,
                 aspectRatio,
                 hasReferenceImage: !!referenceImage
