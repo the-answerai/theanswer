@@ -138,12 +138,8 @@ const JlincSettings = ({ dialogProps }) => {
         if (dialogProps.chatflow && dialogProps.chatflow.analytic) {
             try {
                 const parsed = JSON.parse(dialogProps.chatflow.analytic)
-                // Only load JLINC config
-                if (parsed.jlinc) {
-                    setAnalytic({ jlinc: parsed.jlinc })
-                } else {
-                    setAnalytic({})
-                }
+                // Load entire analytic config to preserve other providers (Langfuse, LangSmith, etc.)
+                setAnalytic(parsed || {})
             } catch (e) {
                 setAnalytic({})
                 console.error(e)
