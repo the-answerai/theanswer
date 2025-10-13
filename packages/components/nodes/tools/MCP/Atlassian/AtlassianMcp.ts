@@ -1,8 +1,8 @@
 /**
  * Atlassian Remote MCP Server Node
  *
- * This file implements an Atlassian MCP server node that uses the remote MCP server
- * at https://mcp.atlassian.com/v1/sse with OAuth 2.0 bearer token authentication.
+ * This file implements an Atlassian MCP server node that uses a custom remote MCP server
+ * with OAuth 2.0 bearer token authentication.
  *
  * Key features:
  * - Uses atlassianOAuth credential with access_token, refresh_token, expiration_time
@@ -21,6 +21,7 @@ import { Tool } from '@langchain/core/tools'
 import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../../src/Interface'
 import { MCPToolkit } from '../core'
 import { getCredentialData } from '../../../../src/utils'
+import { ATLASSIAN_MCP_SERVER_URL } from '../../../../src/constants'
 
 class Atlassian_MCP implements INode {
     label: string
@@ -125,12 +126,12 @@ class Atlassian_MCP implements INode {
         const credentialData = await getCredentialData(nodeData.credential || '', options)
 
         if (!credentialData.access_token) {
-            throw new Error('Access token not found in credential data')
+            console.error('Atlassian MCP: Access token not found in credential data')
+            return []
         }
 
-        // For remote MCP servers, we need to provide the URL directly
         const serverParams = {
-            url: 'https://mcp.atlassian.com/v1/sse'
+            url: `${ATLASSIAN_MCP_SERVER_URL}/sse`
         }
 
         const toolkit = new MCPToolkit(serverParams, 'sse', credentialData.access_token)

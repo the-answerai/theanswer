@@ -3,6 +3,7 @@
  *
  * Server-side version of MCP metadata fetching with caching
  */
+import { ATLASSIAN_MCP_SERVER_URL } from 'flowise-components'
 
 export interface MCPOAuthMetadata {
     issuer: string
@@ -28,8 +29,9 @@ const CACHE_DURATION = 30 * 60 * 1000
  * Fetches MCP OAuth metadata from the well-known endpoint
  * Uses caching to avoid repeated requests
  */
-export async function fetchMCPMetadata(baseUrl: string = 'https://mcp.atlassian.com'): Promise<MCPOAuthMetadata> {
-    const metadataUrl = `${baseUrl}/.well-known/oauth-authorization-server`
+
+export async function fetchMCPMetadata(): Promise<MCPOAuthMetadata> {
+    const metadataUrl = `${ATLASSIAN_MCP_SERVER_URL}/.well-known/oauth-authorization-server`
     const cacheKey = metadataUrl
 
     // Check cache first
