@@ -220,9 +220,15 @@ const PromptEnhancerWizard = ({
     }
 
     const updateField = (path: string, value: any) => {
+        const blockedKeys = ['__proto__', 'prototype', 'constructor']
         setEnhancedData((prev) => {
             const newData = { ...prev }
             const keys = path.split('.')
+            // Prevent prototype pollution: block dangerous keys
+            if (keys.some(k => blockedKeys.includes(k))) {
+                console.warn('Blocked prototype-polluting path:', path)
+                return newData
+            }
             let current: any = newData
             for (let i = 0; i < keys.length - 1; i++) {
                 if (!current[keys[i]]) current[keys[i]] = {}
