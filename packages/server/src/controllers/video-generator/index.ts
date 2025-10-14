@@ -170,7 +170,7 @@ const enhancePrompt = async (req: Request, res: Response, next: NextFunction) =>
             )
         }
 
-        const result = await videoGeneratorService.enhancePromptWithAI(prompt, dialog)
+        const result = await videoGeneratorService.enhancePromptWithAI(prompt, dialog, user.id, user.organizationId)
         return res.json(result)
     } catch (error) {
         next(error)

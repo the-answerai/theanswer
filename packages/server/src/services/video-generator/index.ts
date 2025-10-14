@@ -460,12 +460,69 @@ const downloadOpenAIAsset = async (videoId: string, apiKey: string, variant: 'vi
 }
 
 const processOpenAIJob = async (jobId: string, request: VideoGenerationRequest & { prompt: string }, initialStatus: OpenAIVideoStatus) => {
+    const { createVideoGenerationTrace, createVideoGenerationGeneration, finalizeTrace } = await import('./langfuseTracking')
+    const { getRunningExpressApp } = await import('../../utils/getRunningExpressApp')
+    const { User } = await import('../../database/entities/User')
+
+    // Fetch user data for billing metadata
+    const appServer = getRunningExpressApp()
+    const user = await appServer.AppDataSource.getRepository(User).findOne({
+        where: { id: request.userId }
+    })
+
+    if (!user) {
+        throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `User not found: ${request.userId}`)
+    }
+
+    // Create Langfuse trace for video generation with billing metadata
+    const trace = createVideoGenerationTrace({
+        provider: 'openai',
+        model: request.model,
+        prompt: request.prompt,
+        size: request.size,
+        seconds: request.seconds,
+        aspectRatio: request.aspectRatio,
+        negativePrompt: request.negativePrompt,
+        hasReferenceImage: !!request.referenceImage,
+        remixOf: request.remixVideoProviderId || null,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        userEmail: request.userEmail,
+        jobId,
+        // Billing metadata (required for Stripe integration)
+        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        subscriptionTier: 'free', // Defaults to free, billing system will handle actual tier
+        aiCredentialsOwnership: 'platform' // Video generation always uses platform credentials
+    })
+
+    // Create generation entry with cost tracking
+    const generation = createVideoGenerationGeneration(trace, {
+        provider: 'openai',
+        model: request.model,
+        prompt: request.prompt,
+        size: request.size,
+        seconds: request.seconds,
+        aspectRatio: request.aspectRatio,
+        hasReferenceImage: !!request.referenceImage,
+        remixOf: request.remixVideoProviderId || null,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        userEmail: request.userEmail,
+        jobId,
+        // Billing metadata
+        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        subscriptionTier: 'free',
+        aiCredentialsOwnership: 'platform'
+    })
+
     const apiKey = process.env.AAI_DEFAULT_OPENAI_API_KEY
     if (!apiKey) {
         updateJob(jobId, {
             status: 'failed',
             error: 'OpenAI API key not configured'
         })
+        await generation.end({ output: { error: 'OpenAI API key not configured' } })
+        await finalizeTrace(trace, { status: 'failed', error: 'OpenAI API key not configured' })
         return
     }
 
@@ -512,6 +569,9 @@ const processOpenAIJob = async (jobId: string, request: VideoGenerationRequest &
                 status: 'failed',
                 error: errorMessage
             })
+
+            await generation.end({ output: { error: errorMessage } })
+            await finalizeTrace(trace, { status: 'failed', error: errorMessage })
             return
         }
 
@@ -575,11 +635,34 @@ const processOpenAIJob = async (jobId: string, request: VideoGenerationRequest &
             progress: 100,
             result
         })
+
+        // Finalize generation and trace with success
+        await generation.end({
+            output: {
+                status: 'completed',
+                videoUrl: result.videoUrl,
+                videoId: result.videoId
+            }
+        })
+
+        await finalizeTrace(trace, {
+            status: 'completed',
+            videoUrl: result.videoUrl,
+            metadata: {
+                videoId: result.videoId,
+                thumbnailUrl: result.thumbnailUrl,
+                sessionId: result.sessionId
+            }
+        })
     } catch (error) {
+        const errorMessage = getErrorMessage(error)
         updateJob(jobId, {
             status: 'failed',
-            error: getErrorMessage(error)
+            error: errorMessage
         })
+
+        await generation.end({ output: { error: errorMessage } })
+        await finalizeTrace(trace, { status: 'failed', error: errorMessage })
     }
 }
 
@@ -721,12 +804,70 @@ const pollGoogleOperation = async (
 }
 
 const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, initialOperation: GenerateVideosOperation) => {
+    const { createVideoGenerationTrace, createVideoGenerationGeneration, finalizeTrace } = await import('./langfuseTracking')
+    const { getRunningExpressApp } = await import('../../utils/getRunningExpressApp')
+    const { User } = await import('../../database/entities/User')
+
+    // Fetch user data for billing metadata
+    const appServer = getRunningExpressApp()
+    const user = await appServer.AppDataSource.getRepository(User).findOne({
+        where: { id: request.userId }
+    })
+
+    if (!user) {
+        throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `User not found: ${request.userId}`)
+    }
+
+    // Create Langfuse trace for video generation with billing metadata
+    const trace = createVideoGenerationTrace({
+        provider: 'google',
+        model: request.model,
+        prompt: request.prompt,
+        size: request.size,
+        seconds: request.seconds,
+        aspectRatio: request.aspectRatio,
+        negativePrompt: request.negativePrompt,
+        hasReferenceImage: !!request.referenceImage,
+        remixOf: request.remixVideoProviderId || null,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        userEmail: request.userEmail,
+        jobId,
+        // Billing metadata (required for Stripe integration)
+        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        subscriptionTier: 'free', // Defaults to free, billing system will handle actual tier
+        aiCredentialsOwnership: 'platform' // Video generation always uses platform credentials
+    })
+
+    // Create generation entry with cost tracking
+    const generation = createVideoGenerationGeneration(trace, {
+        provider: 'google',
+        model: request.model,
+        prompt: request.prompt,
+        size: request.size,
+        seconds: request.seconds,
+        aspectRatio: request.aspectRatio,
+        negativePrompt: request.negativePrompt,
+        hasReferenceImage: !!request.referenceImage,
+        remixOf: request.remixVideoProviderId || null,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        userEmail: request.userEmail,
+        jobId,
+        // Billing metadata
+        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        subscriptionTier: 'free',
+        aiCredentialsOwnership: 'platform'
+    })
+
     const apiKey = process.env.AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY
     if (!apiKey) {
         updateJob(jobId, {
             status: 'failed',
             error: 'Google Generative AI API key not configured'
         })
+        await generation.end({ output: { error: 'Google Generative AI API key not configured' } })
+        await finalizeTrace(trace, { status: 'failed', error: 'Google Generative AI API key not configured' })
         return
     }
 
@@ -748,10 +889,13 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
               })
 
         if (!finalOperation.done) {
+            const errorMessage = 'Google video generation did not complete'
             updateJob(jobId, {
                 status: 'failed',
-                error: 'Google video generation did not complete'
+                error: errorMessage
             })
+            await generation.end({ output: { error: errorMessage } })
+            await finalizeTrace(trace, { status: 'failed', error: errorMessage })
             return
         }
 
@@ -766,11 +910,14 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
                 reasons.length > 0
                     ? reasons.join('\n')
                     : "Content was filtered by Google's safety systems. Please modify your prompt or reference image."
+            const fullError = `Google Veo Content Filter:\n${errorMessage}`
 
             updateJob(jobId, {
                 status: 'failed',
-                error: `Google Veo Content Filter:\n${errorMessage}`
+                error: fullError
             })
+            await generation.end({ output: { error: fullError } })
+            await finalizeTrace(trace, { status: 'failed', error: fullError })
             return
         }
 
@@ -789,15 +936,20 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
                 status: 'failed',
                 error: errorMessage
             })
+            await generation.end({ output: { error: errorMessage } })
+            await finalizeTrace(trace, { status: 'failed', error: errorMessage })
             return
         }
 
         const video = generatedVideos[0].video
         if (!video || !video.uri) {
+            const errorMessage = 'Google response missing video URI'
             updateJob(jobId, {
                 status: 'failed',
-                error: 'Google response missing video URI'
+                error: errorMessage
             })
+            await generation.end({ output: { error: errorMessage } })
+            await finalizeTrace(trace, { status: 'failed', error: errorMessage })
             return
         }
 
@@ -899,11 +1051,32 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
             progress: 100,
             result
         })
+
+        // Finalize generation and trace with success
+        await generation.end({
+            output: {
+                status: 'completed',
+                videoUrl: result.videoUrl,
+                videoId: result.videoId
+            }
+        })
+
+        await finalizeTrace(trace, {
+            status: 'completed',
+            videoUrl: result.videoUrl,
+            metadata: {
+                videoId: result.videoId,
+                sessionId: result.sessionId
+            }
+        })
     } catch (error) {
+        const errorMessage = getErrorMessage(error)
         updateJob(jobId, {
             status: 'failed',
-            error: getErrorMessage(error)
+            error: errorMessage
         })
+        await generation.end({ output: { error: errorMessage } })
+        await finalizeTrace(trace, { status: 'failed', error: errorMessage })
     }
 }
 
@@ -1211,8 +1384,44 @@ const listArchivedVideos = async (params: {
 
 const enhancePromptWithAI = async (
     basicPrompt: string,
-    dialog?: { text: string; tone: string; emotion: string }
+    dialog?: { text: string; tone: string; emotion: string },
+    userId?: string,
+    organizationId?: string
 ): Promise<Record<string, any>> => {
+    const { langfuse, createPromptEnhancementGeneration } = await import('./langfuseTracking')
+    const { getRunningExpressApp } = await import('../../utils/getRunningExpressApp')
+    const { User } = await import('../../database/entities/User')
+
+    // Fetch user data for billing metadata
+    const appServer = getRunningExpressApp()
+    const user = userId
+        ? await appServer.AppDataSource.getRepository(User).findOne({
+              where: { id: userId }
+          })
+        : null
+
+    // Create trace for prompt enhancement with billing metadata
+    const trace = langfuse.trace({
+        name: 'VideoPromptEnhancement',
+        userId: userId,
+        tags: ['Prompt Enhancement', 'Video Generation'],
+        metadata: {
+            organizationId,
+            userId,
+            hasDialog: !!dialog,
+            // Billing metadata (required for Stripe integration)
+            customerId: user?.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+            subscriptionTier: 'free', // Defaults to free
+            aiCredentialsOwnership: 'platform', // Prompt enhancement always uses platform credentials
+            // Display name for usage events table
+            chatflowName: 'Video Agent (Prompt Enhancement)'
+        },
+        input: {
+            prompt: basicPrompt,
+            dialog
+        }
+    })
+
     try {
         const apiKey = process.env.AAI_DEFAULT_OPENAI_API_KEY
         if (!apiKey) {
@@ -1272,8 +1481,43 @@ Return ONLY valid JSON, no markdown or explanations.`
             throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, 'No content in OpenAI response')
         }
 
-        return JSON.parse(content)
+        const enhancedData = JSON.parse(content)
+
+        // Extract token usage from OpenAI response
+        const usage = result.usage || {}
+
+        // Create generation entry with token usage
+        // Langfuse will calculate cost based on gpt-4o-mini pricing configured in the UI
+        const generation = createPromptEnhancementGeneration(trace, {
+            model: 'gpt-4o-mini',
+            input: userPrompt,
+            output: content,
+            usage: {
+                prompt_tokens: usage.prompt_tokens,
+                completion_tokens: usage.completion_tokens,
+                total_tokens: usage.total_tokens
+            }
+        })
+
+        // Finalize generation
+        await generation.end({
+            output: enhancedData
+        })
+
+        // Finalize trace
+        await trace.update({
+            output: enhancedData
+        })
+
+        return enhancedData
     } catch (error) {
+        // Log error to trace
+        await trace.update({
+            output: {
+                error: error instanceof Error ? error.message : String(error)
+            }
+        })
+
         if (error instanceof InternalFlowiseError) {
             throw error
         }
