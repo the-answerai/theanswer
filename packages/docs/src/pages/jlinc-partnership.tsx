@@ -1,11 +1,30 @@
+/* eslint-disable react/no-unescaped-entities */
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
-import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
+import {
+    BarChart3,
+    Bot,
+    Building2,
+    ClipboardList,
+    Eye,
+    FileText,
+    FlaskRound,
+    Hospital,
+    Landmark,
+    PenLine,
+    Rocket,
+    Scale,
+    User
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function PartnershipHero() {
     return (
@@ -84,10 +103,10 @@ function VisionSection() {
                 <div style={{ maxWidth: '900px', margin: '0 auto 3rem', fontSize: '1.1rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
                         As AI capabilities accelerate, a critical barrier emerges: <strong>How do you trust what AI produces?</strong> For
-                        public companies and regulated industries, this isn't philosophical—it's existential. Boards won't approve
-                        AI-assisted 10-Ks without provable lineage. Auditors won't sign off on AI-generated risk reports without
-                        tamper-evident trails. Compliance officers won't deploy AI workflows that can't demonstrate complete chain of
-                        custody.
+                        public companies and regulated industries, this isn&apos;t philosophical—it&apos;s existential. Boards won&apos;t
+                        approve AI-assisted 10-Ks without provable lineage. Auditors won&apos;t sign off on AI-generated risk reports
+                        without tamper-evident trails. Compliance officers won&apos;t deploy AI workflows that can&apos;t demonstrate
+                        complete chain of custody.
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
                         <strong>Answer Agents and JLINC are pioneering the solution.</strong>
@@ -143,25 +162,31 @@ function VisionSection() {
 }
 
 function ProblemSection() {
-    const problems = [
+    const problems: {
+        icon: LucideIcon
+        title: string
+        pain: string
+        reality: string
+        problem: string
+    }[] = [
         {
-            icon: '📄',
+            icon: FileText,
             title: 'Where did this come from?',
-            pain: 'AI generates earnings reports mixing data from 15 sources. Auditor asks: "Prove these numbers came from approved systems."',
+            pain: 'AI generates earnings reports mixing data from 15 sources. Auditor asks: &quot;Prove these numbers came from approved systems.&quot;',
             reality: 'Screenshots, log files, trust',
             problem: 'Not sufficient for SOX compliance'
         },
         {
-            icon: '👁️',
+            icon: Eye,
             title: 'What exactly did the AI see?',
-            pain: 'Agent analyzes confidential merger docs. Legal asks: "Show us exactly what context the AI had."',
+            pain: 'Agent analyzes confidential merger docs. Legal asks: &quot;Show us exactly what context the AI had.&quot;',
             reality: 'Best-effort prompt logs, often incomplete',
             problem: 'Not admissible as evidence'
         },
         {
-            icon: '✍️',
+            icon: PenLine,
             title: 'Who made the final decision?',
-            pain: 'AI drafts SEC filing, three executives review it. Board asks: "Who signed off on what?"',
+            pain: 'AI drafts SEC filing, three executives review it. Board asks: &quot;Who signed off on what?&quot;',
             reality: 'Email threads, comments in Google Docs',
             problem: 'Not audit-ready, no cryptographic proof'
         }
@@ -179,8 +204,8 @@ function ProblemSection() {
                     {problems.map((item, idx) => (
                         <div key={idx} className='col col--4'>
                             <div className={styles.featureCard} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>
-                                    {item.icon}
+                                <div style={{ textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>
+                                    <item.icon size={48} strokeWidth={1.5} />
                                 </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>{item.title}</h3>
                                 <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>{item.pain}</p>
@@ -229,10 +254,17 @@ function ProblemSection() {
 }
 
 function SolutionSection() {
-    const steps = [
+    const steps: {
+        number: string
+        icon: LucideIcon
+        title: string
+        subtitle: string
+        detail: string
+        result: string
+    }[] = [
         {
             number: '1',
-            icon: '📄',
+            icon: FileText,
             title: 'Source Verification',
             subtitle: 'Ingested documents',
             detail: 'SHA-256 hash of each document signed via JLINC agreement',
@@ -240,7 +272,7 @@ function SolutionSection() {
         },
         {
             number: '2',
-            icon: '🤖',
+            icon: Bot,
             title: 'Agent Reasoning',
             subtitle: 'Agent processes data',
             detail: 'Prompts, context windows, and intermediate outputs cryptographically stamped',
@@ -248,7 +280,7 @@ function SolutionSection() {
         },
         {
             number: '3',
-            icon: '👤',
+            icon: User,
             title: 'Human Collaboration',
             subtitle: 'Human review & edits',
             detail: 'Each human action appended as new JLINC event with identity verification',
@@ -256,7 +288,7 @@ function SolutionSection() {
         },
         {
             number: '4',
-            icon: '📊',
+            icon: BarChart3,
             title: 'Final Output',
             subtitle: 'Published report',
             detail: 'Final document hash linked to complete lineage chain',
@@ -282,7 +314,9 @@ function SolutionSection() {
                                 <div className={styles.stepNumber} style={{ marginBottom: '0.5rem' }}>
                                     {step.number}
                                 </div>
-                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>{step.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <step.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                                     {step.title}
                                 </h3>
@@ -520,9 +554,15 @@ function BenefitsSection() {
 }
 
 function IndustryUseCases() {
-    const industries = [
+    const industries: {
+        icon: LucideIcon
+        title: string
+        useCases: string[]
+        regulations: string
+        value: string
+    }[] = [
         {
-            icon: '🏦',
+            icon: Landmark,
             title: 'Financial Services',
             useCases: [
                 'Earnings releases & 10-K filings',
@@ -534,21 +574,21 @@ function IndustryUseCases() {
             value: 'Prove to auditors that AI-assisted financial disclosures have complete, cryptographically-verified data lineage from source systems to published documents.'
         },
         {
-            icon: '🏥',
+            icon: Hospital,
             title: 'Healthcare & Life Sciences',
             useCases: ['Clinical trial data analysis', 'Adverse event reporting', 'IRB documentation', 'Medical research publications'],
             regulations: 'HIPAA, 21 CFR Part 11 (FDA), GDPR Article 9',
             value: 'Demonstrate that AI analysis of protected health information maintains complete chain of custody and consent tracking throughout the research lifecycle.'
         },
         {
-            icon: '⚖️',
+            icon: Scale,
             title: 'Legal & Professional Services',
             useCases: ['E-discovery document analysis', 'Contract review & redlining', 'Due diligence reports', 'Attorney work product'],
             regulations: 'Attorney-client privilege, Federal Rules of Evidence',
             value: 'Create defensible AI-assisted legal work product with chain of custody provable in court. Maintain privilege while demonstrating competence.'
         },
         {
-            icon: '🏢',
+            icon: Building2,
             title: 'Public Companies',
             useCases: [
                 'ESG reporting & sustainability disclosures',
@@ -573,7 +613,9 @@ function IndustryUseCases() {
                     {industries.map((industry, idx) => (
                         <div key={idx} className='col col--6' style={{ marginBottom: '2rem' }}>
                             <div className={clsx(styles.featureCard, styles.integrationCard)}>
-                                <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{industry.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <industry.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1.5rem' }}>{industry.title}</h3>
 
                                 <div style={{ marginBottom: '1rem' }}>
@@ -845,11 +887,17 @@ function AboutJLINCSection() {
 }
 
 function ImplementationRoadmap() {
-    const phases = [
+    const phases: {
+        phase: string
+        duration: string
+        icon: LucideIcon
+        tasks: string[]
+        deliverable: string
+    }[] = [
         {
             phase: 'Phase 1: Pilot',
             duration: 'Weeks 1-2',
-            icon: '🧪',
+            icon: FlaskRound,
             tasks: [
                 'Enable JLINC stamping in sandbox environment',
                 'Test with sample workflows (dummy data)',
@@ -861,7 +909,7 @@ function ImplementationRoadmap() {
         {
             phase: 'Phase 2: Policy Mapping',
             duration: 'Weeks 3-5',
-            icon: '📋',
+            icon: ClipboardList,
             tasks: [
                 'Map JLINC event types to governance controls',
                 'Define signature requirements (who signs what)',
@@ -873,7 +921,7 @@ function ImplementationRoadmap() {
         {
             phase: 'Phase 3: Production',
             duration: 'Weeks 6-8',
-            icon: '🚀',
+            icon: Rocket,
             tasks: [
                 'Deploy to production AI workflows',
                 'Train teams on provenance verification',
@@ -902,7 +950,9 @@ function ImplementationRoadmap() {
                                     <h3 style={{ color: '#00ffff', margin: 0, fontSize: '1rem' }}>{phase.phase}</h3>
                                     <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>{phase.duration}</span>
                                 </div>
-                                <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{phase.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <phase.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <ul
                                     style={{
                                         listStyle: 'disc',
@@ -1260,11 +1310,11 @@ function CoFooter() {
 }
 
 export default function JLINCPartnership(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='JLINC Partnership - Cryptographically-Verifiable AI'
                 description='Answer Agents and JLINC bring immutable data provenance to AI workflows—enabling trustworthy AI adoption in public companies and regulated enterprises.'
             >
@@ -1301,7 +1351,7 @@ export default function JLINCPartnership(): JSX.Element {
                     <DemoCTASection />
                     {/* <CoFooter /> */}
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

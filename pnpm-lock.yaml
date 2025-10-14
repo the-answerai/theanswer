@@ -157,7 +157,7 @@ importers:
                 version: 2.3.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
             '@auth0/nextjs-auth0':
                 specifier: 3.5.0
-                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
+                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
             '@aws-sdk/client-s3':
                 specifier: ^3.887.0
                 version: 3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -465,7 +465,7 @@ importers:
                 version: 2.3.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
             '@auth0/nextjs-auth0':
                 specifier: 3.5.0
-                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
+                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
             '@emotion/cache':
                 specifier: ^11.14.0
                 version: 11.14.0
@@ -634,7 +634,7 @@ importers:
                 version: 4.25.2
             '@auth0/nextjs-auth0':
                 specifier: 3.5.0
-                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
+                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
             '@aws-sdk/client-s3':
                 specifier: ^3.887.0
                 version: 3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -1364,6 +1364,9 @@ importers:
             js-yaml:
                 specifier: ^4.1.0
                 version: 4.1.0
+            lucide-react:
+                specifier: ^0.545.0
+                version: 0.545.0(react@18.3.1)
             prism-react-renderer:
                 specifier: ^2.4.1
                 version: 2.4.1(react@18.3.1)
@@ -1964,7 +1967,7 @@ importers:
                 version: 2.3.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
             '@auth0/nextjs-auth0':
                 specifier: 3.5.0
-                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
+                version: 3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))
             '@codemirror/lang-javascript':
                 specifier: ^6.2.4
                 version: 6.2.4
@@ -15442,6 +15445,11 @@ packages:
         resolution: { integrity: sha512-Nv9KddBcQSlQopmBHXSsZVY5xsdlZkdH/Iey0BlcBYggMd4two7cZnKOK9vmy3nY0O5RGH99z1PCeTpPqszUYg== }
         engines: { bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0' }
 
+    lucide-react@0.545.0:
+        resolution: { integrity: sha512-7r1/yUuflQDSt4f1bpn5ZAocyIxcTyVyBBChSVtBKn5M+392cPmI5YJMWOJKk/HUWGm5wg83chlAZtCcGbEZtw== }
+        peerDependencies:
+            react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
     lunary@0.7.15:
         resolution: { integrity: sha512-qBuAxsCG/weIr6Zhapn9oVLxNcjJGzmZRJj8Tu/L+1QOufRjLXfbZ9ouMjSwX36MUTNIxUpgKBbsmIEEcOio4Q== }
         peerDependencies:
@@ -22301,7 +22309,7 @@ snapshots:
             dpop: 2.1.1
             es-cookie: 1.3.2
 
-    '@auth0/nextjs-auth0@3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))':
+    '@auth0/nextjs-auth0@3.5.0(next@14.2.32(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.92.1))':
         dependencies:
             '@panva/hkdf': 1.2.1
             cookie: 1.0.2
@@ -40255,6 +40263,10 @@ snapshots:
     lru-cache@9.1.2: {}
 
     lru.min@1.1.2: {}
+
+    lucide-react@0.545.0(react@18.3.1):
+        dependencies:
+            react: 18.3.1
 
     lunary@0.7.15(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))(react@18.3.1):
         dependencies:

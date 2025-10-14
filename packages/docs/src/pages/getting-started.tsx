@@ -4,8 +4,38 @@ import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
+import {
+    BadgeCheck,
+    BarChart3,
+    BookOpen,
+    Bot,
+    ClipboardList,
+    Download,
+    FileText,
+    Folder,
+    Globe,
+    GraduationCap,
+    HardDrive,
+    Link as LinkIcon,
+    Lock,
+    Mail,
+    MessageSquare,
+    Monitor,
+    Palette,
+    RefreshCw,
+    Rocket,
+    Search,
+    Target,
+    TrendingUp,
+    Video,
+    Wrench,
+    Zap
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function GettingStartedHero() {
     return (
@@ -28,10 +58,12 @@ function GettingStartedHero() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='#steps' className={styles.secondaryLink}>
-                            📋 See How It Works
+                            <ClipboardList size={18} className={styles.linkIcon} />
+                            See How It Works
                         </a>
                         <a href='#resources' className={styles.secondaryLink}>
-                            📚 Learning Resources
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            Learning Resources
                         </a>
                     </div>
                 </div>
@@ -58,9 +90,15 @@ function ThreeSteps() {
                                 enhanced search, and tool integrations.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>⚡ 30-second install</span>
-                                <span>🌐 Works everywhere</span>
-                                <span>🔒 Secure & private</span>
+                                <span>
+                                    <Zap size={16} /> 30-second install
+                                </span>
+                                <span>
+                                    <Globe size={16} /> Works everywhere
+                                </span>
+                                <span>
+                                    <Lock size={16} /> Secure &amp; private
+                                </span>
                             </div>
                             <a
                                 href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
@@ -79,9 +117,15 @@ function ThreeSteps() {
                                 visual Studio builder.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🆓 Completely free</span>
-                                <span>📧 Email signup only</span>
-                                <span>🚀 Instant access</span>
+                                <span>
+                                    <BadgeCheck size={16} /> Completely free
+                                </span>
+                                <span>
+                                    <Mail size={16} /> Email signup only
+                                </span>
+                                <span>
+                                    <Rocket size={16} /> Instant access
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Sign Up Free →
@@ -97,9 +141,15 @@ function ThreeSteps() {
                                 work with AI assistance.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🤖 Multiple AI models</span>
-                                <span>📁 Document upload</span>
-                                <span>🔗 Tool connections</span>
+                                <span>
+                                    <Bot size={16} /> Multiple AI models
+                                </span>
+                                <span>
+                                    <Folder size={16} /> Document upload
+                                </span>
+                                <span>
+                                    <LinkIcon size={16} /> Tool connections
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Start Chatting →
@@ -123,7 +173,9 @@ function LearningResources() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🎓</div>
+                            <div className={styles.comingSoonIcon}>
+                                <GraduationCap size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>AI Learning Hub</strong>
                                 <br />
@@ -139,7 +191,9 @@ function LearningResources() {
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🎥</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Video size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Digital at Scale YouTube</strong>
                                 <br />
@@ -162,7 +216,9 @@ function LearningResources() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>💬</div>
+                            <div className={styles.comingSoonIcon}>
+                                <MessageSquare size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Community Support</strong>
                                 <br />
@@ -182,7 +238,9 @@ function LearningResources() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>📚</div>
+                            <div className={styles.comingSoonIcon}>
+                                <BookOpen size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Use Cases & Examples</strong>
                                 <br />
@@ -202,7 +260,9 @@ function LearningResources() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🛠️</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Wrench size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Developer Resources</strong>
                                 <br />
@@ -237,17 +297,27 @@ function AppOverview() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>💬</div>
+                            <div className={styles.appIcon}>
+                                <MessageSquare size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Chat</h3>
                             <p>
                                 Your conversation hub with specialized AI assistants. Chat histories are automatically stored, switch
                                 between different agents, organize knowledge bases, and manage all your AI interactions.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>💾 Stored Chat History</span>
-                                <span>🔄 Switch Between Agents</span>
-                                <span>📚 Knowledge Base Storage</span>
-                                <span>🎯 Specialized Sidekicks</span>
+                                <span>
+                                    <HardDrive size={16} /> Stored Chat History
+                                </span>
+                                <span>
+                                    <RefreshCw size={16} /> Switch Between Agents
+                                </span>
+                                <span>
+                                    <BookOpen size={16} /> Knowledge Base Storage
+                                </span>
+                                <span>
+                                    <Target size={16} /> Specialized Sidekicks
+                                </span>
                             </div>
                             <a href='/chat' className={styles.featureCardCTA}>
                                 Explore Chat →
@@ -256,17 +326,27 @@ function AppOverview() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🛠️</div>
+                            <div className={styles.appIcon}>
+                                <Wrench size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Sidekick Studio</h3>
                             <p>
                                 Visual workflow builder for creating sophisticated AI agents. Connect new tools, import Flowise flows, and
                                 build complex automation without coding.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🔗 Connect New Tools</span>
-                                <span>📥 Import Flowise Flows</span>
-                                <span>🎨 Visual Builder</span>
-                                <span>⚡ No-Code Creation</span>
+                                <span>
+                                    <LinkIcon size={16} /> Connect New Tools
+                                </span>
+                                <span>
+                                    <Download size={16} /> Import Flowise Flows
+                                </span>
+                                <span>
+                                    <Palette size={16} /> Visual Builder
+                                </span>
+                                <span>
+                                    <Zap size={16} /> No-Code Creation
+                                </span>
                             </div>
                             <a href='/sidekick-studio' className={styles.featureCardCTA}>
                                 Try Studio →
@@ -277,17 +357,27 @@ function AppOverview() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📊</div>
+                            <div className={styles.appIcon}>
+                                <BarChart3 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>AI-Powered Apps</h3>
                             <p>
                                 Specialized applications for data transformation, image generation, and workflow automation. Upload files,
                                 configure processing, and get results instantly.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📈 CSV Transformer</span>
-                                <span>🎨 Image Creator</span>
-                                <span>📄 Document Processing</span>
-                                <span>🤖 Coming Soon: More Apps</span>
+                                <span>
+                                    <TrendingUp size={16} /> CSV Transformer
+                                </span>
+                                <span>
+                                    <Palette size={16} /> Image Creator
+                                </span>
+                                <span>
+                                    <FileText size={16} /> Document Processing
+                                </span>
+                                <span>
+                                    <Bot size={16} /> Coming Soon: More Apps
+                                </span>
                             </div>
                             <a href='/apps' className={styles.featureCardCTA}>
                                 Explore Apps →
@@ -296,17 +386,27 @@ function AppOverview() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🌐</div>
+                            <div className={styles.appIcon}>
+                                <Globe size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Browser Extension</h3>
                             <p>
                                 AI assistance everywhere you browse. Get page summaries, enhanced search results, generate images, and
                                 connect to your business tools—all without leaving your current tab.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📄 Page Summaries</span>
-                                <span>🔍 Enhanced Search</span>
-                                <span>🎨 Image Generation</span>
-                                <span>🔗 Tool Integration</span>
+                                <span>
+                                    <FileText size={16} /> Page Summaries
+                                </span>
+                                <span>
+                                    <Search size={16} /> Enhanced Search
+                                </span>
+                                <span>
+                                    <Palette size={16} /> Image Generation
+                                </span>
+                                <span>
+                                    <LinkIcon size={16} /> Tool Integration
+                                </span>
                             </div>
                             <a href='/browser-sidekick' className={styles.featureCardCTA}>
                                 Get Extension →
@@ -336,7 +436,8 @@ function CTASection() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink}>
-                            💬 Join Community
+                            <MessageSquare size={18} className={styles.linkIcon} />
+                            Join Community
                         </a>
                     </div>
                 </div>
@@ -352,7 +453,9 @@ function DigitalAtScaleSection() {
                 <div style={{ textAlign: 'center' }}>
                     <div className={clsx(styles.commandment, styles.comingSoonCard, styles.subscriptionBanner)}>
                         <div className={styles.subscriptionBannerContent}>
-                            <div className={clsx(styles.comingSoonIcon, styles.subscriptionBannerIcon)}>📺</div>
+                            <div className={clsx(styles.comingSoonIcon, styles.subscriptionBannerIcon)}>
+                                <Monitor size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={clsx(styles.commandmentText, styles.subscriptionBannerText)}>
                                 <strong>Digital at Scale YouTube Channel</strong>
                                 <br />
@@ -378,10 +481,10 @@ function DigitalAtScaleSection() {
 }
 
 export default function GettingStarted(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Get Started with AnswerAgentAI - 3 Simple Steps'
                 description='Transform your productivity in minutes. Install the Chrome extension, sign up for free, and start chatting with AI sidekicks that understand your workflow.'
             >
@@ -412,7 +515,7 @@ export default function GettingStarted(): JSX.Element {
                     <CTASection />
                     <DigitalAtScaleSection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }
