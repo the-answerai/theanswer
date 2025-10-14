@@ -1,9 +1,15 @@
 import { defineConfig, devices } from '@playwright/test'
 import dotenv from 'dotenv'
+import fs from 'fs'
 import path from 'path'
 
-// Load environment variables from .env.test
-dotenv.config({ path: path.resolve(__dirname, '.env.test') })
+// Load environment variables from .env.test without overriding pre-set values (e.g. Bitwarden)
+const envPath = path.resolve(__dirname, '.env.test')
+if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath, override: false })
+}
+
+const isCI = Boolean(process.env.CI)
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -15,11 +21,11 @@ export default defineConfig({
     /* Run tests in files in parallel */
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
-    forbidOnly: !!process.env.CI,
+    forbidOnly: isCI,
     /* Retry on CI only */
-    retries: process.env.CI ? 2 : 0,
+    retries: isCI ? 2 : 0,
     /* Opt out of parallel tests on CI. */
-    workers: process.env.CI ? 1 : undefined,
+    workers: isCI ? 1 : undefined,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [['html', { outputFolder: './e2e/playwright-report' }]],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -68,10 +74,13 @@ export default defineConfig({
     ],
 
     /* Run your local dev server before starting the tests */
-    webServer: {
-        command: 'pnpm dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000 // 2 minutes for startup
-    }
+    // Auto-start dev stack locally; CI already runs `pnpm start`
+    webServer: isCI
+        ? undefined
+        : {
+              command: 'pnpm dev',
+              url: 'http://localhost:3000',
+              reuseExistingServer: true,
+              timeout: 120 * 1000 // 2 minutes for startup
+          }
 })

@@ -1,157 +1,219 @@
 name: E2E Tests
 
+permissions:
+    contents: read
+
 on:
-  push:
-    branches: [main, staging, production]
-  pull_request:
-    branches: [main, staging, production]
-  workflow_dispatch:
+    push:
+        branches: [main, staging, production]
+    pull_request:
+        branches: [main, staging, production]
+    workflow_dispatch:
 
 jobs:
-  e2e:
-    name: Run E2E Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    e2e:
+        name: Run E2E Tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
 
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+        services:
+            postgres:
+                image: pgvector/pgvector:pg16
+                env:
+                    POSTGRES_USER: test_user
+                    POSTGRES_PASSWORD: test_password
+                    POSTGRES_DB: test_flowise
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
 
-      redis:
-        image: redis:latest
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+            redis:
+                image: redis:latest
+                options: >-
+                    --health-cmd "redis-cli ping"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 6379:6379
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+            - name: Install pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 9
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: Setup test database
-        env:
-          PGPASSWORD: postgres
-        run: |
-          # Create test databases
-          psql -h localhost -U postgres -c "CREATE DATABASE test_flowise_e2e;"
-          psql -h localhost -U postgres -c "CREATE DATABASE test_theanswer;"
-          psql -h localhost -U postgres -c "CREATE DATABASE test_example_db;"
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
 
-          # Create test users
-          psql -h localhost -U postgres -c "CREATE USER test_user WITH PASSWORD 'test_password';"
-          psql -h localhost -U postgres -c "CREATE USER test_example_user WITH PASSWORD 'example_password';"
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-          # Grant privileges
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_user;"
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_example_user;"
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_user;"
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_example_user;"
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_user;"
-          psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_example_user;"
+            - name: Setup test database
+              env:
+                  PGPASSWORD: test_password
+              run: |
+                  # Wait for PostgreSQL
+                  until pg_isready -h localhost -p 5432 -U test_user; do
+                    echo "Waiting for PostgreSQL..."
+                    sleep 2
+                  done
 
-          # Enable pgvector extension on all test databases
-          psql -h localhost -U postgres -d test_flowise_e2e -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          psql -h localhost -U postgres -d test_theanswer -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          psql -h localhost -U postgres -d test_example_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
+                  # Enable pgvector (test_flowise already created by service)
+                  psql -h localhost -U test_user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
-      - name: Build packages
-        run: pnpm build
+                  # Verify
+                  psql -h localhost -U test_user -d test_flowise -c "SELECT version();"
 
-      - name: Start Flowise backend server
-        env:
-          NODE_ENV: test
-          DATABASE_TYPE: postgres
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: test_flowise_e2e
-          DATABASE_USER: test_user
-          DATABASE_PASSWORD: test_password
-          ENABLE_E2E_ENDPOINTS: 'true'
-          # E2E_SECRET: ${{ secrets.E2E_SECRET }}  # Optional: Uncomment to enable X-E2E-SECRET validation
-          PORT: 4000
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          STORAGE_TYPE: local
-          BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
-          # Add other required env vars from secrets
-          INITIAL_CHATFLOW_IDS: ${{ secrets.INITIAL_CHATFLOW_IDS || '1ca08600-3593-4128-9786-bef6cb3c5cb8' }}
-        run: |
-          pnpm --filter @flowise/server start &
-          echo "Waiting for backend to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:4000/api/v1/ping; do sleep 2; done'
-          echo "Backend server is ready"
+                  echo "✅ Test database ready: test_flowise"
 
-      - name: Install Playwright browsers
-        working-directory: apps/web
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+            - name: Build packages
+              run: pnpm build
 
-      - name: Run E2E tests
-        working-directory: apps/web
-        env:
-          CI: true
-          BASE_URL: http://localhost:3000
-          API_URL: http://localhost:4000
-          # E2E_SECRET: ${{ secrets.E2E_SECRET }}  # Optional: Must match backend if E2E_SECRET is enabled
-          # Auth0 configuration from secrets
-          AUTH0_SECRET: ${{ secrets.E2E_AUTH0_SECRET }}
-          AUTH0_BASE_URL: http://localhost:3000
-          AUTH0_ISSUER_BASE_URL: ${{ secrets.E2E_AUTH0_ISSUER_BASE_URL }}
-          AUTH0_CLIENT_ID: ${{ secrets.E2E_AUTH0_CLIENT_ID }}
-          AUTH0_CLIENT_SECRET: ${{ secrets.E2E_AUTH0_CLIENT_SECRET }}
-          # Test user credentials from secrets
-          TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-          TEST_ENTERPRISE_AUTH0_ORG_ID: ${{ secrets.E2E_TEST_ENTERPRISE_AUTH0_ORG_ID }}
-          TEST_ENTERPRISE_ORG_NAME: ci-test-org
-          TEST_USER_ENTERPRISE_ADMIN_EMAIL: ${{ secrets.E2E_TEST_USER_ENTERPRISE_ADMIN_EMAIL }}
-          TEST_USER_ENTERPRISE_MEMBER_EMAIL: ${{ secrets.E2E_TEST_USER_ENTERPRISE_MEMBER_EMAIL }}
-          # Test credentials for seeding
-          TEST_OPENAI_API_KEY: sk-test-ci-openai-key
-          TEST_EXASEARCH_API_KEY: test-ci-exa-key
-          # Storage override
-          STORAGE_TYPE: local
-          BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
-        run: pnpm test:e2e
+            - name: Install Playwright browsers
+              working-directory: apps/web
+              run: pnpm exec playwright install --with-deps chromium
 
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: apps/web/e2e/playwright-report/
-          retention-days: 30
+            - name: Start application stack
+              env:
+                  # ============================================
+                  # Infrastructure (always required)
+                  # ============================================
+                  NODE_ENV: test
+                  CI: true
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: apps/web/e2e/test-results/
-          retention-days: 30
+                  # ============================================
+                  # BWS Integration - Loads 4 sensitive secrets from BWS
+                  # ============================================
+                  # Secrets loaded from "AAI - 03 - Local" project:
+                  # - AUTH0_SECRET
+                  # - AUTH0_CLIENT_ID
+                  # - AUTH0_CLIENT_SECRET
+                  # - TEST_USER_PASSWORD
+                  # - STORAGE_TYPE (existing)
+                  BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+                  BWS_PROJECT: theanswer-ai
+                  BWS_ENV: local
+
+                  # ============================================
+                  # Auth0 Configuration (non-sensitive, hardcoded)
+                  # ============================================
+                  AUTH0_ISSUER_BASE_URL: https://answer-ai.us.auth0.com
+                  AUTH0_BASE_URL: http://localhost:3000
+
+                  # ============================================
+                  # Test User Configuration (non-sensitive, hardcoded)
+                  # ============================================
+                  TEST_USER_ENTERPRISE_ADMIN_EMAIL: alpha+enterprise-admin@theanswer.ai
+                  TEST_USER_ENTERPRISE_MEMBER_EMAIL: alpha+enterprise-member@theanswer.ai
+                  TEST_USER_ENTERPRISE_BUILDER_EMAIL: alpha+enterprise-builder@theanswer.ai
+                  TEST_ENTERPRISE_AUTH0_ORG_ID: org_unQ8OLmTNsxVTJCT
+                  TEST_ENTERPRISE_ORG_NAME: local-dev
+
+                  # ============================================
+                  # Database Configuration (localhost test database)
+                  # ============================================
+                  DATABASE_TYPE: postgres
+                  DATABASE_HOST: localhost
+                  DATABASE_PORT: 5432
+                  DATABASE_NAME: test_flowise
+                  DATABASE_USER: test_user
+                  DATABASE_PASSWORD: test_password
+                  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web&connection_limit=1
+
+                  # ============================================
+                  # Service URLs (localhost)
+                  # ============================================
+                  API_URL: http://localhost:4000
+                  BASE_URL: http://localhost:3000
+                  PORT: 4000
+
+                  # ============================================
+                  # Redis Configuration (localhost)
+                  # ============================================
+                  REDIS_HOST: localhost
+                  REDIS_PORT: 6379
+
+                  # ============================================
+                  # Fake Test API Keys (not real credentials)
+                  # ============================================
+                  TEST_OPENAI_API_KEY: sk-test-openai-key-for-e2e
+                  TEST_EXASEARCH_API_KEY: test-exa-search-key-for-e2e
+
+                  # ============================================
+                  # E2E Testing Feature Flags
+                  # ============================================
+                  ENABLE_E2E_ENDPOINTS: true
+                  STORAGE_TYPE: local
+                  BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
+              run: |
+                  echo "Starting application stack with pnpm start..."
+                  pnpm start > /tmp/stack.log 2>&1 &
+                  STACK_PID=$!
+                  echo "Stack PID: $STACK_PID"
+
+                  echo "Waiting for Flowise server (port 4000)..."
+                  timeout 90 bash -c 'until curl -f http://localhost:4000/api/v1/ping; do sleep 2; done'
+                  echo "✅ Flowise server ready"
+
+                  echo "Waiting for Next.js app (port 3000)..."
+                  timeout 90 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+                  echo "✅ Next.js app ready"
+
+                  echo "Stack is ready, PID stored: $STACK_PID"
+                  echo "STACK_PID=$STACK_PID" >> $GITHUB_ENV
+
+            - name: Run E2E tests
+              working-directory: apps/web
+              env:
+                  BASE_URL: http://localhost:3000
+                  API_URL: http://localhost:4000
+              run: pnpm test:e2e
+
+            - name: Stop application stack
+              if: always()
+              run: |
+                  if [ ! -z "$STACK_PID" ]; then
+                    echo "Stopping stack (PID: $STACK_PID)..."
+                    kill $STACK_PID || true
+                    sleep 2
+                    kill -9 $STACK_PID 2>/dev/null || true
+                  fi
+
+            - name: Upload Playwright report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report
+                  path: apps/web/e2e/playwright-report/
+                  retention-days: 30
+
+            - name: Upload test results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results
+                  path: apps/web/e2e/test-results/
+                  retention-days: 30
