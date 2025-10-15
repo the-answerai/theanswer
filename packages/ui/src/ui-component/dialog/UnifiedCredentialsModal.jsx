@@ -61,6 +61,33 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const isQuickSetupMode = missingCredentials.some((cred) => Object.prototype.hasOwnProperty.call(cred, 'isAssigned'))
     const groupedCredentials = isQuickSetupMode ? groupAllCredentialsByType(missingCredentials) : groupCredentialsByType(missingCredentials)
 
+    const resolveGroupForCredential = (credentialName) => {
+        const groupedCreds = isQuickSetupMode ? groupAllCredentialsByType(missingCredentials) : groupCredentialsByType(missingCredentials)
+
+        if (groupedCreds[credentialName]) {
+            const directGroup = groupedCreds[credentialName]
+            return {
+                groupKey: credentialName,
+                componentName: directGroup.credentialTypes?.[0] || directGroup.credentialName || credentialName
+            }
+        }
+
+        const matchedEntry = Object.entries(groupedCreds).find(([_, group]) => {
+            const types = group.credentialTypes || []
+            return types.includes(credentialName) || group.credentialName === credentialName
+        })
+
+        if (matchedEntry) {
+            const [groupKey, group] = matchedEntry
+            const types = group.credentialTypes || []
+            const componentName = types.includes(credentialName) ? credentialName : types[0] || group.credentialName || credentialName
+
+            return { groupKey, componentName }
+        }
+
+        return { groupKey: null, componentName: credentialName }
+    }
+
     // Load available credentials when modal opens
     useEffect(() => {
         if (show && (missingCredentials.length > 0 || isQuickSetupMode)) {
@@ -103,31 +130,56 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     setAvailableCredentials(credentialsData)
 
                     // Handle credential assignments based on mode
-                    const initialAssignments = {}
+                    const defaultAssignments = {}
 
                     if (isQuickSetupMode) {
-                        // In QuickSetup mode, pre-populate with already assigned credentials
                         Object.entries(groupedCreds).forEach(([groupKey, group]) => {
+                            const nodes = group.nodes || []
+                            const credsForGroup = credentialsData[groupKey] || []
+
                             if (group.isAssigned && group.assignedCredentialId) {
-                                group.nodes.forEach((node) => {
-                                    initialAssignments[node.nodeId] = group.assignedCredentialId
+                                nodes.forEach((node) => {
+                                    defaultAssignments[node.nodeId] = group.assignedCredentialId
                                 })
+                            }
+
+                            if (credsForGroup.length > 0) {
+                                const fallbackCredentialId = group.assignedCredentialId || credsForGroup[0]?.id
+                                if (fallbackCredentialId) {
+                                    nodes.forEach((node) => {
+                                        if (!defaultAssignments[node.nodeId]) {
+                                            defaultAssignments[node.nodeId] = fallbackCredentialId
+                                        }
+                                    })
+                                }
                             }
                         })
                     } else {
-                        // Normal mode - Auto-select credentials where there's only one option
-                        Object.entries(credentialsData).forEach(([groupKey, creds]) => {
-                            if (creds && creds.length === 1) {
-                                // Auto-select for all nodes in this group
-                                groupedCreds[groupKey].nodes.forEach((node) => {
-                                    initialAssignments[node.nodeId] = creds[0].id
-                                })
+                        Object.entries(groupedCreds).forEach(([groupKey, group]) => {
+                            const creds = credentialsData[groupKey] || []
+                            if (creds.length > 0) {
+                                const defaultCredentialId = creds[0]?.id
+                                if (defaultCredentialId) {
+                                    group.nodes.forEach((node) => {
+                                        if (!defaultAssignments[node.nodeId]) {
+                                            defaultAssignments[node.nodeId] = defaultCredentialId
+                                        }
+                                    })
+                                }
                             }
                         })
                     }
 
-                    if (Object.keys(initialAssignments).length > 0) {
-                        setCredentialAssignments(initialAssignments)
+                    if (Object.keys(defaultAssignments).length > 0) {
+                        setCredentialAssignments((prev) => {
+                            const mergedAssignments = { ...prev }
+                            Object.entries(defaultAssignments).forEach(([nodeId, credentialId]) => {
+                                if (!mergedAssignments[nodeId]) {
+                                    mergedAssignments[nodeId] = credentialId
+                                }
+                            })
+                            return mergedAssignments
+                        })
                     }
                 } catch (error) {
                     console.error('Error loading credentials:', error)
@@ -148,8 +200,15 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }
 
     const handleAddCredential = async (credentialName) => {
+        const { groupKey, componentName } = resolveGroupForCredential(credentialName)
+        setCreatingCredentialFor(groupKey)
+
         try {
-            const response = await credentialsApi.getSpecificComponentCredential(credentialName)
+            if (!componentName) {
+                throw new Error('Credential type could not be resolved')
+            }
+
+            const response = await credentialsApi.getSpecificComponentCredential(componentName)
             const componentCredential = response.data
 
             // Check if the response actually contains credential component data
@@ -173,6 +232,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             } else {
                 alert(`Failed to load credential component: ${error.message}`)
             }
+            setCreatingCredentialFor(null)
         }
     }
 
@@ -181,7 +241,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
         // Auto-select the newly created credential for the appropriate group
         if (newCredentialId && creatingCredentialFor) {
-            const groupedCreds = groupCredentialsByType(missingCredentials)
+            const groupedCreds = isQuickSetupMode
+                ? groupAllCredentialsByType(missingCredentials)
+                : groupCredentialsByType(missingCredentials)
             const group = groupedCreds[creatingCredentialFor]
 
             if (group) {
@@ -238,16 +300,15 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }
 
     const handleCreateCredential = async (credentialName) => {
-        try {
-            // Find which group this credential belongs to for auto-selection later
-            const groupedCreds = groupCredentialsByType(missingCredentials)
-            const groupKey = Object.keys(groupedCreds).find((key) => {
-                const group = groupedCreds[key]
-                return group.credentialTypes?.includes(credentialName) || group.credentialName === credentialName
-            })
-            setCreatingCredentialFor(groupKey)
+        const { groupKey, componentName } = resolveGroupForCredential(credentialName)
+        setCreatingCredentialFor(groupKey)
 
-            const response = await credentialsApi.getSpecificComponentCredential(credentialName)
+        try {
+            if (!componentName) {
+                throw new Error('Credential type could not be resolved')
+            }
+
+            const response = await credentialsApi.getSpecificComponentCredential(componentName)
             const componentCredential = response.data
 
             // Check if the response actually contains credential component data
