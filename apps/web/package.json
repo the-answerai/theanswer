@@ -12,7 +12,7 @@
         "lint": "next lint",
         "test:e2e:setup": "npx playwright install --with-deps",
         "test:e2e:check": "node scripts/check-playwright.js",
-        "test:e2e": "pnpm test:e2e:check && npx playwright test",
+        "test:e2e": "pnpm test:e2e:check && npx playwright test --workers=1",
         "test:e2e:dev": "pnpm test:e2e:check && npx playwright test --ui",
         "test:e2e:headed": "pnpm test:e2e:check && npx playwright test --headed",
         "test:e2e:debug": "pnpm test:e2e:check && npx playwright test --debug",
