@@ -1,11 +1,17 @@
 import { useState, useCallback } from 'react'
 import { useSidekickFetcher } from '@ui/SidekickSelect/hooks/useSidekickDetails'
+import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 
 // Minimal interface for credential assignment callback
 type CredentialAssignmentCallback = (sidekick: any, assignments: Record<string, string>) => void
 
 // Type for credential assignments map
 type CredentialAssignments = Record<string, string>
+
+type CredentialModalOptions = {
+    dontShowAgain?: boolean
+    dontShowDirty?: boolean
+}
 
 /**
  * Custom hook for checking and managing missing credentials in sidekicks
@@ -14,6 +20,8 @@ export const useCredentialChecker = () => {
     const [showCredentialModal, setShowCredentialModal] = useState<boolean>(false)
     const [missingCredentials, setMissingCredentials] = useState<any[]>([])
     const [onCredentialsAssigned, setOnCredentialsAssigned] = useState<CredentialAssignmentCallback | null>(null)
+    const [initialDontShowAgain, setInitialDontShowAgain] = useState<boolean>(false)
+    const [preferenceScope, setPreferenceScope] = useState<string | null>(null)
 
     const { fetchDetails } = useSidekickFetcher()
 
@@ -38,11 +46,20 @@ export const useCredentialChecker = () => {
 
                 const credentialsToShow = sidekick.credentialsToShow || []
                 const needsSetup = sidekick.needsSetup || false
+                const scope = sidekickId ? `sidekick:${sidekickId}` : null
+                const isSuppressed = scope ? getCredentialModalDismissed(scope) : false
 
                 // Show modal if forceShow is true OR if there are missing credentials
                 if (forceShow || (needsSetup && credentialsToShow.length > 0)) {
+                    if (!forceShow && isSuppressed) {
+                        onAssign(sidekick, {})
+                        return false
+                    }
+
                     setMissingCredentials(credentialsToShow)
                     setOnCredentialsAssigned(() => onAssign)
+                    setPreferenceScope(scope)
+                    setInitialDontShowAgain(isSuppressed)
                     setShowCredentialModal(true)
                     return true
                 } else {
@@ -64,7 +81,11 @@ export const useCredentialChecker = () => {
      * @param credentialAssignments - Map of node IDs to credential IDs
      */
     const handleAssign = useCallback(
-        (credentialAssignments: CredentialAssignments): void => {
+        (credentialAssignments: CredentialAssignments, options?: CredentialModalOptions): void => {
+            if (preferenceScope && options?.dontShowDirty) {
+                setCredentialModalDismissed(preferenceScope, !!options.dontShowAgain)
+            }
+
             if (onCredentialsAssigned) {
                 onCredentialsAssigned(null, credentialAssignments)
             }
@@ -73,38 +94,56 @@ export const useCredentialChecker = () => {
             setShowCredentialModal(false)
             setMissingCredentials([])
             setOnCredentialsAssigned(null)
+            setPreferenceScope(null)
         },
-        [onCredentialsAssigned]
+        [onCredentialsAssigned, preferenceScope]
     )
 
     /**
      * Handle skipping credential assignment
      */
-    const handleSkip = useCallback((): void => {
-        if (onCredentialsAssigned) {
-            onCredentialsAssigned(null, {})
-        }
+    const handleSkip = useCallback(
+        (options?: CredentialModalOptions): void => {
+            if (preferenceScope && options?.dontShowDirty) {
+                setCredentialModalDismissed(preferenceScope, !!options.dontShowAgain)
+            }
 
-        // Reset state
-        setShowCredentialModal(false)
-        setMissingCredentials([])
-        setOnCredentialsAssigned(null)
-    }, [onCredentialsAssigned])
+            if (onCredentialsAssigned) {
+                onCredentialsAssigned(null, {})
+            }
+
+            // Reset state
+            setShowCredentialModal(false)
+            setMissingCredentials([])
+            setOnCredentialsAssigned(null)
+            setPreferenceScope(null)
+        },
+        [onCredentialsAssigned, preferenceScope]
+    )
 
     /**
      * Handle canceling credential assignment
      */
-    const handleCancel = useCallback((): void => {
-        // Reset state without calling onCredentialsAssigned
-        setShowCredentialModal(false)
-        setMissingCredentials([])
-        setOnCredentialsAssigned(null)
-    }, [])
+    const handleCancel = useCallback(
+        (options?: CredentialModalOptions): void => {
+            if (preferenceScope && options?.dontShowDirty) {
+                setCredentialModalDismissed(preferenceScope, !!options.dontShowAgain)
+            }
+
+            // Reset state without calling onCredentialsAssigned
+            setShowCredentialModal(false)
+            setMissingCredentials([])
+            setOnCredentialsAssigned(null)
+            setPreferenceScope(null)
+        },
+        [preferenceScope]
+    )
 
     return {
         showCredentialModal,
         missingCredentials,
         checkCredentials,
+        initialDontShowAgain,
         handleAssign,
         handleSkip,
         handleCancel

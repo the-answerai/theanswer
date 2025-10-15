@@ -38,7 +38,15 @@ const MarketplaceCanvas = () => {
     const reactFlowWrapper = useRef(null)
 
     // Credential checking hook
-    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
+    const {
+        showCredentialModal,
+        missingCredentials,
+        checkCredentials,
+        initialDontShowAgain,
+        handleAssign,
+        handleSkip,
+        handleCancel
+    } = useCredentialChecker()
 
     // ==============================|| useEffect ||============================== //
 
@@ -135,6 +143,7 @@ const MarketplaceCanvas = () => {
                 onSkip={handleSkip}
                 onCancel={handleCancel}
                 flowData={flowData ? JSON.parse(flowData) : null}
+                initialDontShowAgain={initialDontShowAgain}
             />
         </>
     )

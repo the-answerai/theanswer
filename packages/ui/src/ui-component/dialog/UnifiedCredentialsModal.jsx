@@ -19,9 +19,11 @@ import {
     Paper,
     Avatar,
     InputLabel,
-    Chip
+    Chip,
+    Checkbox,
+    FormControlLabel
 } from '@mui/material'
-import { IconPlus, IconX, IconLock } from '@tabler/icons-react'
+import { IconPlus, IconX, IconUserShield, IconShieldCheck } from '@tabler/icons-react'
 
 // project imports
 import { StyledButton } from '@/ui-component/button/StyledButton'
@@ -42,7 +44,7 @@ import { baseURL } from '@/store/constant'
 
 // ==============================|| UnifiedCredentialsModal ||============================== //
 
-const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, onError }) => {
+const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, onError, initialDontShowAgain = false }) => {
     const portalElement = document.getElementById('portal')
     const [credentialAssignments, setCredentialAssignments] = useState({})
     const [availableCredentials, setAvailableCredentials] = useState({})
@@ -52,6 +54,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const [credentialDialogProps, setCredentialDialogProps] = useState({})
     const [refreshKey, setRefreshKey] = useState(0)
     const [creatingCredentialFor, setCreatingCredentialFor] = useState(null) // Track which credential type is being created
+    const [dontShowAgain, setDontShowAgain] = useState(initialDontShowAgain)
+    const [dontShowDirty, setDontShowDirty] = useState(false)
 
     // API hooks for loading component credentials
     const getComponentCredentialApi = useApi(credentialsApi.getSpecificComponentCredential)
@@ -140,6 +144,13 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         }
     }, [show, missingCredentials, refreshKey, isQuickSetupMode]) // Added refreshKey and isQuickSetupMode to dependency array
 
+    useEffect(() => {
+        if (show) {
+            setDontShowAgain(initialDontShowAgain)
+            setDontShowDirty(false)
+        }
+    }, [show, initialDontShowAgain])
+
     const handleCredentialChange = (nodeId, credentialId) => {
         setCredentialAssignments((prev) => ({
             ...prev,
@@ -209,7 +220,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         if (onAssign) {
             setAssigningCredentials(true)
             try {
-                await onAssign(credentialAssignments)
+                await onAssign(credentialAssignments, { dontShowAgain, dontShowDirty })
             } catch (error) {
                 console.error('Error assigning credentials:', error)
                 if (onError) {
@@ -223,13 +234,13 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
     const handleSkip = () => {
         if (onSkip) {
-            onSkip()
+            onSkip({ dontShowAgain, dontShowDirty })
         }
     }
 
     const handleCancel = () => {
         if (onCancel) {
-            onCancel()
+            onCancel({ dontShowAgain, dontShowDirty })
         }
     }
 
@@ -425,7 +436,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                                     }`}
                                                     sx={{ width: 32, height: 32 }}
                                                 >
-                                                    <IconLock />
+                                                    <IconUserShield />
                                                 </Avatar>
                                                 <Box flex={1}>
                                                     <Box display='flex' alignItems='center' gap={1}>
@@ -529,7 +540,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                                         }`}
                                                         sx={{ width: 32, height: 32 }}
                                                     >
-                                                        <IconLock />
+                                                        <IconShieldCheck />
                                                     </Avatar>
                                                     <Box flex={1}>
                                                         <Box display='flex' alignItems='center' gap={1}>
@@ -626,7 +637,21 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ px: 3, pb: 3 }}>
+            <DialogActions sx={{ px: 3, pb: 3, alignItems: 'center' }}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={dontShowAgain}
+                            onChange={(event) => {
+                                setDontShowAgain(event.target.checked)
+                                setDontShowDirty(true)
+                            }}
+                            color='primary'
+                        />
+                    }
+                    label="Don't show this again"
+                    sx={{ mr: 'auto' }}
+                />
                 <Button onClick={handleSkip} color='inherit'>
                     {isQuickSetupMode ? 'Cancel' : 'Skip for now'}
                 </Button>
@@ -663,7 +688,8 @@ UnifiedCredentialsModal.propTypes = {
     onSkip: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
     flowData: PropTypes.object,
-    onError: PropTypes.func
+    onError: PropTypes.func,
+    initialDontShowAgain: PropTypes.bool
 }
 
 export default UnifiedCredentialsModal
