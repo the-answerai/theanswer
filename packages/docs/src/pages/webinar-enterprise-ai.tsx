@@ -78,28 +78,28 @@ function WebinarHero() {
 
     const heroBullets = [
         {
-            icon: '⚙️',
-            copy: '4-week enterprise rollout: multiple disconnected systems unified into one governed AI assistant.'
+            icon: '📊',
+            copy: 'The GenAI Divide revealed: Why 95% of AI projects fail to deliver ROI, and the data-backed path to join the successful 5%.'
         },
         {
-            icon: '💰',
-            copy: 'Targeting 6-figure annual savings: automation frameworks proven in live deployments.'
+            icon: '🧠',
+            copy: 'The Learning Gap exposed: Why static AI systems stall in production and how adaptive, context-aware systems succeed.'
         },
         {
-            icon: '🛡️',
-            copy: 'Security-first: SOC 2 evidence pack, SSO/SAML patterns, and data residency options baked in.'
-        },
-        {
-            icon: '🧭',
-            copy: 'Change enablement: stakeholder scripts, rollout comms, and adoption metrics ready to reuse.'
-        },
-        {
-            icon: '🚀',
-            copy: '30-day pilot guarantee: qualification checklist + risk-free governance review to get sign-off fast.'
+            icon: '👥',
+            copy: 'Shadow AI reality: 90% of employees use unsanctioned tools — turn this risk into opportunity with enterprise-grade alternatives.'
         },
         {
             icon: '🤝',
-            copy: 'Hybrid support: live AnswerAgent voice coaches plus human office hours so your team isn&apos;t alone day one.'
+            copy: 'Build vs. Buy decoded: Why external partnerships succeed at 2x the rate and how to avoid the internal "build trap".'
+        },
+        {
+            icon: '🎯',
+            copy: 'Smart deployment strategy: Target high-ROI back-office automation first — finance, procurement, HR — for fastest value.'
+        },
+        {
+            icon: '🔄',
+            copy: 'The winning formula: Adaptive AI tools + deep integration services = learning-capable systems that actually get adopted.'
         }
     ]
 
@@ -158,8 +158,8 @@ function WebinarHero() {
                         <h1 className={styles.heroHeadline}>{webinarConfig.headlines.primary}</h1>
 
                         <p className={styles.heroSubhead}>
-                            Join Brad Taylor (CEO), Adam Harris (COO), and Max Techera (CTO) as they show the exact AI orchestration system
-                            and framework they built to deploy enterprise AI agents in weeks, not months.
+                            Join Brad Taylor (CEO), Adam Harris (COO), and Max Techera (CTO) as they reveal why 95% of GenAI projects fail —
+                            and the exact framework, backed by MIT research, that the successful 5% use to cross the divide.
                         </p>
 
                         <div className={styles.heroHighlightsHeading}>What you&apos;ll see live</div>
@@ -297,7 +297,7 @@ function ValueProposition() {
                                     WebkitTextFillColor: 'transparent'
                                 }}
                             >
-                                What You&apos;ll Learn in 60 Minutes
+                                What You&apos;ll Discover in 45 Minutes
                             </h2>
                             <p
                                 style={{
@@ -307,7 +307,7 @@ function ValueProposition() {
                                     margin: '0 auto'
                                 }}
                             >
-                                No fluff, no theory. Just the proven frameworks that work.
+                                Research-backed insights on why most AI fails — and how to succeed.
                             </p>
                         </div>
                         <div
@@ -326,10 +326,11 @@ function ValueProposition() {
                                     border: '2px solid #00ffff'
                                 }}
                             >
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Live 4-Week Framework</h3>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>The 95% Failure Reality</h3>
                                 <p style={{ fontSize: '1.1rem' }}>
-                                    Watch the exact deployment process used to go from scattered systems to unified AI in just 4-6 weeks.
+                                    MIT data reveals why most GenAI projects fail to reach production. Learn the three critical gaps holding
+                                    back your AI initiatives.
                                 </p>
                             </div>
 
@@ -341,11 +342,11 @@ function ValueProposition() {
                                     border: '2px solid #00ff00'
                                 }}
                             >
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💰</div>
-                                <h3 style={{ color: '#00ff00', marginBottom: '1rem' }}>Real ROI Numbers</h3>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🧠</div>
+                                <h3 style={{ color: '#00ff00', marginBottom: '1rem' }}>The Learning Gap Solution</h3>
                                 <p style={{ fontSize: '1.1rem' }}>
-                                    100+ hours/week saved potential, dramatically faster search times, 6-figure annual savings projected.
-                                    See the framework.
+                                    Why static AI fails and how adaptive, learning-capable systems deliver the ROI you expected. See real
+                                    examples from successful deployments.
                                 </p>
                             </div>
 
@@ -357,10 +358,11 @@ function ValueProposition() {
                                     border: '2px solid #ffff00'
                                 }}
                             >
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔄</div>
-                                <h3 style={{ color: '#ffff00', marginBottom: '1rem' }}>No Vendor Lock-in</h3>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🤝</div>
+                                <h3 style={{ color: '#ffff00', marginBottom: '1rem' }}>Partner vs. Build Strategy</h3>
                                 <p style={{ fontSize: '1.1rem' }}>
-                                    Swap OpenAI ↔ Claude ↔ Gemini instantly. Keep full control of your AI stack.
+                                    Discover why external partnerships succeed at 2x the rate and how to avoid the internal build trap that
+                                    kills projects.
                                 </p>
                             </div>
                         </div>
@@ -438,10 +440,10 @@ function CustomerLogosSection() {
     return (
         <section className={styles.customerLogoSection} id='customer-proof'>
             <div className='container'>
-                <h2 className={styles.sectionTitle}>Trusted by teams shipping enterprise AI in weeks</h2>
+                <h2 className={styles.sectionTitle}>Organizations That Crossed the Divide</h2>
                 <p className={styles.sectionSubtitle}>
-                    These teams used the playbook you&apos;ll learn on Thursday to launch compliance-ready AI agents and unlock immediate
-                    ROI.
+                    These teams avoided the 95% failure rate by deploying adaptive, learning-capable AI systems with expert integration
+                    partners — achieving real ROI in weeks.
                 </p>
                 <div className={styles.customerLogoGrid}>
                     {customers.map((customer) => (
@@ -541,9 +543,10 @@ function CustomerSuccessSection() {
             id='customer-results'
         >
             <div className='container'>
-                <h2 className={styles.sectionTitle}>Real Results from Real Teams</h2>
+                <h2 className={styles.sectionTitle}>Success Stories from the 5%</h2>
                 <p className={styles.sectionSubtitle}>
-                    Proof that the 4-week deployment framework delivers measurable ROI across finance, advertising, healthcare, and telecom.
+                    See how organizations crossed the GenAI Divide with learning-capable systems and strategic partnerships — delivering
+                    measurable ROI where 95% of others failed.
                 </p>
 
                 <div className={styles.testimonialGrid}>
@@ -577,7 +580,7 @@ function CustomerSuccessSection() {
                 </div>
 
                 <p style={{ textAlign: 'center', marginTop: '3rem', fontSize: '1rem', color: 'rgba(255,255,255,0.75)' }}>
-                    💡 Thursday&apos;s session walks through these playbooks step-by-step so you can replicate them inside your org.
+                    💡 Each session reveals how these teams used adaptive AI and strategic partnerships to avoid the 95% failure rate.
                 </p>
             </div>
         </section>
@@ -593,8 +596,8 @@ function PresenterSection() {
                 <div className={styles.presenterIntro}>
                     <h2 className={styles.sectionTitle}>Meet Your Hosts</h2>
                     <p className={styles.sectionSubtitle}>
-                        Brad Taylor, Adam Harris, and Max Techera are the founding team behind AnswerAI and Last Rev, with deep experience
-                        at Google, Optimizely, and building enterprise-scale AI platforms.
+                        Brad Taylor, Adam Harris, and Max Techera combine enterprise AI deployment experience with deep technical expertise
+                        from Google and Optimizely to help organizations bridge the GenAI Divide.
                     </p>
                 </div>
 
@@ -779,9 +782,9 @@ function AgendaSection() {
             id='agenda'
         >
             <div className='container'>
-                <h2 className={styles.sectionTitle}>60-Minute Game Plan</h2>
+                <h2 className={styles.sectionTitle}>45-Minute Deep Dive</h2>
                 <p className={styles.sectionSubtitle}>
-                    We move fast — you&apos;ll leave with a week-by-week rollout timeline, governance blueprint, and next-step checklist.
+                    From research insights to real solutions — discover why most AI fails and how the successful 5% bridge the divide.
                 </p>
 
                 <div className='row'>
@@ -818,10 +821,10 @@ function FinalCTA() {
                 <div className='row'>
                     <div className='col col--10 col--offset-1'>
                         <div className={styles.finalCtaCard}>
-                            <h2 className={styles.finalCtaHeadline}>Ready to Launch an AI Win in the Next 30 Days?</h2>
+                            <h2 className={styles.finalCtaHeadline}>Ready to Cross the GenAI Divide?</h2>
                             <p className={styles.finalCtaCopy}>
-                                Save your seat for Thursday&apos;s live workshop and walk away with the exact templates, governance
-                                safeguards, and deployment timeline that's driving success for leading enterprises.
+                                Join this bi-weekly session and discover the research-backed strategies that separate the successful 5% from
+                                the failing 95%. Learn the framework to move from pilot purgatory to production AI that delivers real ROI.
                             </p>
 
                             <div
@@ -844,9 +847,9 @@ function FinalCTA() {
                             </div>
 
                             <div className={styles.finalCtaFooter}>
-                                {getLocalWebinarDateTime()} • 60 minutes + live Q&A • Bonus toolkit delivered right after the session
+                                {getLocalWebinarDateTime()} • 45 minutes + Q&A • Bi-weekly educational series
                                 <br />
-                                500+ AI leaders registered — seats refresh daily
+                                Join IT Leaders, Startup Founders, and SMB teams learning to bridge the GenAI Divide
                             </div>
                         </div>
                     </div>
@@ -960,7 +963,7 @@ function StickyCTA() {
                 <div>
                     <div style={{ fontWeight: 600 }}>Save Your Seat Now</div>
                     <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                        Live {localTime} • {seatsLeft} seats left • 60-minute playbook + toolkit
+                        Live {localTime} • {seatsLeft} seats left • 45-minute research session
                     </div>
                 </div>
                 <button type='button' className={styles.stickyCtaButton} onClick={scrollToForm}>
@@ -977,6 +980,8 @@ export default function WebinarEnterpriseAI(): JSX.Element {
         trackingService.trackPageView('/webinar-enterprise-ai', 'Enterprise AI Webinar Landing Page')
 
         // Track content engagement for different sections when they come into view
+        const trackedSections = new Set<string>()
+
         const observerOptions = {
             threshold: 0.5,
             rootMargin: '0px 0px -10% 0px'
@@ -986,7 +991,8 @@ export default function WebinarEnterpriseAI(): JSX.Element {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
                     const sectionId = entry.target.id
-                    if (sectionId) {
+                    if (sectionId && !trackedSections.has(sectionId)) {
+                        trackedSections.add(sectionId)
                         trackingService.trackContentEngagement('section', sectionId)
                     }
                 }
@@ -1005,8 +1011,8 @@ export default function WebinarEnterpriseAI(): JSX.Element {
     return (
         <div data-theme='dark'>
             <Layout
-                title='Enterprise AI Webinar - Deploy AI Agents in weeks'
-                description='Free Thursday webinar: From AI Chaos to Enterprise Success. See how leading enterprises are deploying AI in weeks vs 6+ months. Live demo of vendor-free framework.'
+                title='Bridging the GenAI Divide - Why 95% of AI Projects Fail'
+                description='Free bi-weekly webinar: Discover why 95% of GenAI projects fail to deliver ROI and the research-backed strategies the successful 5% use. MIT data + real implementation frameworks.'
                 noNavbar
             >
                 <WebinarHero />
