@@ -7,12 +7,15 @@ on:
     push:
         branches: [main, staging, production]
     pull_request:
-        branches: [main, staging, production]
+        types: [opened, synchronize, reopened]
+        branches:
+            - '**'
     workflow_dispatch:
 
 jobs:
     e2e:
         name: Run E2E Tests
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
         timeout-minutes: 30
         env:
@@ -75,6 +78,11 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Install PostgreSQL client
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-client
+
             - name: Setup test database
               env:
                   PGPASSWORD: test_password
@@ -87,6 +95,13 @@ jobs:
 
                   # Enable pgvector (test_flowise already created by service)
                   psql -h localhost -U test_user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+                  # Ensure legacy role and database expected by test configuration
+                  psql -h localhost -U test_user -d postgres -tc "SELECT 1 FROM pg_roles WHERE rolname = 'root';" | grep -q 1 || \
+                    psql -h localhost -U test_user -d postgres -c "CREATE ROLE root LOGIN PASSWORD 'test_password';"
+
+                  psql -h localhost -U test_user -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'test_user';" | grep -q 1 || \
+                    psql -h localhost -U test_user -d postgres -c "CREATE DATABASE test_user OWNER root;"
 
                   # Verify
                   psql -h localhost -U test_user -d test_flowise -c "SELECT version();"
