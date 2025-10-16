@@ -30,7 +30,9 @@ export class TrackingService {
 
     // Initialize all tracking services
     private initialize(): void {
-        if (this.initialized) return
+        if (this.initialized) {
+            return
+        }
 
         this.initializeGoogleAnalytics()
         this.initializeLinkedInPixel()
@@ -70,7 +72,7 @@ export class TrackingService {
                 }
             })
         } catch (error) {
-            console.error('Google Analytics initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -111,7 +113,7 @@ export class TrackingService {
                     ;(window.lintrk.q = window.lintrk.q || []).push(args)
                 }
         } catch (error) {
-            console.error('LinkedIn Pixel initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -122,17 +124,22 @@ export class TrackingService {
 
         try {
             // Facebook Pixel Code - Official stub implementation
-            window.fbq =
-                window.fbq ||
-                function (...args: any[]) {
-                    ;(window.fbq.q = window.fbq.q || []).push(args)
+            if (!window.fbq) {
+                window.fbq = function (...args: any[]) {
+                    if (window.fbq.callMethod) {
+                        window.fbq.callMethod.apply(window.fbq, args)
+                    } else {
+                        window.fbq.queue.push(args)
+                    }
                 }
-            window._fbq = window.fbq
-            window.fbq.loaded = true
-            window.fbq.version = '2.0'
-            window.fbq.q = []
+                window._fbq = window.fbq
+                window.fbq.push = window.fbq
+                window.fbq.loaded = true
+                window.fbq.version = '2.0'
+                window.fbq.queue = []
+            }
 
-            // Check if script already exists
+            // Load script if not already present
             const existingScript = document.querySelector('script[src*="fbevents.js"]')
             if (!existingScript) {
                 const facebookScript = document.createElement('script')
@@ -144,7 +151,7 @@ export class TrackingService {
             window.fbq('init', facebookPixel)
             window.fbq('track', 'PageView')
         } catch (error) {
-            console.error('Facebook Pixel initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -204,7 +211,7 @@ export class TrackingService {
                     predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
                 })
             } catch (error) {
-                console.error('Facebook Pixel tracking failed:', error)
+                // Silent fail
             }
         }
 
@@ -215,7 +222,7 @@ export class TrackingService {
                     conversion_id: 'webinar_registration'
                 })
             } catch (error) {
-                console.error('LinkedIn tracking failed:', error)
+                // Silent fail
             }
         }
     }
@@ -268,7 +275,7 @@ export class TrackingService {
                     })
                 }
             } catch (error) {
-                console.error('Facebook Pixel form tracking failed:', error)
+                // Silent fail
             }
         }
     }
