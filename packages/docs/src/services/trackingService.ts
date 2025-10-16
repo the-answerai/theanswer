@@ -122,15 +122,15 @@ export class TrackingService {
 
         try {
             // Facebook Pixel Code - Official stub implementation
-            window.fbq =
-                window.fbq ||
-                function (...args: any[]) {
+            if (!window.fbq) {
+                window.fbq = function (...args: any[]) {
                     ;(window.fbq.q = window.fbq.q || []).push(args)
                 }
-            window._fbq = window.fbq
-            window.fbq.loaded = true
-            window.fbq.version = '2.0'
-            window.fbq.q = []
+                window._fbq = window.fbq
+                window.fbq.loaded = true
+                window.fbq.version = '2.0'
+                window.fbq.q = window.fbq.q || []
+            }
 
             // Check if script already exists
             const existingScript = document.querySelector('script[src*="fbevents.js"]')
