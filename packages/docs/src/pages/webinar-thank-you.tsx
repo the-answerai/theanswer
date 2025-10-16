@@ -827,7 +827,14 @@ function FinalAssurance() {
 export default function WebinarThankYou(): JSX.Element {
     // Initialize page tracking
     useEffect(() => {
-        trackingService.trackPageView('/webinar-thank-you', 'Webinar Registration Confirmed')
+        // Track ViewContent for Facebook Pixel (PageView fires on init)
+        if (window.fbq) {
+            window.fbq('track', 'ViewContent', {
+                content_name: 'Webinar Registration Confirmed',
+                content_category: 'webinar',
+                content_type: 'product'
+            })
+        }
 
         // Track successful conversion landing
         trackingService.trackEvent({

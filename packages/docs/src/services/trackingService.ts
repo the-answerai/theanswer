@@ -142,7 +142,7 @@ export class TrackingService {
             }
 
             window.fbq('init', facebookPixel)
-            // Don't fire PageView here - let explicit trackPageView() calls handle it
+            window.fbq('track', 'PageView')
         } catch (error) {
             console.error('Facebook Pixel initialization failed:', error)
         }

@@ -12,10 +12,10 @@ import styles from './index.module.css'
 
 const RiskAssurances = () => (
     <ul className={styles.riskList}>
-        <li>✅ 30-day replay access + slides</li>
-        <li>✅ Zero sales pitch — just frameworks and dashboards</li>
+        <li>✅ 30-day replay access</li>
+        <li>✅ Zero sales pitch — just research insights and frameworks</li>
         <li>✅ Privacy-first: your email stays with us (no spam)</li>
-        <li>✅ Can&apos;t attend live? Register anyway and we&apos;ll deliver the replay + toolkit automatically</li>
+        <li>✅ Can&apos;t attend live? Register anyway for the replay</li>
     </ul>
 )
 
@@ -152,7 +152,7 @@ function WebinarHero() {
                             <span role='img' aria-hidden='true'>
                                 🔴
                             </span>
-                            <span>Free Live Workshop • {localDateTime}</span>
+                            <span>Free Educational Session • {localDateTime}</span>
                         </div>
 
                         <h1 className={styles.heroHeadline}>{webinarConfig.headlines.primary}</h1>
@@ -202,7 +202,7 @@ function WebinarHero() {
 
                         <div className={styles.heroFormHeading}>
                             <h3>Save Your Seat — Free</h3>
-                            <p>Live demo + 30-day replay • No sales pitch, just the playbooks</p>
+                            <p>45-min research session + 30-day replay • No sales pitch</p>
                         </div>
 
                         <WebinarRegistrationForm />
@@ -243,7 +243,7 @@ function HeroProofSection() {
                     {hasPress && (
                         <div>
                             <p id='hero-proof-heading' className={styles.heroProofLabel}>
-                                Featured by leading enterprise innovators
+                                Research-backed insights from real enterprise AI data
                             </p>
                             <div className={styles.logoStrip}>
                                 {pressFeatures.map((feature) => (
@@ -463,48 +463,53 @@ function CustomerLogosSection() {
 }
 
 function ValueStackSection() {
-    const bonuses = [
+    const insights = [
         {
-            label: 'Live 60-minute enterprise AI deployment training',
-            value: '$497 value'
+            label: 'MIT Research Insights: The data behind why 95% of GenAI projects fail to deliver ROI',
+            icon: '📊'
         },
         {
-            label: '4-week implementation worksheet',
-            value: '$197 value'
+            label: 'The Learning Gap Framework: Why static AI stalls and how adaptive systems succeed',
+            icon: '🧠'
         },
         {
-            label: 'Enterprise AI readiness checklist',
-            value: '$97 value'
+            label: 'Shadow AI Strategy: Turn the 90% unsanctioned use problem into your competitive advantage',
+            icon: '👥'
         },
         {
-            label: 'ROI calculator template',
-            value: '$147 value'
+            label: 'Build vs Buy Decision Model: When partnerships succeed at 2x the rate of internal builds',
+            icon: '🤝'
         },
         {
-            label: 'Security & compliance whitepaper',
-            value: '$97 value'
+            label: 'Live Q&A with Founders: Get your specific AI challenges addressed by our CEO, COO, and CTO',
+            icon: '💬'
+        },
+        {
+            label: 'Optional Follow-up: Opportunity to schedule 1:1 strategy session with Brad Taylor (CEO)',
+            icon: '🎯'
         }
     ]
 
     return (
         <section className={styles.valueStackSection} id='value-stack'>
             <div className='container'>
-                <h2 className={styles.sectionTitle}>What You Get When You Register Today</h2>
+                <h2 className={styles.sectionTitle}>What You Get in This Free Session</h2>
                 <p className={styles.sectionSubtitle}>
-                    Everything you need to execute a board-ready AI project in the next 90 days — yours free just for attending live.
+                    45 minutes of research-backed insights and frameworks to help you avoid the 95% failure rate — no strings attached.
                 </p>
                 <div className={styles.valueStackGrid}>
-                    {bonuses.map((bonus) => (
-                        <div key={bonus.label} className={styles.valueCard}>
+                    {insights.map((insight) => (
+                        <div key={insight.label} className={styles.valueCard}>
                             <div style={{ fontSize: '1.5rem' }} role='img' aria-hidden='true'>
-                                ✅
+                                {insight.icon}
                             </div>
-                            <strong>{bonus.label}</strong>
-                            <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.95rem' }}>{bonus.value}</div>
+                            <strong>{insight.label}</strong>
                         </div>
                     ))}
                 </div>
-                <div className={styles.valueTotal}>Total value: $1,035 — access it all free on Thursday.</div>
+                <div className={styles.valueTotal}>
+                    Free educational session — no pitch, no obligation. Just the frameworks you need to evaluate your AI strategy.
+                </div>
             </div>
         </section>
     )
@@ -516,8 +521,11 @@ function MidPageCTA() {
             <div className='container'>
                 <div className={styles.midCtaCard}>
                     <div className={styles.midCtaCopy}>
-                        <h2>Need the playbook before Thursday?</h2>
-                        <p>Drop your email to hold your seat and get the Enterprise AI readiness checklist + ROI worksheet immediately.</p>
+                        <h2>Ready to Understand Why Your AI Initiatives Are Stalling?</h2>
+                        <p>
+                            Register now to save your seat. Learn the MIT-backed framework that explains the 95% failure rate — and how to
+                            avoid it.
+                        </p>
                     </div>
                     <div className={styles.midCtaForm}>
                         <WebinarRegistrationForm />
@@ -682,7 +690,7 @@ function TestimonialsCarousel() {
     return (
         <section className={styles.carouselSection} id='testimonials'>
             <div className='container'>
-                <h2 className={styles.sectionTitle}>What Leaders Say About the Workshop</h2>
+                <h2 className={styles.sectionTitle}>What Leaders Say About the Framework</h2>
                 <div className={styles.carouselCard}>
                     <p className={styles.carouselQuote}>{active.quote}</p>
                     <p className={styles.carouselAuthor}>
@@ -717,9 +725,10 @@ function ToolkitPreviewSection() {
     return (
         <section className={styles.toolkitSection} id='toolkit'>
             <div className='container'>
-                <h2 className={styles.sectionTitle}>Peek Inside the Implementation Toolkit</h2>
+                <h2 className={styles.sectionTitle}>Peek Inside the Research Toolkit</h2>
                 <p className={styles.sectionSubtitle}>
-                    Download everything the moment you register so you can execute the 30/60/90-day plan without guesswork.
+                    Download everything the moment you register so you can evaluate your AI strategy with the same frameworks the successful
+                    5% use.
                 </p>
                 <div className={styles.toolkitGrid}>
                     {toolkit.map((item) => (
@@ -747,9 +756,10 @@ function RoadmapSection() {
     return (
         <section className={styles.roadmapSection} id='roadmap'>
             <div className='container'>
-                <h2 className={styles.sectionTitle}>Your First 30 Days, Mapped Out</h2>
+                <h2 className={styles.sectionTitle}>The 3 Barriers to AI Success (and How to Overcome Them)</h2>
                 <p className={styles.sectionSubtitle}>
-                    Walk away with a step-by-step execution plan so your team knows exactly what happens after the webinar.
+                    Understand exactly what&apos;s blocking your AI initiatives and the proven framework to move from pilot purgatory to
+                    production success.
                 </p>
                 <div className={styles.roadmapGrid}>
                     {roadmap.map((step) => (
@@ -871,33 +881,34 @@ function SimpleFAQ() {
             <div className='container'>
                 <div className='row'>
                     <div className='col col--10 col--offset-1'>
-                        <h2 className={styles.sectionTitle}>Quick Answers Before You Register</h2>
+                        <h2 className={styles.sectionTitle}>Common Questions About the Session</h2>
                         <p className={styles.sectionSubtitle}>
-                            Bring your questions — we handle the strategy, compliance, and execution details live.
+                            This is an educational research session, not a sales pitch. Here&apos;s what to expect.
                         </p>
 
                         <div className={styles.faqGrid}>
                             <div className={styles.faqCard}>
-                                <h4>Is this a sales pitch?</h4>
+                                <h4>Is this a sales pitch or educational content?</h4>
                                 <p style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                                    Nope. It&apos;s a live teardown of the frameworks and dashboards that drive our enterprise deployments.
-                                    You&apos;ll see product, but there&apos;s no sales deck.
+                                    This is a research-based educational session using MIT data and real implementation examples. We&apos;ll
+                                    share how AnswerAgent AI and Last Rev help organizations, but the focus is on teaching the framework —
+                                    whether you work with us or not.
                                 </p>
                             </div>
 
                             <div className={styles.faqCard}>
                                 <h4>Will it be recorded?</h4>
                                 <p style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                                    Yes — register and you&apos;ll get 30-day replay access plus the slide deck, worksheets, and toolkit
-                                    downloads.
+                                    Yes — register and you&apos;ll get 30-day replay access so you can review the research insights and
+                                    framework at your own pace.
                                 </p>
                             </div>
 
                             <div className={styles.faqCard}>
                                 <h4>What if I can&apos;t attend live?</h4>
                                 <p style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                                    Secure your seat anyway and catch the replay. We&apos;ll also send the templates and instructions so you
-                                    can execute at your pace.
+                                    Register anyway — you&apos;ll receive the replay link. Live attendees get priority for Q&A and CEO
+                                    meeting scheduling, but the content is valuable either way.
                                 </p>
                             </div>
                         </div>
@@ -977,11 +988,16 @@ function StickyCTA() {
 export default function WebinarEnterpriseAI(): JSX.Element {
     // Initialize page tracking
     useEffect(() => {
-        trackingService.trackPageView('/webinar-enterprise-ai', 'Enterprise AI Webinar Landing Page')
+        // Track ViewContent for Facebook Pixel (PageView fires on init)
+        if (window.fbq) {
+            window.fbq('track', 'ViewContent', {
+                content_name: 'Enterprise AI Webinar Landing Page',
+                content_category: 'webinar',
+                content_type: 'product'
+            })
+        }
 
         // Track content engagement for different sections when they come into view
-        const trackedSections = new Set<string>()
-
         const observerOptions = {
             threshold: 0.5,
             rootMargin: '0px 0px -10% 0px'
@@ -991,8 +1007,7 @@ export default function WebinarEnterpriseAI(): JSX.Element {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
                     const sectionId = entry.target.id
-                    if (sectionId && !trackedSections.has(sectionId)) {
-                        trackedSections.add(sectionId)
+                    if (sectionId) {
                         trackingService.trackContentEngagement('section', sectionId)
                     }
                 }
