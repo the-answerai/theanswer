@@ -257,7 +257,8 @@ export class TrackingService {
         if (window.fbq) {
             try {
                 if (action === 'start') {
-                    window.fbq('track', 'Lead', {
+                    // Track form engagement with custom event instead of Lead
+                    window.fbq('trackCustom', 'FormStarted', {
                         content_name: formName,
                         content_category: 'webinar'
                     })
