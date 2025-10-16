@@ -358,15 +358,12 @@ const getChatflowByApiKey = async (apiKeyId: string, keyonly?: unknown): Promise
 }
 
 /**
- * Get chatflow by ID with flexible data source
+ * Get chatflow by ID from database
  * @param chatflowId - The chatflow ID to retrieve
  * @param user - User context for permissions and ownership checks
- * @param useDraft - Data source selection:
- *   - true: Include S3 draft versions (for editor UI, flowData editing)
- *   - false: Database only (for updates, reads, fresh metadata)
- * @returns Promise<ChatFlow> - The chatflow object
+ * @returns Promise<ChatFlow> - The chatflow object from database
  */
-const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true): Promise<any> => {
+const getChatflowById = async (chatflowId: string, user?: IUser): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         const dbResponse = await appServer.AppDataSource.getRepository(ChatFlow)
@@ -394,22 +391,6 @@ const getChatflowById = async (chatflowId: string, user?: IUser, useDraft = true
 
             if (!(isUsersChatflow || isChatflowPublic || isUserOrgAdmin || (hasChatflowOrgVisibility && isUserInSameOrg))) {
                 throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized to access this chatflow`)
-            }
-        }
-
-        // Try to get the current version from S3 storage
-        if (user && useDraft && (dbResponse.userId === user.id || user.permissions?.includes('org:manage'))) {
-            try {
-                const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
-                if (currentRecord) {
-                    return {
-                        ...currentRecord,
-                        isUserDefault: user.defaultChatflowId === chatflowId
-                    }
-                }
-            } catch (error) {
-                // If S3 version fails, fall back to database version
-                logger.error(`Error getting S3 version for chatflow ${chatflowId}: ${getErrorMessage(error)}`)
             }
         }
 
@@ -1151,19 +1132,12 @@ const getChatflowForPrediction = async (chatflowId: string): Promise<any> => {
         const appServer = getRunningExpressApp()
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
 
-        // Get the chatflow
+        // Get the chatflow from database
         const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
         if (!chatflow) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
         }
 
-        // Get current version from S3 for production use
-        const currentRecord = await chatflowStorageService.getChatflowVersion(chatflowId)
-        if (currentRecord) {
-            return currentRecord
-        }
-
-        // Fallback to database version if no version in S3
         return chatflow
     } catch (error) {
         throw new InternalFlowiseError(
