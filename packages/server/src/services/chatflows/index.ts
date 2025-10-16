@@ -1110,14 +1110,22 @@ const rollbackChatflowToVersion = async (chatflowId: string, version: number, us
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
         }
 
-        // Rollback to specified version (this creates a new version with the rollback content)
-        await chatflowStorageService.rollbackToVersion(chatflowId, version, user)
+        // Get the version content from S3
+        const versionContent = await chatflowStorageService.getChatflowVersion(chatflowId, version)
+        if (!versionContent) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Version ${version} not found`)
+        }
 
-        // Update database with the new version number from rollback
+        // Update database with the rolled-back flowData and increment version
         const newVersion = (chatflow.currentVersion || 1) + 1
+        chatflow.flowData = versionContent.flowData
         chatflow.currentVersion = newVersion
 
         const dbResponse = await chatFlowRepository.save(chatflow)
+
+        // Save to S3 as new version (this creates a new version with the rollback content)
+        await chatflowStorageService.rollbackToVersion(chatflowId, version, user)
+
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
