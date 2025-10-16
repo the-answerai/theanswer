@@ -143,12 +143,17 @@ export class TrackingService {
             // Facebook Pixel Code - Official stub implementation
             if (!window.fbq) {
                 window.fbq = function (...args: any[]) {
-                    ;(window.fbq.q = window.fbq.q || []).push(args)
+                    if (window.fbq.callMethod) {
+                        window.fbq.callMethod.apply(window.fbq, args)
+                    } else {
+                        window.fbq.queue.push(args)
+                    }
                 }
                 window._fbq = window.fbq
+                window.fbq.push = window.fbq
                 window.fbq.loaded = true
                 window.fbq.version = '2.0'
-                window.fbq.q = window.fbq.q || []
+                window.fbq.queue = []
             }
 
             // Check if script already exists
@@ -177,11 +182,11 @@ export class TrackingService {
 
             window.fbq('init', facebookPixel)
             console.log('[Tracking] Facebook Pixel: Called init with ID:', facebookPixel)
-            console.log('[Tracking] Facebook Pixel: Queue state:', window.fbq.q)
+            console.log('[Tracking] Facebook Pixel: Queue state:', window.fbq.queue)
 
             window.fbq('track', 'PageView')
             console.log('[Tracking] Facebook Pixel: Called track PageView')
-            console.log('[Tracking] Facebook Pixel: Queue after track:', window.fbq.q)
+            console.log('[Tracking] Facebook Pixel: Queue after track:', window.fbq.queue)
             console.log('[Tracking] Facebook Pixel initialized successfully')
 
             // Check if script is in DOM after a short delay
