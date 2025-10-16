@@ -154,18 +154,44 @@ export class TrackingService {
             // Check if script already exists
             const existingScript = document.querySelector('script[src*="fbevents.js"]')
             if (!existingScript) {
+                console.log('[Tracking] Facebook Pixel: Adding script tag to DOM')
                 const facebookScript = document.createElement('script')
                 facebookScript.async = true
                 facebookScript.src = 'https://connect.facebook.net/en_US/fbevents.js'
+
+                // Add load handler
+                facebookScript.onload = () => {
+                    console.log('[Tracking] Facebook Pixel: Script loaded successfully')
+                }
+
+                // Add error handler
+                facebookScript.onerror = (error) => {
+                    console.error('[Tracking] Facebook Pixel: Script failed to load', error)
+                }
+
                 document.head.appendChild(facebookScript)
+                console.log('[Tracking] Facebook Pixel: Script tag appended to head')
+            } else {
+                console.log('[Tracking] Facebook Pixel: Script already exists in DOM')
             }
 
             window.fbq('init', facebookPixel)
             console.log('[Tracking] Facebook Pixel: Called init with ID:', facebookPixel)
+            console.log('[Tracking] Facebook Pixel: Queue state:', window.fbq.q)
 
             window.fbq('track', 'PageView')
             console.log('[Tracking] Facebook Pixel: Called track PageView')
+            console.log('[Tracking] Facebook Pixel: Queue after track:', window.fbq.q)
             console.log('[Tracking] Facebook Pixel initialized successfully')
+
+            // Check if script is in DOM after a short delay
+            setTimeout(() => {
+                const scriptInDom = document.querySelector('script[src*="fbevents.js"]')
+                console.log('[Tracking] Facebook Pixel: Script in DOM check:', scriptInDom ? 'Found' : 'Not found')
+                if (scriptInDom) {
+                    console.log('[Tracking] Facebook Pixel: Script src:', scriptInDom.getAttribute('src'))
+                }
+            }, 1000)
         } catch (error) {
             console.error('[Tracking] Facebook Pixel initialization failed:', error)
         }
