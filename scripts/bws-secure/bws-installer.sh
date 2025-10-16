@@ -7,6 +7,13 @@
 DEFAULT_BWS_VERSION="0.5.0"
 BWS_VERSION="${BWS_VERSION:-$DEFAULT_BWS_VERSION}"
 
+# Cross-platform temp base and cleanup trap
+TMP_BASE="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"
+cleanup() {
+  [ -n "$tmp_dir" ] && rm -rf "$tmp_dir" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
 main() {
   case "$1" in
   -u | --uninstall)
@@ -90,7 +97,7 @@ extract() {
 download_bws() {
   bws_url="https://github.com/bitwarden/sdk/releases/download/bws-v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
   echo "Downloading bws from: $bws_url"
-  tmp_dir="$(mktemp -d)"
+  tmp_dir="$(mktemp -d "$TMP_BASE/bws-secure.XXXXXXXXXX")"
   downloader "$bws_url" "$tmp_dir/bws.zip"
 }
 
