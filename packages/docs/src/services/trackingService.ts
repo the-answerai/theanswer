@@ -30,20 +30,29 @@ export class TrackingService {
 
     // Initialize all tracking services
     private initialize(): void {
-        if (this.initialized) return
+        if (this.initialized) {
+            console.log('[Tracking] Already initialized, skipping')
+            return
+        }
 
+        console.log('[Tracking] Initializing tracking services...')
         this.initializeGoogleAnalytics()
         this.initializeLinkedInPixel()
         this.initializeFacebookPixel()
 
         this.initialized = true
+        console.log('[Tracking] All tracking services initialized')
     }
 
     // Google Analytics 4 setup
     private initializeGoogleAnalytics(): void {
         const gaId = marketingConfig.tracking.googleAnalyticsId
-        if (!gaId) return
+        if (!gaId) {
+            console.log('[Tracking] Google Analytics ID not configured, skipping')
+            return
+        }
 
+        console.log('[Tracking] Initializing Google Analytics:', gaId)
         try {
             // Load gtag script if not already present
             const existingGtag = document.querySelector(`script[src*="googletagmanager.com/gtag/js"]`)
@@ -69,16 +78,21 @@ export class TrackingService {
                     custom_parameter_2: 'company_size'
                 }
             })
+            console.log('[Tracking] Google Analytics initialized successfully')
         } catch (error) {
-            console.error('Google Analytics initialization failed:', error)
+            console.error('[Tracking] Google Analytics initialization failed:', error)
         }
     }
 
     // LinkedIn Insight Tag setup
     private initializeLinkedInPixel(): void {
         const linkedInPixel = marketingConfig.tracking.linkedInPixel
-        if (!linkedInPixel) return
+        if (!linkedInPixel) {
+            console.log('[Tracking] LinkedIn Pixel ID not configured, skipping')
+            return
+        }
 
+        console.log('[Tracking] Initializing LinkedIn Pixel:', linkedInPixel)
         try {
             // Load LinkedIn Insight Tag if not already present
             const existingLinkedInConfig = document.querySelector('script[data-linkedin-config]')
@@ -110,16 +124,21 @@ export class TrackingService {
                 function (...args: any[]) {
                     ;(window.lintrk.q = window.lintrk.q || []).push(args)
                 }
+            console.log('[Tracking] LinkedIn Pixel initialized successfully')
         } catch (error) {
-            console.error('LinkedIn Pixel initialization failed:', error)
+            console.error('[Tracking] LinkedIn Pixel initialization failed:', error)
         }
     }
 
     // Facebook Pixel setup
     private initializeFacebookPixel(): void {
         const facebookPixel = marketingConfig.tracking.facebookPixel
-        if (!facebookPixel) return
+        if (!facebookPixel) {
+            console.log('[Tracking] Facebook Pixel ID not configured, skipping')
+            return
+        }
 
+        console.log('[Tracking] Initializing Facebook Pixel:', facebookPixel)
         try {
             // Facebook Pixel Code - Official stub implementation
             if (!window.fbq) {
@@ -142,9 +161,13 @@ export class TrackingService {
             }
 
             window.fbq('init', facebookPixel)
+            console.log('[Tracking] Facebook Pixel: Called init with ID:', facebookPixel)
+
             window.fbq('track', 'PageView')
+            console.log('[Tracking] Facebook Pixel: Called track PageView')
+            console.log('[Tracking] Facebook Pixel initialized successfully')
         } catch (error) {
-            console.error('Facebook Pixel initialization failed:', error)
+            console.error('[Tracking] Facebook Pixel initialization failed:', error)
         }
     }
 
@@ -181,6 +204,8 @@ export class TrackingService {
 
     // Track webinar registration conversion
     trackWebinarRegistration(data: ConversionData): void {
+        console.log('[Tracking] Webinar registration:', data)
+
         // Google Analytics 4 event tracking
         if (window.gtag) {
             window.gtag('event', 'webinar_registration', {
@@ -203,8 +228,9 @@ export class TrackingService {
                     status: 'confirmed',
                     predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
                 })
+                console.log('[Tracking] Facebook Pixel: CompleteRegistration tracked')
             } catch (error) {
-                console.error('Facebook Pixel tracking failed:', error)
+                console.error('[Tracking] Facebook Pixel tracking failed:', error)
             }
         }
 
@@ -222,6 +248,8 @@ export class TrackingService {
 
     // Track page views
     trackPageView(pagePath: string, pageTitle?: string): void {
+        console.log('[Tracking] Page view:', pagePath, pageTitle)
+
         if (window.gtag) {
             window.gtag('event', 'page_view', {
                 page_location: window.location.href,
@@ -232,6 +260,7 @@ export class TrackingService {
 
         if (window.fbq) {
             window.fbq('track', 'PageView')
+            console.log('[Tracking] Facebook Pixel: PageView tracked via trackPageView()')
 
             // Track ViewContent for webinar pages
             if (pagePath.includes('webinar')) {
@@ -240,12 +269,15 @@ export class TrackingService {
                     content_category: 'webinar',
                     content_type: 'product'
                 })
+                console.log('[Tracking] Facebook Pixel: ViewContent tracked for webinar page')
             }
         }
     }
 
     // Track form interactions
     trackFormInteraction(action: 'start' | 'complete' | 'abandon', formName: string): void {
+        console.log('[Tracking] Form interaction:', action, formName)
+
         this.trackEvent({
             event: `form_${action}`,
             eventCategory: 'form_interaction',
@@ -262,13 +294,15 @@ export class TrackingService {
                         content_name: formName,
                         content_category: 'webinar'
                     })
+                    console.log('[Tracking] Facebook Pixel: FormStarted custom event tracked')
                 } else if (action === 'abandon') {
                     window.fbq('trackCustom', 'FormAbandonment', {
                         content_name: formName
                     })
+                    console.log('[Tracking] Facebook Pixel: FormAbandonment custom event tracked')
                 }
             } catch (error) {
-                console.error('Facebook Pixel form tracking failed:', error)
+                console.error('[Tracking] Facebook Pixel form tracking failed:', error)
             }
         }
     }
