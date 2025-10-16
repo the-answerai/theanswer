@@ -24,7 +24,9 @@ cleanup() {
   [ -n "$TMP_SCRIPT" ] && rm -f "$TMP_SCRIPT" 2>/dev/null || true
   [ -n "$TMP_FILE" ] && rm -f "$TMP_FILE" 2>/dev/null || true
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
 
 # Helper function to check and initialize git submodules if needed
 check_git_submodules() {
