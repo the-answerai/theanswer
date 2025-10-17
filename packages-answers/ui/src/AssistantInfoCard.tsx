@@ -7,8 +7,8 @@ import {
     Edit as EditIcon,
     ExpandMore as ExpandMoreIcon,
     ContentCopy as ContentCopyIcon,
-    WarningAmber as WarningAmberIcon,
-    CheckCircle as CheckCircleIcon
+    LockOpen as LockOpenIcon,
+    Lock as LockIcon
 } from '@mui/icons-material'
 import { styled } from '@mui/system'
 import { useSelector } from 'react-redux'
@@ -342,7 +342,7 @@ const AssistantInfoCard = ({
                                         }
                                     }}
                                 >
-                                    {needsSetup ? <WarningAmberIcon /> : <CheckCircleIcon />}
+                                    {needsSetup ? <LockOpenIcon /> : <LockIcon />}
                                 </WhiteIconButton>
                             </Tooltip>
                         )}
