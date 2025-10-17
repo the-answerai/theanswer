@@ -1,9 +1,18 @@
 import { Command, Flags } from '@oclif/core'
 import path from 'path'
 import dotenv from 'dotenv'
+import fs from 'fs'
 import logger from '../utils/logger'
 
+// Load main .env file
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env'), override: true })
+
+// Load .env.test file if it exists (for E2E testing)
+const testEnvPath = path.join(__dirname, '..', '..', '..', '..', 'apps', 'web', '.env.test')
+if (fs.existsSync(testEnvPath)) {
+    console.log('[base] Loading test environment from apps/web/.env.test')
+    dotenv.config({ path: testEnvPath, override: true })
+}
 
 enum EXIT_CODE {
     SUCCESS = 0,
@@ -237,6 +246,63 @@ export abstract class BaseCommand extends Command {
             } catch (error) {
                 console.error('Error parsing AAI_DEFAULT_POSTGRES_VECTORSTORE_SECRET:', (error as Error).message)
             }
+        }
+
+        // 🔒 SECURITY: Apply test_ prefix to AAI PostgreSQL variables in test mode
+        // This ensures AAI nodes (VectorStore, RecordManager, AgentMemory) also use test databases
+        // and prevents them from accidentally writing to prod/staging/local databases during tests
+        if (process.env.NODE_ENV === 'test') {
+            const ensureTestPrefix = (value: string | undefined, defaultName: string): string => {
+                const effectiveValue = value?.trim() || defaultName
+                if (effectiveValue.startsWith('test_') || effectiveValue.endsWith('_test')) {
+                    return effectiveValue
+                }
+                return `test_${effectiveValue}`
+            }
+
+            // Apply test_ prefix to RecordManager variables
+            if (process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER,
+                    'user'
+                )
+            }
+
+            // Apply test_ prefix to AgentMemory variables
+            if (process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER,
+                    'user'
+                )
+            }
+
+            // Apply test_ prefix to VectorStore variables
+            if (process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER,
+                    'user'
+                )
+            }
+
+            console.log('🔒 TEST MODE: Applied test_ prefix to AAI PostgreSQL variables')
         }
 
         // Set AAI PostgreSQL table configuration defaults if not already set

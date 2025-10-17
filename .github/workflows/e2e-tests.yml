@@ -1,0 +1,251 @@
+name: E2E Tests
+
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: [main, staging, production]
+    pull_request:
+        types: [opened, synchronize, reopened]
+        branches:
+            - '**'
+    workflow_dispatch:
+
+jobs:
+    e2e:
+        name: Run E2E Tests
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+        timeout-minutes: 45 # Increased for safety
+        env:
+            # BWS Integration
+            BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+            BWS_PROJECT: theanswer-ai
+            BWS_ENV: local
+
+            # Test Mode
+            NODE_ENV: test
+            CI: true
+
+            # Database credentials (hardcoded for CI)
+            # DataSource.ts auto-prefixes to test_user @ test_flowise when NODE_ENV=test
+            DATABASE_TYPE: postgres
+            DATABASE_HOST: localhost
+            DATABASE_PORT: 5432
+            DATABASE_NAME: flowise
+            DATABASE_USER: user
+            DATABASE_PASSWORD: test_password
+
+            # Prisma DATABASE_URL (must use test_ prefix explicitly)
+            # DataSource.ts auto-prefixes DATABASE_NAME/USER, but Prisma needs explicit URL
+            DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web
+
+            # Auth0 (non-sensitive)
+            AUTH0_ISSUER_BASE_URL: https://answer-ai.us.auth0.com
+            AUTH0_BASE_URL: http://localhost:3000
+
+            # Test Users (non-sensitive)
+            TEST_USER_ENTERPRISE_ADMIN_EMAIL: alpha+enterprise-admin@theanswer.ai
+            TEST_USER_ENTERPRISE_MEMBER_EMAIL: alpha+enterprise-member@theanswer.ai
+            TEST_USER_ENTERPRISE_BUILDER_EMAIL: alpha+enterprise-builder@theanswer.ai
+            TEST_ENTERPRISE_AUTH0_ORG_ID: org_unQ8OLmTNsxVTJCT
+            TEST_ENTERPRISE_ORG_NAME: local-dev
+
+            # Service URLs
+            API_URL: http://localhost:4000
+            BASE_URL: http://localhost:3000
+
+            # Redis
+            REDIS_HOST: localhost
+            REDIS_PORT: 6379
+
+            # Storage & Testing
+            STORAGE_TYPE: local
+            ENABLE_E2E_ENDPOINTS: true
+            BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
+
+            # Test API Keys (fake)
+            TEST_OPENAI_API_KEY: sk-test-openai-key-for-e2e
+            TEST_EXASEARCH_API_KEY: test-exa-search-key-for-e2e
+
+        services:
+            postgres:
+                image: pgvector/pgvector:pg16
+                env:
+                    # Base credentials - matches BWS defaults
+                    # The workflow will create both base and test-prefixed users/databases
+                    POSTGRES_USER: user
+                    POSTGRES_PASSWORD: test_password
+                    POSTGRES_DB: postgres
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+            redis:
+                image: redis:latest
+                options: >-
+                    --health-cmd "redis-cli ping"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 6379:6379
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 9
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Install PostgreSQL client
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-client
+
+            - name: Setup test database
+              run: |
+                  # Wait for PostgreSQL to be ready
+                  until pg_isready -h localhost -p 5432 -U user; do
+                    echo "Waiting for PostgreSQL..."
+                    sleep 2
+                  done
+
+                  # Create test database and user
+                  # DataSource.ts and base.ts apply test_ prefix automatically when NODE_ENV=test
+                  # Prisma needs DATABASE_URL with test_ prefix already applied (configured in env vars)
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE DATABASE test_flowise;"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE USER test_user WITH PASSWORD 'test_password';"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_flowise TO test_user;"
+
+                  # Enable pgvector extension
+                  PGPASSWORD=test_password psql -h localhost -U user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+                  # Grant schema permissions
+                  PGPASSWORD=test_password psql -h localhost -U user -d test_flowise -c "GRANT ALL ON SCHEMA public TO test_user;"
+
+                  echo "✅ Test database ready: test_flowise"
+                  echo "   • DataSource.ts: user → test_user, flowise → test_flowise"
+                  echo "   • base.ts (AAI nodes): user → test_user, flowise → test_flowise"
+                  echo "   • Prisma: Uses DATABASE_URL with test_ prefix already applied"
+                  echo "   • 🔒 Security: All components use test_ prefix automatically"
+
+            - name: Build packages
+              run: pnpm build
+
+            - name: Install Playwright browsers
+              working-directory: apps/web
+              run: pnpm exec playwright install --with-deps chromium
+
+            - name: Start application stack
+              run: |
+                  echo "🚀 Starting application stack..."
+                  pnpm start > /tmp/stack.log 2>&1 &
+                  STACK_PID=$!
+                  echo "STACK_PID=$STACK_PID" >> $GITHUB_ENV
+
+                  echo "⏳ Waiting for Flowise server (port 4000)..."
+                  if ! timeout 90 bash -c 'until curl -sf http://localhost:4000/api/v1/ping; do sleep 2; done'; then
+                      echo "❌ Flowise server failed to start"
+                      echo "Last 50 lines of logs:"
+                      tail -50 /tmp/stack.log
+                      exit 1
+                  fi
+                  echo "✅ Flowise server ready"
+
+                  echo "⏳ Waiting for Next.js app (port 3000)..."
+                  if ! timeout 90 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'; then
+                      echo "❌ Next.js app failed to start"
+                      echo "Last 50 lines of logs:"
+                      tail -50 /tmp/stack.log
+                      exit 1
+                  fi
+                  echo "✅ Next.js app ready"
+
+            - name: Verify database configuration
+              if: runner.debug == '1' || failure()
+              run: |
+                  echo "🔍 Database Configuration Check"
+                  echo "PostgreSQL service: postgres:5432"
+                  echo ""
+                  echo "Configured credentials (hardcoded for CI):"
+                  echo "  DATABASE_USER: user"
+                  echo "  DATABASE_NAME: flowise"
+                  echo "  DATABASE_PASSWORD: test_password"
+                  echo ""
+                  echo "Auto-prefixing (NODE_ENV=test):"
+                  echo "  ✅ DataSource.ts → test_user @ test_flowise"
+                  echo "  ✅ base.ts (AAI nodes) → test_user @ test_flowise"
+                  echo ""
+                  echo "Available databases:"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "\l" || echo "Failed to list databases"
+                  echo ""
+                  echo "Available users:"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "\du" || echo "Failed to list users"
+
+            - name: Run E2E tests
+              working-directory: apps/web
+              run: pnpm test:e2e
+
+            - name: Stop application stack
+              if: always()
+              run: |
+                  if [ -n "$STACK_PID" ]; then
+                    echo "Stopping stack (PID: $STACK_PID)..."
+                    kill $STACK_PID 2>/dev/null || true
+                    sleep 2
+                    kill -9 $STACK_PID 2>/dev/null || true
+                  fi
+
+            - name: Upload stack logs on failure
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: stack-logs
+                  path: /tmp/stack.log
+                  retention-days: 7
+
+            - name: Upload Playwright report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report
+                  path: apps/web/e2e/playwright-report/
+                  retention-days: 30
+
+            - name: Upload test results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results
+                  path: apps/web/e2e/test-results/
+                  retention-days: 30

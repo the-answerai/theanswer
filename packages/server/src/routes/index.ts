@@ -60,6 +60,7 @@ import executionsRouter from './executions'
 import validationRouter from './validation'
 import agentflowv2GeneratorRouter from './agentflowv2-generator'
 import adminRouter from './admin'
+import testControlRouter from './test-control'
 
 const router = express.Router()
 
@@ -125,5 +126,10 @@ router.use('/executions', executionsRouter)
 router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
 router.use('/admin', adminRouter)
+
+// Register test endpoints for test mode or development with E2E testing enabled
+if (process.env.NODE_ENV === 'test' || (process.env.NODE_ENV === 'development' && process.env.ENABLE_E2E_ENDPOINTS === 'true')) {
+    router.use('/__test__', testControlRouter)
+}
 
 export default router
