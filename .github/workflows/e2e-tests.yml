@@ -93,7 +93,8 @@ jobs:
                   done
 
                   # Create test database and user
-                  # Both DataSource.ts and base.ts apply test_ prefix automatically when NODE_ENV=test
+                  # DataSource.ts and base.ts apply test_ prefix automatically when NODE_ENV=test
+                  # Prisma needs DATABASE_URL with test_ prefix already applied (configured in env vars)
                   PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE DATABASE test_flowise;"
                   PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE USER test_user WITH PASSWORD 'test_password';"
                   PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_flowise TO test_user;"
@@ -107,6 +108,7 @@ jobs:
                   echo "✅ Test database ready: test_flowise"
                   echo "   • DataSource.ts: user → test_user, flowise → test_flowise"
                   echo "   • base.ts (AAI nodes): user → test_user, flowise → test_flowise"
+                  echo "   • Prisma: Uses DATABASE_URL with test_ prefix already applied"
                   echo "   • 🔒 Security: All components use test_ prefix automatically"
 
             - name: Build packages
@@ -128,6 +130,10 @@ jobs:
                   DATABASE_NAME: flowise
                   DATABASE_USER: user
                   DATABASE_PASSWORD: test_password
+
+                  # Prisma DATABASE_URL (must use test_ prefix explicitly)
+                  # DataSource.ts auto-prefixes DATABASE_NAME/USER, but Prisma needs explicit URL
+                  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web
 
                   # BWS Integration (for Auth0 secrets only)
                   BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
