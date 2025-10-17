@@ -17,7 +17,7 @@ jobs:
         name: Run E2E Tests
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
-        timeout-minutes: 30
+        timeout-minutes: 45 # Increased for safety
         env:
             BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
 
@@ -25,8 +25,11 @@ jobs:
             postgres:
                 image: pgvector/pgvector:pg16
                 env:
-                    POSTGRES_USER: test_user
-                    POSTGRES_PASSWORD: test_password
+                    # IMPORTANT: Services start before workflow, so these must be hardcoded
+                    # Format: test_<DATABASE_USER from BWS>
+                    # If your BWS DATABASE_USER changes, update this accordingly
+                    POSTGRES_USER: test_example_user
+                    POSTGRES_PASSWORD: example_password
                     POSTGRES_DB: test_flowise
                 options: >-
                     --health-cmd pg_isready
@@ -64,11 +67,10 @@ jobs:
 
             - name: Get pnpm store directory
               shell: bash
-              run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-            - uses: actions/cache@v4
-              name: Setup pnpm cache
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
               with:
                   path: ${{ env.STORE_PATH }}
                   key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -85,28 +87,17 @@ jobs:
 
             - name: Setup test database
               env:
-                  PGPASSWORD: test_password
+                  PGPASSWORD: example_password
               run: |
-                  # Wait for PostgreSQL
-                  until pg_isready -h localhost -p 5432 -U test_user; do
+                  until pg_isready -h localhost -p 5432 -U test_example_user; do
                     echo "Waiting for PostgreSQL..."
                     sleep 2
                   done
 
-                  # Enable pgvector (test_flowise already created by service)
-                  psql -h localhost -U test_user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
+                  psql -h localhost -U test_example_user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
+                  psql -h localhost -U test_example_user -d test_flowise -c "SELECT version();"
 
-                  # Ensure legacy role and database expected by test configuration
-                  psql -h localhost -U test_user -d postgres -tc "SELECT 1 FROM pg_roles WHERE rolname = 'root';" | grep -q 1 || \
-                    psql -h localhost -U test_user -d postgres -c "CREATE ROLE root LOGIN PASSWORD 'test_password';"
-
-                  psql -h localhost -U test_user -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'test_user';" | grep -q 1 || \
-                    psql -h localhost -U test_user -d postgres -c "CREATE DATABASE test_user OWNER root;"
-
-                  # Verify
-                  psql -h localhost -U test_user -d test_flowise -c "SELECT version();"
-
-                  echo "✅ Test database ready: test_flowise"
+                  echo "✅ PostgreSQL ready: test_flowise (user: test_example_user)"
 
             - name: Build packages
               run: pnpm build
@@ -117,92 +108,83 @@ jobs:
 
             - name: Start application stack
               env:
-                  # ============================================
-                  # Infrastructure (always required)
-                  # ============================================
                   NODE_ENV: test
                   CI: true
 
-                  # ============================================
-                  # BWS Integration - Loads 4 sensitive secrets from BWS
-                  # ============================================
-                  # Secrets loaded from "AAI - 03 - Local" project:
-                  # - AUTH0_SECRET
-                  # - AUTH0_CLIENT_ID
-                  # - AUTH0_CLIENT_SECRET
-                  # - TEST_USER_PASSWORD
-                  # - STORAGE_TYPE (existing)
+                  # BWS Integration
                   BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
                   BWS_PROJECT: theanswer-ai
                   BWS_ENV: local
 
-                  # ============================================
-                  # Auth0 Configuration (non-sensitive, hardcoded)
-                  # ============================================
+                  # Auth0 (non-sensitive)
                   AUTH0_ISSUER_BASE_URL: https://answer-ai.us.auth0.com
                   AUTH0_BASE_URL: http://localhost:3000
 
-                  # ============================================
-                  # Test User Configuration (non-sensitive, hardcoded)
-                  # ============================================
+                  # Test Users (non-sensitive)
                   TEST_USER_ENTERPRISE_ADMIN_EMAIL: alpha+enterprise-admin@theanswer.ai
                   TEST_USER_ENTERPRISE_MEMBER_EMAIL: alpha+enterprise-member@theanswer.ai
                   TEST_USER_ENTERPRISE_BUILDER_EMAIL: alpha+enterprise-builder@theanswer.ai
                   TEST_ENTERPRISE_AUTH0_ORG_ID: org_unQ8OLmTNsxVTJCT
                   TEST_ENTERPRISE_ORG_NAME: local-dev
 
-                  # ============================================
-                  # Database Configuration (localhost test database)
-                  # ============================================
-                  DATABASE_TYPE: postgres
-                  DATABASE_HOST: localhost
-                  DATABASE_PORT: 5432
-                  DATABASE_NAME: test_flowise
-                  DATABASE_USER: test_user
-                  DATABASE_PASSWORD: test_password
-                  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web&connection_limit=1
-
-                  # ============================================
-                  # Service URLs (localhost)
-                  # ============================================
+                  # Service URLs
                   API_URL: http://localhost:4000
                   BASE_URL: http://localhost:3000
-                  PORT: 4000
 
-                  # ============================================
-                  # Redis Configuration (localhost)
-                  # ============================================
+                  # Redis
                   REDIS_HOST: localhost
                   REDIS_PORT: 6379
 
-                  # ============================================
-                  # Fake Test API Keys (not real credentials)
-                  # ============================================
+                  # Storage & Testing
+                  ENABLE_E2E_ENDPOINTS: true
+                  BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
+
+                  # Test API Keys (fake)
                   TEST_OPENAI_API_KEY: sk-test-openai-key-for-e2e
                   TEST_EXASEARCH_API_KEY: test-exa-search-key-for-e2e
-
-                  # ============================================
-                  # E2E Testing Feature Flags
-                  # ============================================
-                  ENABLE_E2E_ENDPOINTS: true
-                  STORAGE_TYPE: local
-                  BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
               run: |
-                  echo "Starting application stack with pnpm start..."
+                  echo "🚀 Starting application stack..."
                   pnpm start > /tmp/stack.log 2>&1 &
                   STACK_PID=$!
-                  echo "Stack PID: $STACK_PID"
+                  echo "STACK_PID=$STACK_PID" >> $GITHUB_ENV
 
-                  echo "Waiting for Flowise server (port 4000)..."
-                  timeout 90 bash -c 'until curl -f http://localhost:4000/api/v1/ping; do sleep 2; done'
+                  echo "⏳ Waiting for Flowise server (port 4000)..."
+                  if ! timeout 90 bash -c 'until curl -sf http://localhost:4000/api/v1/ping; do sleep 2; done'; then
+                      echo "❌ Flowise server failed to start"
+                      echo "Last 50 lines of logs:"
+                      tail -50 /tmp/stack.log
+                      exit 1
+                  fi
                   echo "✅ Flowise server ready"
 
-                  echo "Waiting for Next.js app (port 3000)..."
-                  timeout 90 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+                  echo "⏳ Waiting for Next.js app (port 3000)..."
+                  if ! timeout 90 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'; then
+                      echo "❌ Next.js app failed to start"
+                      echo "Last 50 lines of logs:"
+                      tail -50 /tmp/stack.log
+                      exit 1
+                  fi
                   echo "✅ Next.js app ready"
 
-                  echo "Stack is ready, PID stored: $STACK_PID"
-                  echo "STACK_PID=$STACK_PID" >> $GITHUB_ENV
+            - name: Verify BWS configuration
+              if: runner.debug == '1' || failure()
+              env:
+                  BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+                  BWS_PROJECT: theanswer-ai
+                  BWS_ENV: local
+                  NODE_ENV: test
+              run: |
+                  echo "🔍 BWS Configuration Check"
+                  pnpm secure-run "bash -c '
+                  echo \"DATABASE_TYPE: \${DATABASE_TYPE:-NOT_SET}\"
+                  echo \"DATABASE_USER: \${DATABASE_USER:-NOT_SET} → test_\${DATABASE_USER}\"
+                  echo \"DATABASE_NAME: \${DATABASE_NAME:-NOT_SET} → test_\${DATABASE_NAME}\"
+                  echo \"DATABASE_PASSWORD: \${DATABASE_PASSWORD:0:3}*** (masked)\"
+                  echo \"\"
+                  echo \"Expected PostgreSQL:\"
+                  echo \"  User: test_example_user\"
+                  echo \"  DB: test_flowise\"
+                  '"
 
             - name: Run E2E tests
               working-directory: apps/web
@@ -214,12 +196,20 @@ jobs:
             - name: Stop application stack
               if: always()
               run: |
-                  if [ ! -z "$STACK_PID" ]; then
+                  if [ -n "$STACK_PID" ]; then
                     echo "Stopping stack (PID: $STACK_PID)..."
-                    kill $STACK_PID || true
+                    kill $STACK_PID 2>/dev/null || true
                     sleep 2
                     kill -9 $STACK_PID 2>/dev/null || true
                   fi
+
+            - name: Upload stack logs on failure
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: stack-logs
+                  path: /tmp/stack.log
+                  retention-days: 7
 
             - name: Upload Playwright report
               if: always()
