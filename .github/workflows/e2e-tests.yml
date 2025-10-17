@@ -19,7 +19,55 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 45 # Increased for safety
         env:
+            # BWS Integration
             BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+            BWS_PROJECT: theanswer-ai
+            BWS_ENV: local
+
+            # Test Mode
+            NODE_ENV: test
+            CI: true
+
+            # Database credentials (hardcoded for CI)
+            # DataSource.ts auto-prefixes to test_user @ test_flowise when NODE_ENV=test
+            DATABASE_TYPE: postgres
+            DATABASE_HOST: localhost
+            DATABASE_PORT: 5432
+            DATABASE_NAME: flowise
+            DATABASE_USER: user
+            DATABASE_PASSWORD: test_password
+
+            # Prisma DATABASE_URL (must use test_ prefix explicitly)
+            # DataSource.ts auto-prefixes DATABASE_NAME/USER, but Prisma needs explicit URL
+            DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web
+
+            # Auth0 (non-sensitive)
+            AUTH0_ISSUER_BASE_URL: https://answer-ai.us.auth0.com
+            AUTH0_BASE_URL: http://localhost:3000
+
+            # Test Users (non-sensitive)
+            TEST_USER_ENTERPRISE_ADMIN_EMAIL: alpha+enterprise-admin@theanswer.ai
+            TEST_USER_ENTERPRISE_MEMBER_EMAIL: alpha+enterprise-member@theanswer.ai
+            TEST_USER_ENTERPRISE_BUILDER_EMAIL: alpha+enterprise-builder@theanswer.ai
+            TEST_ENTERPRISE_AUTH0_ORG_ID: org_unQ8OLmTNsxVTJCT
+            TEST_ENTERPRISE_ORG_NAME: local-dev
+
+            # Service URLs
+            API_URL: http://localhost:4000
+            BASE_URL: http://localhost:3000
+
+            # Redis
+            REDIS_HOST: localhost
+            REDIS_PORT: 6379
+
+            # Storage & Testing
+            STORAGE_TYPE: local
+            ENABLE_E2E_ENDPOINTS: true
+            BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
+
+            # Test API Keys (fake)
+            TEST_OPENAI_API_KEY: sk-test-openai-key-for-e2e
+            TEST_EXASEARCH_API_KEY: test-exa-search-key-for-e2e
 
         services:
             postgres:
@@ -119,54 +167,6 @@ jobs:
               run: pnpm exec playwright install --with-deps chromium
 
             - name: Start application stack
-              env:
-                  NODE_ENV: test
-                  CI: true
-
-                  # Test database credentials (hardcoded for CI)
-                  DATABASE_TYPE: postgres
-                  DATABASE_HOST: localhost
-                  DATABASE_PORT: 5432
-                  DATABASE_NAME: flowise
-                  DATABASE_USER: user
-                  DATABASE_PASSWORD: test_password
-
-                  # Prisma DATABASE_URL (must use test_ prefix explicitly)
-                  # DataSource.ts auto-prefixes DATABASE_NAME/USER, but Prisma needs explicit URL
-                  DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_flowise?schema=web
-
-                  # BWS Integration (for Auth0 secrets only)
-                  BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-                  BWS_PROJECT: theanswer-ai
-                  BWS_ENV: local
-
-                  # Auth0 (non-sensitive)
-                  AUTH0_ISSUER_BASE_URL: https://answer-ai.us.auth0.com
-                  AUTH0_BASE_URL: http://localhost:3000
-
-                  # Test Users (non-sensitive)
-                  TEST_USER_ENTERPRISE_ADMIN_EMAIL: alpha+enterprise-admin@theanswer.ai
-                  TEST_USER_ENTERPRISE_MEMBER_EMAIL: alpha+enterprise-member@theanswer.ai
-                  TEST_USER_ENTERPRISE_BUILDER_EMAIL: alpha+enterprise-builder@theanswer.ai
-                  TEST_ENTERPRISE_AUTH0_ORG_ID: org_unQ8OLmTNsxVTJCT
-                  TEST_ENTERPRISE_ORG_NAME: local-dev
-
-                  # Service URLs
-                  API_URL: http://localhost:4000
-                  BASE_URL: http://localhost:3000
-
-                  # Redis
-                  REDIS_HOST: localhost
-                  REDIS_PORT: 6379
-
-                  # Storage & Testing
-                  STORAGE_TYPE: local
-                  ENABLE_E2E_ENDPOINTS: true
-                  BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
-
-                  # Test API Keys (fake)
-                  TEST_OPENAI_API_KEY: sk-test-openai-key-for-e2e
-                  TEST_EXASEARCH_API_KEY: test-exa-search-key-for-e2e
               run: |
                   echo "🚀 Starting application stack..."
                   pnpm start > /tmp/stack.log 2>&1 &
@@ -214,9 +214,6 @@ jobs:
 
             - name: Run E2E tests
               working-directory: apps/web
-              env:
-                  BASE_URL: http://localhost:3000
-                  API_URL: http://localhost:4000
               run: pnpm test:e2e
 
             - name: Stop application stack
