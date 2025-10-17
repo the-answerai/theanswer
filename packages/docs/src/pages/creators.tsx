@@ -1,9 +1,41 @@
+/* eslint-disable react/no-unescaped-entities */
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import {
+    AlarmClock,
+    Ban,
+    Banknote,
+    BarChart3,
+    BookOpen,
+    CheckCircle2,
+    ClipboardList,
+    Coins,
+    FilePenLine,
+    Handshake,
+    HeartCrack,
+    Lightbulb,
+    Link as LinkIcon,
+    MessageSquare,
+    Microscope,
+    Palette,
+    Rocket,
+    Scale,
+    ScrollText,
+    Search,
+    SlidersHorizontal,
+    Sparkles,
+    Star,
+    Target,
+    XCircle,
+    Zap
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function CreatorsHero() {
     return (
@@ -23,10 +55,12 @@ function CreatorsHero() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='#the-problem' className={styles.secondaryLink}>
-                            🎨 The Problem
+                            <Palette size={18} className={styles.linkIcon} />
+                            The Problem
                         </a>
                         <a href='#our-solution' className={styles.secondaryLink}>
-                            ✨ Our Solution
+                            <Sparkles size={18} className={styles.linkIcon} />
+                            Our Solution
                         </a>
                     </div>
                 </div>
@@ -42,7 +76,9 @@ function OpeningHook() {
                 <div className='row'>
                     <div className='col col--12'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)} style={{ textAlign: 'center' }}>
-                            <div className={styles.comingSoonIcon}>💔</div>
+                            <div className={styles.comingSoonIcon}>
+                                <HeartCrack size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <h2 style={{ color: '#ff00ff', marginBottom: '1.5rem' }}>You Didn&apos;t Choose This.</h2>
                                 <p style={{ fontSize: '1.2rem', lineHeight: '1.8', marginBottom: '1.5rem' }}>
@@ -68,40 +104,60 @@ function OriginalSinSection() {
     return (
         <section className={styles.featuresSection}>
             <div className='container'>
-                <h2 className='text--center'>AI&apos;s Original Sin</h2>
+                <h2 className='text--center'>AI's Original Sin</h2>
                 <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    The foundation was built on theft—but it doesn&apos;t have to stay that way
+                    The foundation was built on theft—but it doesn't have to stay that way
                 </p>
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.comingSoonIcon}>⚖️</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Scale size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>The Current Reality</h3>
                             <p>
                                 Major AI companies built their models by scraping billions of creative works without consent, compensation,
-                                or credit. Artists discovered their life&apos;s work powering systems that could replace them.
+                                or credit. Artists discovered their life's work powering systems that could replace them.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🚫 No consent required</span>
-                                <span>💸 Zero compensation</span>
-                                <span>🔍 No transparency</span>
-                                <span>❌ No artist control</span>
+                                <span>
+                                    <Ban size={16} /> No consent required
+                                </span>
+                                <span>
+                                    <Banknote size={16} /> Zero compensation
+                                </span>
+                                <span>
+                                    <Search size={16} /> No transparency
+                                </span>
+                                <span>
+                                    <XCircle size={16} /> No artist control
+                                </span>
                             </div>
                         </div>
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.comingSoonIcon}>✨</div>
-                            <h3>What We&apos;re Building</h3>
+                            <div className={styles.comingSoonIcon}>
+                                <Sparkles size={48} strokeWidth={1.5} />
+                            </div>
+                            <h3>What We're Building</h3>
                             <p>
                                 The first AI platform where every image, video, and audio sample is ethically sourced. Where creators are
                                 compensated fairly. Where you control how your work is used.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>✅ Full consent required</span>
-                                <span>💰 Fair compensation</span>
-                                <span>🔬 Complete transparency</span>
-                                <span>🎯 Creator control</span>
+                                <span>
+                                    <CheckCircle2 size={16} /> Full consent required
+                                </span>
+                                <span>
+                                    <Coins size={16} /> Fair compensation
+                                </span>
+                                <span>
+                                    <Microscope size={16} /> Complete transparency
+                                </span>
+                                <span>
+                                    <Target size={16} /> Creator control
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -112,7 +168,8 @@ function OriginalSinSection() {
                         className={clsx(styles.ctaButton, styles.secondaryLink)}
                         style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}
                     >
-                        📖 Read &quot;Original Sin&quot; - The Full Story
+                        <BookOpen size={18} className={styles.linkIcon} />
+                        Read &quot;Original Sin&quot; - The Full Story
                     </a>
                 </div>
             </div>
@@ -138,9 +195,15 @@ function OurSolution() {
                                 work is never stolen again.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🔗 Blockchain verification</span>
-                                <span>📜 Immutable records</span>
-                                <span>🔍 Full audit trails</span>
+                                <span>
+                                    <LinkIcon size={16} /> Blockchain verification
+                                </span>
+                                <span>
+                                    <ScrollText size={16} /> Immutable records
+                                </span>
+                                <span>
+                                    <Search size={16} /> Full audit trails
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -153,9 +216,15 @@ function OurSolution() {
                                 earn—automatically and transparently.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>💰 Usage-based royalties</span>
-                                <span>⚡ Automatic payments</span>
-                                <span>📊 Transparent metrics</span>
+                                <span>
+                                    <Coins size={16} /> Usage-based royalties
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Automatic payments
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Transparent metrics
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -168,9 +237,15 @@ function OurSolution() {
                                 Your art, your rules.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🎛️ Granular controls</span>
-                                <span>🚫 Opt-out anytime</span>
-                                <span>📋 Usage restrictions</span>
+                                <span>
+                                    <SlidersHorizontal size={16} /> Granular controls
+                                </span>
+                                <span>
+                                    <Ban size={16} /> Opt-out anytime
+                                </span>
+                                <span>
+                                    <ClipboardList size={16} /> Usage restrictions
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -186,28 +261,32 @@ function WhyNow() {
             <div className='container'>
                 <h2 className='text--center'>Why This Matters Now</h2>
                 <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    The window for ethical AI is closing—but it&apos;s not closed yet
+                    The window for ethical AI is closing—but it's not closed yet
                 </p>
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>⏰</div>
+                            <div className={styles.comingSoonIcon}>
+                                <AlarmClock size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>The Current Landscape</strong>
                                 <br />
                                 Want to use ethically sourced AI for your creative work? Your options are essentially zero. Every major
-                                model was built on stolen art, and the few &quot;ethical&quot; alternatives lack the quality to compete.
+                                model was built on stolen art, and the few "ethical" alternatives lack the quality to compete.
                             </div>
                         </div>
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🚀</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Rocket size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Our Opportunity</strong>
                                 <br />
                                 We can build something better. A model trained exclusively on ethically sourced content that rivals or
-                                exceeds the quality of those built on theft. Prove that doing right doesn&apos;t mean falling behind.
+                                exceeds the quality of those built on theft. Prove that doing right doesn't mean falling behind.
                             </div>
                         </div>
                     </div>
@@ -228,17 +307,27 @@ function JoinWaitlist() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🎨</div>
+                            <div className={styles.appIcon}>
+                                <Palette size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>For Artists & Creators</h3>
                             <p>
                                 Submit your original work to train ethical models. Set your terms, track your impact, and earn fair
                                 compensation for every use.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📝 Original artwork submission</span>
-                                <span>💰 Revenue sharing</span>
-                                <span>📊 Usage analytics</span>
-                                <span>🎛️ Full control</span>
+                                <span>
+                                    <FilePenLine size={16} /> Original artwork submission
+                                </span>
+                                <span>
+                                    <Coins size={16} /> Revenue sharing
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Usage analytics
+                                </span>
+                                <span>
+                                    <SlidersHorizontal size={16} /> Full control
+                                </span>
                             </div>
                             <a
                                 href='https://share.hsforms.com/your-hubspot-form-id'
@@ -252,17 +341,27 @@ function JoinWaitlist() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🤝</div>
+                            <div className={styles.appIcon}>
+                                <Handshake size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>For Ethical AI Users</h3>
                             <p>
                                 Support the movement for ethical AI. Get early access to models trained only on consented, compensated
                                 creative work.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🌟 Early access</span>
-                                <span>✅ Ethical guarantee</span>
-                                <span>📜 Full transparency</span>
-                                <span>💡 Creator stories</span>
+                                <span>
+                                    <Star size={16} /> Early access
+                                </span>
+                                <span>
+                                    <CheckCircle2 size={16} /> Ethical guarantee
+                                </span>
+                                <span>
+                                    <ScrollText size={16} /> Full transparency
+                                </span>
+                                <span>
+                                    <Lightbulb size={16} /> Creator stories
+                                </span>
                             </div>
                             <a
                                 href='https://share.hsforms.com/your-hubspot-form-id'
@@ -286,7 +385,7 @@ function ClosingRally() {
             <div className='container text--center'>
                 <h2>This Is Our Moment to Choose Differently</h2>
                 <p style={{ fontSize: '1.3rem', marginBottom: '2rem', opacity: 0.9 }}>
-                    To prove that ethical AI isn&apos;t just possible—it&apos;s better
+                    To prove that ethical AI isn't just possible—it's better
                 </p>
                 <div className='row' style={{ marginBottom: '3rem' }}>
                     <div className='col col--12'>
@@ -319,10 +418,12 @@ function ClosingRally() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/blog/original-sin' className={styles.secondaryLink}>
-                            📖 Read &quot;Original Sin&quot;
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            Read &quot;Original Sin&quot;
                         </a>
                         <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink}>
-                            💬 Join Discord
+                            <MessageSquare size={18} className={styles.linkIcon} />
+                            Join Discord
                         </a>
                     </div>
                 </div>
@@ -332,10 +433,10 @@ function ClosingRally() {
 }
 
 export default function Creators(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Creators - Help Us Build Ethical AI That Respects Your Work'
                 description="Join the Creator Alliance. Help build the world's first 100% ethically curated AI models that pay creators fairly and respect consent. Your art matters. Your voice matters. Your choice matters."
             >
@@ -348,7 +449,7 @@ export default function Creators(): JSX.Element {
                     <JoinWaitlist />
                     <ClosingRally />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }
