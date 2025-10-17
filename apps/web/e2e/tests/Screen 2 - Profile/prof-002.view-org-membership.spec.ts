@@ -3,7 +3,7 @@ import { loginWithTestUser } from '../../helpers/auth'
 import { resetOnly } from '../../helpers/database'
 import { PROFILE_SELECTORS } from '../../helpers/selectors'
 
-test.describe('PROF-001: View Account Info - Profile Card with Avatar, Display Name, and Email', () => {
+test.describe('PROF-002: View Org Membership - Organization Name and Membership Info', () => {
     test.setTimeout(60000) // 60 seconds timeout for these tests
 
     test.beforeEach(async ({ page, context }) => {
@@ -26,7 +26,7 @@ test.describe('PROF-001: View Account Info - Profile Card with Avatar, Display N
         console.log('✅ User authenticated and visible in UI')
     })
 
-    test('should display profile card with avatar, display name, and email accurately', async ({ page }) => {
+    test('should display organization name and membership information accurately', async ({ page }) => {
         console.log('🚀 Navigating to profile page...')
         await page.goto('/profile', { waitUntil: 'domcontentloaded' })
         await expect(page).not.toHaveURL(/auth0\.com/)
@@ -38,24 +38,21 @@ test.describe('PROF-001: View Account Info - Profile Card with Avatar, Display N
         await expect(profileCard).toBeVisible({ timeout: 15000 })
         console.log('✅ Profile card is visible')
 
-        // Verify avatar is visible in profile card
-        console.log('🖼️ Verifying avatar in profile card...')
-        const avatar = page.locator(PROFILE_SELECTORS.avatar).first()
-        await expect(avatar).toBeVisible({ timeout: 10000 })
-        console.log('✅ Avatar is visible')
+        // Verify organization name is visible
+        console.log('🏢 Verifying organization name...')
+        const expectedOrgName = process.env.TEST_ENTERPRISE_ORG_NAME!
+        const orgName = page.locator('text=' + expectedOrgName).first()
+        await expect(orgName).toBeVisible({ timeout: 10000 })
+        console.log(`✅ Organization name "${expectedOrgName}" is visible`)
 
-        // Verify display name is visible in profile card
-        console.log('👤 Verifying display name in profile card...')
-        const displayName = page.locator('h5').filter({ hasText: process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL! })
-        await expect(displayName).toBeVisible({ timeout: 10000 })
-        console.log('✅ Display name is visible and accurate')
+        // Verify organization membership section is present
+        console.log('👥 Verifying organization membership section...')
+        // Looking for text that indicates membership or organization details
+        // This could be "Organization Member", "Admin", "Member", etc.
+        const membershipInfo = page.locator(PROFILE_SELECTORS.profileCard).locator('text=/Organization|Member|Admin|Role/i').first()
+        await expect(membershipInfo).toBeVisible({ timeout: 10000 })
+        console.log('✅ Organization membership information is visible')
 
-        // Verify email is visible in profile card
-        console.log('📧 Verifying email in profile card...')
-        const profileEmail = page.locator('p').filter({ hasText: process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL! }).first()
-        await expect(profileEmail).toBeVisible({ timeout: 10000 })
-        console.log('✅ Email is visible and accurate')
-
-        console.log('🎉 PROF-001 Test Passed: Avatar, display name, and email are all visible and accurate')
+        console.log('🎉 PROF-002 Test Passed: Organization name and membership info are displayed correctly')
     })
 })
