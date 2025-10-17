@@ -25,12 +25,11 @@ jobs:
             postgres:
                 image: pgvector/pgvector:pg16
                 env:
-                    # IMPORTANT: Services start before workflow, so these must be hardcoded
-                    # Format: test_<DATABASE_USER from BWS>
-                    # If your BWS DATABASE_USER changes, update this accordingly
-                    POSTGRES_USER: test_example_user
-                    POSTGRES_PASSWORD: example_password
-                    POSTGRES_DB: test_flowise
+                    # Base credentials - matches BWS defaults
+                    # The workflow will create both base and test-prefixed users/databases
+                    POSTGRES_USER: user
+                    POSTGRES_PASSWORD: test_password
+                    POSTGRES_DB: postgres
                 options: >-
                     --health-cmd pg_isready
                     --health-interval 10s
@@ -86,18 +85,29 @@ jobs:
                   sudo apt-get install -y postgresql-client
 
             - name: Setup test database
-              env:
-                  PGPASSWORD: example_password
               run: |
-                  until pg_isready -h localhost -p 5432 -U test_example_user; do
+                  # Wait for PostgreSQL to be ready
+                  until pg_isready -h localhost -p 5432 -U user; do
                     echo "Waiting for PostgreSQL..."
                     sleep 2
                   done
 
-                  psql -h localhost -U test_example_user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
-                  psql -h localhost -U test_example_user -d test_flowise -c "SELECT version();"
+                  # Create test database and user
+                  # Both DataSource.ts and base.ts apply test_ prefix automatically when NODE_ENV=test
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE DATABASE test_flowise;"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "CREATE USER test_user WITH PASSWORD 'test_password';"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE test_flowise TO test_user;"
 
-                  echo "✅ PostgreSQL ready: test_flowise (user: test_example_user)"
+                  # Enable pgvector extension
+                  PGPASSWORD=test_password psql -h localhost -U user -d test_flowise -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+                  # Grant schema permissions
+                  PGPASSWORD=test_password psql -h localhost -U user -d test_flowise -c "GRANT ALL ON SCHEMA public TO test_user;"
+
+                  echo "✅ Test database ready: test_flowise"
+                  echo "   • DataSource.ts: user → test_user, flowise → test_flowise"
+                  echo "   • base.ts (AAI nodes): user → test_user, flowise → test_flowise"
+                  echo "   • 🔒 Security: All components use test_ prefix automatically"
 
             - name: Build packages
               run: pnpm build
@@ -111,7 +121,15 @@ jobs:
                   NODE_ENV: test
                   CI: true
 
-                  # BWS Integration
+                  # Test database credentials (hardcoded for CI)
+                  DATABASE_TYPE: postgres
+                  DATABASE_HOST: localhost
+                  DATABASE_PORT: 5432
+                  DATABASE_NAME: flowise
+                  DATABASE_USER: user
+                  DATABASE_PASSWORD: test_password
+
+                  # BWS Integration (for Auth0 secrets only)
                   BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
                   BWS_PROJECT: theanswer-ai
                   BWS_ENV: local
@@ -136,6 +154,7 @@ jobs:
                   REDIS_PORT: 6379
 
                   # Storage & Testing
+                  STORAGE_TYPE: local
                   ENABLE_E2E_ENDPOINTS: true
                   BLOB_STORAGE_PATH: /tmp/.flowise-test/storage
 
@@ -166,25 +185,26 @@ jobs:
                   fi
                   echo "✅ Next.js app ready"
 
-            - name: Verify BWS configuration
+            - name: Verify database configuration
               if: runner.debug == '1' || failure()
-              env:
-                  BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-                  BWS_PROJECT: theanswer-ai
-                  BWS_ENV: local
-                  NODE_ENV: test
               run: |
-                  echo "🔍 BWS Configuration Check"
-                  pnpm secure-run "bash -c '
-                  echo \"DATABASE_TYPE: \${DATABASE_TYPE:-NOT_SET}\"
-                  echo \"DATABASE_USER: \${DATABASE_USER:-NOT_SET} → test_\${DATABASE_USER}\"
-                  echo \"DATABASE_NAME: \${DATABASE_NAME:-NOT_SET} → test_\${DATABASE_NAME}\"
-                  echo \"DATABASE_PASSWORD: \${DATABASE_PASSWORD:0:3}*** (masked)\"
-                  echo \"\"
-                  echo \"Expected PostgreSQL:\"
-                  echo \"  User: test_example_user\"
-                  echo \"  DB: test_flowise\"
-                  '"
+                  echo "🔍 Database Configuration Check"
+                  echo "PostgreSQL service: postgres:5432"
+                  echo ""
+                  echo "Configured credentials (hardcoded for CI):"
+                  echo "  DATABASE_USER: user"
+                  echo "  DATABASE_NAME: flowise"
+                  echo "  DATABASE_PASSWORD: test_password"
+                  echo ""
+                  echo "Auto-prefixing (NODE_ENV=test):"
+                  echo "  ✅ DataSource.ts → test_user @ test_flowise"
+                  echo "  ✅ base.ts (AAI nodes) → test_user @ test_flowise"
+                  echo ""
+                  echo "Available databases:"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "\l" || echo "Failed to list databases"
+                  echo ""
+                  echo "Available users:"
+                  PGPASSWORD=test_password psql -h localhost -U user -d postgres -c "\du" || echo "Failed to list users"
 
             - name: Run E2E tests
               working-directory: apps/web
