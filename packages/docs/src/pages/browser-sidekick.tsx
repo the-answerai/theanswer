@@ -3,8 +3,33 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
+import {
+    BookOpen,
+    Rocket,
+    FileText,
+    Zap,
+    Target,
+    BarChart3,
+    Search,
+    Brain,
+    TrendingUp,
+    Lightbulb,
+    Palette,
+    MessageSquare,
+    Sparkles,
+    Bot,
+    Link2,
+    Briefcase,
+    ListChecks,
+    Wrench,
+    Cpu,
+    Theater
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function BrowserExtensionHero() {
     return (
@@ -27,10 +52,12 @@ function BrowserExtensionHero() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/browser' className={styles.secondaryLink}>
-                            📚 View Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            View Documentation
                         </a>
                         <a href='#features' className={styles.secondaryLink}>
-                            🚀 Explore Features
+                            <Rocket size={18} className={styles.linkIcon} />
+                            Explore Features
                         </a>
                     </div>
                 </div>
@@ -50,17 +77,27 @@ function CoreFeatures() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📄</div>
+                            <div className={styles.appIcon}>
+                                <FileText size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Instant Page Summaries</h3>
                             <p>
                                 Get the essence of any article, research paper, or webpage in seconds. Extract key insights and main points
                                 without reading through lengthy content.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>⚡ Instant Analysis</span>
-                                <span>🎯 Key Points</span>
-                                <span>📊 Data Extraction</span>
-                                <span>🔍 Smart Filtering</span>
+                                <span>
+                                    <Zap size={16} /> Instant Analysis
+                                </span>
+                                <span>
+                                    <Target size={16} /> Key Points
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Data Extraction
+                                </span>
+                                <span>
+                                    <Search size={16} /> Smart Filtering
+                                </span>
                             </div>
                             <a
                                 href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
@@ -72,17 +109,27 @@ function CoreFeatures() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🔍</div>
+                            <div className={styles.appIcon}>
+                                <Search size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>AI-Enhanced Search</h3>
                             <p>
                                 Go beyond basic web searches with AI-powered query enhancement, result analysis, and intelligent filtering
                                 to find exactly what you need.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🧠 Smart Queries</span>
-                                <span>📈 Result Analysis</span>
-                                <span>🎯 Precision Results</span>
-                                <span>💡 Context Aware</span>
+                                <span>
+                                    <Brain size={16} /> Smart Queries
+                                </span>
+                                <span>
+                                    <TrendingUp size={16} /> Result Analysis
+                                </span>
+                                <span>
+                                    <Target size={16} /> Precision Results
+                                </span>
+                                <span>
+                                    <Lightbulb size={16} /> Context Aware
+                                </span>
                             </div>
                             <a
                                 href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
@@ -96,17 +143,27 @@ function CoreFeatures() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🎨</div>
+                            <div className={styles.appIcon}>
+                                <Palette size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>DALL-E Image Generation</h3>
                             <p>
                                 Create stunning images from text descriptions directly in your browser. Perfect for presentations, social
                                 media, and creative projects.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🖼️ Text-to-Image</span>
-                                <span>✨ High Quality</span>
-                                <span>⚡ Instant Generation</span>
-                                <span>🎭 Multiple Styles</span>
+                                <span>
+                                    <Palette size={16} /> Text-to-Image
+                                </span>
+                                <span>
+                                    <Sparkles size={16} /> High Quality
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Instant Generation
+                                </span>
+                                <span>
+                                    <Palette size={16} /> Multiple Styles
+                                </span>
                             </div>
                             <a
                                 href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
@@ -118,17 +175,27 @@ function CoreFeatures() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🔗</div>
+                            <div className={styles.appIcon}>
+                                <Link2 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Tool Integrations</h3>
                             <p>
                                 Connect to your essential tools like Salesforce, Jira, Slack, GitHub, and more. Query and interact with your
                                 systems using natural language.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>💼 CRM Integration</span>
-                                <span>📋 Project Tools</span>
-                                <span>💬 Communication</span>
-                                <span>🔧 Developer Tools</span>
+                                <span>
+                                    <Briefcase size={16} /> CRM Integration
+                                </span>
+                                <span>
+                                    <ListChecks size={16} /> Project Tools
+                                </span>
+                                <span>
+                                    <MessageSquare size={16} /> Communication
+                                </span>
+                                <span>
+                                    <Wrench size={16} /> Developer Tools
+                                </span>
                             </div>
                             <a
                                 href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
@@ -155,7 +222,9 @@ function AIModels() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🤖</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Bot size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>OpenAI Models</strong>
                                 <br />
@@ -165,7 +234,9 @@ function AIModels() {
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🧠</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Brain size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Google Gemini</strong>
                                 <br />
@@ -178,7 +249,9 @@ function AIModels() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🎭</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Theater size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Anthropic Claude</strong>
                                 <br />
@@ -189,7 +262,9 @@ function AIModels() {
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🦙</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Cpu size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Llama & Deepseek</strong>
                                 <br />
@@ -214,7 +289,9 @@ function UseCases() {
                 <div className='row'>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>📊</div>
+                            <div className={styles.stepNumber}>
+                                <BarChart3 size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Research & Analysis</h3>
                             <p>
                                 Quickly gather information, summarize research papers, compile competitive intelligence, and generate
@@ -224,7 +301,9 @@ function UseCases() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>💼</div>
+                            <div className={styles.stepNumber}>
+                                <Briefcase size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Business Operations</h3>
                             <p>
                                 Streamline CRM updates, analyze project tickets, draft communications, and maintain business intelligence
@@ -234,7 +313,9 @@ function UseCases() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>🎨</div>
+                            <div className={styles.stepNumber}>
+                                <Palette size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Creative Projects</h3>
                             <p>
                                 Generate marketing visuals, create social media content, draft copy, and develop creative concepts without
@@ -265,10 +346,12 @@ function CTASection() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/browser' className={styles.secondaryLink}>
-                            📖 Read Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            Read Documentation
                         </a>
                         <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink}>
-                            💬 Get Support
+                            <MessageSquare size={18} className={styles.linkIcon} />
+                            Get Support
                         </a>
                     </div>
                 </div>
@@ -278,11 +361,11 @@ function CTASection() {
 }
 
 export default function BrowserExtension(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Browser Extension - AI Everywhere You Browse'
                 description='Bring AI assistance to every website. Get page summaries, enhanced search, and access to your AI sidekicks without leaving your browser tab.'
             >
@@ -294,7 +377,7 @@ export default function BrowserExtension(): JSX.Element {
                     <UseCases />
                     <CTASection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

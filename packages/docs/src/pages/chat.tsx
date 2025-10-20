@@ -4,8 +4,38 @@ import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
+import {
+    BookOpen,
+    Bot,
+    BarChart3,
+    TrendingUp,
+    Search,
+    ClipboardList,
+    Lightbulb,
+    Pen,
+    FileText,
+    Smartphone,
+    Mail,
+    Target,
+    Code2,
+    Bug,
+    Wrench,
+    BookMarked,
+    Building,
+    Microscope,
+    Library,
+    Brain,
+    Paperclip,
+    Settings,
+    Folder,
+    Star,
+    Globe
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function ChatHero() {
     return (
@@ -20,15 +50,17 @@ function ChatHero() {
                     powerful sidekicks for every task.
                 </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai/chat' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Start Chatting
+                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                        Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/chat' className={styles.secondaryLink}>
-                            📚 View Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            View Documentation
                         </a>
                         <a href='#features' className={styles.secondaryLink}>
-                            🤖 Meet the Sidekicks
+                            <Bot size={18} className={styles.linkIcon} />
+                            Meet the Sidekicks
                         </a>
                     </div>
                 </div>
@@ -48,17 +80,27 @@ function FeaturedSidekicks() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📊</div>
+                            <div className={styles.appIcon}>
+                                <BarChart3 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Data Analysts</h3>
                             <p>
                                 Intelligent assistants that help you interpret and visualize complex datasets. Get insights, generate
                                 reports, and discover patterns in your data with natural language queries.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📈 Data Visualization</span>
-                                <span>🔍 Pattern Recognition</span>
-                                <span>📋 Report Generation</span>
-                                <span>💡 Smart Insights</span>
+                                <span>
+                                    <TrendingUp size={16} /> Data Visualization
+                                </span>
+                                <span>
+                                    <Search size={16} /> Pattern Recognition
+                                </span>
+                                <span>
+                                    <ClipboardList size={16} /> Report Generation
+                                </span>
+                                <span>
+                                    <Lightbulb size={16} /> Smart Insights
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Try Data Analyst →
@@ -67,17 +109,27 @@ function FeaturedSidekicks() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>✍️</div>
+                            <div className={styles.appIcon}>
+                                <Pen size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Content Creators</h3>
                             <p>
                                 Creative assistants that help generate articles, blog posts, marketing copy, and social media content.
                                 Perfect for writers, marketers, and content teams.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📝 Article Writing</span>
-                                <span>📱 Social Media</span>
-                                <span>📧 Email Campaigns</span>
-                                <span>🎯 Brand Voice</span>
+                                <span>
+                                    <FileText size={16} /> Article Writing
+                                </span>
+                                <span>
+                                    <Smartphone size={16} /> Social Media
+                                </span>
+                                <span>
+                                    <Mail size={16} /> Email Campaigns
+                                </span>
+                                <span>
+                                    <Target size={16} /> Brand Voice
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Try Content Creator →
@@ -88,17 +140,27 @@ function FeaturedSidekicks() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>💻</div>
+                            <div className={styles.appIcon}>
+                                <Code2 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Code Assistants</h3>
                             <p>
                                 Programming experts that provide code reviews, debugging help, architecture advice, and documentation
                                 generation. Your pair programming partner that never sleeps.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🐛 Code Review</span>
-                                <span>🔧 Debugging</span>
-                                <span>📖 Documentation</span>
-                                <span>🏗️ Architecture</span>
+                                <span>
+                                    <Bug size={16} /> Code Review
+                                </span>
+                                <span>
+                                    <Wrench size={16} /> Debugging
+                                </span>
+                                <span>
+                                    <BookMarked size={16} /> Documentation
+                                </span>
+                                <span>
+                                    <Building size={16} /> Architecture
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Try Code Assistant →
@@ -107,17 +169,27 @@ function FeaturedSidekicks() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🔬</div>
+                            <div className={styles.appIcon}>
+                                <Microscope size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Research Aids</h3>
                             <p>
                                 Academic and business research specialists that help with literature reviews, market analysis, competitive
                                 intelligence, and comprehensive research reports.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📚 Literature Review</span>
-                                <span>📊 Market Analysis</span>
-                                <span>🎯 Competitive Intel</span>
-                                <span>📄 Report Writing</span>
+                                <span>
+                                    <Library size={16} /> Literature Review
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Market Analysis
+                                </span>
+                                <span>
+                                    <Target size={16} /> Competitive Intel
+                                </span>
+                                <span>
+                                    <FileText size={16} /> Report Writing
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Try Research Aid →
@@ -141,7 +213,9 @@ function ChatFeatures() {
                 <div className='row'>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🧠</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Brain size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Context Awareness</strong>
                                 <br />
@@ -152,7 +226,9 @@ function ChatFeatures() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>📎</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Paperclip size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>File Upload Support</strong>
                                 <br />
@@ -163,7 +239,9 @@ function ChatFeatures() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>⚙️</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Settings size={48} strokeWidth={1.5} />
+                            </div>
                             <div className={styles.commandmentText}>
                                 <strong>Customizable Parameters</strong>
                                 <br />
@@ -189,14 +267,18 @@ function SidekickStudio() {
                 <div className='row'>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>📂</div>
+                            <div className={styles.stepNumber}>
+                                <Folder size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>My Sidekicks</h3>
                             <p>View and manage your personal collection of AI sidekicks. Organize, customize, and deploy your chatflows.</p>
                         </div>
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>⭐</div>
+                            <div className={styles.stepNumber}>
+                                <Star size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>AnswerAgentAI Suggested</h3>
                             <p>
                                 Explore curated sidekicks recommended by AnswerAgentAI. Discover new capabilities and specialized
@@ -206,7 +288,9 @@ function SidekickStudio() {
                     </div>
                     <div className='col col--4'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>🌐</div>
+                            <div className={styles.stepNumber}>
+                                <Globe size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Community Shared</h3>
                             <p>Access sidekicks shared by your organization and the global community. Learn from others&apos; creations.</p>
                         </div>
@@ -231,10 +315,12 @@ function CTASection() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/chat' className={styles.secondaryLink}>
-                            📖 Read Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            Read Documentation
                         </a>
                         <a href='/docs/sidekick-studio' className={styles.secondaryLink}>
-                            🛠️ Sidekick Studio
+                            <Wrench size={18} className={styles.linkIcon} />
+                            Sidekick Studio
                         </a>
                     </div>
                 </div>
@@ -244,11 +330,11 @@ function CTASection() {
 }
 
 export default function Chat(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Chat - AI Conversation Hub'
                 description='Your central hub for AI conversations with specialized sidekicks. Manage chat histories, access different AI agents, and boost productivity.'
             >
@@ -270,7 +356,7 @@ export default function Chat(): JSX.Element {
                     <SidekickStudio />
                     <CTASection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

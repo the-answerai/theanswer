@@ -110,7 +110,15 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     const reactFlowWrapper = useRef(null)
     const canvasHeaderRef = useRef(null)
 
-    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
+    const {
+        showCredentialModal,
+        missingCredentials,
+        checkCredentials,
+        initialDontShowAgain,
+        handleAssign,
+        handleSkip,
+        handleCancel
+    } = useCredentialChecker()
 
     // ==============================|| Chatflow API ||============================== //
 
@@ -812,6 +820,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 onSkip={handleSkip}
                 onCancel={handleCancel}
                 flowData={null}
+                initialDontShowAgain={initialDontShowAgain}
             />
         </>
     )

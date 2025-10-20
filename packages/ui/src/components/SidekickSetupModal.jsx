@@ -16,13 +16,17 @@ import useNotifier from '@/utils/useNotifier'
 import { IconX } from '@tabler/icons-react'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
+import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 
 // Dynamic import for UnifiedCredentialsModal
 const UnifiedCredentialsModal = dynamic(() => import('@/ui-component/dialog/UnifiedCredentialsModal'), { ssr: false })
 
 const SidekickSetupModal = ({ sidekickId, onComplete }) => {
+    const preferenceScope = sidekickId ? `sidekick:${sidekickId}` : null
+
     // Local state to track if user has skipped setup for this instance
     const [hasSkipped, setHasSkipped] = useState(false)
+    const [isSuppressed, setIsSuppressed] = useState(() => (preferenceScope ? getCredentialModalDismissed(preferenceScope) : false))
 
     // Get search params to check for QuickSetup and router for URL manipulation
     const searchParams = useSearchParams()
@@ -49,12 +53,30 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         onComplete?.()
     }, [router, onComplete])
 
+    useEffect(() => {
+        if (!preferenceScope) return
+        // Local storage only available in browser
+        const storedPreference = getCredentialModalDismissed(preferenceScope)
+        setIsSuppressed((prev) => (prev === storedPreference ? prev : storedPreference))
+    }, [preferenceScope])
+
     // Reset hasSkipped when QuickSetup is true
     useEffect(() => {
         if (isQuickSetup && hasSkipped) {
             setHasSkipped(false)
         }
     }, [isQuickSetup])
+
+    const persistDismissPreference = useCallback(
+        (options) => {
+            if (!preferenceScope || !options?.dontShowDirty) return
+
+            const shouldSuppress = !!options.dontShowAgain
+            setCredentialModalDismissed(preferenceScope, shouldSuppress)
+            setIsSuppressed(shouldSuppress)
+        },
+        [preferenceScope]
+    )
 
     // Simplified error handler
     const handleModalError = useCallback(
@@ -78,7 +100,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
 
     // Handle credential assignment
     const handleModalAssign = useCallback(
-        async (credentialAssignments) => {
+        async (credentialAssignments, options) => {
             try {
                 if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
                     const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
@@ -90,39 +112,45 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                         options: { variant: 'success' }
                     })
                 }
+                persistDismissPreference(options)
                 handleURLCleanup()
             } catch (error) {
                 console.error('Error assigning credentials:', error)
                 handleModalError('Error assigning credentials. Please try again.')
             }
         },
-        [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError]
+        [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError, persistDismissPreference]
     )
 
-    const handleModalSkip = useCallback(() => {
+    const handleModalSkip = useCallback((options) => {
         const userConfirmed = window.confirm(
             'Warning: The chat flow will not work properly without credentials. Are you sure you want to skip setup?'
         )
 
         if (userConfirmed) {
             setHasSkipped(true)
+            persistDismissPreference(options)
             handleURLCleanup()
         }
-    }, [handleURLCleanup])
+    }, [handleURLCleanup, persistDismissPreference])
 
-    const handleModalCancel = useCallback(() => {
-        handleURLCleanup()
-    }, [handleURLCleanup])
+    const handleModalCancel = useCallback(
+        (options) => {
+            persistDismissPreference(options)
+            handleURLCleanup()
+        },
+        [handleURLCleanup, persistDismissPreference]
+    )
 
-    // Only show modal if:
-    // 1. Sidekick exists
-    // 2. User hasn't skipped setup for this instance (unless QuickSetup is true)
-    if (!sidekick || (hasSkipped && !isQuickSetup)) {
-        return null
+    const shouldHideModal = () => {
+        if (!sidekick) return true
+        if (isQuickSetup) return false
+        if (hasSkipped) return true
+        if (isSuppressed) return true
+        return !needsSetup
     }
 
-    // For non-QuickSetup mode, only show if there are unassigned credentials
-    if (!isQuickSetup && !needsSetup) {
+    if (shouldHideModal()) {
         return null
     }
 
@@ -134,6 +162,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
             onSkip={handleModalSkip}
             onCancel={handleModalCancel}
             onError={handleModalError}
+            initialDontShowAgain={isSuppressed}
         />
     )
 }
