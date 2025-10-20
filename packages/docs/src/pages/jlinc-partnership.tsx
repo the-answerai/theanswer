@@ -1,10 +1,30 @@
+/* eslint-disable react/no-unescaped-entities */
 import clsx from 'clsx'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import {
+    BarChart3,
+    Bot,
+    Building2,
+    ClipboardList,
+    Eye,
+    FileText,
+    FlaskRound,
+    Hospital,
+    Landmark,
+    PenLine,
+    Rocket,
+    Scale,
+    User
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function PartnershipHero() {
     return (
@@ -45,8 +65,8 @@ function PartnershipHero() {
                         <a href='#solution' className={styles.secondaryLink}>
                             How It Works
                         </a>
-                        <a href='https://docs.jlinc.io' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
-                            JLINC Documentation
+                        <a href='#architecture' className={styles.secondaryLink}>
+                            Technical Architecture
                         </a>
                     </div>
                 </div>
@@ -78,7 +98,7 @@ function VisionSection() {
                 <div className={styles.sectionEyebrow} style={{ textAlign: 'center', justifyContent: 'center' }}>
                     Why This Partnership Matters
                 </div>
-                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Solving AI&apos;s Trust Gap</h2>
+                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Solving AI's Trust Gap</h2>
 
                 <div style={{ maxWidth: '900px', margin: '0 auto 3rem', fontSize: '1.1rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
@@ -92,9 +112,9 @@ function VisionSection() {
                         <strong>Answer Agents and JLINC are pioneering the solution.</strong>
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
-                        By combining Answer Agents&apos; sophisticated AI orchestration with JLINC&apos;s cryptographic provenance protocol,
-                        we&apos;re creating something unprecedented: AI workflows where every decision is traceable, every contribution is
-                        accountable, and every output is auditable.
+                        By combining Answer Agents' sophisticated AI orchestration with JLINC's cryptographic provenance protocol, we're
+                        creating something unprecedented: AI workflows where every decision is traceable, every contribution is accountable,
+                        and every output is auditable.
                     </p>
                 </div>
 
@@ -114,10 +134,10 @@ function VisionSection() {
                         <div className={styles.featureCard} style={{ height: '100%' }}>
                             <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>JLINC Brings</h3>
                             <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'grid', gap: '0.75rem' }}>
-                                <li>Zero-knowledge third-party auditing</li>
-                                <li>Cryptographically signed inputs & outputs</li>
-                                <li>Information Sharing Agreements (ISAs)</li>
-                                <li>W3C DID identities for data provenance</li>
+                                <li>Cryptographic signature protocol (public key cryptography)</li>
+                                <li>Information Sharing Agreements (ISA)</li>
+                                <li>Vendor-neutral ledger anchoring</li>
+                                <li>W3C DID method specification</li>
                             </ul>
                         </div>
                     </div>
@@ -142,23 +162,29 @@ function VisionSection() {
 }
 
 function ProblemSection() {
-    const problems = [
+    const problems: {
+        icon: LucideIcon
+        title: string
+        pain: string
+        reality: string
+        problem: string
+    }[] = [
         {
-            icon: '📄',
+            icon: FileText,
             title: 'Where did this come from?',
             pain: 'AI generates earnings reports mixing data from 15 sources. Auditor asks: &quot;Prove these numbers came from approved systems.&quot;',
             reality: 'Screenshots, log files, trust',
             problem: 'Not sufficient for SOX compliance'
         },
         {
-            icon: '👁️',
+            icon: Eye,
             title: 'What exactly did the AI see?',
             pain: 'Agent analyzes confidential merger docs. Legal asks: &quot;Show us exactly what context the AI had.&quot;',
             reality: 'Best-effort prompt logs, often incomplete',
             problem: 'Not admissible as evidence'
         },
         {
-            icon: '✍️',
+            icon: PenLine,
             title: 'Who made the final decision?',
             pain: 'AI drafts SEC filing, three executives review it. Board asks: &quot;Who signed off on what?&quot;',
             reality: 'Email threads, comments in Google Docs',
@@ -178,8 +204,8 @@ function ProblemSection() {
                     {problems.map((item, idx) => (
                         <div key={idx} className='col col--4'>
                             <div className={styles.featureCard} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>
-                                    {item.icon}
+                                <div style={{ textAlign: 'center', marginBottom: '1rem', opacity: 0.5 }}>
+                                    <item.icon size={48} strokeWidth={1.5} />
                                 </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>{item.title}</h3>
                                 <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>{item.pain}</p>
@@ -228,18 +254,25 @@ function ProblemSection() {
 }
 
 function SolutionSection() {
-    const steps = [
+    const steps: {
+        number: string
+        icon: LucideIcon
+        title: string
+        subtitle: string
+        detail: string
+        result: string
+    }[] = [
         {
             number: '1',
-            icon: '📄',
+            icon: FileText,
             title: 'Source Verification',
             subtitle: 'Ingested documents',
-            detail: 'SHA-256 hash of each document signed via JLINC protocol',
+            detail: 'SHA-256 hash of each document signed via JLINC agreement',
             result: 'Provable origin of all inputs'
         },
         {
             number: '2',
-            icon: '🤖',
+            icon: Bot,
             title: 'Agent Reasoning',
             subtitle: 'Agent processes data',
             detail: 'Prompts, context windows, and intermediate outputs cryptographically stamped',
@@ -247,7 +280,7 @@ function SolutionSection() {
         },
         {
             number: '3',
-            icon: '👤',
+            icon: User,
             title: 'Human Collaboration',
             subtitle: 'Human review & edits',
             detail: 'Each human action appended as new JLINC event with identity verification',
@@ -255,7 +288,7 @@ function SolutionSection() {
         },
         {
             number: '4',
-            icon: '📊',
+            icon: BarChart3,
             title: 'Final Output',
             subtitle: 'Published report',
             detail: 'Final document hash linked to complete lineage chain',
@@ -271,7 +304,7 @@ function SolutionSection() {
                 </div>
                 <h2 className={clsx(styles.sectionHeading, 'text--center')}>Immutable Chain of Custody for AI Workflows</h2>
                 <p className={clsx(styles.sectionLead, 'text--center')} style={{ maxWidth: '800px', margin: '1rem auto 3rem' }}>
-                    Every step—from data ingestion to final report—is cryptographically signed and privately archived to ensure immutability
+                    Every step—from data ingestion to final report—is cryptographically stamped and anchored to an immutable ledger
                 </p>
 
                 <div className='row'>
@@ -281,7 +314,9 @@ function SolutionSection() {
                                 <div className={styles.stepNumber} style={{ marginBottom: '0.5rem' }}>
                                     {step.number}
                                 </div>
-                                <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>{step.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <step.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                                     {step.title}
                                 </h3>
@@ -330,6 +365,14 @@ function SolutionSection() {
                         </div>
                     ))}
                 </div>
+
+                <div
+                    className={clsx(styles.testimonialCard)}
+                    style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}
+                >
+                    <strong>Cryptographic Foundation:</strong> Every event is signed using standard public-key cryptography and anchored to
+                    your chosen ledger—whether that's a private database, Hyperledger, or public blockchain.
+                </div>
             </div>
         </section>
     )
@@ -377,7 +420,7 @@ function ComparisonSection() {
                         <tbody>
                             {[
                                 ['Lineage Granularity', 'Best-effort prompt logs', 'Cryptographic event stream at context-window level'],
-                                ['Proof Standard', 'Screenshot / PDF export', 'Cryptographically-backed, machine-verifiable receipts'],
+                                ['Proof Standard', 'Screenshot / PDF export', 'Ledger-backed, machine-verifiable receipts'],
                                 [
                                     'Human ↔ AI Handshake',
                                     'Informal comments or approval emails',
@@ -395,11 +438,7 @@ function ComparisonSection() {
                                     'Username/password authentication',
                                     'Cryptographic public-key identity (non-repudiable)'
                                 ],
-                                [
-                                    'High-Volume Performance',
-                                    'Limited by database performance',
-                                    'Tens of millions of records per day in single cloud thread'
-                                ]
+                                ['Ledger Flexibility', 'Proprietary databases', 'Vendor-neutral: private DB, Hyperledger, or public chain']
                             ].map((row, idx) => (
                                 <tr key={idx} style={{ borderBottom: idx < 7 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}>
                                     <td style={{ padding: '1rem', fontWeight: 600, color: '#00ffff' }}>{row[0]}</td>
@@ -415,9 +454,9 @@ function ComparisonSection() {
                     className={clsx(styles.testimonialCard)}
                     style={{ marginTop: '2rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
                 >
-                    This isn&apos;t just better logging—it&apos;s a{' '}
-                    <strong style={{ color: '#00ffff' }}>fundamental shift in how AI systems prove their trustworthiness</strong>. From
-                    &quot;we logged it&quot; to &quot;it&apos;s cryptographically impossible to falsify.&quot;
+                    This isn't just better logging—it's a{' '}
+                    <strong style={{ color: '#00ffff' }}>fundamental shift in how AI systems prove their trustworthiness</strong>. From "we
+                    logged it" to "it's cryptographically impossible to falsify."
                 </div>
             </div>
         </section>
@@ -467,7 +506,7 @@ function BenefitsSection() {
             title: 'Scale with Confidence',
             subtitle: 'For Executives',
             description: 'Board members can trust AI-assisted strategic documents. Scale agent workflows without sacrificing governance.',
-            detail: 'Competitive advantage: deploy AI where others can&apos;t'
+            detail: "Competitive advantage: deploy AI where others can't"
         }
     ]
 
@@ -515,9 +554,15 @@ function BenefitsSection() {
 }
 
 function IndustryUseCases() {
-    const industries = [
+    const industries: {
+        icon: LucideIcon
+        title: string
+        useCases: string[]
+        regulations: string
+        value: string
+    }[] = [
         {
-            icon: '🏦',
+            icon: Landmark,
             title: 'Financial Services',
             useCases: [
                 'Earnings releases & 10-K filings',
@@ -529,21 +574,21 @@ function IndustryUseCases() {
             value: 'Prove to auditors that AI-assisted financial disclosures have complete, cryptographically-verified data lineage from source systems to published documents.'
         },
         {
-            icon: '🏥',
+            icon: Hospital,
             title: 'Healthcare & Life Sciences',
             useCases: ['Clinical trial data analysis', 'Adverse event reporting', 'IRB documentation', 'Medical research publications'],
             regulations: 'HIPAA, 21 CFR Part 11 (FDA), GDPR Article 9',
             value: 'Demonstrate that AI analysis of protected health information maintains complete chain of custody and consent tracking throughout the research lifecycle.'
         },
         {
-            icon: '⚖️',
+            icon: Scale,
             title: 'Legal & Professional Services',
             useCases: ['E-discovery document analysis', 'Contract review & redlining', 'Due diligence reports', 'Attorney work product'],
             regulations: 'Attorney-client privilege, Federal Rules of Evidence',
             value: 'Create defensible AI-assisted legal work product with chain of custody provable in court. Maintain privilege while demonstrating competence.'
         },
         {
-            icon: '🏢',
+            icon: Building2,
             title: 'Public Companies',
             useCases: [
                 'ESG reporting & sustainability disclosures',
@@ -562,13 +607,15 @@ function IndustryUseCases() {
                 <div className={styles.sectionEyebrow} style={{ textAlign: 'center', justifyContent: 'center' }}>
                     Industry Use Cases
                 </div>
-                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Built for Enterprises That Can&apos;t Afford to Guess</h2>
+                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Built for Enterprises That Can't Afford to Guess</h2>
 
                 <div className='row' style={{ marginTop: '3rem' }}>
                     {industries.map((industry, idx) => (
                         <div key={idx} className='col col--6' style={{ marginBottom: '2rem' }}>
                             <div className={clsx(styles.featureCard, styles.integrationCard)}>
-                                <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{industry.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <industry.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1.5rem' }}>{industry.title}</h3>
 
                                 <div style={{ marginBottom: '1rem' }}>
@@ -614,8 +661,6 @@ function IndustryUseCases() {
     )
 }
 
-// Unused function - commented out to fix ESLint error
-// eslint-disable-next-line unused-imports/no-unused-vars
 function TechnicalArchitecture() {
     return (
         <section className={styles.missionSection} id='architecture'>
@@ -625,7 +670,7 @@ function TechnicalArchitecture() {
                 </div>
                 <h2 className={clsx(styles.sectionHeading, 'text--center')}>Protocol-Based, Not Platform-Locked</h2>
                 <p className={clsx(styles.sectionLead, 'text--center')} style={{ maxWidth: '700px', margin: '1rem auto 3rem' }}>
-                    JLINC&apos;s open standard integrates seamlessly with Answer Agents&apos; orchestration layer
+                    JLINC's open standard integrates seamlessly with Answer Agents' orchestration layer
                 </p>
 
                 <div
@@ -760,7 +805,7 @@ function AboutJLINCSection() {
                 <div className={styles.sectionEyebrow} style={{ textAlign: 'center', justifyContent: 'center' }}>
                     About JLINC
                 </div>
-                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Powered by JLINC&apos;s Open Provenance Protocol</h2>
+                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Powered by JLINC's Open Provenance Protocol</h2>
 
                 <div style={{ maxWidth: '900px', margin: '2rem auto', fontSize: '1.05rem', lineHeight: '1.7', opacity: 0.9 }}>
                     <p>
@@ -779,9 +824,8 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Protocol, Not Platform</h3>
                             <p>
-                                JLINC isn&apos;t a blockchain company or SaaS vendor. It&apos;s an{' '}
-                                <strong>open protocol specification</strong> that works with any infrastructure. Think of it like SMTP for
-                                provenance—a standard anyone can implement.
+                                JLINC isn't a blockchain company or SaaS vendor. It's an <strong>open protocol specification</strong> that
+                                works with any infrastructure. Think of it like SMTP for provenance—a standard anyone can implement.
                             </p>
                         </div>
                     </div>
@@ -789,8 +833,8 @@ function AboutJLINCSection() {
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
                             <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Patent-Protected Innovation</h3>
                             <p>
-                                US Patent &quot;Internet Data Usage Control Systems&quot; issued January 17, 2023 by the US Patent and
-                                Trademark Office. Legally protected intellectual property with nearly a decade of R&amp;D.
+                                US Patent "Internet Data Usage Control Systems" issued January 17, 2023 by the US Patent and Trademark
+                                Office. Legally protected intellectual property with nearly a decade of R&D.
                             </p>
                         </div>
                     </div>
@@ -827,11 +871,14 @@ function AboutJLINCSection() {
                         flexWrap: 'wrap'
                     }}
                 >
-                    <a href='https://docs.jlinc.io' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
-                        JLINC Documentation
+                    <a href='https://jlinc.com' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
+                        Learn more about JLINC
                     </a>
                     <a href='https://protocol.jlinc.org' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
                         JLINC Protocol Specification
+                    </a>
+                    <a href='https://did-spec.jlinc.org' target='_blank' rel='noopener noreferrer' className={styles.secondaryLink}>
+                        W3C DID Method Spec
                     </a>
                 </div>
             </div>
@@ -839,14 +886,18 @@ function AboutJLINCSection() {
     )
 }
 
-// Unused function - commented out to fix ESLint error
-// eslint-disable-next-line unused-imports/no-unused-vars
 function ImplementationRoadmap() {
-    const phases = [
+    const phases: {
+        phase: string
+        duration: string
+        icon: LucideIcon
+        tasks: string[]
+        deliverable: string
+    }[] = [
         {
             phase: 'Phase 1: Pilot',
             duration: 'Weeks 1-2',
-            icon: '🧪',
+            icon: FlaskRound,
             tasks: [
                 'Enable JLINC stamping in sandbox environment',
                 'Test with sample workflows (dummy data)',
@@ -858,7 +909,7 @@ function ImplementationRoadmap() {
         {
             phase: 'Phase 2: Policy Mapping',
             duration: 'Weeks 3-5',
-            icon: '📋',
+            icon: ClipboardList,
             tasks: [
                 'Map JLINC event types to governance controls',
                 'Define signature requirements (who signs what)',
@@ -870,7 +921,7 @@ function ImplementationRoadmap() {
         {
             phase: 'Phase 3: Production',
             duration: 'Weeks 6-8',
-            icon: '🚀',
+            icon: Rocket,
             tasks: [
                 'Deploy to production AI workflows',
                 'Train teams on provenance verification',
@@ -899,7 +950,9 @@ function ImplementationRoadmap() {
                                     <h3 style={{ color: '#00ffff', margin: 0, fontSize: '1rem' }}>{phase.phase}</h3>
                                     <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>{phase.duration}</span>
                                 </div>
-                                <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{phase.icon}</div>
+                                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                                    <phase.icon size={48} strokeWidth={1.5} />
+                                </div>
                                 <ul
                                     style={{
                                         listStyle: 'disc',
@@ -963,8 +1016,6 @@ function ImplementationRoadmap() {
     )
 }
 
-// Unused function - commented out to fix ESLint error
-// eslint-disable-next-line unused-imports/no-unused-vars
 function PartnershipVisionSection() {
     return (
         <section className={styles.featuresSection}>
@@ -981,11 +1032,11 @@ function PartnershipVisionSection() {
                     </p>
                     <p style={{ marginTop: '1.5rem' }}>
                         As AI becomes more capable—from writing code to making medical diagnoses to managing investment portfolios—the need
-                        for provenance becomes existential. Society can&apos;t afford opaque AI systems in critical domains. We need
-                        verifiable intelligence.
+                        for provenance becomes existential. Society can't afford opaque AI systems in critical domains. We need verifiable
+                        intelligence.
                     </p>
                     <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '1.2rem', color: '#00ffff' }}>
-                        <strong>That&apos;s what we&apos;re building together.</strong>
+                        <strong>That's what we're building together.</strong>
                     </p>
                 </div>
 
@@ -1044,104 +1095,31 @@ function PartnershipVisionSection() {
     )
 }
 
-function ZeroKnowledgeAuditingSection() {
-    return (
-        <section className={styles.missionSection}>
-            <div className='container'>
-                <div className={styles.sectionEyebrow} style={{ textAlign: 'center', justifyContent: 'center' }}>
-                    Core Capability
-                </div>
-                <h2 className={clsx(styles.sectionHeading, 'text--center')}>Truly Private, Zero-Knowledge, Third-Party Auditing</h2>
-                <p className={clsx(styles.sectionLead, 'text--center')} style={{ maxWidth: '800px', margin: '1rem auto 3rem' }}>
-                    Enable external auditors to verify your AI operations without ever seeing your private data
-                </p>
-
-                <div style={{ maxWidth: '900px', margin: '0 auto 3rem', fontSize: '1.05rem', lineHeight: '1.7', opacity: 0.9 }}>
-                    <p>
-                        Traditional auditing requires sharing sensitive data with auditors. JLINC&apos;s zero-knowledge approach
-                        fundamentally changes this—enabling cryptographic verification of compliance without exposing your proprietary
-                        information.
-                    </p>
-                </div>
-
-                <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard} style={{ height: '100%' }}>
-                            <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>🔐</div>
-                            <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Cryptographic Signing</h3>
-                            <p style={{ fontSize: '0.95rem' }}>
-                                Every time an event passes through the system, it is cryptographically signed by that element of the system,
-                                creating an immutable chain of accountability.
-                            </p>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard} style={{ height: '100%' }}>
-                            <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>🔒</div>
-                            <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Privatizing Hash Algorithm</h3>
-                            <p style={{ fontSize: '0.95rem' }}>
-                                Data is passed through a privatizing hashing algorithm to create zero-knowledge audit records—one-way
-                                functions that can&apos;t be reverse-engineered to reveal sensitive content.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard} style={{ height: '100%' }}>
-                            <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>📦</div>
-                            <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Third-Party Archiving</h3>
-                            <p style={{ fontSize: '0.95rem' }}>
-                                Audit records are delivered to a third-party archiver for use in later audits, maintaining independence and
-                                preventing tampering by any single party.
-                            </p>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard} style={{ height: '100%' }}>
-                            <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>✓</div>
-                            <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1rem' }}>Verifiable Compliance</h3>
-                            <p style={{ fontSize: '0.95rem' }}>
-                                External auditors can cryptographically verify that data and ownership is what you claim it to be—without
-                                ever being given access to your private data.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    className={clsx(styles.testimonialCard)}
-                    style={{ marginTop: '3rem', maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}
-                >
-                    <strong style={{ fontSize: '1.1rem', display: 'block', marginBottom: '0.5rem' }}>
-                        This enables businesses to leverage third-party auditors that can verify compliance without compromising data
-                        privacy.
-                    </strong>
-                    <span style={{ opacity: 0.9 }}>Auditors prove what happened. You keep your data. Everyone wins.</span>
-                </div>
-            </div>
-        </section>
-    )
-}
-
 function FAQSection() {
     const faqs = [
         {
             q: 'How is this different from blockchain-based AI solutions?',
-            a: 'JLINC is a protocol, not a blockchain. It works with high-volume, high-speed infrastructure without the overhead of traditional ledgers. Process tens of millions of records per day in a single cloud thread—impossible with blockchain-based solutions.'
+            a: 'JLINC is a protocol, not a blockchain. It can anchor to private databases, Hyperledger, or public blockchains—giving you maximum flexibility. Most "blockchain AI" solutions lock you into specific infrastructure. JLINC adapts to yours.'
         },
         {
             q: 'Does cryptographic verification slow down AI workflows?',
-            a: 'No. JLINC stamping happens asynchronously, adding <100ms per event (imperceptible to users). Your agents run at full speed while provenance is captured in the background. The non-blockchain architecture enables processing tens of millions of records daily without performance degradation.'
+            a: 'No. JLINC stamping happens asynchronously, adding <100ms per event (imperceptible to users). Your agents run at full speed while provenance is captured in the background.'
+        },
+        {
+            q: "What if we don't want to use a public blockchain?",
+            a: "You don't have to. JLINC is vendor-neutral. Anchor to your private PostgreSQL database, Hyperledger Fabric, or any system you trust. The cryptographic signatures provide tamper-evidence regardless of ledger choice."
         },
         {
             q: 'Can we verify provenance years later?',
-            a: 'Yes. JLINC creates immutable records that can be queried indefinitely. As long as the archive exists (your responsibility to maintain), provenance is verifiable. Think of it like digital signatures on PDFs—they don&apos;t expire.'
+            a: "Yes. JLINC creates immutable records that can be queried indefinitely. As long as the ledger exists (your responsibility to maintain), provenance is verifiable. Think of it like digital signatures on PDFs—they don't expire."
+        },
+        {
+            q: 'How do you protect data privacy?',
+            a: "Only cryptographic hashes are written to the ledger—never the actual data. Hashes are one-way functions (can't reverse-engineer content). Your sensitive information stays in your systems with your access controls."
         },
         {
             q: 'What happens if Answer Agents or JLINC goes out of business?',
-            a: 'JLINC is an open protocol. The signature verification doesn&apos;t depend on JLINC-the-company existing. As long as you have the cryptographic keys and archive data, you can verify provenance. We can also provide code escrow arrangements.'
+            a: "JLINC is an open protocol. The signature verification doesn't depend on JLINC-the-company existing. As long as you have the cryptographic keys and ledger data, you can verify provenance. We can also provide code escrow arrangements."
         }
     ]
 
@@ -1175,7 +1153,7 @@ function DemoCTASection() {
                 </div>
                 <h2 className={clsx(styles.sectionHeading, 'text--center')}>Experience Verifiable AI in Action</h2>
                 <p className={clsx(styles.sectionLead, 'text--center')} style={{ maxWidth: '700px', margin: '1rem auto 3rem' }}>
-                    See how Answer Agents + JLINC transforms AI workflows from &quot;trust us&quot; to &quot;verify yourself&quot;
+                    See how Answer Agents + JLINC transforms AI workflows from "trust us" to "verify yourself"
                 </p>
 
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -1184,7 +1162,7 @@ function DemoCTASection() {
                         style={{ background: 'rgba(0, 255, 255, 0.08)', border: '2px solid rgba(0, 255, 255, 0.35)' }}
                     >
                         <h3 style={{ color: '#00ffff', textAlign: 'center', marginBottom: '1.5rem' }}>Schedule 30-Minute Demo</h3>
-                        <p style={{ textAlign: 'center', marginBottom: '1.5rem', opacity: 0.9 }}>What you&apos;ll see:</p>
+                        <p style={{ textAlign: 'center', marginBottom: '1.5rem', opacity: 0.9 }}>What you'll see:</p>
                         <ul
                             style={{
                                 listStyle: 'disc',
@@ -1220,14 +1198,8 @@ function DemoCTASection() {
                             <div className={styles.featureCard}>
                                 <h4 style={{ color: '#00ffff', marginBottom: '1rem', textAlign: 'center' }}>For Technical Teams</h4>
                                 <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                    <a
-                                        href='https://docs.jlinc.io'
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                        className={styles.secondaryLink}
-                                        style={{ justifyContent: 'center' }}
-                                    >
-                                        JLINC Documentation
+                                    <a href='#architecture' className={styles.secondaryLink} style={{ justifyContent: 'center' }}>
+                                        Technical Architecture
                                     </a>
                                     <a
                                         href='https://protocol.jlinc.org'
@@ -1236,7 +1208,7 @@ function DemoCTASection() {
                                         className={styles.secondaryLink}
                                         style={{ justifyContent: 'center' }}
                                     >
-                                        JLINC Protocol Specification
+                                        JLINC Protocol Docs
                                     </a>
                                 </div>
                             </div>
@@ -1269,8 +1241,6 @@ function DemoCTASection() {
     )
 }
 
-// Unused function - commented out to fix ESLint error
-// eslint-disable-next-line unused-imports/no-unused-vars
 function CoFooter() {
     return (
         <section style={{ background: 'rgba(0, 0, 0, 0.5)', padding: '3rem 0', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -1340,13 +1310,11 @@ function CoFooter() {
 }
 
 export default function JLINCPartnership(): JSX.Element {
-    // siteConfig unused but required by useDocusaurusContext hook
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='JLINC Partnership - Cryptographically-Verifiable AI'
                 description='Answer Agents and JLINC bring immutable data provenance to AI workflows—enabling trustworthy AI adoption in public companies and regulated enterprises.'
             >
@@ -1374,7 +1342,6 @@ export default function JLINCPartnership(): JSX.Element {
                     <SolutionSection />
                     <ComparisonSection />
                     <BenefitsSection />
-                    <ZeroKnowledgeAuditingSection />
                     <IndustryUseCases />
                     {/* <TechnicalArchitecture /> */}
                     <AboutJLINCSection />
@@ -1384,7 +1351,7 @@ export default function JLINCPartnership(): JSX.Element {
                     <DemoCTASection />
                     {/* <CoFooter /> */}
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

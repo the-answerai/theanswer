@@ -6,6 +6,9 @@ import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISu
 
 import styles from './index.module.css'
 
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
+
 function AgentsHero() {
     return (
         <header className={clsx('hero hero--primary', styles.heroSection)}>
@@ -19,8 +22,8 @@ function AgentsHero() {
                     supercharge your productivity.
                 </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Build Agents Now
+                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                        Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/agents' className={styles.secondaryLink}>
@@ -550,11 +553,11 @@ function CTASection() {
 }
 
 export default function Agents(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='AI Agents - Intelligent Autonomous Assistants'
                 description='Build intelligent AI agents that understand your needs, connect to your tools, and execute complex workflows autonomously.'
             >
@@ -567,7 +570,7 @@ export default function Agents(): JSX.Element {
                     <HowItWorks />
                     <CTASection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }
