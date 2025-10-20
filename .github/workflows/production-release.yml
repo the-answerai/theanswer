@@ -1,0 +1,161 @@
+name: Create Production Release
+
+on:
+    pull_request:
+        types: [closed]
+        branches:
+            - production
+
+jobs:
+    create_release:
+        if: github.event.pull_request.merged == true
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: read
+            issues: read
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: production
+
+            - name: Extract version from PR
+              id: extract_version
+              run: |
+                  # Extract version from PR title (e.g., "Release: Staging to Production - v1.7.1")
+                  PR_TITLE="${{ github.event.pull_request.title }}"
+                  VERSION=$(echo "$PR_TITLE" | grep -oP 'v\d+\.\d+\.\d+' || echo "")
+
+                  # If no version in title, try to extract from branch name
+                  if [ -z "$VERSION" ]; then
+                    BRANCH="${{ github.event.pull_request.head.ref }}"
+                    VERSION=$(echo "$BRANCH" | grep -oP 'v\d+\.\d+\.\d+' || echo "")
+                  fi
+
+                  # If still no version, look for release notes file
+                  if [ -z "$VERSION" ]; then
+                    LATEST_RELEASE_NOTE=$(ls -1 release-notes/RELEASE_NOTES_*.md 2>/dev/null | sort -V | tail -1 || echo "")
+                    if [ -n "$LATEST_RELEASE_NOTE" ]; then
+                      VERSION=$(basename "$LATEST_RELEASE_NOTE" | grep -oP '\d+\.\d+\.\d+' || echo "")
+                      if [ -n "$VERSION" ]; then
+                        VERSION="v$VERSION"
+                      fi
+                    fi
+                  fi
+
+                  # If still no version, generate one based on date
+                  if [ -z "$VERSION" ]; then
+                    VERSION="v$(date +%Y.%m.%d)"
+                  fi
+
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Detected version: $VERSION"
+
+            - name: Read release notes
+              id: release_notes
+              run: |
+                  # Try to find release notes file
+                  VERSION_NUM="${{ steps.extract_version.outputs.version }}"
+                  VERSION_NUM_CLEAN=$(echo "$VERSION_NUM" | sed 's/^v//')
+                  RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_${VERSION_NUM_CLEAN}.md"
+
+                  if [ -f "$RELEASE_NOTES_FILE" ]; then
+                    echo "Found release notes file: $RELEASE_NOTES_FILE"
+                    # Read the file and store in a variable, properly handling multiline
+                    {
+                      echo 'notes<<EOF'
+                      cat "$RELEASE_NOTES_FILE"
+                      echo 'EOF'
+                    } >> $GITHUB_OUTPUT
+                  else
+                    echo "No release notes file found at $RELEASE_NOTES_FILE, using PR body"
+                    # Use PR body as release notes
+                    {
+                      echo 'notes<<EOF'
+                      echo "${{ github.event.pull_request.body }}"
+                      echo 'EOF'
+                    } >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Check if release exists
+              id: check_release
+              run: |
+                  VERSION="${{ steps.extract_version.outputs.version }}"
+                  # Check if a release with this tag already exists
+                  if gh release view "$VERSION" >/dev/null 2>&1; then
+                    echo "exists=true" >> $GITHUB_OUTPUT
+                    echo "Release $VERSION already exists"
+                  else
+                    echo "exists=false" >> $GITHUB_OUTPUT
+                    echo "Release $VERSION does not exist"
+                  fi
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create Release
+              if: steps.check_release.outputs.exists == 'false'
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ steps.extract_version.outputs.version }}
+                  release_name: Release ${{ steps.extract_version.outputs.version }}
+                  body: |
+                      ## Release ${{ steps.extract_version.outputs.version }}
+
+                      This release was automatically created from PR #${{ github.event.pull_request.number }}
+
+                      **PR Title:** ${{ github.event.pull_request.title }}
+                      **Merged by:** @${{ github.event.pull_request.merged_by.login }}
+                      **Merge Date:** ${{ github.event.pull_request.merged_at }}
+
+                      ---
+
+                      ${{ steps.release_notes.outputs.notes }}
+
+                      ---
+
+                      **Full Changelog:** [${{ github.event.pull_request.base.ref }}...${{ steps.extract_version.outputs.version }}](https://github.com/${{ github.repository }}/compare/${{ github.event.pull_request.base.ref }}...${{ steps.extract_version.outputs.version }})
+                  draft: false
+                  prerelease: false
+
+            - name: Update existing release
+              if: steps.check_release.outputs.exists == 'true'
+              run: |
+                  VERSION="${{ steps.extract_version.outputs.version }}"
+                  echo "Updating existing release $VERSION"
+
+                  # Update the release with new information
+                  gh release edit "$VERSION" \
+                    --title "Release $VERSION" \
+                    --notes "## Release $VERSION
+
+                    This release was automatically updated from PR #${{ github.event.pull_request.number }}
+
+                    **PR Title:** ${{ github.event.pull_request.title }}
+                    **Merged by:** @${{ github.event.pull_request.merged_by.login }}
+                    **Merge Date:** ${{ github.event.pull_request.merged_at }}
+
+                    ---
+
+                    ${{ steps.release_notes.outputs.notes }}
+
+                    ---
+
+                    **Full Changelog:** [${{ github.event.pull_request.base.ref }}...$VERSION](https://github.com/${{ github.repository }}/compare/${{ github.event.pull_request.base.ref }}...$VERSION)"
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Post release comment
+              if: success()
+              run: |
+                  VERSION="${{ steps.extract_version.outputs.version }}"
+                  ACTION="${{ steps.check_release.outputs.exists == 'true' && 'updated' || 'created' }}"
+
+                  gh pr comment ${{ github.event.pull_request.number }} \
+                    --body "🎉 Release [$VERSION](https://github.com/${{ github.repository }}/releases/tag/$VERSION) has been automatically $ACTION!"
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
