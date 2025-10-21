@@ -47,8 +47,6 @@
         "cypress:ci": "START_SERVER_AND_TEST_INSECURE=1 start-server-and-test start https-get://localhost:3000 cypress:run",
         "test": "jest",
         "test:auth": "mocha -r ts-node/register test/auth/**/*.test.ts --timeout 10000",
-        "backfill-billing-tags": "ts-node scripts/backfill-billing-tags.ts",
-        "backfill-billing-tags:dry": "DRY_RUN=true ts-node scripts/backfill-billing-tags.ts",
         "test:api": "jest test/api",
         "test:api:watch": "jest test/api --watch",
         "test:billing": "jest src/services/billing/__tests__/*.test.ts",
