@@ -462,24 +462,13 @@ export class StripeProvider {
     ): Promise<boolean> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
-        // Self-healing: Track if trace had no billing tags for logging
-        // IMPORTANT: We do NOT modify tags because Langfuse tags are append-only (cannot be removed via API)
-        // - billing:pending tag stays forever (added on trace creation in handler.ts)
-        // - We rely ONLY on metadata.billing_status to track processing state
-        // - When tag filtering is enabled, we fetch billing:pending traces and filter by metadata.billing_status
-        const existingTags = (data.fullTrace?.tags || []) as string[]
-        const hasBillingPending = existingTags.includes('billing:pending')
-        const hasNoBillingTags = !hasBillingPending
-
+        // Mark trace as processed in Langfuse metadata
+        // This prevents it from being fetched again (filtered by API-level metadata.billing_status != 'processed')
         await langfuse.trace({
             id: data.traceId,
             timestamp: data.fullTrace?.timestamp,
-            // Do NOT set tags - Langfuse tags are append-only and cannot be removed
-            // The billing:pending tag stays on the trace forever
             metadata: {
                 ...data.fullTrace?.metadata,
-                // Self-healing: Always set billing_status to processed
-                // This ensures consistency even if the trace was previously untagged
                 billing_status: 'processed',
                 meter_event_id: result.identifier,
                 billing_details: {
@@ -519,8 +508,7 @@ export class StripeProvider {
             }
         })
 
-        // Return true if self-healing occurred (trace had no billing tags)
-        return hasNoBillingTags
+        return false
     }
 
     private calculateResourceBreakdown(credits: number, cost: number, totalCredits: number) {
