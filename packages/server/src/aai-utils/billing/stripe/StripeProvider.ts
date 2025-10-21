@@ -449,11 +449,38 @@ export class StripeProvider {
     ): Promise<void> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
+        // Self-healing: Prepare updated tags
+        // - Remove 'billing:pending' if it exists
+        // - Add 'billing:processed' to mark as completed
+        // - If trace was never tagged (missed by backfill), this will add the processed tag
+        // - If trace has 'billing:pending', it will be replaced with 'billing:processed'
+        const existingTags = (data.fullTrace?.tags || []) as string[]
+        const hasBillingProcessed = existingTags.includes('billing:processed')
+        const hasBillingPending = existingTags.includes('billing:pending')
+        const hasNoBillingTags = !hasBillingProcessed && !hasBillingPending
+
+        // Log if we're self-healing an untagged trace
+        if (hasNoBillingTags) {
+            log.info('Self-healing: Processing untagged trace', {
+                traceId: data.traceId,
+                existingTags,
+                timestamp: data.fullTrace?.timestamp
+            })
+        }
+
+        // Only update tags if not already processed (defensive check)
+        const updatedTags = hasBillingProcessed
+            ? existingTags
+            : existingTags.filter((tag: string) => tag !== 'billing:pending').concat('billing:processed')
+
         await langfuse.trace({
             id: data.traceId,
             timestamp: data.fullTrace?.timestamp,
+            tags: updatedTags,
             metadata: {
                 ...data.fullTrace?.metadata,
+                // Self-healing: Always set billing_status to processed
+                // This ensures consistency even if the trace was previously untagged
                 billing_status: 'processed',
                 meter_event_id: result.identifier,
                 billing_details: {

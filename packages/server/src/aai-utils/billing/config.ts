@@ -41,6 +41,19 @@ export const BILLING_CONFIG = {
         BATCH_DELAY_MS: 1000
     },
 
+    // Sync configuration
+    SYNC: {
+        LOOKBACK_DAYS: parseInt(process.env.BILLING_SYNC_LOOKBACK_DAYS || '90'),
+        PAGE_BATCH_SIZE: 15, // Number of pages to fetch in parallel
+        RATE_LIMIT_DELAY_MS: 1000, // Delay between page batches
+        // Enable tag-based filtering (requires backfill)
+        // WARNING: Only enable after backfill is complete AND you have a mechanism to tag new traces
+        // When enabled, only fetches traces with 'billing:pending' tag
+        // New traces created after backfill won't have tags and will be MISSED
+        // Options: (1) Run backfill periodically, (2) Tag new traces on creation, or (3) Keep disabled
+        USE_TAG_FILTERING: process.env.BILLING_USE_TAG_FILTERING === 'true'
+    },
+
     // Resource configuration
     AI_TOKENS: {
         TOKENS_PER_CREDIT: 10, // 1,000 tokens = 100 Credits
