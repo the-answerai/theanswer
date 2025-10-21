@@ -1,6 +1,6 @@
 export type ObservationLevel = 'DEBUG' | 'DEFAULT' | 'WARNING' | 'ERROR'
 export type UsageUnit = 'CHARACTERS' | 'TOKENS' | 'MILLISECONDS' | 'SECONDS' | 'IMAGES' | 'REQUESTS'
-
+import { MetadataFilter } from 'langfuse/types'
 export interface Usage {
     input?: null | number
     inputCost?: null | number
@@ -163,7 +163,7 @@ export interface LangfuseClient {
     fetchTrace(id: string): Promise<{ data: LangfuseTrace }>
     fetchObservation(id: string): Promise<Observation>
     fetchTraces(options: {
-        fromTimestamp?: string | null
+        fromTimestamp?: string | null | Date
         limit?: number | null
         name?: string | null
         orderBy?: string | null
@@ -174,7 +174,7 @@ export interface LangfuseClient {
         toTimestamp?: string | null
         userId?: string | null
         version?: string | null
-        filter?: Record<string, any>
+        filter?: MetadataFilter[] | Record<string, any>
         cursor?: string
     }): Promise<{
         data: LangfuseTrace[]

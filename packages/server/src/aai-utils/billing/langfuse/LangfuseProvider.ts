@@ -8,6 +8,28 @@ import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
 type Trace = GetLangfuseTracesResponse['data'][number]
 type FullTrace = GetLangfuseTraceResponse
 
+/**
+ * Metadata filter structure for Langfuse API
+ * Note: API supports this in v3.38.6+ but SDK types not yet updated
+ */
+interface MetadataFilter {
+    column: string
+    operator: string
+    key?: string
+    value: any
+    type: string
+}
+
+/**
+ * Extended fetchTraces params with filter support
+ * Note: SDK types don't include 'filter' yet, but API supports it
+ */
+interface FetchTracesParams {
+    fromTimestamp?: Date
+    limit?: number
+    page?: number
+    filter?: MetadataFilter[]
+}
 export class LangfuseProvider {
     // Cache for flow platform status (resets each sync)
     private platformNodeCache = new Map<string, boolean>()
@@ -19,7 +41,7 @@ export class LangfuseProvider {
      * Metadata filter to exclude already-processed traces
      * Backward compatible: Traces without billing_status field are included (treated as != 'processed')
      */
-    private static readonly UNPROCESSED_FILTER = [
+    private static readonly UNPROCESSED_FILTER: MetadataFilter[] = [
         {
             column: 'metadata',
             operator: '!=',
@@ -98,8 +120,14 @@ export class LangfuseProvider {
             // Handle single trace lookup
             if (traceId) {
                 const trace = await langfuse.fetchTrace(traceId)
-                const traces = trace.data
-                    ? [{ ...trace.data, observations: trace.data.observations?.map((obs: any) => obs?.id) } as any]
+                const traces: Trace[] = trace.data
+                    ? [
+                          {
+                              ...trace.data,
+                              observations: trace.data.observations?.map((obs) => obs?.id),
+                              scores: trace.data.scores?.map((score) => score?.id)
+                          } as unknown as Trace
+                      ]
                     : []
 
                 const response = await this.processAndSyncTraces(traces)
@@ -120,12 +148,14 @@ export class LangfuseProvider {
             })
 
             // Fetch and process first page
-            const initialResponse = await langfuse.fetchTraces({
+            const params: FetchTracesParams = {
                 fromTimestamp,
                 limit: 100,
                 page: 1,
                 filter: LangfuseProvider.UNPROCESSED_FILTER
-            } as any)
+            }
+            // SDK types don't include filter yet, but API supports it (3.38.6+)
+            const initialResponse = await langfuse.fetchTraces(params as Parameters<typeof langfuse.fetchTraces>[0])
 
             const totalPages = initialResponse.meta.totalPages
             log.info('Total pages to process', { totalPages })
@@ -186,7 +216,7 @@ export class LangfuseProvider {
             processedCount,
             failedCount,
             skippedCount
-        } as any
+        }
     }
 
     /**
@@ -201,14 +231,14 @@ export class LangfuseProvider {
         // Build page requests
         const pageRequests = []
         for (let page = startPage; page <= endPage; page++) {
-            pageRequests.push(
-                langfuse.fetchTraces({
-                    fromTimestamp,
-                    limit: 100,
-                    page,
-                    filter: LangfuseProvider.UNPROCESSED_FILTER
-                } as any)
-            )
+            const params: FetchTracesParams = {
+                fromTimestamp,
+                limit: 100,
+                page,
+                filter: LangfuseProvider.UNPROCESSED_FILTER
+            }
+            // SDK types don't include filter yet, but API supports it (3.38.6+)
+            pageRequests.push(langfuse.fetchTraces(params as Parameters<typeof langfuse.fetchTraces>[0]))
         }
 
         // Fetch all pages in parallel
