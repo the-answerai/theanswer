@@ -30,6 +30,15 @@ jobs:
             - name: Detect changes
               id: changes
               run: |
+                  # Skip if last commit was made by GitHub Action (prevents infinite loop)
+                  COMMIT_AUTHOR="${{ github.event.head_commit.author.name || '' }}"
+                  if [ "$COMMIT_AUTHOR" == "GitHub Action" ]; then
+                    echo "⏭️  Skipping - last commit was automated version bump"
+                    echo "embed_react_changed=false" >> $GITHUB_OUTPUT
+                    echo "submodule_hash_changed=false" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
+
                   # For manual triggers, always mark as changed
                   if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
                     echo "embed_react_changed=true" >> $GITHUB_OUTPUT
@@ -264,7 +273,7 @@ jobs:
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-            - name: Create Git Tag
+            - name: Commit and push version bump
               run: |
                   NEW_VERSION="aai-embed-react-v${{ steps.version.outputs.new_version }}"
                   echo "Creating tag $NEW_VERSION"
@@ -273,11 +282,22 @@ jobs:
                   git add package.json
                   cd ../..
 
-                  git commit -m "chore: bump aai-embed-react to ${{ steps.version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+                  # Commit the version bump
+                  if git commit -m "chore: bump aai-embed-react to ${{ steps.version.outputs.new_version }} [skip ci]"; then
+                    echo "✅ Version bump committed"
 
-                  if ! git tag -l | grep -q "^$NEW_VERSION$"; then
-                    git tag -a $NEW_VERSION -m "Release aai-embed-react ${{ steps.version.outputs.new_version }}"
-                    git push origin $NEW_VERSION || echo "Failed to push tag, continuing..."
+                    # Push the commit back to staging
+                    git push origin staging
+
+                    # Create and push tag
+                    if ! git tag -l | grep -q "^$NEW_VERSION$"; then
+                      git tag -a $NEW_VERSION -m "Release aai-embed-react ${{ steps.version.outputs.new_version }}"
+                      git push origin $NEW_VERSION
+                    fi
+
+                    echo "✅ Pushed commit and tag to origin"
+                  else
+                    echo "⚠️  No changes to commit (package.json unchanged)"
                   fi
 
             - name: Summary
