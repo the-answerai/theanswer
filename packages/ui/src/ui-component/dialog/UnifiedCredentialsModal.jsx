@@ -39,6 +39,7 @@ import {
 // project imports
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import AddEditCredentialDialog from '@/views/credentials/AddEditCredentialDialog'
+import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import {
     groupCredentialsByType,
     groupAllCredentialsByType,
@@ -50,12 +51,16 @@ import {
 // API
 import credentialsApi from '@/api/credentials'
 
+// Hooks
+import useConfirm from '@/hooks/useConfirm'
+
 // Constants
 import { baseURL } from '@/store/constant'
 
 // ==============================|| UnifiedCredentialsModal ||============================== //
 
 const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, onError, initialDontShowAgain = false }) => {
+    const { confirm } = useConfirm()
     const [credentialAssignments, setCredentialAssignments] = useState({})
     const [availableCredentials, setAvailableCredentials] = useState({})
     const [loading, setLoading] = useState(false)
@@ -72,9 +77,15 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const isQuickSetupMode = missingCredentials.some((cred) => Object.prototype.hasOwnProperty.call(cred, 'isAssigned'))
     const groupedCredentials = isQuickSetupMode ? groupAllCredentialsByType(missingCredentials) : groupCredentialsByType(missingCredentials)
 
+    console.log('[UnifiedCredentialsModal] missingCredentials:', missingCredentials)
+    console.log('[UnifiedCredentialsModal] isQuickSetupMode:', isQuickSetupMode)
+    console.log('[UnifiedCredentialsModal] groupedCredentials:', groupedCredentials)
+
     // Organize credentials by priority and connection status
     const organizedCredentials = useMemo(() => {
-        return organizeCredentialsByPriority(groupedCredentials)
+        const organized = organizeCredentialsByPriority(groupedCredentials)
+        console.log('[UnifiedCredentialsModal] organizedCredentials:', organized)
+        return organized
     }, [groupedCredentials])
 
     const resolveGroupForCredential = (credentialName) => {
@@ -296,13 +307,79 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         }
     }
 
-    const handleSkip = () => {
+    const handleSkip = async () => {
+        // Check if there are required credentials that haven't been set up
+        const requiredCreds = organizedCredentials?.required || []
+        const hasUnassignedRequired = requiredCreds.some((group) => {
+            const nodes = group.nodes || []
+            return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+        })
+
+        // Show confirmation if there are unassigned required credentials
+        if (hasUnassignedRequired) {
+            const confirmPayload = {
+                title: 'Skip credential setup?',
+                description: 'The workflow will not work properly without required credentials. Are you sure you want to skip setup?',
+                confirmButtonName: 'Skip anyway',
+                cancelButtonName: 'Continue setup'
+            }
+            
+            try {
+                const isConfirmed = await confirm(confirmPayload)
+                
+                if (!isConfirmed) {
+                    return // User chose to continue setup
+                }
+            } catch (error) {
+                console.error('[handleSkip] error in confirm:', error)
+                return
+            }
+        }
+
+        // User confirmed or no required credentials missing, proceed with skip
         if (onSkip) {
             onSkip({ dontShowAgain, dontShowDirty })
         }
     }
 
-    const handleCancel = () => {
+    const handleCancel = async () => {
+        // Check if there are ANY unconnected credentials (required or optional) that haven't been set up
+        const requiredCreds = organizedCredentials?.required || []
+        const optionalCreds = organizedCredentials?.optional || []
+        const allUnconnected = [...requiredCreds, ...optionalCreds]
+        
+        const hasUnassignedCredentials = allUnconnected.some((group) => {
+            const nodes = group.nodes || []
+            return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+        })
+
+        // Always show confirmation dialog when closing
+        const hasRequired = requiredCreds.length > 0
+        const message = hasUnassignedCredentials && hasRequired
+            ? 'The workflow will not work properly without required credentials. Are you sure you want to close?'
+            : hasUnassignedCredentials
+            ? 'You have not finished setting up credentials. Are you sure you want to close?'
+            : 'Are you sure you want to close?'
+        
+        const confirmPayload = {
+            title: 'Close without saving?',
+            description: message,
+            confirmButtonName: 'Close anyway',
+            cancelButtonName: 'Continue setup'
+        }
+        
+        try {
+            const isConfirmed = await confirm(confirmPayload)
+            
+            if (!isConfirmed) {
+                return // User chose to continue setup, don't close modal
+            }
+        } catch (error) {
+            console.error('[handleCancel] error in confirm:', error)
+            return
+        }
+
+        // User confirmed, proceed to close
         if (onCancel) {
             onCancel({ dontShowAgain, dontShowDirty })
         }
@@ -315,13 +392,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         }))
     }
 
-    // Render a single credential card
+    // Render a single credential card with modern card design
     const renderCredentialCard = (group) => {
-        const { groupKey, label, credentialTypes, nodes, isAssigned } = group
+        const { groupKey, label, credentialTypes, nodes, isAssigned, isRequired } = group
         const credentialsForGroup = availableCredentials[groupKey] || []
-        const hasMultipleNodes = nodes?.length > 1
-        // Check if ANY node has isRequired=true OR if ANY node has isOptional=false
-        const isRequired = nodes?.some((node) => node.isRequired === true || node.isOptional === false) || false
         const isConnected = isAssigned || false
         const isExpanded = expandedCredentials[groupKey] || false
 
@@ -336,257 +410,275 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         return (
             <Paper
                 key={groupKey}
-                elevation={isConnected ? 0 : 2}
+                elevation={0}
                 sx={{
-                    p: 2.5,
+                    p: 3,
                     borderRadius: 2,
-                    border: '2px solid',
-                    borderColor: isConnected ? 'success.light' : isRequired ? 'warning.main' : 'grey.300',
-                    backgroundColor: isConnected ? 'rgba(46, 125, 50, 0.04)' : 'background.paper',
-                    transition: 'all 0.2s ease-in-out',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                        boxShadow: isConnected ? 2 : 4
+                        borderColor: isConnected ? 'secondary.main' : 'rgba(255, 255, 255, 0.16)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                        '& .connected-box': {
+                            borderColor: 'secondary.main',
+                            bgcolor: 'action.hover'
+                        },
+                        '& .edit-button': {
+                            bgcolor: 'secondary.light',
+                            color: 'secondary.main'
+                        }
                     }
                 }}
             >
-                <Stack spacing={2}>
-                    {/* Header */}
-                    <Box display='flex' alignItems='center' gap={2}>
-                        <Avatar
-                            src={`${baseURL}/api/v1/components-credentials-icon/${credentialTypes?.[0] || group.credentialName}`}
-                            sx={{ width: 48, height: 48, bgcolor: 'background.paper' }}
-                        >
-                            {isConnected ? <IconShieldCheck /> : <IconUserShield />}
-                        </Avatar>
-                        <Box flex={1}>
-                            <Box display='flex' alignItems='center' gap={1} mb={0.5}>
-                                <Typography variant='h6' fontWeight='bold'>
-                                    {toSentenceCase(label)}
-                                </Typography>
-                                {/* Connection Status Badge */}
-                                <Chip
-                                    icon={isConnected ? <IconLink size={14} /> : <IconUnlink size={14} />}
-                                    label={isConnected ? 'Connected' : 'Not Connected'}
-                                    size='small'
-                                    color={isConnected ? 'success' : 'warning'}
-                                    variant='filled'
-                                    sx={{ fontSize: '0.7rem', height: 22 }}
-                                />
-                                {/* Required/Optional Badge */}
-                                <Chip
-                                    label={isRequired ? 'Required' : 'Optional'}
-                                    size='small'
-                                    color={isRequired ? 'error' : 'default'}
-                                    variant='outlined'
-                                    sx={{ fontSize: '0.7rem', height: 22 }}
-                                />
-                                {/* Category Badge */}
-                                {credCategory.displayName !== 'Other' && (
-                                    <Chip
-                                        label={credCategory.displayName}
-                                        size='small'
-                                        variant='outlined'
-                                        sx={{ fontSize: '0.7rem', height: 22 }}
-                                    />
-                                )}
-                            </Box>
-                            <Typography variant='body2' color='text.secondary'>
-                                {hasMultipleNodes
-                                    ? `Required by ${nodes.length} nodes`
-                                    : `Required by ${toSentenceCase(nodes?.[0]?.nodeName)}`}
+                {/* Header: Icon, Name, Status */}
+                <Box display='flex' alignItems='flex-start' gap={2.5}>
+                    <Avatar
+                        src={`${baseURL}/api/v1/components-credentials-icon/${credentialTypes?.[0] || group.credentialName}`}
+                        sx={{ 
+                            width: 48, 
+                            height: 48, 
+                            bgcolor: 'grey.100',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            p: 0.75
+                        }}
+                    >
+                        {isConnected ? <IconShieldCheck /> : <IconUserShield />}
+                    </Avatar>
+                    <Box flex={1}>
+                        <Box display='flex' alignItems='center' gap={1} mb={0.5} flexWrap='wrap'>
+                            <Typography variant='h6' fontWeight='600' sx={{ fontSize: '16px' }}>
+                                {toSentenceCase(label)}
                             </Typography>
-                        </Box>
-                    </Box>
-
-                    {/* Main Action Area */}
-                    <Box>
-                        {!isConnected ? (
-                            /* Unconnected: Show "Connect" button with logo */
-                            <Stack spacing={1.5}>
-                                <StyledButton
-                                    variant='contained'
-                                    color='primary'
-                                    fullWidth
-                                    startIcon={
-                                        <Box
-                                            component='img'
-                                            src={`${baseURL}/api/v1/components-credentials-icon/${
-                                                credentialTypes?.[0] || group.credentialName
-                                            }`}
-                                            alt={label}
-                                            sx={{
-                                                width: 20,
-                                                height: 20,
-                                                objectFit: 'contain',
-                                                borderRadius: '4px'
-                                            }}
-                                            onError={(e) => {
-                                                e.target.style.display = 'none'
-                                            }}
-                                        />
-                                    }
-                                    onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
-                                    sx={{
-                                        py: 1,
-                                        fontSize: '0.95rem',
+                            {isConnected && (
+                                <Chip
+                                    icon={<IconShieldCheck size={14} />}
+                                    label='Connected'
+                                    size='small'
+                                    sx={{ 
+                                        fontSize: '0.75rem', 
+                                        height: 24,
                                         fontWeight: 600,
-                                        textTransform: 'none'
+                                        bgcolor: 'rgba(46, 125, 50, 0.1)',
+                                        color: '#2e7d32',
+                                        border: '1px solid',
+                                        borderColor: '#2e7d32',
+                                        '& .MuiChip-icon': {
+                                            color: '#2e7d32'
+                                        }
+                                    }}
+                                />
+                            )}
+                            {isRequired && (
+                                <Chip
+                                    label='Required'
+                                    size='small'
+                                    sx={{ 
+                                        fontSize: '0.75rem', 
+                                        height: 24,
+                                        fontWeight: 600,
+                                        bgcolor: 'transparent',
+                                        color: '#d32f2f',
+                                        border: '1px solid',
+                                        borderColor: '#d32f2f'
+                                    }}
+                                />
+                            )}
+                        </Box>
+                        <Typography variant='body2' color='text.secondary' sx={{ fontSize: '14px', mt: 0.5 }}>
+                            {nodes?.length > 1
+                                ? `Required by ${nodes.length} nodes`
+                                : `Required by ${toSentenceCase(nodes?.[0]?.nodeName || 'unknown node')}`}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {/* Connected As Section or Connect Actions */}
+                <Box sx={{ mt: 2.5 }}>
+                    {isConnected && assignedCredential ? (
+                        <Paper
+                            variant='outlined'
+                            className='connected-box'
+                            sx={{
+                                p: 2.5,
+                                borderRadius: 1.5,
+                                bgcolor: 'background.default',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 2,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                    borderColor: 'secondary.main',
+                                    bgcolor: 'action.hover',
+                                    '& .edit-button': {
+                                        bgcolor: 'secondary.light',
+                                        color: 'secondary.main'
+                                    }
+                                }
+                            }}
+                        >
+                            <Box sx={{ flex: 1 }}>
+                                <Typography 
+                                    variant='body2' 
+                                    color='text.secondary' 
+                                    sx={{ 
+                                        fontSize: '13px',
+                                        mb: 0.5,
+                                        letterSpacing: '0.02em'
                                     }}
                                 >
-                                    Connect
-                                </StyledButton>
-                                {credentialsForGroup.length > 0 && (
-                                    <Box>
-                                        <Button
-                                            size='small'
-                                            onClick={() => toggleCredentialExpanded(groupKey)}
-                                            endIcon={isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
-                                            sx={{ textTransform: 'none' }}
-                                        >
-                                            {isExpanded ? 'Hide' : 'Show'} existing credentials
-                                        </Button>
-                                        <Collapse in={isExpanded}>
-                                            <Box sx={{ mt: 1 }}>
-                                                <FormControl fullWidth size='small'>
-                                                    <Select
-                                                        value={nodes?.[0] ? credentialAssignments[nodes[0].nodeId] || '' : ''}
-                                                        onChange={(e) => {
-                                                            nodes?.forEach((node) => {
-                                                                handleCredentialChange(node.nodeId, e.target.value)
-                                                            })
-                                                        }}
-                                                        displayEmpty
-                                                        disabled={loading || assigningCredentials}
-                                                    >
-                                                        <MenuItem value=''>
-                                                            <em>Select existing credential...</em>
-                                                        </MenuItem>
-                                                        {credentialsForGroup.map((credential) => (
-                                                            <MenuItem key={credential.id} value={credential.id}>
-                                                                <Box display='flex' alignItems='center' gap={1}>
-                                                                    <Typography>{credential.name}</Typography>
-                                                                    <Typography variant='caption' color='text.secondary'>
-                                                                        ({credential.credentialName})
-                                                                    </Typography>
-                                                                </Box>
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </Box>
-                                        </Collapse>
-                                    </Box>
-                                )}
-                            </Stack>
-                        ) : (
-                            /* Connected: Show assigned credential with edit option */
-                            <Box>
-                                <Paper
+                                    Connected as:
+                                </Typography>
+                                <Typography 
+                                    variant='body1' 
+                                    sx={{ 
+                                        fontSize: '15px', 
+                                        fontWeight: 600,
+                                        color: 'text.primary',
+                                        lineHeight: 1.4
+                                    }}
+                                >
+                                    {assignedCredential.name}
+                                </Typography>
+                            </Box>
+                            <IconButton
+                                size='small'
+                                onClick={() => toggleCredentialExpanded(groupKey)}
+                                disabled={loading || assigningCredentials}
+                                className='edit-button'
+                                sx={{
+                                    color: 'text.secondary',
+                                    bgcolor: 'transparent',
+                                    p: 1,
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        bgcolor: 'secondary.main',
+                                        color: 'white'
+                                    }
+                                }}
+                            >
+                                <IconEdit size={18} />
+                            </IconButton>
+                        </Paper>
+                    ) : (
+                        <Stack direction='row' spacing={1.5} alignItems='center'>
+                            <Button
+                                variant='contained'
+                                color='secondary'
+                                onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
+                                disabled={loading || assigningCredentials}
+                                sx={{ 
+                                    textTransform: 'none', 
+                                    fontWeight: 500, 
+                                    minWidth: 120,
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                                    }
+                                }}
+                            >
+                                Connect
+                            </Button>
+                            {credentialsForGroup.length > 0 && (
+                                <Button
                                     variant='outlined'
-                                    sx={{
-                                        p: 1.5,
-                                        backgroundColor: 'rgba(46, 125, 50, 0.08)',
-                                        borderColor: 'success.main',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between'
+                                    onClick={() => toggleCredentialExpanded(groupKey)}
+                                    sx={{ 
+                                        textTransform: 'none', 
+                                        minWidth: 140,
+                                        borderColor: 'divider',
+                                        color: 'text.primary',
+                                        '&:hover': {
+                                            borderColor: 'secondary.main',
+                                            bgcolor: 'action.hover',
+                                            color: 'secondary.main'
+                                        }
                                     }}
                                 >
-                                    <Box flex={1}>
-                                        <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
-                                            Connected as:
-                                        </Typography>
-                                        <Typography variant='body1' fontWeight='medium'>
-                                            {assignedCredential?.name || 'Unknown Credential'}
-                                        </Typography>
-                                    </Box>
-                                    <IconButton
-                                        size='small'
-                                        onClick={() => toggleCredentialExpanded(groupKey)}
+                                    {isExpanded ? 'Hide' : `Use existing (${credentialsForGroup.length})`}
+                                </Button>
+                            )}
+                        </Stack>
+                    )}
+
+                    {/* Dropdown for selecting existing credentials */}
+                    {isExpanded && credentialsForGroup.length > 0 && (
+                        <Collapse in={isExpanded}>
+                            <Stack direction='row' spacing={1.5} sx={{ mt: 2 }} alignItems='center'>
+                                <FormControl fullWidth size='small'>
+                                    <Select
+                                        value={nodes?.[0] ? credentialAssignments[nodes[0].nodeId] || '' : ''}
+                                        onChange={(e) => {
+                                            nodes?.forEach((node) => {
+                                                handleCredentialChange(node.nodeId, e.target.value)
+                                            })
+                                        }}
+                                        displayEmpty={!isConnected}
+                                        disabled={loading || assigningCredentials}
                                         sx={{
-                                            ml: 2,
-                                            bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                            '&:hover': {
-                                                bgcolor: 'background.paper',
-                                                borderColor: 'primary.main'
+                                            bgcolor: 'background.default',
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'divider'
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'secondary.main'
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: 'secondary.main'
                                             }
                                         }}
-                                        title='Edit credential'
                                     >
-                                        <IconEdit size={16} />
-                                    </IconButton>
-                                </Paper>
-
-                                {/* Edit Dropdown */}
-                                <Collapse in={isExpanded}>
-                                    <Box sx={{ mt: 2 }}>
-                                        <Typography variant='caption' color='text.secondary' sx={{ mb: 1, display: 'block' }}>
-                                            Change credential:
-                                        </Typography>
-                                        <Stack spacing={1}>
-                                            <FormControl fullWidth size='small'>
-                                                <Select
-                                                    value={nodes?.[0] ? credentialAssignments[nodes[0].nodeId] || '' : ''}
-                                                    onChange={(e) => {
-                                                        nodes?.forEach((node) => {
-                                                            handleCredentialChange(node.nodeId, e.target.value)
-                                                        })
-                                                    }}
-                                                    disabled={loading || assigningCredentials}
-                                                >
-                                                    {credentialsForGroup.map((credential) => (
-                                                        <MenuItem key={credential.id} value={credential.id}>
-                                                            <Box display='flex' alignItems='center' gap={1}>
-                                                                <Typography>{credential.name}</Typography>
-                                                                <Typography variant='caption' color='text.secondary'>
-                                                                    ({credential.credentialName})
-                                                                </Typography>
-                                                            </Box>
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                            <Button
-                                                size='small'
-                                                startIcon={<IconPlus size={14} />}
-                                                onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
-                                                sx={{ textTransform: 'none' }}
-                                            >
-                                                Add new credential
-                                            </Button>
-                                        </Stack>
-                                    </Box>
-                                </Collapse>
-                            </Box>
-                        )}
-                    </Box>
-
-                    {/* Show affected nodes if multiple */}
-                    {hasMultipleNodes && (
-                        <Box>
-                            <Typography variant='caption' color='text.secondary' gutterBottom>
-                                Affected nodes:
-                            </Typography>
-                            <Box display='flex' flexWrap='wrap' gap={0.5} mt={0.5}>
-                                {nodes?.map((node) => (
-                                    <Chip key={node.nodeId} label={toSentenceCase(node.nodeName)} size='small' variant='outlined' />
-                                ))}
-                            </Box>
-                        </Box>
+                                        {!isConnected && (
+                                            <MenuItem value=''>
+                                                <em>Select existing...</em>
+                                            </MenuItem>
+                                        )}
+                                        {credentialsForGroup.map((credential) => (
+                                            <MenuItem key={credential.id} value={credential.id}>
+                                                {credential.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                {/* Only show "Create new" button for connected credentials */}
+                                {isConnected && (
+                                    <Button
+                                        variant='contained'
+                                        color='secondary'
+                                        onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
+                                        disabled={loading || assigningCredentials}
+                                        sx={{ 
+                                            textTransform: 'none', 
+                                            fontWeight: 500,
+                                            minWidth: 120,
+                                            whiteSpace: 'nowrap',
+                                            boxShadow: 'none',
+                                            '&:hover': {
+                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                                            }
+                                        }}
+                                    >
+                                        Create new
+                                    </Button>
+                                )}
+                            </Stack>
+                        </Collapse>
                     )}
-                </Stack>
+                </Box>
             </Paper>
         )
     }
 
     if (!show) return null
 
-    const hasUnconnectedRequired = organizedCredentials.unconnectedRequired.length > 0
-    const hasUnconnectedOptional = organizedCredentials.unconnectedOptional.length > 0
-    const hasConnectedRequired = organizedCredentials.connectedRequired.length > 0
-    const hasConnectedOptional = organizedCredentials.connectedOptional.length > 0
+    const hasRequired = organizedCredentials.required?.length > 0
+    const hasOptional = organizedCredentials.optional?.length > 0
+    const hasConnected = organizedCredentials.connected?.length > 0
 
     const component = (
         <Dialog
@@ -594,99 +686,125 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             onClose={handleCancel}
             maxWidth='md'
             fullWidth
-            sx={{ position: 'absolute' }}
-            PaperProps={{ sx: { borderRadius: 2 } }}
+            PaperProps={{ 
+                sx: { 
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                    backgroundImage: 'none'
+                } 
+            }}
         >
             <DialogTitle
                 sx={{
-                    fontSize: '1.2rem',
-                    pb: 2,
+                    pb: 3,
+                    pt: 4,
+                    px: 4,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    borderBottom: '2px solid',
+                    borderColor: 'secondary.light'
                 }}
             >
-                <Typography variant='body1' sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                <Typography 
+                    variant='h4' 
+                    sx={{ 
+                        fontWeight: 700, 
+                        fontSize: '1.75rem',
+                        letterSpacing: '-0.02em'
+                    }}
+                >
                     {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
                 </Typography>
-                <IconButton onClick={handleCancel} size='small'>
+                <IconButton 
+                    onClick={handleCancel} 
+                    size='small'
+                    sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                            bgcolor: 'action.hover',
+                            color: 'text.primary'
+                        }
+                    }}
+                >
                     <IconX />
                 </IconButton>
             </DialogTitle>
 
-            <DialogContent sx={{ padding: 3, minHeight: '400px' }}>
+            <DialogContent sx={{ p: 4, minHeight: '400px', bgcolor: 'background.default' }}>
                 {loading ? (
                     <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
-                        <CircularProgress />
+                        <CircularProgress color='secondary' />
                         <Typography sx={{ ml: 2 }}>Loading credentials...</Typography>
                     </Box>
                 ) : (
                     <Stack spacing={3}>
-                        {/* Unconnected Required Section */}
-                        {hasUnconnectedRequired && (
+                        {/* Required Section */}
+                        {hasRequired && (
                             <Box>
-                                <Box display='flex' alignItems='center' gap={1} mb={2}>
-                                    <IconUnlink size={20} color='#ed6c02' />
-                                    <Typography variant='h6' color='error.main' fontWeight='bold'>
-                                        Required Setup
+                                <Box sx={{ pt: 2, mb: 2 }}>
+                                    <Typography 
+                                        variant='h6' 
+                                        fontWeight='700' 
+                                        sx={{ 
+                                            fontSize: '1.1rem',
+                                            mb: 0.5
+                                        }}
+                                    >
+                                        Required
+                                    </Typography>
+                                    <Typography variant='body2' color='text.secondary'>
+                                        These credentials are essential to use the chatflow
                                     </Typography>
                                 </Box>
-                                <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-                                    These credentials are essential for this flow to function properly.
-                                </Typography>
                                 <Stack spacing={2}>
-                                    {organizedCredentials.unconnectedRequired.map((group) => renderCredentialCard(group))}
+                                    {organizedCredentials.required.map((group) => renderCredentialCard(group))}
                                 </Stack>
                             </Box>
                         )}
 
-                        {/* Unconnected Optional Section */}
-                        {hasUnconnectedOptional && (
+                        {/* Optional Section */}
+                        {hasOptional && (
                             <Box>
-                                {hasUnconnectedRequired && <Divider sx={{ my: 2 }} />}
-                                <Box display='flex' alignItems='center' gap={1} mb={2}>
-                                    <IconUnlink size={20} color='#ed6c02' />
-                                    <Typography variant='h6' fontWeight='bold'>
-                                        Optional Enhancements
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography 
+                                        variant='h6' 
+                                        fontWeight='700' 
+                                        sx={{ 
+                                            fontSize: '1.1rem',
+                                            mb: 0.5
+                                        }}
+                                    >
+                                        Optional
+                                    </Typography>
+                                    <Typography variant='body2' color='text.secondary'>
+                                        Optional credentials for additional features
                                     </Typography>
                                 </Box>
-                                <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-                                    These credentials unlock additional features and capabilities.
-                                </Typography>
                                 <Stack spacing={2}>
-                                    {organizedCredentials.unconnectedOptional.map((group) => renderCredentialCard(group))}
+                                    {organizedCredentials.optional.map((group) => renderCredentialCard(group))}
                                 </Stack>
                             </Box>
                         )}
 
-                        {/* Connected Required Section */}
-                        {hasConnectedRequired && (
+                        {/* Connected Section */}
+                        {hasConnected && (
                             <Box>
-                                {(hasUnconnectedRequired || hasUnconnectedOptional) && <Divider sx={{ my: 2 }} />}
-                                <Box display='flex' alignItems='center' gap={1} mb={2}>
-                                    <IconLink size={20} color='#2e7d32' />
-                                    <Typography variant='h6' color='success.main' fontWeight='bold'>
-                                        Connected (Required)
+                                <Box sx={{ pt: 2, mb: 2 }}>
+                                    <Typography 
+                                        variant='h6' 
+                                        fontWeight='700' 
+                                        sx={{ 
+                                            fontSize: '1.1rem',
+                                            mb: 0.5,
+                                            color: 'secondary.main'
+                                        }}
+                                    >
+                                        Connected
                                     </Typography>
                                 </Box>
                                 <Stack spacing={2}>
-                                    {organizedCredentials.connectedRequired.map((group) => renderCredentialCard(group))}
-                                </Stack>
-                            </Box>
-                        )}
-
-                        {/* Connected Optional Section */}
-                        {hasConnectedOptional && (
-                            <Box>
-                                {(hasUnconnectedRequired || hasUnconnectedOptional || hasConnectedRequired) && <Divider sx={{ my: 2 }} />}
-                                <Box display='flex' alignItems='center' gap={1} mb={2}>
-                                    <IconLink size={20} color='#2e7d32' />
-                                    <Typography variant='h6' color='success.main' fontWeight='bold'>
-                                        Connected (Optional)
-                                    </Typography>
-                                </Box>
-                                <Stack spacing={2}>
-                                    {organizedCredentials.connectedOptional.map((group) => renderCredentialCard(group))}
+                                    {organizedCredentials.connected.map((group) => renderCredentialCard(group))}
                                 </Stack>
                             </Box>
                         )}
@@ -694,34 +812,69 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ px: 3, pb: 3, alignItems: 'center' }}>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={dontShowAgain}
-                            onChange={(event) => {
-                                setDontShowAgain(event.target.checked)
-                                setDontShowDirty(true)
-                            }}
-                            color='primary'
-                        />
-                    }
-                    label="Don't show this again"
-                    sx={{ mr: 'auto' }}
-                />
-                <Button onClick={handleSkip} color='inherit'>
-                    {isQuickSetupMode ? 'Cancel' : 'Skip for now'}
-                </Button>
-                <StyledButton
-                    variant='contained'
-                    onClick={handleAssignCredentials}
-                    disabled={loading || assigningCredentials}
-                    startIcon={assigningCredentials ? <CircularProgress size={16} /> : null}
-                >
-                    {assigningCredentials ? 'Saving...' : 'Save & Continue'}
-                </StyledButton>
+            <DialogActions sx={{ px: 4, pb: 3, pt: 3, alignItems: 'center', borderTop: '2px solid', borderColor: 'secondary.light' }}>
+                {/* Left side: Checkbox */}
+                <Box sx={{ mr: 'auto' }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={dontShowAgain}
+                                onChange={(event) => {
+                                    setDontShowAgain(event.target.checked)
+                                    setDontShowDirty(true)
+                                }}
+                                color='secondary'
+                                size='small'
+                            />
+                        }
+                        label={
+                            <Typography variant='body2' color='text.secondary'>
+                                Don't show this again
+                            </Typography>
+                        }
+                    />
+                </Box>
+
+                <Stack direction='row' spacing={1.5}>
+                    <Button 
+                        onClick={isQuickSetupMode ? handleCancel : handleSkip} 
+                        color='inherit' 
+                        sx={{ 
+                            textTransform: 'none',
+                            px: 2.5,
+                            fontWeight: 400
+                        }}
+                    >
+                        {isQuickSetupMode ? 'Cancel' : "I'll finish this later"}
+                    </Button>
+                    <Button
+                        variant='contained'
+                        color='secondary'
+                        onClick={handleAssignCredentials}
+                        disabled={
+                            loading || 
+                            assigningCredentials || 
+                            organizedCredentials.required.some((group) => {
+                                // Check if all nodes in this required group have credential assignments
+                                const nodes = group.nodes || []
+                                return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+                            })
+                        }
+                        sx={{ 
+                            textTransform: 'none',
+                            px: 3,
+                            fontWeight: 400
+                        }}
+                    >
+                        {assigningCredentials ? <CircularProgress size={16} sx={{ mr: 1, color: 'inherit' }} /> : null}
+                        {assigningCredentials ? 'Saving...' : 'Continue'}
+                    </Button>
+                </Stack>
             </DialogActions>
 
+            {/* Confirm Dialog for cancel confirmation */}
+            <ConfirmDialog />
+            
             {/* Credential creation dialog */}
             <AddEditCredentialDialog
                 show={showCredentialDialog}
