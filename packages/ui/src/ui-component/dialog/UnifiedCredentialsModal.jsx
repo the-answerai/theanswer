@@ -471,7 +471,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                     }}
                                 />
                             )}
-                            {isRequired && (
+                            {isRequired && !isConnected && (
                                 <Chip
                                     label='Required'
                                     size='small'
