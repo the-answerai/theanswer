@@ -22,10 +22,12 @@ export class LangfuseProvider {
      * Auto-tagging:
      * - New traces are automatically tagged with 'billing:pending' on creation (handler.ts:678,694)
      * - Self-healing catches any edge cases where tags might be missing
-     * - Traces are marked 'billing:processed' after successful sync to Stripe
+     * - Traces are marked with metadata.billing_status='processed' after successful sync to Stripe
+     * - NOTE: billing:pending tag is PERMANENT (Langfuse tags are append-only, cannot be removed)
      *
      * Tag-based filtering (optional optimization):
      * - When BILLING_USE_TAG_FILTERING=true, only fetches traces with 'billing:pending' tag
+     * - Then filters by metadata.billing_status !== 'processed' to exclude already-processed traces
      * - Significantly reduces API calls and memory usage for large datasets (40k → ~100s traces)
      * - Self-healing logic still runs in-memory as defensive measure
      * - SAFE to enable after backfill completes (auto-tagging ensures new traces won't be missed)
@@ -37,7 +39,7 @@ export class LangfuseProvider {
      *
      * When disabled (default):
      * - Fetches all traces from lookback period
-     * - Filters in-memory based on metadata.billing_status and tags
+     * - Filters in-memory based on metadata.billing_status
      * - Self-healing catches ALL untagged traces automatically
      * - Slower but guarantees no traces are missed (recommended until backfill completes)
      *
@@ -116,15 +118,15 @@ export class LangfuseProvider {
                 const metadata = (trace.metadata as TraceMetadata) || {}
                 const tags = this.getTraceTags(trace)
 
-                // Self-healing: Check both metadata AND tags for processed status
-                // A trace is considered processed if EITHER:
-                // 1. metadata.billing_status === 'processed', OR
-                // 2. tags includes 'billing:processed'
-                const isProcessed = metadata.billing_status === 'processed' || tags.includes('billing:processed')
+                // Self-healing: Check metadata for processed status
+                // NOTE: We only check metadata.billing_status, NOT tags
+                // - billing:pending tag is permanent (cannot be removed from Langfuse)
+                // - metadata.billing_status is the source of truth for processing state
+                const isProcessed = metadata.billing_status === 'processed'
                 const isNotProcessed = !isProcessed
 
-                // Track untagged traces for logging
-                const hasNoBillingTags = !tags.includes('billing:processed') && !tags.includes('billing:pending')
+                // Track untagged traces for logging (self-healing scenario)
+                const hasNoBillingTags = !tags.includes('billing:pending')
                 if (isNotProcessed && hasNoBillingTags && (hasTokenCost || hasComputeTime)) {
                     firstPageUntaggedCount++
                 }
@@ -290,15 +292,15 @@ export class LangfuseProvider {
                 const metadata = (trace.metadata as TraceMetadata) || {}
                 const tags = this.getTraceTags(trace)
 
-                // Self-healing: Check both metadata AND tags for processed status
-                // A trace is considered processed if EITHER:
-                // 1. metadata.billing_status === 'processed', OR
-                // 2. tags includes 'billing:processed'
-                const isProcessed = metadata.billing_status === 'processed' || tags.includes('billing:processed')
+                // Self-healing: Check metadata for processed status
+                // NOTE: We only check metadata.billing_status, NOT tags
+                // - billing:pending tag is permanent (cannot be removed from Langfuse)
+                // - metadata.billing_status is the source of truth for processing state
+                const isProcessed = metadata.billing_status === 'processed'
                 const isNotProcessed = !isProcessed
 
                 // Track untagged traces for logging (self-healing scenario)
-                const hasNoBillingTags = !tags.includes('billing:processed') && !tags.includes('billing:pending')
+                const hasNoBillingTags = !tags.includes('billing:pending')
                 if (isNotProcessed && hasNoBillingTags && (hasTokenCost || hasComputeTime)) {
                     untaggedCount++
                 }
