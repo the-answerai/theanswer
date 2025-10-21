@@ -1,48 +1,31 @@
-import { INodeParams } from '@flowise/components'
-import { CredentialInfo } from 'types'
+import { getCredentialCategory } from './getCredentialCategory'
 
 /**
- * Extract all credentials (assigned and unassigned) from flow data
+ * Extract all credentials (assigned and unassigned) from flow data for QuickSetup mode
  * @param {string|object} flowData - Flow data as JSON string or object
- * @returns {CredentialInfo[]} Array of all credentials with assignment status
+ * @returns {object} Object containing all credentials info
  */
-export const extractAllCredentials = (flowData: string | any): CredentialInfo[] => {
+export const extractAllCredentials = (flowData: string | any) => {
     try {
         // Parse flow data if it's a string
         const flow = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
 
         if (!flow.nodes || !Array.isArray(flow.nodes)) {
-            return []
+            return { allCredentials: [], hasCredentials: false }
         }
 
-        const allCredentials: CredentialInfo[] = []
+        const allCredentials: any[] = []
         const credentialTypes = new Set<string>()
-
-        // Define commonly needed optional credentials that should be offered
-        const importantOptionalCredentials = ['redisCacheApi', 'redisCacheUrlApi', 'upstashRedisApi', 'upstashRedisMemoryApi']
 
         // Iterate through all nodes
         flow.nodes.forEach((node: any) => {
             if (node.data && node.data.inputParams) {
-                // Find credential input parameters (required OR important optional ones)
-                const credentialParams = node.data.inputParams.filter((param: INodeParams) => {
-                    if (param.type !== 'credential') return false
-
-                    // Include required credentials
-                    if (!param.optional) return true
-
-                    // Include important optional credentials
-                    if (
-                        param.credentialNames &&
-                        param.credentialNames.some((name: string) => importantOptionalCredentials.includes(name))
-                    ) {
-                        return true
-                    }
-
-                    return false
+                // Find all credential input parameters
+                const credentialParams = node.data.inputParams.filter((param: any) => {
+                    return param.type === 'credential'
                 })
 
-                credentialParams.forEach((credentialParam: INodeParams) => {
+                credentialParams.forEach((credentialParam: any) => {
                     // Check if credential is assigned
                     const hasCredential =
                         node.data.credential ||
@@ -55,13 +38,27 @@ export const extractAllCredentials = (flowData: string | any): CredentialInfo[] 
                     credentialNames.forEach((credentialName: string) => {
                         credentialTypes.add(credentialName)
 
+                        // Get category information to determine if credential is core
+                        const category = getCredentialCategory(node.data.category, credentialName)
+                        
+                        // Credential is required if:
+                        // 1. Category is core (Chat Models, Agents, etc), OR
+                        // 2. Parameter explicitly marked as NOT optional (optional: false)
+                        // Default to optional if not explicitly marked
+                        const isRequired = category.isCore || (credentialParam.optional === false)
+
                         const credInfo = {
                             nodeId: node.id,
                             nodeName: node.data.name || 'Unknown Node',
+                            nodeCategory: node.data.category || 'Unknown',
+                            nodeType: node.data.type || node.type || 'Unknown',
                             credentialType: credentialName,
                             parameterName: credentialParam.name,
                             label: credentialParam.label || credentialParam.name,
-                            isOptional: !!credentialParam.optional,
+                            isRequired: isRequired,
+                            isCore: category.isCore,
+                            categoryType: category.type,
+                            categoryDisplayName: category.displayName,
                             isAssigned: !!hasCredential,
                             assignedCredentialId: hasCredential || null
                         }
@@ -72,9 +69,12 @@ export const extractAllCredentials = (flowData: string | any): CredentialInfo[] 
             }
         })
 
-        return allCredentials
+        return {
+            allCredentials,
+            hasCredentials: credentialTypes.size > 0
+        }
     } catch (error) {
         console.error('Error in extractAllCredentials:', error)
-        return []
+        return { allCredentials: [], hasCredentials: false }
     }
 }
