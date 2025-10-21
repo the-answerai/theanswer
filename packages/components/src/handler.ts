@@ -675,7 +675,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         metadata: metadata,
                         userId: options?.user?.id,
                         sessionId: options.sessionId,
-                        tags: [`Name:${chatflow.name}`],
+                        tags: [`Name:${chatflow.name}`, 'billing:pending'],
                         version: chatflow.updatedDate
                         // TODO: This is still causing an error
                         // This works to keep the root trace name and have everything else update on the root trace
@@ -691,7 +691,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         try {
                             if (parentLangfuseTrace) {
                                 parentLangfuseTrace.update({
-                                    tags: [`Name:${chatflow.name}`],
+                                    tags: [`Name:${chatflow.name}`, 'billing:pending'],
                                     metadata,
                                     userId: options?.user?.id,
                                     sessionId: options.sessionId,
