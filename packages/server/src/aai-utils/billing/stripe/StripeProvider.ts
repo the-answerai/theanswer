@@ -307,6 +307,7 @@ export class StripeProvider {
             const meterEvents: Stripe.Billing.MeterEvent[] = []
             const failedEvents: Array<{ traceId: string; error: string }> = []
             const processedTraces: string[] = []
+            let selfHealedCount = 0
 
             // console.log('Syncing usage to Stripe', {
             //     count: creditsData.length,
@@ -364,7 +365,10 @@ export class StripeProvider {
                                 })
 
                                 // Update trace metadata with billing info
-                                await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                const wasSelfHealed = await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                if (wasSelfHealed) {
+                                    selfHealedCount++
+                                }
 
                                 meterEvents.push(result)
                                 processedTraces.push(data.traceId)
@@ -387,6 +391,15 @@ export class StripeProvider {
                 if (i + BATCH_SIZE < creditsData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
+            }
+
+            // Log self-healing summary
+            if (selfHealedCount > 0) {
+                log.info('Self-healing: Processed untagged traces', {
+                    count: selfHealedCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((selfHealedCount / processedTraces.length) * 100).toFixed(2) + '%'
+                })
             }
 
             return {
@@ -446,7 +459,7 @@ export class StripeProvider {
         batchSize: number,
         batchIndex: number,
         meterId: string
-    ): Promise<void> {
+    ): Promise<boolean> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
         // Self-healing: Prepare updated tags
@@ -459,19 +472,11 @@ export class StripeProvider {
         const hasBillingPending = existingTags.includes('billing:pending')
         const hasNoBillingTags = !hasBillingProcessed && !hasBillingPending
 
-        // Log if we're self-healing an untagged trace
-        if (hasNoBillingTags) {
-            log.info('Self-healing: Processing untagged trace', {
-                traceId: data.traceId,
-                existingTags,
-                timestamp: data.fullTrace?.timestamp
-            })
-        }
-
         // Only update tags if not already processed (defensive check)
+        // Use Set to prevent duplicate tags in case of concurrent updates (race condition)
         const updatedTags = hasBillingProcessed
             ? existingTags
-            : existingTags.filter((tag: string) => tag !== 'billing:pending').concat('billing:processed')
+            : Array.from(new Set([...existingTags.filter((tag: string) => tag !== 'billing:pending'), 'billing:processed']))
 
         await langfuse.trace({
             id: data.traceId,
@@ -519,6 +524,9 @@ export class StripeProvider {
                 }
             }
         })
+
+        // Return true if self-healing occurred (trace had no billing tags)
+        return hasNoBillingTags
     }
 
     private calculateResourceBreakdown(credits: number, cost: number, totalCredits: number) {

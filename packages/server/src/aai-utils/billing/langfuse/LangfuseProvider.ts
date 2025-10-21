@@ -13,34 +13,37 @@ export class LangfuseProvider {
     // Cache for flow platform status (resets each sync)
     private platformNodeCache = new Map<string, boolean>()
 
+    // Future timestamp buffer (5 minutes) for timestamp validation
+    private static readonly FUTURE_TIMESTAMP_BUFFER_SECONDS = 300
+
     /**
      * Sync usage data from Langfuse to Stripe
      *
-     * Tag-based filtering:
+     * Auto-tagging:
+     * - New traces are automatically tagged with 'billing:pending' on creation (handler.ts:678,694)
+     * - Self-healing catches any edge cases where tags might be missing
+     * - Traces are marked 'billing:processed' after successful sync to Stripe
+     *
+     * Tag-based filtering (optional optimization):
      * - When BILLING_USE_TAG_FILTERING=true, only fetches traces with 'billing:pending' tag
-     * - Requires backfill script to have run (packages/server/scripts/backfill-billing-tags.ts)
      * - Significantly reduces API calls and memory usage for large datasets (40k → ~100s traces)
      * - Self-healing logic still runs in-memory as defensive measure
+     * - SAFE to enable after backfill completes (auto-tagging ensures new traces won't be missed)
      *
-     * ⚠️ IMPORTANT LIMITATION with tag filtering:
-     * - New traces created AFTER backfill won't have 'billing:pending' tag
-     * - These traces will be COMPLETELY MISSED by tag-filtered sync
-     * - Solutions:
-     *   1. Keep tag filtering DISABLED (recommended until auto-tagging implemented)
-     *   2. Run backfill script periodically (e.g., daily) to tag new traces
-     *   3. Implement auto-tagging on trace creation (future work)
+     * ⚠️ IMPORTANT - Before enabling tag filtering:
+     * - Run backfill script ONCE to tag existing traces (packages/server/scripts/backfill-billing-tags.ts)
+     * - Backfill only needed for traces created BEFORE auto-tagging was implemented
+     * - After backfill, new traces will be automatically tagged on creation
      *
-     * When disabled (default - RECOMMENDED):
+     * When disabled (default):
      * - Fetches all traces from lookback period
      * - Filters in-memory based on metadata.billing_status and tags
      * - Self-healing catches ALL untagged traces automatically
-     * - Slower but guarantees no traces are missed
+     * - Slower but guarantees no traces are missed (recommended until backfill completes)
      *
      * @param traceId - Optional specific trace ID to sync
      */
     async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
-        let allTraces: Trace[] = []
-        let allCreditsData: CreditsData[] = []
         let failedTraces: Array<{ traceId: string; error: string }> = []
         let processedTraces: string[] = []
         let skippedTraces: Array<{ traceId: string; reason: string }> = []
@@ -49,7 +52,16 @@ export class LangfuseProvider {
         try {
             // Handle single trace lookup separately (no pagination needed)
             if (traceId) {
-                const traces = await this.fetchUsageData(traceId)
+                // Fetch single trace directly from Langfuse
+                const trace = await langfuse.fetchTrace(traceId)
+                const traces = trace.data
+                    ? [
+                          {
+                              ...trace.data,
+                              observations: trace.data.observations?.map((obs: any) => obs?.id)
+                          } as any
+                      ]
+                    : []
                 const creditsDataWithTraces = await this.convertUsageToCredits(traces)
 
                 // Sync to Stripe
@@ -65,8 +77,6 @@ export class LangfuseProvider {
                     processedTraces: stripeResponse.processedTraces,
                     failedTraces: stripeResponse.failedEvents,
                     skippedTraces: [],
-                    traces,
-                    creditsData: creditsDataWithTraces.map((item) => item.creditsData),
                     meterEvents: stripeResponse.meterEvents
                 }
             }
@@ -104,7 +114,7 @@ export class LangfuseProvider {
                 const hasTokenCost = trace.totalCost > 0
                 const hasComputeTime = trace.latency > 0
                 const metadata = (trace.metadata as TraceMetadata) || {}
-                const tags = (trace.tags || []) as string[]
+                const tags = this.getTraceTags(trace)
 
                 // Self-healing: Check both metadata AND tags for processed status
                 // A trace is considered processed if EITHER:
@@ -121,8 +131,7 @@ export class LangfuseProvider {
 
                 if (isProcessed) {
                     skippedTraces.push({ traceId: trace.id, reason: 'Already processed' })
-                }
-                if (!(hasTokenCost || hasComputeTime)) {
+                } else if (!(hasTokenCost || hasComputeTime)) {
                     skippedTraces.push({ traceId: trace.id, reason: 'No billable usage' })
                 }
 
@@ -149,8 +158,6 @@ export class LangfuseProvider {
                 processedTraces.push(...stripeResponse.processedTraces)
                 failedTraces.push(...stripeResponse.failedEvents)
                 meterEvents.push(...stripeResponse.meterEvents)
-                allTraces.push(...firstPageTraces)
-                allCreditsData.push(...creditsDataWithTraces.map((item) => item.creditsData))
             }
 
             // Process remaining pages in groups
@@ -169,9 +176,6 @@ export class LangfuseProvider {
                 // Fetch page group
                 const traces = await this.fetchPageGroup(startPage, endPage, fromTimestamp, undefined, skippedTraces)
 
-                // Track for final response (only needed for compatibility)
-                allTraces.push(...traces)
-
                 if (traces.length > 0) {
                     // Convert to credits
                     const creditsDataWithTraces = await this.convertUsageToCredits(traces)
@@ -189,7 +193,6 @@ export class LangfuseProvider {
                     processedTraces.push(...stripeResponse.processedTraces)
                     failedTraces.push(...stripeResponse.failedEvents)
                     meterEvents.push(...stripeResponse.meterEvents)
-                    allCreditsData.push(...creditsDataWithTraces.map((item) => item.creditsData))
                 }
 
                 // Rate limit between page groups (skip on last batch)
@@ -216,130 +219,17 @@ export class LangfuseProvider {
             processedTraces,
             failedTraces,
             skippedTraces,
-            traces: allTraces,
-            creditsData: allCreditsData,
             meterEvents
         }
     }
 
     /**
-     * Fetch usage data for a specific trace ID
-     * NOTE: This method is now only used for single trace lookups.
-     * Bulk syncing uses the streaming approach in syncUsageToStripe() which calls fetchPageGroup()
-     * @param traceId - Specific trace ID to fetch
-     * @returns Array containing the single trace (for compatibility with existing code)
+     * Safely extract tags array from trace
+     * @param trace - Trace object to extract tags from
+     * @returns Array of tag strings
      */
-    private async fetchUsageData(traceId?: string): Promise<GetLangfuseTracesResponse['data']> {
-        try {
-            if (traceId) {
-                const trace = await langfuse.fetchTrace(traceId)
-                if (trace.data) {
-                    return [
-                        {
-                            ...trace.data,
-                            observations: trace.data.observations?.map((obs: any) => obs?.id)
-                        } as any
-                    ]
-                }
-            }
-
-            // DEPRECATED: The code below is no longer used for bulk syncing
-            // Bulk syncing now uses streaming approach in syncUsageToStripe() with fetchPageGroup()
-            // Kept for backwards compatibility in case this method is called without traceId
-            const startOfMonth = new Date()
-            startOfMonth.setDate(1)
-            startOfMonth.setHours(0, 0, 0, 0)
-
-            // Build base fetch parameters
-            const baseFetchParams: any = {
-                fromTimestamp: startOfMonth,
-                limit: 100,
-                page: 1
-            }
-
-            // Use tag-based filtering if enabled
-            if (BILLING_CONFIG.SYNC.USE_TAG_FILTERING) {
-                baseFetchParams.tags = ['billing:pending']
-            }
-
-            // Get total pages first
-            const initialResponse = await langfuse.fetchTraces(baseFetchParams)
-
-            const totalPages = initialResponse.meta.totalPages
-            let allTraces: GetLangfuseTracesResponse['data'] = []
-
-            // Process initial response
-            const validInitialTraces = initialResponse.data.filter((trace) => {
-                if (traceId && trace.id !== traceId) {
-                    return false
-                }
-                const hasTokenCost = trace.totalCost > 0
-                const hasComputeTime = trace.latency > 0
-                const metadata = (trace.metadata as TraceMetadata) || {}
-                const tags = (trace.tags || []) as string[]
-
-                // Self-healing: Check both metadata AND tags for processed status
-                const isProcessed = metadata.billing_status === 'processed' || tags.includes('billing:processed')
-                const isNotProcessed = !isProcessed
-
-                return (hasTokenCost || hasComputeTime) && isNotProcessed
-            })
-            allTraces = allTraces.concat(validInitialTraces)
-
-            // Fetch remaining pages in parallel with rate limiting
-            const BATCH_SIZE = 15 // Number of concurrent requests
-            const RATE_LIMIT_DELAY = 1000 // 1 second delay between batches
-
-            for (let i = 2; i <= totalPages; i += BATCH_SIZE) {
-                const batch = []
-                for (let j = 0; j < BATCH_SIZE && i + j <= totalPages; j++) {
-                    const pageParams: any = {
-                        fromTimestamp: startOfMonth,
-                        limit: 100,
-                        page: i + j
-                    }
-
-                    // Use tag-based filtering if enabled
-                    if (BILLING_CONFIG.SYNC.USE_TAG_FILTERING) {
-                        pageParams.tags = ['billing:pending']
-                    }
-
-                    batch.push(langfuse.fetchTraces(pageParams))
-                }
-
-                const responses = await Promise.all(batch)
-
-                responses.forEach((response) => {
-                    const validTraces = response.data.filter((trace) => {
-                        if (traceId && trace.id !== traceId) {
-                            return false
-                        }
-                        const hasTokenCost = trace.totalCost > 0
-                        const hasComputeTime = trace.latency > 0
-                        const metadata = (trace.metadata as TraceMetadata) || {}
-                        const tags = (trace.tags || []) as string[]
-
-                        // Self-healing: Check both metadata AND tags for processed status
-                        const isProcessed = metadata.billing_status === 'processed' || tags.includes('billing:processed')
-                        const isNotProcessed = !isProcessed
-
-                        return (hasTokenCost || hasComputeTime) && isNotProcessed
-                    })
-                    allTraces = allTraces.concat(validTraces)
-                })
-
-                // Rate limit delay between batches
-                if (i + BATCH_SIZE <= totalPages) {
-                    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY))
-                }
-            }
-
-            return allTraces
-        } catch (error) {
-            log.error('Error fetching usage data from Langfuse:', error)
-            console.log(error)
-            throw error
-        }
+    private getTraceTags(trace: Trace): string[] {
+        return (trace.tags || []) as string[]
     }
 
     /**
@@ -398,7 +288,7 @@ export class LangfuseProvider {
                 const hasTokenCost = trace.totalCost > 0
                 const hasComputeTime = trace.latency > 0
                 const metadata = (trace.metadata as TraceMetadata) || {}
-                const tags = (trace.tags || []) as string[]
+                const tags = this.getTraceTags(trace)
 
                 // Self-healing: Check both metadata AND tags for processed status
                 // A trace is considered processed if EITHER:
@@ -417,8 +307,7 @@ export class LangfuseProvider {
                 if (skippedTraces) {
                     if (isProcessed) {
                         skippedTraces.push({ traceId: trace.id, reason: 'Already processed' })
-                    }
-                    if (!(hasTokenCost || hasComputeTime)) {
+                    } else if (!(hasTokenCost || hasComputeTime)) {
                         skippedTraces.push({ traceId: trace.id, reason: 'No billable usage' })
                     }
                 }
@@ -490,7 +379,7 @@ export class LangfuseProvider {
             const traceTimestampSeconds = Math.floor(traceDate.getTime() / 1000)
 
             // Skip future timestamps (with 5 min buffer)
-            if (traceTimestampSeconds > nowUtcSeconds + 300) {
+            if (traceTimestampSeconds > nowUtcSeconds + LangfuseProvider.FUTURE_TIMESTAMP_BUFFER_SECONDS) {
                 log.warn('Skipping trace with future timestamp', {
                     traceId: trace.id,
                     timestamp: trace.timestamp,
