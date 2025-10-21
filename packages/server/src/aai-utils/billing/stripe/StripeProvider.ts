@@ -462,26 +462,20 @@ export class StripeProvider {
     ): Promise<boolean> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
-        // Self-healing: Prepare updated tags
-        // - Remove 'billing:pending' if it exists
-        // - Add 'billing:processed' to mark as completed
-        // - If trace was never tagged (missed by backfill), this will add the processed tag
-        // - If trace has 'billing:pending', it will be replaced with 'billing:processed'
+        // Self-healing: Track if trace had no billing tags for logging
+        // IMPORTANT: We do NOT modify tags because Langfuse tags are append-only (cannot be removed via API)
+        // - billing:pending tag stays forever (added on trace creation in handler.ts)
+        // - We rely ONLY on metadata.billing_status to track processing state
+        // - When tag filtering is enabled, we fetch billing:pending traces and filter by metadata.billing_status
         const existingTags = (data.fullTrace?.tags || []) as string[]
-        const hasBillingProcessed = existingTags.includes('billing:processed')
         const hasBillingPending = existingTags.includes('billing:pending')
-        const hasNoBillingTags = !hasBillingProcessed && !hasBillingPending
-
-        // Only update tags if not already processed (defensive check)
-        // Use Set to prevent duplicate tags in case of concurrent updates (race condition)
-        const updatedTags = hasBillingProcessed
-            ? existingTags
-            : Array.from(new Set([...existingTags.filter((tag: string) => tag !== 'billing:pending'), 'billing:processed']))
+        const hasNoBillingTags = !hasBillingPending
 
         await langfuse.trace({
             id: data.traceId,
             timestamp: data.fullTrace?.timestamp,
-            tags: updatedTags,
+            // Do NOT set tags - Langfuse tags are append-only and cannot be removed
+            // The billing:pending tag stays on the trace forever
             metadata: {
                 ...data.fullTrace?.metadata,
                 // Self-healing: Always set billing_status to processed
