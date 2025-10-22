@@ -1,4 +1,3 @@
-import { prisma } from '@db/client'
 import auth0 from '@utils/auth/auth0'
 
 interface User {
@@ -8,7 +7,13 @@ interface User {
     chatflowDomain: string
 }
 
-export async function getChats(user: User) {
+interface PaginationOptions {
+    limit?: number
+    cursor?: string
+}
+
+export async function getChats(user: User, options: PaginationOptions = {}) {
+    const { limit = 20, cursor } = options
     // Get auth token for chatflow API
     let token
     try {
@@ -19,64 +24,27 @@ export async function getChats(user: User) {
         token = accessToken
     } catch (err) {
         console.error('Auth error:', err)
+        return []
     }
 
-    // Fetch local chats
-    const localChatsPromise = prisma.chat
-        .findMany({
-            where: {
-                users: { some: { email: user.email } },
-                organization: { id: user.organizationId },
-                chatflowChatId: { not: null },
-                journeyId: null
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            include: {
-                prompt: true,
-                messages: { orderBy: { createdAt: 'desc' }, take: 1 }
+    // Fetch chatflow chats with pagination
+    try {
+        const response = await fetch(`${user.chatflowDomain}/api/v1/chats?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
             }
         })
-        .then((data: any) => JSON.parse(JSON.stringify(data)))
 
-    // Fetch chatflow chats
-    const chatflowChatsPromise = token
-        ? fetch(`${user.chatflowDomain}/api/v1/chats`, {
-              method: 'GET',
-              headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`
-              }
-          })
-              .then((res) => (res.ok ? res.json() : []))
-              .catch((err: any) => {
-                  console.error('Error fetching chatflow chats:', err.message)
-                  return []
-              })
-        : Promise.resolve([])
+        if (!response.ok) {
+            console.error('Error fetching chatflow chats:', response.statusText)
+            return []
+        }
 
-    // Wait for both promises to resolve
-    const [localChats, chatflowChats] = await Promise.all([localChatsPromise, chatflowChatsPromise])
-
-    // Merge and deduplicate chats
-    const mergedChats = [
-        // ...localChats
-    ]
-    if (chatflowChats.length > 0) {
-        chatflowChats.forEach((chatflowChat: any) => {
-            // Only add if not already in local chats
-            if (!localChats.some((local) => local.chatflowChatId === chatflowChat.id)) {
-                mergedChats.push({
-                    ...chatflowChat,
-                    chatflowChatId: chatflowChat.id
-                })
-            }
-        })
+        return await response.json()
+    } catch (err: any) {
+        console.error('Error fetching chatflow chats:', err.message)
+        return []
     }
-
-    // Sort merged chats by date
-    mergedChats.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-    return mergedChats
 }
