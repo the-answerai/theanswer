@@ -4,20 +4,37 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { Chat } from '../../database/entities/Chat'
-import { Not, IsNull } from 'typeorm'
+import { Not, IsNull, LessThan } from 'typeorm'
 
-const getAllChats = async (user: IUser) => {
+interface PaginationOptions {
+    limit?: number
+    cursor?: string
+}
+
+const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
+    const { limit = 20, cursor } = options
+
+    // Validate cursor date if provided
+    if (cursor) {
+        const cursorDate = new Date(cursor)
+        if (isNaN(cursorDate.getTime())) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Invalid cursor date format')
+        }
+    }
+
     try {
         const appServer = getRunningExpressApp()
         const chats = await appServer.AppDataSource.getRepository(Chat).find({
             where: {
-                owner: { id: user.id },
-                organization: { id: user.organizationId },
-                chatflowChatId: Not(IsNull())
+                ownerId: user.id,
+                organizationId: user.organizationId,
+                chatflowChatId: Not(IsNull()),
+                ...(cursor ? { createdDate: LessThan(new Date(cursor)) } : {})
             },
             order: {
                 createdDate: 'DESC'
-            }
+            },
+            take: limit
         })
         return JSON.parse(JSON.stringify(chats))
     } catch (error) {
@@ -31,8 +48,8 @@ const getChatById = async (chatId: string, user: IUser) => {
         const chat = await appServer.AppDataSource.getRepository(Chat).findOne({
             where: {
                 id: chatId,
-                owner: { id: user.id },
-                organization: { id: user.organizationId }
+                ownerId: user.id,
+                organizationId: user.organizationId
             },
             relations: {
                 chatflow: true
