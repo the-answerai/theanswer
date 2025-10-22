@@ -1,6 +1,6 @@
 export type ObservationLevel = 'DEBUG' | 'DEFAULT' | 'WARNING' | 'ERROR'
 export type UsageUnit = 'CHARACTERS' | 'TOKENS' | 'MILLISECONDS' | 'SECONDS' | 'IMAGES' | 'REQUESTS'
-import { MetadataFilter } from 'langfuse/types'
+
 export interface Usage {
     input?: null | number
     inputCost?: null | number
@@ -157,6 +157,17 @@ export interface LangfuseOptions {
     baseUrl?: string
 }
 
+/**
+ * Metadata filter structure for Langfuse API v3.38.6+
+ */
+export interface MetadataFilter {
+    column: string
+    operator: string
+    key?: string
+    value: any
+    type: string
+}
+
 export interface LangfuseClient {
     new (options: LangfuseOptions): LangfuseClient
     trace(id: string, metadata?: { metadata: TraceMetadata }): Promise<LangfuseTrace>
@@ -174,7 +185,7 @@ export interface LangfuseClient {
         toTimestamp?: string | null
         userId?: string | null
         version?: string | null
-        filter?: MetadataFilter[] | Record<string, any>
+        filter?: MetadataFilter[] // Added in v3.38.6+ API
         cursor?: string
     }): Promise<{
         data: LangfuseTrace[]
