@@ -1,8 +1,77 @@
+/* ===================================
+   PROFESSIONAL INDIGO THEME
+   Corporate styling for enterprise trust
+   =================================== */
+
+:root {
+    /* Primary Colors - Professional & Trustworthy */
+    --primary-navy: #0f172a;
+    --primary-slate: #334155;
+    --primary-blue: #3b82f6;
+
+    /* Accent Colors - Strategic Pops */
+    --accent-indigo: #6366f1;
+    --accent-teal: #14b8a6;
+    --accent-amber: #f59e0b;
+
+    /* Backgrounds */
+    --bg-white: #ffffff;
+    --bg-gray-50: #f8fafc;
+    --bg-gray-100: #f1f5f9;
+    --bg-gray-900: #0f172a;
+    --bg-gray-950: #020617;
+
+    /* Borders & Dividers */
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-emphasis: #6366f1;
+
+    /* Professional Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* ===================================
+   LUCIDE ICON UTILITIES
+   Professional icon styling
+   =================================== */
+
+.linkIcon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    color: var(--accent-indigo);
+    transition: all 0.2s ease;
+}
+
+.appIcon svg {
+    color: var(--accent-indigo);
+    transition: all 0.3s ease;
+}
+
+.featureCard:hover .appIcon svg,
+.commandmentCard:hover .appIcon svg,
+.toolkitCard:hover .appIcon svg {
+    color: var(--primary-blue);
+    transform: scale(1.1);
+}
+
+.appFeatures span svg,
+.featureList span svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.35rem;
+    color: var(--accent-indigo);
+}
+
 .heroTitle {
     font-size: 3rem;
-    font-weight: bold;
+    font-weight: 700;
     text-align: center;
     margin-bottom: 1rem;
+    letter-spacing: -0.02em;
 }
 
 .heroSection {
@@ -13,6 +82,7 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    background: linear-gradient(135deg, var(--bg-gray-950) 0%, var(--primary-navy) 100%);
 }
 
 .heroBackground {
@@ -22,20 +92,20 @@
     width: 100%;
     height: 100%;
     z-index: 1;
-    background-color: black;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
 }
 
 .threeJsCanvas {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    opacity: 0.2;
+    opacity: 0.15;
 }
 
 .heroFallback {
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.2), rgba(0, 0, 0, 0.9));
+    background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15), rgba(15, 23, 42, 0.95));
     opacity: 0.85;
 }
 
@@ -72,12 +142,12 @@
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 10px;
     padding: 0.9rem 1rem;
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .heroChecklistIcon {
@@ -96,8 +166,8 @@
     display: grid;
     gap: 1.5rem;
     background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 18px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     padding: 1.75rem;
 }
 
@@ -109,11 +179,11 @@
 .heroVoiceCard {
     display: grid;
     gap: 1rem;
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 0, 0, 0.65));
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(15, 23, 42, 0.85));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
     padding: 1.75rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-xl);
 }
 
 .heroVoiceHeader {
@@ -139,17 +209,18 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.9rem 1.6rem;
-    border-radius: 999px;
-    background: #00ffff;
-    color: #001828;
+    border-radius: 8px;
+    background: var(--accent-indigo);
+    color: #ffffff;
     font-weight: 600;
     border: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .heroVoiceButton:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 28px rgba(0, 255, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: #5558e3;
 }
 
 .heroVoiceAssurance {
@@ -168,7 +239,7 @@
 
 .landingHero {
     padding: 6rem 0 4rem;
-    background: radial-gradient(circle at top right, rgba(0, 255, 255, 0.15), rgba(0, 0, 0, 0.85));
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), rgba(15, 23, 42, 0.95));
 }
 
 .heroContainer {
@@ -193,15 +264,15 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.95rem;
-    letter-spacing: 0.12em;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     font-weight: 600;
-    color: #00ffff;
-    background: rgba(0, 255, 255, 0.15);
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    border-radius: 999px;
-    padding: 0.55rem 1.25rem;
+    color: var(--accent-indigo);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
     margin-bottom: 1.5rem;
 }
 
@@ -210,7 +281,8 @@
     line-height: 1.05;
     font-weight: 700;
     margin-bottom: 1.25rem;
-    background: linear-gradient(120deg, #ffffff, #00ffff 70%);
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #ffffff, #a5b4fc 70%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -280,9 +352,9 @@
     display: flex;
     gap: 1rem;
     align-items: center;
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     padding: 1.15rem 1.4rem;
     min-height: 96px;
     animation: heroCarouselFade 0.4s ease;
@@ -310,7 +382,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 1px solid rgba(0, 255, 255, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.4);
     background: transparent;
     cursor: pointer;
     padding: 0;
@@ -324,8 +396,8 @@
 }
 
 .heroCarouselIndicatorActive {
-    background: #00ffff;
-    border-color: #00ffff;
+    background: var(--accent-indigo);
+    border-color: var(--accent-indigo);
 }
 
 @keyframes heroCarouselFade {
@@ -340,13 +412,13 @@
 }
 
 .testimonialCard {
-    background: rgba(0, 0, 0, 0.5);
-    border-left: 3px solid #00ffff;
+    background: rgba(15, 23, 42, 0.6);
+    border-left: 3px solid var(--accent-indigo);
     padding: 1.2rem 1.4rem;
-    border-radius: 12px;
+    border-radius: 8px;
     color: rgba(255, 255, 255, 0.9);
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 .testimonialAuthor {
@@ -355,15 +427,15 @@
     gap: 0.6rem;
     margin-top: 0.75rem;
     font-weight: 600;
-    color: #00ffff;
+    color: var(--accent-indigo);
 }
 
 .heroFormCard {
-    background: rgba(0, 16, 40, 0.9);
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 16px;
     padding: 2.5rem 2.25rem;
-    box-shadow: 0 28px 48px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-xl);
     position: relative;
 }
 
@@ -430,18 +502,20 @@
 }
 
 .calendarButton {
-    background: rgba(0, 255, 255, 0.15);
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    border-radius: 999px;
-    padding: 0.45rem 1.2rem;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
     font-size: 0.85rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
     text-decoration: none;
     transition: all 0.2s ease;
 }
 
 .calendarButton:hover {
-    background: rgba(0, 255, 255, 0.25);
+    background: rgba(99, 102, 241, 0.2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .valueStackSection {
@@ -455,8 +529,9 @@
     text-align: center;
     font-size: clamp(2rem, 4vw, 2.8rem);
     margin-bottom: 1rem;
-    font-weight: 600;
-    background: linear-gradient(120deg, #ffffff, #00ffff 70%);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #ffffff, #a5b4fc 70%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -476,17 +551,24 @@
 }
 
 .valueCard {
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 16px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     padding: 1.6rem;
     display: grid;
     gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.valueCard:hover {
+    background: rgba(99, 102, 241, 0.12);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .valueCard strong {
     font-size: 1rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
 }
 
 .valueTotal {
@@ -515,12 +597,18 @@
 }
 
 .presenterCard {
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 20px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     padding: 2rem;
     display: grid;
     gap: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.presenterCard:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: var(--shadow-md);
 }
 
 .presenterHeader {
@@ -534,7 +622,7 @@
     height: 56px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(0, 255, 255, 0.6);
+    border: 2px solid var(--accent-indigo);
 }
 
 .presenterPlaceholder {
@@ -544,8 +632,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 255, 255, 0.15);
-    color: #00ffff;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-indigo);
     font-weight: 600;
     letter-spacing: 1px;
 }
@@ -579,9 +667,9 @@
 .carouselCard {
     max-width: 720px;
     margin: 0 auto;
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 24px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 20px;
     padding: 3rem;
     text-align: center;
 }
@@ -595,8 +683,9 @@
 
 .carouselAuthor {
     font-size: 0.95rem;
-    color: rgba(0, 255, 255, 0.8);
+    color: var(--accent-indigo);
     margin-bottom: 1.5rem;
+    font-weight: 500;
 }
 
 .carouselDots {
@@ -609,14 +698,19 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    border: 1px solid rgba(0, 255, 255, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.4);
     background: transparent;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+.carouselDot:hover {
+    border-color: var(--accent-indigo);
 }
 
 .carouselDotActive {
-    background: #00ffff;
+    background: var(--accent-indigo);
+    border-color: var(--accent-indigo);
 }
 
 .videoSection {
@@ -635,10 +729,10 @@
     position: relative;
     width: 100%;
     padding-top: 56.25%;
-    border-radius: 18px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .videoFrame iframe {
@@ -669,18 +763,25 @@
 }
 
 .toolkitCard {
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 18px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     padding: 2rem 1.75rem;
     display: grid;
     gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.toolkitCard:hover {
+    background: rgba(99, 102, 241, 0.12);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .toolkitCard h3 {
     margin: 0;
     font-size: 1.1rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
 }
 
 .toolkitCard p {
@@ -707,10 +808,16 @@
 }
 
 .roadmapCard {
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 18px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     padding: 1.75rem;
+    transition: all 0.2s ease;
+}
+
+.roadmapCard:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: var(--shadow-md);
 }
 
 .roadmapHeader {
@@ -722,7 +829,7 @@
 
 .roadmapPhase {
     font-weight: 600;
-    color: #00ffff;
+    color: var(--accent-indigo);
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
@@ -808,7 +915,7 @@
 .miniStatValue {
     font-size: 2.25rem;
     font-weight: 700;
-    color: #00ffff;
+    color: var(--accent-indigo);
 }
 
 .miniStatLabel {
@@ -831,23 +938,25 @@
 }
 
 .faqCard h4 {
-    color: #00ffff;
+    color: var(--accent-indigo);
     margin-bottom: 0.75rem;
+    font-weight: 700;
 }
 
 .finalCtaCard {
-    background: rgba(0, 20, 50, 0.9);
-    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     padding: 3.5rem 3rem;
-    border-radius: 20px;
+    border-radius: 16px;
     text-align: center;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-xl);
 }
 
 .finalCtaHeadline {
     font-size: 2.1rem;
+    font-weight: 700;
     margin-bottom: 1rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
 }
 
 .finalCtaCopy {
@@ -875,15 +984,15 @@
     left: 1rem;
     right: 1rem;
     bottom: 1rem;
-    background: rgba(0, 18, 36, 0.95);
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
     padding: 1rem 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.25rem;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-xl);
     transform: translateY(140%);
     transition: transform 0.35s ease;
     z-index: 999;
@@ -895,20 +1004,22 @@
 }
 
 .stickyCtaButton {
-    background: linear-gradient(120deg, #00ffff, #00cccc);
-    color: #001020;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
+    color: #ffffff;
     border: none;
-    border-radius: 999px;
+    border-radius: 8px;
     padding: 0.85rem 1.8rem;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    box-shadow: 0 12px 30px rgba(0, 255, 255, 0.35);
-    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-md);
+    transition: all 0.2s ease;
 }
 
 .stickyCtaButton:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
 }
 
 .desktopStickyHeader {
@@ -928,14 +1039,14 @@
 }
 
 .desktopStickyInner {
-    background: rgba(0, 18, 36, 0.95);
-    border: 1px solid rgba(0, 255, 255, 0.35);
-    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 50px;
     padding: 0.6rem 1.5rem;
     display: flex;
     align-items: center;
     gap: 1.75rem;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow-lg);
 }
 
 .desktopStickyInner span {
@@ -1064,21 +1175,22 @@
 }
 
 .ctaPrimary {
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     color: #fff;
-    border-radius: 50px;
+    border-radius: 10px;
     padding: 1.2rem 3rem;
-    font-size: 1.3rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-lg);
     border: none;
+    transition: all 0.2s ease;
 }
 
 .ctaPrimary:hover {
-    background: linear-gradient(45deg, #00ffff, #ff00ff);
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-3px);
     color: #fff;
 }
 
@@ -1093,19 +1205,19 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     font-size: 0.9rem;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
 }
 
 .secondaryLink:hover {
-    color: #00ffff;
-    background: rgba(0, 255, 255, 0.1);
+    color: var(--accent-indigo);
+    background: rgba(99, 102, 241, 0.12);
     transform: translateY(-1px);
 }
 
@@ -1115,24 +1227,25 @@
 }
 
 .ctaDevelopers {
-    background-color: #00ffff;
-    color: #000;
+    background-color: var(--accent-indigo);
+    color: #fff;
 }
 
 .ctaDevelopers:hover {
     background-color: transparent;
-    color: #00ffff;
+    color: var(--accent-indigo);
+    border-color: var(--accent-indigo);
 }
 
 .ctaAlpha {
-    background-color: #ff00ff;
+    background-color: var(--primary-blue);
     color: #fff;
-    border-color: #ff00ff;
+    border-color: var(--primary-blue);
 }
 
 .ctaAlpha:hover {
     background-color: transparent;
-    color: #ff00ff;
+    color: var(--primary-blue);
 }
 
 .ctaChromeExtension {
@@ -1159,26 +1272,30 @@
 .featuresSection h2,
 .macAppTeaserSection h2,
 .pricingSection h2 {
-    color: #00ffff;
+    color: #ffffff;
     margin-bottom: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .sectionEyebrow {
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 0.8rem;
-    color: rgba(0, 255, 255, 0.8);
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--accent-indigo);
     margin-bottom: 0.75rem;
-    /* display: inline-flex; */
     align-items: center;
     gap: 0.35rem;
     text-align: center;
     justify-content: center;
+    font-weight: 600;
 }
 
 .sectionHeading {
     margin: 0;
     font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: #ffffff;
 }
 
@@ -1194,7 +1311,7 @@
 
 .confirmationCard {
     background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: 20px;
     padding: 2.75rem;
     display: grid;
@@ -1208,8 +1325,8 @@
 }
 
 .confirmationItem {
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: 16px;
     padding: 1.2rem 1.1rem;
     display: grid;
@@ -1253,9 +1370,9 @@
     width: 100%;
     height: 0;
     padding-bottom: 56.25%; /* 16:9 aspect ratio */
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+    box-shadow: var(--shadow-lg);
 }
 
 .youtubeVideo {
@@ -1274,13 +1391,13 @@
 
 .beliefsSection h2 {
     font-size: 2.5rem;
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 3rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: -0.02em;
 }
 
 .commandments {
@@ -1306,8 +1423,8 @@
 }
 
 .commandmentCard {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
-    border: 2px solid rgba(0, 255, 255, 0.4);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+    border: 2px solid rgba(99, 102, 241, 0.25);
     border-radius: 12px;
     padding: 2rem;
     backdrop-filter: blur(10px);
@@ -1318,10 +1435,10 @@
 }
 
 .commandmentCard:hover {
-    border-color: rgba(0, 255, 255, 0.8);
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.15), rgba(0, 255, 255, 0.15));
+    border-color: rgba(99, 102, 241, 0.5);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.12));
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 255, 255, 0.3);
+    box-shadow: var(--shadow-lg);
 }
 
 .commandmentCard::before {
@@ -1330,8 +1447,8 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ff00ff, #00ffff);
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-indigo), var(--primary-blue));
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -1343,20 +1460,20 @@
 .commandmentNumber {
     font-size: 3rem;
     font-weight: bold;
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-family: 'Courier New', monospace;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
     margin-bottom: 1rem;
     text-align: center;
 }
 
 .commandmentTitle {
     font-size: 1.4rem;
-    font-weight: bold;
-    color: #00ffff;
+    font-weight: 700;
+    color: var(--accent-indigo);
     margin-bottom: 1rem;
     text-align: center;
 }
@@ -1370,8 +1487,8 @@
 
 .commandmentCardFull {
     grid-column: 1 / -1;
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.15), rgba(0, 255, 255, 0.15));
-    border: 2px solid rgba(0, 255, 255, 0.6);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.12));
+    border: 2px solid rgba(99, 102, 241, 0.4);
 }
 
 .commandmentCardFull .commandmentNumber {
@@ -1404,11 +1521,10 @@
 }
 
 .featureCard {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 16px;
     padding: 2rem;
-    /* Remove forced stretching that can create oversized panels */
     height: auto;
     display: flex;
     flex-direction: column;
@@ -1419,17 +1535,17 @@
 }
 
 .featureCard:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 255, 255, 0.2);
-    border-color: rgba(0, 255, 255, 0.6);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(99, 102, 241, 0.4);
 }
 
 .featureCard h3 {
-    color: #00ffff;
-    font-size: 1.5rem;
+    color: var(--accent-indigo);
+    font-size: 1.4rem;
+    font-weight: 700;
     margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: -0.01em;
 }
 
 .featureCard p {
@@ -1440,22 +1556,21 @@
 
 .featureCardCTA {
     display: inline-block;
-    padding: 0.8rem 1.5rem;
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     color: #fff;
     text-decoration: none;
-    border-radius: 25px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
     font-size: 0.9rem;
 }
 
 .featureCardCTA:hover {
-    background: linear-gradient(45deg, #00ffff, #ff00ff);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 0, 255, 0.3);
+    box-shadow: var(--shadow-md);
     color: #fff;
 }
 
@@ -1467,14 +1582,14 @@
     width: 100px;
     height: 100px;
     margin-bottom: 1rem;
-    filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+    filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.3));
 }
 
 /* Apps Page Specific Styles */
 .appIcon {
     font-size: 3rem;
     margin-bottom: 1rem;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.2));
 }
 
 .appFeatures {
@@ -1485,12 +1600,12 @@
 }
 
 .appFeatures span {
-    background: rgba(0, 255, 255, 0.1);
-    color: #00ffff;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent-indigo);
     padding: 0.3rem 0.8rem;
-    border-radius: 15px;
+    border-radius: 6px;
     font-size: 0.8rem;
-    border: 1px solid rgba(0, 255, 255, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.25);
 }
 
 .comingSoonSection {
@@ -1506,7 +1621,7 @@
     font-size: 2.5rem;
     min-width: 4rem;
     text-align: center;
-    filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.5));
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
 }
 
 .expectationVoiceNote {
@@ -1515,11 +1630,11 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     padding: 0.9rem 1.2rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.95rem;
 }
 
@@ -1545,10 +1660,10 @@
 .bonusMeta {
     margin-top: 0.5rem;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.65);
-    background: rgba(0, 255, 255, 0.08);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
     padding: 0.4rem 0.75rem;
     display: inline-block;
 }
@@ -1560,9 +1675,9 @@
     gap: 1rem;
     align-items: center;
     justify-content: space-between;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     padding: 1.1rem 1.4rem;
     font-size: 0.95rem;
 }
@@ -1576,7 +1691,7 @@
 .stepNumber {
     font-size: 3rem;
     font-weight: bold;
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1585,9 +1700,9 @@
 }
 
 .ctaSection {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.05), rgba(0, 255, 255, 0.05));
-    border-top: 1px solid rgba(0, 255, 255, 0.2);
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(59, 130, 246, 0.05));
+    border-top: 1px solid rgba(99, 102, 241, 0.15);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 /* Integration Section Styles */
@@ -1598,29 +1713,29 @@
 }
 
 .integrationCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 255, 255, 0.15);
-    border-color: rgba(0, 255, 255, 0.6);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(99, 102, 241, 0.4);
 }
 
 .integrationIcon {
     font-size: 2.5rem;
     min-width: 4rem;
     text-align: center;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
     margin-bottom: 0.5rem;
 }
 
 /* YouTube Video Styles */
 .videoCard {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.08), rgba(0, 255, 255, 0.08));
-    border: 1px solid rgba(0, 255, 255, 0.4);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
     min-height: 500px;
 }
 
 .videoCard:hover {
-    border-color: rgba(0, 255, 255, 0.8);
-    box-shadow: 0 25px 50px rgba(0, 255, 255, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: var(--shadow-xl);
 }
 
 /* Subscription Banner Styles */
@@ -1632,14 +1747,14 @@
     justify-content: space-between !important;
     flex-wrap: wrap !important;
     gap: 1rem !important;
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.12), rgba(0, 255, 255, 0.12)) !important;
-    border: 1px solid rgba(0, 255, 255, 0.5) !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.12)) !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
     transition: all 0.3s ease;
 }
 
 .subscriptionBanner:hover {
-    border-color: rgba(0, 255, 255, 0.8);
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.25);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 }
 
@@ -1654,7 +1769,7 @@
 .subscriptionBannerIcon {
     font-size: 2rem !important;
     margin: 0 !important;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.4));
 }
 
 .subscriptionBannerText {
@@ -1690,8 +1805,8 @@
 }
 
 .pricingCard {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
-    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
     border-radius: 16px;
     text-align: center;
     min-height: 500px;
@@ -1705,45 +1820,44 @@
 }
 
 .pricingCard:hover {
-    border-color: rgba(0, 255, 255, 0.6);
-    box-shadow: 0 20px 40px rgba(0, 255, 255, 0.2);
-    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
 }
 
 .pricingCardHighlighted {
-    border: 2px solid #00ffff;
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(255, 0, 255, 0.15));
-    transform: scale(1.08) translateY(-10px);
-    box-shadow: 0 25px 50px rgba(0, 255, 255, 0.3);
+    border: 2px solid var(--accent-indigo);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(59, 130, 246, 0.15));
+    transform: scale(1.05) translateY(-8px);
+    box-shadow: var(--shadow-xl);
     z-index: 2;
 }
 
 .pricingCardHighlighted:hover {
-    transform: scale(1.08) translateY(-15px);
-    box-shadow: 0 30px 60px rgba(0, 255, 255, 0.4);
+    transform: scale(1.05) translateY(-12px);
+    box-shadow: 0 24px 60px rgba(99, 102, 241, 0.25);
 }
 
 .pricingIcon {
     font-size: 3rem;
     margin-bottom: 1rem;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+    filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.4));
 }
 
 .pricingHighlight {
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
     margin: 1rem 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: -0.01em;
 }
 
 .pricingCallout {
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
-    border: 2px solid rgba(0, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(59, 130, 246, 0.1));
+    border: 2px solid rgba(99, 102, 241, 0.3);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
@@ -2032,14 +2146,15 @@
 
 .progressiveCard {
     background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    border-radius: 18px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
     padding: 2.75rem;
 }
 
 .progressiveCard h2 {
     margin: 0.5rem 0 1rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
+    font-weight: 700;
 }
 
 .progressiveCard p {
@@ -2061,8 +2176,8 @@
 
 .progressiveChoiceColumn {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 14px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
     padding: 1.25rem 1.4rem;
     display: grid;
     gap: 0.75rem;
@@ -2074,8 +2189,8 @@
 }
 
 .progressiveVoiceColumn {
-    background: rgba(0, 255, 255, 0.12);
-    border-color: rgba(0, 255, 255, 0.4);
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.35);
 }
 
 .progressiveChoiceCopy {
@@ -2091,17 +2206,18 @@
 
 .progressiveVoiceButton {
     padding: 0.75rem 1.4rem;
-    border-radius: 999px;
-    border: 1px solid rgba(0, 255, 255, 0.55);
-    color: #00ffff;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: var(--accent-indigo);
     background: transparent;
     font-weight: 600;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .progressiveVoiceButton:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(0, 255, 255, 0.25);
+    box-shadow: var(--shadow-md);
+    background: rgba(99, 102, 241, 0.08);
 }
 
 .progressiveProof {
@@ -2163,7 +2279,7 @@
 
 .customerLogoMetric {
     font-size: 0.9rem;
-    color: #00ffff;
+    color: var(--accent-indigo);
     font-weight: 600;
 }
 
@@ -2194,9 +2310,9 @@
 
 .formField input:focus,
 .formField textarea:focus {
-    border-color: #00ffff;
+    border-color: var(--accent-indigo);
     outline: none;
-    background: rgba(0, 255, 255, 0.08);
+    background: rgba(99, 102, 241, 0.08);
 }
 
 .formFieldFull {
@@ -2236,14 +2352,14 @@
 .formSubmit {
     justify-self: flex-start;
     padding: 0.95rem 2.5rem;
-    border-radius: 999px;
+    border-radius: 8px;
     border: none;
-    background: linear-gradient(120deg, #00ffff, #00b7ff);
-    color: #001828;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
+    color: #ffffff;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .formSubmit:disabled {
@@ -2252,8 +2368,9 @@
 }
 
 .formSubmit:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 32px rgba(0, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
 }
 
 .fitCallSection {
@@ -2377,17 +2494,18 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.95rem 2.2rem;
-    border-radius: 999px;
-    background: #00ffff;
-    color: #001828;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
+    color: #ffffff;
     font-weight: 600;
     text-decoration: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .fitCallButton:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 36px rgba(0, 255, 255, 0.3);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
 }
 
 .shareActions {
@@ -2435,17 +2553,18 @@
 .copyButton {
     justify-self: center;
     padding: 0.65rem 1.8rem;
-    border-radius: 999px;
-    border: 1px solid rgba(0, 255, 255, 0.4);
-    background: rgba(0, 255, 255, 0.12);
-    color: #00ffff;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent-indigo);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .copyButton:hover {
-    background: rgba(0, 255, 255, 0.2);
+    background: rgba(99, 102, 241, 0.2);
+    transform: translateY(-1px);
 }
 
 .copyButton:active {
@@ -2501,7 +2620,8 @@
 
 .finalAssuranceFaqs h3 {
     margin: 0 0 0.4rem 0;
-    color: #00ffff;
+    color: var(--accent-indigo);
+    font-weight: 700;
 }
 
 .finalAssuranceFaqs p {
@@ -2537,17 +2657,18 @@
 
 .finalAssuranceButton {
     padding: 0.9rem 1.8rem;
-    border-radius: 999px;
-    background: #00ffff;
-    color: #001828;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--primary-blue));
+    color: #ffffff;
     font-weight: 600;
     border: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .finalAssuranceButton:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 32px rgba(0, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #5558e3, #3b82f6);
 }
 
 .finalAssuranceCaption {
@@ -2573,7 +2694,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease;

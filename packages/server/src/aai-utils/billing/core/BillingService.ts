@@ -311,10 +311,10 @@ export class BillingService implements BillingProvider {
                 durationMs: totalTime,
                 traceId,
                 processedCount: result.processedTraces.length,
-                failedCount: result.failedTraces.length,
-                skippedCount: result.skippedTraces.length,
-                meterEventsCount: result.meterEvents.length,
-                skippedTraces: result.skippedTraces
+                failedCount: result.failedTraces?.length,
+                skippedCount: result.skippedTraces?.length,
+                meterEventsCount: result.meterEvents?.length,
+                skippedTraces: result.skippedTraces?.length
             })
             return result
         } catch (error: any) {

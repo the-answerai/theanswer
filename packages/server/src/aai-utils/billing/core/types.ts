@@ -232,6 +232,9 @@ export interface SyncUsageResponse {
     meterEvents?: Stripe.Billing.MeterEvent[]
     traces?: any[]
     creditsData?: CreditsData[]
+    processedCount?: number
+    failedCount?: number
+    skippedCount?: number
 }
 
 export interface UsageSummary {

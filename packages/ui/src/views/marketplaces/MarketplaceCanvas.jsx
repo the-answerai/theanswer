@@ -38,7 +38,15 @@ const MarketplaceCanvas = () => {
     const reactFlowWrapper = useRef(null)
 
     // Credential checking hook
-    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
+    const {
+        showCredentialModal,
+        missingCredentials,
+        checkCredentials,
+        initialDontShowAgain,
+        handleAssign,
+        handleSkip,
+        handleCancel
+    } = useCredentialChecker()
 
     // ==============================|| useEffect ||============================== //
 
@@ -55,7 +63,7 @@ const MarketplaceCanvas = () => {
     const onChatflowCopy = (stateData) => {
         // stateData is now the complete state with all template information
         const flowDataParsed = stateData.flowData ? JSON.parse(stateData.flowData) : {}
-        
+
         const isAgentCanvas = (flowDataParsed?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
@@ -135,6 +143,7 @@ const MarketplaceCanvas = () => {
                 onSkip={handleSkip}
                 onCancel={handleCancel}
                 flowData={flowData ? JSON.parse(flowData) : null}
+                initialDontShowAgain={initialDontShowAgain}
             />
         </>
     )

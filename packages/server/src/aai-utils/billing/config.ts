@@ -1,5 +1,4 @@
 import { Logger } from 'winston'
-import { Langfuse } from 'langfuse'
 
 // Initialize logger
 export const log = console as unknown as Logger
@@ -41,6 +40,13 @@ export const BILLING_CONFIG = {
         BATCH_DELAY_MS: 1000
     },
 
+    // Sync configuration
+    SYNC: {
+        LOOKBACK_DAYS: parseInt(process.env.BILLING_SYNC_LOOKBACK_DAYS || '90'),
+        PAGE_BATCH_SIZE: 15, // Number of pages to fetch in parallel
+        RATE_LIMIT_DELAY_MS: 1000 // Delay between page batches
+    },
+
     // Resource configuration
     AI_TOKENS: {
         TOKENS_PER_CREDIT: 10, // 1,000 tokens = 100 Credits
@@ -73,10 +79,3 @@ export const BILLING_CONFIG = {
         STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Credits)'
     }
 }
-
-// Initialize Langfuse client
-export const langfuse = new Langfuse({
-    publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
-    secretKey: process.env.LANGFUSE_SECRET_KEY || '',
-    baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-})

@@ -7,6 +7,9 @@ import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISu
 
 import styles from './index.module.css'
 
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
+
 function SidekickStudioHero() {
     return (
         <header className={clsx('hero hero--primary', styles.heroSection)}>
@@ -20,8 +23,8 @@ function SidekickStudioHero() {
                     flows to automate your processes.
                 </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Launch Studio
+                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                        Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/sidekick-studio' className={styles.secondaryLink}>
@@ -349,11 +352,11 @@ function CTASection() {
 }
 
 export default function SidekickStudio(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Sidekick Studio - Visual AI Workflow Builder'
                 description='Build complex AI workflows with our visual no-code editor. Connect tools, create agents, and automate processes without coding.'
             >
@@ -382,7 +385,7 @@ export default function SidekickStudio(): JSX.Element {
                     <NodeReferenceImage />
                     <CTASection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

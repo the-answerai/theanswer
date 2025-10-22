@@ -20,6 +20,7 @@ interface ConversionData {
 
 export class TrackingService {
     private initialized = false
+    private scrollTrackingInitialized = false
 
     constructor() {
         if (typeof window !== 'undefined') {
@@ -29,7 +30,9 @@ export class TrackingService {
 
     // Initialize all tracking services
     private initialize(): void {
-        if (this.initialized) return
+        if (this.initialized) {
+            return
+        }
 
         this.initializeGoogleAnalytics()
         this.initializeLinkedInPixel()
@@ -44,11 +47,14 @@ export class TrackingService {
         if (!gaId) return
 
         try {
-            // Load gtag script
-            const gtagScript = document.createElement('script')
-            gtagScript.async = true
-            gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
-            document.head.appendChild(gtagScript)
+            // Load gtag script if not already present
+            const existingGtag = document.querySelector(`script[src*="googletagmanager.com/gtag/js"]`)
+            if (!existingGtag) {
+                const gtagScript = document.createElement('script')
+                gtagScript.async = true
+                gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
+                document.head.appendChild(gtagScript)
+            }
 
             // Initialize gtag
             window.dataLayer = window.dataLayer || []
@@ -65,9 +71,8 @@ export class TrackingService {
                     custom_parameter_2: 'company_size'
                 }
             })
-
         } catch (error) {
-            console.error('Google Analytics initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -77,22 +82,29 @@ export class TrackingService {
         if (!linkedInPixel) return
 
         try {
-            // Load LinkedIn Insight Tag
-            const linkedInScript = document.createElement('script')
-            linkedInScript.type = 'text/javascript'
-            linkedInScript.innerHTML = `
+            // Load LinkedIn Insight Tag if not already present
+            const existingLinkedInConfig = document.querySelector('script[data-linkedin-config]')
+            if (!existingLinkedInConfig) {
+                const linkedInScript = document.createElement('script')
+                linkedInScript.type = 'text/javascript'
+                linkedInScript.setAttribute('data-linkedin-config', 'true')
+                linkedInScript.innerHTML = `
         _linkedin_partner_id = "${linkedInPixel}";
         window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
         window._linkedin_data_partner_ids.push(_linkedin_partner_id);
       `
-            document.head.appendChild(linkedInScript)
+                document.head.appendChild(linkedInScript)
+            }
 
             // Load LinkedIn tracking script
-            const linkedInTrackingScript = document.createElement('script')
-            linkedInTrackingScript.type = 'text/javascript'
-            linkedInTrackingScript.async = true
-            linkedInTrackingScript.src = 'https://snap.licdn.com/li.lms-analytics/insight.min.js'
-            document.head.appendChild(linkedInTrackingScript)
+            const existingLinkedInScript = document.querySelector('script[src*="snap.licdn.com"]')
+            if (!existingLinkedInScript) {
+                const linkedInTrackingScript = document.createElement('script')
+                linkedInTrackingScript.type = 'text/javascript'
+                linkedInTrackingScript.async = true
+                linkedInTrackingScript.src = 'https://snap.licdn.com/li.lms-analytics/insight.min.js'
+                document.head.appendChild(linkedInTrackingScript)
+            }
 
             // Initialize lintrk function
             window.lintrk =
@@ -100,9 +112,8 @@ export class TrackingService {
                 function (...args: any[]) {
                     ;(window.lintrk.q = window.lintrk.q || []).push(args)
                 }
-
         } catch (error) {
-            console.error('LinkedIn Pixel initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -112,27 +123,35 @@ export class TrackingService {
         if (!facebookPixel) return
 
         try {
-            // Facebook Pixel Code
-            window.fbq =
-                window.fbq ||
-                function (...args: any[]) {
-                    ;(window.fbq.q = window.fbq.q || []).push(args)
+            // Facebook Pixel Code - Official stub implementation
+            if (!window.fbq) {
+                window.fbq = function (...args: any[]) {
+                    if (window.fbq.callMethod) {
+                        window.fbq.callMethod.apply(window.fbq, args)
+                    } else {
+                        window.fbq.queue.push(args)
+                    }
                 }
-            window._fbq = window.fbq
-            window.fbq.push = window.fbq
-            window.fbq.loaded = true
-            window.fbq.version = '2.0'
-            window.fbq.queue = []
+                window._fbq = window.fbq
+                window.fbq.push = window.fbq
+                window.fbq.loaded = true
+                window.fbq.version = '2.0'
+                window.fbq.queue = []
+            }
 
-            const facebookScript = document.createElement('script')
-            facebookScript.async = true
-            facebookScript.src = 'https://connect.facebook.net/en_US/fbevents.js'
-            document.head.appendChild(facebookScript)
+            // Load script if not already present
+            const existingScript = document.querySelector('script[src*="fbevents.js"]')
+            if (!existingScript) {
+                const facebookScript = document.createElement('script')
+                facebookScript.async = true
+                facebookScript.src = 'https://connect.facebook.net/en_US/fbevents.js'
+                document.head.appendChild(facebookScript)
+            }
 
             window.fbq('init', facebookPixel)
             window.fbq('track', 'PageView')
         } catch (error) {
-            console.error('Facebook Pixel initialization failed:', error)
+            // Silent fail
         }
     }
 
@@ -165,7 +184,6 @@ export class TrackingService {
                 currency: 'USD'
             })
         }
-
     }
 
     // Track webinar registration conversion
@@ -193,7 +211,7 @@ export class TrackingService {
                     predicted_ltv: data.leadScore ? data.leadScore * 10 : 100
                 })
             } catch (error) {
-                console.error('Facebook Pixel tracking failed:', error)
+                // Silent fail
             }
         }
 
@@ -204,7 +222,7 @@ export class TrackingService {
                     conversion_id: 'webinar_registration'
                 })
             } catch (error) {
-                console.error('LinkedIn tracking failed:', error)
+                // Silent fail
             }
         }
     }
@@ -231,7 +249,6 @@ export class TrackingService {
                 })
             }
         }
-
     }
 
     // Track form interactions
@@ -247,7 +264,8 @@ export class TrackingService {
         if (window.fbq) {
             try {
                 if (action === 'start') {
-                    window.fbq('track', 'Lead', {
+                    // Track form engagement with custom event instead of Lead
+                    window.fbq('trackCustom', 'FormStarted', {
                         content_name: formName,
                         content_category: 'webinar'
                     })
@@ -257,7 +275,7 @@ export class TrackingService {
                     })
                 }
             } catch (error) {
-                console.error('Facebook Pixel form tracking failed:', error)
+                // Silent fail
             }
         }
     }
@@ -362,7 +380,7 @@ export class TrackingService {
 
     // Initialize scroll tracking
     initializeScrollTracking(): void {
-        if (typeof window === 'undefined') return
+        if (typeof window === 'undefined' || this.scrollTrackingInitialized) return
 
         let scrollThresholds = [25, 50, 75, 100]
         let firedThresholds: number[] = []
@@ -381,6 +399,7 @@ export class TrackingService {
         }
 
         window.addEventListener('scroll', handleScroll, { passive: true })
+        this.scrollTrackingInitialized = true
     }
 }
 

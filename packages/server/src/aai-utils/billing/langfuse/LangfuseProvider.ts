@@ -1,55 +1,280 @@
 import { CreditsData, TraceMetadata, SyncUsageResponse, UsageEvent, UsageEventsResponse, GetUsageEventsParams } from '../core/types'
-import { langfuse, log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
-import type { GetLangfuseTraceResponse, GetLangfuseTracesResponse } from 'langfuse-core'
+import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
+import axios from 'axios'
 import { StripeProvider } from '../stripe/StripeProvider'
-import Stripe from 'stripe'
 import { extractCredentialsAndModels } from 'flowise-components'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
-
-type Trace = GetLangfuseTracesResponse['data'][number]
-type FullTrace = GetLangfuseTraceResponse
+import { TraceWithDetails as Trace, TraceWithFullDetails } from '@langfuse/core'
 
 export class LangfuseProvider {
     // Cache for flow platform status (resets each sync)
     private platformNodeCache = new Map<string, boolean>()
 
+    // Langfuse API configuration
+    private readonly langfuseBaseUrl: string
+    private readonly langfuseAuth: string
+
+    constructor() {
+        // Set up Langfuse API configuration
+        this.langfuseBaseUrl = process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+        const publicKey = process.env.LANGFUSE_PUBLIC_KEY || ''
+        const secretKey = process.env.LANGFUSE_SECRET_KEY || ''
+        // Basic auth: publicKey as username, secretKey as password
+        this.langfuseAuth = Buffer.from(`${publicKey}:${secretKey}`).toString('base64')
+    }
+
+    // Future timestamp buffer (5 minutes) for timestamp validation
+    private static readonly FUTURE_TIMESTAMP_BUFFER_SECONDS = 300
+
+    /**
+     * Metadata filter to exclude already-processed traces
+     * Backward compatible: Traces without billing_status field are included (treated as != 'processed')
+     *
+     * NOTE: v4 Migration - Metadata filtering syntax may be different in v4 API
+     * TODO: Check v4 API documentation for correct metadata filtering approach
+     * Currently disabled in api.trace.list() calls below
+     */
+    private static readonly UNPROCESSED_FILTER = [
+        {
+            column: 'metadata',
+            operator: 'does not contain',
+            key: 'billing_status',
+            value: 'processed',
+            type: 'stringObject'
+        }
+    ]
+
+    /**
+     * Make authenticated request to Langfuse API
+     */
+    private async fetchFromLangfuseAPI(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+        try {
+            const url = `${this.langfuseBaseUrl}/api/public${endpoint}`
+            const response = await axios.get(url, {
+                params,
+                headers: {
+                    Authorization: `Basic ${this.langfuseAuth}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            return response.data
+        } catch (error: any) {
+            log.error('Error fetching from Langfuse API', {
+                endpoint,
+                error: error.message,
+                status: error.response?.status
+            })
+            throw error
+        }
+    }
+
+    /**
+     * Fetch traces from Langfuse API with proper filter encoding
+     */
+    private async fetchTraces(params: {
+        fromTimestamp?: string
+        toTimestamp?: string
+        limit?: number
+        page?: number
+        userId?: string
+        filter?: any[]
+    }): Promise<any> {
+        const queryParams: any = { ...params }
+
+        // Properly encode the filter parameter if present
+        if (params.filter) {
+            queryParams.filter = JSON.stringify(params.filter)
+        }
+
+        return this.fetchFromLangfuseAPI('/traces', queryParams)
+    }
+
+    /**
+     * Fetch a single trace by ID
+     */
+    private async fetchTrace(traceId: string): Promise<any> {
+        return this.fetchFromLangfuseAPI(`/traces/${traceId}`)
+    }
+
+    /**
+     * Check if trace has billable usage
+     */
+    private hasBillableUsage(trace: Trace): boolean {
+        return trace.totalCost > 0 || trace.latency > 0
+    }
+
+    /**
+     * Filter traces for billable usage and return count of skipped
+     * Also filters out already processed traces (billing_status = 'processed')
+     */
+    private filterBillableTraces(traces: Trace[]): { billable: Trace[]; skippedCount: number } {
+        let skippedCount = 0
+        let alreadyProcessedCount = 0
+
+        const billable = traces.filter((trace) => {
+            // Check if already processed (client-side filtering as backup to API filtering)
+            const metadata = trace.metadata as any
+            if (metadata?.billing_status === 'processed') {
+                alreadyProcessedCount++
+                return false
+            }
+
+            // Check if has billable usage
+            if (!this.hasBillableUsage(trace)) {
+                skippedCount++
+                return false
+            }
+            return true
+        })
+
+        if (alreadyProcessedCount > 0) {
+            log.info('Filtered out already processed traces', {
+                alreadyProcessedCount,
+                totalTraces: traces.length,
+                remainingTraces: billable.length
+            })
+        }
+
+        return { billable, skippedCount }
+    }
+
+    /**
+     * Convert traces to credits and sync to Stripe
+     */
+    private async processAndSyncTraces(traces: Trace[]) {
+        if (traces.length === 0) {
+            return { processedTraces: [], failedEvents: [], meterEvents: [] }
+        }
+
+        const creditsDataWithTraces = await this.convertUsageToCredits(traces)
+        const stripeProvider = new StripeProvider()
+
+        return await stripeProvider.syncUsageToStripe(
+            creditsDataWithTraces.map((item) => ({
+                ...item.creditsData,
+                fullTrace: item.fullTrace
+            }))
+        )
+    }
+
+    /**
+     * Sync usage data from Langfuse to Stripe
+     *
+     * Filtering Strategy (Dual-layer approach for reliability):
+     * 1. API-level filter: metadata.billing_status != 'processed' (attempted, but may not work consistently in v4)
+     * 2. Client-side filter: Checks metadata.billing_status !== 'processed' in filterBillableTraces()
+     * 3. In-memory filter: billable usage (totalCost > 0 OR latency > 0)
+     *
+     * Processing Flow:
+     * - Fetches unprocessed traces from lookback period
+     * - Filters out already processed traces (client-side backup)
+     * - Converts usage to credits and syncs to Stripe
+     * - Marks traces as processed: metadata.billing_status = 'processed' (TODO: v4 implementation needed)
+     *
+     * Backward Compatible: Old traces without billing_status field are automatically included
+     *
+     * @param traceId - Optional specific trace ID to sync
+     */
     async syncUsageToStripe(traceId?: string): Promise<SyncUsageResponse> {
-        let traces: Trace[] = []
-        let creditsDataWithTraces: Array<{ creditsData: CreditsData; fullTrace: any }> = []
+        // Track counts instead of full arrays to reduce memory usage
+        let processedCount = 0
+        let failedCount = 0
+        let skippedCount = 0
+        // Only track failures for debugging (typically small)
         let failedTraces: Array<{ traceId: string; error: string }> = []
-        let processedTraces: string[] = []
-        let skippedTraces: Array<{ traceId: string; reason: string }> = []
-        let meterEvents: Stripe.Billing.MeterEvent[] = []
 
         try {
-            traces = await this.fetchUsageData(traceId)
-            // Track skipped traces from initial filtering
-            const skippedFromInitialFilter = traces.filter((trace) => {
-                const metadata = (trace.metadata as TraceMetadata) || {}
-                if (metadata.billing_status === 'processed') {
-                    skippedTraces.push({ traceId: trace.id, reason: 'Already processed' })
-                    return true
+            // Handle single trace lookup
+            if (traceId) {
+                const trace = await this.fetchTrace(traceId)
+                const traces: Trace[] = trace
+                    ? [
+                          {
+                              ...trace,
+                              observations: trace.observations?.map((obs: any) => obs?.id),
+                              scores: trace.scores?.map((score: any) => score?.id)
+                          } as unknown as Trace
+                      ]
+                    : []
+
+                const response = await this.processAndSyncTraces(traces)
+                return {
+                    processedTraces: response.processedTraces,
+                    failedTraces: response.failedEvents,
+                    skippedTraces: []
                 }
-                if (!(trace.totalCost > 0 || trace.latency > 0)) {
-                    skippedTraces.push({ traceId: trace.id, reason: 'No billable usage' })
-                    return true
-                }
-                return false
+            }
+
+            // Use the earliest possible date to fetch ALL unprocessed traces
+            // The filter will ensure we only get unprocessed ones, so we don't need time limits
+            const fromTimestamp = new Date('2020-01-01T00:00:00.000Z') // Langfuse didn't exist before 2020
+            const toTimestamp = new Date() // Current time
+
+            log.info('Starting streaming sync for ALL unprocessed traces', {
+                fromTimestamp: fromTimestamp.toISOString(),
+                toTimestamp: toTimestamp.toISOString(),
+                filter: 'billing_status != processed',
+                note: 'Fetching all historical unprocessed traces'
             })
 
-            creditsDataWithTraces = await this.convertUsageToCredits(traces)
+            // Fetch and process first page
+            const initialResponse = await this.fetchTraces({
+                fromTimestamp: fromTimestamp.toISOString(),
+                toTimestamp: toTimestamp.toISOString(),
+                limit: 100,
+                page: 1,
+                filter: LangfuseProvider.UNPROCESSED_FILTER
+            })
+            // console.log('initialResponse', initialResponse)
+            const totalPages = initialResponse.meta.totalPages
+            log.info('Total pages to process', { totalPages })
 
-            // Create meter events in Stripe
-            const stripeProvider = new StripeProvider()
-            const stripeResponse = await stripeProvider.syncUsageToStripe(
-                creditsDataWithTraces.map((item) => ({
-                    ...item.creditsData,
-                    fullTrace: item.fullTrace
-                }))
-            )
-            meterEvents = stripeResponse.meterEvents
-            failedTraces = stripeResponse.failedEvents
-            processedTraces = stripeResponse.processedTraces
+            const { billable: firstPageTraces, skippedCount: firstPageSkipped } = this.filterBillableTraces(initialResponse.data)
+            const firstPageResponse = await this.processAndSyncTraces(firstPageTraces)
+
+            processedCount += firstPageResponse.processedTraces.length
+            failedCount += firstPageResponse.failedEvents.length
+            skippedCount += firstPageSkipped
+            failedTraces.push(...firstPageResponse.failedEvents)
+
+            // Process remaining pages in batches
+            const PAGE_BATCH_SIZE = BILLING_CONFIG.SYNC.PAGE_BATCH_SIZE
+            const RATE_LIMIT_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
+
+            for (let startPage = 2; startPage <= totalPages; startPage += PAGE_BATCH_SIZE) {
+                const endPage = Math.min(startPage + PAGE_BATCH_SIZE - 1, totalPages)
+
+                log.info('Processing page group', {
+                    startPage,
+                    endPage,
+                    progress: `${endPage}/${totalPages}`
+                })
+
+                const { billable: traces, skippedCount: pageSkipped } = await this.fetchPageGroup(
+                    startPage,
+                    endPage,
+                    fromTimestamp,
+                    toTimestamp
+                )
+                const response = await this.processAndSyncTraces(traces)
+
+                processedCount += response.processedTraces.length
+                failedCount += response.failedEvents.length
+                skippedCount += pageSkipped
+                failedTraces.push(...response.failedEvents)
+
+                // Rate limit between batches
+                if (endPage < totalPages) {
+                    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS))
+                }
+            }
+
+            log.info('Streaming sync completed', {
+                totalPagesProcessed: totalPages,
+                processedCount,
+                failedCount,
+                skippedCount
+            })
         } catch (error: any) {
             log.error('Error syncing usage data:', error)
             failedTraces = [{ traceId: traceId || 'unknown', error: error.message }]
@@ -59,108 +284,55 @@ export class LangfuseProvider {
         }
 
         return {
-            processedTraces,
+            processedTraces: [], // Deprecated - keeping for API compatibility
             failedTraces,
-            skippedTraces,
-            traces,
-            creditsData: creditsDataWithTraces.map((item) => item.creditsData),
-            meterEvents
+            skippedTraces: [], // Deprecated - keeping for API compatibility
+            processedCount,
+            failedCount,
+            skippedCount
         }
     }
 
-    private async fetchUsageData(traceId?: string): Promise<GetLangfuseTracesResponse['data']> {
-        try {
-            if (traceId) {
-                const trace = await langfuse.fetchTrace(traceId)
-                if (trace.data) {
-                    return [
-                        {
-                            ...trace.data,
-                            observations: trace.data.observations?.map((obs: any) => obs?.id)
-                        } as any
-                    ]
-                }
-            }
-
-            const startOfMonth = new Date()
-            startOfMonth.setDate(1)
-            startOfMonth.setHours(0, 0, 0, 0)
-
-            // Get total pages first
-            const initialResponse = await langfuse.fetchTraces({
-                fromTimestamp: startOfMonth,
-                limit: 100,
-                page: 1
-            })
-
-            const totalPages = initialResponse.meta.totalPages
-            let allTraces: GetLangfuseTracesResponse['data'] = []
-
-            // Process initial response
-            const validInitialTraces = initialResponse.data.filter((trace) => {
-                if (traceId && trace.id !== traceId) {
-                    return false
-                }
-                const hasTokenCost = trace.totalCost > 0
-                const hasComputeTime = trace.latency > 0
-                const metadata = (trace.metadata as TraceMetadata) || {}
-                const isNotProcessed = metadata.billing_status !== 'processed'
-                return (hasTokenCost || hasComputeTime) && isNotProcessed
-            })
-            allTraces = allTraces.concat(validInitialTraces)
-
-            // Fetch remaining pages in parallel with rate limiting
-            const BATCH_SIZE = 15 // Number of concurrent requests
-            const RATE_LIMIT_DELAY = 1000 // 1 second delay between batches
-
-            for (let i = 2; i <= totalPages; i += BATCH_SIZE) {
-                const batch = []
-                for (let j = 0; j < BATCH_SIZE && i + j <= totalPages; j++) {
-                    batch.push(
-                        langfuse.fetchTraces({
-                            fromTimestamp: startOfMonth,
-                            limit: 100,
-                            page: i + j
-                        })
-                    )
-                }
-
-                const responses = await Promise.all(batch)
-
-                responses.forEach((response) => {
-                    const validTraces = response.data.filter((trace) => {
-                        if (traceId && trace.id !== traceId) {
-                            return false
-                        }
-                        const hasTokenCost = trace.totalCost > 0
-                        const hasComputeTime = trace.latency > 0
-                        const metadata = (trace.metadata as TraceMetadata) || {}
-                        const isNotProcessed = metadata.billing_status !== 'processed'
-                        return (hasTokenCost || hasComputeTime) && isNotProcessed
-                    })
-                    allTraces = allTraces.concat(validTraces)
+    /**
+     * Fetch and filter traces from multiple pages in parallel
+     */
+    private async fetchPageGroup(
+        startPage: number,
+        endPage: number,
+        fromTimestamp: Date,
+        toTimestamp: Date,
+        traceId?: string
+    ): Promise<{ billable: Trace[]; skippedCount: number }> {
+        // Build page requests
+        const pageRequests = []
+        for (let page = startPage; page <= endPage; page++) {
+            pageRequests.push(
+                this.fetchTraces({
+                    fromTimestamp: fromTimestamp.toISOString(),
+                    toTimestamp: toTimestamp.toISOString(),
+                    limit: 100,
+                    page,
+                    filter: LangfuseProvider.UNPROCESSED_FILTER
                 })
-
-                // Rate limit delay between batches
-                if (i + BATCH_SIZE <= totalPages) {
-                    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY))
-                }
-            }
-
-            return allTraces
-        } catch (error) {
-            log.error('Error fetching usage data from Langfuse:', error)
-            console.log(error)
-            throw error
+            )
         }
+
+        // Fetch all pages in parallel
+        const responses = await Promise.all(pageRequests)
+
+        // Combine and filter traces
+        const allTraces = responses.flatMap((response) => response.data)
+        const tracesById = traceId ? allTraces.filter((trace) => trace.id === traceId) : allTraces
+
+        return this.filterBillableTraces(tracesById)
     }
 
+    /**
+     * Validate that trace has required fields for billing
+     * Note: billing_status check not needed here - API filter handles it
+     */
     private async validateUsageData(trace: Trace): Promise<boolean> {
-        const metadata = (trace.metadata as TraceMetadata) || {}
-        return !!(
-            (trace.id && typeof trace.totalCost === 'number' && typeof trace.latency === 'number')
-            // && metadata.billing_status !== 'processed'
-        )
+        return !!(trace.id && typeof trace.totalCost === 'number' && typeof trace.latency === 'number')
     }
     private async convertUsageToCredits(usageData: Trace[]): Promise<Array<{ creditsData: CreditsData; fullTrace: any }>> {
         const validTraces = await Promise.all(usageData.map((trace) => this.validateUsageData(trace)))
@@ -204,7 +376,7 @@ export class LangfuseProvider {
             const traceTimestampSeconds = Math.floor(traceDate.getTime() / 1000)
 
             // Skip future timestamps (with 5 min buffer)
-            if (traceTimestampSeconds > nowUtcSeconds + 300) {
+            if (traceTimestampSeconds > nowUtcSeconds + LangfuseProvider.FUTURE_TIMESTAMP_BUFFER_SECONDS) {
                 log.warn('Skipping trace with future timestamp', {
                     traceId: trace.id,
                     timestamp: trace.timestamp,
@@ -217,13 +389,14 @@ export class LangfuseProvider {
                 ...((trace.metadata || {}) as TraceMetadata),
                 aiCredentialsOwnership: 'user'
             } as TraceMetadata
-            const { data: fullTrace } = await langfuse.fetchTrace(trace.id)
-            const costs = await this.calculateCosts(fullTrace)
+            const fullTrace = await this.fetchTrace(trace.id)
+            // TODO: Update calculateCosts, getModelUsage, and buildCreditsData to work with v4 API response types
+            const costs = await this.calculateCosts(fullTrace as any)
             metadata.aiCredentialsOwnership = costs.aiCredentialsOwnership
             const credits = this.convertCostsToCredits(costs)
             const modelUsage = await this.getModelUsage(fullTrace as any)
 
-            const creditsData = this.buildCreditsData(fullTrace, metadata, costs, credits, modelUsage, traceTimestampSeconds)
+            const creditsData = this.buildCreditsData(fullTrace as any, metadata, costs, credits, modelUsage, traceTimestampSeconds)
             return { creditsData, fullTrace: fullTrace }
         } catch (error: any) {
             log.error('Error processing trace', { traceId: trace.id, error: error.message })
@@ -239,10 +412,10 @@ export class LangfuseProvider {
 
         try {
             const appServer = getRunningExpressApp()
-            const result = await appServer.AppDataSource.query('SELECT flow_data FROM chat_flow WHERE id = $1', [chatflowId])
+            const result = await appServer.AppDataSource.query('SELECT "flowData" FROM chat_flow WHERE id = $1', [chatflowId])
 
-            if (result?.[0]?.flow_data) {
-                const { hasPlatformAINodes } = extractCredentialsAndModels(result[0].flow_data)
+            if (result?.[0]?.flowData) {
+                const { hasPlatformAINodes } = extractCredentialsAndModels(result[0].flowData)
                 this.platformNodeCache.set(chatflowId, hasPlatformAINodes)
                 return hasPlatformAINodes
             }
@@ -254,7 +427,7 @@ export class LangfuseProvider {
         return false
     }
 
-    private async calculateCosts(trace: FullTrace): Promise<{
+    private async calculateCosts(trace: TraceWithFullDetails): Promise<{
         ai: number
         compute: number
         storage: number
@@ -299,7 +472,7 @@ export class LangfuseProvider {
         }
     }
 
-    private async getModelUsage(trace: FullTrace) {
+    private async getModelUsage(trace: TraceWithFullDetails) {
         return trace.observations
             .filter((obs) => obs.model && (obs.calculatedTotalCost || obs.calculatedTotalCost === 0))
             .map((obs) => ({
@@ -312,7 +485,7 @@ export class LangfuseProvider {
     }
 
     private buildCreditsData(
-        trace: FullTrace,
+        trace: TraceWithFullDetails,
         metadata: TraceMetadata,
         costs: { ai: number; compute: number; storage: number; total: number; withMargin: number },
         credits: { ai_tokens: number; compute: number; storage: number },
@@ -373,20 +546,20 @@ export class LangfuseProvider {
             const startDate = new Date()
             startDate.setDate(startDate.getDate() - 30)
 
-            // Fetch traces from Langfuse with pagination
-            const langfuseResponse = await langfuse.fetchTraces({
-                fromTimestamp: startDate,
-                toTimestamp: endDate,
+            // Fetch traces from Langfuse API with pagination
+            const langfuseResponse = await this.fetchTraces({
+                fromTimestamp: startDate.toISOString(),
+                toTimestamp: endDate.toISOString(),
                 limit,
                 page,
                 userId,
-                orderBy: sortBy === 'timestamp' ? (sortOrder === 'desc' ? 'timestamp.DESC' : 'timestamp.ASC') : undefined
+                filter: LangfuseProvider.UNPROCESSED_FILTER
                 // Note: We can't directly filter by customerId in the API call
                 // We'll filter the results after fetching
             })
 
             // Filter traces by customerId
-            const filteredTraces = (langfuseResponse?.data || []).filter((trace) => {
+            const filteredTraces = (langfuseResponse?.data || []).filter((trace: Trace) => {
                 const metadata = trace.metadata as TraceMetadata
                 return (
                     trace.userId === userId ||
@@ -397,8 +570,14 @@ export class LangfuseProvider {
             })
 
             // Transform traces to UsageEvent format
-            const events: UsageEvent[] = filteredTraces.map((trace) => {
-                const metadata = (trace.metadata as TraceMetadata) || {}
+            const events: UsageEvent[] = filteredTraces.map((trace: Trace) => {
+                const metadata = (trace.metadata || {}) as TraceMetadata & {
+                    billing_details?: any
+                    billing_status?: string
+                    stripeError?: string
+                    chatflowName?: string
+                    chatflowid?: string
+                }
 
                 // Extract billing details
                 const billingDetails = metadata.billing_details || {}

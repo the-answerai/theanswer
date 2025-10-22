@@ -17,16 +17,26 @@ import {
     UsageSummary
 } from '../core/types'
 import { log, BILLING_CONFIG } from '../config'
-import { langfuse } from '../config'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
+// Import v3 Langfuse for trace metadata updates (v4 doesn't have this method yet)
+import { Langfuse } from 'langfuse'
 import { StripeEvent } from '../../../database/entities/StripeEvent'
 import { Subscription as SubscriptionEntity } from '../../../database/entities/Subscription'
 // import { UserCredits } from '../../../database/entities/UserCredits'
 
 export class StripeProvider {
     stripeClient: Stripe
+    langfuseV3: Langfuse // v3 client for trace metadata updates
+
     constructor() {
         this.stripeClient = new Stripe(process.env.BILLING_STRIPE_SECRET_KEY! ?? '')
+        // Initialize v3 Langfuse client for trace metadata updates
+        // (v4 API doesn't have trace metadata update method yet)
+        this.langfuseV3 = new Langfuse({
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
+            secretKey: process.env.LANGFUSE_SECRET_KEY || '',
+            baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+        })
     }
 
     async getInvoices(params: Stripe.InvoiceListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Invoice>>> {
@@ -307,6 +317,8 @@ export class StripeProvider {
             const meterEvents: Stripe.Billing.MeterEvent[] = []
             const failedEvents: Array<{ traceId: string; error: string }> = []
             const processedTraces: string[] = []
+            let selfHealedCount = 0
+            let duplicateEventCount = 0
 
             // console.log('Syncing usage to Stripe', {
             //     count: creditsData.length,
@@ -358,15 +370,48 @@ export class StripeProvider {
                                         ).toFixed(6)
                                     }
                                 }
-                                const result = await this.stripeClient.billing.meterEvents.create(stripeMeterEvent).catch((error) => {
-                                    log.error('Failed to create meter event', { error: error.message, stripeMeterEvent })
-                                    throw error
-                                })
+                                let result
+                                let isDuplicate = false
 
-                                // Update trace metadata with billing info
-                                await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                try {
+                                    result = await this.stripeClient.billing.meterEvents.create(stripeMeterEvent)
+                                } catch (error: any) {
+                                    // Check if this is a duplicate identifier error
+                                    if (error.message?.includes('An event already exists with identifier')) {
+                                        log.warn('Meter event already exists, marking trace as processed', {
+                                            traceId: data.traceId,
+                                            identifier: stripeMeterEvent.identifier,
+                                            message: 'Duplicate meter event - trace was likely processed before but metadata update failed'
+                                        })
+                                        isDuplicate = true
+                                        duplicateEventCount++
+                                        // Create a mock result for metadata update (cast to match MeterEvent type)
+                                        result = {
+                                            object: 'billing.meter_event',
+                                            identifier: stripeMeterEvent.identifier,
+                                            created: stripeMeterEvent.timestamp,
+                                            livemode: process.env.NODE_ENV === 'production',
+                                            timestamp: stripeMeterEvent.timestamp,
+                                            event_name: stripeMeterEvent.event_name,
+                                            payload: stripeMeterEvent.payload
+                                        } as Stripe.Billing.MeterEvent
+                                    } else {
+                                        // For other errors, log and throw as before
+                                        log.error('Failed to create meter event', { error: error.message, stripeMeterEvent })
+                                        throw error
+                                    }
+                                }
 
-                                meterEvents.push(result)
+                                // Update trace metadata with billing info (even for duplicates to prevent reprocessing)
+                                const wasSelfHealed = await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                if (wasSelfHealed) {
+                                    selfHealedCount++
+                                }
+
+                                // Only add to meterEvents if not a duplicate
+                                if (!isDuplicate) {
+                                    meterEvents.push(result)
+                                }
                                 processedTraces.push(data.traceId)
                                 break
                             } catch (error) {
@@ -387,6 +432,25 @@ export class StripeProvider {
                 if (i + BATCH_SIZE < creditsData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
+            }
+
+            // Log self-healing summary
+            if (selfHealedCount > 0) {
+                log.info('Self-healing: Processed untagged traces', {
+                    count: selfHealedCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((selfHealedCount / processedTraces.length) * 100).toFixed(2) + '%'
+                })
+            }
+
+            // Log duplicate events summary
+            if (duplicateEventCount > 0) {
+                log.info('Duplicate events handled gracefully', {
+                    count: duplicateEventCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((duplicateEventCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    note: 'These traces were already in Stripe but not marked as processed in Langfuse'
+                })
             }
 
             return {
@@ -446,10 +510,13 @@ export class StripeProvider {
         batchSize: number,
         batchIndex: number,
         meterId: string
-    ): Promise<void> {
+    ): Promise<boolean> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
-        await langfuse.trace({
+        // Mark trace as processed in Langfuse metadata
+        // This prevents it from being fetched again (filtered by API-level metadata.billing_status != 'processed')
+        // Using v3 client for this operation as v4 doesn't have trace metadata update method yet
+        await this.langfuseV3.trace({
             id: data.traceId,
             timestamp: data.fullTrace?.timestamp,
             metadata: {
@@ -492,6 +559,14 @@ export class StripeProvider {
                 }
             }
         })
+
+        log.debug('Trace metadata updated successfully', {
+            traceId: data.traceId,
+            billingStatus: 'processed',
+            meterEventId: result.identifier
+        })
+
+        return false
     }
 
     private calculateResourceBreakdown(credits: number, cost: number, totalCredits: number) {

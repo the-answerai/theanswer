@@ -5,6 +5,7 @@ export interface WebinarConfig {
     webinarDateTimeISO: string
     maxSeats: number
     currentRegistrations: number
+    registrationLabel?: string
     scarcity?: {
         totalSeats: number
         registrationDeadline: string
@@ -155,7 +156,8 @@ export const webinarConfig: WebinarConfig = {
     webinarTime: '11:00 AM PT',
     webinarDateTimeISO: nextWebinar.toISOString(),
     maxSeats: 200,
-    currentRegistrations: 147,
+    currentRegistrations: 147, // Update this number regularly to show social proof
+    registrationLabel: '147 IT leaders, CTOs, and operations executives already registered',
     scarcity: {
         totalSeats: 200,
         registrationDeadline: new Date(nextWebinar.getTime() - 60000).toISOString(), // 1 minute before start
@@ -166,19 +168,19 @@ export const webinarConfig: WebinarConfig = {
         ]
     },
     limitedBonus: {
-        headline: 'Bonus for the first 150 registrants',
-        subhead: 'Lock in your seat now and you’ll also get:',
+        headline: '⚡ Only 10 CEO Strategy Sessions Available This Month',
+        subhead: 'First 50 registrants get priority access:',
         perks: [
-            'Private Slack AMA with the AnswerAI founding team the week before the webinar',
-            '1:1 20-minute AI readiness audit (scheduled post-workshop)',
-            'Early access to the Enterprise AI Playbook PDF before it goes public'
+            '1:1 Strategy Session with Brad Taylor (CEO) — discuss your specific AI challenges and get personalized guidance (only 10 slots available per month)',
+            'Priority Q&A during live session — your questions answered first by our founding team',
+            'Early notification for future sessions in our bi-weekly educational series before they fill up'
         ]
     },
     pressFeatures: [
-        { name: 'Enterprise AI Leaders' },
-        { name: 'Cloud Native Solutions' },
-        { name: 'AI Implementation Partners' },
-        { name: 'Innovation Workshop Series' }
+        { name: 'Based on MIT Research', label: '📊 MIT Project NANDA Research' },
+        { name: '$30-40B Enterprise AI Investment', label: '💰 $30-40B Industry Analysis' },
+        { name: 'Real Implementation Data', label: '📈 Real Success/Failure Data' },
+        { name: 'Bi-weekly Educational Series', label: '🎓 Ongoing Education Series' }
     ],
     hostHighlights: [
         {
@@ -193,64 +195,63 @@ export const webinarConfig: WebinarConfig = {
     ],
     testimonialQuotes: [
         {
-            quote: '"We are consolidating multiple knowledge systems into a unified AI interface with promising early results."',
-            author: 'Customer Success Lead',
+            quote: '"This framework finally explained why our three AI pilots never made it to production. The learning gap concept was our missing piece — we were deploying static systems expecting adaptive results."',
+            author: 'VP of IT Innovation',
             role: 'Enterprise Technology',
             company: 'Fortune 500 AdTech Company'
         },
         {
-            quote: '"The potential to save 100+ analyst hours weekly is what drove us to implement this AI framework."',
-            author: 'Operations Director',
+            quote: '"Understanding the 2x success rate for partnerships vs internal builds completely changed our strategy. We stopped trying to build everything in-house and focused our team on what they do best."',
+            author: 'Chief Technology Officer',
             role: 'Financial Services',
             company: 'Leading Private Equity Firm'
         },
         {
-            quote: '"Our pilot teams are finding information dramatically faster, improving response times across regions."',
-            author: 'Sales Enablement Lead',
+            quote: '"The Shadow AI data was eye-opening — 90% using unsanctioned tools meant we had huge demand we weren\'t meeting. Instead of fighting it, we channeled that energy into sanctioned, secure alternatives."',
+            author: 'Chief Information Security Officer',
             role: 'Healthcare Technology',
             company: 'Multi-Regional Healthcare Provider'
         }
     ],
     roadmap: [
         {
-            phase: 'Week 1',
-            duration: 'Days 1-7',
-            outcomes: ['Executive alignment & success metrics', 'AI readiness audit delivered', 'Use-case priority matrix built']
+            phase: 'Barrier 1',
+            duration: 'The GenAI Divide',
+            outcomes: [
+                'Why 95% of AI projects fail to deliver ROI despite $30-40B investment',
+                'The gap between pilot activity and production deployment',
+                'How to identify if your initiatives are trapped in pilot purgatory'
+            ]
         },
         {
-            phase: 'Week 2',
-            duration: 'Days 8-14',
-            outcomes: ['Secure environment configured', 'Systems & data sources connected', 'Governance guardrails activated']
+            phase: 'Barrier 2',
+            duration: 'The Learning Gap',
+            outcomes: [
+                'Why static AI systems stall: no memory, context, or improvement over time',
+                'What learning-capable systems look like and why they succeed',
+                'How to evaluate if your AI tools can actually adapt to your business'
+            ]
         },
         {
-            phase: 'Week 3',
-            duration: 'Days 15-21',
-            outcomes: ['Pilot teams onboarded', 'Workflows automated with human-in-loop QA', 'Performance baseline captured']
+            phase: 'Barrier 3',
+            duration: 'Shadow AI Risk',
+            outcomes: [
+                '90% of employees using unsanctioned AI tools — the security/compliance threat',
+                'Why Shadow AI reveals massive unmet demand you can capitalize on',
+                'How to provide enterprise-grade alternatives that employees actually want to use'
+            ]
         },
         {
-            phase: 'Week 4+',
-            duration: 'Days 22-30',
-            outcomes: ['Company-wide launch playbook', 'Executive dashboard + ROI tracker', '90-day optimization backlog']
+            phase: 'Solution',
+            duration: 'Crossing the Divide',
+            outcomes: [
+                'The winning formula: Adaptive AI + Strategic Partnerships (2x success rate)',
+                'Why back-office automation delivers higher ROI than front-office pilots',
+                'Your next steps: framework to assess and improve your AI initiatives'
+            ]
         }
     ],
-    toolkitPreview: [
-        {
-            title: 'Deployment Command Center',
-            description: 'Notion + Airtable templates to manage requirements, approvals, and cutover checklist.'
-        },
-        {
-            title: 'Executive Scorecard Dashboard',
-            description: 'Ready-to-use Looker/Sheets dashboards for ROI, adoption, and compliance tracking.'
-        },
-        {
-            title: 'Security & Compliance Packet',
-            description: 'SOC2-ready policy templates, vendor review questionnaires, and data flow diagrams.'
-        },
-        {
-            title: 'AI Use-Case Prioritization Matrix',
-            description: 'Weighted scoring model to align stakeholders on impact vs. complexity instantly.'
-        }
-    ],
+    toolkitPreview: [],
     introVideo: {
         url: 'https://www.youtube-nocookie.com/embed/TODO_REPLACE_WITH_WEBINAR_INTRO',
         caption: 'Bradley Taylor shares what you’ll accomplish in this 60-minute working session (replace with final video).'
@@ -258,9 +259,9 @@ export const webinarConfig: WebinarConfig = {
 
     // Headlines - easily A/B testable
     headlines: {
-        primary: 'From AI Chaos to Enterprise Success: Deploy AI Agents in weeks, Not months',
-        alternate1: 'Stop Paying AI Tax: How Enterprises Cut Costs 30% While Scaling AI',
-        alternate2: 'The Enterprise AI Playbook: Vendor-Free Implementation in 30 Days'
+        primary: 'Bridging the GenAI Divide: How to Join the 5% That Succeed',
+        alternate1: "Why 95% of GenAI Projects Fail - And How to Be in the 5% That Don't",
+        alternate2: 'From Pilot Purgatory to Production: The GenAI Success Playbook'
     },
 
     // Customer success metrics - UPDATE THESE EASILY
@@ -321,21 +322,21 @@ export const webinarConfig: WebinarConfig = {
     problems: [
         {
             icon: '📉',
-            title: '87% of AI Projects Fail',
+            title: 'The GenAI Divide: 95% Fail to Deliver ROI',
             description:
-                'Most enterprises get trapped in vendor lock-in, paying 60% more than needed for AI implementations that take 6+ months and deliver no measurable ROI.'
+                'Despite $30-40 billion spent on enterprise AI, 95% of organizations see zero measurable ROI from GenAI initiatives. Only 5% of AI pilots make it to production and create real business value.'
         },
         {
-            icon: '🔒',
-            title: 'Vendor Lock-In Nightmare',
+            icon: '🧠',
+            title: "The Learning Gap: Static Systems Don't Scale",
             description:
-                "Companies spend millions on proprietary AI platforms, then discover they can't switch models, export data, or customize workflows to their actual needs."
+                "Most GenAI tools don't retain feedback, remember context, or improve over time. This brittleness leads to user frustration, low adoption, and projects stuck in pilot purgatory."
         },
         {
-            icon: '⏰',
-            title: '6-Month Implementation Hell',
+            icon: '👥',
+            title: 'Shadow AI: 90% Using Unsanctioned Tools',
             description:
-                'Traditional AI deployments require armies of consultants, endless meetings, and complex integrations that still leave teams frustrated and unproductive.'
+                'While official AI projects stall, 90% of employees use personal AI tools like ChatGPT for work, creating massive security, compliance, and data privacy risks.'
         }
     ],
 
@@ -452,56 +453,69 @@ export const webinarConfig: WebinarConfig = {
     agenda: [
         {
             time: '5 min',
-            topic: 'Opening & Problem Statement',
-            description: 'AI implementation chaos in enterprises and our proven solution framework'
+            topic: 'Introduction & The GenAI Divide',
+            description: 'Welcome and overview: Why 95% of GenAI projects fail to deliver ROI, and how to join the successful 5%'
         },
         {
-            time: '15 min',
-            topic: 'The Enterprise AI Reality Check',
-            description: 'Why 87% of AI projects fail, vendor lock-in costs, and IAS 4-week vs 6+ month case study'
+            time: '7 min',
+            topic: 'The GenAI Divide: Hype vs. Reality',
+            description:
+                "Data on GenAI failure rates, the gap between AI pilots and production deployments, and what's really holding organizations back"
         },
         {
-            time: '20 min',
-            topic: 'Live Demo: 4-Week Deployment Framework',
-            description: 'Week-by-week breakdown with live AnswerAgent platform demonstration and real client examples'
+            time: '7 min',
+            topic: 'Why AI Pilots Stall: The Learning Gap',
+            description: "Root causes of the 95% failure rate — static systems that don't learn, retain context, or improve over time"
         },
         {
-            time: '10 min',
-            topic: 'Enterprise Success Stories',
-            description: 'Palatine Capital (120 hours saved), IAS (6 systems unified), Moonstruck (9 reps), WOW! ($3K→$36K), ROI metrics'
+            time: '5 min',
+            topic: 'The Rise (and Risk) of Shadow AI',
+            description:
+                "90% of employees using unsanctioned AI tools: the massive demand signal and the security/compliance risks you can't ignore"
         },
         {
-            time: '10 min',
-            topic: 'Q&A & 90-Day Pilot Program',
-            description: 'Live objection handling with client proof points, 90-day pilot introduction, clear next steps'
+            time: '7 min',
+            topic: 'Build vs. Buy: Why Internal AI Efforts Struggle',
+            description: 'Why external partnerships succeed at 2x the rate of internal builds, and how to avoid the "build trap"'
+        },
+        {
+            time: '8 min',
+            topic: 'Crossing the Divide: Adaptive Tools + Deep Services',
+            description:
+                'The winning combination: learning-capable AI systems + expert integration services. Live demo of AnswerAgent + Last Rev approach'
+        },
+        {
+            time: '6 min',
+            topic: 'Q&A & Next Steps',
+            description: 'Your questions answered. How to move from piloting to real results with a follow-up session and assessment'
         }
     ],
 
     // FAQ content addressing common objections
     faqs: [
         {
-            question: "This sounds too complex to implement. How do we know it won't be another 18-month project?",
-            answer: "IAS (Integral Ad Science) deployed our full solution in exactly weeks with all employees onboarded. We've proven this timeline works because we pre-built 100+ integrations (SFDC, Jira, Confluence, etc.) and use a human-in-the-loop approach rather than trying to automate everything at once."
+            question: "We've already tried AI pilots that went nowhere. How is this different?",
+            answer: "That's the GenAI Divide in action — 95% of pilots fail because they use static systems without learning capability or proper integration. We focus on adaptive AI with memory and feedback loops, plus the deep services to embed it into your actual workflows. Our approach addresses the root causes MIT identified: the learning gap and lack of workflow integration."
         },
         {
-            question: "What about vendor lock-in? We've been burned before by platforms that held our data hostage.",
-            answer: 'Unlike competitors, you bring your own API tokens and can switch between OpenAI, Claude, and Gemini instantly. Complete export capabilities mean you keep everything if you cancel. Open-source components let you fork and modify code. Your data, your infrastructure, your control.'
+            question: "Isn't this just more hype? How do we know you can deliver real results?",
+            answer: "We start with pragmatic, back-office use cases where AI has proven ROI — finance, procurement, HR automation. MIT research shows these deliver higher returns than flashy front-office pilots. We'll show you exactly how organizations like yours achieved measurable results by focusing on practical automation first."
         },
         {
-            question: 'How do we handle security and compliance in a regulated industry?',
-            answer: 'We offer SOC2 Type II compliance pathways, on-premise deployment, and air-gapped options. Fortune 500 financial services companies use our platform with full regulatory compliance (SOX, FINRA). Complete audit trails and role-based access controls are built-in.'
+            question: 'Should we build this internally or work with a partner?',
+            answer: 'MIT data shows external partnerships succeed at 2x the rate of internal builds (67% vs 33%). Most internal projects stall due to stretched teams, evolving AI landscape, and complex integrations. Partners bring specialized expertise, faster deployment, and continuous updates so you can focus on your business, not becoming an AI company.'
         },
         {
-            question: "What's the actual ROI? We need concrete numbers to justify this to our board.",
-            answer: 'Palatine Capital Partners saved $312K annually by automating 120 analyst-hours per week. Average clients see 10-30% reduction in SaaS tool spending within 90 days. IAS achieved 40% faster ticket resolution. Typical payback period is 90 days with measurable productivity gains.'
+            question: 'What about Shadow AI? Our employees are already using ChatGPT — should we ban it?',
+            answer: 'Shadow AI affects 90% of companies and banning rarely works long-term. The better approach: provide sanctioned, enterprise-grade AI tools that are just as easy to use but secure, compliant, and learning-capable. Give employees what they need within governance boundaries rather than driving them underground.'
         },
         {
-            question: "Our team isn't technical. Will we need to hire AI specialists to use this?",
-            answer: "Monostruck Medical's sales operations team (non-technical) unified 9 reps across locations in 3 weeks. Our 'buttons beat chat' philosophy means simple interfaces, not complex AI interactions. We provide training, but the platform is designed for business users, not developers."
+            question: 'How do we handle security and compliance with AI?',
+            answer: 'This is exactly why Shadow AI is so dangerous — employees using unsanctioned tools bypass all your controls. We help you deploy enterprise-grade AI with proper governance, audit trails, data residency, and compliance frameworks. Your data stays in your environment with full visibility and control.'
         },
         {
-            question: 'How is this different from Microsoft Copilot or OpenAI Enterprise?',
-            answer: 'No vendor lock-in (swap models instantly), usage-based pricing (not per-seat), 4-week deployment (not 6+ months), and complete customization. While competitors lock you into their ecosystem, we integrate with your existing tools and let you maintain full control.'
+            question: 'Will this webinar be another vendor pitch?',
+            answer: "No — this is an educational session based on MIT research and real implementation experience. We'll share the framework that separates the successful 5% from the failing 95%, whether you work with us or not. Our goal is to help you avoid pilot purgatory and achieve real AI transformation."
         }
     ]
 }

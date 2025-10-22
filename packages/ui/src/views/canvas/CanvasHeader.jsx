@@ -17,8 +17,8 @@ import {
     IconX,
     IconCode,
     IconAdjustmentsHorizontal,
-    IconCircleCheck,
-    IconAlertCircle
+    IconLock,
+    IconLockOpen
 } from '@tabler/icons-react'
 
 // project imports
@@ -507,7 +507,7 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 window.dispatchEvent(new Event('popstate'))
                             }}
                         >
-                            {needsSetup ? <IconAlertCircle stroke={1.5} size='1.3rem' /> : <IconCircleCheck stroke={1.5} size='1.3rem' />}
+                            {needsSetup ? <IconLockOpen stroke={1.5} size='1.3rem' /> : <IconLock stroke={1.5} size='1.3rem' />}
                         </Avatar>
                     </ButtonBase>
                     <ButtonBase title={`Save ${title}`} sx={{ borderRadius: '50%', mr: 2 }}>
