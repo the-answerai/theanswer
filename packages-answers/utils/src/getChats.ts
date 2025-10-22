@@ -81,8 +81,12 @@ export async function getChats(user: User, options: PaginationOptions = {}) {
         })
     }
 
-    // Sort merged chats by date and limit results
-    mergedChats.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    // Sort merged chats by date and limit results (handle both createdAt and createdDate)
+    mergedChats.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.createdDate).getTime()
+        const dateB = new Date(b.createdAt || b.createdDate).getTime()
+        return dateB - dateA
+    })
 
     return mergedChats.slice(0, limit)
 }

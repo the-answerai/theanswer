@@ -4,20 +4,28 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { Chat } from '../../database/entities/Chat'
-import { Not, IsNull } from 'typeorm'
+import { Not, IsNull, LessThan } from 'typeorm'
 
-const getAllChats = async (user: IUser) => {
+interface PaginationOptions {
+    limit?: number
+    cursor?: string
+}
+
+const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
+    const { limit = 20, cursor } = options
     try {
         const appServer = getRunningExpressApp()
         const chats = await appServer.AppDataSource.getRepository(Chat).find({
             where: {
                 owner: { id: user.id },
                 organization: { id: user.organizationId },
-                chatflowChatId: Not(IsNull())
+                chatflowChatId: Not(IsNull()),
+                ...(cursor ? { createdDate: LessThan(new Date(cursor)) } : {})
             },
             order: {
                 createdDate: 'DESC'
-            }
+            },
+            take: limit
         })
         return JSON.parse(JSON.stringify(chats))
     } catch (error) {

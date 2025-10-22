@@ -67,8 +67,9 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
         // First page
         if (pageIndex === 0) return '/api/chats?limit=20'
 
-        // Get cursor from last chat of previous page
-        const cursor = previousPageData?.[previousPageData.length - 1]?.createdAt
+        // Get cursor from last chat of previous page (handle both createdAt and createdDate)
+        const lastChat = previousPageData?.[previousPageData.length - 1]
+        const cursor = lastChat?.createdAt || lastChat?.createdDate
         return `/api/chats?limit=20&cursor=${cursor}`
     }
 

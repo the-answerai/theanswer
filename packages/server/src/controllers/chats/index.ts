@@ -8,7 +8,9 @@ const getAllChats = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: chatsController.getAllChats - Unauthorized')
         }
-        const apiResponse = await chatsService.getAllChats(req.user)
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20
+        const cursor = req.query.cursor as string | undefined
+        const apiResponse = await chatsService.getAllChats(req.user, { limit, cursor })
         return res.json(apiResponse)
     } catch (error) {
         next(error)
