@@ -1,4 +1,3 @@
-import { prisma } from '@db/client'
 import auth0 from '@utils/auth/auth0'
 
 interface User {
@@ -25,68 +24,27 @@ export async function getChats(user: User, options: PaginationOptions = {}) {
         token = accessToken
     } catch (err) {
         console.error('Auth error:', err)
+        return []
     }
-
-    // Fetch local chats with pagination
-    const localChatsPromise = prisma.chat
-        .findMany({
-            where: {
-                users: { some: { email: user.email } },
-                organization: { id: user.organizationId },
-                chatflowChatId: { not: null },
-                journeyId: null,
-                ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {})
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            take: limit,
-            include: {
-                prompt: true,
-                messages: { orderBy: { createdAt: 'desc' }, take: 1 }
-            }
-        })
-        .then((data: any) => JSON.parse(JSON.stringify(data)))
 
     // Fetch chatflow chats with pagination
-    const chatflowChatsPromise = token
-        ? fetch(`${user.chatflowDomain}/api/v1/chats?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`, {
-              method: 'GET',
-              headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`
-              }
-          })
-              .then((res) => (res.ok ? res.json() : []))
-              .catch((err: any) => {
-                  console.error('Error fetching chatflow chats:', err.message)
-                  return []
-              })
-        : Promise.resolve([])
-
-    // Wait for both promises to resolve
-    const [localChats, chatflowChats] = await Promise.all([localChatsPromise, chatflowChatsPromise])
-
-    // Merge and deduplicate chats
-    const mergedChats = [...localChats]
-    if (chatflowChats.length > 0) {
-        chatflowChats.forEach((chatflowChat: any) => {
-            // Only add if not already in local chats
-            if (!localChats.some((local) => local.chatflowChatId === chatflowChat.id)) {
-                mergedChats.push({
-                    ...chatflowChat,
-                    chatflowChatId: chatflowChat.id
-                })
+    try {
+        const response = await fetch(`${user.chatflowDomain}/api/v1/chats?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
             }
         })
+
+        if (!response.ok) {
+            console.error('Error fetching chatflow chats:', response.statusText)
+            return []
+        }
+
+        return await response.json()
+    } catch (err: any) {
+        console.error('Error fetching chatflow chats:', err.message)
+        return []
     }
-
-    // Sort merged chats by date and limit results (handle both createdAt and createdDate)
-    mergedChats.sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.createdDate).getTime()
-        const dateB = new Date(b.createdAt || b.createdDate).getTime()
-        return dateB - dateA
-    })
-
-    return mergedChats.slice(0, limit)
 }
