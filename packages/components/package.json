@@ -132,7 +132,7 @@
         "llamaindex": "^0.3.17",
         "lodash": "^4.17.21",
         "lunary": "^0.7.15",
-        "mammoth": "^1.10.0",
+        "mammoth": "^1.11.0",
         "mcp-remote": "^0.1.29",
         "meilisearch": "^0.41.0",
         "moment": "^2.30.1",
