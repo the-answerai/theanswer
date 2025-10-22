@@ -233,11 +233,18 @@ jobs:
                   # Use manual version if provided
                   if [ -n "${{ github.event.inputs.version_override }}" ]; then
                     NEW_VERSION="${{ github.event.inputs.version_override }}"
-                    npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+                    node -e "const pkg = require('./package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
                   else
                     BUMP_TYPE="${{ steps.bump.outputs.bump_type }}"
-                    npm version $BUMP_TYPE --no-git-tag-version
-                    NEW_VERSION=$(node -p "require('./package.json').version")
+                    # Manually bump version to avoid npm/pnpm issues with workspace: protocol
+                    if [ "$BUMP_TYPE" == "major" ]; then
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major] = pkg.version.split('.').map(Number); console.log((major + 1) + '.0.0');")
+                    elif [ "$BUMP_TYPE" == "minor" ]; then
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major, minor] = pkg.version.split('.').map(Number); console.log(major + '.' + (minor + 1) + '.0');")
+                    else
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major, minor, patch] = pkg.version.split('.').map(Number); console.log(major + '.' + minor + '.' + (patch + 1));")
+                    fi
+                    node -e "const pkg = require('./package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
                   fi
 
                   echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
