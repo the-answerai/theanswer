@@ -36,11 +36,26 @@ const deleteVariable = async (variableId: string): Promise<any> => {
     }
 }
 
-const getAllVariables = async (user: IUser) => {
+const getAllVariables = async (user: IUser, exportMode: boolean = false) => {
     try {
         const appServer = getRunningExpressApp()
         const variableRepo = appServer.AppDataSource.getRepository(Variable)
 
+        // SECURITY: For export operations, only include variables owned by the user
+        if (exportMode) {
+            const variables = await variableRepo.find({
+                where: { 
+                    organizationId: user.organizationId, 
+                    userId: user.id 
+                }
+            })
+            return variables.map((variable) => ({
+                ...variable,
+                isOwner: true // All variables in export mode are user-owned
+            }))
+        }
+
+        // Regular mode - include shared variables for viewing
         const isAdmin = user?.roles?.includes('Admin')
 
         let conditions: FindOptionsWhere<Variable> | FindOptionsWhere<Variable>[]
