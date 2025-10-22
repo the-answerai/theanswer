@@ -1637,9 +1637,6 @@ importers:
             '@google/genai':
                 specifier: ^0.7.0
                 version: 0.7.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5)
-            '@langfuse/client':
-                specifier: ^4.2.0
-                version: 4.2.0(@opentelemetry/api@1.9.0)
             '@langfuse/core':
                 specifier: ^4.2.0
                 version: 4.2.0
@@ -5641,19 +5638,8 @@ packages:
         peerDependencies:
             '@langchain/core': 0.3.59
 
-    '@langfuse/client@4.2.0':
-        resolution: { integrity: sha512-3Ps+k0SdNwntZhUJMaxfImQ1A7iubxBae4xz3h7TMf5afBuTaJrrrgTrkUJVP+qSzyCa95wzerDPm/X4h5p5PA== }
-        peerDependencies:
-            '@opentelemetry/api': ^1.9.0
-
     '@langfuse/core@4.2.0':
         resolution: { integrity: sha512-QARHC8Xz3ZyFrIQtbc9L34XQo5yWwpTBvzqiXeEw/LScigG9gyUf3XaykVbJ8Er0O7cggHm9wBXw3POMxDih/w== }
-
-    '@langfuse/tracing@4.2.0':
-        resolution: { integrity: sha512-0WiqupzU2OoItnlPBFNZa6ODOKxPtD3f46c+G9RaajOELX+lfToDMvVWjmajuZdHbm5BE6BYidbGJtFfLNiyTA== }
-        engines: { node: '>=20' }
-        peerDependencies:
-            '@opentelemetry/api': ^1.9.0
 
     '@last-rev/contentful-mcp-server@1.1.0':
         resolution: { integrity: sha512-+RwFWorr7sVdX17q38l9UFqbcjw80XITmnyWxCa5iNa1qkclkH6hVyT+0fC+JsuTV6fWIDZQoYO84AdTqakMWQ== }
@@ -27456,19 +27442,7 @@ snapshots:
             - encoding
             - ws
 
-    '@langfuse/client@4.2.0(@opentelemetry/api@1.9.0)':
-        dependencies:
-            '@langfuse/core': 4.2.0
-            '@langfuse/tracing': 4.2.0(@opentelemetry/api@1.9.0)
-            '@opentelemetry/api': 1.9.0
-            mustache: 4.2.0
-
     '@langfuse/core@4.2.0': {}
-
-    '@langfuse/tracing@4.2.0(@opentelemetry/api@1.9.0)':
-        dependencies:
-            '@langfuse/core': 4.2.0
-            '@opentelemetry/api': 1.9.0
 
     '@last-rev/contentful-mcp-server@1.1.0(babel-plugin-macros@3.1.0)':
         dependencies:

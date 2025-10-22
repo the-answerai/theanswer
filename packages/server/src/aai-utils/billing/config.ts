@@ -1,5 +1,4 @@
 import { Logger } from 'winston'
-import { LangfuseClient } from '@langfuse/client'
 
 // Initialize logger
 export const log = console as unknown as Logger
@@ -80,10 +79,3 @@ export const BILLING_CONFIG = {
         STORAGE: 'Usage from data storage and persistence (1 GB/month = 500 Credits)'
     }
 }
-
-// Initialize Langfuse client (v4)
-export const langfuse = new LangfuseClient({
-    publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
-    secretKey: process.env.LANGFUSE_SECRET_KEY || '',
-    baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-})
