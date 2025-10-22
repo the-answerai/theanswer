@@ -73,7 +73,7 @@ importers:
                 version: 7.18.0(typescript@5.5.4)
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             cursor-tools:
                 specifier: latest
                 version: 0.6.0-alpha.12(@playwright/test@1.55.0)(bufferutil@4.0.9)(deepmerge@4.3.1)(encoding@0.1.13)(utf-8-validate@6.0.5)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -127,7 +127,7 @@ importers:
                 version: 2.0.1
             knip:
                 specifier: ^5.63.1
-                version: 5.63.1(@types/node@24.3.1)(typescript@5.5.4)
+                version: 5.63.1(@types/node@24.9.1)(typescript@5.5.4)
             lint-staged:
                 specifier: ^15.5.2
                 version: 15.5.2
@@ -214,7 +214,7 @@ importers:
                 version: 1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             chromadb:
                 specifier: ^1.10.5
                 version: 1.10.5(@google/generative-ai@0.24.1)(cohere-ai@7.19.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(encoding@0.1.13))(encoding@0.1.13)(ollama@0.5.17)(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76))
@@ -513,7 +513,7 @@ importers:
                 version: 2.14.1(@types/react@18.2.15)(immer@9.0.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             clsx:
                 specifier: ^1.2.1
                 version: 1.2.1
@@ -664,7 +664,7 @@ importers:
                 version: 4.25.2
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             bufferutil:
                 specifier: ^4.0.9
                 version: 4.0.9
@@ -673,7 +673,7 @@ importers:
                 version: 1.1.2
             contentful-management:
                 specifier: ^11.57.1
-                version: 11.57.1(debug@4.4.1)
+                version: 11.57.1
             csv:
                 specifier: ^6.4.1
                 version: 6.4.1
@@ -867,7 +867,7 @@ importers:
                 version: 1.1.0
             '@answerai/salesforce-mcp':
                 specifier: ^0.1.0
-                version: 0.1.0(@types/node@24.3.1)(encoding@0.1.13)
+                version: 0.1.0(@types/node@24.9.1)(encoding@0.1.13)
             '@apidevtools/json-schema-ref-parser':
                 specifier: ^12.0.2
                 version: 12.0.2
@@ -909,7 +909,7 @@ importers:
                 version: 3.9.25
             '@getzep/zep-cloud':
                 specifier: ~1.0.12
-                version: 1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4))
+                version: 1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(g3hy2qr5phattispf4an5zz774))
             '@getzep/zep-js':
                 specifier: ^0.9.0
                 version: 0.9.0
@@ -933,7 +933,7 @@ importers:
                 version: 2.8.1
             '@jlinc/langchain':
                 specifier: ^0.1.3
-                version: 0.1.3(2mxfj365zf7k5p5gmnphohcam4)
+                version: 0.1.3(csah7gdoqghlvnmrl3p2keuwwm)
             '@langchain/anthropic':
                 specifier: 0.3.23
                 version: 0.3.23(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
@@ -948,7 +948,7 @@ importers:
                 version: 0.3.4(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(encoding@0.1.13)
             '@langchain/community':
                 specifier: 0.3.47
-                version: 0.3.47(gx2raii6e7i5goaj4xi3wb55p4)
+                version: 0.3.47(ix2nx5klyi56idfijhl7zfupue)
             '@langchain/core':
                 specifier: 0.3.59
                 version: 0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
@@ -999,7 +999,7 @@ importers:
                 version: 1.1.0(babel-plugin-macros@3.1.0)
             '@mem0/community':
                 specifier: ^0.0.1
-                version: 0.0.1(syfprxqj3g6xqsnxxozkcomqca)
+                version: 0.0.1(mhskezeukjbtvhumaytoniguha)
             '@mendable/firecrawl-js':
                 specifier: ^0.0.28
                 version: 0.0.28
@@ -1050,7 +1050,7 @@ importers:
                 version: 2.57.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
             '@tsmztech/mcp-server-salesforce':
                 specifier: ^0.0.2
-                version: 0.0.2(@types/node@24.3.1)(encoding@0.1.13)
+                version: 0.0.2(@types/node@24.9.1)(encoding@0.1.13)
             '@upstash/redis':
                 specifier: 1.22.1
                 version: 1.22.1(encoding@0.1.13)
@@ -1068,7 +1068,7 @@ importers:
                 version: 4.16.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             cheerio:
                 specifier: ^1.1.2
                 version: 1.1.2
@@ -1086,7 +1086,7 @@ importers:
                 version: 10.15.1
             contentful-management:
                 specifier: ^11.57.1
-                version: 11.57.1(debug@4.4.1)
+                version: 11.57.1
             couchbase:
                 specifier: 4.4.1
                 version: 4.4.1
@@ -1158,13 +1158,16 @@ importers:
                 version: 1.5.0
             langchain:
                 specifier: 0.3.28
-                version: 0.3.28(idka4flj5daepzmmm4lpdrqkh4)
+                version: 0.3.28(g3hy2qr5phattispf4an5zz774)
             langfuse:
-                specifier: 3.37.6
-                version: 3.37.6
+                specifier: 3.38.6
+                version: 3.38.6
+            langfuse-core:
+                specifier: ^3.38.6
+                version: 3.38.6
             langfuse-langchain:
                 specifier: 3.37.6
-                version: 3.37.6(langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4))
+                version: 3.37.6(langchain@0.3.28(g3hy2qr5phattispf4an5zz774))
             langsmith:
                 specifier: 0.1.6
                 version: 0.1.6
@@ -1260,7 +1263,7 @@ importers:
                 version: 1.2.3
             typeorm:
                 specifier: ^0.3.26
-                version: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+                version: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             weaviate-ts-client:
                 specifier: ^1.6.0
                 version: 1.6.0(encoding@0.1.13)(graphql@16.11.0)
@@ -1415,7 +1418,7 @@ importers:
                 version: 1.5.0
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             cors:
                 specifier: ^2.8.5
                 version: 2.8.5
@@ -1634,6 +1637,9 @@ importers:
             '@google/genai':
                 specifier: ^0.7.0
                 version: 0.7.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5)
+            '@langfuse/core':
+                specifier: ^4.2.0
+                version: 4.2.0
             '@oclif/core':
                 specifier: 4.0.7
                 version: 4.0.7
@@ -1684,7 +1690,7 @@ importers:
                 version: 0.4.1
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             bull-board:
                 specifier: ^2.1.3
                 version: 2.1.3
@@ -1699,7 +1705,7 @@ importers:
                 version: 0.5.4
             contentful-management:
                 specifier: ^11.57.1
-                version: 11.57.1(debug@4.4.1)
+                version: 11.57.1
             cors:
                 specifier: ^2.8.5
                 version: 2.8.5
@@ -1752,11 +1758,11 @@ importers:
                 specifier: ^0.0.11
                 version: 0.0.11
             langfuse:
-                specifier: 3.37.6
-                version: 3.37.6
+                specifier: 3.38.6
+                version: 3.38.6
             langfuse-core:
-                specifier: 3.37.6
-                version: 3.37.6
+                specifier: ^3.38.6
+                version: 3.38.6
             lodash:
                 specifier: ^4.17.21
                 version: 4.17.21
@@ -1837,7 +1843,7 @@ importers:
                 version: 7.2.1
             typeorm:
                 specifier: ^0.3.26
-                version: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.19.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+                version: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.19.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             undici:
                 specifier: ^6.19.8
                 version: 6.21.3
@@ -1928,7 +1934,7 @@ importers:
                 version: 10.0.0
             jest:
                 specifier: ^29.7.0
-                version: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+                version: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             mocha:
                 specifier: ^10.8.2
                 version: 10.8.2
@@ -1937,7 +1943,7 @@ importers:
                 version: 2.0.22
             oclif:
                 specifier: ^4.22.18
-                version: 4.22.18(@types/node@24.3.1)(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
+                version: 4.22.18(@types/node@24.9.1)(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
             rimraf:
                 specifier: ^5.0.10
                 version: 5.0.10
@@ -1952,10 +1958,10 @@ importers:
                 version: 2.1.0
             ts-jest:
                 specifier: ^29.4.1
-                version: 29.4.1(@babel/core@7.28.4)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.28.4))(jest-util@30.0.5)(jest@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)))(typescript@5.5.4)
+                version: 29.4.1(@babel/core@7.28.4)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.28.4))(jest-util@30.0.5)(jest@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)))(typescript@5.5.4)
             ts-node:
                 specifier: ^10.9.2
-                version: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)
+                version: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)
             tsc-watch:
                 specifier: ^6.3.1
                 version: 6.3.1(typescript@5.5.4)
@@ -2045,7 +2051,7 @@ importers:
                 version: 4.25.1(@babel/runtime@7.28.4)(@codemirror/autocomplete@6.18.7)(@codemirror/language@6.11.3)(@codemirror/lint@6.8.5)(@codemirror/search@6.5.10)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.38.2)(codemirror@6.0.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
             axios:
                 specifier: ^1.12.1
-                version: 1.12.1(debug@4.4.1)
+                version: 1.12.1
             clsx:
                 specifier: ^1.2.1
                 version: 1.2.1
@@ -2178,7 +2184,7 @@ importers:
                 version: 12.8.3(@testing-library/dom@9.3.4)
             '@vitejs/plugin-react':
                 specifier: ^4.7.0
-                version: 4.7.0(vite@7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))
+                version: 4.7.0(vite@7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))
             pretty-quick:
                 specifier: ^3.3.1
                 version: 3.3.1(prettier@3.6.2)
@@ -2193,10 +2199,10 @@ importers:
                 version: 5.5.4
             vite:
                 specifier: ^7.1.5
-                version: 7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
+                version: 7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
             vite-plugin-pwa:
                 specifier: ^0.17.5
-                version: 0.17.5(vite@7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))(workbox-build@6.6.0(@types/babel__core@7.20.5))(workbox-window@6.6.0)
+                version: 0.17.5(vite@7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))(workbox-build@6.6.0(@types/babel__core@7.20.5))(workbox-window@6.6.0)
             vite-plugin-react-js-support:
                 specifier: ^1.0.7
                 version: 1.0.7
@@ -2666,6 +2672,10 @@ packages:
 
     '@aws-sdk/types@3.887.0':
         resolution: { integrity: sha512-fmTEJpUhsPsovQ12vZSpVTEP/IaRoJAMBGQXlQNjtCpkBp6Iq3KQDa/HDaPINE+3xxo6XvTdtibsNOd5zJLV9A== }
+        engines: { node: '>=18.0.0' }
+
+    '@aws-sdk/types@3.910.0':
+        resolution: { integrity: sha512-o67gL3vjf4nhfmuSUNNkit0d62QJEwwHLxucwVJkR/rw9mfUtAWsgBs8Tp16cdUbMgsyQtCQilL8RAJDoGtadQ== }
         engines: { node: '>=18.0.0' }
 
     '@aws-sdk/util-arn-parser@3.873.0':
@@ -3518,6 +3528,9 @@ packages:
     '@codemirror/commands@6.8.1':
         resolution: { integrity: sha512-KlGVYufHMQzxbdQONiLyGQDUW0itrLZwq3CcY7xpv9ZLRHqzkBSoteocBHtMCoY7/Ci4xhzSrToIeLg7FxHuaw== }
 
+    '@codemirror/commands@6.9.0':
+        resolution: { integrity: sha512-454TVgjhO6cMufsyyGN70rGIfJxJEjcqjBG2x2Y03Y/+Fm99d3O/Kv1QDYWuG6hvxsgmjXmBuATikIIYvERX+w== }
+
     '@codemirror/lang-javascript@6.2.4':
         resolution: { integrity: sha512-0WVmhp1QOqZ4Rt6GlVGwKJN3KW7Xh4H2q8ZZNGZaP6lRdxXJzmjm4FqvmOojVj6khWJHIb9sp7U/72W7xQgqAA== }
 
@@ -3541,6 +3554,9 @@ packages:
 
     '@codemirror/view@6.38.2':
         resolution: { integrity: sha512-bTWAJxL6EOFLPzTx+O5P5xAO3gTqpatQ2b/ARQ8itfU/v2LlpS3pH2fkL0A3E/Fx8Y2St2KES7ZEV0sHTsSW/A== }
+
+    '@codemirror/view@6.38.6':
+        resolution: { integrity: sha512-qiS0z1bKs5WOvHIAC0Cybmv4AJSkAXgX5aD6Mqd2epSLlVJsQl8NG23jCVouIgkh4All/mrbdsf2UOLFnJw0tw== }
 
     '@colors/colors@1.5.0':
         resolution: { integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ== }
@@ -5622,6 +5638,9 @@ packages:
         peerDependencies:
             '@langchain/core': 0.3.59
 
+    '@langfuse/core@4.2.0':
+        resolution: { integrity: sha512-QARHC8Xz3ZyFrIQtbc9L34XQo5yWwpTBvzqiXeEw/LScigG9gyUf3XaykVbJ8Er0O7cggHm9wBXw3POMxDih/w== }
+
     '@last-rev/contentful-mcp-server@1.1.0':
         resolution: { integrity: sha512-+RwFWorr7sVdX17q38l9UFqbcjw80XITmnyWxCa5iNa1qkclkH6hVyT+0fC+JsuTV6fWIDZQoYO84AdTqakMWQ== }
         hasBin: true
@@ -5632,8 +5651,14 @@ packages:
     '@lezer/common@1.2.3':
         resolution: { integrity: sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA== }
 
+    '@lezer/common@1.3.0':
+        resolution: { integrity: sha512-L9X8uHCYU310o99L3/MpJKYxPzXPOS7S0NmBaM7UO/x2Kb2WbmMLSkfvdr1KxRIFYOpbY0Jhn7CfLSUDzL8arQ== }
+
     '@lezer/highlight@1.2.1':
         resolution: { integrity: sha512-Z5duk4RN/3zuVO7Jq0pGLJ3qynpxUVsh7IbUbGj88+uV2ApSAn6kWg2au3iJb+0Zi7kKtqffIESgNcRXWZWmSA== }
+
+    '@lezer/highlight@1.2.2':
+        resolution: { integrity: sha512-z8TQwaBXXQIvG6i2g3e9cgMwUUXu9Ib7jo2qRRggdhwKpM56Dw3PM3wmexn+EGaaOZ7az0K7sjc3/gcGW7sz7A== }
 
     '@lezer/javascript@1.5.3':
         resolution: { integrity: sha512-jexmlKq5NpGiB7t+0QkyhSXRgaiab5YisHIQW9C7EcU19KSUsDguZe9WY+rmRDg34nXoNH2LQ4SxpC+aJUchSQ== }
@@ -7885,6 +7910,10 @@ packages:
         resolution: { integrity: sha512-RkUpIOsVlAwUIZXO1dsz8Zm+N72LClFfsNqf173catVlvRZiwPy0x2u0JLEA4byreOPKDZPGjmPDylMoP8ZJRg== }
         engines: { node: '>=18.0.0' }
 
+    '@smithy/types@4.8.0':
+        resolution: { integrity: sha512-QpELEHLO8SsQVtqP+MkEgCYTFW0pleGozfs3cZ183ZBj9z3VC1CX1/wtFMK64p+5bhtZo41SeLK1rBRtd25nHQ== }
+        engines: { node: '>=18.0.0' }
+
     '@smithy/url-parser@4.1.1':
         resolution: { integrity: sha512-bx32FUpkhcaKlEoOMbScvc93isaSiRM75pQ5IgIBaMkT7qMlIibpPRONyx/0CvrXHzJLpOn/u6YiDX2hcvs7Dg== }
         engines: { node: '>=18.0.0' }
@@ -8791,6 +8820,9 @@ packages:
     '@types/node@18.19.124':
         resolution: { integrity: sha512-hY4YWZFLs3ku6D2Gqo3RchTd9VRCcrjqp/I0mmohYeUVA5Y8eCXKJEasHxLAJVZRJuQogfd1GiJ9lgogBgKeuQ== }
 
+    '@types/node@18.19.130':
+        resolution: { integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg== }
+
     '@types/node@20.19.13':
         resolution: { integrity: sha512-yCAeZl7a0DxgNVteXFHt9+uyFbqXGy/ShC4BlcHkoE0AfGXYv/BUiplV72DjMYXHDBXFjhvr6DD1NiRVfB4j8g== }
 
@@ -8799,6 +8831,9 @@ packages:
 
     '@types/node@24.3.1':
         resolution: { integrity: sha512-3vXmQDXy+woz+gnrTvuvNrPzekOi+Ds0ReMxw0LzBiK3a+1k0kQn9f2NWk+lgD4rJehFUmYy2gMhJ2ZI+7YP9g== }
+
+    '@types/node@24.9.1':
+        resolution: { integrity: sha512-QoiaXANRkSXK6p0Duvt56W208du4P9Uye9hWLWgGMDTEoKPhuenzNcC4vGUmrNkiOKTlIrBoyNQYNpSwfEZXSg== }
 
     '@types/oauth@0.9.6':
         resolution: { integrity: sha512-H9TRCVKBNOhZZmyHLqFt9drPM9l+ShWiqqJijU1B8P3DX3ub84NjxDuy+Hjrz+fEca5Kwip3qPMKNyiLgNJtIA== }
@@ -9897,6 +9932,9 @@ packages:
 
     axios@1.12.1:
         resolution: { integrity: sha512-Kn4kbSXpkFHCGE6rBFNwIv0GQs4AvDT80jlveJDKFxjbTYMUeB4QtsdPCv6H8Cm19Je7IU6VFtRl2zWZI0rudQ== }
+
+    axios@1.12.2:
+        resolution: { integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw== }
 
     axobject-query@4.1.0:
         resolution: { integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ== }
@@ -11512,6 +11550,15 @@ packages:
 
     debug@4.4.1:
         resolution: { integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ== }
+        engines: { node: '>=6.0' }
+        peerDependencies:
+            supports-color: '*'
+        peerDependenciesMeta:
+            supports-color:
+                optional: true
+
+    debug@4.4.3:
+        resolution: { integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA== }
         engines: { node: '>=6.0' }
         peerDependencies:
             supports-color: '*'
@@ -15060,12 +15107,8 @@ packages:
     langchainhub@0.0.11:
         resolution: { integrity: sha512-WnKI4g9kU2bHQP136orXr2bcRdgz9iiTBpTN0jWt9IlScUKnJBoD0aa2HOzHURQKeQDnt2JwqVmQ6Depf5uDLQ== }
 
-    langfuse-core@3.37.6:
-        resolution: { integrity: sha512-R38t3tazFoRNIJGzgJljmKXm94KJtusPGHwa5c0uc2duK/SRqHyFbWj5Bpj0Z7AnbNjbT5U6AgNH2OAZb1bksQ== }
-        engines: { node: '>=18' }
-
-    langfuse-core@3.38.5:
-        resolution: { integrity: sha512-vf/4zxv7/mz97yOpQiCJ7Mok8YZt9a52nn3XWTj+qxll4zenHT+wfAHwvfJ4BnVjK54GbEmP7IB524f/5ltq7g== }
+    langfuse-core@3.38.6:
+        resolution: { integrity: sha512-EcZXa+DK9FJdi1I30+u19eKjuBJ04du6j2Nybk19KKCuraLczg/ppkTQcGvc4QOk//OAi3qUHrajUuV74RXsBQ== }
         engines: { node: '>=18' }
 
     langfuse-langchain@3.37.6:
@@ -15074,8 +15117,8 @@ packages:
         peerDependencies:
             langchain: '>=0.0.157 <0.4.0'
 
-    langfuse@3.37.6:
-        resolution: { integrity: sha512-szgdHwh4YbnZIvCGs/pVoSR+4RnRYuutCRL/F36RdqutX2DCDu3ep14I/9DsnEKVKbiWbA/kILYeDnDBJ8OsKg== }
+    langfuse@3.38.6:
+        resolution: { integrity: sha512-mtwfsNGIYvObRh+NYNGlJQJDiBN+Wr3Hnr++wN25mxuOpSTdXX+JQqVCyAqGL5GD2TAXRZ7COsN42Vmp9krYmg== }
         engines: { node: '>=18' }
 
     langium@3.3.1:
@@ -15490,6 +15533,7 @@ packages:
 
     mailsplit@5.4.5:
         resolution: { integrity: sha512-oMfhmvclR689IIaQmIcR5nODnZRRVwAKtqFT407TIvmhX2OLUBnshUTcxzQBt3+96sZVDud9NfSe1NxAkUNXEQ== }
+        deprecated: This package has been renamed to @zone-eu/mailsplit. Please update your dependencies.
 
     make-dir@3.1.0:
         resolution: { integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw== }
@@ -15561,6 +15605,7 @@ packages:
 
     mathjax-full@3.2.2:
         resolution: { integrity: sha512-+LfG9Fik+OuI8SLwsiR02IVdjcnRCy5MufYLi0C3TdMT56L/pjB0alMVGgoWJF8pN9Rc7FESycZB9BMNWIid5w== }
+        deprecated: Version 4 replaces this package with the scoped package @mathjax/src
 
     mcp-remote@0.1.29:
         resolution: { integrity: sha512-0kXOPteu1CtWAgbj5TN+23CaklRXD6u0H5pQ1JKtTQjjaqR4QkY5SWAVUhIOKiStooen5p9v7vNQZkf2ewyzVg== }
@@ -19006,6 +19051,11 @@ packages:
         engines: { node: '>= 0.4' }
         hasBin: true
 
+    resolve@1.22.11:
+        resolution: { integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ== }
+        engines: { node: '>= 0.4' }
+        hasBin: true
+
     resolve@2.0.0-next.5:
         resolution: { integrity: sha512-U7WjGVG9sH8tvjW5SmGbQuui75FiyjAX72HX15DwBBwF9dNiQZRQAg9nnPhYy+TUnE0+VcrttuvNI8oSxZcocA== }
         hasBin: true
@@ -19991,6 +20041,9 @@ packages:
     style-mod@4.1.2:
         resolution: { integrity: sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw== }
 
+    style-mod@4.1.3:
+        resolution: { integrity: sha512-i/n8VsZydrugj3Iuzll8+x/00GH2vnYsk1eomD8QiRrSAeW6ItbCQDtfXCeJHd0iwiNagqjQkvpvREEPtW3IoQ== }
+
     style-to-js@1.1.17:
         resolution: { integrity: sha512-xQcBGDxJb6jjFCTzvQtfiPn6YvvP2O8U1MDIPNfJQlWMYfktPy+iGsHE7cssjs7y84d9fQaK4UF3RIJaAHSoYA== }
 
@@ -20852,6 +20905,9 @@ packages:
 
     undici-types@7.10.0:
         resolution: { integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag== }
+
+    undici-types@7.16.0:
+        resolution: { integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw== }
 
     undici@5.28.4:
         resolution: { integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g== }
@@ -22151,7 +22207,7 @@ snapshots:
     '@answerai/answeragent-mcp@1.0.1':
         dependencies:
             '@modelcontextprotocol/sdk': 0.6.0
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             dotenv: 16.6.1
             express: 5.1.0
             zod: 3.25.67
@@ -22173,11 +22229,11 @@ snapshots:
         transitivePeerDependencies:
             - supports-color
 
-    '@answerai/salesforce-mcp@0.1.0(@types/node@24.3.1)(encoding@0.1.13)':
+    '@answerai/salesforce-mcp@0.1.0(@types/node@24.9.1)(encoding@0.1.13)':
         dependencies:
             '@modelcontextprotocol/sdk': 0.5.0
             dotenv: 16.6.1
-            jsforce: 3.10.7(@types/node@24.3.1)(encoding@0.1.13)
+            jsforce: 3.10.7(@types/node@24.9.1)(encoding@0.1.13)
         transitivePeerDependencies:
             - '@types/node'
             - encoding
@@ -22330,7 +22386,7 @@ snapshots:
     '@aws-crypto/crc32@3.0.0':
         dependencies:
             '@aws-crypto/util': 3.0.0
-            '@aws-sdk/types': 3.887.0
+            '@aws-sdk/types': 3.910.0
             tslib: 1.14.1
         optional: true
 
@@ -22377,7 +22433,7 @@ snapshots:
 
     '@aws-crypto/util@3.0.0':
         dependencies:
-            '@aws-sdk/types': 3.887.0
+            '@aws-sdk/types': 3.910.0
             '@aws-sdk/util-utf8-browser': 3.259.0
             tslib: 1.14.1
         optional: true
@@ -23274,6 +23330,12 @@ snapshots:
         dependencies:
             '@smithy/types': 4.5.0
             tslib: 2.8.1
+
+    '@aws-sdk/types@3.910.0':
+        dependencies:
+            '@smithy/types': 4.8.0
+            tslib: 2.8.1
+        optional: true
 
     '@aws-sdk/util-arn-parser@3.873.0':
         dependencies:
@@ -24395,6 +24457,13 @@ snapshots:
             '@codemirror/view': 6.38.2
             '@lezer/common': 1.2.3
 
+    '@codemirror/commands@6.9.0':
+        dependencies:
+            '@codemirror/language': 6.11.3
+            '@codemirror/state': 6.5.2
+            '@codemirror/view': 6.38.6
+            '@lezer/common': 1.3.0
+
     '@codemirror/lang-javascript@6.2.4':
         dependencies:
             '@codemirror/autocomplete': 6.18.7
@@ -24428,7 +24497,7 @@ snapshots:
     '@codemirror/search@6.5.10':
         dependencies:
             '@codemirror/state': 6.5.2
-            '@codemirror/view': 6.38.2
+            '@codemirror/view': 6.38.6
             crelt: 1.0.6
 
     '@codemirror/state@6.5.2':
@@ -24439,14 +24508,21 @@ snapshots:
         dependencies:
             '@codemirror/language': 6.11.3
             '@codemirror/state': 6.5.2
-            '@codemirror/view': 6.38.2
-            '@lezer/highlight': 1.2.1
+            '@codemirror/view': 6.38.6
+            '@lezer/highlight': 1.2.2
 
     '@codemirror/view@6.38.2':
         dependencies:
             '@codemirror/state': 6.5.2
             crelt: 1.0.6
             style-mod: 4.1.2
+            w3c-keyname: 2.2.8
+
+    '@codemirror/view@6.38.6':
+        dependencies:
+            '@codemirror/state': 6.5.2
+            crelt: 1.0.6
+            style-mod: 4.1.3
             w3c-keyname: 2.2.8
 
     '@colors/colors@1.5.0':
@@ -24456,7 +24532,7 @@ snapshots:
 
     '@contentful/app-sdk@4.43.0':
         dependencies:
-            contentful-management: 11.57.1(debug@4.4.1)
+            contentful-management: 11.57.1
         transitivePeerDependencies:
             - debug
 
@@ -26032,7 +26108,7 @@ snapshots:
     '@gar/promisify@1.1.3':
         optional: true
 
-    '@getzep/zep-cloud@1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4))':
+    '@getzep/zep-cloud@1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(g3hy2qr5phattispf4an5zz774))':
         dependencies:
             form-data: 4.0.4
             node-fetch: 2.7.0(encoding@0.1.13)
@@ -26041,7 +26117,7 @@ snapshots:
             zod: 3.25.67
         optionalDependencies:
             '@langchain/core': 0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
-            langchain: 0.3.28(idka4flj5daepzmmm4lpdrqkh4)
+            langchain: 0.3.28(g3hy2qr5phattispf4an5zz774)
         transitivePeerDependencies:
             - encoding
 
@@ -26364,32 +26440,32 @@ snapshots:
     '@img/sharp-win32-x64@0.33.5':
         optional: true
 
-    '@inquirer/checkbox@4.2.2(@types/node@24.3.1)':
+    '@inquirer/checkbox@4.2.2(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
             '@inquirer/figures': 1.0.13
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             ansi-escapes: 4.3.2
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@inquirer/confirm@3.2.0':
         dependencies:
             '@inquirer/core': 9.2.1
             '@inquirer/type': 1.5.5
 
-    '@inquirer/confirm@5.1.16(@types/node@24.3.1)':
+    '@inquirer/confirm@5.1.16(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/core@10.2.0(@types/node@24.3.1)':
+    '@inquirer/core@10.2.0(@types/node@24.9.1)':
         dependencies:
             '@inquirer/figures': 1.0.13
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             ansi-escapes: 4.3.2
             cli-width: 4.1.0
             mute-stream: 2.0.0
@@ -26397,7 +26473,7 @@ snapshots:
             wrap-ansi: 6.2.0
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@inquirer/core@9.2.1':
         dependencies:
@@ -26414,28 +26490,28 @@ snapshots:
             wrap-ansi: 6.2.0
             yoctocolors-cjs: 2.1.3
 
-    '@inquirer/editor@4.2.18(@types/node@24.3.1)':
+    '@inquirer/editor@4.2.18(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/external-editor': 1.0.1(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/external-editor': 1.0.1(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/expand@4.0.18(@types/node@24.3.1)':
+    '@inquirer/expand@4.0.18(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/external-editor@1.0.1(@types/node@24.3.1)':
+    '@inquirer/external-editor@1.0.1(@types/node@24.9.1)':
         dependencies:
             chardet: 2.1.0
             iconv-lite: 0.6.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@inquirer/figures@1.0.13': {}
 
@@ -26444,59 +26520,59 @@ snapshots:
             '@inquirer/core': 9.2.1
             '@inquirer/type': 1.5.5
 
-    '@inquirer/input@4.2.2(@types/node@24.3.1)':
+    '@inquirer/input@4.2.2(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/number@3.0.18(@types/node@24.3.1)':
+    '@inquirer/number@3.0.18(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/password@4.0.18(@types/node@24.3.1)':
+    '@inquirer/password@4.0.18(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             ansi-escapes: 4.3.2
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/prompts@7.8.4(@types/node@24.3.1)':
+    '@inquirer/prompts@7.8.4(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/checkbox': 4.2.2(@types/node@24.3.1)
-            '@inquirer/confirm': 5.1.16(@types/node@24.3.1)
-            '@inquirer/editor': 4.2.18(@types/node@24.3.1)
-            '@inquirer/expand': 4.0.18(@types/node@24.3.1)
-            '@inquirer/input': 4.2.2(@types/node@24.3.1)
-            '@inquirer/number': 3.0.18(@types/node@24.3.1)
-            '@inquirer/password': 4.0.18(@types/node@24.3.1)
-            '@inquirer/rawlist': 4.1.6(@types/node@24.3.1)
-            '@inquirer/search': 3.1.1(@types/node@24.3.1)
-            '@inquirer/select': 4.3.2(@types/node@24.3.1)
+            '@inquirer/checkbox': 4.2.2(@types/node@24.9.1)
+            '@inquirer/confirm': 5.1.16(@types/node@24.9.1)
+            '@inquirer/editor': 4.2.18(@types/node@24.9.1)
+            '@inquirer/expand': 4.0.18(@types/node@24.9.1)
+            '@inquirer/input': 4.2.2(@types/node@24.9.1)
+            '@inquirer/number': 3.0.18(@types/node@24.9.1)
+            '@inquirer/password': 4.0.18(@types/node@24.9.1)
+            '@inquirer/rawlist': 4.1.6(@types/node@24.9.1)
+            '@inquirer/search': 3.1.1(@types/node@24.9.1)
+            '@inquirer/select': 4.3.2(@types/node@24.9.1)
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/rawlist@4.1.6(@types/node@24.3.1)':
+    '@inquirer/rawlist@4.1.6(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
-    '@inquirer/search@3.1.1(@types/node@24.3.1)':
+    '@inquirer/search@3.1.1(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
             '@inquirer/figures': 1.0.13
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@inquirer/select@2.5.0':
         dependencies:
@@ -26506,15 +26582,15 @@ snapshots:
             ansi-escapes: 4.3.2
             yoctocolors-cjs: 2.1.3
 
-    '@inquirer/select@4.3.2(@types/node@24.3.1)':
+    '@inquirer/select@4.3.2(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/core': 10.2.0(@types/node@24.3.1)
+            '@inquirer/core': 10.2.0(@types/node@24.9.1)
             '@inquirer/figures': 1.0.13
-            '@inquirer/type': 3.0.8(@types/node@24.3.1)
+            '@inquirer/type': 3.0.8(@types/node@24.9.1)
             ansi-escapes: 4.3.2
             yoctocolors-cjs: 2.1.3
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@inquirer/type@1.5.5':
         dependencies:
@@ -26524,9 +26600,9 @@ snapshots:
         dependencies:
             mute-stream: 1.0.0
 
-    '@inquirer/type@3.0.8(@types/node@24.3.1)':
+    '@inquirer/type@3.0.8(@types/node@24.9.1)':
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
 
     '@ioredis/commands@1.3.1': {}
 
@@ -26603,7 +26679,7 @@ snapshots:
             - supports-color
             - ts-node
 
-    '@jest/core@29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))':
+    '@jest/core@29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))':
         dependencies:
             '@jest/console': 29.7.0
             '@jest/reporters': 29.7.0
@@ -26617,7 +26693,7 @@ snapshots:
             exit: 0.1.2
             graceful-fs: 4.2.11
             jest-changed-files: 29.7.0
-            jest-config: 29.7.0(@types/node@18.15.11)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            jest-config: 29.7.0(@types/node@18.15.11)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             jest-haste-map: 29.7.0
             jest-message-util: 29.7.0
             jest-regex-util: 29.6.3
@@ -26783,10 +26859,10 @@ snapshots:
             '@types/yargs': 17.0.33
             chalk: 4.1.2
 
-    '@jlinc/langchain@0.1.3(2mxfj365zf7k5p5gmnphohcam4)':
+    '@jlinc/langchain@0.1.3(csah7gdoqghlvnmrl3p2keuwwm)':
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
-            langchain: 0.3.35(idka4flj5daepzmmm4lpdrqkh4)
+            axios: 1.12.1
+            langchain: 0.3.35(g3hy2qr5phattispf4an5zz774)
         transitivePeerDependencies:
             - '@langchain/anthropic'
             - '@langchain/aws'
@@ -27002,7 +27078,7 @@ snapshots:
             - encoding
         optional: true
 
-    '@langchain/community@0.3.47(gx2raii6e7i5goaj4xi3wb55p4)':
+    '@langchain/community@0.3.47(ix2nx5klyi56idfijhl7zfupue)':
         dependencies:
             '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.55.0)(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@17.2.2)(encoding@0.1.13)(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))(utf-8-validate@6.0.5)(zod@3.25.67)
             '@ibm-cloud/watsonx-ai': 1.6.0(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
@@ -27014,7 +27090,7 @@ snapshots:
             flat: 5.0.2
             ibm-cloud-sdk-core: 5.3.2
             js-yaml: 4.1.0
-            langchain: 0.3.28(idka4flj5daepzmmm4lpdrqkh4)
+            langchain: 0.3.28(g3hy2qr5phattispf4an5zz774)
             langsmith: 0.3.68(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
             openai: 4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)
             uuid: 10.0.0
@@ -27030,7 +27106,7 @@ snapshots:
             '@browserbasehq/sdk': 2.6.0(encoding@0.1.13)
             '@datastax/astra-db-ts': 1.5.0
             '@elastic/elasticsearch': 8.19.1
-            '@getzep/zep-cloud': 1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4))
+            '@getzep/zep-cloud': 1.0.12(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(langchain@0.3.28(g3hy2qr5phattispf4an5zz774))
             '@getzep/zep-js': 0.9.0
             '@gomomento/sdk': 1.116.0
             '@gomomento/sdk-core': 1.116.0
@@ -27083,7 +27159,7 @@ snapshots:
             redis: 4.7.1
             replicate: 0.31.1
             srt-parser-2: 1.2.3
-            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             weaviate-client: 3.8.1(encoding@0.1.13)
             ws: 8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
         transitivePeerDependencies:
@@ -27366,6 +27442,8 @@ snapshots:
             - encoding
             - ws
 
+    '@langfuse/core@4.2.0': {}
+
     '@last-rev/contentful-mcp-server@1.1.0(babel-plugin-macros@3.1.0)':
         dependencies:
             '@contentful/node-apps-toolkit': 3.13.1
@@ -27385,9 +27463,15 @@ snapshots:
 
     '@lezer/common@1.2.3': {}
 
+    '@lezer/common@1.3.0': {}
+
     '@lezer/highlight@1.2.1':
         dependencies:
             '@lezer/common': 1.2.3
+
+    '@lezer/highlight@1.2.2':
+        dependencies:
+            '@lezer/common': 1.3.0
 
     '@lezer/javascript@1.5.3':
         dependencies:
@@ -27507,11 +27591,11 @@ snapshots:
             '@types/react': 18.2.15
             react: 18.3.1
 
-    '@mem0/community@0.0.1(syfprxqj3g6xqsnxxozkcomqca)':
+    '@mem0/community@0.0.1(mhskezeukjbtvhumaytoniguha)':
         dependencies:
-            '@langchain/community': 0.3.47(gx2raii6e7i5goaj4xi3wb55p4)
+            '@langchain/community': 0.3.47(ix2nx5klyi56idfijhl7zfupue)
             '@langchain/core': 0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             mem0ai: 2.1.38(@anthropic-ai/sdk@0.52.0)(@cloudflare/workers-types@4.20250912.0)(@google/genai@0.7.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5))(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(@mistralai/mistralai@0.1.3(encoding@0.1.13))(@qdrant/js-client-rest@1.15.1(typescript@5.5.4))(@supabase/supabase-js@2.57.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(@types/jest@30.0.0)(@types/pg@8.15.5)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.19.0(encoding@0.1.13))(neo4j-driver@5.28.1)(ollama@0.5.17)(pg@8.16.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
             uuid: 9.0.1
             zod: 3.22.4
@@ -27676,7 +27760,7 @@ snapshots:
 
     '@mendable/firecrawl-js@0.0.28':
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             dotenv: 16.6.1
             uuid: 9.0.1
             zod: 3.25.67
@@ -28545,9 +28629,9 @@ snapshots:
         dependencies:
             '@oclif/core': 4.5.3
 
-    '@oclif/plugin-not-found@3.2.67(@types/node@24.3.1)':
+    '@oclif/plugin-not-found@3.2.67(@types/node@24.9.1)':
         dependencies:
-            '@inquirer/prompts': 7.8.4(@types/node@24.3.1)
+            '@inquirer/prompts': 7.8.4(@types/node@24.9.1)
             '@oclif/core': 4.5.3
             ansis: 3.17.0
             fast-levenshtein: 3.0.0
@@ -30000,7 +30084,7 @@ snapshots:
             builtin-modules: 3.3.0
             deepmerge: 4.3.1
             is-module: 1.0.0
-            resolve: 1.22.10
+            resolve: 1.22.11
             rollup: 2.79.2
 
     '@rollup/plugin-node-resolve@15.0.1(rollup@3.29.5)':
@@ -30200,7 +30284,7 @@ snapshots:
             '@slack/types': 2.16.0
             '@types/is-stream': 1.1.0
             '@types/node': 18.15.11
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             eventemitter3: 3.1.2
             form-data: 4.0.4
             is-electron: 2.2.2
@@ -30487,6 +30571,11 @@ snapshots:
     '@smithy/types@4.5.0':
         dependencies:
             tslib: 2.8.1
+
+    '@smithy/types@4.8.0':
+        dependencies:
+            tslib: 2.8.1
+        optional: true
 
     '@smithy/url-parser@4.1.1':
         dependencies:
@@ -31100,11 +31189,11 @@ snapshots:
 
     '@tsconfig/node16@1.0.4': {}
 
-    '@tsmztech/mcp-server-salesforce@0.0.2(@types/node@24.3.1)(encoding@0.1.13)':
+    '@tsmztech/mcp-server-salesforce@0.0.2(@types/node@24.9.1)(encoding@0.1.13)':
         dependencies:
             '@modelcontextprotocol/sdk': 0.5.0
             dotenv: 16.6.1
-            jsforce: 3.10.7(@types/node@24.3.1)(encoding@0.1.13)
+            jsforce: 3.10.7(@types/node@24.9.1)(encoding@0.1.13)
         transitivePeerDependencies:
             - '@types/node'
             - encoding
@@ -31571,6 +31660,10 @@ snapshots:
         dependencies:
             undici-types: 5.26.5
 
+    '@types/node@18.19.130':
+        dependencies:
+            undici-types: 5.26.5
+
     '@types/node@20.19.13':
         dependencies:
             undici-types: 6.21.0
@@ -31582,6 +31675,10 @@ snapshots:
     '@types/node@24.3.1':
         dependencies:
             undici-types: 7.10.0
+
+    '@types/node@24.9.1':
+        dependencies:
+            undici-types: 7.16.0
 
     '@types/oauth@0.9.6':
         dependencies:
@@ -32300,7 +32397,7 @@ snapshots:
         transitivePeerDependencies:
             - supports-color
 
-    '@vitejs/plugin-react@4.7.0(vite@7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))':
+    '@vitejs/plugin-react@4.7.0(vite@7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))':
         dependencies:
             '@babel/core': 7.28.4
             '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.4)
@@ -32308,7 +32405,7 @@ snapshots:
             '@rolldown/pluginutils': 1.0.0-beta.27
             '@types/babel__core': 7.20.5
             react-refresh: 0.17.0
-            vite: 7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
+            vite: 7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
         transitivePeerDependencies:
             - supports-color
 
@@ -32716,7 +32813,7 @@ snapshots:
             '@crawlee/types': 3.14.1
             agentkeepalive: 4.6.0
             async-retry: 1.3.3
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             content-type: 1.0.5
             ow: 0.28.2
             tslib: 2.8.1
@@ -32983,7 +33080,7 @@ snapshots:
         dependencies:
             '@aws-sdk/util-utf8-browser': 3.259.0
             '@httptoolkit/websocket-stream': 6.0.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             buffer: 6.0.3
             crypto-js: 4.2.0
             mqtt: 4.3.8(bufferutil@4.0.9)(utf-8-validate@6.0.5)
@@ -33002,9 +33099,25 @@ snapshots:
 
     axe-core@4.10.3: {}
 
+    axios@1.12.1:
+        dependencies:
+            follow-redirects: 1.15.11(debug@4.4.3)
+            form-data: 4.0.4
+            proxy-from-env: 1.1.0
+        transitivePeerDependencies:
+            - debug
+
     axios@1.12.1(debug@4.4.1):
         dependencies:
             follow-redirects: 1.15.11(debug@4.4.1)
+            form-data: 4.0.4
+            proxy-from-env: 1.1.0
+        transitivePeerDependencies:
+            - debug
+
+    axios@1.12.2(debug@4.4.3):
+        dependencies:
+            follow-redirects: 1.15.11(debug@4.4.3)
             form-data: 4.0.4
             proxy-from-env: 1.1.0
         transitivePeerDependencies:
@@ -33912,12 +34025,12 @@ snapshots:
     codemirror@6.0.1:
         dependencies:
             '@codemirror/autocomplete': 6.18.7
-            '@codemirror/commands': 6.8.1
+            '@codemirror/commands': 6.9.0
             '@codemirror/language': 6.11.3
             '@codemirror/lint': 6.8.5
             '@codemirror/search': 6.5.10
             '@codemirror/state': 6.5.2
-            '@codemirror/view': 6.38.2
+            '@codemirror/view': 6.38.6
 
     codsen-utils@1.6.8:
         dependencies:
@@ -34179,11 +34292,21 @@ snapshots:
         dependencies:
             '@contentful/rich-text-types': 16.8.5
             '@types/json-patch': 0.0.30
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             contentful-sdk-core: 8.3.2
             fast-copy: 3.0.2
             lodash.isplainobject: 4.0.6
             type-fest: 4.41.0
+        transitivePeerDependencies:
+            - debug
+
+    contentful-management@11.57.1:
+        dependencies:
+            '@contentful/rich-text-types': 16.8.5
+            axios: 1.12.1
+            contentful-sdk-core: 9.2.0
+            fast-copy: 3.0.2
+            globals: 15.15.0
         transitivePeerDependencies:
             - debug
 
@@ -34223,7 +34346,7 @@ snapshots:
         dependencies:
             '@contentful/content-source-maps': 0.11.32
             '@contentful/rich-text-types': 16.8.5
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             contentful-resolve-response: 1.9.3
             contentful-sdk-core: 8.3.2
             json-stringify-safe: 5.0.1
@@ -34368,13 +34491,13 @@ snapshots:
             - supports-color
             - ts-node
 
-    create-jest@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    create-jest@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
             '@jest/types': 29.6.3
             chalk: 4.1.2
             exit: 0.1.2
             graceful-fs: 4.2.11
-            jest-config: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            jest-config: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             jest-util: 29.7.0
             prompts: 2.4.2
         transitivePeerDependencies:
@@ -35031,6 +35154,10 @@ snapshots:
             ms: 2.1.3
         optionalDependencies:
             supports-color: 8.1.1
+
+    debug@4.4.3:
+        dependencies:
+            ms: 2.1.3
 
     decamelize@1.2.0: {}
 
@@ -37014,6 +37141,10 @@ snapshots:
         optionalDependencies:
             debug: 4.4.1(supports-color@8.1.1)
 
+    follow-redirects@1.15.11(debug@4.4.3):
+        optionalDependencies:
+            debug: 4.4.3
+
     for-each@0.3.5:
         dependencies:
             is-callable: 1.2.7
@@ -38235,11 +38366,11 @@ snapshots:
     ibm-cloud-sdk-core@5.3.2:
         dependencies:
             '@types/debug': 4.1.12
-            '@types/node': 18.19.124
+            '@types/node': 18.19.130
             '@types/tough-cookie': 4.0.5
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.2(debug@4.4.3)
             camelcase: 6.3.0
-            debug: 4.4.1(supports-color@8.1.1)
+            debug: 4.4.3
             dotenv: 16.6.1
             extend: 3.0.2
             file-type: 16.5.4
@@ -38247,7 +38378,7 @@ snapshots:
             isstream: 0.1.2
             jsonwebtoken: 9.0.2
             mime-types: 2.1.35
-            retry-axios: 2.6.0(axios@1.12.1)
+            retry-axios: 2.6.0(axios@1.12.2(debug@4.4.3))
             tough-cookie: 6.0.0
         transitivePeerDependencies:
             - supports-color
@@ -38376,9 +38507,9 @@ snapshots:
         transitivePeerDependencies:
             - encoding
 
-    inquirer@8.2.7(@types/node@24.3.1):
+    inquirer@8.2.7(@types/node@24.9.1):
         dependencies:
-            '@inquirer/external-editor': 1.0.1(@types/node@24.3.1)
+            '@inquirer/external-editor': 1.0.1(@types/node@24.9.1)
             ansi-escapes: 4.3.2
             chalk: 4.1.2
             cli-cursor: 3.1.0
@@ -38893,16 +39024,16 @@ snapshots:
             - supports-color
             - ts-node
 
-    jest-cli@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    jest-cli@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
-            '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             '@jest/test-result': 29.7.0
             '@jest/types': 29.6.3
             chalk: 4.1.2
-            create-jest: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            create-jest: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             exit: 0.1.2
             import-local: 3.2.0
-            jest-config: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            jest-config: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             jest-util: 29.7.0
             jest-validate: 29.7.0
             yargs: 17.7.2
@@ -38943,7 +39074,7 @@ snapshots:
             - babel-plugin-macros
             - supports-color
 
-    jest-config@29.7.0(@types/node@18.15.11)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    jest-config@29.7.0(@types/node@18.15.11)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
             '@babel/core': 7.28.4
             '@jest/test-sequencer': 29.7.0
@@ -38969,12 +39100,12 @@ snapshots:
             strip-json-comments: 3.1.1
         optionalDependencies:
             '@types/node': 18.15.11
-            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)
+            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)
         transitivePeerDependencies:
             - babel-plugin-macros
             - supports-color
 
-    jest-config@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    jest-config@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
             '@babel/core': 7.28.4
             '@jest/test-sequencer': 29.7.0
@@ -38999,8 +39130,8 @@ snapshots:
             slash: 3.0.0
             strip-json-comments: 3.1.1
         optionalDependencies:
-            '@types/node': 24.3.1
-            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)
+            '@types/node': 24.9.1
+            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)
         transitivePeerDependencies:
             - babel-plugin-macros
             - supports-color
@@ -39287,12 +39418,12 @@ snapshots:
             - supports-color
             - ts-node
 
-    jest@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    jest@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
-            '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             '@jest/types': 29.6.3
             import-local: 3.2.0
-            jest-cli: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            jest-cli: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
         transitivePeerDependencies:
             - '@types/node'
             - babel-plugin-macros
@@ -39302,7 +39433,7 @@ snapshots:
     jira.js@2.20.1:
         dependencies:
             atlassian-jwt: 2.0.3
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             form-data: 4.0.4
             oauth: 0.10.2
             tslib: 2.8.1
@@ -39433,7 +39564,7 @@ snapshots:
 
     jsesc@3.1.0: {}
 
-    jsforce@3.10.7(@types/node@24.3.1)(encoding@0.1.13):
+    jsforce@3.10.7(@types/node@24.9.1)(encoding@0.1.13):
         dependencies:
             '@babel/runtime': 7.28.4
             '@babel/runtime-corejs3': 7.28.4
@@ -39446,7 +39577,7 @@ snapshots:
             faye: 1.4.1
             form-data: 4.0.4
             https-proxy-agent: 5.0.1
-            inquirer: 8.2.7(@types/node@24.3.1)
+            inquirer: 8.2.7(@types/node@24.9.1)
             multistream: 3.1.0
             node-fetch: 2.7.0(encoding@0.1.13)
             open: 7.4.2
@@ -39625,10 +39756,10 @@ snapshots:
 
     kleur@4.1.5: {}
 
-    knip@5.63.1(@types/node@24.3.1)(typescript@5.5.4):
+    knip@5.63.1(@types/node@24.9.1)(typescript@5.5.4):
         dependencies:
             '@nodelib/fs.walk': 1.2.8
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
             fast-glob: 3.3.3
             formatly: 0.3.0
             jiti: 2.5.1
@@ -39685,7 +39816,7 @@ snapshots:
             '@supabase/supabase-js': 2.57.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
             apify-client: 2.17.0
             assemblyai: 4.16.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             cheerio: 1.1.2
             chromadb: 1.10.5(@google/generative-ai@0.24.1)(cohere-ai@7.19.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))(encoding@0.1.13))(encoding@0.1.13)(ollama@0.5.17)(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.76))
             couchbase: 4.4.1
@@ -39716,7 +39847,7 @@ snapshots:
             - encoding
             - openai
 
-    langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4):
+    langchain@0.3.28(g3hy2qr5phattispf4an5zz774):
         dependencies:
             '@langchain/core': 0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
             '@langchain/openai': 0.5.15(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -39741,10 +39872,10 @@ snapshots:
             '@langchain/mistralai': 0.2.1(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
             '@langchain/ollama': 0.2.3(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
             '@langchain/xai': 0.0.3(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             cheerio: 1.1.2
             handlebars: 4.7.8
-            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
         transitivePeerDependencies:
             - '@opentelemetry/api'
             - '@opentelemetry/exporter-trace-otlp-proto'
@@ -39753,7 +39884,7 @@ snapshots:
             - openai
             - ws
 
-    langchain@0.3.35(idka4flj5daepzmmm4lpdrqkh4):
+    langchain@0.3.35(g3hy2qr5phattispf4an5zz774):
         dependencies:
             '@langchain/core': 0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67))
             '@langchain/openai': 0.5.15(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -39778,10 +39909,10 @@ snapshots:
             '@langchain/mistralai': 0.2.1(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
             '@langchain/ollama': 0.2.3(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))
             '@langchain/xai': 0.0.3(@langchain/core@0.3.59(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.202.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(openai@4.96.0(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(zod@3.25.67)))(encoding@0.1.13)(ws@8.17.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             cheerio: 1.1.2
             handlebars: 4.7.8
-            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            typeorm: 0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
         transitivePeerDependencies:
             - '@opentelemetry/api'
             - '@opentelemetry/exporter-trace-otlp-proto'
@@ -39792,23 +39923,19 @@ snapshots:
 
     langchainhub@0.0.11: {}
 
-    langfuse-core@3.37.6:
+    langfuse-core@3.38.6:
         dependencies:
             mustache: 4.2.0
 
-    langfuse-core@3.38.5:
+    langfuse-langchain@3.37.6(langchain@0.3.28(g3hy2qr5phattispf4an5zz774)):
         dependencies:
-            mustache: 4.2.0
+            langchain: 0.3.28(g3hy2qr5phattispf4an5zz774)
+            langfuse: 3.38.6
+            langfuse-core: 3.38.6
 
-    langfuse-langchain@3.37.6(langchain@0.3.28(idka4flj5daepzmmm4lpdrqkh4)):
+    langfuse@3.38.6:
         dependencies:
-            langchain: 0.3.28(idka4flj5daepzmmm4lpdrqkh4)
-            langfuse: 3.37.6
-            langfuse-core: 3.38.5
-
-    langfuse@3.37.6:
-        dependencies:
-            langfuse-core: 3.38.5
+            langfuse-core: 3.38.6
 
     langium@3.3.1:
         dependencies:
@@ -40826,7 +40953,7 @@ snapshots:
             '@types/jest': 30.0.0
             '@types/pg': 8.15.5
             '@types/sqlite3': 3.1.11
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             cloudflare: 4.5.0(encoding@0.1.13)
             groq-sdk: 0.19.0(encoding@0.1.13)
             neo4j-driver: 5.28.1
@@ -42285,7 +42412,7 @@ snapshots:
 
     obuf@1.1.2: {}
 
-    oclif@4.22.18(@types/node@24.3.1)(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)):
+    oclif@4.22.18(@types/node@24.9.1)(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)):
         dependencies:
             '@aws-sdk/client-cloudfront': 3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
             '@aws-sdk/client-s3': 3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
@@ -42294,7 +42421,7 @@ snapshots:
             '@inquirer/select': 2.5.0
             '@oclif/core': 4.5.3
             '@oclif/plugin-help': 6.2.32
-            '@oclif/plugin-not-found': 3.2.67(@types/node@24.3.1)
+            '@oclif/plugin-not-found': 3.2.67(@types/node@24.9.1)
             '@oclif/plugin-warn-if-update-available': 3.1.46
             ansis: 3.17.0
             async-retry: 1.3.3
@@ -43649,7 +43776,7 @@ snapshots:
 
     posthog-node@3.6.3:
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             rusha: 0.8.14
         transitivePeerDependencies:
             - debug
@@ -44987,6 +45114,12 @@ snapshots:
             path-parse: 1.0.7
             supports-preserve-symlinks-flag: 1.0.0
 
+    resolve@1.22.11:
+        dependencies:
+            is-core-module: 2.16.1
+            path-parse: 1.0.7
+            supports-preserve-symlinks-flag: 1.0.0
+
     resolve@2.0.0-next.5:
         dependencies:
             is-core-module: 2.16.1
@@ -45011,9 +45144,9 @@ snapshots:
             onetime: 7.0.0
             signal-exit: 4.1.0
 
-    retry-axios@2.6.0(axios@1.12.1):
+    retry-axios@2.6.0(axios@1.12.2(debug@4.4.3)):
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.2(debug@4.4.3)
 
     retry-request@7.0.2(encoding@0.1.13):
         dependencies:
@@ -46176,6 +46309,8 @@ snapshots:
 
     style-mod@4.1.2: {}
 
+    style-mod@4.1.3: {}
+
     style-to-js@1.1.17:
         dependencies:
             style-to-object: 1.0.9
@@ -46709,12 +46844,12 @@ snapshots:
 
     ts-interface-checker@0.1.13: {}
 
-    ts-jest@29.4.1(@babel/core@7.28.4)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.28.4))(jest-util@30.0.5)(jest@29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)))(typescript@5.5.4):
+    ts-jest@29.4.1(@babel/core@7.28.4)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.28.4))(jest-util@30.0.5)(jest@29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)))(typescript@5.5.4):
         dependencies:
             bs-logger: 0.2.6
             fast-json-stable-stringify: 2.1.0
             handlebars: 4.7.8
-            jest: 29.7.0(@types/node@24.3.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4))
+            jest: 29.7.0(@types/node@24.9.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4))
             json5: 2.2.3
             lodash.memoize: 4.1.2
             make-error: 1.3.6
@@ -46805,14 +46940,14 @@ snapshots:
         optionalDependencies:
             '@swc/core': 1.13.5(@swc/helpers@0.5.17)
 
-    ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4):
+    ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4):
         dependencies:
             '@cspotcode/source-map-support': 0.8.1
             '@tsconfig/node10': 1.0.11
             '@tsconfig/node12': 1.0.11
             '@tsconfig/node14': 1.0.3
             '@tsconfig/node16': 1.0.4
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
             acorn: 8.15.0
             acorn-walk: 8.3.4
             arg: 4.1.3
@@ -47066,7 +47201,7 @@ snapshots:
             - babel-plugin-macros
             - supports-color
 
-    typeorm@0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.19.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    typeorm@0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.19.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
             '@sqltools/formatter': 1.2.5
             ansis: 3.17.0
@@ -47090,12 +47225,12 @@ snapshots:
             pg: 8.16.3
             redis: 4.7.1
             sqlite3: 5.1.7
-            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)
+            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)
         transitivePeerDependencies:
             - babel-plugin-macros
             - supports-color
 
-    typeorm@0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)):
+    typeorm@0.3.26(babel-plugin-macros@3.1.0)(ioredis@5.7.0)(mongodb@6.3.0(@aws-sdk/credential-providers@3.887.0(aws-crt@1.27.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)))(socks@2.8.7))(mysql2@3.14.5)(pg@8.16.3)(redis@4.7.1)(reflect-metadata@0.1.14)(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)):
         dependencies:
             '@sqltools/formatter': 1.2.5
             ansis: 3.17.0
@@ -47119,7 +47254,7 @@ snapshots:
             pg: 8.16.3
             redis: 4.7.1
             sqlite3: 5.1.7
-            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.3.1)(typescript@5.5.4)
+            ts-node: 10.9.2(@swc/core@1.13.5(@swc/helpers@0.5.17))(@types/node@24.9.1)(typescript@5.5.4)
         transitivePeerDependencies:
             - babel-plugin-macros
             - supports-color
@@ -47196,6 +47331,8 @@ snapshots:
     undici-types@6.21.0: {}
 
     undici-types@7.10.0: {}
+
+    undici-types@7.16.0: {}
 
     undici@5.28.4:
         dependencies:
@@ -47670,12 +47807,12 @@ snapshots:
             remove-trailing-separator: 1.1.0
             replace-ext: 1.0.1
 
-    vite-plugin-pwa@0.17.5(vite@7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))(workbox-build@6.6.0(@types/babel__core@7.20.5))(workbox-window@6.6.0):
+    vite-plugin-pwa@0.17.5(vite@7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))(workbox-build@6.6.0(@types/babel__core@7.20.5))(workbox-window@6.6.0):
         dependencies:
             debug: 4.4.1(supports-color@8.1.1)
             fast-glob: 3.3.3
             pretty-bytes: 6.1.1
-            vite: 7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
+            vite: 7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1)
             workbox-build: 6.6.0(@types/babel__core@7.20.5)
             workbox-window: 6.6.0
         transitivePeerDependencies:
@@ -47710,7 +47847,7 @@ snapshots:
             sass: 1.92.1
             terser: 5.44.0
 
-    vite@7.1.5(@types/node@24.3.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1):
+    vite@7.1.5(@types/node@24.9.1)(jiti@2.5.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1):
         dependencies:
             esbuild: 0.25.9
             fdir: 6.5.0(picomatch@4.0.3)
@@ -47719,7 +47856,7 @@ snapshots:
             rollup: 4.50.1
             tinyglobby: 0.2.15
         optionalDependencies:
-            '@types/node': 24.3.1
+            '@types/node': 24.9.1
             fsevents: 2.3.3
             jiti: 2.5.1
             sass: 1.92.1
@@ -47751,7 +47888,7 @@ snapshots:
 
     wait-on@7.2.0:
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             joi: 17.13.3
             lodash: 4.17.21
             minimist: 1.2.8
@@ -48177,7 +48314,7 @@ snapshots:
 
     wikipedia@2.1.2:
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             infobox-parser: 3.6.4
         transitivePeerDependencies:
             - debug
@@ -48502,7 +48639,7 @@ snapshots:
 
     youtube-captions-scraper@2.0.3:
         dependencies:
-            axios: 1.12.1(debug@4.4.1)
+            axios: 1.12.1
             he: 1.2.0
             lodash: 4.17.21
             striptags: 3.2.0
