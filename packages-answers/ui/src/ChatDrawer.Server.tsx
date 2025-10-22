@@ -9,7 +9,8 @@ const ChatDrawerServer = async () => {
         return null
     }
 
-    const mergedChats = await getChats(session.user)
+    // Fetch only initial chats for SSR
+    const mergedChats = await getChats(session.user, { limit: 20 })
     return <ChatDrawerClient chats={mergedChats} />
 }
 

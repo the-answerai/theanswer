@@ -1,6 +1,6 @@
 'use client'
 import * as React from 'react'
-import useSWR from 'swr'
+import useSWRInfinite from 'swr/infinite'
 import NextLink from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { styled } from '@mui/material/styles'
@@ -9,6 +9,7 @@ import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
+import CircularProgress from '@mui/material/CircularProgress'
 
 import closedMixin from './theme/closedMixin'
 import openedMixin from './theme/openedMixin'
@@ -57,8 +58,26 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
     const pathname = usePathname()
     const [open, setOpen] = React.useState<boolean | undefined>(defaultOpen)
     const [opened, setOpened] = React.useState<{ [key: string | number]: boolean }>({ chats: true })
+    const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
-    const { data: fetchedChats } = useSWR<Chat[] | { error: string }>('/api/chats', fetcher, { fallback: chats })
+    const getKey = (pageIndex: number, previousPageData: Chat[] | null) => {
+        // Reached the end (no data or less than limit means no more pages)
+        if (previousPageData && previousPageData.length < 20) return null
+
+        // First page
+        if (pageIndex === 0) return '/api/chats?limit=20'
+
+        // Get cursor from last chat of previous page
+        const cursor = previousPageData?.[previousPageData.length - 1]?.createdAt
+        return `/api/chats?limit=20&cursor=${cursor}`
+    }
+
+    const { data, size, setSize, isValidating } = useSWRInfinite<Chat[]>(getKey, fetcher, {
+        fallbackData: chats ? [chats] : undefined,
+        revalidateFirstPage: false
+    })
+
+    const fetchedChats = React.useMemo(() => data?.flat() || [], [data])
     const getDateKey = (chat: Chat) => {
         const date = new Date(chat.createdAt ?? chat.createdDate)
         const now = new Date()
@@ -70,16 +89,36 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
     }
 
     const chatsByDate = React.useMemo(() => {
-        if (!fetchedChats || fetchedChats?.error) return {}
+        if (!fetchedChats || fetchedChats.length === 0) return {}
 
-        const sortedChats = fetchedChats?.sort(
-            (a, b) => new Date(b.createdAt ?? b.createdDate).getTime() - new Date(a.createdAt ?? a.createdDate).getTime()
-        )
-        return sortedChats?.reduce((accum: { [key: string]: Chat[] }, chat: Chat) => {
+        return fetchedChats.reduce((accum: { [key: string]: Chat[] }, chat: Chat) => {
             const dateKey = getDateKey(chat)
             return { ...accum, [dateKey]: [...(accum[dateKey] || []), chat] }
         }, {})
     }, [fetchedChats])
+
+    // Check if there's more data to load
+    const hasMore = data && data[data.length - 1]?.length === 20
+
+    // IntersectionObserver for infinite scroll
+    React.useEffect(() => {
+        if (!hasMore) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !isValidating) {
+                    setSize(size + 1)
+                }
+            },
+            { threshold: 0.1 }
+        )
+
+        if (loadMoreRef.current) {
+            observer.observe(loadMoreRef.current)
+        }
+
+        return () => observer.disconnect()
+    }, [size, setSize, isValidating, hasMore])
 
     return (
         <>
@@ -119,6 +158,12 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
                         ))}
                     </Box>
                 ))}
+                {/* Load more trigger */}
+                {hasMore && (
+                    <Box ref={loadMoreRef} sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                        {isValidating && <CircularProgress size={24} />}
+                    </Box>
+                )}
             </List>
         </>
     )

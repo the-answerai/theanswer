@@ -8,7 +8,13 @@ interface User {
     chatflowDomain: string
 }
 
-export async function getChats(user: User) {
+interface PaginationOptions {
+    limit?: number
+    cursor?: string
+}
+
+export async function getChats(user: User, options: PaginationOptions = {}) {
+    const { limit = 20, cursor } = options
     // Get auth token for chatflow API
     let token
     try {
@@ -21,18 +27,20 @@ export async function getChats(user: User) {
         console.error('Auth error:', err)
     }
 
-    // Fetch local chats
+    // Fetch local chats with pagination
     const localChatsPromise = prisma.chat
         .findMany({
             where: {
                 users: { some: { email: user.email } },
                 organization: { id: user.organizationId },
                 chatflowChatId: { not: null },
-                journeyId: null
+                journeyId: null,
+                ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {})
             },
             orderBy: {
                 createdAt: 'desc'
             },
+            take: limit,
             include: {
                 prompt: true,
                 messages: { orderBy: { createdAt: 'desc' }, take: 1 }
@@ -40,9 +48,9 @@ export async function getChats(user: User) {
         })
         .then((data: any) => JSON.parse(JSON.stringify(data)))
 
-    // Fetch chatflow chats
+    // Fetch chatflow chats with pagination
     const chatflowChatsPromise = token
-        ? fetch(`${user.chatflowDomain}/api/v1/chats`, {
+        ? fetch(`${user.chatflowDomain}/api/v1/chats?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}`, {
               method: 'GET',
               headers: {
                   'Content-Type': 'application/json',
@@ -60,9 +68,7 @@ export async function getChats(user: User) {
     const [localChats, chatflowChats] = await Promise.all([localChatsPromise, chatflowChatsPromise])
 
     // Merge and deduplicate chats
-    const mergedChats = [
-        // ...localChats
-    ]
+    const mergedChats = [...localChats]
     if (chatflowChats.length > 0) {
         chatflowChats.forEach((chatflowChat: any) => {
             // Only add if not already in local chats
@@ -75,8 +81,8 @@ export async function getChats(user: User) {
         })
     }
 
-    // Sort merged chats by date
+    // Sort merged chats by date and limit results
     mergedChats.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-    return mergedChats
+    return mergedChats.slice(0, limit)
 }
