@@ -18,6 +18,7 @@ import { Chat, Journey } from 'types'
 import { Box } from '@mui/material'
 
 const drawerWidth = 400
+const CHATS_PAGE_SIZE = 20
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -62,15 +63,16 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
 
     const getKey = (pageIndex: number, previousPageData: Chat[] | null) => {
         // Reached the end (no data or less than limit means no more pages)
-        if (previousPageData && previousPageData.length < 20) return null
+        if (previousPageData && previousPageData.length < CHATS_PAGE_SIZE) return null
 
         // First page
-        if (pageIndex === 0) return '/api/chats?limit=20'
+        if (pageIndex === 0) return `/api/chats?limit=${CHATS_PAGE_SIZE}`
 
-        // Get cursor from last chat of previous page (handle both createdAt and createdDate)
+        // Get cursor from last chat of previous page
+        // Chatflows API uses 'createdDate', but fallback to 'createdAt' for type compatibility
         const lastChat = previousPageData?.[previousPageData.length - 1]
-        const cursor = lastChat?.createdAt || lastChat?.createdDate
-        return `/api/chats?limit=20&cursor=${cursor}`
+        const cursor = lastChat?.createdDate || lastChat?.createdAt
+        return `/api/chats?limit=${CHATS_PAGE_SIZE}&cursor=${cursor}`
     }
 
     const { data, size, setSize, isValidating } = useSWRInfinite<Chat[]>(getKey, fetcher, {
@@ -99,7 +101,7 @@ export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerP
     }, [fetchedChats])
 
     // Check if there's more data to load
-    const hasMore = data && data[data.length - 1]?.length === 20
+    const hasMore = data && data[data.length - 1]?.length === CHATS_PAGE_SIZE
 
     // IntersectionObserver for infinite scroll
     React.useEffect(() => {

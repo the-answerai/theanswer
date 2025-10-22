@@ -5,6 +5,9 @@ import { getChats } from '@utils/getChats'
 
 import type { Chat } from 'types'
 
+const DEFAULT_PAGE_SIZE = 20
+const MAX_PAGE_SIZE = 100
+
 export async function GET(req: Request): Promise<NextResponse<Chat[]>> {
     const session = await getCachedSession()
 
@@ -13,7 +16,8 @@ export async function GET(req: Request): Promise<NextResponse<Chat[]>> {
     }
 
     const { searchParams } = new URL(req.url)
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const requestedLimit = parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE))
+    const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE)
     const cursor = searchParams.get('cursor') || undefined
 
     const mergedChats = await getChats(session.user, { limit, cursor })

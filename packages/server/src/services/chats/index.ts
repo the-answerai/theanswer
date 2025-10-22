@@ -13,12 +13,21 @@ interface PaginationOptions {
 
 const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
     const { limit = 20, cursor } = options
+
+    // Validate cursor date if provided
+    if (cursor) {
+        const cursorDate = new Date(cursor)
+        if (isNaN(cursorDate.getTime())) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Invalid cursor date format')
+        }
+    }
+
     try {
         const appServer = getRunningExpressApp()
         const chats = await appServer.AppDataSource.getRepository(Chat).find({
             where: {
-                owner: { id: user.id },
-                organization: { id: user.organizationId },
+                ownerId: user.id,
+                organizationId: user.organizationId,
                 chatflowChatId: Not(IsNull()),
                 ...(cursor ? { createdDate: LessThan(new Date(cursor)) } : {})
             },
@@ -39,8 +48,8 @@ const getChatById = async (chatId: string, user: IUser) => {
         const chat = await appServer.AppDataSource.getRepository(Chat).findOne({
             where: {
                 id: chatId,
-                owner: { id: user.id },
-                organization: { id: user.organizationId }
+                ownerId: user.id,
+                organizationId: user.organizationId
             },
             relations: {
                 chatflow: true
