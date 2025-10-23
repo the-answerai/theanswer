@@ -111,8 +111,8 @@ jobs:
                   echo "📍 Submodule commit: $CURRENT_COMMIT"
 
                   # Check if this version exists on npm
-                  if npm view @answerai/aai-embed@$EMBED_VERSION version 2>/dev/null; then
-                    echo "✅ @answerai/aai-embed@$EMBED_VERSION is published on npm"
+                  if npm view aai-embed@$EMBED_VERSION version 2>/dev/null; then
+                    echo "✅ aai-embed@$EMBED_VERSION is published on npm"
 
                     # Optional: Verify git tag matches commit for extra safety
                     EXPECTED_TAG="v${EMBED_VERSION}"
@@ -132,13 +132,13 @@ jobs:
                     echo "is_published=true" >> $GITHUB_OUTPUT
                     echo "embed_version=$EMBED_VERSION" >> $GITHUB_OUTPUT
                   else
-                    echo "❌ @answerai/aai-embed@$EMBED_VERSION NOT found on npm"
+                    echo "❌ aai-embed@$EMBED_VERSION NOT found on npm"
                     echo ""
                     echo "🛑 Cannot publish aai-embed-react because aai-embed@$EMBED_VERSION hasn't been published yet."
                     echo ""
                     echo "Next steps:"
                     echo "1. Ensure aai-embed workflow ran successfully in the chat-embed repository"
-                    echo "2. Verify the package was published: npm view @answerai/aai-embed@$EMBED_VERSION"
+                    echo "2. Verify the package was published: npm view aai-embed@$EMBED_VERSION"
                     echo "3. If not published, trigger the workflow manually in the chat-embed repo"
 
                     echo "is_published=false" >> $GITHUB_OUTPUT
@@ -253,8 +253,7 @@ jobs:
             - name: Update package metadata
               working-directory: ./packages/embed-react
               run: |
-                  # Update package name to scoped name
-                  node -e "const pkg = require('./package.json'); pkg.name = '@answerai/aai-embed-react'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+                  # Keep package name as-is (aai-embed-react)
 
                   # Add publishConfig
                   node -e "const pkg = require('./package.json'); pkg.publishConfig = { access: 'public' }; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
@@ -309,6 +308,6 @@ jobs:
 
             - name: Summary
               run: |
-                  echo "✅ Published @answerai/aai-embed-react@${{ steps.version.outputs.new_version }} to npm"
+                  echo "✅ Published aai-embed-react@${{ steps.version.outputs.new_version }} to npm"
                   echo "✅ Peer dependency: aai-embed@^${{ steps.embed_version.outputs.embed_version }}"
                   echo "✅ Created tag aai-embed-react-v${{ steps.version.outputs.new_version }}"
