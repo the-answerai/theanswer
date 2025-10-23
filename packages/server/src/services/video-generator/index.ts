@@ -14,6 +14,9 @@ import { Blob } from 'node:buffer'
 const STORAGE_FOLDER = 'generated-videos'
 const OPENAI_MODELS = new Set(['sora-2', 'sora-2-pro'])
 const GOOGLE_MODELS = new Set(['veo-3.0-generate-001', 'veo-3.0-fast-generate-001'])
+// Duration constraints based on provider API specifications
+const OPENAI_VALID_DURATIONS = [4, 8, 12] // OpenAI Sora: discrete values only
+const GOOGLE_VALID_DURATIONS = [4, 6, 8] // Google Veo: supported discrete values
 const POLL_INTERVAL_MS = 5000
 const MAX_POLL_ATTEMPTS = 120 // ~10 minutes
 const JOB_RETENTION_MS = 24 * 60 * 60 * 1000 // keep completed jobs for 24 hours
@@ -146,6 +149,33 @@ const mapOpenAIStatus = (status?: string): JobStatus => {
         default:
             return 'queued'
     }
+}
+
+/**
+ * Validates and normalizes video duration based on provider constraints.
+ * Auto-corrects invalid values to the nearest supported duration instead of failing.
+ *
+ * @param seconds - Requested duration in seconds
+ * @param model - Video generation model name
+ * @returns Duration guaranteed to be accepted by the downstream provider
+ */
+const validateAndNormalizeDuration = (seconds: number | undefined, model: string): number => {
+    if (!seconds) return 8 // Works for both providers
+
+    const isOpenAI = OPENAI_MODELS.has(model)
+    const validDurations = isOpenAI ? OPENAI_VALID_DURATIONS : GOOGLE_VALID_DURATIONS
+
+    if (validDurations.includes(seconds)) {
+        return seconds
+    }
+
+    const normalized = validDurations.reduce((previous, current) =>
+        Math.abs(current - seconds) < Math.abs(previous - seconds) ? current : previous
+    )
+
+    console.warn(`[Video Generator] Adjusted duration from ${seconds}s to ${normalized}s for model ${model} (provider constraint)`)
+
+    return normalized
 }
 
 const getStorageType = (): string => {
@@ -677,6 +707,9 @@ const startOpenAIJob = async (request: VideoGenerationRequest): Promise<VideoJob
         throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Prompt is required for OpenAI video generation')
     }
 
+    // Validate and normalize duration once for the entire request lifecycle
+    const validatedSeconds = validateAndNormalizeDuration(request.seconds, request.model)
+
     let creationResponse: OpenAIVideoStatus
 
     if (request.remixVideoProviderId) {
@@ -685,7 +718,7 @@ const startOpenAIJob = async (request: VideoGenerationRequest): Promise<VideoJob
         }
 
         if (request.size) body.size = request.size
-        if (request.seconds) body.seconds = request.seconds
+        if (validatedSeconds) body.seconds = validatedSeconds
 
         const remixResponse = await fetch(`https://api.openai.com/v1/videos/${request.remixVideoProviderId}/remix`, {
             method: 'POST',
@@ -711,8 +744,8 @@ const startOpenAIJob = async (request: VideoGenerationRequest): Promise<VideoJob
             formData.append('size', request.size)
         }
 
-        if (request.seconds) {
-            formData.append('seconds', request.seconds.toString())
+        if (validatedSeconds) {
+            formData.append('seconds', validatedSeconds.toString())
         }
 
         if (request.referenceImage?.base64) {
@@ -762,7 +795,8 @@ const startOpenAIJob = async (request: VideoGenerationRequest): Promise<VideoJob
     }
 
     registerJob(job)
-    setImmediate(() => processOpenAIJob(jobId, { ...request, prompt }, creationResponse))
+    // Pass normalized seconds for consistent telemetry/logging downstream
+    setImmediate(() => processOpenAIJob(jobId, { ...request, prompt, seconds: validatedSeconds }, creationResponse))
 
     return job
 }
@@ -1102,6 +1136,7 @@ const startGoogleJob = async (request: VideoGenerationRequest): Promise<VideoJob
     }
 
     const client = new GoogleGenAI({ apiKey })
+    const validatedSeconds = validateAndNormalizeDuration(request.seconds, request.model)
 
     const aspectRatio = request.aspectRatio || deriveAspectRatio(request.size)
     const params: GenerateVideosParameters = {
@@ -1109,7 +1144,7 @@ const startGoogleJob = async (request: VideoGenerationRequest): Promise<VideoJob
         prompt: request.prompt,
         config: {
             aspectRatio,
-            durationSeconds: request.seconds || 8,
+            durationSeconds: validatedSeconds,
             negativePrompt: request.negativePrompt
         }
     }
@@ -1145,7 +1180,8 @@ const startGoogleJob = async (request: VideoGenerationRequest): Promise<VideoJob
     }
 
     registerJob(job)
-    setImmediate(() => processGoogleJob(jobId, request, operation))
+    // Pass normalized seconds for consistent telemetry/logging downstream
+    setImmediate(() => processGoogleJob(jobId, { ...request, seconds: validatedSeconds }, operation))
 
     return job
 }
