@@ -178,7 +178,18 @@ const getProviderForModel = (model: string): Provider => {
     return 'openai'
 }
 
-const durationOptions = [4, 6, 8, 10, 12, 15]
+/**
+ * Provider-specific duration constraints based on provider API documentation.
+ * Frontend uses these discrete sets so users cannot pick unsupported durations.
+ */
+const getProviderDurationOptions = (provider: Provider): number[] => {
+    if (provider === 'openai') {
+        // OpenAI Sora models support only 4, 8, and 12 second videos.
+        return [4, 8, 12]
+    }
+    // Google Veo models support discrete duration values.
+    return [4, 6, 8]
+}
 
 const formatDateTime = (value?: string) => {
     if (!value) return 'Unknown date'
@@ -236,6 +247,7 @@ const VideoCreator = () => {
     const [dialogEmotion, setDialogEmotion] = useState('calm')
 
     const provider = useMemo(() => getProviderForModel(model), [model])
+    const durationOptions = useMemo(() => getProviderDurationOptions(provider), [provider])
     const jobPollers = useRef<Map<string, number>>(new Map())
 
     useEffect(() => {
@@ -333,6 +345,8 @@ const VideoCreator = () => {
     }
 
     useEffect(() => {
+        const validDurations = getProviderDurationOptions(provider)
+
         if (provider === 'google') {
             // Veo: 1080p only supports 16:9, 720p supports both 16:9 and 9:16
             setAspectRatio((current) => {
@@ -344,10 +358,16 @@ const VideoCreator = () => {
                 return current
             })
             setSize((current) => (current === '1280x720' || current === '1920x1080' ? current : '1280x720'))
-            setSeconds((current) => (durationOptions.includes(current) ? current : 8))
+            setSeconds((current) => (validDurations.includes(current) ? current : 8))
         } else {
+            // OpenAI: validate against strict constraints [4, 8, 12]
             setSize((current) => (current === '1280x720' || current === '1920x1080' ? current : '1280x720'))
-            setSeconds((current) => (durationOptions.includes(current) ? current : 8))
+            setSeconds((current) => {
+                if (validDurations.includes(current)) return current
+                // Find closest valid duration for OpenAI (4, 8, or 12)
+                const closest = validDurations.reduce((prev, curr) => (Math.abs(curr - current) < Math.abs(prev - current) ? curr : prev))
+                return closest
+            })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [provider])
@@ -1087,9 +1107,12 @@ const VideoCreator = () => {
                             <Slider
                                 value={seconds}
                                 onChange={(_, newValue) => setSeconds(newValue as number)}
-                                min={4}
-                                max={15}
-                                step={1}
+                                min={Math.min(...durationOptions)}
+                                max={Math.max(...durationOptions)}
+                                step={null}
+                                marks={durationOptions.map((duration) => ({
+                                    value: duration
+                                }))}
                                 disabled={loading}
                                 size='small'
                                 sx={{ flexGrow: 1 }}
