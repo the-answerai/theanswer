@@ -43,12 +43,27 @@ const deleteTool = async (toolId: string, user: IUser): Promise<any> => {
     }
 }
 
-const getAllTools = async (user: IUser): Promise<Tool[]> => {
+const getAllTools = async (user: IUser, exportMode: boolean = false): Promise<Tool[]> => {
     try {
         const appServer = getRunningExpressApp()
         const toolRepo = appServer.AppDataSource.getRepository(Tool)
         const isAdmin = user?.roles?.includes('Admin')
 
+        // SECURITY: For export operations, only include tools owned by the user
+        if (exportMode) {
+            const tools = await toolRepo.find({
+                where: { 
+                    organizationId: user.organizationId, 
+                    userId: user.id 
+                }
+            })
+            return tools.map((tool) => ({
+                ...tool,
+                isOwner: true // All tools in export mode are user-owned
+            }))
+        }
+
+        // Regular mode - include shared tools for viewing
         const tools = await toolRepo.find({
             // @ts-ignore
             where: isAdmin

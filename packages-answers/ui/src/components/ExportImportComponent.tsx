@@ -1,18 +1,41 @@
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+// Remove Redux import and replace with local state
+// import { useDispatch } from 'react-redux'
+// @ts-ignore
 import { stringify, exportData } from '@/utils/exportImport'
+// Remove Redux action import
+// @ts-ignore
+// import { enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 
 // Material UI
-import { Button, Dialog, DialogTitle, DialogContent, Stack, FormControlLabel, Checkbox, DialogActions, Box, MenuItem } from '@mui/material'
-
-// Assets
-import ExportingGIF from '@/assets/images/Exporting.gif'
+import {
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    Stack,
+    FormControlLabel,
+    Checkbox,
+    DialogActions,
+    Box,
+    MenuItem,
+    Snackbar,
+    Alert
+} from '@mui/material'
 
 // API
+// @ts-ignore
 import exportImportApi from '@/api/exportimport'
 
 // Hooks
+// @ts-ignore
 import useApi from '@/hooks/useApi'
+// @ts-ignore
 import { getErrorMessage } from '@/utils/errorHandler'
+
+//Assets
+import ExportingGIF from '../../../../packages/ui/src/assets/images/Exporting.gif'
 
 interface ExportDialogProps {
     show: boolean
@@ -25,10 +48,25 @@ interface ExportImportComponentProps {
     onSuccess?: () => void
 }
 
-const dataToExport = ['Chatflows', 'Agentflows', 'Tools', 'Variables', 'Assistants']
+const dataToExport = [
+    'Agentflows',
+    'Agentflows V2',
+    'Assistants Custom',
+    'Assistants OpenAI',
+    'Assistants Azure',
+    'Chatflows',
+    'Chats',
+    'Chat Messages',
+    'Chat Feedbacks',
+    'Custom Templates',
+    'Document Stores',
+    'Executions',
+    'Tools',
+    'Variables'
+]
 
 const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
-    const [selectedData, setSelectedData] = useState(['Chatflows', 'Agentflows', 'Tools', 'Variables', 'Assistants'])
+    const [selectedData, setSelectedData] = useState(dataToExport)
     const [isExporting, setIsExporting] = useState(false)
 
     useEffect(() => {
@@ -78,7 +116,7 @@ const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
                 {isExporting && (
                     <Box sx={{ height: 'auto', display: 'flex', justifyContent: 'center', mb: 3 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <img
+                            <Image
                                 style={{
                                     objectFit: 'cover',
                                     height: 'auto',
@@ -86,6 +124,8 @@ const ExportDialog = ({ show, onCancel, onExport }: ExportDialogProps) => {
                                 }}
                                 src={ExportingGIF}
                                 alt='ExportingGIF'
+                                width={100}
+                                height={100}
                             />
                             <span>Exporting data might take a while</span>
                         </div>
@@ -115,22 +155,86 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
     const [exportDialogOpen, setExportDialogOpen] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
+    // Replace Redux with local state for notifications
+    const [notification, setNotification] = useState<{
+        open: boolean
+        message: string
+        severity: 'error' | 'success' | 'info' | 'warning'
+    }>({
+        open: false,
+        message: '',
+        severity: 'info'
+    })
+
+    // Remove Redux dispatch
+    // const dispatch = useDispatch()
+    // const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
+
     const importAllApi = useApi(exportImportApi.importData)
     const exportAllApi = useApi(exportImportApi.exportData)
 
+    // Secure random function - no longer needed with local notifications
+    // const getSecureRandom = () => {
+    //     const array = new Uint32Array(1)
+    //     crypto.getRandomValues(array)
+    //     return array[0]
+    // }
+
+    // Replace Redux notification with local state
+    const showErrorNotification = (message: string) => {
+        setNotification({
+            open: true,
+            message,
+            severity: 'error'
+        })
+    }
+
+    // Add function to close notification
+    const handleCloseNotification = () => {
+        setNotification((prev) => ({ ...prev, open: false }))
+    }
+
+    // Helper function to extract error message from API response
+    const getApiErrorMessage = (error: any, fallbackMessage: string): string => {
+        if (!error?.response?.data) {
+            return fallbackMessage
+        }
+        
+        const responseData = error.response.data
+        return typeof responseData === 'object' ? responseData.message : responseData
+    }
+
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return
+        if (!e.target.files) {
+            return
+        }
 
         const file = e.target.files[0]
-
         const reader = new FileReader()
         reader.onload = (evt) => {
             if (!evt?.target?.result) {
                 return
             }
-            const body = JSON.parse(evt.target.result as string)
-            importAllApi.request(body)
+
+            try {
+                const fileContent = evt.target.result as string
+                const body = JSON.parse(fileContent)
+                importAllApi.request(body)
+            } catch (error) {
+                // Handle specific JSON parsing errors
+                if (error instanceof SyntaxError) {
+                    showErrorNotification(`Invalid JSON format: ${error.message}`)
+                } else {
+                    // Handle other potential errors (e.g., API request setup)
+                    showErrorNotification(`Import failed: ${getErrorMessage(error)}`)
+                }
+            }
         }
+
+        reader.onerror = () => {
+            showErrorNotification('Error reading file')
+        }
+
         reader.readAsText(file)
     }
 
@@ -143,23 +247,62 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
 
     const onExport = (data: string[]) => {
         const body: Record<string, boolean> = {}
-        if (data.includes('Chatflows')) body.chatflow = true
+        // Use the same parameters as ProfileSection
         if (data.includes('Agentflows')) body.agentflow = true
+        if (data.includes('Agentflows V2')) body.agentflowv2 = true
+        if (data.includes('Assistants Custom')) body.assistantCustom = true
+        if (data.includes('Assistants OpenAI')) body.assistantOpenAI = true
+        if (data.includes('Assistants Azure')) body.assistantAzure = true
+        if (data.includes('Chatflows')) body.chatflow = true
+        if (data.includes('Chats')) body.chat = true
+        if (data.includes('Chat Messages')) body.chat_message = true
+        if (data.includes('Chat Feedbacks')) body.chat_feedback = true
+        if (data.includes('Custom Templates')) body.custom_template = true
+        if (data.includes('Document Stores')) body.document_store = true
+        if (data.includes('Executions')) body.execution = true
         if (data.includes('Tools')) body.tool = true
         if (data.includes('Variables')) body.variable = true
-        if (data.includes('Assistants')) body.assistant = true
 
         exportAllApi.request(body)
     }
 
+    // Import success effect
     useEffect(() => {
-        if (importAllApi.data && onSuccess) {
-            onSuccess()
-            if (onClose) onClose()
+        if (importAllApi.data) {
+            // Show success notification
+            setNotification({
+                open: true,
+                message: 'Data imported successfully!',
+                severity: 'success'
+            })
+
+            if (onSuccess) {
+                onSuccess()
+            }
+            if (onClose) {
+                onClose()
+            }
             window.location.href = '/'
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [importAllApi.data])
+
+    // Import error effect
+    useEffect(() => {
+        if (importAllApi.error) {
+            const error = importAllApi.error
+            const errMsg = getApiErrorMessage(error, 'Invalid Imported File')
+            showErrorNotification(`Failed to import: ${errMsg}`)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [importAllApi.error])
+
+    // Import loading effect
+    useEffect(() => {
+        if (importAllApi.loading) {
+            // Loading state can be handled by UI components
+        }
+    }, [importAllApi.loading])
 
     useEffect(() => {
         if (exportAllApi.data) {
@@ -174,13 +317,31 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
                 linkElement.setAttribute('download', exportAllApi.data.FileDefaultName)
                 linkElement.click()
 
+                // Show success notification
+                setNotification({
+                    open: true,
+                    message: 'Data exported successfully!',
+                    severity: 'success'
+                })
+
                 if (onClose) onClose()
             } catch (error) {
-                console.error(`Failed to export all: ${getErrorMessage(error)}`)
+                showErrorNotification(`Export failed: ${getErrorMessage(error)}`)
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [exportAllApi.data])
+
+    // Add error handling for export
+    useEffect(() => {
+        if (exportAllApi.error) {
+            setExportDialogOpen(false)
+            const error = exportAllApi.error
+            const errMsg = getApiErrorMessage(error, 'Internal Server Error')
+            showErrorNotification(`Failed to export: ${errMsg}`)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [exportAllApi.error])
 
     return (
         <>
@@ -188,6 +349,11 @@ export const ExportImportMenuItems = ({ onClose, onSuccess }: ExportImportCompon
             <MenuItem onClick={importAll}>Import Data</MenuItem>
             <input ref={inputRef} type='file' hidden onChange={fileChange} accept='.json' />
             <ExportDialog show={exportDialogOpen} onCancel={() => setExportDialogOpen(false)} onExport={(data) => onExport(data)} />
+            <Snackbar open={notification.open} autoHideDuration={6000} onClose={handleCloseNotification}>
+                <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
+                    {notification.message}
+                </Alert>
+            </Snackbar>
         </>
     )
 }

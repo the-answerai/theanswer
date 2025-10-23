@@ -300,6 +300,44 @@ export class StripeProvider {
         }
     }
 
+    /**
+     * Adjust timestamp for Stripe's 35-day limitation on meter events
+     * Stripe doesn't accept meter events older than 35 days
+     *
+     * @param originalTimestamp - Original timestamp in seconds
+     * @returns Adjusted timestamp info with original date preserved
+     */
+    private adjustTimestampForStripe(originalTimestamp: number): {
+        adjustedTimestamp: number
+        wasAdjusted: boolean
+        originalDate?: string
+    } {
+        const now = Date.now() / 1000 // Current time in seconds
+        const thirtyFiveDaysAgo = now - 35 * 24 * 60 * 60
+        const thirtyFourDaysAgo = now - 34 * 24 * 60 * 60 // Use 34 days as the "historical catch-up" date
+
+        // Stripe allows timestamps up to and including 35 days ago
+        // We only need to adjust if it's MORE than 35 days old
+        if (originalTimestamp < thirtyFiveDaysAgo) {
+            log.info('Adjusting old timestamp for Stripe', {
+                originalDate: new Date(originalTimestamp * 1000).toISOString(),
+                adjustedDate: new Date(thirtyFourDaysAgo * 1000).toISOString(),
+                ageInDays: Math.floor((now - originalTimestamp) / (24 * 60 * 60))
+            })
+
+            return {
+                adjustedTimestamp: Math.floor(thirtyFourDaysAgo),
+                wasAdjusted: true,
+                originalDate: new Date(originalTimestamp * 1000).toISOString()
+            }
+        }
+
+        return {
+            adjustedTimestamp: originalTimestamp,
+            wasAdjusted: false
+        }
+    }
+
     async syncUsageToStripe(creditsData: Array<CreditsData & { fullTrace: any }>): Promise<{
         meterEvents: Stripe.Billing.MeterEvent[]
         failedEvents: Array<{ traceId: string; error: string }>
@@ -319,6 +357,7 @@ export class StripeProvider {
             const processedTraces: string[] = []
             let selfHealedCount = 0
             let duplicateEventCount = 0
+            let adjustedTimestampCount = 0
 
             // console.log('Syncing usage to Stripe', {
             //     count: creditsData.length,
@@ -333,7 +372,10 @@ export class StripeProvider {
 
                 const batchResults = await Promise.allSettled(
                     batch.map(async (data) => {
-                        const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+                        const originalTimestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+
+                        // Adjust timestamp for Stripe's 35-day limitation
+                        const { adjustedTimestamp, wasAdjusted, originalDate } = this.adjustTimestampForStripe(originalTimestamp)
 
                         // Ensure all unknown credit types are counted as AI tokens
                         const aiTokens = data.credits.ai_tokens + (data.credits.unknown || 0)
@@ -346,12 +388,17 @@ export class StripeProvider {
 
                         let retryCount = 0
 
+                        // Track if this event's timestamp was adjusted
+                        if (wasAdjusted) {
+                            adjustedTimestampCount++
+                        }
+
                         while (retryCount < BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
                             try {
                                 const stripeMeterEvent = {
                                     event_name: 'credits',
                                     identifier: `${data.traceId}_credits`,
-                                    timestamp,
+                                    timestamp: adjustedTimestamp, // Use adjusted timestamp
                                     payload: {
                                         value: totalCredits.toString(),
                                         stripe_customer_id: data.stripeCustomerId,
@@ -450,6 +497,16 @@ export class StripeProvider {
                     totalProcessed: processedTraces.length,
                     percentage: ((duplicateEventCount / processedTraces.length) * 100).toFixed(2) + '%',
                     note: 'These traces were already in Stripe but not marked as processed in Langfuse'
+                })
+            }
+
+            // Log adjusted timestamps summary
+            if (adjustedTimestampCount > 0) {
+                log.info('Historical data: Adjusted timestamps for Stripe 35-day limitation', {
+                    count: adjustedTimestampCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((adjustedTimestampCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    note: 'Traces older than 35 days were batched to 34 days ago with original dates preserved in metadata'
                 })
             }
 

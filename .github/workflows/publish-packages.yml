@@ -1,0 +1,314 @@
+name: Publish aai-embed-react to NPM
+
+# This workflow only publishes aai-embed-react.
+# aai-embed is published by its own workflow in the chat-embed submodule repository.
+
+on:
+    push:
+        branches:
+            - staging
+    workflow_dispatch:
+        inputs:
+            version_override:
+                description: 'Version override for aai-embed-react (optional, e.g., 1.2.3)'
+                required: false
+
+jobs:
+    detect-changes:
+        name: Detect aai-embed-react Changes
+        runs-on: ubuntu-latest
+        outputs:
+            embed_react_changed: ${{ steps.changes.outputs.embed_react_changed }}
+            submodule_hash_changed: ${{ steps.changes.outputs.submodule_hash_changed }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  submodules: recursive
+
+            - name: Detect changes
+              id: changes
+              run: |
+                  # Skip if last commit was made by GitHub Action (prevents infinite loop)
+                  COMMIT_AUTHOR="${{ github.event.head_commit.author.name || '' }}"
+                  if [ "$COMMIT_AUTHOR" == "GitHub Action" ]; then
+                    echo "⏭️  Skipping - last commit was automated version bump"
+                    echo "embed_react_changed=false" >> $GITHUB_OUTPUT
+                    echo "submodule_hash_changed=false" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
+
+                  # For manual triggers, always mark as changed
+                  if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+                    echo "embed_react_changed=true" >> $GITHUB_OUTPUT
+                    echo "submodule_hash_changed=false" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
+
+                  # For push events, detect actual changes
+                  PREV_COMMIT="${{ github.event.before }}"
+                  CURR_COMMIT="${{ github.sha }}"
+
+                  # If this is the first push to the branch, compare with HEAD~1
+                  if [ "$PREV_COMMIT" == "0000000000000000000000000000000000000000" ]; then
+                    PREV_COMMIT="HEAD~1"
+                  fi
+
+                  echo "Comparing changes between $PREV_COMMIT and $CURR_COMMIT"
+
+                  # Check for changes in aai-embed-react
+                  if git diff --name-only $PREV_COMMIT $CURR_COMMIT | grep -q "^packages/embed-react/"; then
+                    echo "✓ Changes detected in packages/embed-react/"
+                    echo "embed_react_changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "✗ No changes in packages/embed-react/"
+                    echo "embed_react_changed=false" >> $GITHUB_OUTPUT
+                  fi
+
+                  # Check if submodule commit hash changed (indicates aai-embed dependency update)
+                  if git diff $PREV_COMMIT $CURR_COMMIT -- packages/embed | grep -q "^+Subproject commit"; then
+                    echo "✓ Submodule commit hash changed"
+                    echo "submodule_hash_changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "✗ Submodule commit hash unchanged"
+                    echo "submodule_hash_changed=false" >> $GITHUB_OUTPUT
+                  fi
+
+    verify-embed-published:
+        name: Verify aai-embed is Published
+        needs: detect-changes
+        # Only run if submodule hash changed (not needed for direct aai-embed-react changes)
+        if: needs.detect-changes.outputs.submodule_hash_changed == 'true'
+        runs-on: ubuntu-latest
+        outputs:
+            is_published: ${{ steps.verify.outputs.is_published }}
+            embed_version: ${{ steps.verify.outputs.embed_version }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  submodules: recursive
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20.17.0'
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Verify aai-embed version on npm
+              id: verify
+              run: |
+                  cd packages/embed
+
+                  # Get version from submodule's package.json
+                  EMBED_VERSION=$(node -p "require('./package.json').version")
+                  echo "📦 Submodule aai-embed version: $EMBED_VERSION"
+
+                  # Get current commit hash
+                  CURRENT_COMMIT=$(git rev-parse HEAD)
+                  echo "📍 Submodule commit: $CURRENT_COMMIT"
+
+                  # Check if this version exists on npm
+                  if npm view @answerai/aai-embed@$EMBED_VERSION version 2>/dev/null; then
+                    echo "✅ @answerai/aai-embed@$EMBED_VERSION is published on npm"
+
+                    # Optional: Verify git tag matches commit for extra safety
+                    EXPECTED_TAG="v${EMBED_VERSION}"
+                    TAG_COMMIT=$(git rev-list -n 1 $EXPECTED_TAG 2>/dev/null || echo "")
+
+                    if [ -n "$TAG_COMMIT" ]; then
+                      if [ "$CURRENT_COMMIT" == "$TAG_COMMIT" ]; then
+                        echo "✅ Submodule commit matches version tag $EXPECTED_TAG"
+                      else
+                        echo "⚠️  WARNING: Submodule commit ($CURRENT_COMMIT) doesn't match tag $EXPECTED_TAG ($TAG_COMMIT)"
+                        echo "This might indicate an unpublished commit. Proceeding anyway since version exists on npm."
+                      fi
+                    else
+                      echo "ℹ️  No git tag found for $EXPECTED_TAG (this is okay if using a different tagging scheme)"
+                    fi
+
+                    echo "is_published=true" >> $GITHUB_OUTPUT
+                    echo "embed_version=$EMBED_VERSION" >> $GITHUB_OUTPUT
+                  else
+                    echo "❌ @answerai/aai-embed@$EMBED_VERSION NOT found on npm"
+                    echo ""
+                    echo "🛑 Cannot publish aai-embed-react because aai-embed@$EMBED_VERSION hasn't been published yet."
+                    echo ""
+                    echo "Next steps:"
+                    echo "1. Ensure aai-embed workflow ran successfully in the chat-embed repository"
+                    echo "2. Verify the package was published: npm view @answerai/aai-embed@$EMBED_VERSION"
+                    echo "3. If not published, trigger the workflow manually in the chat-embed repo"
+
+                    echo "is_published=false" >> $GITHUB_OUTPUT
+                    exit 1
+                  fi
+
+    publish-aai-embed-react:
+        name: Publish aai-embed-react
+        needs: [detect-changes, verify-embed-published]
+        # Run if:
+        # 1. embed-react files changed (always publish), OR
+        # 2. submodule hash changed AND aai-embed is published (dependency update)
+        if: |
+            always() &&
+            (needs.detect-changes.outputs.embed_react_changed == 'true' ||
+             (needs.detect-changes.outputs.submodule_hash_changed == 'true' &&
+              needs.verify-embed-published.outputs.is_published == 'true'))
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            packages: write
+            id-token: write
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  submodules: recursive
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20.17.0'
+                  registry-url: 'https://registry.npmjs.org'
+                  scope: '@answerai'
+
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 9.15.9
+
+            - name: Setup Git
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+
+            - name: Get aai-embed version
+              id: embed_version
+              run: |
+                  cd packages/embed
+                  EMBED_VERSION=$(node -p "require('./package.json').version")
+                  echo "embed_version=$EMBED_VERSION" >> $GITHUB_OUTPUT
+                  echo "aai-embed dependency version: $EMBED_VERSION"
+
+            - name: Determine version bump
+              id: bump
+              working-directory: ./packages/embed-react
+              run: |
+                  # Check if there are any tags
+                  if git tag -l "aai-embed-react-v*" | grep -q .; then
+                    LAST_TAG=$(git tag -l "aai-embed-react-v*" | sort -V | tail -n1)
+                    echo "Last tag: $LAST_TAG"
+                    COMMITS=$(git log --pretty=format:"%s" $LAST_TAG..HEAD -- packages/embed-react/)
+                  else
+                    echo "No tags found for aai-embed-react"
+                    COMMITS=$(git log --pretty=format:"%s" -- packages/embed-react/)
+                  fi
+
+                  echo "Commits:"
+                  echo "$COMMITS"
+
+                  # If only submodule changed, do patch bump
+                  if [ "${{ needs.detect-changes.outputs.embed_react_changed }}" == "false" ]; then
+                    BUMP_TYPE="patch"
+                    echo "Only submodule dependency updated, using patch bump"
+                  else
+                    # Determine version bump type from commits
+                    BUMP_TYPE="patch"
+                    echo "$COMMITS" | grep -i -E '\b(BREAKING|MAJOR)\b' > /dev/null && BUMP_TYPE="major"
+                    if [ "$BUMP_TYPE" == "patch" ]; then
+                      echo "$COMMITS" | grep -i -E '\b(feat|feature|minor)\b' > /dev/null && BUMP_TYPE="minor"
+                    fi
+                  fi
+
+                  echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+                  echo "Determined version bump: $BUMP_TYPE"
+
+            - name: Bump version
+              id: version
+              working-directory: ./packages/embed-react
+              run: |
+                  # Use manual version if provided
+                  if [ -n "${{ github.event.inputs.version_override }}" ]; then
+                    NEW_VERSION="${{ github.event.inputs.version_override }}"
+                    node -e "const pkg = require('./package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+                  else
+                    BUMP_TYPE="${{ steps.bump.outputs.bump_type }}"
+                    # Manually bump version to avoid npm/pnpm issues with workspace: protocol
+                    if [ "$BUMP_TYPE" == "major" ]; then
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major] = pkg.version.split('.').map(Number); console.log((major + 1) + '.0.0');")
+                    elif [ "$BUMP_TYPE" == "minor" ]; then
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major, minor] = pkg.version.split('.').map(Number); console.log(major + '.' + (minor + 1) + '.0');")
+                    else
+                      NEW_VERSION=$(node -e "const pkg = require('./package.json'); const [major, minor, patch] = pkg.version.split('.').map(Number); console.log(major + '.' + minor + '.' + (patch + 1));")
+                    fi
+                    node -e "const pkg = require('./package.json'); pkg.version = '$NEW_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+                  fi
+
+                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+                  echo "New version: $NEW_VERSION"
+
+            - name: Update package metadata
+              working-directory: ./packages/embed-react
+              run: |
+                  # Update package name to scoped name
+                  node -e "const pkg = require('./package.json'); pkg.name = '@answerai/aai-embed-react'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+                  # Add publishConfig
+                  node -e "const pkg = require('./package.json'); pkg.publishConfig = { access: 'public' }; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+                  # Add repository
+                  node -e "const pkg = require('./package.json'); pkg.repository = { type: 'git', url: 'git+https://github.com/the-answerai/theanswer.git' }; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+                  # Update peerDependencies to match the aai-embed version from submodule
+                  EMBED_VERSION="${{ steps.embed_version.outputs.embed_version }}"
+                  echo "Updating aai-embed peer dependency to ^$EMBED_VERSION"
+                  node -e "const pkg = require('./package.json'); pkg.peerDependencies['aai-embed'] = '^$EMBED_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Build package
+              working-directory: ./packages/embed-react
+              run: pnpm build
+
+            - name: Publish to npm
+              working-directory: ./packages/embed-react
+              run: npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Commit and push version bump
+              run: |
+                  NEW_VERSION="aai-embed-react-v${{ steps.version.outputs.new_version }}"
+                  echo "Creating tag $NEW_VERSION"
+
+                  cd packages/embed-react
+                  git add package.json
+                  cd ../..
+
+                  # Commit the version bump
+                  if git commit -m "chore: bump aai-embed-react to ${{ steps.version.outputs.new_version }} [skip ci]"; then
+                    echo "✅ Version bump committed"
+
+                    # Push the commit back to staging
+                    git push origin staging
+
+                    # Create and push tag
+                    if ! git tag -l | grep -q "^$NEW_VERSION$"; then
+                      git tag -a $NEW_VERSION -m "Release aai-embed-react ${{ steps.version.outputs.new_version }}"
+                      git push origin $NEW_VERSION
+                    fi
+
+                    echo "✅ Pushed commit and tag to origin"
+                  else
+                    echo "⚠️  No changes to commit (package.json unchanged)"
+                  fi
+
+            - name: Summary
+              run: |
+                  echo "✅ Published @answerai/aai-embed-react@${{ steps.version.outputs.new_version }} to npm"
+                  echo "✅ Peer dependency: aai-embed@^${{ steps.embed_version.outputs.embed_version }}"
+                  echo "✅ Created tag aai-embed-react-v${{ steps.version.outputs.new_version }}"
