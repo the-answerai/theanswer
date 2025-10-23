@@ -316,6 +316,8 @@ export class StripeProvider {
         const thirtyFiveDaysAgo = now - 35 * 24 * 60 * 60
         const thirtyFourDaysAgo = now - 34 * 24 * 60 * 60 // Use 34 days as the "historical catch-up" date
 
+        // Stripe allows timestamps up to and including 35 days ago
+        // We only need to adjust if it's MORE than 35 days old
         if (originalTimestamp < thirtyFiveDaysAgo) {
             log.info('Adjusting old timestamp for Stripe', {
                 originalDate: new Date(originalTimestamp * 1000).toISOString(),
