@@ -414,9 +414,7 @@ export class StripeProvider {
                                                 data.costs.base.storage +
                                                 (data.costs.base.unknown || 0)) *
                                             BILLING_CONFIG.MARGIN_MULTIPLIER
-                                        ).toFixed(6),
-                                        // Add original date to payload if timestamp was adjusted
-                                        ...(wasAdjusted && { original_date: originalDate, historical_data: 'true' })
+                                        ).toFixed(6)
                                     }
                                 }
                                 let result
