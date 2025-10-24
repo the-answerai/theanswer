@@ -17,6 +17,8 @@ import MarketplaceCanvasHeader from '@/views/marketplaces/MarketplaceCanvasHeade
 import StickyNote from './StickyNote'
 import EditNodeDialog from '@/views/agentflowsv2/EditNodeDialog'
 import { flowContext } from '@/store/context/ReactFlowContext'
+import useFlowCredentials from '@/hooks/useFlowCredentials'
+import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 
 const nodeTypes = { agentFlow: AgentFlowNode, stickyNote: StickyNote, iteration: IterationNode }
 const edgeTypes = { agentFlow: AgentFlowEdge }
@@ -40,6 +42,10 @@ const MarketplaceCanvasV2 = () => {
     const reactFlowWrapper = useRef(null)
     const { setReactFlowInstance } = useContext(flowContext)
 
+    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
+        useFlowCredentials()
+    const hasPromptedCredentialsRef = useRef(false)
+
     // ==============================|| useEffect ||============================== //
 
     useEffect(() => {
@@ -47,10 +53,16 @@ const MarketplaceCanvasV2 = () => {
             const initialFlow = JSON.parse(flowData)
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
-        }
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [flowData])
+            if (!hasPromptedCredentialsRef.current) {
+                hasPromptedCredentialsRef.current = true
+                const preferenceScope = state?.id ? `template:${state.id}` : null
+                openCredentialModal(flowData, { preferenceScope }).catch((error) =>
+                    console.error('Failed to open credential modal:', error)
+                )
+            }
+        }
+    }, [flowData, openCredentialModal, state])
 
     const onChatflowCopy = (stateData) => {
         // stateData is now the complete state with all template information
@@ -125,6 +137,15 @@ const MarketplaceCanvasV2 = () => {
                     </div>
                 </Box>
             </Box>
+
+            <UnifiedCredentialsModal
+                show={showCredentialModal}
+                missingCredentials={missingCredentials}
+                onAssign={handleAssign}
+                onSkip={handleSkip}
+                onCancel={handleCancel}
+                initialDontShowAgain={initialDontShowAgain}
+            />
         </>
     )
 }

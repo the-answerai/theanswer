@@ -16,7 +16,7 @@ import StickyNote from '../canvas/StickyNote'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 // credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
+import useFlowCredentials from '@/hooks/useFlowCredentials'
 import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 
 const nodeTypes = { customNode: MarketplaceCanvasNode, stickyNote: StickyNote }
@@ -39,15 +39,9 @@ const MarketplaceCanvas = () => {
     const reactFlowWrapper = useRef(null)
 
     // Credential checking hook
-    const {
-        showCredentialModal,
-        missingCredentials,
-        checkCredentials,
-        initialDontShowAgain,
-        handleAssign,
-        handleSkip,
-        handleCancel
-    } = useCredentialChecker()
+    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
+        useFlowCredentials()
+    const hasPromptedCredentialsRef = useRef(false)
 
     // ==============================|| useEffect ||============================== //
 
@@ -56,10 +50,16 @@ const MarketplaceCanvas = () => {
             const initialFlow = JSON.parse(flowData)
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
-        }
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [flowData])
+            if (!hasPromptedCredentialsRef.current) {
+                hasPromptedCredentialsRef.current = true
+                const preferenceScope = state?.id ? `template:${state.id}` : null
+                openCredentialModal(flowData, { preferenceScope }).catch((error) =>
+                    console.error('Failed to open credential modal:', error)
+                )
+            }
+        }
+    }, [flowData, openCredentialModal, state])
 
     const onChatflowCopy = (stateData) => {
         // stateData is now the complete state with all template information
@@ -146,7 +146,6 @@ const MarketplaceCanvas = () => {
                 onAssign={handleAssign}
                 onSkip={handleSkip}
                 onCancel={handleCancel}
-                flowData={flowData ? JSON.parse(flowData) : null}
                 initialDontShowAgain={initialDontShowAgain}
             />
         </>

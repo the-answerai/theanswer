@@ -32,6 +32,8 @@ import EditNodeDialog from '@/views/agentflowsv2/EditNodeDialog'
 import ChatPopUp from '@/views/chatmessage/ChatPopUp'
 import ValidationPopUp from '@/views/chatmessage/ValidationPopUp'
 import { flowContext } from '@/store/context/ReactFlowContext'
+import useFlowCredentials from '@/hooks/useFlowCredentials'
+import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 
 // API
 import nodesApi from '@/api/nodes'
@@ -101,6 +103,10 @@ const AgentflowCanvas = () => {
     const [editNodeDialogOpen, setEditNodeDialogOpen] = useState(false)
     const [editNodeDialogProps, setEditNodeDialogProps] = useState({})
 
+    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
+        useFlowCredentials()
+    const hasPromptedCredentialsRef = useRef(false)
+
     const reactFlowWrapper = useRef(null)
 
     // ==============================|| Chatflow API ||============================== //
@@ -163,6 +169,10 @@ const AgentflowCanvas = () => {
             setNodes(nodes)
             setEdges(flowData.edges || [])
             setTimeout(() => setDirty(), 0)
+
+            hasPromptedCredentialsRef.current = true
+            const preferenceScope = chatflowId ? `flow:${chatflowId}` : null
+            openCredentialModal(flowData, { preferenceScope }).catch((error) => console.error('Failed to open credential modal:', error))
         } catch (e) {
             console.error(e)
         }
@@ -572,8 +582,19 @@ const AgentflowCanvas = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasDataStore.chatflow])
 
+    useEffect(() => {
+        if (canvasDataStore.chatflow?.flowData && !hasPromptedCredentialsRef.current) {
+            hasPromptedCredentialsRef.current = true
+            const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
+            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) =>
+                console.error('Failed to open credential modal:', error)
+            )
+        }
+    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+
     // Initialization
     useEffect(() => {
+        hasPromptedCredentialsRef.current = false
         setIsSyncNodesButtonEnabled(false)
         if (chatflowId) {
             getSpecificChatflowApi.request(chatflowId)
@@ -779,6 +800,15 @@ const AgentflowCanvas = () => {
                 </Box>
                 <ConfirmDialog />
             </Box>
+
+            <UnifiedCredentialsModal
+                show={showCredentialModal}
+                missingCredentials={missingCredentials}
+                onAssign={handleAssign}
+                onSkip={handleSkip}
+                onCancel={handleCancel}
+                initialDontShowAgain={initialDontShowAgain}
+            />
         </>
     )
 }

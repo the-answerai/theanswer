@@ -58,7 +58,7 @@ import { usePrompt } from '@/utils/usePrompt'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 
 // credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
+import useFlowCredentials from '@/hooks/useFlowCredentials'
 import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 const nodeTypes = { customNode: CanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: ButtonEdge }
@@ -110,15 +110,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     const reactFlowWrapper = useRef(null)
     const canvasHeaderRef = useRef(null)
 
-    const {
-        showCredentialModal,
-        missingCredentials,
-        checkCredentials,
-        initialDontShowAgain,
-        handleAssign,
-        handleSkip,
-        handleCancel
-    } = useCredentialChecker()
+    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
+        useFlowCredentials()
+    const hasPromptedCredentialsRef = useRef(false)
 
     // ==============================|| Chatflow API ||============================== //
 
@@ -615,10 +609,21 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasDataStore.chatflow])
 
+    useEffect(() => {
+        if (canvasDataStore.chatflow?.flowData && !hasPromptedCredentialsRef.current) {
+            hasPromptedCredentialsRef.current = true
+            const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
+            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) =>
+                console.error('Failed to open credential modal:', error)
+            )
+        }
+    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+
     // Initialization
     useEffect(() => {
         // console.log('🎨 Canvas initialization effect running:', { chatflowId })
 
+        hasPromptedCredentialsRef.current = false
         setIsSyncNodesButtonEnabled(false)
         setIsUpsertButtonEnabled(false)
         if (chatflowId) {
@@ -819,7 +824,6 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 onAssign={handleAssign}
                 onSkip={handleSkip}
                 onCancel={handleCancel}
-                flowData={null}
                 initialDontShowAgain={initialDontShowAgain}
             />
         </>
