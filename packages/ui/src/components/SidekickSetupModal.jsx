@@ -17,11 +17,14 @@ import { IconX } from '@tabler/icons-react'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
+import useConfirm from '@/hooks/useConfirm'
 
-// Dynamic import for UnifiedCredentialsModal
+// Dynamic imports
 const UnifiedCredentialsModal = dynamic(() => import('@/ui-component/dialog/UnifiedCredentialsModal'), { ssr: false })
+const ConfirmDialog = dynamic(() => import('@/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
 const SidekickSetupModal = ({ sidekickId, onComplete }) => {
+    const { confirm } = useConfirm()
     const preferenceScope = sidekickId ? `sidekick:${sidekickId}` : null
 
     // Local state to track if user has skipped setup for this instance
@@ -122,20 +125,26 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError, persistDismissPreference]
     )
 
-    const handleModalSkip = useCallback((options) => {
-        const userConfirmed = window.confirm(
-            'Warning: The chat flow will not work properly without credentials. Are you sure you want to skip setup?'
-        )
+    const handleModalSkip = useCallback(async (options) => {
+        const confirmPayload = {
+            title: 'Skip credential setup?',
+            description: 'The chat flow will not work properly without credentials. Are you sure you want to skip setup?',
+            confirmButtonName: 'Skip anyway',
+            cancelButtonName: 'Continue setup'
+        }
+        const isConfirmed = await confirm(confirmPayload)
 
-        if (userConfirmed) {
+        if (isConfirmed) {
             setHasSkipped(true)
             persistDismissPreference(options)
             handleURLCleanup()
         }
-    }, [handleURLCleanup, persistDismissPreference])
+    }, [handleURLCleanup, persistDismissPreference, confirm])
 
     const handleModalCancel = useCallback(
         (options) => {
+            console.log('[SidekickSetupModal] handleModalCancel called')
+            setHasSkipped(true) // Hide the modal by setting skipped state
             persistDismissPreference(options)
             handleURLCleanup()
         },
@@ -155,15 +164,18 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     }
 
     return (
-        <UnifiedCredentialsModal
-            show={true}
-            missingCredentials={credentialsToShow}
-            onAssign={handleModalAssign}
-            onSkip={handleModalSkip}
-            onCancel={handleModalCancel}
-            onError={handleModalError}
-            initialDontShowAgain={isSuppressed}
-        />
+        <>
+            <ConfirmDialog />
+            <UnifiedCredentialsModal
+                show={true}
+                missingCredentials={credentialsToShow}
+                onAssign={handleModalAssign}
+                onSkip={handleModalSkip}
+                onCancel={handleModalCancel}
+                onError={handleModalError}
+                initialDontShowAgain={isSuppressed}
+            />
+        </>
     )
 }
 

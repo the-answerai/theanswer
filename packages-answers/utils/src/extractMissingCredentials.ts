@@ -2,10 +2,12 @@
  * Utility functions for detecting and managing missing credentials in flows
  */
 
+import { getCredentialCategory } from './getCredentialCategory'
+
 /**
  * Extract required credentials from flow data and identify missing ones
  * @param {string|object} flowData - Flow data as JSON string or object
- * @returns {any[]} Array of missing credentials
+ * @returns {object} Object containing missing credentials info
  */
 export const extractMissingCredentials = (flowData: string | any) => {
     try {
@@ -13,34 +15,18 @@ export const extractMissingCredentials = (flowData: string | any) => {
         const flow = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
 
         if (!flow.nodes || !Array.isArray(flow.nodes)) {
-            return []
+            return { missingCredentials: [], hasCredentials: false }
         }
 
         const missingCredentials: any[] = []
         const credentialTypes = new Set<string>()
 
-        // Define commonly needed optional credentials that should be offered
-        const importantOptionalCredentials = ['redisCacheApi', 'redisCacheUrlApi', 'upstashRedisApi', 'upstashRedisMemoryApi']
-
         // Iterate through all nodes
-        flow.nodes.forEach((node: any, index: number) => {
+        flow.nodes.forEach((node: any) => {
             if (node.data && node.data.inputParams) {
-                // Find credential input parameters (required OR important optional ones)
+                // Find all credential input parameters
                 const credentialParams = node.data.inputParams.filter((param: any) => {
-                    if (param.type !== 'credential') return false
-
-                    // Include required credentials
-                    if (!param.optional) return true
-
-                    // Include important optional credentials
-                    if (
-                        param.credentialNames &&
-                        param.credentialNames.some((name: string) => importantOptionalCredentials.includes(name))
-                    ) {
-                        return true
-                    }
-
-                    return false
+                    return param.type === 'credential'
                 })
 
                 credentialParams.forEach((credentialParam: any) => {
@@ -57,13 +43,27 @@ export const extractMissingCredentials = (flowData: string | any) => {
                         credentialNames.forEach((credentialName: string) => {
                             credentialTypes.add(credentialName)
 
+                            // Get category information to determine if credential is core
+                            const category = getCredentialCategory(node.data.category, credentialName)
+                            
+                            // Credential is required if:
+                            // 1. Category is core (Chat Models, Agents, etc), OR
+                            // 2. Parameter explicitly marked as NOT optional (optional: false)
+                            // Default to optional if not explicitly marked
+                            const isRequired = category.isCore || (credentialParam.optional === false)
+
                             const missingCred = {
                                 nodeId: node.id,
                                 nodeName: node.data.name || 'Unknown Node',
+                                nodeCategory: node.data.category || 'Unknown',
+                                nodeType: node.data.type || node.type || 'Unknown',
                                 credentialType: credentialName,
                                 parameterName: credentialParam.name,
                                 label: credentialParam.label || credentialParam.name,
-                                isOptional: !!credentialParam.optional
+                                isRequired: isRequired,
+                                isCore: category.isCore,
+                                categoryType: category.type,
+                                categoryDisplayName: category.displayName
                             }
 
                             missingCredentials.push(missingCred)
@@ -73,9 +73,12 @@ export const extractMissingCredentials = (flowData: string | any) => {
             }
         })
 
-        return missingCredentials
+        return {
+            missingCredentials,
+            hasCredentials: credentialTypes.size > 0
+        }
     } catch (error) {
         console.error('Error in extractMissingCredentials:', error)
-        return []
+        return { missingCredentials: [], hasCredentials: false }
     }
 }
