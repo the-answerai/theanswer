@@ -6,6 +6,9 @@ export const log = console as unknown as Logger
 // Default customer ID for development
 export const DEFAULT_CUSTOMER_ID = process.env.BILLING_DEFAULT_STRIPE_CUSTOMER_ID
 
+// Override flag: When true, ALWAYS use DEFAULT_CUSTOMER_ID regardless of trace metadata or user data
+export const OVERRIDE_CUSTOMER_ID = process.env.BILLING_OVERRIDE_CUSTOMER_ID === 'true'
+
 // Load environment variables with defaults
 // Base rate: $20 for 500,000 credits = $0.00004 per credit
 const BILLING_CREDIT_PRICE_USD = parseFloat(process.env.BILLING_CREDIT_PRICE_USD || '0.00004')

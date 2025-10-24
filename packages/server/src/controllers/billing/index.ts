@@ -11,7 +11,7 @@ import checkOwnership from '../../utils/checkOwnership'
 import logger from '../../utils/logger'
 // import { billingService } from '../../services/billing'
 import { CustomerStatus, UsageStats } from '../../aai-utils/billing/core/types'
-import { BILLING_CONFIG } from '../../aai-utils/billing/config'
+import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
 import { UsageSummary } from '../../aai-utils/billing/core/types'
 import Stripe from 'stripe'
 import { ChatMessage } from '../../database/entities/ChatMessage'
@@ -262,7 +262,8 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
  */
 const getUsageSummary = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const customerId = req.user?.stripeCustomerId
+        // Apply organizational billing override if enabled
+        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : req.user?.stripeCustomerId
         // if (!customerId) {
         //     throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User has no associated Stripe customer')
         // }
@@ -482,7 +483,8 @@ const createCheckoutSession = async (req: Request, res: Response, next: NextFunc
         const billingService = new BillingService()
         const session = await billingService.createCheckoutSession({
             priceId: BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY,
-            customerId: req.user?.stripeCustomerId!,
+            // Apply organizational billing override if enabled
+            customerId: OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : req.user?.stripeCustomerId!,
             successUrl: `${req.headers.origin}/billing?status=success`,
             cancelUrl: `${req.headers.origin}/billing?status=cancel`
         })
@@ -522,8 +524,9 @@ const cancelSubscription = async (req: Request, res: Response, next: NextFunctio
         }
 
         // At this point TypeScript knows subscriptionId is a string
-        // Verify subscription belongs to the user
-        const subscription = await billingService.getSubscriptionWithUsage(req.user.stripeCustomerId!)
+        // Verify subscription belongs to the user/organization
+        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : req.user.stripeCustomerId!
+        const subscription = await billingService.getSubscriptionWithUsage(customerId)
         if (!subscription || subscription.id !== subscriptionId) {
             throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Subscription not found or does not belong to the user')
         }
@@ -571,9 +574,10 @@ const getSubscriptionWithUsage = async (req: Request, res: Response, next: NextF
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User not authenticated')
         }
 
-        const customerId = req.user.stripeCustomerId
+        // Apply organizational billing override if enabled
+        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : req.user.stripeCustomerId
         if (!customerId) {
-            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user')
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user/organization')
         }
 
         // Get active subscription
@@ -632,10 +636,11 @@ const handleWebhook = async (req: Request, res: Response, next: NextFunction) =>
 export const getCustomerStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
-        const customerId = req.user?.stripeCustomerId
+        // Apply organizational billing override if enabled
+        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : req.user?.stripeCustomerId
 
         if (!customerId) {
-            return res.status(400).json({ error: 'Customer ID not found' })
+            return res.status(400).json({ error: 'Customer ID not found for user/organization' })
         }
 
         const [customer, subscription, usage] = await Promise.all([
@@ -705,7 +710,8 @@ export const getCustomerStatus = async (req: Request, res: Response, next: NextF
 const getUsageEvents = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
-        const customerId = req.user?.stripeCustomerId
+        // Apply organizational billing override if enabled
+        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : req.user?.stripeCustomerId
         // if (!customerId) {
         //     throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User has no associated Stripe customer')
         // }

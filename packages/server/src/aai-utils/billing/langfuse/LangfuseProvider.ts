@@ -1,5 +1,5 @@
 import { CreditsData, TraceMetadata, SyncUsageResponse, UsageEvent, UsageEventsResponse, GetUsageEventsParams } from '../core/types'
-import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
+import { log, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import axios from 'axios'
 import { StripeProvider } from '../stripe/StripeProvider'
 import { extractCredentialsAndModels } from 'flowise-components'
@@ -504,7 +504,8 @@ export class LangfuseProvider {
             userId: metadata.userId,
             organizationId: metadata.organizationId,
             aiCredentialsOwnership: metadata.aiCredentialsOwnership,
-            stripeCustomerId: metadata.customerId || DEFAULT_CUSTOMER_ID!,
+            // When OVERRIDE_CUSTOMER_ID is true, ALWAYS use DEFAULT_CUSTOMER_ID (ignores trace metadata and DB values)
+            stripeCustomerId: OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : metadata.customerId || DEFAULT_CUSTOMER_ID!,
             subscriptionTier: metadata.subscriptionTier || 'free',
             timestamp: trace.timestamp.toString(),
             timestampEpoch: timestampSeconds,
