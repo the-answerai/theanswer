@@ -42,9 +42,13 @@ export const BILLING_CONFIG = {
 
     // Sync configuration
     SYNC: {
-        LOOKBACK_DAYS: parseInt(process.env.BILLING_SYNC_LOOKBACK_DAYS || '90'),
-        PAGE_BATCH_SIZE: 15, // Number of pages to fetch in parallel
-        RATE_LIMIT_DELAY_MS: 1000 // Delay between page batches
+        LOOKBACK_DAYS: parseInt(process.env.BILLING_SYNC_LOOKBACK_DAYS || '7'), // Reduced from 90 to 7 days
+        PAGE_BATCH_SIZE: parseInt(process.env.BILLING_SYNC_PAGE_BATCH_SIZE || '3'), // Reduced from 15 to 3 pages
+        RATE_LIMIT_DELAY_MS: parseInt(process.env.BILLING_SYNC_RATE_LIMIT_MS || '2000'), // Increased from 1000 to 2000ms
+        TRACE_BATCH_SIZE: parseInt(process.env.BILLING_SYNC_TRACE_BATCH_SIZE || '5'), // Reduced from 15 to 5 traces
+        MAX_RETRIES: 3,
+        RETRY_DELAY_MS: 1000,
+        EXPONENTIAL_BACKOFF: true
     },
 
     // Resource configuration
