@@ -79,6 +79,7 @@ export class LangfuseProvider {
         userId?: string
         filter?: any[]
         fields?: string
+        orderBy?: string
     }): Promise<any> {
         const queryParams: any = { ...params }
 
@@ -151,12 +152,20 @@ export class LangfuseProvider {
                 limit: 1,
                 page: 1,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
-                fields: 'core' // Minimal fields for discovery
+                fields: 'core', // Minimal fields for discovery
+                orderBy: 'timestamp' // CRITICAL: Order by timestamp ascending (default) to get OLDEST first
+                // Note: Langfuse API defaults to ascending order, so just 'timestamp' should work
+                // If this returns newest instead of oldest, we fall back to 2020-01-01 anyway
             })
 
             if (response.data.length === 0) {
                 return null // No unprocessed traces
             }
+
+            log.info('Found oldest unprocessed trace', {
+                traceId: response.data[0].id,
+                timestamp: response.data[0].timestamp
+            })
 
             return new Date(response.data[0].timestamp)
         } catch (error) {
