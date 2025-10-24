@@ -49,6 +49,8 @@ export const BILLING_CONFIG = {
         PAGE_BATCH_SIZE: parseInt(process.env.BILLING_SYNC_PAGE_BATCH_SIZE || '3'), // Reduced from 15 to 3 pages
         RATE_LIMIT_DELAY_MS: parseInt(process.env.BILLING_SYNC_RATE_LIMIT_MS || '2000'), // Increased from 1000 to 2000ms
         TRACE_BATCH_SIZE: parseInt(process.env.BILLING_SYNC_TRACE_BATCH_SIZE || '5'), // Reduced from 15 to 5 traces
+        CHUNK_SIZE_DAYS: parseInt(process.env.BILLING_SYNC_CHUNK_SIZE_DAYS || '30'), // Time window size for historical processing
+        PAGE_FETCH_DELAY_MS: parseInt(process.env.BILLING_PAGE_FETCH_DELAY_MS || '500'), // Delay between sequential page fetches
         MAX_RETRIES: 3,
         RETRY_DELAY_MS: 1000,
         EXPONENTIAL_BACKOFF: true

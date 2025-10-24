@@ -13,6 +13,7 @@ import { useTheme } from '@mui/material/styles'
 import MarketplaceCanvasNode from './MarketplaceCanvasNode'
 import MarketplaceCanvasHeader from './MarketplaceCanvasHeader'
 import StickyNote from '../canvas/StickyNote'
+import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 // credential checking
 import { useCredentialChecker } from '@/hooks/useCredentialChecker'
@@ -134,6 +135,9 @@ const MarketplaceCanvas = () => {
                     </div>
                 </Box>
             </Box>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog />
 
             {/* Unified Credentials Modal */}
             <UnifiedCredentialsModal

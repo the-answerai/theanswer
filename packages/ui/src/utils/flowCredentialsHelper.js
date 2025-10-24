@@ -2,6 +2,13 @@
  * Utility functions for detecting and managing missing credentials in flows
  */
 
+import { extractMissingCredentials } from '@utils/extractMissingCredentials'
+import { extractAllCredentials } from '@utils/extractAllCredentials'
+import { getCredentialCategory } from '@utils/getCredentialCategory'
+
+// Re-export for convenience
+export { extractMissingCredentials, extractAllCredentials, getCredentialCategory }
+
 /**
  * Convert camelCase or PascalCase string to sentence case
  * @param {string} str - String in camelCase or PascalCase
@@ -62,172 +69,6 @@ export const toSentenceCase = (str) => {
 }
 
 /**
- * Extract required credentials from flow data and identify missing ones
- * @param {string|object} flowData - Flow data as JSON string or object
- * @returns {object} Object containing missing credentials info
- */
-export const extractMissingCredentials = (flowData) => {
-    try {
-        // Parse flow data if it's a string
-        const flow = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
-
-        if (!flow.nodes || !Array.isArray(flow.nodes)) {
-            return { missingCredentials: [], hasCredentials: false }
-        }
-
-        const missingCredentials = []
-        const credentialTypes = new Set()
-
-        // Define commonly needed optional credentials that should be offered
-        const importantOptionalCredentials = ['redisCacheApi', 'redisCacheUrlApi', 'upstashRedisApi', 'upstashRedisMemoryApi']
-
-        // Iterate through all nodes
-        flow.nodes.forEach((node) => {
-            if (node.data && node.data.inputParams) {
-                // Find credential input parameters (required OR important optional ones)
-                const credentialParams = node.data.inputParams.filter((param) => {
-                    if (param.type !== 'credential') return false
-
-                    // Include required credentials
-                    if (!param.optional) return true
-
-                    // Include important optional credentials
-                    if (param.credentialNames && param.credentialNames.some((name) => importantOptionalCredentials.includes(name))) {
-                        return true
-                    }
-
-                    return false
-                })
-
-                credentialParams.forEach((credentialParam) => {
-                    // Check if credential is assigned
-                    const hasCredential =
-                        node.data.credential ||
-                        (node.data.inputs && node.data.inputs[credentialParam.name]) ||
-                        (node.data.inputs && node.data.inputs['FLOWISE_CREDENTIAL_ID'])
-
-                    if (!hasCredential) {
-                        // Extract credential names
-                        const credentialNames = credentialParam.credentialNames || []
-
-                        credentialNames.forEach((credentialName) => {
-                            credentialTypes.add(credentialName)
-
-                            const missingCred = {
-                                nodeId: node.id,
-                                nodeName: node.data.name || 'Unknown Node',
-                                nodeCategory: node.data.category || 'Unknown',
-                                nodeType: node.data.type || node.type || 'Unknown',
-                                credentialType: credentialName,
-                                parameterName: credentialParam.name,
-                                label: credentialParam.label || credentialParam.name,
-                                isOptional: !!credentialParam.optional,
-                                isRequired: !credentialParam.optional
-                            }
-
-                            missingCredentials.push(missingCred)
-                        })
-                    }
-                })
-            }
-        })
-
-        const result = {
-            missingCredentials,
-            hasCredentials: credentialTypes.size > 0
-        }
-
-        return result
-    } catch (error) {
-        console.error('Error in extractMissingCredentials:', error)
-        return { missingCredentials: [], hasCredentials: false }
-    }
-}
-
-/**
- * Extract all credentials (assigned and unassigned) from flow data for QuickSetup mode
- * @param {string|object} flowData - Flow data as JSON string or object
- * @returns {object} Object containing all credentials info
- */
-export const extractAllCredentials = (flowData) => {
-    try {
-        // Parse flow data if it's a string
-        const flow = typeof flowData === 'string' ? JSON.parse(flowData) : flowData
-
-        if (!flow.nodes || !Array.isArray(flow.nodes)) {
-            return { allCredentials: [], hasCredentials: false }
-        }
-
-        const allCredentials = []
-        const credentialTypes = new Set()
-
-        // Define commonly needed optional credentials that should be offered
-        const importantOptionalCredentials = ['redisCacheApi', 'redisCacheUrlApi', 'upstashRedisApi', 'upstashRedisMemoryApi']
-
-        // Iterate through all nodes
-        flow.nodes.forEach((node) => {
-            if (node.data && node.data.inputParams) {
-                // Find credential input parameters (required OR important optional ones)
-                const credentialParams = node.data.inputParams.filter((param) => {
-                    if (param.type !== 'credential') return false
-
-                    // Include required credentials
-                    if (!param.optional) return true
-
-                    // Include important optional credentials
-                    if (param.credentialNames && param.credentialNames.some((name) => importantOptionalCredentials.includes(name))) {
-                        return true
-                    }
-
-                    return false
-                })
-
-                credentialParams.forEach((credentialParam) => {
-                    // Check if credential is assigned
-                    const hasCredential =
-                        node.data.credential ||
-                        (node.data.inputs && node.data.inputs[credentialParam.name]) ||
-                        (node.data.inputs && node.data.inputs['FLOWISE_CREDENTIAL_ID'])
-
-                    // Extract credential names
-                    const credentialNames = credentialParam.credentialNames || []
-
-                    credentialNames.forEach((credentialName) => {
-                        credentialTypes.add(credentialName)
-
-                        const credInfo = {
-                            nodeId: node.id,
-                            nodeName: node.data.name || 'Unknown Node',
-                            nodeCategory: node.data.category || 'Unknown',
-                            nodeType: node.data.type || node.type || 'Unknown',
-                            credentialType: credentialName,
-                            parameterName: credentialParam.name,
-                            label: credentialParam.label || credentialParam.name,
-                            isOptional: !!credentialParam.optional,
-                            isRequired: !credentialParam.optional,
-                            isAssigned: !!hasCredential,
-                            assignedCredentialId: hasCredential || null
-                        }
-
-                        allCredentials.push(credInfo)
-                    })
-                })
-            }
-        })
-
-        const result = {
-            allCredentials,
-            hasCredentials: credentialTypes.size > 0
-        }
-
-        return result
-    } catch (error) {
-        console.error('Error in extractAllCredentials:', error)
-        return { allCredentials: [], hasCredentials: false }
-    }
-}
-
-/**
  * Group missing credentials by credential type for better organization
  * @param {array} missingCredentials - Array of missing credential objects
  * @returns {object} Grouped credentials by type
@@ -277,8 +118,10 @@ export const groupCredentialsByType = (missingCredentials) => {
                     nodeId: credInfo.nodeId,
                     nodeName: credInfo.nodeName,
                     parameterName: credInfo.parameterName,
-                    isOptional: credInfo.isOptional,
                     isRequired: credInfo.isRequired,
+                    isCore: credInfo.isCore,
+                    categoryType: credInfo.categoryType,
+                    categoryDisplayName: credInfo.categoryDisplayName,
                     nodeCategory: credInfo.nodeCategory,
                     nodeType: credInfo.nodeType
                 })
@@ -349,8 +192,10 @@ export const groupAllCredentialsByType = (allCredentials) => {
                     parameterName: credInfo.parameterName,
                     isAssigned: credInfo.isAssigned,
                     assignedCredentialId: credInfo.assignedCredentialId,
-                    isOptional: credInfo.isOptional,
                     isRequired: credInfo.isRequired,
+                    isCore: credInfo.isCore,
+                    categoryType: credInfo.categoryType,
+                    categoryDisplayName: credInfo.categoryDisplayName,
                     nodeCategory: credInfo.nodeCategory,
                     nodeType: credInfo.nodeType
                 })
@@ -416,98 +261,67 @@ export const isValidCredentialAssignment = (node, credentialId, availableCredent
 }
 
 /**
- * Sort and organize grouped credentials by connection status and priority
- * Ordering: Unconnected (Required, Optional) → Connected (Required, Optional)
- * Within each section: Alphabetical by label
+ * Organize credentials into three sections: Required, Optional, and Connected
+ * - Required: Unconnected credentials that must be assigned (isRequired: true)
+ * - Optional: Unconnected credentials that are optional (isRequired: false)
+ * - Connected: All connected credentials (sorted: required first, then optional)
  * @param {object} groupedCredentials - Grouped credentials object
- * @returns {object} Organized credentials with sections
+ * @returns {object} Organized credentials with three sections
  */
 export const organizeCredentialsByPriority = (groupedCredentials) => {
     const sections = {
-        unconnectedRequired: [],
-        unconnectedOptional: [],
-        connectedRequired: [],
-        connectedOptional: []
+        required: [],    // Unconnected required credentials
+        optional: [],    // Unconnected optional credentials
+        connected: []    // All connected credentials
     }
 
     Object.entries(groupedCredentials).forEach(([groupKey, group]) => {
         const isConnected = group.isAssigned || false
-        // Check if ANY node has isRequired=true OR if ANY node has isOptional=false
-        const isRequired = group.nodes?.some((node) => node.isRequired === true || node.isOptional === false) || false
+        
+        // Check if ANY node in this group is marked as required
+        // isRequired is calculated as: category.isCore || !credentialParam.optional
+        const isRequired = group.nodes?.some((node) => node.isRequired === true) || false
+        
+        // Also track isCore for sorting connected credentials
+        const isCore = group.nodes?.some((node) => node.isCore === true) || false
 
-        // Determine which section this credential belongs to
+        const credentialItem = {
+            groupKey,
+            ...group,
+            isConnected,
+            isRequired,
+            isCore
+        }
+
+        // Route to appropriate section based on connection status and requirement
         if (!isConnected && isRequired) {
-            sections.unconnectedRequired.push({ groupKey, ...group })
+            // Unconnected required credentials go to "Required"
+            sections.required.push(credentialItem)
         } else if (!isConnected && !isRequired) {
-            sections.unconnectedOptional.push({ groupKey, ...group })
-        } else if (isConnected && isRequired) {
-            sections.connectedRequired.push({ groupKey, ...group })
-        } else {
-            sections.connectedOptional.push({ groupKey, ...group })
+            // Unconnected optional credentials go to "Optional"
+            sections.optional.push(credentialItem)
+        } else if (isConnected) {
+            // All connected credentials go to "Connected"
+            sections.connected.push(credentialItem)
         }
     })
 
-    // Sort each section alphabetically by label
+    // Sort functions
     const sortByLabel = (a, b) => (a.label || '').localeCompare(b.label || '')
-    sections.unconnectedRequired.sort(sortByLabel)
-    sections.unconnectedOptional.sort(sortByLabel)
-    sections.connectedRequired.sort(sortByLabel)
-    sections.connectedOptional.sort(sortByLabel)
+    
+    // Sort connected section: required first, then alphabetically within each group
+    const sortConnected = (a, b) => {
+        // Required credentials before optional
+        if (a.isRequired && !b.isRequired) return -1
+        if (!a.isRequired && b.isRequired) return 1
+        // Then alphabetically by label
+        return (a.label || '').localeCompare(b.label || '')
+    }
+
+    // Sort each section
+    sections.required.sort(sortByLabel)
+    sections.optional.sort(sortByLabel)
+    sections.connected.sort(sortConnected)
 
     return sections
-}
-
-/**
- * Determine credential category based on node category and type
- * @param {string} nodeCategory - Node category (e.g., "Chat Models", "Tools", "MCP Servers")
- * @param {string} credentialType - Credential type name
- * @returns {object} Category info with type and display name
- */
-export const getCredentialCategory = (nodeCategory, credentialType) => {
-    // Normalize category
-    const category = (nodeCategory || '').toLowerCase()
-    const credType = (credentialType || '').toLowerCase()
-
-    // Chat Models - always required for basic functionality
-    if (category.includes('chat model') || category.includes('llm')) {
-        return { type: 'chatModel', displayName: 'Chat Model', isCore: true }
-    }
-
-    // MCP Servers - optional tools
-    if (category.includes('mcp server') || credType.includes('mcp')) {
-        return { type: 'mcpServer', displayName: 'MCP Server', isCore: false }
-    }
-
-    // Tools - optional enhancements
-    if (category.includes('tool')) {
-        return { type: 'tool', displayName: 'Tool', isCore: false }
-    }
-
-    // Agents - required for agent flows
-    if (category.includes('agent')) {
-        return { type: 'agent', displayName: 'Agent', isCore: true }
-    }
-
-    // Chains - required for chain flows
-    if (category.includes('chain')) {
-        return { type: 'chain', displayName: 'Chain', isCore: true }
-    }
-
-    // Document Loaders
-    if (category.includes('document loader')) {
-        return { type: 'documentLoader', displayName: 'Document Loader', isCore: false }
-    }
-
-    // Vector Stores
-    if (category.includes('vector store')) {
-        return { type: 'vectorStore', displayName: 'Vector Store', isCore: false }
-    }
-
-    // Cache - optional but important
-    if (credType.includes('redis') || credType.includes('cache')) {
-        return { type: 'cache', displayName: 'Cache', isCore: false }
-    }
-
-    // Default
-    return { type: 'other', displayName: 'Other', isCore: false }
 }
