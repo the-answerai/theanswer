@@ -565,15 +565,18 @@ export class LangfuseProvider {
                 // We'll filter the results after fetching
             })
 
-            // Filter traces by customerId
+            // Filter traces by userId and customerId
+            // When organizational billing override is enabled, we skip the customerId check
+            // because all traces have individual user customer IDs but bill to the org customer ID
             const filteredTraces = (langfuseResponse?.data || []).filter((trace: Trace) => {
                 const metadata = trace.metadata as TraceMetadata
-                return (
-                    trace.userId === userId ||
-                    trace.userId === params.user.id ||
-                    params.user.roles?.includes('Admin') ||
-                    (metadata && metadata.stripeCustomerId === customerId)
-                )
+                // Always allow: own traces, admin access
+                const hasUserAccess = trace.userId === userId || trace.userId === params.user.id || params.user.roles?.includes('Admin')
+
+                // Only check customer ID when override is disabled
+                const hasCustomerAccess = !OVERRIDE_CUSTOMER_ID && metadata && metadata.stripeCustomerId === customerId
+
+                return hasUserAccess || hasCustomerAccess
             })
 
             // Transform traces to UsageEvent format
