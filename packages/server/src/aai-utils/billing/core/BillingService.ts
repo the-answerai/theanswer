@@ -234,7 +234,7 @@ export class BillingService implements BillingProvider {
             // Map summaries to include meter_name
             const usage = allSummaries.map((summary) => ({
                 ...summary,
-                meter_name: summary.meter === process.env.STRIPE_CREDITS_METER_ID ? 'credits' : 'unknown'
+                meter_name: summary.meter === BILLING_CONFIG.BILLING_CREDITS_METER_ID ? 'credits' : 'unknown'
             }))
 
             return {

@@ -6,6 +6,9 @@ export const log = console as unknown as Logger
 // Default customer ID for development
 export const DEFAULT_CUSTOMER_ID = process.env.BILLING_DEFAULT_STRIPE_CUSTOMER_ID
 
+// Override flag: When true, ALWAYS use DEFAULT_CUSTOMER_ID regardless of trace metadata or user data
+export const OVERRIDE_CUSTOMER_ID = process.env.BILLING_OVERRIDE_CUSTOMER_ID === 'true'
+
 // Load environment variables with defaults
 // Base rate: $20 for 500,000 credits = $0.00004 per credit
 const BILLING_CREDIT_PRICE_USD = parseFloat(process.env.BILLING_CREDIT_PRICE_USD || '0.00004')
@@ -16,13 +19,13 @@ const BILLING_FREE_PLAN_CREDITS = parseInt(process.env.BILLING_FREE_PLAN_CREDITS
 // Billing configuration
 export const BILLING_CONFIG = {
     PRICE_IDS: {
-        FREE_MONTHLY: process.env.STRIPE_FREE_PRICE_ID,
+        FREE_MONTHLY: process.env.BILLING_STRIPE_FREE_PRICE_ID,
         PAID_MONTHLY: process.env.BILLING_STRIPE_PAID_PRICE_ID
     },
     // Base rate: $20 for 500,000 credits = $0.00004 per credit
     CREDIT_TO_USD: BILLING_CREDIT_PRICE_USD,
     MARGIN_MULTIPLIER: MARGIN_MULTIPLIER,
-    BILLING_CREDITS_METER_ID: process.env.STRIPE_CREDITS_METER_ID,
+    BILLING_CREDITS_METER_ID: process.env.BILLING_STRIPE_CREDITS_METER_ID,
     BILLING_CREDITS_METER_NAME: 'credits',
 
     // Plan limits

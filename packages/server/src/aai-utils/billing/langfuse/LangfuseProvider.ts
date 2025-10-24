@@ -1,5 +1,5 @@
 import { CreditsData, TraceMetadata, SyncUsageResponse, UsageEvent, UsageEventsResponse, GetUsageEventsParams } from '../core/types'
-import { log, DEFAULT_CUSTOMER_ID, BILLING_CONFIG } from '../config'
+import { log, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID, BILLING_CONFIG } from '../config'
 import axios from 'axios'
 import { StripeProvider } from '../stripe/StripeProvider'
 import { extractCredentialsAndModels } from 'flowise-components'
@@ -504,7 +504,8 @@ export class LangfuseProvider {
             userId: metadata.userId,
             organizationId: metadata.organizationId,
             aiCredentialsOwnership: metadata.aiCredentialsOwnership,
-            stripeCustomerId: metadata.customerId || DEFAULT_CUSTOMER_ID!,
+            // When OVERRIDE_CUSTOMER_ID is true, ALWAYS use DEFAULT_CUSTOMER_ID (ignores trace metadata and DB values)
+            stripeCustomerId: OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : metadata.customerId || DEFAULT_CUSTOMER_ID!,
             subscriptionTier: metadata.subscriptionTier || 'free',
             timestamp: trace.timestamp.toString(),
             timestampEpoch: timestampSeconds,
@@ -564,15 +565,18 @@ export class LangfuseProvider {
                 // We'll filter the results after fetching
             })
 
-            // Filter traces by customerId
+            // Filter traces by userId and customerId
+            // When organizational billing override is enabled, we skip the customerId check
+            // because all traces have individual user customer IDs but bill to the org customer ID
             const filteredTraces = (langfuseResponse?.data || []).filter((trace: Trace) => {
                 const metadata = trace.metadata as TraceMetadata
-                return (
-                    trace.userId === userId ||
-                    trace.userId === params.user.id ||
-                    params.user.roles?.includes('Admin') ||
-                    (metadata && metadata.stripeCustomerId === customerId)
-                )
+                // Always allow: own traces, admin access
+                const hasUserAccess = trace.userId === userId || trace.userId === params.user.id || params.user.roles?.includes('Admin')
+
+                // Only check customer ID when override is disabled
+                const hasCustomerAccess = !OVERRIDE_CUSTOMER_ID && metadata && metadata.stripeCustomerId === customerId
+
+                return hasUserAccess || hasCustomerAccess
             })
 
             // Transform traces to UsageEvent format

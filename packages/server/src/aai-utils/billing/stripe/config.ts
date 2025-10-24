@@ -2,7 +2,7 @@ import { BILLING_CONFIG } from '../config'
 
 // Load environment variables with defaults
 const BILLING_CREDIT_PRICE_USD = BILLING_CONFIG.CREDIT_TO_USD // Use the same value from billing config
-const MARGIN_MULTIPLIER = parseFloat(process.env.STRIPE_MARGIN_MULTIPLIER || '1.3') // 30% margin
+const MARGIN_MULTIPLIER = parseFloat(process.env.BILLING_STRIPE_MARGIN_MULTIPLIER || '1.3') // 30% margin
 
 // Stripe-specific billing configuration
 export const STRIPE_CONFIG = {
@@ -10,7 +10,7 @@ export const STRIPE_CONFIG = {
 
     // Single meter for total credits
     CREDITS: {
-        METER_ID: process.env.STRIPE_CREDITS_METER_ID || 'mtr_test_61S7tgODE3yzFip9Q41FeRAHyP6byJRI',
+        METER_ID: process.env.BILLING_STRIPE_CREDITS_METER_ID || 'mtr_test_61S7tgODE3yzFip9Q41FeRAHyP6byJRI',
         METER_NAME: 'credits',
         BASE_PRICE_USD: BILLING_CREDIT_PRICE_USD,
         MARGIN_MULTIPLIER: MARGIN_MULTIPLIER // 30% margin
@@ -19,7 +19,7 @@ export const STRIPE_CONFIG = {
     // Legacy meters configuration
     METERS: {
         AI_TOKENS: {
-            METER_ID: process.env.STRIPE_AI_TOKENS_METER_ID || 'mtr_test_61S7tgODE3yzFip9Q41FeRAHyP6byJRI',
+            METER_ID: process.env.BILLING_STRIPE_AI_TOKENS_METER_ID || 'mtr_test_61S7tgODE3yzFip9Q41FeRAHyP6byJRI',
             TOKENS_PER_CREDIT: BILLING_CONFIG.AI_TOKENS.TOKENS_PER_CREDIT,
             BASE_PRICE_USD: BILLING_CREDIT_PRICE_USD * 10, // 10x base price for tokens
             MARGIN_MULTIPLIER: 1.2,
