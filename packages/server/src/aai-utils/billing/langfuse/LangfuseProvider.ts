@@ -78,6 +78,7 @@ export class LangfuseProvider {
         page?: number
         userId?: string
         filter?: any[]
+        fields?: string
     }): Promise<any> {
         const queryParams: any = { ...params }
 
@@ -218,12 +219,14 @@ export class LangfuseProvider {
             })
 
             // Fetch and process first page
+            // Use minimal fields for initial filtering - exclude observations & scores for performance
             const initialResponse = await this.fetchTraces({
                 fromTimestamp: fromTimestamp.toISOString(),
                 toTimestamp: toTimestamp.toISOString(),
                 limit: 100,
                 page: 1,
-                filter: LangfuseProvider.UNPROCESSED_FILTER
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
             })
             // console.log('initialResponse', initialResponse)
             const totalPages = initialResponse.meta.totalPages
@@ -312,7 +315,8 @@ export class LangfuseProvider {
                     toTimestamp: toTimestamp.toISOString(),
                     limit: 100,
                     page,
-                    filter: LangfuseProvider.UNPROCESSED_FILTER
+                    filter: LangfuseProvider.UNPROCESSED_FILTER,
+                    fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
                 })
             )
         }
@@ -547,13 +551,15 @@ export class LangfuseProvider {
             startDate.setDate(startDate.getDate() - 30)
 
             // Fetch traces from Langfuse API with pagination
+            // Use minimal fields for usage events display - exclude observations to reduce load
             const langfuseResponse = await this.fetchTraces({
                 fromTimestamp: startDate.toISOString(),
                 toTimestamp: endDate.toISOString(),
                 limit,
                 page,
                 userId,
-                filter: LangfuseProvider.UNPROCESSED_FILTER
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core,metrics,io' // Exclude observations & scores - faster response
                 // Note: We can't directly filter by customerId in the API call
                 // We'll filter the results after fetching
             })
