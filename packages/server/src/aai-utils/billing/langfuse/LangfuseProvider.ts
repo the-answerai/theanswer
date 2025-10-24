@@ -140,6 +140,32 @@ export class LangfuseProvider {
     }
 
     /**
+     * Find the oldest unprocessed trace to optimize time window processing
+     * Returns null if no unprocessed traces exist
+     */
+    private async findOldestUnprocessedTrace(): Promise<Date | null> {
+        try {
+            const response = await this.fetchTraces({
+                fromTimestamp: new Date('2020-01-01').toISOString(),
+                toTimestamp: new Date().toISOString(),
+                limit: 1,
+                page: 1,
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core' // Minimal fields for discovery
+            })
+
+            if (response.data.length === 0) {
+                return null // No unprocessed traces
+            }
+
+            return new Date(response.data[0].timestamp)
+        } catch (error) {
+            log.warn('Failed to find oldest trace, defaulting to 2020-01-01', { error })
+            return new Date('2020-01-01') // Safe fallback
+        }
+    }
+
+    /**
      * Convert traces to credits and sync to Stripe
      */
     private async processAndSyncTraces(traces: Trace[]) {
@@ -206,74 +232,113 @@ export class LangfuseProvider {
                 }
             }
 
-            // Use the earliest possible date to fetch ALL unprocessed traces
-            // The filter will ensure we only get unprocessed ones, so we don't need time limits
-            const fromTimestamp = new Date('2020-01-01T00:00:00.000Z') // Langfuse didn't exist before 2020
-            const toTimestamp = new Date() // Current time
-
-            log.info('Starting streaming sync for ALL unprocessed traces', {
-                fromTimestamp: fromTimestamp.toISOString(),
-                toTimestamp: toTimestamp.toISOString(),
-                filter: 'billing_status != processed',
-                note: 'Fetching all historical unprocessed traces'
-            })
-
-            // Fetch and process first page
-            // Use minimal fields for initial filtering - exclude observations & scores for performance
-            const initialResponse = await this.fetchTraces({
-                fromTimestamp: fromTimestamp.toISOString(),
-                toTimestamp: toTimestamp.toISOString(),
-                limit: 100,
-                page: 1,
-                filter: LangfuseProvider.UNPROCESSED_FILTER,
-                fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
-            })
-            // console.log('initialResponse', initialResponse)
-            const totalPages = initialResponse.meta.totalPages
-            log.info('Total pages to process', { totalPages })
-
-            const { billable: firstPageTraces, skippedCount: firstPageSkipped } = this.filterBillableTraces(initialResponse.data)
-            const firstPageResponse = await this.processAndSyncTraces(firstPageTraces)
-
-            processedCount += firstPageResponse.processedTraces.length
-            failedCount += firstPageResponse.failedEvents.length
-            skippedCount += firstPageSkipped
-            failedTraces.push(...firstPageResponse.failedEvents)
-
-            // Process remaining pages in batches
-            const PAGE_BATCH_SIZE = BILLING_CONFIG.SYNC.PAGE_BATCH_SIZE
-            const RATE_LIMIT_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
-
-            for (let startPage = 2; startPage <= totalPages; startPage += PAGE_BATCH_SIZE) {
-                const endPage = Math.min(startPage + PAGE_BATCH_SIZE - 1, totalPages)
-
-                log.info('Processing page group', {
-                    startPage,
-                    endPage,
-                    progress: `${endPage}/${totalPages}`
-                })
-
-                const { billable: traces, skippedCount: pageSkipped } = await this.fetchPageGroup(
-                    startPage,
-                    endPage,
-                    fromTimestamp,
-                    toTimestamp
-                )
-                const response = await this.processAndSyncTraces(traces)
-
-                processedCount += response.processedTraces.length
-                failedCount += response.failedEvents.length
-                skippedCount += pageSkipped
-                failedTraces.push(...response.failedEvents)
-
-                // Rate limit between batches
-                if (endPage < totalPages) {
-                    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS))
+            // Step 1: Find oldest unprocessed trace to optimize window range
+            const oldestTraceDate = await this.findOldestUnprocessedTrace()
+            if (!oldestTraceDate) {
+                log.info('No unprocessed traces found - all caught up!')
+                return {
+                    processedTraces: [],
+                    failedTraces: [],
+                    skippedTraces: [],
+                    processedCount: 0,
+                    failedCount: 0,
+                    skippedCount: 0
                 }
             }
 
-            log.info('Streaming sync completed', {
-                totalPagesProcessed: totalPages,
+            const CHUNK_SIZE_DAYS = BILLING_CONFIG.SYNC.CHUNK_SIZE_DAYS
+            const NOW = new Date()
+            let windowStart = new Date(oldestTraceDate)
+            let windowNumber = 0
+            const totalWindowsEstimate = Math.ceil((NOW.getTime() - windowStart.getTime()) / (CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000))
+
+            log.info('Starting time-windowed sync for unprocessed traces', {
+                oldestTrace: oldestTraceDate.toISOString(),
+                now: NOW.toISOString(),
+                chunkSizeDays: CHUNK_SIZE_DAYS,
+                estimatedWindows: totalWindowsEstimate
+            })
+
+            // Step 2: Process each time window
+            while (windowStart < NOW) {
+                windowNumber++
+                const windowEnd = new Date(Math.min(windowStart.getTime() + CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000, NOW.getTime()))
+
+                log.info('Processing time window', {
+                    window: `${windowNumber}/${totalWindowsEstimate}`,
+                    start: windowStart.toISOString(),
+                    end: windowEnd.toISOString(),
+                    progress: `${((windowNumber / totalWindowsEstimate) * 100).toFixed(1)}%`
+                })
+
+                const fromTimestamp = windowStart
+                const toTimestamp = windowEnd
+
+                // Fetch and process first page
+                // Use minimal fields for initial filtering - exclude observations & scores for performance
+                const initialResponse = await this.fetchTraces({
+                    fromTimestamp: fromTimestamp.toISOString(),
+                    toTimestamp: toTimestamp.toISOString(),
+                    limit: 100,
+                    page: 1,
+                    filter: LangfuseProvider.UNPROCESSED_FILTER,
+                    fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
+                })
+                const totalPages = initialResponse.meta.totalPages
+                log.info('Total pages to process in this window', { totalPages })
+
+                const { billable: firstPageTraces, skippedCount: firstPageSkipped } = this.filterBillableTraces(initialResponse.data)
+                const firstPageResponse = await this.processAndSyncTraces(firstPageTraces)
+
+                processedCount += firstPageResponse.processedTraces.length
+                failedCount += firstPageResponse.failedEvents.length
+                skippedCount += firstPageSkipped
+                failedTraces.push(...firstPageResponse.failedEvents)
+
+                // Process remaining pages in batches
+                const PAGE_BATCH_SIZE = BILLING_CONFIG.SYNC.PAGE_BATCH_SIZE
+                const RATE_LIMIT_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
+
+                for (let startPage = 2; startPage <= totalPages; startPage += PAGE_BATCH_SIZE) {
+                    const endPage = Math.min(startPage + PAGE_BATCH_SIZE - 1, totalPages)
+
+                    log.info('Processing page group', {
+                        startPage,
+                        endPage,
+                        progress: `${endPage}/${totalPages}`
+                    })
+
+                    const { billable: traces, skippedCount: pageSkipped } = await this.fetchPageGroup(
+                        startPage,
+                        endPage,
+                        fromTimestamp,
+                        toTimestamp
+                    )
+                    const response = await this.processAndSyncTraces(traces)
+
+                    processedCount += response.processedTraces.length
+                    failedCount += response.failedEvents.length
+                    skippedCount += pageSkipped
+                    failedTraces.push(...response.failedEvents)
+
+                    // Rate limit between batches
+                    if (endPage < totalPages) {
+                        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS))
+                    }
+                }
+
+                log.info('Completed time window', {
+                    window: `${windowNumber}/${totalWindowsEstimate}`,
+                    windowPagesProcessed: totalPages,
+                    windowProcessedCount: processedCount
+                })
+
+                // Move to next window (no gaps in coverage)
+                windowStart = windowEnd
+            }
+
+            log.info('Time-windowed sync completed', {
+                totalWindows: windowNumber,
                 processedCount,
                 failedCount,
                 skippedCount
@@ -297,7 +362,8 @@ export class LangfuseProvider {
     }
 
     /**
-     * Fetch and filter traces from multiple pages in parallel
+     * Fetch and filter traces from multiple pages sequentially
+     * Sequential fetching prevents ClickHouse database overload
      */
     private async fetchPageGroup(
         startPage: number,
@@ -306,23 +372,29 @@ export class LangfuseProvider {
         toTimestamp: Date,
         traceId?: string
     ): Promise<{ billable: Trace[]; skippedCount: number }> {
-        // Build page requests
-        const pageRequests = []
-        for (let page = startPage; page <= endPage; page++) {
-            pageRequests.push(
-                this.fetchTraces({
-                    fromTimestamp: fromTimestamp.toISOString(),
-                    toTimestamp: toTimestamp.toISOString(),
-                    limit: 100,
-                    page,
-                    filter: LangfuseProvider.UNPROCESSED_FILTER,
-                    fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
-                })
-            )
-        }
+        // Fetch pages sequentially to avoid ClickHouse overload
+        // IMPORTANT: Construct and await each request inside the loop
+        // to prevent all HTTP requests from firing in parallel
+        const responses = []
+        const PAGE_FETCH_DELAY_MS = BILLING_CONFIG.SYNC.PAGE_FETCH_DELAY_MS
 
-        // Fetch all pages in parallel
-        const responses = await Promise.all(pageRequests)
+        for (let page = startPage; page <= endPage; page++) {
+            // Execute fetch call and await immediately (truly sequential)
+            const response = await this.fetchTraces({
+                fromTimestamp: fromTimestamp.toISOString(),
+                toTimestamp: toTimestamp.toISOString(),
+                limit: 100,
+                page,
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
+            })
+            responses.push(response)
+
+            // Delay between pages to give ClickHouse breathing room
+            if (page < endPage) {
+                await new Promise((resolve) => setTimeout(resolve, PAGE_FETCH_DELAY_MS))
+            }
+        }
 
         // Combine and filter traces
         const allTraces = responses.flatMap((response) => response.data)
