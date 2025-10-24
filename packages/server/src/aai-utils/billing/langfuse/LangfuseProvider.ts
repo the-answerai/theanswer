@@ -372,29 +372,26 @@ export class LangfuseProvider {
         toTimestamp: Date,
         traceId?: string
     ): Promise<{ billable: Trace[]; skippedCount: number }> {
-        // Build page requests
-        const pageRequests = []
-        for (let page = startPage; page <= endPage; page++) {
-            pageRequests.push(
-                this.fetchTraces({
-                    fromTimestamp: fromTimestamp.toISOString(),
-                    toTimestamp: toTimestamp.toISOString(),
-                    limit: 100,
-                    page,
-                    filter: LangfuseProvider.UNPROCESSED_FILTER,
-                    fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
-                })
-            )
-        }
-
         // Fetch pages sequentially to avoid ClickHouse overload
+        // IMPORTANT: Construct and await each request inside the loop
+        // to prevent all HTTP requests from firing in parallel
         const responses = []
         const PAGE_FETCH_DELAY_MS = BILLING_CONFIG.SYNC.PAGE_FETCH_DELAY_MS
-        for (const request of pageRequests) {
-            const response = await request
+
+        for (let page = startPage; page <= endPage; page++) {
+            // Execute fetch call and await immediately (truly sequential)
+            const response = await this.fetchTraces({
+                fromTimestamp: fromTimestamp.toISOString(),
+                toTimestamp: toTimestamp.toISOString(),
+                limit: 100,
+                page,
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
+            })
             responses.push(response)
+
             // Delay between pages to give ClickHouse breathing room
-            if (responses.length < pageRequests.length) {
+            if (page < endPage) {
                 await new Promise((resolve) => setTimeout(resolve, PAGE_FETCH_DELAY_MS))
             }
         }
