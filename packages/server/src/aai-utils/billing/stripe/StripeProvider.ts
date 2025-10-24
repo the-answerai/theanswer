@@ -476,6 +476,15 @@ export class StripeProvider {
                     })
                 )
 
+                // CRITICAL: Flush Langfuse metadata updates after each batch
+                // This ensures traces are marked as 'processed' even if the process dies
+                // Prevents reprocessing the same batch over and over
+                log.debug('Flushing Langfuse metadata updates for batch', {
+                    batchIndex: Math.floor(i / BATCH_SIZE) + 1,
+                    tracesInBatch: batch.length
+                })
+                await this.langfuseV3.flushAsync()
+
                 if (i + BATCH_SIZE < creditsData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
@@ -510,6 +519,12 @@ export class StripeProvider {
                 })
             }
 
+            // Final flush to ensure all metadata updates are persisted
+            log.info('Final flush of Langfuse metadata updates', {
+                totalProcessed: processedTraces.length
+            })
+            await this.langfuseV3.flushAsync()
+
             return {
                 meterEvents,
                 failedEvents,
@@ -517,6 +532,12 @@ export class StripeProvider {
             }
         } catch (error) {
             log.error('Error syncing usage to Stripe', { error })
+            // Flush any pending metadata updates even on error
+            try {
+                await this.langfuseV3.flushAsync()
+            } catch (flushError) {
+                log.error('Failed to flush Langfuse metadata on error', { flushError })
+            }
             throw error
         }
     }
