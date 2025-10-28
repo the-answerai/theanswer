@@ -212,41 +212,6 @@ export const groupAllCredentialsByType = (allCredentials) => {
  * @param {object} credentialAssignments - Object mapping nodeId to credentialId
  * @returns {object} Updated flow data
  */
-const CONFIG_COMPONENT_KEYS = [
-    'llmModel',
-    'llmModelName',
-    'agentModel',
-    'conditionAgentModel',
-    'retrieverModel',
-    'model',
-    'modelName',
-    'chatModel',
-    'assistantModel',
-    'selectedAssistant',
-    'toolModel',
-    'selectedTool',
-    'agentFlowModel'
-]
-
-const buildConfigEntryKey = (nodeId, parameterName, credentialType) => `${nodeId}:${parameterName}:${credentialType}`
-
-const resolveConfigComponentName = (config, inputs, parameterName) => {
-    if (!config || typeof config !== 'object') return ''
-    for (const key of CONFIG_COMPONENT_KEYS) {
-        if (typeof config[key] === 'string' && config[key]) return config[key]
-    }
-    const matchingInputKey = parameterName.replace(/Config$/, '')
-    if (matchingInputKey && typeof inputs?.[matchingInputKey] === 'string') {
-        return inputs[matchingInputKey]
-    }
-    for (const value of Object.values(config)) {
-        if (typeof value === 'string' && value) {
-            return value
-        }
-    }
-    return ''
-}
-
 export const updateFlowDataWithCredentials = (flowData, credentialAssignments) => {
     try {
         const flow = typeof flowData === 'string' ? JSON.parse(flowData) : { ...flowData }
@@ -260,26 +225,15 @@ export const updateFlowDataWithCredentials = (flowData, credentialAssignments) =
             if (credentialAssignments[node.id]) {
                 const updatedNode = { ...node }
                 updatedNode.data = { ...node.data }
-                const assignedCredential = credentialAssignments[node.id]
 
                 // Set the credential
-                updatedNode.data.credential = assignedCredential
+                updatedNode.data.credential = credentialAssignments[node.id]
 
                 // Also set in inputs for compatibility
                 if (!updatedNode.data.inputs) {
                     updatedNode.data.inputs = {}
                 }
-                updatedNode.data.inputs['FLOWISE_CREDENTIAL_ID'] = assignedCredential
-
-                // Update nested config objects that track credential assignments
-                Object.entries(updatedNode.data.inputs).forEach(([inputKey, inputValue]) => {
-                    if (!inputValue || typeof inputValue !== 'object') return
-                    if (!Object.prototype.hasOwnProperty.call(inputValue, 'credential')) return
-                    updatedNode.data.inputs[inputKey] = {
-                        ...inputValue,
-                        credential: assignedCredential
-                    }
-                })
+                updatedNode.data.inputs['FLOWISE_CREDENTIAL_ID'] = credentialAssignments[node.id]
 
                 return updatedNode
             }
@@ -290,104 +244,6 @@ export const updateFlowDataWithCredentials = (flowData, credentialAssignments) =
     } catch (error) {
         console.error('Error updating flow data with credentials:', error)
         return flowData
-    }
-}
-
-export const collectFlowCredentials = async (flowData, options = {}) => {
-    const { fetchNodeDefinition } = options
-    const flow = typeof flowData === 'string' ? JSON.parse(flowData) : { ...flowData }
-
-    if (!flow.nodes || !Array.isArray(flow.nodes)) {
-        return {
-            allCredentials: [],
-            missingCredentials: [],
-            hasCredentials: false,
-            hasMissingCredentials: false
-        }
-    }
-
-    const baseMissing = extractMissingCredentials(flow).missingCredentials || []
-    const baseAll = extractAllCredentials(flow).allCredentials || []
-
-    const allCredentials = [...baseAll]
-    const missingCredentials = [...baseMissing]
-
-    const seenAllKeys = new Set(allCredentials.map((cred) => buildConfigEntryKey(cred.nodeId, cred.parameterName, cred.credentialType)))
-    const seenMissingKeys = new Set(
-        missingCredentials.map((cred) => buildConfigEntryKey(cred.nodeId, cred.parameterName, cred.credentialType))
-    )
-
-    if (typeof fetchNodeDefinition === 'function') {
-        for (const node of flow.nodes) {
-            const nodeData = node.data || {}
-            const inputs = nodeData.inputs || {}
-
-            for (const [inputKey, inputValue] of Object.entries(inputs)) {
-                if (!inputKey.endsWith('Config')) continue
-                if (!inputValue || typeof inputValue !== 'object') continue
-                if (!Object.prototype.hasOwnProperty.call(inputValue, 'credential')) continue
-
-                const componentName = resolveConfigComponentName(inputValue, inputs, inputKey)
-
-                let nodeDefinition = null
-                let credentialNames = []
-
-                if (componentName) {
-                    try {
-                        nodeDefinition = await fetchNodeDefinition(componentName)
-                        const credentialObj = nodeDefinition?.credential
-                        if (credentialObj?.credentialNames && Array.isArray(credentialObj.credentialNames)) {
-                            credentialNames = credentialObj.credentialNames
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to load node definition for ${componentName}:`, error)
-                    }
-                }
-
-                if (!credentialNames.length) {
-                    credentialNames = componentName ? [componentName] : [inputKey]
-                }
-
-                const label =
-                    nodeDefinition?.label ||
-                    (componentName ? toSentenceCase(componentName) : toSentenceCase(inputKey.replace(/Config$/, 'Credential')))
-
-                credentialNames.forEach((credentialName) => {
-                    const entryKey = buildConfigEntryKey(node.id, inputKey, credentialName)
-                    const isAssigned = !!inputValue.credential
-                    const entry = {
-                        nodeId: node.id,
-                        nodeName: nodeData.name || 'Unknown Node',
-                        nodeCategory: nodeData.category || 'Unknown',
-                        nodeType: nodeData.type || node.type || 'Unknown',
-                        credentialType: credentialName,
-                        parameterName: inputKey,
-                        label,
-                        isOptional: false,
-                        isRequired: true,
-                        isAssigned,
-                        assignedCredentialId: isAssigned ? inputValue.credential : null
-                    }
-
-                    if (!seenAllKeys.has(entryKey)) {
-                        seenAllKeys.add(entryKey)
-                        allCredentials.push(entry)
-                    }
-
-                    if (!isAssigned && !seenMissingKeys.has(entryKey)) {
-                        seenMissingKeys.add(entryKey)
-                        missingCredentials.push(entry)
-                    }
-                })
-            }
-        }
-    }
-
-    return {
-        allCredentials,
-        missingCredentials,
-        hasCredentials: allCredentials.length > 0,
-        hasMissingCredentials: missingCredentials.length > 0
     }
 }
 
@@ -414,18 +270,18 @@ export const isValidCredentialAssignment = (node, credentialId, availableCredent
  */
 export const organizeCredentialsByPriority = (groupedCredentials) => {
     const sections = {
-        required: [],    // Unconnected required credentials
-        optional: [],    // Unconnected optional credentials
-        connected: []    // All connected credentials
+        required: [], // Unconnected required credentials
+        optional: [], // Unconnected optional credentials
+        connected: [] // All connected credentials
     }
 
     Object.entries(groupedCredentials).forEach(([groupKey, group]) => {
         const isConnected = group.isAssigned || false
-        
+
         // Check if ANY node in this group is marked as required
         // isRequired is calculated as: category.isCore || !credentialParam.optional
         const isRequired = group.nodes?.some((node) => node.isRequired === true) || false
-        
+
         // Also track isCore for sorting connected credentials
         const isCore = group.nodes?.some((node) => node.isCore === true) || false
 
@@ -452,7 +308,7 @@ export const organizeCredentialsByPriority = (groupedCredentials) => {
 
     // Sort functions
     const sortByLabel = (a, b) => (a.label || '').localeCompare(b.label || '')
-    
+
     // Sort connected section: required first, then alphabetically within each group
     const sortConnected = (a, b) => {
         // Required credentials before optional

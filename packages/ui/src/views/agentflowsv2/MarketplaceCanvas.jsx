@@ -48,6 +48,8 @@ const MarketplaceCanvasV2 = () => {
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
         }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
     const onChatflowCopy = (stateData) => {
