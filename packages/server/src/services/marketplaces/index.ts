@@ -62,6 +62,19 @@ const TEMPLATE_TYPE_PREFIXES = {
     ANSWERAI: 'ai_'
 }
 
+const mapChatflowTypeToTemplateType = (chatflowType?: string, fallbackType?: string) => {
+    switch (chatflowType) {
+        case 'AGENTFLOW':
+            return 'AgentflowV2'
+        case 'MULTIAGENT':
+            return 'Agentflow'
+        case 'CHATFLOW':
+            return 'Chatflow'
+        default:
+            return fallbackType ?? chatflowType
+    }
+}
+
 // Get all templates for marketplaces
 const getAllTemplates = async (user: IUser | undefined) => {
     try {
@@ -390,7 +403,7 @@ const saveCustomTemplate = async (body: any, user: IUser): Promise<any> => {
             customTemplate.apiConfig = chatflow.apiConfig
             customTemplate.speechToText = chatflow.speechToText
             customTemplate.category = chatflow.category
-            customTemplate.type = chatflow.type
+            customTemplate.type = mapChatflowTypeToTemplateType(chatflow.type, customTemplate.type)
             customTemplate.description = customTemplate.description || chatflow.description
         } else if (body.tool) {
             const flowData = {
