@@ -76,8 +76,7 @@ export const processFlowCredentials = (flowData: FlowData): ProcessResult => {
             credentials,
             hasCredentials: credentialTypes.size > 0
         }
-    } catch (error) {
-        console.error('Error in processFlowCredentials:', error)
+    } catch (_error) {
         return { credentials: [], hasCredentials: false }
     }
 }

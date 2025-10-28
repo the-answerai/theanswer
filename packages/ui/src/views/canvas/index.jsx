@@ -630,9 +630,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         if (canvasDataStore.chatflow?.flowData && canvasDataStore.chatflow?.id && !hasPromptedCredentialsRef.current) {
             hasPromptedCredentialsRef.current = true
             const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
-            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) =>
-                console.error('Failed to open credential modal:', error)
-            )
+            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch(() => {})
         }
     }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
 
@@ -654,7 +652,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     preferenceScope,
                     mode: 'all',
                     forceShow: true
-                }).catch((error) => console.error('Failed to open QuickSetup modal:', error))
+                }).catch(() => {})
             }
         }
 

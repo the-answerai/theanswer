@@ -28,8 +28,7 @@ export const collectFlowCredentials = async (flowData, _options = {}) => {
             missingCredentials,
             allCredentials: credentials
         }
-    } catch (error) {
-        console.error('Error in collectFlowCredentials:', error)
+    } catch (_error) {
         return {
             missingCredentials: [],
             allCredentials: []

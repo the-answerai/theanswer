@@ -173,7 +173,7 @@ const AgentflowCanvas = () => {
             // Credential modal will be triggered automatically after save via useEffect
             // watching canvasDataStore.chatflow.flowData (lines 585-593)
         } catch (e) {
-            console.error(e)
+            errorFailed('Failed to load flow data. Please verify the file content.')
         }
     }
 
@@ -605,9 +605,7 @@ const AgentflowCanvas = () => {
 
         hasPromptedCredentialsRef.current = true
         const preferenceScope = `flow:${currentChatflow.id}`
-        openCredentialModal(currentChatflow.flowData, { preferenceScope }).catch((error) =>
-            console.error('Failed to open credential modal:', error)
-        )
+        openCredentialModal(currentChatflow.flowData, { preferenceScope }).catch(() => {})
     }, [
         canvasDataStore.chatflow?.flowData,
         canvasDataStore.chatflow?.id,
@@ -640,7 +638,7 @@ const AgentflowCanvas = () => {
                     preferenceScope,
                     mode: 'all',
                     forceShow: true
-                }).catch((error) => console.error('Failed to open QuickSetup modal:', error))
+                }).catch(() => {})
             }
         }
 

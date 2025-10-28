@@ -15,8 +15,7 @@ const fetchNodeDefinition = async (nodeName) => {
             nodeDefinitionCache.set(nodeName, nodeDefinition)
         }
         return nodeDefinition
-    } catch (error) {
-        console.warn(`Failed to fetch node definition for ${nodeName}:`, error)
+    } catch (_error) {
         return null
     }
 }
