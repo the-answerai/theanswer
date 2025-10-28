@@ -591,53 +591,72 @@ const AgentflowCanvas = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasDataStore.chatflow])
 
+    // Only show credential modal for flows that have been saved to database (have an ID)
+    // This prevents modal from showing during template load (before save)
     useEffect(() => {
-        const flowId = canvasDataStore.chatflow?.id
-        const flowData = canvasDataStore.chatflow?.flowData
-
-        if (!flowId || !flowData || hasPromptedCredentialsRef.current) {
-            return
-        }
+        const currentChatflow = canvasDataStore.chatflow
+        if (!reactFlowInstance) return
+        if (!currentChatflow?.flowData || !currentChatflow?.id || hasPromptedCredentialsRef.current) return
+        const canManageFlow =
+            currentChatflow.canEdit === undefined && currentChatflow.isOwner === undefined
+                ? true
+                : currentChatflow.canEdit ?? currentChatflow.isOwner ?? false
+        if (!canManageFlow) return
 
         hasPromptedCredentialsRef.current = true
-        const preferenceScope = `flow:${flowId}`
-        openCredentialModal(flowData, { preferenceScope }).catch((error) => console.error('Failed to open credential modal:', error))
-    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+        const preferenceScope = `flow:${currentChatflow.id}`
+        openCredentialModal(currentChatflow.flowData, { preferenceScope }).catch((error) =>
+            console.error('Failed to open credential modal:', error)
+        )
+    }, [
+        canvasDataStore.chatflow?.flowData,
+        canvasDataStore.chatflow?.id,
+        canvasDataStore.chatflow?.canEdit,
+        canvasDataStore.chatflow?.isOwner,
+        openCredentialModal,
+        reactFlowInstance
+    ])
 
-    // Listen for QuickSetup parameter to open credential modal in "all" mode
+    // Handle QuickSetup URL parameter - opens modal in "manage credentials" mode
     useEffect(() => {
-        const handleQuickSetup = () => {
-            const searchParams = new URLSearchParams(window.location.search)
-            const isQuickSetup = searchParams.get('QuickSetup') === 'true'
+        const checkQuickSetupParam = () => {
+            const urlParams = new URLSearchParams(window.location.search)
+            const isQuickSetup = urlParams.get('QuickSetup') === 'true'
 
-            if (isQuickSetup && canvasDataStore.chatflow?.flowData) {
-                const flowId = canvasDataStore.chatflow.id
-                const preferenceScope = flowId ? `flow:${flowId}` : null
+            const canManageFlow =
+                canvasDataStore.chatflow?.canEdit === undefined && canvasDataStore.chatflow?.isOwner === undefined
+                    ? true
+                    : canvasDataStore.chatflow?.canEdit ?? canvasDataStore.chatflow?.isOwner ?? false
 
-                // Open modal with all credentials (mode: 'all') and force show
+            if (isQuickSetup && reactFlowInstance && canvasDataStore.chatflow?.flowData && canvasDataStore.chatflow?.id && canManageFlow) {
+                // Remove QuickSetup parameter from URL
+                urlParams.delete('QuickSetup')
+                const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`
+                window.history.replaceState({}, '', newUrl)
+
+                // Open modal in "all credentials" mode with forceShow
+                const preferenceScope = `flow:${canvasDataStore.chatflow.id}`
                 openCredentialModal(canvasDataStore.chatflow.flowData, {
                     preferenceScope,
                     mode: 'all',
                     forceShow: true
-                }).catch((error) => console.error('Failed to open credential modal:', error))
-
-                // Clean up URL parameter
-                searchParams.delete('QuickSetup')
-                const newUrl = `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
-                window.history.replaceState({}, '', newUrl)
+                }).catch((error) => console.error('Failed to open QuickSetup modal:', error))
             }
         }
 
-        // Check immediately on mount
-        handleQuickSetup()
+        checkQuickSetupParam()
 
-        // Listen for popstate events (when button triggers history change)
-        window.addEventListener('popstate', handleQuickSetup)
-
-        return () => {
-            window.removeEventListener('popstate', handleQuickSetup)
-        }
-    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+        // Listen for popstate events (triggered by the QuickSetup button)
+        window.addEventListener('popstate', checkQuickSetupParam)
+        return () => window.removeEventListener('popstate', checkQuickSetupParam)
+    }, [
+        canvasDataStore.chatflow?.flowData,
+        canvasDataStore.chatflow?.id,
+        canvasDataStore.chatflow?.canEdit,
+        canvasDataStore.chatflow?.isOwner,
+        openCredentialModal,
+        reactFlowInstance
+    ])
 
     // Initialization
     useEffect(() => {

@@ -15,10 +15,6 @@ import MarketplaceCanvasHeader from './MarketplaceCanvasHeader'
 import StickyNote from '../canvas/StickyNote'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
-// credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
-import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
-
 const nodeTypes = { customNode: MarketplaceCanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: '' }
 
@@ -38,10 +34,6 @@ const MarketplaceCanvas = () => {
 
     const reactFlowWrapper = useRef(null)
 
-    // Credential checking hook
-    const { showCredentialModal, missingCredentials, checkCredentials, initialDontShowAgain, handleAssign, handleSkip, handleCancel } =
-        useCredentialChecker()
-
     // ==============================|| useEffect ||============================== //
 
     useEffect(() => {
@@ -50,8 +42,6 @@ const MarketplaceCanvas = () => {
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
         }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
     const onChatflowCopy = (stateData) => {
@@ -131,17 +121,6 @@ const MarketplaceCanvas = () => {
 
             {/* Confirm Dialog */}
             <ConfirmDialog />
-
-            {/* Unified Credentials Modal */}
-            <UnifiedCredentialsModal
-                show={showCredentialModal}
-                missingCredentials={missingCredentials}
-                onAssign={handleAssign}
-                onSkip={handleSkip}
-                onCancel={handleCancel}
-                flowData={flowData ? JSON.parse(flowData) : null}
-                initialDontShowAgain={initialDontShowAgain}
-            />
         </>
     )
 }

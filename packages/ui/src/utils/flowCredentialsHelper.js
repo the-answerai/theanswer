@@ -5,9 +5,37 @@
 import { extractMissingCredentials } from '@utils/extractMissingCredentials'
 import { extractAllCredentials } from '@utils/extractAllCredentials'
 import { getCredentialCategory } from '@utils/getCredentialCategory'
+import { processFlowCredentials } from '@utils/processFlowCredentials'
 
 // Re-export for convenience
 export { extractMissingCredentials, extractAllCredentials, getCredentialCategory }
+
+/**
+ * Collect all credential information from flow data (both missing and all credentials)
+ * This is an async wrapper that combines extractMissingCredentials and extractAllCredentials
+ * @param {string|object} flowData - Flow data as JSON string or object
+ * @param {object} options - Optional configuration (e.g., { fetchNodeDefinition })
+ * @returns {Promise<object>} Object containing missingCredentials and allCredentials arrays
+ */
+export const collectFlowCredentials = async (flowData, _options = {}) => {
+    try {
+        const { credentials } = processFlowCredentials(flowData)
+        const missingCredentials = credentials
+            .filter((credential) => !credential.isAssigned)
+            .map(({ isAssigned, assignedCredentialId, ...rest }) => rest)
+
+        return {
+            missingCredentials,
+            allCredentials: credentials
+        }
+    } catch (error) {
+        console.error('Error in collectFlowCredentials:', error)
+        return {
+            missingCredentials: [],
+            allCredentials: []
+        }
+    }
+}
 
 /**
  * Convert camelCase or PascalCase string to sentence case
