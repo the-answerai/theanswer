@@ -227,6 +227,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 flowData: JSON.stringify({ nodes, edges })
             }
 
+            // Block credential modal from showing until user saves
+            // Modal should only show AFTER user clicks save
+            // MUST set this BEFORE dispatch to prevent modal trigger
+            hasPromptedCredentialsRef.current = true
+
             dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
             setChatflow(newChatflow)
             setNodes(nodes)
@@ -554,6 +559,10 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             const initialFlow = chatflow.flowData ? JSON.parse(chatflow.flowData) : []
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
+            // Allow modal to check for missing credentials when loading existing flow
+            // Modal will show immediately if credentials are missing (unless user dismissed it)
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow })
         } else if (getSpecificChatflowApi?.error?.response?.data?.message) {
             errorFailed(`Failed to save ${canvasTitle}: ${getSpecificChatflowApi.error.response.data.message}`)
@@ -569,6 +578,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         if (createNewChatflowApi?.data) {
             const chatflow = createNewChatflowApi.data
             // console.log('✅ Create new chatflow successful, navigating to:', `/${isAgentCanvas ? 'agentcanvas' : 'canvas'}/${chatflow.id}`)
+            // Reset to allow modal to show after first save
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow })
             saveChatflowSuccess()
             navigate(`/${isAgentCanvas ? 'agentcanvas' : 'canvas'}/${chatflow.id}`, {
@@ -587,6 +599,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     useEffect(() => {
         if (updateChatflowApi?.data) {
             // console.log('✅ Update chatflow successful, NOT navigating (should we?)')
+            // Reset to allow modal to check for missing credentials after update
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow: updateChatflowApi.data })
             saveChatflowSuccess()
         } else if (updateChatflowApi?.error?.response?.data?.message) {
@@ -610,12 +625,50 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     }, [canvasDataStore.chatflow])
 
     useEffect(() => {
-        if (canvasDataStore.chatflow?.flowData && !hasPromptedCredentialsRef.current) {
-            hasPromptedCredentialsRef.current = true
-            const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
-            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) =>
-                console.error('Failed to open credential modal:', error)
-            )
+        const flowId = canvasDataStore.chatflow?.id
+        const flowData = canvasDataStore.chatflow?.flowData
+
+        if (!flowId || !flowData || hasPromptedCredentialsRef.current) {
+            return
+        }
+
+        hasPromptedCredentialsRef.current = true
+        const preferenceScope = `flow:${flowId}`
+        openCredentialModal(flowData, { preferenceScope }).catch((error) => console.error('Failed to open credential modal:', error))
+    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+
+    // Listen for QuickSetup parameter to open credential modal in "all" mode
+    useEffect(() => {
+        const handleQuickSetup = () => {
+            const searchParams = new URLSearchParams(window.location.search)
+            const isQuickSetup = searchParams.get('QuickSetup') === 'true'
+
+            if (isQuickSetup && canvasDataStore.chatflow?.flowData) {
+                const flowId = canvasDataStore.chatflow.id
+                const preferenceScope = flowId ? `flow:${flowId}` : null
+
+                // Open modal with all credentials (mode: 'all') and force show
+                openCredentialModal(canvasDataStore.chatflow.flowData, {
+                    preferenceScope,
+                    mode: 'all',
+                    forceShow: true
+                }).catch((error) => console.error('Failed to open credential modal:', error))
+
+                // Clean up URL parameter
+                searchParams.delete('QuickSetup')
+                const newUrl = `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+                window.history.replaceState({}, '', newUrl)
+            }
+        }
+
+        // Check immediately on mount
+        handleQuickSetup()
+
+        // Listen for popstate events (when button triggers history change)
+        window.addEventListener('popstate', handleQuickSetup)
+
+        return () => {
+            window.removeEventListener('popstate', handleQuickSetup)
         }
     }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
 
@@ -623,7 +676,8 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     useEffect(() => {
         // console.log('🎨 Canvas initialization effect running:', { chatflowId })
 
-        hasPromptedCredentialsRef.current = false
+        // DO NOT reset hasPromptedCredentialsRef here - it prevents duplicate modals
+        // The ref is managed by the credential modal useEffect and save handlers
         setIsSyncNodesButtonEnabled(false)
         setIsUpsertButtonEnabled(false)
         if (chatflowId) {
@@ -653,6 +707,12 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         deployed: false,
                         isPublic: false
                     }
+
+                    // Block credential modal from showing until user saves
+                    // Modal should only show AFTER user clicks save
+                    // MUST set this BEFORE dispatch to prevent modal trigger
+                    hasPromptedCredentialsRef.current = true
+
                     setChatflow(newChatflow)
                     dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
 
@@ -669,6 +729,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 // console.log('🎨 No duplicated flow data, creating blank canvas')
                 setNodes([])
                 setEdges([])
+                // Block credential modal for blank canvas until user saves
+                // MUST set this BEFORE dispatch to prevent modal trigger
+                hasPromptedCredentialsRef.current = true
                 setChatflow({
                     name: templateName ? `Copy of ${templateName}` : `Untitled ${canvasTitle}`
                 })

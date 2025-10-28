@@ -15,10 +15,6 @@ import MarketplaceCanvasHeader from './MarketplaceCanvasHeader'
 import StickyNote from '../canvas/StickyNote'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
-// credential checking
-import useFlowCredentials from '@/hooks/useFlowCredentials'
-import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
-
 const nodeTypes = { customNode: MarketplaceCanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: '' }
 
@@ -38,11 +34,6 @@ const MarketplaceCanvas = () => {
 
     const reactFlowWrapper = useRef(null)
 
-    // Credential checking hook
-    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
-        useFlowCredentials()
-    const hasPromptedCredentialsRef = useRef(false)
-
     // ==============================|| useEffect ||============================== //
 
     useEffect(() => {
@@ -50,16 +41,8 @@ const MarketplaceCanvas = () => {
             const initialFlow = JSON.parse(flowData)
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
-
-            if (!hasPromptedCredentialsRef.current) {
-                hasPromptedCredentialsRef.current = true
-                const preferenceScope = state?.id ? `template:${state.id}` : null
-                openCredentialModal(flowData, { preferenceScope }).catch((error) =>
-                    console.error('Failed to open credential modal:', error)
-                )
-            }
         }
-    }, [flowData, openCredentialModal, state])
+    }, [flowData])
 
     const onChatflowCopy = (stateData) => {
         // stateData is now the complete state with all template information
@@ -138,16 +121,6 @@ const MarketplaceCanvas = () => {
 
             {/* Confirm Dialog */}
             <ConfirmDialog />
-
-            {/* Unified Credentials Modal */}
-            <UnifiedCredentialsModal
-                show={showCredentialModal}
-                missingCredentials={missingCredentials}
-                onAssign={handleAssign}
-                onSkip={handleSkip}
-                onCancel={handleCancel}
-                initialDontShowAgain={initialDontShowAgain}
-            />
         </>
     )
 }
