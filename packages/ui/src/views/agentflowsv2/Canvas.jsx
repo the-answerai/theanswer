@@ -103,8 +103,17 @@ const AgentflowCanvas = () => {
     const [editNodeDialogOpen, setEditNodeDialogOpen] = useState(false)
     const [editNodeDialogProps, setEditNodeDialogProps] = useState({})
 
-    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
-        useFlowCredentials()
+    const {
+        showCredentialModal,
+        missingCredentials,
+        allCredentials,
+        modalMode,
+        initialDontShowAgain,
+        openCredentialModal,
+        handleAssign,
+        handleSkip,
+        handleCancel
+    } = useFlowCredentials()
     const hasPromptedCredentialsRef = useRef(false)
 
     const reactFlowWrapper = useRef(null)
@@ -605,7 +614,11 @@ const AgentflowCanvas = () => {
 
         hasPromptedCredentialsRef.current = true
         const preferenceScope = `flow:${currentChatflow.id}`
-        openCredentialModal(currentChatflow.flowData, { preferenceScope }).catch(() => {})
+        openCredentialModal(currentChatflow.flowData, { preferenceScope }).catch((error) => {
+            if (process.env.NODE_ENV === 'development') {
+                console.error('[Canvas] Failed to open credential modal:', error)
+            }
+        })
     }, [
         canvasDataStore.chatflow?.flowData,
         canvasDataStore.chatflow?.id,
@@ -638,7 +651,11 @@ const AgentflowCanvas = () => {
                     preferenceScope,
                     mode: 'all',
                     forceShow: true
-                }).catch(() => {})
+                }).catch((error) => {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error('[Canvas] Failed to open credential modal (QuickSetup):', error)
+                    }
+                })
             }
         }
 
@@ -879,6 +896,8 @@ const AgentflowCanvas = () => {
             <UnifiedCredentialsModal
                 show={showCredentialModal}
                 missingCredentials={missingCredentials}
+                allCredentials={allCredentials}
+                modalMode={modalMode}
                 onAssign={handleAssign}
                 onSkip={handleSkip}
                 onCancel={handleCancel}

@@ -14,10 +14,9 @@ export { extractMissingCredentials, extractAllCredentials, getCredentialCategory
  * Collect all credential information from flow data (both missing and all credentials)
  * This is an async wrapper that combines extractMissingCredentials and extractAllCredentials
  * @param {string|object} flowData - Flow data as JSON string or object
- * @param {object} options - Optional configuration (e.g., { fetchNodeDefinition })
  * @returns {Promise<object>} Object containing missingCredentials and allCredentials arrays
  */
-export const collectFlowCredentials = async (flowData, _options = {}) => {
+export const collectFlowCredentials = async (flowData) => {
     try {
         const { credentials } = processFlowCredentials(flowData)
         const missingCredentials = credentials

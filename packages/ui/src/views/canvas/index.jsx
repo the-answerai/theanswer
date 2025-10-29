@@ -110,8 +110,17 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     const reactFlowWrapper = useRef(null)
     const canvasHeaderRef = useRef(null)
 
-    const { showCredentialModal, missingCredentials, initialDontShowAgain, openCredentialModal, handleAssign, handleSkip, handleCancel } =
-        useFlowCredentials()
+    const {
+        showCredentialModal,
+        missingCredentials,
+        allCredentials,
+        modalMode,
+        initialDontShowAgain,
+        openCredentialModal,
+        handleAssign,
+        handleSkip,
+        handleCancel
+    } = useFlowCredentials()
     const hasPromptedCredentialsRef = useRef(false)
 
     // ==============================|| Chatflow API ||============================== //
@@ -630,7 +639,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         if (canvasDataStore.chatflow?.flowData && canvasDataStore.chatflow?.id && !hasPromptedCredentialsRef.current) {
             hasPromptedCredentialsRef.current = true
             const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
-            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch(() => {})
+            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) => {
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('[Canvas] Failed to open credential modal:', error)
+                }
+            })
         }
     }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
 
@@ -652,7 +665,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     preferenceScope,
                     mode: 'all',
                     forceShow: true
-                }).catch(() => {})
+                }).catch((error) => {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error('[Canvas] Failed to open credential modal (QuickSetup):', error)
+                    }
+                })
             }
         }
 
@@ -875,6 +892,8 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             <UnifiedCredentialsModal
                 show={showCredentialModal}
                 missingCredentials={missingCredentials}
+                allCredentials={allCredentials}
+                modalMode={modalMode}
                 onAssign={handleAssign}
                 onSkip={handleSkip}
                 onCancel={handleCancel}

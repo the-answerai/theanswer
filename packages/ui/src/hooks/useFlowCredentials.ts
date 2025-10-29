@@ -3,9 +3,9 @@ import nodesApi from '@/api/nodes'
 import { collectFlowCredentials, updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 
-const nodeDefinitionCache = new Map()
+const nodeDefinitionCache = new Map<string, any>()
 
-const fetchNodeDefinition = async (nodeName) => {
+const fetchNodeDefinition = async (nodeName: string) => {
     if (!nodeName) return null
     if (nodeDefinitionCache.has(nodeName)) return nodeDefinitionCache.get(nodeName)
     try {
@@ -20,14 +20,14 @@ const fetchNodeDefinition = async (nodeName) => {
     }
 }
 
-const resetState = (setShowModal, setCredentialList, setAllCredentialsState, setInitialDontShowAgain) => {
+const resetState = (setShowModal: any, setCredentialList: any, setAllCredentialsState: any, setInitialDontShowAgain: any) => {
     setShowModal(false)
     setCredentialList([])
     setAllCredentialsState([])
     setInitialDontShowAgain(false)
 }
 
-const buildCallbackPayload = (flowState, evaluation, mode) => ({
+const buildCallbackPayload = (flowState: any, evaluation: any, mode: string) => ({
     flowData: flowState?.raw ?? null,
     parsedFlow: flowState?.parsed ?? null,
     allCredentials: evaluation?.allCredentials ?? [],
@@ -37,17 +37,17 @@ const buildCallbackPayload = (flowState, evaluation, mode) => ({
 
 export const useFlowCredentials = () => {
     const [showCredentialModal, setShowCredentialModal] = useState(false)
-    const [credentialList, setCredentialList] = useState([])
-    const [allCredentialsState, setAllCredentialsState] = useState([])
+    const [credentialList, setCredentialList] = useState<any[]>([])
+    const [allCredentialsState, setAllCredentialsState] = useState<any[]>([])
     const [initialDontShowAgain, setInitialDontShowAgain] = useState(false)
 
-    const preferenceScopeRef = useRef(null)
-    const callbacksRef = useRef({ onAssign: null, onSkip: null, onCancel: null })
-    const flowRef = useRef({ raw: null, parsed: null, format: 'object' })
-    const evaluationRef = useRef({ allCredentials: [], missingCredentials: [] })
-    const modeRef = useRef('missing')
+    const preferenceScopeRef = useRef<string | null>(null)
+    const callbacksRef = useRef<any>({ onAssign: null, onSkip: null, onCancel: null })
+    const flowRef = useRef<any>({ raw: null, parsed: null, format: 'object' })
+    const evaluationRef = useRef<any>({ allCredentials: [], missingCredentials: [] })
+    const modeRef = useRef<string>('missing')
 
-    const openCredentialModal = useCallback(async (flowData, options = {}) => {
+    const openCredentialModal = useCallback(async (flowData: any, options: any = {}) => {
         const { preferenceScope = null, onAssign, onSkip, onCancel, forceShow = false, mode = 'missing' } = options
 
         const evaluation = await collectFlowCredentials(flowData, { fetchNodeDefinition })
@@ -82,7 +82,7 @@ export const useFlowCredentials = () => {
         return { shown: true, evaluation }
     }, [])
 
-    const applyPreference = (options) => {
+    const applyPreference = (options: any) => {
         const scope = preferenceScopeRef.current
         if (!scope) return
         if (options?.dontShowDirty) {
@@ -90,7 +90,7 @@ export const useFlowCredentials = () => {
         }
     }
 
-    const handleAssign = useCallback((credentialAssignments, options = {}) => {
+    const handleAssign = useCallback((credentialAssignments: any, options: any = {}) => {
         applyPreference(options)
 
         const currentFlow = flowRef.current
@@ -123,7 +123,7 @@ export const useFlowCredentials = () => {
         callbacksRef.current = { onAssign: null, onSkip: null, onCancel: null }
     }, [])
 
-    const handleSkip = useCallback((options = {}) => {
+    const handleSkip = useCallback((options: any = {}) => {
         applyPreference(options)
         callbacksRef.current.onSkip?.(flowRef.current.raw, buildCallbackPayload(flowRef.current, evaluationRef.current, modeRef.current))
 
@@ -132,7 +132,7 @@ export const useFlowCredentials = () => {
         callbacksRef.current = { onAssign: null, onSkip: null, onCancel: null }
     }, [])
 
-    const handleCancel = useCallback((options = {}) => {
+    const handleCancel = useCallback((options: any = {}) => {
         applyPreference(options)
         callbacksRef.current.onCancel?.(flowRef.current.raw, buildCallbackPayload(flowRef.current, evaluationRef.current, modeRef.current))
 
