@@ -428,23 +428,7 @@ class AAIUrlsLoader extends BaseDocumentLoader {
                         query = query.is('ai_analysis', null)
                     }
 
-                    // Apply HTTP status filter
-                    if (this.statusFilter.length > 0) {
-                        const statusClauses = this.statusFilter.map((filter) => {
-                            if (filter === 'success') return 'http_status.gte.200,http_status.lt.300'
-                            if (filter === 'redirect') return 'http_status.gte.300,http_status.lt.400'
-                            if (filter === 'client_error') return 'http_status.gte.400,http_status.lt.500'
-                            if (filter === 'server_error') return 'http_status.gte.500'
-                            if (filter === 'informational') return 'http_status.gte.100,http_status.lt.200'
-                            if (filter === 'unknown') return 'http_status.is.null'
-                            // Specific status code
-                            return `http_status.eq.${filter}`
-                        })
-
-                        if (statusClauses.length > 0) {
-                            query = query.or(statusClauses.join(','))
-                        }
-                    }
+                    // Note: HTTP status filtering is applied in-memory after fetching (see filterByHttpStatus)
 
                     const { data, error } = await query
 
@@ -473,7 +457,12 @@ class AAIUrlsLoader extends BaseDocumentLoader {
                     // Apply tag filtering if specified
                     let filteredUrls = urlsWithTags
                     if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
-                        filteredUrls = this.filterByTags(urlsWithTags)
+                        filteredUrls = this.filterByTags(filteredUrls)
+                    }
+
+                    // Apply HTTP status filtering if specified
+                    if (this.statusFilter.length > 0) {
+                        filteredUrls = this.filterByHttpStatus(filteredUrls)
                     }
 
                     allUrls.push(...filteredUrls)
@@ -546,6 +535,23 @@ class AAIUrlsLoader extends BaseDocumentLoader {
             }
 
             return true
+        })
+    }
+
+    private filterByHttpStatus(urls: any[]): any[] {
+        return urls.filter((url) => {
+            const status = url.http_status
+
+            return this.statusFilter.some((filter) => {
+                if (filter === 'success') return status >= 200 && status < 300
+                if (filter === 'redirect') return status >= 300 && status < 400
+                if (filter === 'client_error') return status >= 400 && status < 500
+                if (filter === 'server_error') return status >= 500 && status < 600
+                if (filter === 'informational') return status >= 100 && status < 200
+                if (filter === 'unknown') return status === null || status === undefined
+                // Specific status code
+                return status === parseInt(filter, 10)
+            })
         })
     }
 
