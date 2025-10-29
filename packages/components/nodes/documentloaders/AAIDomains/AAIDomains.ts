@@ -200,6 +200,28 @@ class AAIDomains_DocumentLoaders implements INode {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
         }
 
+        // Validate inputs
+        if (limit !== undefined && limit !== null) {
+            if (limit <= 0) {
+                throw new Error('Limit must be a positive number')
+            }
+            if (!Number.isInteger(limit)) {
+                throw new Error('Limit must be an integer')
+            }
+        }
+
+        if (includeTagsLogic && !['OR', 'AND'].includes(includeTagsLogic)) {
+            throw new Error('Include Tags Logic must be either "OR" or "AND"')
+        }
+
+        if (isValid && !['all', 'true', 'false', 'null'].includes(isValid)) {
+            throw new Error('Is Valid must be one of: "all", "true", "false", "null"')
+        }
+
+        if (hasAnalysis && !['all', 'analyzed', 'not_analyzed'].includes(hasAnalysis)) {
+            throw new Error('Has Analysis must be one of: "all", "analyzed", "not_analyzed"')
+        }
+
         // Get environment variables
         const supabaseUrl = process.env.AAI_DATASTORE_SUPABASE_URL
         const supabaseKey = process.env.AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY

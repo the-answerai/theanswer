@@ -184,6 +184,41 @@ class AAIUrls_DocumentLoaders implements INode {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
         }
 
+        // Validate inputs
+        if (limit !== undefined && limit !== null) {
+            if (limit <= 0) {
+                throw new Error('Limit must be a positive number')
+            }
+            if (!Number.isInteger(limit)) {
+                throw new Error('Limit must be an integer')
+            }
+        }
+
+        if (includeTagsLogic && !['OR', 'AND'].includes(includeTagsLogic)) {
+            throw new Error('Include Tags Logic must be either "OR" or "AND"')
+        }
+
+        if (statusFilter) {
+            const validCategories = ['success', 'redirect', 'client_error', 'server_error', 'informational', 'unknown']
+            const statusFilters = statusFilter.split(',').map((s) => s.trim())
+            for (const filter of statusFilters) {
+                // Check if it's a valid category or a valid HTTP status code (100-599)
+                const isCategory = validCategories.includes(filter)
+                const isNumeric = /^\d+$/.test(filter)
+                const statusCode = isNumeric ? parseInt(filter, 10) : null
+
+                if (!isCategory && (!isNumeric || statusCode === null || statusCode < 100 || statusCode > 599)) {
+                    throw new Error(
+                        `Invalid status filter "${filter}". Must be one of: ${validCategories.join(', ')}, or a valid HTTP status code (100-599)`
+                    )
+                }
+            }
+        }
+
+        if (hasAnalysis && !['all', 'analyzed', 'not_analyzed'].includes(hasAnalysis)) {
+            throw new Error('Has Analysis must be one of: "all", "analyzed", "not_analyzed"')
+        }
+
         // Get environment variables
         const supabaseUrl = process.env.AAI_DATASTORE_SUPABASE_URL
         const supabaseKey = process.env.AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY

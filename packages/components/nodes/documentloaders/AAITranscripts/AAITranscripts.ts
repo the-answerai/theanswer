@@ -203,6 +203,82 @@ class AAITranscripts_DocumentLoaders implements INode {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
         }
 
+        // Validate inputs
+        if (limit !== undefined && limit !== null) {
+            if (limit <= 0) {
+                throw new Error('Limit must be a positive number')
+            }
+            if (!Number.isInteger(limit)) {
+                throw new Error('Limit must be an integer')
+            }
+        }
+
+        if (includeTagsLogic && !['OR', 'AND'].includes(includeTagsLogic)) {
+            throw new Error('Include Tags Logic must be either "OR" or "AND"')
+        }
+
+        if (dateFrom) {
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/
+            if (!datePattern.test(dateFrom)) {
+                throw new Error('Date From must be in ISO format (YYYY-MM-DD)')
+            }
+            const parsedDate = new Date(dateFrom)
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error('Date From is not a valid date')
+            }
+        }
+
+        if (dateTo) {
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/
+            if (!datePattern.test(dateTo)) {
+                throw new Error('Date To must be in ISO format (YYYY-MM-DD)')
+            }
+            const parsedDate = new Date(dateTo)
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error('Date To is not a valid date')
+            }
+        }
+
+        if (dateFrom && dateTo) {
+            const fromDate = new Date(dateFrom)
+            const toDate = new Date(dateTo)
+            if (fromDate > toDate) {
+                throw new Error('Date From must be before or equal to Date To')
+            }
+        }
+
+        if (sentimentMin !== undefined && sentimentMin !== null) {
+            if (typeof sentimentMin !== 'number' || isNaN(sentimentMin)) {
+                throw new Error('Sentiment Min must be a number')
+            }
+            if (sentimentMin < 1 || sentimentMin > 10) {
+                throw new Error('Sentiment Min must be between 1 and 10')
+            }
+        }
+
+        if (sentimentMax !== undefined && sentimentMax !== null) {
+            if (typeof sentimentMax !== 'number' || isNaN(sentimentMax)) {
+                throw new Error('Sentiment Max must be a number')
+            }
+            if (sentimentMax < 1 || sentimentMax > 10) {
+                throw new Error('Sentiment Max must be between 1 and 10')
+            }
+        }
+
+        if (
+            sentimentMin !== undefined &&
+            sentimentMin !== null &&
+            sentimentMax !== undefined &&
+            sentimentMax !== null &&
+            sentimentMin > sentimentMax
+        ) {
+            throw new Error('Sentiment Min cannot be greater than Sentiment Max')
+        }
+
+        if (hasAnalysis && !['all', 'analyzed', 'not_analyzed'].includes(hasAnalysis)) {
+            throw new Error('Has Analysis must be one of: "all", "analyzed", "not_analyzed"')
+        }
+
         // Get environment variables
         const supabaseUrl = process.env.AAI_DATASTORE_SUPABASE_URL
         const supabaseKey = process.env.AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY

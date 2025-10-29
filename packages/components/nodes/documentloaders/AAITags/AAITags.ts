@@ -131,6 +131,20 @@ class AAITags_DocumentLoaders implements INode {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
         }
 
+        // Validate inputs
+        if (limit !== undefined && limit !== null) {
+            if (limit <= 0) {
+                throw new Error('Limit must be a positive number')
+            }
+            if (!Number.isInteger(limit)) {
+                throw new Error('Limit must be an integer')
+            }
+        }
+
+        if (parentTagsOnly && childTagsOnly) {
+            throw new Error('Cannot set both Parent Tags Only and Child Tags Only to true - they are mutually exclusive')
+        }
+
         // Get environment variables
         const supabaseUrl = process.env.AAI_DATASTORE_SUPABASE_URL
         const supabaseKey = process.env.AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY
