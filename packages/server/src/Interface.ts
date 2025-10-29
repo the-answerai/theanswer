@@ -18,6 +18,15 @@ export type MessageType = 'apiMessage' | 'userMessage'
 
 export type ChatflowType = 'CHATFLOW' | 'MULTIAGENT' | 'ASSISTANT' | 'AGENTFLOW'
 
+export type TemplateDisplayType = 'AgentflowV2' | 'Agentflow' | 'Chatflow' | 'Tool'
+
+export const CHATFLOW_TO_TEMPLATE_TYPE: Record<ChatflowType, TemplateDisplayType> = {
+    AGENTFLOW: 'AgentflowV2',
+    MULTIAGENT: 'Agentflow',
+    CHATFLOW: 'Chatflow',
+    ASSISTANT: 'Chatflow'
+}
+
 export type AssistantType = 'CUSTOM' | 'OPENAI' | 'AZURE'
 
 export type ExecutionState = 'INPROGRESS' | 'FINISHED' | 'ERROR' | 'TERMINATED' | 'TIMEOUT' | 'STOPPED'

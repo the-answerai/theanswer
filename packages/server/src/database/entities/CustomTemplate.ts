@@ -1,4 +1,4 @@
-import { ICustomTemplate } from '../../Interface'
+import { ICustomTemplate, TemplateDisplayType } from '../../Interface'
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity('custom_template')
@@ -25,7 +25,7 @@ export class CustomTemplate implements ICustomTemplate {
     usecases?: string
 
     @Column({ nullable: true, type: 'text' })
-    type?: string
+    type?: TemplateDisplayType
 
     @Column({ nullable: true, type: 'text' })
     chatbotConfig?: string

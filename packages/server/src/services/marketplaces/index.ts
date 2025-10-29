@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
-import { IReactFlowEdge, IReactFlowNode, IUser } from '../../Interface'
+import { IReactFlowEdge, IReactFlowNode, IUser, CHATFLOW_TO_TEMPLATE_TYPE, TemplateDisplayType, ChatflowType } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { DeleteResult, IsNull } from 'typeorm'
 import { CustomTemplate } from '../../database/entities/CustomTemplate'
@@ -60,19 +60,6 @@ const TEMPLATE_TYPE_PREFIXES = {
     TOOL: 'tool_',
     AGENTFLOW: 'af_',
     ANSWERAI: 'ai_'
-}
-
-const mapChatflowTypeToTemplateType = (chatflowType?: string, fallbackType?: string) => {
-    switch (chatflowType) {
-        case 'AGENTFLOW':
-            return 'AgentflowV2'
-        case 'MULTIAGENT':
-            return 'Agentflow'
-        case 'CHATFLOW':
-            return 'Chatflow'
-        default:
-            return fallbackType ?? chatflowType
-    }
 }
 
 // Get all templates for marketplaces
@@ -403,7 +390,29 @@ const saveCustomTemplate = async (body: any, user: IUser): Promise<any> => {
             customTemplate.apiConfig = chatflow.apiConfig
             customTemplate.speechToText = chatflow.speechToText
             customTemplate.category = chatflow.category
-            customTemplate.type = mapChatflowTypeToTemplateType(chatflow.type, customTemplate.type)
+
+            // ✅ Original pattern (restored): Frontend sends display types, backend trusts them
+            // Frontend transformation (ExportAsTemplateDialog.jsx):
+            //   AGENTFLOW → 'AgentflowV2'
+            //   MULTIAGENT → 'Agentflow'
+            //   CHATFLOW → 'Chatflow'
+            // Backend receives type via Object.assign(customTemplate, body)
+            // Bug history: Cameron Taylor's Aug 2025 commit added explicit type overwrite
+            // This validation provides safety net while trusting frontend
+            const validTypes: TemplateDisplayType[] = ['AgentflowV2', 'Agentflow', 'Chatflow']
+
+            if (!customTemplate.type || !validTypes.includes(customTemplate.type as TemplateDisplayType)) {
+                // Frontend didn't provide valid type - use mapping as fallback
+                const fallbackType = CHATFLOW_TO_TEMPLATE_TYPE[chatflow.type as ChatflowType] || 'Chatflow'
+                console.warn(`Invalid or missing template type from frontend. Using fallback: ${fallbackType}`, {
+                    providedType: customTemplate.type,
+                    chatflowType: chatflow.type,
+                    chatflowId: chatflow.id
+                })
+                customTemplate.type = fallbackType
+            }
+            // If valid type provided by frontend, it's already in customTemplate from Object.assign
+
             customTemplate.description = customTemplate.description || chatflow.description
         } else if (body.tool) {
             const flowData = {
