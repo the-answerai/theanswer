@@ -58,7 +58,7 @@ import { usePrompt } from '@/utils/usePrompt'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 
 // credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
+import useFlowCredentials from '@/hooks/useFlowCredentials'
 import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
 const nodeTypes = { customNode: CanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: ButtonEdge }
@@ -113,12 +113,15 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     const {
         showCredentialModal,
         missingCredentials,
-        checkCredentials,
+        allCredentials,
+        modalMode,
         initialDontShowAgain,
+        openCredentialModal,
         handleAssign,
         handleSkip,
         handleCancel
-    } = useCredentialChecker()
+    } = useFlowCredentials()
+    const hasPromptedCredentialsRef = useRef(false)
 
     // ==============================|| Chatflow API ||============================== //
 
@@ -232,6 +235,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 type: flowData.type,
                 flowData: JSON.stringify({ nodes, edges })
             }
+
+            // Block credential modal from showing until user saves
+            // Modal should only show AFTER user clicks save
+            // MUST set this BEFORE dispatch to prevent modal trigger
+            hasPromptedCredentialsRef.current = true
 
             dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
             setChatflow(newChatflow)
@@ -560,6 +568,10 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             const initialFlow = chatflow.flowData ? JSON.parse(chatflow.flowData) : []
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
+            // Allow modal to check for missing credentials when loading existing flow
+            // Modal will show immediately if credentials are missing (unless user dismissed it)
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow })
         } else if (getSpecificChatflowApi?.error?.response?.data?.message) {
             errorFailed(`Failed to save ${canvasTitle}: ${getSpecificChatflowApi.error.response.data.message}`)
@@ -575,6 +587,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         if (createNewChatflowApi?.data) {
             const chatflow = createNewChatflowApi.data
             // console.log('✅ Create new chatflow successful, navigating to:', `/${isAgentCanvas ? 'agentcanvas' : 'canvas'}/${chatflow.id}`)
+            // Reset to allow modal to show after first save
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow })
             saveChatflowSuccess()
             navigate(`/${isAgentCanvas ? 'agentcanvas' : 'canvas'}/${chatflow.id}`, {
@@ -593,6 +608,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     useEffect(() => {
         if (updateChatflowApi?.data) {
             // console.log('✅ Update chatflow successful, NOT navigating (should we?)')
+            // Reset to allow modal to check for missing credentials after update
+            // MUST set this BEFORE dispatch to allow modal trigger
+            hasPromptedCredentialsRef.current = false
             dispatch({ type: SET_CHATFLOW, chatflow: updateChatflowApi.data })
             saveChatflowSuccess()
         } else if (updateChatflowApi?.error?.response?.data?.message) {
@@ -615,10 +633,59 @@ const Canvas = ({ chatflowid: chatflowId }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasDataStore.chatflow])
 
+    // Only show credential modal for flows that have been saved to database (have an ID)
+    // This prevents modal from showing during template load (before save)
+    useEffect(() => {
+        if (canvasDataStore.chatflow?.flowData && canvasDataStore.chatflow?.id && !hasPromptedCredentialsRef.current) {
+            hasPromptedCredentialsRef.current = true
+            const preferenceScope = canvasDataStore.chatflow?.id ? `flow:${canvasDataStore.chatflow.id}` : null
+            openCredentialModal(canvasDataStore.chatflow.flowData, { preferenceScope }).catch((error) => {
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('[Canvas] Failed to open credential modal:', error)
+                }
+            })
+        }
+    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+
+    // Handle QuickSetup URL parameter - opens modal in "manage credentials" mode
+    useEffect(() => {
+        const checkQuickSetupParam = () => {
+            const urlParams = new URLSearchParams(window.location.search)
+            const isQuickSetup = urlParams.get('QuickSetup') === 'true'
+
+            if (isQuickSetup && canvasDataStore.chatflow?.flowData && canvasDataStore.chatflow?.id) {
+                // Remove QuickSetup parameter from URL
+                urlParams.delete('QuickSetup')
+                const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`
+                window.history.replaceState({}, '', newUrl)
+
+                // Open modal in "all credentials" mode with forceShow
+                const preferenceScope = `flow:${canvasDataStore.chatflow.id}`
+                openCredentialModal(canvasDataStore.chatflow.flowData, {
+                    preferenceScope,
+                    mode: 'all',
+                    forceShow: true
+                }).catch((error) => {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error('[Canvas] Failed to open credential modal (QuickSetup):', error)
+                    }
+                })
+            }
+        }
+
+        checkQuickSetupParam()
+
+        // Listen for popstate events (triggered by the QuickSetup button)
+        window.addEventListener('popstate', checkQuickSetupParam)
+        return () => window.removeEventListener('popstate', checkQuickSetupParam)
+    }, [canvasDataStore.chatflow?.flowData, canvasDataStore.chatflow?.id, openCredentialModal])
+
     // Initialization
     useEffect(() => {
         // console.log('🎨 Canvas initialization effect running:', { chatflowId })
 
+        // DO NOT reset hasPromptedCredentialsRef here - it prevents duplicate modals
+        // The ref is managed by the credential modal useEffect and save handlers
         setIsSyncNodesButtonEnabled(false)
         setIsUpsertButtonEnabled(false)
         if (chatflowId) {
@@ -648,6 +715,12 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         deployed: false,
                         isPublic: false
                     }
+
+                    // Block credential modal from showing until user saves
+                    // Modal should only show AFTER user clicks save
+                    // MUST set this BEFORE dispatch to prevent modal trigger
+                    hasPromptedCredentialsRef.current = true
+
                     setChatflow(newChatflow)
                     dispatch({ type: SET_CHATFLOW, chatflow: newChatflow })
 
@@ -664,6 +737,9 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                 // console.log('🎨 No duplicated flow data, creating blank canvas')
                 setNodes([])
                 setEdges([])
+                // Block credential modal for blank canvas until user saves
+                // MUST set this BEFORE dispatch to prevent modal trigger
+                hasPromptedCredentialsRef.current = true
                 setChatflow({
                     name: templateName ? `Copy of ${templateName}` : `Untitled ${canvasTitle}`
                 })
@@ -816,10 +892,11 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             <UnifiedCredentialsModal
                 show={showCredentialModal}
                 missingCredentials={missingCredentials}
+                allCredentials={allCredentials}
+                modalMode={modalMode}
                 onAssign={handleAssign}
                 onSkip={handleSkip}
                 onCancel={handleCancel}
-                flowData={null}
                 initialDontShowAgain={initialDontShowAgain}
             />
         </>

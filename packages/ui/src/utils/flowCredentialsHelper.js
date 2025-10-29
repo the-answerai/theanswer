@@ -5,9 +5,35 @@
 import { extractMissingCredentials } from '@utils/extractMissingCredentials'
 import { extractAllCredentials } from '@utils/extractAllCredentials'
 import { getCredentialCategory } from '@utils/getCredentialCategory'
+import { processFlowCredentials } from '@utils/processFlowCredentials'
 
 // Re-export for convenience
 export { extractMissingCredentials, extractAllCredentials, getCredentialCategory }
+
+/**
+ * Collect all credential information from flow data (both missing and all credentials)
+ * This is an async wrapper that combines extractMissingCredentials and extractAllCredentials
+ * @param {string|object} flowData - Flow data as JSON string or object
+ * @returns {Promise<object>} Object containing missingCredentials and allCredentials arrays
+ */
+export const collectFlowCredentials = async (flowData) => {
+    try {
+        const { credentials } = processFlowCredentials(flowData)
+        const missingCredentials = credentials
+            .filter((credential) => !credential.isAssigned)
+            .map(({ isAssigned, assignedCredentialId, ...rest }) => rest)
+
+        return {
+            missingCredentials,
+            allCredentials: credentials
+        }
+    } catch (_error) {
+        return {
+            missingCredentials: [],
+            allCredentials: []
+        }
+    }
+}
 
 /**
  * Convert camelCase or PascalCase string to sentence case
@@ -270,18 +296,18 @@ export const isValidCredentialAssignment = (node, credentialId, availableCredent
  */
 export const organizeCredentialsByPriority = (groupedCredentials) => {
     const sections = {
-        required: [],    // Unconnected required credentials
-        optional: [],    // Unconnected optional credentials
-        connected: []    // All connected credentials
+        required: [], // Unconnected required credentials
+        optional: [], // Unconnected optional credentials
+        connected: [] // All connected credentials
     }
 
     Object.entries(groupedCredentials).forEach(([groupKey, group]) => {
         const isConnected = group.isAssigned || false
-        
+
         // Check if ANY node in this group is marked as required
         // isRequired is calculated as: category.isCore || !credentialParam.optional
         const isRequired = group.nodes?.some((node) => node.isRequired === true) || false
-        
+
         // Also track isCore for sorting connected credentials
         const isCore = group.nodes?.some((node) => node.isCore === true) || false
 
@@ -308,7 +334,7 @@ export const organizeCredentialsByPriority = (groupedCredentials) => {
 
     // Sort functions
     const sortByLabel = (a, b) => (a.label || '').localeCompare(b.label || '')
-    
+
     // Sort connected section: required first, then alphabetically within each group
     const sortConnected = (a, b) => {
         // Required credentials before optional
