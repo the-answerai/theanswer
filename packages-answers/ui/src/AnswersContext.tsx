@@ -422,10 +422,75 @@ export function AnswersProvider({
     }
 
     const updateLastMessageArtifacts = (artifacts: any) => {
+        // Transform FILE-STORAGE:: references to API URLs
+        if (Array.isArray(artifacts)) {
+            artifacts.forEach((artifact: any) => {
+                if ((artifact.type === 'png' || artifact.type === 'jpeg') && artifact.data?.startsWith?.('FILE-STORAGE::')) {
+                    const baseURL = sessionStorage.getItem('baseURL') || ''
+                    const fileName = artifact.data.replace('FILE-STORAGE::', '')
+                    artifact.data = `${baseURL}/api/v1/get-upload-file?chatflowId=${sidekick?.id}&chatId=${chatId}&fileName=${fileName}`
+                }
+            })
+        }
+
         setMessages((prevMessages) => {
             let allMessages = [...cloneDeep(prevMessages)]
             if (allMessages[allMessages.length - 1].role === 'user') return allMessages
             allMessages[allMessages.length - 1].artifacts = artifacts
+            return allMessages
+        })
+    }
+
+    const updateLastMessageAgentFlowExecutedData = (data: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].agentFlowExecutedData = data
+            return allMessages
+        })
+    }
+
+    const updateLastMessageCalledTools = (tools: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].calledTools = tools
+            return allMessages
+        })
+    }
+
+    const updateLastMessageUsageMetadata = (metadata: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].usageMetadata = metadata
+            return allMessages
+        })
+    }
+
+    const updateLastMessageTool = (tool: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].tool = tool
+            return allMessages
+        })
+    }
+
+    const updateLastMessageAgentFlowEvent = (event: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].agentFlowEvent = event
+            return allMessages
+        })
+    }
+
+    const updateLastMessageNextAgentFlow = (nextAgentFlow: any) => {
+        setMessages((prevMessages) => {
+            let allMessages = [...cloneDeep(prevMessages)]
+            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
+            allMessages[allMessages.length - 1].nextAgentFlow = nextAgentFlow
             return allMessages
         })
     }
@@ -655,6 +720,24 @@ export function AnswersProvider({
                             break
                         case 'artifacts':
                             updateLastMessageArtifacts(payload.data)
+                            break
+                        case 'agentFlowExecutedData':
+                            updateLastMessageAgentFlowExecutedData(payload.data)
+                            break
+                        case 'calledTools':
+                            updateLastMessageCalledTools(payload.data)
+                            break
+                        case 'usageMetadata':
+                            updateLastMessageUsageMetadata(payload.data)
+                            break
+                        case 'tool':
+                            updateLastMessageTool(payload.data)
+                            break
+                        case 'agentFlowEvent':
+                            updateLastMessageAgentFlowEvent(payload.data)
+                            break
+                        case 'nextAgentFlow':
+                            updateLastMessageNextAgentFlow(payload.data)
                             break
                         case 'metadata':
                             if (payload.data.chatId) {
