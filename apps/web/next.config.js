@@ -36,26 +36,24 @@ let nextConfig = withBundleAnalyzer({
               output: 'standalone'
           }
         : {}),
-    experimental: {
-        turbo: {
-            resolveAlias: {
-                '@db/*': '../../packages-answers/db/src/*',
-                '@utils/*': '../../packages-answers/utils/src/*',
-                '@ui/*': '../../packages-answers/ui/src/*',
-                '@types/*': '../../packages-answers/types/src/*',
-                '@tsconfig/*': '../../packages-answers/tsconfig/src/*',
-                '@/views/*': '../../packages/ui/src/views/*',
-                '@/utils/*': '../../packages/ui/src/utils/*',
-                '@/assets/*': '../../packages/ui/src/assets/*',
-                '@/hooks/*': '../../packages/ui/src/hooks/*',
-                '@/menu-items/*': '../../packages/ui/src/menu-items/*',
-                '@/store/*': '../../packages/ui/src/store/*',
-                '@/themes/*': '../../packages/ui/src/themes/*',
-                '@/themes': '../../packages/ui/src/themes/index',
-                '@/assets/images/*': '../../packages/ui/src/assets/images/*'
-            }
-        },
-        serverComponentsExternalPackages: ['canvas', '@aws-sdk/client-s3', '@aws-sdk/signature-v4-crt', '@aws-sdk/s3-request-presigner']
+    serverExternalPackages: ['canvas', '@aws-sdk/client-s3', '@aws-sdk/signature-v4-crt', '@aws-sdk/s3-request-presigner'],
+    turbo: {
+        resolveAlias: {
+            '@db/*': '../../packages-answers/db/src/*',
+            '@utils/*': '../../packages-answers/utils/src/*',
+            '@ui/*': '../../packages-answers/ui/src/*',
+            '@types/*': '../../packages-answers/types/src/*',
+            '@tsconfig/*': '../../packages-answers/tsconfig/src/*',
+            '@/views/*': '../../packages/ui/src/views/*',
+            '@/utils/*': '../../packages/ui/src/utils/*',
+            '@/assets/*': '../../packages/ui/src/assets/*',
+            '@/hooks/*': '../../packages/ui/src/hooks/*',
+            '@/menu-items/*': '../../packages/ui/src/menu-items/*',
+            '@/store/*': '../../packages/ui/src/store/*',
+            '@/themes/*': '../../packages/ui/src/themes/*',
+            '@/themes': '../../packages/ui/src/themes/index',
+            '@/assets/images/*': '../../packages/ui/src/assets/images/*'
+        }
     },
     typescript: {
         ignoreBuildErrors: true

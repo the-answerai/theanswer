@@ -10,7 +10,7 @@ import { darkModeTheme } from '../theme'
 import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 import { Auth0Setup } from '@/hooks/useAuth0Setup'
 import dynamic from 'next/dynamic'
 const HelpChatDrawer = dynamic(() => import('../HelpChatDrawer'), { ssr: false })
@@ -115,7 +115,7 @@ export default function AppLayout({
     // }
 
     return (
-        <UserProvider>
+        <Auth0Provider>
             <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.accessToken}>
                 <FlagsmithProvider
                     serverState={flagsmithState}
@@ -153,6 +153,6 @@ export default function AppLayout({
                     {/* </Auth0Provider> */}
                 </FlagsmithProvider>
             </Auth0Setup>
-        </UserProvider>
+        </Auth0Provider>
     )
 }

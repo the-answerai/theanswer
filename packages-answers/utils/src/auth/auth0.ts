@@ -1,5 +1,16 @@
-// utils/auth0.js
-import { initAuth0 } from '@auth0/nextjs-auth0'
+// Auth0 v4 configuration
+// In v4, we don't need initAuth0. The configuration is handled by environment variables.
+import { 
+    getSession,
+    updateSession,
+    withApiAuthRequired,
+    withPageAuthRequired,
+    handleAuth,
+    handleCallback,
+    handleLogin,
+    handleLogout,
+    handleProfile
+} from '@auth0/nextjs-auth0'
 
 // Debug logging helper with safety
 const debugLog = (message: string, data?: any) => {
@@ -39,9 +50,10 @@ const getBaseUrl = () => {
     }
 
     const error = 'No valid baseURL found. Set either VERCEL_PREVIEW_URL, VERCEL_URL, or AUTH0_BASE_URL environment variable.'
-    debugLog('ERROR: Base URL determination failed', { error })
+
     throw new Error(error)
 }
+
 const domain = process.env.AUTH0_BASE_URL?.replace('https://', '')?.replace('http://', '')?.split(':')[0]?.split('.')?.slice(-2)?.join('.')
 
 // Log Auth0 configuration for debugging
@@ -58,27 +70,33 @@ const authConfig = {
     organizationId: process.env.AUTH0_ORGANIZATION_ID
 }
 
-debugLog('Initializing Auth0 with config', authConfig)
+debugLog('Auth0 configuration', authConfig)
 
-export default initAuth0({
-    secret: process.env.AUTH0_SECRET,
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-    baseURL: baseURL,
-    clientID: process.env.AUTH0_CLIENT_ID,
-    clientSecret: process.env.AUTH0_CLIENT_SECRET,
-    idTokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'RS256',
-    authorizationParams: {
-        response_type: 'code',
-        scope: 'openid profile email',
-        audience: process.env.AUTH0_AUDIENCE ?? 'https://theanswer.ai'
-    },
-    session: {
-        cookie: {
-            domain: domain
-        }
-    },
-    routes: {
-        callback: '/api/auth/callback',
-        postLogoutRedirect: '/'
-    }
-})
+// Export configuration for use with Auth0 v4
+// In v4, the SDK automatically picks up these environment variables:
+// AUTH0_SECRET, AUTH0_ISSUER_BASE_URL, AUTH0_BASE_URL, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET
+// Additional configuration can be done via AUTH0_* environment variables
+
+// For backward compatibility, we export the auth0 SDK methods directly
+
+// Export the configuration for custom usage
+export const auth0Config = {
+    ...authConfig,
+    baseURL,
+    domain
+}
+
+// Default export for backward compatibility
+const auth0 = {
+    getSession,
+    updateSession,
+    withApiAuthRequired,
+    withPageAuthRequired,
+    handleAuth,
+    handleCallback,
+    handleLogin,
+    handleLogout,
+    handleProfile
+}
+
+export default auth0

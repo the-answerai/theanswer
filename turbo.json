@@ -1,5 +1,5 @@
 {
-    "$schema": "https://turbo.build/schema.json",
+    "$schema": "https://turbo.build/schema.v2.json",
     "globalEnv": [
         "ANALYZE",
         "ATLASSIAN_CLIENT_ID",
@@ -84,14 +84,11 @@
         },
         "build": {
             "dependsOn": ["^build"],
-            "outputs": ["dist/**", "build/**", ".next/**"],
-
-            "outputMode": "new-only"
+            "outputs": ["dist/**", "build/**", ".next/**"]
         },
         "test:auth": {
             "dependsOn": ["^build"],
-            "outputs": ["dist/**", "build/**", ".next/**"],
-            "outputMode": "new-only"
+            "outputs": ["dist/**", "build/**", ".next/**"]
         },
         "db:generate": {
             "dependsOn": ["db:deploy"],
@@ -109,8 +106,7 @@
         },
         "db#build": {
             "cache": false,
-            "outputs": ["dist/**", "generated/**"],
-            "outputMode": "new-only"
+            "outputs": ["dist/**", "generated/**"]
         },
         "db#dev": {
             "dependsOn": ["//#db:healthcheck", "build"],
@@ -119,9 +115,7 @@
         },
         "web#build": {
             "dependsOn": ["^build", "db#build"],
-            "outputs": ["dist/**", ".next/**"],
-
-            "outputMode": "new-only"
+            "outputs": ["dist/**", ".next/**"]
         },
         "lint": {
             "outputs": []
