@@ -533,6 +533,29 @@ export function AnswersProvider({
                     else if (data.json) text = '```json\n' + JSON.stringify(data.json, null, 2)
                     else text = JSON.stringify(data, null, 2)
 
+                    // Parse followUpPrompts safely - handle double-stringification from backend
+                    let followUpPrompts = undefined
+                    if (data?.followUpPrompts) {
+                        try {
+                            followUpPrompts = data.followUpPrompts
+                            // First parse if it's a string
+                            if (typeof followUpPrompts === 'string') {
+                                followUpPrompts = JSON.parse(followUpPrompts)
+                            }
+                            // Second parse if still a string (backend double-stringifies)
+                            if (typeof followUpPrompts === 'string') {
+                                followUpPrompts = JSON.parse(followUpPrompts)
+                            }
+                            // Ensure it's an array
+                            if (!Array.isArray(followUpPrompts)) {
+                                followUpPrompts = undefined
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse followUpPrompts:', e)
+                            followUpPrompts = undefined
+                        }
+                    }
+
                     setMessages((prevMessages) => [
                         ...prevMessages,
                         {
@@ -540,6 +563,7 @@ export function AnswersProvider({
                             content: text,
                             id: data?.chatMessageId,
                             sourceDocuments: data?.sourceDocuments,
+                            followUpPrompts,
                             usedTools: data?.usedTools,
                             fileAnnotations: data?.fileAnnotations,
                             agentReasoning: data?.agentReasoning,
@@ -636,17 +660,25 @@ export function AnswersProvider({
                             if (payload.data.chatId) {
                                 setChatId(payload.data.chatId)
                             }
-                            if (payload.data.chatMessageId) {
-                                setMessages((prevMessages) => {
-                                    const allMessages = [...cloneDeep(prevMessages)]
-                                    const lastMessage = allMessages[allMessages.length - 1]
-                                    if (lastMessage?.role === 'user') return allMessages
+                            setMessages((prevMessages) => {
+                                const allMessages = [...cloneDeep(prevMessages)]
+                                const lastMessage = allMessages[allMessages.length - 1]
+                                if (lastMessage?.role === 'user') return allMessages
+
+                                // Update message ID and chat info
+                                if (payload.data.chatMessageId) {
                                     lastMessage.id = payload.data.chatMessageId
                                     lastMessage.chatId = payload.data.chatId
                                     lastMessage.chatflowid = chatflowid
-                                    return allMessages
-                                })
-                            }
+                                }
+
+                                // Add follow-up prompts if present
+                                if (payload.data.followUpPrompts) {
+                                    lastMessage.followUpPrompts = payload.data.followUpPrompts
+                                }
+
+                                return allMessages
+                            })
                             break
                         case 'error':
                             setError(payload.data)

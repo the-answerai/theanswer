@@ -93,7 +93,8 @@ class AAIEmbedding_Embeddings implements INode {
             throw new Error('AAI_DEFAULT_OPENAI_API_KEY environment variable is not set')
         }
 
-        const obj: Partial<OpenAIEmbeddingsParams> & { openAIApiKey?: string; configuration?: ClientOptions } = {
+        const obj: Partial<OpenAIEmbeddingsParams> & { apiKey?: string; openAIApiKey?: string; configuration?: ClientOptions } = {
+            apiKey: openAIApiKey,
             openAIApiKey,
             modelName
         }

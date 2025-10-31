@@ -1,10 +1,11 @@
-import { ChatOpenAI as LangchainChatOpenAI, ChatOpenAIFields, OpenAIClient } from '@langchain/openai'
+import { ChatOpenAI as LangchainChatOpenAI, ChatOpenAIFields } from '@langchain/openai'
 import { BaseCache } from '@langchain/core/caches'
 import { ICommonObject, IMultiModalOption, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
 import { ChatOpenAI } from './FlowiseChatOpenAI'
 import { getModels, MODEL_TYPE } from '../../../src/modelLoader'
 import { HttpsProxyAgent } from 'https-proxy-agent'
+import { OpenAI as OpenAIClient } from 'openai'
 
 class ChatOpenAI_ChatModels implements INode {
     label: string
@@ -232,7 +233,7 @@ class ChatOpenAI_ChatModels implements INode {
         const basePath = nodeData.inputs?.basepath as string
         const proxyUrl = nodeData.inputs?.proxyUrl as string
         const baseOptions = nodeData.inputs?.baseOptions
-        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.Chat.ChatCompletionReasoningEffort
+        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.ReasoningEffort | null
         const promptCacheKey = nodeData.inputs?.promptCacheKey as string
 
         const allowImageUploads = nodeData.inputs?.allowImageUploads as boolean
@@ -253,11 +254,14 @@ class ChatOpenAI_ChatModels implements INode {
             streaming: streaming ?? true
         }
 
-        if (modelName.includes('o3') || modelName.includes('o1')) {
+        if (modelName.includes('o1') || modelName.includes('o3') || modelName.includes('gpt-5')) {
             delete obj.temperature
-        }
-        if ((modelName.includes('o1') || modelName.includes('o3')) && reasoningEffort) {
-            obj.reasoningEffort = reasoningEffort
+            delete obj.stop
+            const reasoning: OpenAIClient.Reasoning = {}
+            if (reasoningEffort) {
+                reasoning.effort = reasoningEffort
+            }
+            obj.reasoning = reasoning
         }
         if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)
         if (topP) obj.topP = parseFloat(topP)

@@ -27,7 +27,7 @@ export class AzureChatOpenAI extends LangchainAzureChatOpenAI implements IVision
     }
 
     revertToOriginalModel(): void {
-        this.modelName = this.configuredModel
+        this.model = this.configuredModel
         this.maxTokens = this.configuredMaxToken
     }
 

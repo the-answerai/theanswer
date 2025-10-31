@@ -1,9 +1,10 @@
-import { AzureOpenAIInput, AzureChatOpenAI as LangchainAzureChatOpenAI, ChatOpenAIFields, OpenAIClient } from '@langchain/openai'
+import { AzureOpenAIInput, AzureChatOpenAI as LangchainAzureChatOpenAI, ChatOpenAIFields } from '@langchain/openai'
 import { BaseCache } from '@langchain/core/caches'
 import { ICommonObject, IMultiModalOption, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
 import { getModels, MODEL_TYPE } from '../../../src/modelLoader'
 import { AzureChatOpenAI } from './FlowiseAzureChatOpenAI'
+import { OpenAI as OpenAIClient } from 'openai'
 
 const serverCredentialsExists =
     !!process.env.AZURE_OPENAI_API_KEY &&
@@ -199,7 +200,7 @@ class AzureChatOpenAI_ChatModels implements INode {
         const topP = nodeData.inputs?.topP as string
         const basePath = nodeData.inputs?.basepath as string
         const baseOptions = nodeData.inputs?.baseOptions
-        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.Chat.ChatCompletionReasoningEffort
+        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.ReasoningEffort | null
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const azureOpenAIApiKey = getCredentialParam('azureOpenAIApiKey', credentialData, nodeData)
@@ -237,11 +238,19 @@ class AzureChatOpenAI_ChatModels implements INode {
                 console.error('Error parsing base options', exception)
             }
         }
-        if (modelName === 'o3-mini' || modelName.includes('o1')) {
+        if (modelName.includes('o1') || modelName.includes('o3') || modelName.includes('gpt-5')) {
             delete obj.temperature
-        }
-        if ((modelName.includes('o1') || modelName.includes('o3')) && reasoningEffort) {
-            obj.reasoningEffort = reasoningEffort
+            delete obj.stop
+            const reasoning: OpenAIClient.Reasoning = {}
+            if (reasoningEffort) {
+                reasoning.effort = reasoningEffort
+            }
+            obj.reasoning = reasoning
+
+            if (maxTokens) {
+                delete obj.maxTokens
+                obj.maxCompletionTokens = parseInt(maxTokens, 10)
+            }
         }
 
         const multiModalOption: IMultiModalOption = {
