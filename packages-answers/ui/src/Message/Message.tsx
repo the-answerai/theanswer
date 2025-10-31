@@ -26,6 +26,8 @@ import isArray from 'lodash/isArray'
 import { SimpleMarkdown } from './SimpleMarkdown'
 import { LoadingAnimation } from './LoadingAnimation'
 import { FollowUpPrompts } from '../FollowUpPrompts'
+import { ArtifactRenderer, Artifact } from './ArtifactRenderer'
+import { AgentExecutedDataCard } from './AgentExecutedDataCard'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -352,6 +354,28 @@ export const MessageCard = ({
                     Array.isArray((other as any).agentReasoning) &&
                     (other as any).agentReasoning.length > 0 &&
                     (other as any).agentReasoning.map((agentObject: any) => {
+                        // Check if this is a nextAgent transition indicator
+                        if (agentObject.nextAgent) {
+                            return (
+                                <Box
+                                    key={`next-agent-${agentObject.nextAgent}`}
+                                    sx={{
+                                        background: 'linear-gradient(to top, #303030, #212121)',
+                                        borderRadius: 1,
+                                        p: 2,
+                                        mb: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1
+                                    }}
+                                >
+                                    <img src='/next-agent.gif' alt='Next agent transition' style={{ height: '35px', width: 'auto' }} />
+                                    <Typography sx={{ color: '#e0e0e0' }}>{agentObject.nextAgent}</Typography>
+                                </Box>
+                            )
+                        }
+
+                        // Regular agent reasoning accordion
                         return (
                             <CustomAccordion
                                 defaultExpanded={agentObject?.messages?.length > 1}
@@ -531,42 +555,22 @@ export const MessageCard = ({
                                             Array.isArray(agentObject.artifacts) &&
                                             agentObject.artifacts.length > 0 &&
                                             agentObject.artifacts[0] !== null && (
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    <Typography
-                                                        variant='caption'
-                                                        component='span'
-                                                        sx={{
-                                                            color: '#9e9e9e',
-                                                            mr: 0.5,
-                                                            alignSelf: 'center'
-                                                        }}
-                                                    >
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                                                    <Typography variant='caption' sx={{ color: '#9e9e9e' }}>
                                                         Artifacts:
                                                     </Typography>
-                                                    {agentObject.artifacts.map((artifact: any, idx: number) => {
-                                                        if (!artifact) return null
-                                                        return (
-                                                            <Chip
+                                                    {agentObject.artifacts.map((artifact: Artifact, idx: number) =>
+                                                        artifact ? (
+                                                            <ArtifactRenderer
                                                                 key={idx}
-                                                                label={typeof artifact.name === 'string' ? artifact.name : 'Artifact'}
-                                                                size='small'
-                                                                variant='outlined'
-                                                                sx={{
-                                                                    height: '20px',
-                                                                    fontSize: '0.65rem',
-                                                                    color: 'success.light',
-                                                                    borderColor: 'rgba(76, 175, 80, 0.5)'
-                                                                }}
-                                                                onClick={() =>
-                                                                    artifact.data &&
-                                                                    onSourceDialogClick(
-                                                                        artifact.data,
-                                                                        `${typeof artifact.name === 'string' ? artifact.name : 'Artifact'}`
-                                                                    )
-                                                                }
+                                                                artifact={artifact}
+                                                                index={idx}
+                                                                isAgentReasoning={true}
+                                                                chatflowId={chatflowid}
+                                                                chatId={chatId}
                                                             />
-                                                        )
-                                                    })}
+                                                        ) : null
+                                                    )}
                                                 </Box>
                                             )}
                                     </Box>
@@ -574,6 +578,45 @@ export const MessageCard = ({
                             </CustomAccordion>
                         )
                     })}
+
+                {/* Top-level Artifacts Section */}
+                {(other as any).artifacts && Array.isArray((other as any).artifacts) && (other as any).artifacts.length > 0 && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            width: '100%',
+                            mb: 2
+                        }}
+                    >
+                        {(other as any).artifacts.map((artifact: Artifact, index: number) =>
+                            artifact ? (
+                                <ArtifactRenderer
+                                    key={index}
+                                    artifact={artifact}
+                                    index={index}
+                                    isAgentReasoning={false}
+                                    chatflowId={chatflowid}
+                                    chatId={chatId}
+                                />
+                            ) : null
+                        )}
+                    </Box>
+                )}
+
+                {/* AgentFlow Execution Tree Visualization */}
+                {(other as any).agentFlowExecutedData &&
+                    Array.isArray((other as any).agentFlowExecutedData) &&
+                    (other as any).agentFlowExecutedData.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                            <AgentExecutedDataCard
+                                executedData={(other as any).agentFlowExecutedData}
+                                chatflowId={chatflowid ?? ''}
+                                sessionId={chatId ?? ''}
+                            />
+                        </Box>
+                    )}
 
                 {/* Files and Audio section */}
                 {parsedFileUploads?.length > 0 && (
