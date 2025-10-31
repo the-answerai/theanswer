@@ -9,7 +9,7 @@ import { darkModeTheme } from '../theme'
 import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 import { Auth0Setup } from '@/hooks/useAuth0Setup'
 import dynamic from 'next/dynamic'
 import { PermissionProvider } from '../PermissionProvider'
@@ -45,7 +45,7 @@ export default function AppLayout({
     // }
 
     return (
-        <UserProvider>
+        <Auth0Provider>
             <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.accessToken}>
                 <PermissionProvider initialUser={session?.user as any}>
                     <ThemeProvider theme={darkModeTheme}>
@@ -70,6 +70,6 @@ export default function AppLayout({
                     </ThemeProvider>
                 </PermissionProvider>
             </Auth0Setup>
-        </UserProvider>
+        </Auth0Provider>
     )
 }

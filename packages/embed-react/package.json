@@ -23,10 +23,10 @@
         "@rollup/plugin-terser": "0.4.0",
         "@rollup/plugin-typescript": "11.0.0",
         "@types/node": "18.15.11",
-        "@types/react": "18.2.15",
+        "@types/react": "^19.0.0",
         "aai-embed": "workspace:*",
         "eslint": "8.37.0",
-        "react": "18.2.0",
+        "react": "^19.2.0",
         "rollup": "3.29.5",
         "rollup-plugin-serve": "3.0.0",
         "rollup-plugin-typescript-paths": "1.4.0",
@@ -36,6 +36,6 @@
     },
     "peerDependencies": {
         "aai-embed": "^3.0.10",
-        "react": "18.x"
+        "react": "^19.0.0"
     }
 }

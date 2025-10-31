@@ -2,7 +2,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { store } from '@/store'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { Auth0Provider } from '@auth0/nextjs-auth0/client'
 
 // style + assets
 import '@/assets/scss/style.scss'
@@ -24,11 +24,11 @@ const AppProvider = ({ children, apiHost, accessToken }) => {
         <Provider store={store}>
             <SnackbarProvider>
                 <ConfirmContextProvider>
-                    <UserProvider>
+                    <Auth0Provider>
                         <Auth0Setup apiHost={apiHost} accessToken={accessToken}>
                             <ReactFlowContext>{children}</ReactFlowContext>
                         </Auth0Setup>
-                    </UserProvider>
+                    </Auth0Provider>
                 </ConfirmContextProvider>
             </SnackbarProvider>
         </Provider>

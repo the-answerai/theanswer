@@ -1,6 +1,6 @@
 'use client'
 import { PaletteMode } from '@mui/material'
-import createTheme from '@mui/material/styles/createTheme'
+import { createTheme } from '@mui/material/styles'
 import { teal, grey, deepOrange } from '@mui/material/colors'
 import { theme as studioTheme } from '@/themes'
 import { deepmerge } from '@mui/utils'
