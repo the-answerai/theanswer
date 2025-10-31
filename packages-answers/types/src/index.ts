@@ -350,6 +350,7 @@ export interface Message extends Partial<DB.Message> {
     role: string
     feedbacks?: MessageFeedback[]
     content: string
+    followUpPrompts?: string[]
 }
 
 export type AlgoliaHit = Hit<{

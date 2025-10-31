@@ -390,7 +390,6 @@ const saveCustomTemplate = async (body: any, user: IUser): Promise<any> => {
             customTemplate.apiConfig = chatflow.apiConfig
             customTemplate.speechToText = chatflow.speechToText
             customTemplate.category = chatflow.category
-            customTemplate.type = chatflow.type
             customTemplate.description = customTemplate.description || chatflow.description
         } else if (body.tool) {
             const flowData = {

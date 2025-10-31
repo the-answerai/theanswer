@@ -25,6 +25,7 @@ import { FileUpload } from '../types'
 import isArray from 'lodash/isArray'
 import { SimpleMarkdown } from './SimpleMarkdown'
 import { LoadingAnimation } from './LoadingAnimation'
+import { FollowUpPrompts } from '../FollowUpPrompts'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -68,6 +69,8 @@ interface MessageCardProps extends Partial<Omit<Message, 'content'>>, MessageExt
     ) => void
     isFeedbackAllowed?: boolean
     chatflowid?: string
+    isLastMessage?: boolean
+    followUpPrompts?: string[]
 }
 
 const getLanguageFromClassName = (className: string | undefined) => {
@@ -136,6 +139,8 @@ export const MessageCard = ({
     chatflowid,
     id: messageId,
     usedTools,
+    isLastMessage,
+    followUpPrompts,
     ...other
 }: MessageCardProps) => {
     other = { ...other, role, user } as any
@@ -258,17 +263,6 @@ export const MessageCard = ({
         }
         return fileUploads
     }, [fileUploads])
-
-    // Update the isLastMessage check to use content instead of ID
-    const isLastMessage = React.useMemo(() => {
-        if (!messages || !content) return false
-
-        // Get the last non-user message
-        const lastAiMessage = [...messages].reverse().find((msg) => msg.role !== 'userMessage' && msg.role !== 'user')
-
-        // Compare content to identify if this is the last message
-        return lastAiMessage?.content === content
-    }, [messages, content])
 
     // Modify the effect to detect partial code blocks
     React.useEffect(() => {
@@ -707,6 +701,19 @@ export const MessageCard = ({
                     </Box>
                 ) : null}
             </Box>
+            {/* Follow-up prompts - only show for assistant messages that are the last message */}
+            {role === 'assistant' && isLastMessage && followUpPrompts && followUpPrompts.length > 0 && (
+                <FollowUpPrompts
+                    prompts={followUpPrompts}
+                    onPromptClick={(prompt) => {
+                        // Send the follow-up prompt as a new message
+                        sendMessage({
+                            content: prompt,
+                            sidekick
+                        })
+                    }}
+                />
+            )}
             {(other as any).action && (
                 <Box sx={{ mt: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     {(other as any).action.text && (

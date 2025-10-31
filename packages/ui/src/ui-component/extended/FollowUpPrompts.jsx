@@ -24,7 +24,6 @@ import { AsyncDropdown } from '@/ui-component/dropdown/AsyncDropdown'
 // Icons
 import { IconX } from '@tabler/icons-react'
 import { Dropdown } from '@/ui-component/dropdown/Dropdown'
-import Image from 'next/image'
 
 const promptDescription =
     'Prompt to generate questions based on the conversation history. You can use variable {history} to refer to the conversation history.'
@@ -505,7 +504,7 @@ const FollowUpPrompts = ({ dialogProps }) => {
                                                 backgroundColor: 'white'
                                             }}
                                         >
-                                            <Image
+                                            <img
                                                 style={{
                                                     width: '100%',
                                                     height: '100%',

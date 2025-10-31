@@ -59,17 +59,25 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                     onCancel={() => setShowFeedbackContentDialog(false)}
                     onConfirm={submitFeedbackContent}
                 />
-                {messages?.map((message, index) => (
-                    <MessageCard
-                        {...message}
-                        key={`message_${index}`}
-                        setSelectedDocuments={setSelectedDocuments}
-                        setPreviewCode={setPreviewCode}
-                        openLinksInNewTab={openLinksInNewTab}
-                        role={message.role}
-                        isFeedbackAllowed={chatbotConfig?.chatFeedback?.status}
-                    />
-                ))}
+                {messages?.map((message, index) => {
+                    // Simple check: is this the last message AND is it an assistant message?
+                    // This ensures follow-up prompts only show on the very last assistant response
+                    const isLastMessage = index === messages.length - 1 && message.role === 'assistant'
+
+                    return (
+                        <MessageCard
+                            {...message}
+                            key={`message_${index}`}
+                            setSelectedDocuments={setSelectedDocuments}
+                            setPreviewCode={setPreviewCode}
+                            openLinksInNewTab={openLinksInNewTab}
+                            role={message.role}
+                            isFeedbackAllowed={chatbotConfig?.chatFeedback?.status}
+                            isLastMessage={isLastMessage}
+                            followUpPrompts={message.followUpPrompts}
+                        />
+                    )
+                })}
 
                 {error ? (
                     <>
