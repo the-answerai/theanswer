@@ -11,6 +11,7 @@ export interface Sidekick extends DB.Sidekick {
     constraints: {
         isSpeechToTextEnabled: boolean
         isImageUploadAllowed: boolean
+        isRAGFileUploadAllowed: boolean
         uploadSizeAndTypes: {
             fileTypes: string[]
             maxUploadSize: number
@@ -546,6 +547,7 @@ export interface SidekickListItem extends Pick<DB.Sidekick, 'id' | 'placeholder'
     constraints: {
         isSpeechToTextEnabled: boolean
         isImageUploadAllowed: boolean
+        isRAGFileUploadAllowed: boolean
         uploadSizeAndTypes: {
             fileTypes: string[]
             maxUploadSize: number

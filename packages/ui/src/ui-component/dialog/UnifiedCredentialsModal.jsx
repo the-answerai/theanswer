@@ -77,14 +77,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const isQuickSetupMode = missingCredentials.some((cred) => Object.prototype.hasOwnProperty.call(cred, 'isAssigned'))
     const groupedCredentials = isQuickSetupMode ? groupAllCredentialsByType(missingCredentials) : groupCredentialsByType(missingCredentials)
 
-    console.log('[UnifiedCredentialsModal] missingCredentials:', missingCredentials)
-    console.log('[UnifiedCredentialsModal] isQuickSetupMode:', isQuickSetupMode)
-    console.log('[UnifiedCredentialsModal] groupedCredentials:', groupedCredentials)
-
     // Organize credentials by priority and connection status
     const organizedCredentials = useMemo(() => {
         const organized = organizeCredentialsByPriority(groupedCredentials)
-        console.log('[UnifiedCredentialsModal] organizedCredentials:', organized)
         return organized
     }, [groupedCredentials])
 
@@ -312,7 +307,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         const requiredCreds = organizedCredentials?.required || []
         const hasUnassignedRequired = requiredCreds.some((group) => {
             const nodes = group.nodes || []
-            return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+            return nodes.length > 0 && !nodes.every((node) => credentialAssignments[node.nodeId])
         })
 
         // Show confirmation if there are unassigned required credentials
@@ -323,10 +318,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 confirmButtonName: 'Skip anyway',
                 cancelButtonName: 'Continue setup'
             }
-            
+
             try {
                 const isConfirmed = await confirm(confirmPayload)
-                
+
                 if (!isConfirmed) {
                     return // User chose to continue setup
                 }
@@ -347,30 +342,31 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         const requiredCreds = organizedCredentials?.required || []
         const optionalCreds = organizedCredentials?.optional || []
         const allUnconnected = [...requiredCreds, ...optionalCreds]
-        
+
         const hasUnassignedCredentials = allUnconnected.some((group) => {
             const nodes = group.nodes || []
-            return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+            return nodes.length > 0 && !nodes.every((node) => credentialAssignments[node.nodeId])
         })
 
         // Always show confirmation dialog when closing
         const hasRequired = requiredCreds.length > 0
-        const message = hasUnassignedCredentials && hasRequired
-            ? 'The workflow will not work properly without required credentials. Are you sure you want to close?'
-            : hasUnassignedCredentials
-            ? 'You have not finished setting up credentials. Are you sure you want to close?'
-            : 'Are you sure you want to close?'
-        
+        const message =
+            hasUnassignedCredentials && hasRequired
+                ? 'The workflow will not work properly without required credentials. Are you sure you want to close?'
+                : hasUnassignedCredentials
+                ? 'You have not finished setting up credentials. Are you sure you want to close?'
+                : 'Are you sure you want to close?'
+
         const confirmPayload = {
             title: 'Close without saving?',
             description: message,
             confirmButtonName: 'Close anyway',
             cancelButtonName: 'Continue setup'
         }
-        
+
         try {
             const isConfirmed = await confirm(confirmPayload)
-            
+
             if (!isConfirmed) {
                 return // User chose to continue setup, don't close modal
             }
@@ -436,9 +432,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 <Box display='flex' alignItems='flex-start' gap={2.5}>
                     <Avatar
                         src={`${baseURL}/api/v1/components-credentials-icon/${credentialTypes?.[0] || group.credentialName}`}
-                        sx={{ 
-                            width: 48, 
-                            height: 48, 
+                        sx={{
+                            width: 48,
+                            height: 48,
                             bgcolor: 'grey.100',
                             border: '1px solid',
                             borderColor: 'divider',
@@ -457,8 +453,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                     icon={<IconShieldCheck size={14} />}
                                     label='Connected'
                                     size='small'
-                                    sx={{ 
-                                        fontSize: '0.75rem', 
+                                    sx={{
+                                        fontSize: '0.75rem',
                                         height: 24,
                                         fontWeight: 600,
                                         bgcolor: 'rgba(46, 125, 50, 0.1)',
@@ -475,8 +471,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 <Chip
                                     label='Required'
                                     size='small'
-                                    sx={{ 
-                                        fontSize: '0.75rem', 
+                                    sx={{
+                                        fontSize: '0.75rem',
                                         height: 24,
                                         fontWeight: 600,
                                         bgcolor: 'transparent',
@@ -523,10 +519,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                             }}
                         >
                             <Box sx={{ flex: 1 }}>
-                                <Typography 
-                                    variant='body2' 
-                                    color='text.secondary' 
-                                    sx={{ 
+                                <Typography
+                                    variant='body2'
+                                    color='text.secondary'
+                                    sx={{
                                         fontSize: '13px',
                                         mb: 0.5,
                                         letterSpacing: '0.02em'
@@ -534,10 +530,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 >
                                     Connected as:
                                 </Typography>
-                                <Typography 
-                                    variant='body1' 
-                                    sx={{ 
-                                        fontSize: '15px', 
+                                <Typography
+                                    variant='body1'
+                                    sx={{
+                                        fontSize: '15px',
                                         fontWeight: 600,
                                         color: 'text.primary',
                                         lineHeight: 1.4
@@ -572,9 +568,9 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 color='secondary'
                                 onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
                                 disabled={loading || assigningCredentials}
-                                sx={{ 
-                                    textTransform: 'none', 
-                                    fontWeight: 500, 
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 500,
                                     minWidth: 120,
                                     boxShadow: 'none',
                                     '&:hover': {
@@ -588,8 +584,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                 <Button
                                     variant='outlined'
                                     onClick={() => toggleCredentialExpanded(groupKey)}
-                                    sx={{ 
-                                        textTransform: 'none', 
+                                    sx={{
+                                        textTransform: 'none',
                                         minWidth: 140,
                                         borderColor: 'divider',
                                         color: 'text.primary',
@@ -652,8 +648,8 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                         color='secondary'
                                         onClick={() => handleAddCredential(credentialTypes?.[0] || group.credentialName)}
                                         disabled={loading || assigningCredentials}
-                                        sx={{ 
-                                            textTransform: 'none', 
+                                        sx={{
+                                            textTransform: 'none',
                                             fontWeight: 500,
                                             minWidth: 120,
                                             whiteSpace: 'nowrap',
@@ -686,12 +682,12 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             onClose={handleCancel}
             maxWidth='md'
             fullWidth
-            PaperProps={{ 
-                sx: { 
+            PaperProps={{
+                sx: {
                     borderRadius: 2,
                     bgcolor: 'background.paper',
                     backgroundImage: 'none'
-                } 
+                }
             }}
         >
             <DialogTitle
@@ -706,18 +702,18 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     borderColor: 'secondary.light'
                 }}
             >
-                <Typography 
-                    variant='h4' 
-                    sx={{ 
-                        fontWeight: 700, 
+                <Typography
+                    variant='h4'
+                    sx={{
+                        fontWeight: 700,
                         fontSize: '1.75rem',
                         letterSpacing: '-0.02em'
                     }}
                 >
                     {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
                 </Typography>
-                <IconButton 
-                    onClick={handleCancel} 
+                <IconButton
+                    onClick={handleCancel}
                     size='small'
                     sx={{
                         color: 'text.secondary',
@@ -743,10 +739,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         {hasRequired && (
                             <Box>
                                 <Box sx={{ pt: 2, mb: 2 }}>
-                                    <Typography 
-                                        variant='h6' 
-                                        fontWeight='700' 
-                                        sx={{ 
+                                    <Typography
+                                        variant='h6'
+                                        fontWeight='700'
+                                        sx={{
                                             fontSize: '1.1rem',
                                             mb: 0.5
                                         }}
@@ -757,9 +753,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                         These credentials are essential to use the chatflow
                                     </Typography>
                                 </Box>
-                                <Stack spacing={2}>
-                                    {organizedCredentials.required.map((group) => renderCredentialCard(group))}
-                                </Stack>
+                                <Stack spacing={2}>{organizedCredentials.required.map((group) => renderCredentialCard(group))}</Stack>
                             </Box>
                         )}
 
@@ -767,10 +761,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         {hasOptional && (
                             <Box>
                                 <Box sx={{ mb: 2 }}>
-                                    <Typography 
-                                        variant='h6' 
-                                        fontWeight='700' 
-                                        sx={{ 
+                                    <Typography
+                                        variant='h6'
+                                        fontWeight='700'
+                                        sx={{
                                             fontSize: '1.1rem',
                                             mb: 0.5
                                         }}
@@ -781,9 +775,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                         Optional credentials for additional features
                                     </Typography>
                                 </Box>
-                                <Stack spacing={2}>
-                                    {organizedCredentials.optional.map((group) => renderCredentialCard(group))}
-                                </Stack>
+                                <Stack spacing={2}>{organizedCredentials.optional.map((group) => renderCredentialCard(group))}</Stack>
                             </Box>
                         )}
 
@@ -791,10 +783,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         {hasConnected && (
                             <Box>
                                 <Box sx={{ pt: 2, mb: 2 }}>
-                                    <Typography 
-                                        variant='h6' 
-                                        fontWeight='700' 
-                                        sx={{ 
+                                    <Typography
+                                        variant='h6'
+                                        fontWeight='700'
+                                        sx={{
                                             fontSize: '1.1rem',
                                             mb: 0.5,
                                             color: 'secondary.main'
@@ -803,9 +795,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                         Connected
                                     </Typography>
                                 </Box>
-                                <Stack spacing={2}>
-                                    {organizedCredentials.connected.map((group) => renderCredentialCard(group))}
-                                </Stack>
+                                <Stack spacing={2}>{organizedCredentials.connected.map((group) => renderCredentialCard(group))}</Stack>
                             </Box>
                         )}
                     </Stack>
@@ -836,10 +826,10 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                 </Box>
 
                 <Stack direction='row' spacing={1.5}>
-                    <Button 
-                        onClick={isQuickSetupMode ? handleCancel : handleSkip} 
-                        color='inherit' 
-                        sx={{ 
+                    <Button
+                        onClick={isQuickSetupMode ? handleCancel : handleSkip}
+                        color='inherit'
+                        sx={{
                             textTransform: 'none',
                             px: 2.5,
                             fontWeight: 400
@@ -852,15 +842,15 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         color='secondary'
                         onClick={handleAssignCredentials}
                         disabled={
-                            loading || 
-                            assigningCredentials || 
+                            loading ||
+                            assigningCredentials ||
                             organizedCredentials.required.some((group) => {
                                 // Check if all nodes in this required group have credential assignments
                                 const nodes = group.nodes || []
-                                return nodes.length > 0 && !nodes.every(node => credentialAssignments[node.nodeId])
+                                return nodes.length > 0 && !nodes.every((node) => credentialAssignments[node.nodeId])
                             })
                         }
-                        sx={{ 
+                        sx={{
                             textTransform: 'none',
                             px: 3,
                             fontWeight: 400
@@ -874,7 +864,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
             {/* Confirm Dialog for cancel confirmation */}
             <ConfirmDialog />
-            
+
             {/* Credential creation dialog */}
             <AddEditCredentialDialog
                 show={showCredentialDialog}
