@@ -52,7 +52,6 @@ There are three different .env files you can set environment variables for Answe
 | AUTH_AUTH0_CLIENT_SECRET      | Auth0 client secret for authentication                   | Root                        |
 | AUTH_AUTH0_ISSUER             | Auth0 issuer URL for authentication                      | Root                        |
 | DATABASE_URL                  | Full database connection URL                             | AnswerAgentAI               |
-| VITE_FLAGSMITH_ENVIRONMENT_ID | Flagsmith environment ID                                 | UI                          |
 | NUMBER_OF_PROXIES             | Number of proxies (commented out)                        | Server                      |
 | CORS_ORIGINS                  | Allowed CORS origins (commented out)                     | Server                      |
 | DATABASE_NAME                 | Database name (commented out)                            | Server                      |

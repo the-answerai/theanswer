@@ -46,7 +46,7 @@ import useNotifier from '@/utils/useNotifier'
 import { generateRandomGradient, formatDataGridRows } from '@/utils/genericHelper'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import ExportAsTemplateDialog from '@/ui-component/dialog/ExportAsTemplateDialog'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 const exampleAPIFunc = `/*
 * You can use any libraries imported in AnswerAI
@@ -100,7 +100,8 @@ const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, set
     const [showHowToDialog, setShowHowToDialog] = useState(false)
     const [visibility, setVisibility] = useState(['Private'])
 
-    const flags = useFlags(['org:manage'])
+    const { hasFeature } = usePermissions()
+    const canManageOrg = hasFeature('org:manage')
 
     const [exportAsTemplateDialogOpen, setExportAsTemplateDialogOpen] = useState(false)
     const [exportAsTemplateDialogProps, setExportAsTemplateDialogProps] = useState({})
@@ -555,7 +556,7 @@ const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, set
                         <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
                             <FormGroup>
                                 {TOOL_VISIBILITY_OPTIONS.map((type) => {
-                                    const isDisabled = type === 'Private' || (type === 'Organization' && !flags['org:manage']?.enabled)
+                                    const isDisabled = type === 'Private' || (type === 'Organization' && !canManageOrg)
                                     return (
                                         <FormControlLabel
                                             key={type}

@@ -4,11 +4,10 @@ import auth0 from '@utils/auth/auth0'
 import { authenticateApiKey } from '@utils/auth/authenticateApiKey'
 import * as jose from 'jose'
 import { User } from 'types'
-import flagsmith from 'flagsmith/isomorphic'
 import { getStripeClient } from '@utils/stripe/getStripeClient'
 
 const getCachedSession = cache(
-    async (req?: any, res: any = new Response()): Promise<{ user: User; flagsmithState: any; accessToken: string }> => {
+    async (req?: any, res: any = new Response()): Promise<{ user: User; accessToken: string }> => {
         let session = null
         try {
             session = await (req && res ? auth0.getSession(req, res) : auth0.getSession())
@@ -83,39 +82,6 @@ const getCachedSession = cache(
                 session = { user: apiKeyData.user } as any
             }
         }
-        if (session?.user) {
-            try {
-                await flagsmith.init({
-                    // fetches flags on the server and passes them to the App
-                    environmentID: process.env.FLAGSMITH_ENVIRONMENT_ID!,
-                    ...(session?.user?.email && {
-                        identity: `user_${session?.user?.organizationId}_${
-                            session?.user?.email
-                                ? session.user.email.split('').reduce((a: any, b: any) => {
-                                      a = (a << 5) - a + b.charCodeAt(0)
-                                      return a & a
-                                  }, 0)
-                                : ''
-                        }`,
-                        traits: session.user.roles
-                            ? {
-                                  env: 'production',
-                                  organization: session?.user?.organizationId,
-                                  roles: session?.user?.roles?.join(',') ?? '',
-                                  invited: !!session?.user?.invited,
-                                  domain: session?.user?.email?.split('@')[1]!
-                              }
-                            : undefined
-                    })
-                })
-
-                const flagsmithState = flagsmith.getState()
-                session.flagsmithState = flagsmithState
-            } catch (error: any) {
-                console.error('Error initializing flagsmith:', error.message)
-            }
-        }
-
         // Check for CHATFLOW_DOMAIN_OVERRIDE to override the chatflowDomain
         if (process.env.CHATFLOW_DOMAIN_OVERRIDE) {
             // Override chatflowDomain with the environment variable
@@ -144,7 +110,7 @@ const getCachedSession = cache(
             }
         }
 
-        return session as { user: User; flagsmithState: any; accessToken: string; subscription: any }
+        return session as { user: User; accessToken: string; subscription: any }
     }
 )
 

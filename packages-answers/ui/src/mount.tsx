@@ -1,20 +1,14 @@
 import { ThemeProvider } from '@emotion/react'
-import flagsmith from 'flagsmith'
-import { FlagsmithProvider } from 'flagsmith/react'
 import { darkModeTheme } from './theme'
 import { mount as ogMount } from 'cypress/react18'
 import MockNextRouter from './MockNextRouter'
+import { PermissionProvider } from './PermissionProvider'
 
 export const mount = (children: any) =>
     ogMount(
         <MockNextRouter>
-            <FlagsmithProvider
-                flagsmith={flagsmith}
-                options={{
-                    environmentID: process.env.FLAGSMITH_ENVIRONMENT_ID!
-                }}
-            >
+            <PermissionProvider>
                 <ThemeProvider theme={darkModeTheme}>{children}</ThemeProvider>
-            </FlagsmithProvider>
+            </PermissionProvider>
         </MockNextRouter>
     )

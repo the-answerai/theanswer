@@ -56,7 +56,7 @@ import { baseURL } from '@/store/constant'
 import { SET_COMPONENT_CREDENTIALS } from '@/store/actions'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderColor: theme.palette.grey[900] + 25,
@@ -100,7 +100,7 @@ const Credentials = () => {
     const [componentsCredentials, setComponentsCredentials] = useState([])
     const [orgCredentialsSettings, setOrgCredentialsSettings] = useState([])
     const [tabValue, setTabValue] = useState(0)
-    const flags = useFlags(['org:manage'])
+    const { hasFeature } = usePermissions()
     const [myCredentials, setMyCredentials] = useState([])
     const [organizationCredentials, setOrganizationCredentials] = useState([])
 
@@ -122,7 +122,7 @@ const Credentials = () => {
 
     // Filter component credentials based on org settings
     const getFilteredComponentsCredentials = () => {
-        const isAdmin = flags['org:manage']?.enabled
+        const isAdmin = hasFeature('org:manage')
 
         // Admins see all credentials
         if (isAdmin) {
@@ -341,7 +341,13 @@ const Credentials = () => {
         }
     }, [getAllComponentsCredentialsApi.data, getAllCredentialsApi.data, addNew, edit, dispatch, searchParams])
 
-    const isAdmin = flags?.['org:manage']?.enabled
+    const isAdmin = hasFeature('org:manage')
+
+    useEffect(() => {
+        if (!isAdmin && tabValue !== 0) {
+            setTabValue(0)
+        }
+    }, [isAdmin, tabValue])
 
     return (
         <>
@@ -369,7 +375,7 @@ const Credentials = () => {
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label='credential tabs'>
                                 <Tab label='My Credentials' />
-                                <Tab label='Organization Credentials' />
+                                {isAdmin && <Tab label='Organization Credentials' />}
                             </Tabs>
                         </Box>
 

@@ -7,13 +7,15 @@ import { Divider, List, Typography } from '@mui/material'
 // project imports
 import NavItem from '../NavItem'
 import NavCollapse from '../NavCollapse'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 // ==============================|| SIDEBAR MENU LIST GROUP ||============================== //
 
 const NavGroup = ({ item }) => {
     const theme = useTheme()
-    const flags = useFlags(['org:manage', 'chatflow:manage', 'chatflow:use'])
+    const { hasFeature } = usePermissions()
+    const canUseChatflows = hasFeature('chatflow:use')
+    const canManageChatflows = hasFeature('chatflow:manage')
     const MEMBER_ACTIONS = ['chatflows', 'marketplaces', 'document-stores']
     const BUILDER_ACTIONS = ['agentflows', 'assistants', 'tools', 'credentials', 'variables', 'apikey', 'admin']
 
@@ -22,8 +24,8 @@ const NavGroup = ({ item }) => {
         ?.filter(
             (item) =>
                 // menu list collapse & itemspackages/ui/src/layout/MainLayout/Sidebar/MenuList/NavGroup/index.jsx
-                (MEMBER_ACTIONS?.includes(item.id) && flags['chatflow:use']?.enabled) ||
-                (BUILDER_ACTIONS?.includes(item.id) && flags['chatflow:manage']?.enabled)
+                (MEMBER_ACTIONS?.includes(item.id) && canUseChatflows) ||
+                (BUILDER_ACTIONS?.includes(item.id) && canManageChatflows)
         )
         ?.map((menu) => {
             switch (menu.type) {
