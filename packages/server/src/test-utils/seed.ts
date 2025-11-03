@@ -199,9 +199,15 @@ export const seedTestData = async (config: SeedTestConfig, providedDataSource?: 
                 organizationId: organization.id
             })
         } else {
+            // Preserve defaultChatflowId when updating existing user
+            const existingDefaultChatflowId = user.defaultChatflowId
             user.email = config.user.email
             user.name = config.user.name ?? user.name ?? config.user.email
             user.organizationId = organization.id
+            // Restore defaultChatflowId if it was set
+            if (existingDefaultChatflowId && !user.defaultChatflowId) {
+                user.defaultChatflowId = existingDefaultChatflowId
+            }
         }
         user = await userRepo.save(user)
 
@@ -268,21 +274,30 @@ export const seedTestData = async (config: SeedTestConfig, providedDataSource?: 
         }
 
         const preserveExistingChatflow = config.options?.preserveExistingChatflow === true
+        logger.debug(
+            `[test-utils] preserveExistingChatflow: ${preserveExistingChatflow}, user.defaultChatflowId: ${user.defaultChatflowId}`
+        )
 
         let targetChatflow: ChatFlow | null = null
 
         if (preserveExistingChatflow) {
             if (user.defaultChatflowId) {
+                logger.debug(`[test-utils] Looking for chatflow by defaultChatflowId: ${user.defaultChatflowId}`)
                 targetChatflow = await chatflowRepo.findOne({ where: { id: user.defaultChatflowId } })
+                logger.debug(`[test-utils] Found chatflow by defaultChatflowId: ${!!targetChatflow}`)
             }
 
             if (!targetChatflow) {
+                logger.debug(`[test-utils] Looking for any chatflow for userId: ${user.id}`)
                 targetChatflow = await chatflowRepo.findOne({
                     where: { userId: user.id },
                     order: { createdDate: 'DESC' }
                 })
+                logger.debug(`[test-utils] Found chatflow by userId: ${!!targetChatflow}`)
             }
         }
+
+        logger.info(`[test-utils] Target chatflow: ${targetChatflow ? targetChatflow.id : 'none - will create new'}`)
 
         let template: ChatFlow | null = null
         let flowData: any
@@ -409,14 +424,17 @@ const buildScenarioSeedConfig = (scenario: string, user: SeedTestConfig['user'])
             return {
                 user,
                 credentials: {
-                    openai: { name: 'Seed OpenAI', assigned: true }
+                    openai: [
+                        { name: 'Seed OpenAI 1', assigned: false },
+                        { name: 'Seed OpenAI 2', assigned: false }
+                    ]
                 }
             }
         case 'user-with-exa':
             return {
                 user,
                 credentials: {
-                    exa: { name: 'Seed Exa', assigned: true }
+                    exa: { name: 'Seed Exa', assigned: false }
                 }
             }
         case 'user-with-both-credentials':

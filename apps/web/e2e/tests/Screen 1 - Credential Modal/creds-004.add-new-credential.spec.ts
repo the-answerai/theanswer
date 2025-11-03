@@ -9,13 +9,13 @@ test.describe('Add New Credential', () => {
         console.log('🗑️ Resetting database for clean test state...')
         await resetOnly()
 
-        console.log('🔐 Logging in as admin (creates chatflow)...')
+        console.log('🔐 Logging in as admin (creates user and chatflow)...')
         await loginWithTestUser(page, 'admin', true)
 
-        await expect(page).toHaveURL(/\/chat\//, { timeout: 20000 })
-
-        console.log('🔧 Applying credential scenario: user-with-openai...')
+        console.log('🌱 Applying credential scenario AFTER login: user-with-openai...')
         await seedScenario('user-with-openai', 'admin')
+
+        await expect(page).toHaveURL(/\/chat\//, { timeout: 20000 })
 
         await page.goto('/chat', { waitUntil: 'networkidle' })
         await expect(page).not.toHaveURL(/auth0\.com/)
@@ -27,8 +27,8 @@ test.describe('Add New Credential', () => {
         await waitForLoadingToResolve(modal)
 
         const confluenceCard = getCredentialCard(modal, CREDENTIAL_LABELS.confluence)
-        const addButton = confluenceCard.getByRole('button', { name: /Add New/i })
-        await addButton.click()
+        const connectButton = confluenceCard.getByRole('button', { name: 'Connect' })
+        await connectButton.click()
 
         const addDialog = page
             .locator('div[role="dialog"]')
@@ -45,7 +45,14 @@ test.describe('Add New Credential', () => {
         await addDialog.getByRole('button', { name: /^Add$/ }).click()
         await expect(addDialog).toBeHidden({ timeout: 20000 })
 
+        // Click "Use existing" button to show the dropdown
+        const useExistingButton = confluenceCard.getByRole('button', { name: /Use existing \(\d+\)/ })
+        await expect(useExistingButton).toBeVisible()
+        await useExistingButton.click()
+
+        // Wait for dropdown to appear and then click it
         const dropdown = confluenceCard.getByRole('combobox')
+        await expect(dropdown).toBeVisible({ timeout: 2000 })
         await dropdown.click()
 
         const newlyCreatedOption = page.getByRole('option', { name: credentialName })

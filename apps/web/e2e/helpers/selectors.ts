@@ -14,18 +14,21 @@ export const LOADING_STATES = {
 } as const
 
 export const STATUS_CHIP = {
-    assigned: 'Assigned',
+    connected: 'Connected',
+    required: 'Required',
+    // Legacy support (deprecated - use 'connected' instead)
+    assigned: 'Connected',
     setupRequired: 'Setup Required'
 } as const
 
 export const CREDENTIAL_LABELS = {
-    openai: /OpenAIApi/i,
-    exa: /exaSearchApi/i,
-    jira: /JiraApi/i,
-    confluence: /confluenceCloudApi/i,
-    github: /githubApi/i,
-    contentful: /contentfulManagementApi/i,
-    slack: /slackApi/i
+    openai: /Open\s+AI\s+api/i,
+    exa: /Exa\s+search\s+api/i,
+    jira: /Jira\s+api/i,
+    confluence: /Confluence\s+cloud\s+api/i,
+    github: /Github\s+api/i,
+    contentful: /Contentful\s+management\s+api/i,
+    slack: /Slack\s+api/i
 } as const
 
 export const TEST_IDS = {
@@ -40,7 +43,12 @@ export const BUTTON_TEXTS = {
     logIn: 'Log In',
     signIn: 'Sign In',
     submit: 'Submit',
-    assignAndContinue: 'Assign & Continue'
+    connect: 'Connect',
+    useExisting: /Use existing \(\d+\)/,
+    createNew: 'Create new',
+    closeAnyway: 'Close anyway',
+    // Legacy support (deprecated)
+    assignAndContinue: 'Continue'
 } as const
 
 export const FORM_SELECTORS = {

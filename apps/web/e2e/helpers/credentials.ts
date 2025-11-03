@@ -13,21 +13,25 @@ export const waitForLoadingToResolve = async (modal: Locator): Promise<void> => 
 }
 
 export const getCredentialCard = (modal: Locator, label: RegExp): Locator => {
-    // Find the specific credential heading, then get the closest MuiPaper-root parent (credential card container)
-    return modal
-        .getByRole('heading', { name: label })
-        .locator('xpath=ancestor::div[contains(@class, "MuiPaper-root") and contains(@class, "MuiPaper-elevation1")]')
-        .first()
+    // Find the credential heading and traverse up 4 levels to the card container (MuiPaper-root)
+    // This ensures we scope to the entire credential card, not just the heading row
+    return modal.getByRole('heading', { name: label }).locator('xpath=ancestor::div[4]')
 }
 
 export const expectCredentialStatus = async (
     modal: Locator,
     credentialType: keyof typeof CREDENTIAL_LABELS,
-    expectedStatus: 'assigned' | 'setupRequired'
+    expectedStatus: 'connected' | 'required' | 'assigned' | 'setupRequired'
 ): Promise<void> => {
     const card = getCredentialCard(modal, CREDENTIAL_LABELS[credentialType])
-    const statusText = expectedStatus === 'assigned' ? 'Assigned' : 'Setup Required'
-    await expect(card.getByText(statusText)).toBeVisible()
+
+    if (expectedStatus === 'assigned' || expectedStatus === 'connected') {
+        // Connected credentials show a "Connected" status chip
+        await expect(card.getByText('Connected', { exact: true })).toBeVisible()
+    } else {
+        // Unconnected/optional credentials show a "Connect" button (no status text)
+        await expect(card.getByRole('button', { name: 'Connect' })).toBeVisible()
+    }
 }
 
 export const expectModalVisible = async (page: Page): Promise<Locator> => {

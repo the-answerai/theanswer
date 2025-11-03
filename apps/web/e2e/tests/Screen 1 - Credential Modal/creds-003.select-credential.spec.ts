@@ -1,49 +1,29 @@
 import { test, expect } from '@playwright/test'
 import { loginWithTestUser } from '../../helpers/auth'
 import { resetOnly, seedScenario } from '../../helpers/database'
-import { waitForLoadingToResolve, getCredentialCard } from '../../helpers/credentials'
+import { waitForLoadingToResolve, getCredentialCard, expectModalVisible } from '../../helpers/credentials'
 import { MODAL_TITLES, CREDENTIAL_LABELS } from '../../helpers/selectors'
 
 test.describe('Select Credential', () => {
-    test('allows selecting from dropdown', async ({ page }) => {
-        // Step 1: Clean database for isolated test
+    test.beforeEach(async ({ page }) => {
         console.log('🗑️ Resetting database for clean test state...')
         await resetOnly()
 
-        // Step 2: Login creates real user + default chatflow (Auth0 handles user creation)
-        console.log('🔐 Logging in as admin (creates authenticated user + default chatflow)...')
+        console.log('🔐 Logging in as admin (creates user and chatflow)...')
         await loginWithTestUser(page, 'admin', true)
 
-        // Step 3: Verify we're authenticated and can see user content
-        const userEmail = page.locator('text=' + process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!).first()
-        await expect(userEmail).toBeVisible({ timeout: 10000 })
-        console.log('✅ User authenticated and visible in UI')
+        console.log('🌱 Applying credential scenario AFTER login: user-with-openai...')
+        await seedScenario('user-with-openai', 'admin')
 
-        // Step 4: Ensure we're on /chat/ before seeding so the user exists server-side
         await expect(page).toHaveURL(/\/chat\//, { timeout: 20000 })
 
-        // Step 5: Apply scenario to the logged-in user to create an unassigned OpenAI credential
-        console.log('🔧 Applying credential scenario: user-with-openai...')
-        await seedScenario('user-with-openai')
-
-        // Optional: allow slight delay for database propagation
-        await page.waitForTimeout(2000)
-        console.log('✅ Scenario prepared for dropdown testing')
-
-        // Step 6: Refresh /chat to ensure modal triggers automatically
-        console.log('🚀 Navigating to /chat...')
         await page.goto('/chat', { waitUntil: 'networkidle' })
         await expect(page).not.toHaveURL(/auth0\.com/)
+        await expectModalVisible(page)
+    })
 
-        // Step 6: Wait for modal to appear
-        console.log('⏳ Waiting for credentials modal...')
-        await page.waitForSelector(`[role="dialog"]`, { timeout: 10000 })
-
+    test('allows selecting from dropdown', async ({ page }) => {
         const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
-        await expect(modal).toBeVisible()
-        console.log('✅ Credentials modal appeared')
-
-        // Step 6: Wait for loading to resolve
         await waitForLoadingToResolve(modal)
 
         // Step 7: Look for OpenAI card
@@ -52,16 +32,17 @@ test.describe('Select Credential', () => {
         await expect(openaiCard).toBeVisible()
         console.log('✅ OpenAI card found')
 
-        // Step 8: Check dropdown initial state (should be closed with placeholder)
-        console.log('📋 Checking initial dropdown state...')
-        const dropdown = openaiCard.getByRole('combobox')
-        await expect(dropdown).toBeVisible()
+        // Step 8: Click "Use existing (1)" button to expand the dropdown section
+        console.log('📂 Clicking "Use existing" button to expand dropdown...')
+        const useExistingButton = openaiCard.getByRole('button', { name: /Use existing \(\d+\)/ })
+        await expect(useExistingButton).toBeVisible()
+        await useExistingButton.click()
 
-        // Step 9: Verify dropdown shows placeholder (unassigned state)
-        console.log('🔍 Verifying dropdown shows placeholder...')
-        // The placeholder text is in a sibling element, not inside the combobox itself
-        await expect(openaiCard.getByText('Select Credential').first()).toBeVisible()
-        console.log('✅ Dropdown shows placeholder - credential is unassigned')
+        // Step 9: Wait for the dropdown to appear (Collapse animation)
+        console.log('⏳ Waiting for dropdown to appear...')
+        const dropdown = openaiCard.getByRole('combobox')
+        await expect(dropdown).toBeVisible({ timeout: 2000 })
+        console.log('✅ Dropdown is now visible')
 
         // Step 10: Open dropdown to see available options
         console.log('📂 Opening dropdown to view available credentials...')
