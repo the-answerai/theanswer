@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react'
 import NextLink from 'next/link'
-import { useFlags } from 'flagsmith/react'
 
 import Box from '@mui/material/Box'
 import Tabs from '@mui/material/Tabs'
@@ -16,7 +15,6 @@ import SidekickList from './SidekickList'
 import { AppSettings } from 'types'
 
 const SidekickTabs = ({ appSettings }: { appSettings: AppSettings }) => {
-    const flags = useFlags(['sidekicks_system'])
     const [currentTab, setCurrentTab] = useState('Favorites')
     const [isLoading, setIsLoading] = useState(true)
 

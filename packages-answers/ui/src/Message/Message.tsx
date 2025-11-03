@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react'
 import { AxiosError } from 'axios'
-import { useFlags } from 'flagsmith/react'
 import Image from 'next/image'
 import { JsonViewer } from '@textea/json-viewer'
 import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui/material'
@@ -26,6 +25,7 @@ import isArray from 'lodash/isArray'
 import { SimpleMarkdown } from './SimpleMarkdown'
 import { LoadingAnimation } from './LoadingAnimation'
 import { FollowUpPrompts } from '../FollowUpPrompts'
+import { usePermissions } from '../PermissionProvider'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -144,7 +144,8 @@ export const MessageCard = ({
     ...other
 }: MessageCardProps) => {
     other = { ...other, role, user } as any
-    const { developer_mode } = useFlags(['developer_mode']) // only causes re-render if specified flag values / traits change
+    const { hasFeature } = usePermissions()
+    const isDeveloperMode = hasFeature('developer_mode')
     const { user: currentUser, sendMessageFeedback, sendMessage, appSettings, messages, sidekick } = useAnswers()
     const sourceDocuments = isArray(other.sourceDocuments) ? other.sourceDocuments : JSON.parse(other.sourceDocuments ?? '[]')
     const contextDocumentsBySource: Record<string, Document[]> = React.useMemo(
@@ -930,7 +931,7 @@ export const MessageCard = ({
                     )}
                 </Box>
             ) : null}
-            {developer_mode?.enabled ? (
+            {isDeveloperMode ? (
                 <Box>
                     {sourceDocuments?.length ? (
                         <CustomAccordion TransitionProps={{ unmountOnExit: true }}>

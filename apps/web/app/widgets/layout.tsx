@@ -17,7 +17,7 @@ const WidgetLayout = async ({
     const session = await getCachedSession()
 
     return (
-        <AppWidgetLayout session={session as Session} params={params} flagsmithState={session?.flagsmithState}>
+        <AppWidgetLayout session={session as Session} params={params}>
             {children}
         </AppWidgetLayout>
     )

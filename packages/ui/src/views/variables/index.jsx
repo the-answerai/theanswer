@@ -42,7 +42,7 @@ import variablesApi from '@/api/variables'
 // Hooks
 import useApi from '@/hooks/useApi'
 import useConfirm from '@/hooks/useConfirm'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 // utils
 import useNotifier from '@/utils/useNotifier'
@@ -88,7 +88,8 @@ const Variables = () => {
     const [variables, setVariables] = useState([])
     const [showHowToDialog, setShowHowToDialog] = useState(false)
     const [tabValue, setTabValue] = useState(0)
-    const flags = useFlags(['org:manage'])
+    const { hasFeature } = usePermissions()
+    const isAdmin = hasFeature('org:manage')
     const [myVariables, setMyVariables] = useState([])
     const [organizationVariables, setOrganizationVariables] = useState([])
 
@@ -208,7 +209,11 @@ const Variables = () => {
         }
     }, [getAllVariables.data])
 
-    const isAdmin = flags?.['org:manage']?.enabled
+    useEffect(() => {
+        if (!isAdmin && tabValue !== 0) {
+            setTabValue(0)
+        }
+    }, [isAdmin, tabValue])
 
     return (
         <>
@@ -240,7 +245,7 @@ const Variables = () => {
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label='variable tabs'>
                                 <Tab label='My Variables' />
-                                <Tab label='Organization Variables' />
+                                {isAdmin && <Tab label='Organization Variables' />}
                             </Tabs>
                         </Box>
                         {!isLoading && variables.length === 0 ? (

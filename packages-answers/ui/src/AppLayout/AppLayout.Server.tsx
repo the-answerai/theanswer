@@ -12,7 +12,6 @@ const AppLayoutServer = (props: {
     params?: {
         slug: string
     }
-    flagsmithState?: any
     noDrawer?: boolean
 }) => {
     return (

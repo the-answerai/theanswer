@@ -1,5 +1,4 @@
 import React from 'react'
-import { useFlags } from 'flagsmith/react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
@@ -22,7 +21,6 @@ const PromptCard: React.FC<PromptCardProps> = ({
     // usages,
     onClick
 }) => {
-    const flags = useFlags(['delete_prompt'])
     const { deletePrompt, updatePrompt } = useAnswers()
     const [lastInteraction, setLastInteraction] = React.useState<string>('')
 

@@ -1,6 +1,6 @@
 'use client'
 import axios from 'axios'
-import { useFlags } from 'flagsmith/react'
+import { usePermissions } from './PermissionProvider'
 
 import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
@@ -36,9 +36,10 @@ const AppSyncToolbar = ({
     appSettings?: AppSettings
     onSync?: (s: string) => void
 }) => {
-    const flags = useFlags(['sync', 'confluence'])
+    const { hasFeature } = usePermissions()
+    const canSync = hasFeature('sync')
     const { handleSync } = useSync({ onSync })
-    // if (!flags.sync.enabled) return null;
+    if (!canSync) return null
     return (
         <Accordion
             defaultExpanded={expanded}
@@ -92,7 +93,7 @@ const AppSyncToolbar = ({
                             }}
                             variant='outlined'
                             color='primary'
-                            disabled={!service.enabled && !(flags[service.id] as any)?.enabled}
+                            disabled={!service.enabled}
                             onClick={() => handleSync(service?.name)}
                         >
                             {service.name}

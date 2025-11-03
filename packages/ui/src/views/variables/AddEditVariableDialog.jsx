@@ -38,7 +38,7 @@ import useNotifier from '@/utils/useNotifier'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { Dropdown } from '@/ui-component/dropdown/Dropdown'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 const variableTypes = [
     {
@@ -57,7 +57,8 @@ const AddEditVariableDialog = ({ show, dialogProps, onCancel, onConfirm, setErro
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
 
     const dispatch = useDispatch()
-    const flags = useFlags(['org:manage'])
+    const { hasFeature } = usePermissions()
+    const canManageOrg = hasFeature('org:manage')
 
     // ==============================|| Snackbar ||============================== //
 
@@ -289,7 +290,7 @@ const AddEditVariableDialog = ({ show, dialogProps, onCancel, onConfirm, setErro
                     <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
                         <FormGroup>
                             {['Private', 'Organization'].map((type) => {
-                                const isDisabled = type === 'Private' || (type === 'Organization' && !flags['org:manage']?.enabled)
+                                const isDisabled = type === 'Private' || (type === 'Organization' && !canManageOrg)
                                 return (
                                     <FormControlLabel
                                         key={type}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import axios from 'axios'
-import { useFlags } from 'flagsmith/react'
+import { usePermissions } from './PermissionProvider'
 
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
@@ -28,7 +28,8 @@ interface ModalProps {
 }
 
 const NewDocumentModal: React.FC<ModalProps> = ({ title, onSave, source = 'file' }) => {
-    const flags = useFlags(['organization_override'])
+    const { hasFeature } = usePermissions()
+    const canOverrideOrganization = hasFeature('organization_override')
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [theMessage, setTheMessage] = useState('')
@@ -103,7 +104,7 @@ const NewDocumentModal: React.FC<ModalProps> = ({ title, onSave, source = 'file'
                             {title ?? `Add ${source} document`}
                         </Typography>
 
-                        {flags?.organization_override?.enabled ? (
+                        {canOverrideOrganization ? (
                             <TextField
                                 {...register('organizationId')}
                                 error={Boolean(errors.organizationId)}

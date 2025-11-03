@@ -36,7 +36,7 @@ import chatflowsApi from '@/api/chatflows'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 
 // utils
@@ -48,7 +48,8 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 
 const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, handleDeleteFlow, handleLoadFlow }, ref) => {
     const theme = useTheme()
-    const flags = useFlags(['chatflow:share:external'])
+    const { hasFeature } = usePermissions()
+    const canShareExternally = hasFeature('chatflow:share:external')
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const flowNameRef = useRef()
