@@ -1,7 +1,7 @@
 export interface FileUpload {
     data: string
     preview: string
-    type: 'file' | 'url' | 'audio'
+    type: 'file' | 'url' | 'audio' | 'file:full' | 'file:rag'
     name: string
     mime?: string
     duration?: number

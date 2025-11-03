@@ -27,7 +27,7 @@ import { LoadingAnimation } from './LoadingAnimation'
 import { FollowUpPrompts } from '../FollowUpPrompts'
 import { usePermissions } from '../PermissionProvider'
 import { ArtifactRenderer, Artifact } from './ArtifactRenderer'
-import { AgentExecutedDataCard } from './AgentExecutedDataCard'
+import AgentExecutedDataCard from './AgentExecutedDataCard'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -1131,6 +1131,82 @@ export const MessageCard = ({
                     </Box>
                 </>
             ) : null}
+            {/* Called tools section - Progressive display with spinner */}
+            {(other as any).calledTools && Array.isArray((other as any).calledTools) && (other as any).calledTools.length > 0 && (
+                <Box sx={{ mt: 2, mb: 1 }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                            alignItems: 'center'
+                        }}
+                    >
+                        {(other as any).calledTools.map(({ tool }: any, toolIdx: number) => {
+                            if (!tool) return null
+                            return (
+                                <Chip
+                                    key={`called-${toolIdx}`}
+                                    icon={
+                                        <Box
+                                            component='span'
+                                            sx={{
+                                                width: 15,
+                                                height: 15,
+                                                display: 'inline-flex',
+                                                '& .MuiCircularProgress-root': { width: '15px !important', height: '15px !important' }
+                                            }}
+                                        >
+                                            <svg className='MuiCircularProgress-root' viewBox='22 22 44 44'>
+                                                <circle
+                                                    className='MuiCircularProgress-circle'
+                                                    cx='44'
+                                                    cy='44'
+                                                    r='20'
+                                                    fill='none'
+                                                    stroke='currentColor'
+                                                    strokeWidth='4'
+                                                    style={{
+                                                        strokeDasharray: '80px, 200px',
+                                                        strokeDashoffset: '0px',
+                                                        animation: 'circular-rotate 1.4s linear infinite'
+                                                    }}
+                                                />
+                                            </svg>
+                                        </Box>
+                                    }
+                                    label={tool}
+                                    size='small'
+                                    variant='outlined'
+                                    clickable
+                                    sx={{
+                                        height: '28px',
+                                        fontSize: '0.75rem',
+                                        borderColor: 'primary.main',
+                                        color: 'primary.main',
+                                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                        opacity: 0.9,
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                                            opacity: 1
+                                        },
+                                        '& .MuiChip-icon': {
+                                            color: 'primary.main'
+                                        }
+                                    }}
+                                    onClick={() => {
+                                        setSourceDialogProps({
+                                            data: (other as any).calledTools[toolIdx],
+                                            title: 'Called Tool'
+                                        })
+                                        setSourceDialogOpen(true)
+                                    }}
+                                />
+                            )
+                        })}
+                    </Box>
+                </Box>
+            )}
             {/* Tools used section - Enhanced bubble UI */}
             {usedTools && usedTools.length > 0 && (
                 <Box sx={{ mt: 2, mb: 1 }}>

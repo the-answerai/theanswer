@@ -2,6 +2,7 @@
 import React from 'react'
 import { Box, Card, CardMedia } from '@mui/material'
 import { SimpleMarkdown } from './SimpleMarkdown'
+import { SafeHTML } from '../components/SafeHTML'
 
 export interface Artifact {
     type: 'png' | 'jpeg' | 'html' | 'markdown' | 'csv' | 'json' | string
@@ -57,7 +58,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact, in
         )
     }
 
-    // Handle HTML artifacts
+    // Handle HTML artifacts - using SafeHTML to prevent XSS attacks
     if (artifact.type === 'html') {
         return (
             <Box
@@ -67,7 +68,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({ artifact, in
                     mb: isAgentReasoning ? 1 : 2
                 }}
             >
-                <div dangerouslySetInnerHTML={{ __html: artifact.data }}></div>
+                <SafeHTML html={artifact.data} />
             </Box>
         )
     }

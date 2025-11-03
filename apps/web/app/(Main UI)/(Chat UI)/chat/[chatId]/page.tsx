@@ -3,7 +3,7 @@ import { prisma } from '@db/client'
 import Chat from '@ui/Chat'
 import ChatNotFound from '@ui/ChatNotFound'
 import getCachedSession from '@ui/getCachedSession'
-import { findSidekicksForChat } from '@utils/findSidekicksForChat'
+
 import auth0 from '@utils/auth/auth0'
 import type { Chatflow, Chat as ChatType, User } from 'types'
 
@@ -126,7 +126,6 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
     }
 
     const user = session.user
-    let sidekicks: any[] = []
 
     try {
         const [chat] = await Promise.all([getChat(params.chatId, user)])
@@ -146,11 +145,11 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
 
         // Chat without credential issues - use regular Chat component
         // The Chat component will handle credential checking using useCredentialChecker hook
-        return <Chat {...params} chat={chatWithMessages} journey={chatWithMessages?.journey} sidekicks={sidekicks} />
+        return <Chat {...params} chat={chatWithMessages} journey={chatWithMessages?.journey} />
     } catch (error) {
         console.error('Error loading chat:', error)
         // Even if there's an error, still pass the sidekicks if we have them
-        return <Chat {...params} sidekicks={sidekicks} />
+        return <Chat {...params} />
     }
 }
 
