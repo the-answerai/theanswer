@@ -2,7 +2,6 @@ import React, { ElementType } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { signIn } from 'next-auth/react'
-import { useFlags } from 'flagsmith/react'
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -13,7 +12,6 @@ import CardActionArea from '@mui/material/CardActionArea'
 import CardHeader from '@mui/material/CardHeader'
 import Avatar from '@mui/material/Avatar'
 
-import { useAnswers } from '../AnswersContext'
 import JourneySetting from '../JourneySetting'
 
 import { AnswersFilters, AppService, AppSettings } from 'types'
@@ -41,9 +39,6 @@ const JourneySourceCard: React.FC<JourneySourceCardProps> = ({
     updateFilter,
     ...other
 }) => {
-    const flags = useFlags(['delete_prompt', id])
-    enabled = enabled || flags[id]?.enabled
-    const { deletePrompt, updatePrompt } = useAnswers()
     const [lastInteraction, setLastInteraction] = React.useState<string>('')
     const handleAuthIntegration = () => {
         signIn(providerId)
@@ -78,10 +73,7 @@ const JourneySourceCard: React.FC<JourneySourceCardProps> = ({
                             minHeight: '100%',
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            ...(flags?.delete_prompt?.enabled && {
-                                paddingRight: 4
-                            })
+                            justifyContent: 'space-between'
                         }}
                         disabled={expanded}
                         onClick={onClick}

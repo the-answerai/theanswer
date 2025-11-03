@@ -110,8 +110,6 @@ services:
                 name: aai-unified2-flowise
                 type: web
                 property: hostport
-          - key: FLAGSMITH_ENVIRONMENT_ID
-            sync: false
 
           # =========================================
           # Web External Services
@@ -304,12 +302,6 @@ services:
           - key: LANGFUSE_PUBLIC_KEY
             sync: false
           - key: LANGFUSE_SECRET_KEY
-            sync: false
-
-          # =========================================
-          # Flowise Feature Flags
-          # =========================================
-          - key: FLAGSMITH_ENVIRONMENT_ID
             sync: false
 
           # =========================================

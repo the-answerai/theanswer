@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { useFlags } from 'flagsmith/react'
+import { usePermissions } from './PermissionProvider'
 
 import Box from '@mui/material/Box'
 import Tabs from '@mui/material/Tabs'
@@ -14,7 +14,8 @@ import SyncStatusList from './SyncStatusList'
 import { AppSettings } from 'types'
 
 const SyncStausLists = ({ appSettings }: { appSettings: AppSettings }) => {
-    const flags = useFlags(['web_sync_status'])
+    const { hasFeature } = usePermissions()
+    const canViewWebStatus = hasFeature('web_sync_status')
     const [currentTab, setCurrentTab] = useState('UserDocs')
     const [isLoading, setIsLoading] = useState(true)
 
@@ -45,14 +46,14 @@ const SyncStausLists = ({ appSettings }: { appSettings: AppSettings }) => {
 
             <Tabs value={currentTab} onChange={handleTabChange} centered sx={{ mb: 4 }}>
                 <Tab label='My Stuff' value='UserDocs' />
-                {flags?.web_sync_status?.enabled ? <Tab label='Web' value='Web' /> : null}
+                {canViewWebStatus ? <Tab label='Web' value='Web' /> : null}
             </Tabs>
 
             <Box role='tabpanel' hidden={currentTab !== 'UserDocs'}>
                 <SyncStatusList endpoint={getEndpoint('UserDocs')} appSettings={appSettings} />
             </Box>
 
-            {flags?.web_sync_status?.enabled ? (
+            {canViewWebStatus ? (
                 <Box role='tabpanel' hidden={currentTab !== 'Web'}>
                     <SyncStatusList endpoint={getEndpoint('Web')} appSettings={appSettings} prefilterSource='web' />
                 </Box>

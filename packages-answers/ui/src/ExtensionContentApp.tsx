@@ -1,26 +1,19 @@
 import { ThemeProvider } from '@emotion/react'
-import flagsmith from 'flagsmith'
-import { FlagsmithProvider } from 'flagsmith/react'
 
 import { darkModeTheme } from './theme'
 import { AnswersProvider } from './AnswersContext'
 import ChatExtensionWidget from './ChatExtensionWidget'
 import { User } from 'types'
+import { PermissionProvider } from './PermissionProvider'
 
 const ExtensionContentApp = ({ apiUrl }: { apiUrl: string }) => {
     return (
         <AnswersProvider user={{} as User} appSettings={{}} apiUrl={apiUrl}>
-            <FlagsmithProvider
-                options={{
-                    // @ts-expect-error
-                    environmentID: process.env.FLAGSMITH_ENVIRONMENT_ID!
-                }}
-                flagsmith={flagsmith}
-            >
+            <PermissionProvider>
                 <ThemeProvider theme={darkModeTheme}>
                     <ChatExtensionWidget />
                 </ThemeProvider>
-            </FlagsmithProvider>
+            </PermissionProvider>
         </AnswersProvider>
     )
     // React.useEffect(() => {

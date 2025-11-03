@@ -20,7 +20,6 @@ import type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { usePathname } from 'next/navigation'
 import { Menu, MenuItem, Tooltip } from '@mui/material'
-import { useFlags } from 'flagsmith/react'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'
@@ -38,6 +37,7 @@ import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
+import { usePermissions } from './PermissionProvider'
 
 const drawerWidth = 240
 
@@ -95,17 +95,20 @@ interface AppDrawerProps {
             defaultChatflowId?: string
         }
     }
-    flagsmithState: unknown
 }
 
-export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
+export const AppDrawer = ({ session }: AppDrawerProps) => {
     const user = session?.user
     const [drawerOpen, setDrawerOpen] = useState(true) // Changed to true for open by default
     const [submenuOpen, setSubmenuOpen] = useState('')
     const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-    const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage', 'enterprise_admin'])
+    const { hasFeature, hasRole } = usePermissions()
+    const canUseChatflows = hasFeature('chatflow:use')
+    const canManageChatflows = hasFeature('chatflow:manage')
+    const canManageOrg = hasFeature('org:manage')
+    const isEnterpriseAdminEnabled = hasFeature('enterprise_admin')
 
     // Helper function to determine if this is a public organization
     // TODO: This should be refined to compare against actual PUBLIC_ORG_ID from backend
@@ -124,12 +127,12 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
         const userRoles = user?.roles || []
 
         // Check if user is admin (has org:manage permission or Admin role)
-        if (flags['org:manage']?.enabled || userRoles.includes('Admin')) {
+        if (canManageOrg || userRoles.includes('Admin') || hasRole('Admin')) {
             return 'admin'
         }
 
         // Check if user is builder (has chatflow:manage permission)
-        if (flags['chatflow:manage']?.enabled) {
+        if (canManageChatflows) {
             return 'builder'
         }
 
@@ -219,7 +222,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
         }
 
         // Enterprise Admin - top-level (feature-flagged)
-        if (flags['enterprise_admin']?.enabled && userRole === 'admin') {
+        if (isEnterpriseAdminEnabled && userRole === 'admin') {
             menuConfig.push({
                 id: 'enterprise_admin',
                 text: 'Enterprise Admin',
@@ -251,7 +254,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
             return items.map((item) => {
                 if (!item.subMenu) return item
                 const filteredSubMenu = item.subMenu.filter((subItem) => {
-                    return flags['chatflow:use'].enabled || flags['chatflow:manage'].enabled
+                    return canUseChatflows || canManageChatflows
                 })
                 return { ...item, subMenu: filteredSubMenu }
             })
@@ -260,7 +263,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
         menuConfig = filterMenuItems([
             // Sidekick Store moved under Sidekick Studio
             // Enterprise Admin - top-level (feature-flagged)
-            ...(flags['enterprise_admin']?.enabled && userRole === 'admin'
+            ...(isEnterpriseAdminEnabled && userRole === 'admin'
                 ? [
                       {
                           id: 'enterprise_admin',
@@ -271,7 +274,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                   ]
                 : []),
             // Studio section (collapsible) with Assistants and Document Stores moved in
-            ...(flags['chatflow:use'].enabled
+            ...(canUseChatflows
                 ? [
                       {
                           id: 'studio',
@@ -335,7 +338,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                               ...(userRole === 'admin'
                                   ? [
                                         // Show nested Admin only when enterprise admin flag is disabled
-                                        ...(flags['enterprise_admin']?.enabled
+                              ...(isEnterpriseAdminEnabled
                                             ? []
                                             : [
                                                   {
@@ -358,7 +361,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                   ]
                 : []),
             // Top-level Profile and Billing for public orgs
-            ...(flags['chatflow:use'].enabled
+            ...(canUseChatflows
                 ? [
                       {
                           id: 'profile',
@@ -429,7 +432,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                             />
                         </IconButton>
                         {/* Apps button visibility */}
-                        {(isPrivateOrg || flags['chatflow:manage'].enabled) &&
+                        {(isPrivateOrg || canManageChatflows || canManageOrg) &&
                             (drawerOpen ? (
                                 <Tooltip title='Manage and configure your applications' placement='right'>
                                     <Button
