@@ -19,7 +19,8 @@
         "test:e2e:auth": "pnpm test:e2e:check && npx playwright test auth.spec.ts",
         "test:e2e:auth:headed": "pnpm test:e2e:check && npx playwright test auth.spec.ts --headed",
         "test:e2e:auth:debug": "pnpm test:e2e:check && npx playwright test auth.spec.ts --debug",
-        "test:e2e:report": "npx playwright show-report e2e/playwright-report"
+        "test:e2e:report": "npx playwright show-report e2e/playwright-report",
+        "test:e2e:serial": "pnpm test:e2e:check && npx playwright test --workers=1"
     },
     "dependencies": {
         "@auth0/auth0-react": "2.3.0",
