@@ -37,8 +37,8 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
 
     let token
     try {
-        const { accessToken } = await auth0.getAccessToken({
-            authorizationParams: { organization: user.org_name }
+        const { token: accessToken } = await auth0.getAccessToken({
+            // authorizationParams: { organization: user.org_name }
         })
         if (!accessToken) throw new Error('No access token found')
         token = accessToken

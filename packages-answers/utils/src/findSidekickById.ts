@@ -7,7 +7,7 @@ import { extractAllCredentials } from './extractAllCredentials'
 export async function findSidekickById(user: User, id: string) {
     let token
     try {
-        const { accessToken } = await auth0.getAccessToken({
+        const { token: accessToken } = await auth0.getAccessToken({
             authorizationParams: { organization: user.org_name }
         })
         if (!accessToken) throw new Error('No access token found')

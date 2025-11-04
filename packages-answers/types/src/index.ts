@@ -291,6 +291,9 @@ export interface User extends Omit<DB.User, 'appSettings'> {
     org_id: string
     org_name: string
     roles?: string[]
+    tokenSet?: {
+        accessToken: string
+    }
     // accounts: DB.Account[] | null;
 }
 

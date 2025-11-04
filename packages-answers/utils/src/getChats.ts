@@ -1,4 +1,4 @@
-import auth0 from '@utils/auth/auth0'
+import auth0 from './auth/auth0'
 
 interface User {
     email: string
@@ -17,8 +17,11 @@ export async function getChats(user: User, options: PaginationOptions = {}) {
     // Get auth token for chatflow API
     let token
     try {
-        const { accessToken } = await auth0.getAccessToken({
-            authorizationParams: { organization: user.organizationName }
+        const { token: accessToken } = await auth0.getAccessToken({
+            audience: 'https://theanswer.ai',
+            refresh: true,
+            scope: 'openid profile email'
+            // authorizationParams: { organization: user.organizationName }
         })
         if (!accessToken) throw new Error('No access token found')
         token = accessToken
@@ -44,7 +47,7 @@ export async function getChats(user: User, options: PaginationOptions = {}) {
 
         return await response.json()
     } catch (err: any) {
-        console.error('Error fetching chatflow chats:', err.message)
+        console.error(err)
         return []
     }
 }
