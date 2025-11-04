@@ -1,15 +1,16 @@
 'use client'
 
-import React from 'react'
+import * as React from 'react'
 import dynamic from 'next/dynamic'
 
 const DynamicView = dynamic(() => import('flowise-ui/src/views/chatbot/index'), {
     ssr: false
 })
 
-const Page = ({ params }: { params: { encodedDomain: string; id: string } }) => {
+const Page = async ({ params }: { params: { encodedDomain: string; id: string } }) => {
+    const { encodedDomain, id } = await params
     const apiHost = React.useMemo(() => {
-        const decodedDomain = decodeURIComponent(params.encodedDomain)
+        const decodedDomain = decodeURIComponent(encodedDomain)
         try {
             const decoded = atob(decodedDomain)
             if (decoded.includes('localhost')) {
@@ -23,11 +24,11 @@ const Page = ({ params }: { params: { encodedDomain: string; id: string } }) => 
             }
             return decodedDomain.startsWith('http') ? decodedDomain : `https://${decodedDomain}`
         }
-    }, [params.encodedDomain])
+    }, [encodedDomain])
 
     return (
         <>
-            <DynamicView apiHost={apiHost} chatflowId={params.id} />
+            <DynamicView apiHost={apiHost} chatflowId={id} />
         </>
     )
 }

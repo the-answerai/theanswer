@@ -10,8 +10,8 @@ export default async function ChatUILayout({ children }: { children: React.React
     const apiHost = session?.user?.chatflowDomain
 
     return (
-        <AppProvider apiHost={apiHost} accessToken={session?.accessToken}>
-            <AppLayout apiHost={apiHost} accessToken={session?.accessToken}>
+        <AppProvider apiHost={apiHost} accessToken={session?.tokenSet?.accessToken}>
+            <AppLayout apiHost={apiHost} accessToken={session?.tokenSet?.accessToken}>
                 <ChatLayout>{children}</ChatLayout>
             </AppLayout>
         </AppProvider>

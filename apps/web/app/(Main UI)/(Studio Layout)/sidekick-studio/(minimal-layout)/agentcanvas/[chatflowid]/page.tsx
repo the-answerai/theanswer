@@ -5,10 +5,11 @@ interface ViewProps {
     chatflowid: string
 }
 
-const Page = ({ params }: { params: { chatflowid: string } }) => {
+const Page = async ({ params }: { params: { chatflowid: string } }) => {
+    const { chatflowid } = await params
     return (
         <>
-            <View chatflowid={params.chatflowid} />
+            <View chatflowid={chatflowid} />
         </>
     )
 }

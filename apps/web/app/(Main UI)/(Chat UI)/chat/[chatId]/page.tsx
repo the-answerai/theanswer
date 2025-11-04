@@ -11,8 +11,8 @@ async function getChat(chatId: string, user: User) {
     // Get auth token for chatflow API
     let token
     try {
-        const { accessToken } = await auth0.getAccessToken({
-            authorizationParams: { organization: user.org_name }
+        const { token: accessToken } = await auth0.getAccessToken({
+            // authorizationParams: { organization: user.org_name }
         })
         if (!accessToken) throw new Error('No access token found')
         token = accessToken
@@ -72,8 +72,8 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
     if (!chat?.chatflowChatId) return []
 
     try {
-        const { accessToken } = await auth0.getAccessToken({
-            authorizationParams: { organization: user.org_name }
+        const { token: accessToken } = await auth0.getAccessToken({
+            // authorizationParams: { organization: user.org_name }
         })
         if (!accessToken) throw new Error('No access token found')
 
@@ -126,9 +126,9 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
     }
 
     const user = session.user
-
+    const { chatId } = await params
     try {
-        const [chat] = await Promise.all([getChat(params.chatId, user)])
+        const [chat] = await Promise.all([getChat(chatId, user)])
 
         if (!chat) {
             return <ChatNotFound />
@@ -145,11 +145,11 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
 
         // Chat without credential issues - use regular Chat component
         // The Chat component will handle credential checking using useCredentialChecker hook
-        return <Chat {...params} chat={chatWithMessages} journey={chatWithMessages?.journey} />
+        return <Chat chat={chatWithMessages} journey={chatWithMessages?.journey} />
     } catch (error) {
         console.error('Error loading chat:', error)
         // Even if there's an error, still pass the sidekicks if we have them
-        return <Chat {...params} />
+        return <Chat />
     }
 }
 

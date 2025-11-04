@@ -9,8 +9,8 @@ export const metadata = {
     description: 'Your current Answer Agent chat'
 }
 
-const ChatDetailPage = ({ params }: any) => {
-    return <Chat {...params} />
+const ChatDetailPage = () => {
+    return <Chat />
 }
 
 export default ChatDetailPage

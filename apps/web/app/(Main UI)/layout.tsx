@@ -14,7 +14,7 @@ const MainUiLayout = async (props: {
 }) => {
     const [session] = await Promise.all([getCachedSession()])
 
-    const headersList = headers()
+    const headersList = await headers()
     const host = headersList.get('host') || ''
     const currentDomain = host.split(':')[0] // Remove port if present
     const userDomain = session ? session?.user?.answersDomain?.split('https://')[1] : null // Remove the protocol
@@ -26,6 +26,7 @@ const MainUiLayout = async (props: {
 
     return (
         <AppLayout
+            accessToken={session?.tokenSet?.accessToken}
             appSettings={session?.user?.appSettings!}
             // providers={providers}
             session={JSON.parse(JSON.stringify(session as Session))}

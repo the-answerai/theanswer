@@ -7,10 +7,11 @@ import SidekickSetupModal from '@/components/SidekickSetupModal'
 const View = dynamic(() => import('@/views/canvas/index'), { ssr: false })
 
 const Page = ({ params }: { params: { chatflowid: string } }) => {
+    const { chatflowid } = React.use(params)
     return (
         <>
-            <View chatflowid={params.chatflowid} />
-            <SidekickSetupModal sidekickId={params.chatflowid} />
+            <View chatflowid={chatflowid} />
+            <SidekickSetupModal sidekickId={chatflowid} />
         </>
     )
 }

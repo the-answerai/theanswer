@@ -5,9 +5,8 @@ import AppLayout from 'flowise-ui/src/AppLayout'
 const StudioLayout = async ({ children }: { children: React.ReactElement }) => {
     const session = await getCachedSession()
     const apiHost = session?.user?.chatflowDomain
-
     return (
-        <AppLayout apiHost={apiHost} accessToken={session?.accessToken}>
+        <AppLayout apiHost={apiHost} accessToken={session?.tokenSet?.accessToken}>
             {children}
         </AppLayout>
     )
