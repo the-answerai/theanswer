@@ -1,3 +1,4 @@
+import auth0 from '@utils/auth/auth0'
 import { NextRequest, NextResponse } from 'next/server'
 
 // const allowedOrigins = ['https://localhost:3210'] // TODO: lock this down
@@ -8,8 +9,11 @@ const corsOptions = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 }
 
-export const middleware = function middleware(request: NextRequest) {
+export const middleware = async function middleware(request: NextRequest) {
     // Handle CORS for API routes
+    // Handle simple requests
+    const response = await auth0.middleware(request)
+
     if (request.nextUrl.pathname.startsWith('/api/')) {
         // Check the origin from the request
         const origin = request.headers.get('origin') ?? ''
@@ -26,9 +30,6 @@ export const middleware = function middleware(request: NextRequest) {
             return NextResponse.json({}, { headers: preflightHeaders })
         }
 
-        // Handle simple requests
-        const response = NextResponse.next()
-
         if (isAllowedOrigin) {
             response.headers.set('Access-Control-Allow-Origin', origin)
         }
@@ -40,9 +41,17 @@ export const middleware = function middleware(request: NextRequest) {
         return response
     }
 
-    return NextResponse.next()
+    return response
 }
 
 export const config = {
-    matcher: '/api/:path*'
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+         */
+        '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'
+    ]
 }

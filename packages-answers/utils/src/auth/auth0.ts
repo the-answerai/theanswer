@@ -1,51 +1,37 @@
 // Auth0 v4 configuration
 // In v4, we don't need initAuth0. The configuration is handled by environment variables.
-import { 
-    getSession,
-    updateSession,
-    withApiAuthRequired,
-    withPageAuthRequired,
-    handleAuth,
-    handleCallback,
-    handleLogin,
-    handleLogout,
-    handleProfile
+import {
+    // getSession,
+    // updateSession,
+    // withApiAuthRequired,
+    withPageAuthRequired
+    // handleAuth,
+    // handleCallback,
+    // handleLogin,
+    // handleLogout,
+    // handleProfile
 } from '@auth0/nextjs-auth0'
-
-// Debug logging helper with safety
-const debugLog = (message: string, data?: any) => {
-    if (process.env.AUTH0_DEBUG === 'true' || process.env.DEBUG === 'true') {
-        let dataStr = ''
-        if (data) {
-            try {
-                dataStr = JSON.stringify(data, null, 2)
-            } catch {
-                dataStr = String(data)
-            }
-        }
-        console.log('🔐 AUTH0 DEBUG:', message, dataStr)
-    }
-}
+import { Auth0Client } from '@auth0/nextjs-auth0/server'
 
 const getBaseUrl = () => {
     let baseURL
-    debugLog('Determining base URL...')
+    // console.log('Determining base URL...')
 
     if (process.env.VERCEL_PREVIEW_URL) {
         baseURL = `https://${process.env.VERCEL_PREVIEW_URL}`
-        debugLog('Using VERCEL_PREVIEW_URL', { baseURL })
+        // console.log('Using VERCEL_PREVIEW_URL', { baseURL })
     }
     if (process.env.VERCEL_URL) {
         baseURL = `https://${process.env.VERCEL_URL}`
-        debugLog('Using VERCEL_URL', { baseURL })
+        // console.log('Using VERCEL_URL', { baseURL })
     }
     if (process.env.AUTH0_BASE_URL) {
         baseURL = process.env.AUTH0_BASE_URL
-        debugLog('Using AUTH0_BASE_URL', { baseURL })
+        // console.log('Using AUTH0_BASE_URL', { baseURL })
     }
 
     if (baseURL) {
-        debugLog('Final base URL determined', { baseURL })
+        // console.log('Final base URL determined', { baseURL })
         return baseURL
     }
 
@@ -54,23 +40,36 @@ const getBaseUrl = () => {
     throw new Error(error)
 }
 
-const domain = process.env.AUTH0_BASE_URL?.replace('https://', '')?.replace('http://', '')?.split(':')[0]?.split('.')?.slice(-2)?.join('.')
+const domain = process.env.AUTH0_ISSUER_BASE_URL?.replace('https://', '')?.replace('https://', '')
 
 // Log Auth0 configuration for debugging
 const baseURL = getBaseUrl()
 const authConfig = {
-    secret: process.env.AUTH0_SECRET ? '[REDACTED]' : 'MISSING',
-    issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-    baseURL,
-    clientID: process.env.AUTH0_CLIENT_ID,
-    clientSecret: process.env.AUTH0_CLIENT_SECRET ? '[REDACTED]' : 'MISSING',
-    idTokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'RS256',
-    audience: process.env.AUTH0_AUDIENCE ?? 'https://theanswer.ai',
-    domain,
+    secret: process.env.AUTH0_SECRET,
+    // issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+    appBaseUrl: baseURL,
+    domain: domain,
+    clientId: process.env.AUTH0_CLIENT_ID,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    authorizationParameters: {
+        response_type: 'code',
+        scope: 'openid profile email',
+        audience: process.env.AUTH0_AUDIENCE ?? 'https://theanswer.ai'
+    },
+    session: {
+        cookie: {
+            domain: process.env.AUTH0_DOMAIN
+        }
+    },
+    // routes: {
+    //     callback: '/api/auth/callback'
+    //     // postLogoutRedirect: '/'
+    // },
+
     organizationId: process.env.AUTH0_ORGANIZATION_ID
 }
 
-debugLog('Auth0 configuration', authConfig)
+// console.log('Auth0 configuration', authConfig)
 
 // Export configuration for use with Auth0 v4
 // In v4, the SDK automatically picks up these environment variables:
@@ -86,17 +85,35 @@ export const auth0Config = {
     domain
 }
 
-// Default export for backward compatibility
-const auth0 = {
-    getSession,
-    updateSession,
-    withApiAuthRequired,
-    withPageAuthRequired,
-    handleAuth,
-    handleCallback,
-    handleLogin,
-    handleLogout,
-    handleProfile
-}
+export const auth0 = new Auth0Client({
+    ...auth0Config,
+    async beforeSessionSaved(session, idToken) {
+        console.log('🔐 beforeSessionSaved CALLED')
+        console.log('📋 ID Token param:', JSON.stringify(idToken, null, 2))
+        console.log('📋 Session param:', JSON.stringify(session, null, 2))
+        console.log('👤 Session.user BEFORE:', JSON.stringify(session?.user, null, 2))
+
+        // The claims are already in session.user from the ID token
+        // We just need to map the namespaced claims to cleaner property names
+        const user = session?.user || session
+
+        session.user = {
+            ...user,
+            // Map namespaced roles claim to session.user.roles
+            roles: user['https://theanswer.ai/roles'] || [],
+            // Preserve existing org claims (already in ID token)
+            org_id: user.org_id,
+            org_name: user.org_name,
+            // Preserve domain claims
+            chatflowDomain: user.chatflowDomain,
+            answersDomain: user.answersDomain,
+            // Preserve Stripe customer ID if present
+            stripeCustomerId: user.stripeCustomerId
+        }
+
+        console.log('👤 Session.user AFTER:', JSON.stringify(session?.user, null, 2))
+        return session
+    }
+})
 
 export default auth0
