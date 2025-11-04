@@ -14,7 +14,6 @@ services:
                 - AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
                 - AUTH0_ORGANIZATION_ID=${AUTH0_ORGANIZATION_ID}
                 - AUTH0_DOMAIN=${AUTH0_DOMAIN}
-                - FLAGSMITH_ENVIRONMENT_ID=${FLAGSMITH_ENVIRONMENT_ID}
                 - WEB_AUTH0_SECRET=${WEB_AUTH0_SECRET}
         restart: unless-stopped
         ports:

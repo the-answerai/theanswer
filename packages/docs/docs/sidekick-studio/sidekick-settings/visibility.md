@@ -37,9 +37,9 @@ The component offers the following visibility options:
 -   Certain visibility options may be disabled based on user permissions or organization settings
 -   Tooltips provide information on how to enable restricted options
 
-### Flagsmith Integration
+### Permission Engine Integration
 
--   Uses feature flags to control the availability of certain visibility options
+-   Uses the shared permission manager to gate visibility options based on the user's roles and explicit permissions
 
 ## How to Use
 
@@ -75,7 +75,7 @@ The component offers the following visibility options:
 -   The component uses Redux for state management and dispatching actions
 -   Visibility settings are stored in the `visibility` field of the chatflow data
 -   When saved, the configuration is updated via an API call to `updateChatflow`
--   Feature flags from Flagsmith control the availability of certain visibility options
+-   The shared permission manager determines whether individual visibility options are enabled based on user roles and permissions
 
 ## Error Handling
 

@@ -30,7 +30,6 @@ const MainUiLayout = async (props: {
             // providers={providers}
             session={JSON.parse(JSON.stringify(session as Session))}
             params={props.params}
-            flagsmithState={session?.flagsmithState}
         >
             {props.children}
         </AppLayout>

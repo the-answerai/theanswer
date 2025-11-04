@@ -26,18 +26,7 @@ export const generateFollowUpPrompts = async (
         const providerConfig = followUpPromptsConfig[followUpPromptsConfig.selectedProvider]
         if (!providerConfig) return undefined
         const credentialId = providerConfig.credentialId as string
-
-        let credentialData: ICommonObject
-        try {
-            credentialData = await getCredentialData(credentialId ?? '', options)
-            if (!credentialData || Object.keys(credentialData).length === 0) {
-                console.warn('No credential data found for follow-up prompts, skipping generation')
-                return undefined
-            }
-        } catch (error) {
-            console.error('Error retrieving credential data for follow-up prompts:', error)
-            return undefined
-        }
+        const credentialData = await getCredentialData(credentialId ?? '', options)
         const followUpPromptsPrompt = providerConfig.prompt.replace('{history}', apiMessageContent)
 
         switch (followUpPromptsConfig.selectedProvider) {
@@ -47,6 +36,7 @@ export const generateFollowUpPrompts = async (
                     model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
+                // @ts-ignore
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
                 const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
                 return structuredResponse
@@ -66,7 +56,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 // use structured output parser because withStructuredOutput is not working
-                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType)
+                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType as any)
                 const formatInstructions = parser.getFormatInstructions()
                 const prompt = PromptTemplate.fromTemplate(`
                     ${providerConfig.prompt}
@@ -81,24 +71,13 @@ export const generateFollowUpPrompts = async (
                 return structuredResponse
             }
             case FollowUpPromptProvider.GOOGLE_GENAI: {
-                const llm = new ChatGoogleGenerativeAI({
+                const model = new ChatGoogleGenerativeAI({
                     apiKey: credentialData.googleGenerativeAPIKey,
                     model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
-                // use structured output parser because withStructuredOutput is not working
-                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType)
-                const formatInstructions = parser.getFormatInstructions()
-                const prompt = PromptTemplate.fromTemplate(`
-                    ${providerConfig.prompt}
-                     
-                    {format_instructions}
-                `)
-                const chain = prompt.pipe(llm).pipe(parser)
-                const structuredResponse = await chain.invoke({
-                    history: apiMessageContent,
-                    format_instructions: formatInstructions
-                })
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
                 return structuredResponse
             }
             case FollowUpPromptProvider.MISTRALAI: {
@@ -116,8 +95,10 @@ export const generateFollowUpPrompts = async (
                 const model = new ChatOpenAI({
                     apiKey: credentialData.openAIApiKey,
                     model: providerConfig.modelName,
-                    temperature: parseFloat(`${providerConfig.temperature}`)
+                    temperature: parseFloat(`${providerConfig.temperature}`),
+                    useResponsesApi: true
                 })
+                // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
                 const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
                 return structuredResponse

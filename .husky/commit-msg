@@ -1,0 +1,47 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Validate commit message follows conventional commits format
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Conventional commit pattern: type(scope): description
+# type: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
+# scope: optional
+# description: required
+pattern="^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9_\-]+\))?: .+$"
+
+# Allow merge commits
+if echo "$commit_msg" | grep -qE "^Merge "; then
+  exit 0
+fi
+
+# Allow revert commits
+if echo "$commit_msg" | grep -qE "^Revert "; then
+  exit 0
+fi
+
+# Validate commit message
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Commit message must follow conventional commits format:"
+  echo "  type(scope): description"
+  echo ""
+  echo "Types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert"
+  echo "Scope: optional (e.g., auth, api, ui)"
+  echo ""
+  echo "Examples:"
+  echo "  ✅ feat(auth): add OAuth2 support"
+  echo "  ✅ fix(api): resolve race condition"
+  echo "  ✅ chore(release): staging to production - 2025.11.03"
+  echo "  ✅ docs: update README"
+  echo ""
+  echo "Your message:"
+  echo "  ❌ $commit_msg"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Commit message format is valid"
+exit 0

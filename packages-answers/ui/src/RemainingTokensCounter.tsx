@@ -2,14 +2,20 @@
 
 import { Box, Typography } from '@mui/material'
 import NextLink from 'next/link'
-import { useFlags } from 'flagsmith/react'
 import { useUserPlans } from './hooks/useUserPlan'
 
 export const RemainingTokensCounter: React.FC = () => {
     const { activeUserPlan } = useUserPlans()
-    const flags = useFlags(['unlimited_tier'])
+    const planTokenLimit = activeUserPlan?.plan?.tokenLimit
+    const planName = activeUserPlan?.plan?.name?.toLowerCase() ?? ''
+    const isUnlimitedPlan =
+        planTokenLimit === undefined ||
+        planTokenLimit === null ||
+        planTokenLimit <= 0 ||
+        Number.isNaN(planTokenLimit) ||
+        planName.includes('unlimited')
 
-    const remainingTokens = flags.unlimited_tier.enabled ? Infinity : activeUserPlan?.tokensLeft ?? 0
+    const remainingTokens = isUnlimitedPlan ? Infinity : activeUserPlan?.tokensLeft ?? 0
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography>
@@ -27,7 +33,7 @@ export const RemainingTokensCounter: React.FC = () => {
                         )}
                     </>
                 ) : (
-                    <>Tokens remaining: {flags.unlimited_tier.enabled ? 'unlimited' : remainingTokens}</>
+                    <>Tokens remaining: {isUnlimitedPlan ? 'unlimited' : remainingTokens}</>
                 )}
             </Typography>
         </Box>

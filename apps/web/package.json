@@ -48,7 +48,6 @@
         "db": "workspace:*",
         "encoding": "^0.1.13",
         "experimental-prisma-webpack-plugin": "workspace:*",
-        "flagsmith": "^4.1.4",
         "flowise-ui": "workspace:*",
         "handlebars": "^4.7.8",
         "inngest": "^1.10.1",

@@ -12,7 +12,7 @@ import { StyledButton } from '@/ui-component/button/StyledButton'
 
 // Hooks
 import useNotifier from '@/utils/useNotifier'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 
 // API
 import chatflowsApi from '@/api/chatflows'
@@ -25,7 +25,9 @@ const visibilityOptions = [
 ]
 
 const VisibilitySettings = ({ dialogProps }) => {
-    const flags = useFlags(['chatflow:share:internal', 'org:manage'])
+    const { hasFeature } = usePermissions()
+    const canManageOrg = hasFeature('org:manage')
+    const canShareInternally = hasFeature('chatflow:share:internal')
 
     const dispatch = useDispatch()
     const chatflow = useSelector((state) => state?.canvas?.chatflow) || dialogProps.chatflow
@@ -109,9 +111,9 @@ const VisibilitySettings = ({ dialogProps }) => {
                     {visibilityOptions.map(({ name, description }) => {
                         const isDisabled =
                             name === 'Private' ||
-                            (name === 'Browser Extension' && !flags['org:manage']?.enabled) ||
-                            (name === 'Organization' && !flags['org:manage']?.enabled) ||
-                            (name === 'Marketplace' && !flags['chatflow:share:internal']?.enabled)
+                            (name === 'Browser Extension' && !canManageOrg) ||
+                            (name === 'Organization' && !canManageOrg) ||
+                            (name === 'Marketplace' && !canShareInternally)
                         return (
                             <Box key={name} display='flex' alignItems='center'>
                                 <FormControlLabel

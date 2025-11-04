@@ -3,7 +3,7 @@ import React, { ChangeEvent, useState } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
-import { useFlags } from 'flagsmith/react'
+import { usePermissions } from './PermissionProvider'
 
 import Grid from '@mui/material/Grid'
 import FormControl from '@mui/material/FormControl'
@@ -82,7 +82,8 @@ const SidekickForm = ({
     allTags?: string[]
     contextFields?: any
 }) => {
-    const flags = useFlags(['sidekicks_system'])
+    const { hasFeature } = usePermissions()
+    const canManageSystemSidekicks = hasFeature('sidekicks_system')
     const defaultSliderValues = {
         presence: sidekick?.presence ?? 0,
         temperature: sidekick?.temperature ?? 1,
@@ -262,7 +263,7 @@ const SidekickForm = ({
                                                     <MenuItem value='private'>Private</MenuItem>
                                                     <MenuItem value='org'>My Org</MenuItem>
                                                     <MenuItem value='global'>Global</MenuItem>
-                                                    {flags?.sidekicks_system?.enabled && <MenuItem value='system'>System</MenuItem>}
+                                                    {canManageSystemSidekicks && <MenuItem value='system'>System</MenuItem>}
                                                 </Select>
                                             )}
                                         />

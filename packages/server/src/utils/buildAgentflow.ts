@@ -1895,7 +1895,7 @@ export const executeAgentFlow = async ({
     if (lastNodeOutput?.artifacts) apiMessage.artifacts = JSON.stringify(lastNodeOutput.artifacts)
     if (chatflow.followUpPrompts) {
         const followUpPromptsConfig = JSON.parse(chatflow.followUpPrompts)
-        const followUpPrompts = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
+        const followUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
             chatId,
             chatflowid,
             appDataSource,

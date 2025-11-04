@@ -11,6 +11,7 @@ export interface Sidekick extends DB.Sidekick {
     constraints: {
         isSpeechToTextEnabled: boolean
         isImageUploadAllowed: boolean
+        isRAGFileUploadAllowed: boolean
         uploadSizeAndTypes: {
             fileTypes: string[]
             maxUploadSize: number
@@ -350,6 +351,7 @@ export interface Message extends Partial<DB.Message> {
     role: string
     feedbacks?: MessageFeedback[]
     content: string
+    followUpPrompts?: string[]
 }
 
 export type AlgoliaHit = Hit<{
@@ -545,6 +547,7 @@ export interface SidekickListItem extends Pick<DB.Sidekick, 'id' | 'placeholder'
     constraints: {
         isSpeechToTextEnabled: boolean
         isImageUploadAllowed: boolean
+        isRAGFileUploadAllowed: boolean
         uploadSizeAndTypes: {
             fileTypes: string[]
             maxUploadSize: number

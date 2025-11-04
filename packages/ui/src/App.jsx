@@ -15,34 +15,18 @@ import themes from '@/themes'
 import NavigationScroll from '@/layout/NavigationScroll'
 import { useAuth0 } from '@auth0/auth0-react'
 import useNotifyParentOfNavigation from './utils/useNotifyParentOfNavigation'
-import { useFlagsmith } from 'flagsmith/react'
 
 // ==============================|| APP ||============================== //
 
 const App = () => {
     const customization = useSelector((state) => state.customization)
     const { user, isLoading, getAccessTokenSilently, error, signinWithRedirect } = useAuth0()
-    const flagsmith = useFlagsmith()
     useNotifyParentOfNavigation()
     React.useEffect(() => {
-        if (user) {
-            flagsmith.identify(
-                `user_${user.org_id}_${
-                    user.email
-                        ? user.email.split('').reduce((a, b) => {
-                              a = (a << 5) - a + b.charCodeAt(0)
-                              return a & a
-                          }, 0)
-                        : ''
-                }`,
-                {
-                    roles: user['https://theanswer.ai/roles']?.join(',')
-                }
-            )
-            // TODO: remove replace
-            sessionStorage.setItem('baseURL', user.chatflowDomain?.replace('8080', '4000'))
+        if (user?.chatflowDomain) {
+            sessionStorage.setItem('baseURL', user.chatflowDomain.replace('8080', '4000'))
         }
-    }, [user, flagsmith])
+    }, [user?.chatflowDomain])
     React.useEffect(() => {
         ;(async () => {
             try {

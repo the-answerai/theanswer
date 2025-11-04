@@ -2,7 +2,6 @@
 import React from 'react'
 
 import IntegrationCard from './IntegrationCard'
-import { useFlags } from 'flagsmith/react'
 import { AppService, AppSettings } from 'types'
 import { useRouter } from 'next/navigation'
 import { Box, ClickAwayListener } from '@mui/material'
@@ -14,14 +13,9 @@ export const AppsDrawer = ({ appSettings, activeApp }: { appSettings: AppSetting
     // });
     const router = useRouter()
     const selected = appSettings?.services?.find((item) => item.id === activeApp)
-    const flags = useFlags(appSettings?.services?.map((s) => s.id) ?? [])
-
     const enabledServices: AppService[] | undefined = React.useMemo(
-        () =>
-            appSettings?.services?.filter((service) => {
-                return (flags?.[service.id] as any)?.enabled
-            }) ?? [],
-        [appSettings?.services, flags]
+        () => appSettings?.services?.filter((service) => service.enabled) ?? [],
+        [appSettings?.services]
     )
     // console.log('Expanded', expanded);
     return (
