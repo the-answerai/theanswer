@@ -1,6 +1,3 @@
-const { PrismaPlugin } = require('experimental-prisma-webpack-plugin')
-
-const webpack = require('webpack')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
     enabled: process.env.ANALYZE === 'true'
 })
@@ -36,8 +33,15 @@ let nextConfig = withBundleAnalyzer({
               output: 'standalone'
           }
         : {}),
-    serverExternalPackages: ['canvas', '@aws-sdk/client-s3', '@aws-sdk/signature-v4-crt', '@aws-sdk/s3-request-presigner'],
-    turbo: {
+    serverExternalPackages: [
+        'canvas',
+        '@aws-sdk/client-s3',
+        '@aws-sdk/signature-v4-crt',
+        '@aws-sdk/s3-request-presigner',
+        'puppeteer',
+        'handlebars'
+    ],
+    turbopack: {
         resolveAlias: {
             '@db/*': '../../packages-answers/db/src/*',
             '@utils/*': '../../packages-answers/utils/src/*',
@@ -53,6 +57,12 @@ let nextConfig = withBundleAnalyzer({
             '@/themes/*': '../../packages/ui/src/themes/*',
             '@/themes': '../../packages/ui/src/themes/index',
             '@/assets/images/*': '../../packages/ui/src/assets/images/*'
+        },
+        rules: {
+            '*.svg': {
+                loaders: ['@svgr/webpack'],
+                as: '*.js'
+            }
         }
     },
     typescript: {
@@ -98,50 +108,6 @@ let nextConfig = withBundleAnalyzer({
         AUTH0_SECRET: process.env.AUTH0_SECRET,
         CHATFLOW_DOMAIN_OVERRIDE: process.env.CHATFLOW_DOMAIN_OVERRIDE,
         LANGFUSE_HOST: process.env.LANGFUSE_HOST
-    },
-    webpack: (config, { isServer }) => {
-        config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
-        config.plugins = [
-            ...config.plugins,
-            // new PrismaPlugin(),
-            new webpack.IgnorePlugin({
-                resourceRegExp: /canvas/,
-                contextRegExp: /jsdom$/
-            })
-        ]
-
-        config.module.rules.push({
-            test: /\.svg$/,
-            use: [
-                {
-                    loader: '@svgr/webpack',
-                    options: {
-                        svgo: false
-                    }
-                },
-                {
-                    loader: 'url-loader',
-                    options: {
-                        limit: 8192, // 8kb
-                        name: '[name].[hash:8].[ext]',
-                        outputPath: 'static/images/',
-                        publicPath: '/_next/static/images/'
-                    }
-                }
-            ]
-        })
-        if (isServer) {
-            config.plugins = [...config.plugins, new PrismaPlugin()]
-            // Avoid AWS SDK Node.js require issue
-            // if (nextRuntime === 'nodejs') {
-            //   config.plugins = [
-            //     ...config.plugins,
-            //     new webpack.IgnorePlugin({ resourceRegExp: /^aws-crt$/ })
-            //   ];
-            // }
-        }
-
-        return config
     }
 })
 
