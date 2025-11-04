@@ -101,7 +101,11 @@ const MainLayout = ({ children }) => {
                 {/* <Sidebar drawerOpen={leftDrawerOpened} drawerToggle={handleLeftDrawerToggle} isInIframe={isInIframe} /> */}
             </>
             {/* main content */}
-            <Main theme={theme} open={leftDrawerOpened} isInIframe={isInIframe}>
+            <Main
+                // theme={theme}
+                open={leftDrawerOpened}
+                isInIframe={isInIframe}
+            >
                 {children}
             </Main>
         </Box>
