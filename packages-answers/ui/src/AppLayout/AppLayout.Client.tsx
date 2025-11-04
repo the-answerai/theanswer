@@ -3,7 +3,7 @@ import { Session } from '@auth0/nextjs-auth0'
 import React from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
+import { ThemeProvider } from '@mui/material'
 
 import { darkModeTheme } from '../theme'
 import GlobalStyles from '../GlobalStyles'
@@ -37,23 +37,16 @@ export default function AppLayout({
     }
     noDrawer?: boolean
 }) {
-    // const authorizationParams = {
-    //     organization: session?.user.organizationId,
-    //     redirect_uri: typeof window !== 'undefined' ? window?.location?.origin : '',
-    //     audience: process.env.VITE_AUTH_AUDIENCE,
-    //     scope: 'openid profile email'
-    // }
-
     return (
         <Auth0Provider>
-            <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.accessToken}>
+            <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.tokenSet?.accessToken}>
                 <PermissionProvider initialUser={session?.user as any}>
                     <ThemeProvider theme={darkModeTheme}>
                         <CssBaseline enableColorScheme />
                         <GlobalStyles />
                         <SubscriptionDialogProvider>
                             <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', overflowY: 'auto' }}>
-                                {!noDrawer && <AppDrawer params={params} session={session} />}
+                                {!noDrawer && <AppDrawer session={session} />}
                                 <div style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
                                     <div style={{ width: '100%', position: 'relative' }}>{children}</div>
                                 </div>

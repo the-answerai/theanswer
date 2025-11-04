@@ -329,8 +329,8 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
                     return (
                         <Box
                             component='li'
-                            key={sidekick.id}
                             {...props}
+                            key={sidekick.id}
                             sx={{ p: 0, px: '5px', '&:hover': { backgroundColor: 'transparent' } }}
                         >
                             <SidekickOption

@@ -41,7 +41,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
             try {
                 const res = await fetch(url)
                 if (res.status === 401) {
-                    window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
+                    // window.location.href = '/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
                 } else {
                     const data = await res.json()
                     if (enablePerformanceLogs) {
@@ -62,7 +62,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
             } catch (error) {
                 console.log('error', error)
                 if (error instanceof Response && error.status === 401) {
-                    window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
+                    window.location.href = '/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
                 }
                 return { sidekicks: [], categories: { top: [], more: [] } }
             }

@@ -338,7 +338,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                               ...(userRole === 'admin'
                                   ? [
                                         // Show nested Admin only when enterprise admin flag is disabled
-                              ...(isEnterpriseAdminEnabled
+                                        ...(isEnterpriseAdminEnabled
                                             ? []
                                             : [
                                                   {
@@ -751,7 +751,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()
-                                        window.location.href = '/api/auth/login'
+                                        window.location.href = '/auth/login'
                                     }}
                                 >
                                     Switch Organization

@@ -47,7 +47,7 @@ const Auth = ({ providers }: AuthProps) => {
                         <Typography variant='body1' sx={{ fontSize: '1.1rem', textAlign: 'center', lineHeight: '1.5' }}>
                             Please retry after some time. If the issue persists, reach out to us at max@theanswer.ai
                         </Typography>
-                        <Button variant='contained' type='submit' href='/api/auth/login'>
+                        <Button variant='contained' type='submit' href='/auth/login'>
                             Try again
                         </Button>
                     </Stack>
