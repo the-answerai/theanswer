@@ -16,11 +16,11 @@ interface SidekickApiResponse {
 export async function GET(req: Request, { params }: { params: { id: string } }) {
     const session = await getCachedSession()
     const user = session?.user
-
     if (!session?.user?.email) return respond401()
+    const { id } = await params
 
     try {
-        const sidekick = await findSidekickById(user, params.id)
+        const sidekick = await findSidekickById(user, id)
 
         if (!sidekick) {
             return NextResponse.json({ error: 'Sidekick not found' }, { status: 404 })

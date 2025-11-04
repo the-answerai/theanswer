@@ -7,7 +7,7 @@ import type { Chat } from 'types'
 
 export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Chat>> {
     const user = await getCachedSession()
-    const id = params.id
+    const { id } = await params
 
     const [record] = await prisma.chat.findMany({
         where: {
