@@ -19,8 +19,7 @@ export const useSidekickWithCredentials = (sidekickId, forceQuickSetup = false) 
         mutate,
         isLoading
     } = useSWR(apiUrl, fetcher, {
-        revalidateOnFocus: false,
-        dedupingInterval: 10000
+        revalidateOnFocus: false
     })
 
     const updateSidekick = useCallback(

@@ -7,8 +7,7 @@ export function useApi<T = any>(key: string, apiFunc: () => Promise<{ data: T }>
     }
 
     const { data, error, isLoading, mutate } = useSWR<T>(key, fetcher, {
-        revalidateOnFocus: true,
-        dedupingInterval: 5000
+        revalidateOnFocus: true
     })
 
     return {
