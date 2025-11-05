@@ -72,12 +72,15 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
 
     // Use the optimized fetcher
     const { data, isLoading } = useSWR('/api/sidekicks', fetcher, {
-        fallbackData: { sidekicks: defaultSidekicks, categories: { top: [], more: [] } },
-        revalidateOnFocus: true, // Reduce unnecessary refetches
-        dedupingInterval: 10000 // Dedupe requests within 10 seconds
+        // fallbackData: { sidekicks: defaultSidekicks, categories: { top: [], more: [] } }
+        // revalidateOnFocus: true // Reduce unnecessary refetches
+        // dedupingInterval: 10000 // Dedupe requests within 10 seconds
     })
 
-    const { sidekicks: allSidekicks = [], categories: chatflowCategories = { top: [], more: [] } } = data
+    const { sidekicks: allSidekicks = [], categories: chatflowCategories = { top: [], more: [] } } = data || {
+        sidekicks: defaultSidekicks,
+        categories: { top: [], more: [] }
+    }
 
     // Optimize combinedSidekicks calculation with better dependency tracking
     const combinedSidekicks = useMemo(() => {

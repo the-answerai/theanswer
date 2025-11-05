@@ -5,9 +5,9 @@ import axios from 'axios'
 
 const fetcher = async (url: string): Promise<Sidekick> => axios.get(url).then((res) => res.data)
 const swrConfig = {
-    retry: 2,
-    retryDelay: 1000,
-    dedupingInterval: 2000
+    // retry: 2
+    // retryDelay: 1000,
+    // dedupingInterval: 2000
 }
 
 // Pure SWR hook for declarative usage

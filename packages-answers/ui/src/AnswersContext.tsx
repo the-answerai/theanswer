@@ -208,7 +208,7 @@ export function AnswersProvider({
     const [filters, setFilters] = useState<AnswersFilters>(deepmerge({}, appSettings?.filters, journey?.filters, chat?.filters))
     const { data: selectedSidekickData, mutate: mutateSidekickDetails } = useSidekickDetails(sidekick?.id ?? null)
     const chatbotConfig = React.useMemo(() => selectedSidekickData?.chatbotConfig, [selectedSidekickData])
-
+    console.log('AnswersContext', { selectedSidekickData, chatbotConfig, sidekick })
     // Refs for stable callbacks without message dependency
     const messagesRef = useRef(messages)
     const chatIdRef = useRef(chatId)
@@ -865,15 +865,6 @@ export function AnswersProvider({
                             }))
                         ]
                     }
-
-                    // Use SWR optimistic update to update cache
-                    mutateSidekickDetails(
-                        (current: any) => ({
-                            ...current,
-                            constraints: newConstraints
-                        }),
-                        { revalidate: false }
-                    )
 
                     // Also update local state for immediate reactivity
                     setSidekick((prev) =>

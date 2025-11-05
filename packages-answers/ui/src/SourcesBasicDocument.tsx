@@ -23,7 +23,7 @@ const SourcesBasicDocument: React.FC<{
                 .then((res) => res.json())
                 .then((data) => data.sources),
         {
-            dedupingInterval: 1000
+            // dedupingInterval: 1000
         }
     )
 
