@@ -79,7 +79,6 @@ export function useBillingData() {
     const { data, error, isLoading, mutate } = useSWR<UsageSummary>('/api/billing/usage', fetcher, {
         refreshInterval: 60000, // Refresh every minute
         revalidateOnFocus: true
-        // dedupingInterval: 5000 // Dedupe requests within 5 seconds
     })
 
     return {

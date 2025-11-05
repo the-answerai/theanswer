@@ -7,22 +7,6 @@ import { deepmerge } from '@utils/deepmerge'
 import { clearEmptyValues } from './clearEmptyValues'
 import predictionApi from '@/api/prediction'
 import chatmessagefeedbackApi from '@/api/chatmessagefeedback'
-
-// import {
-//     AnswersFilters,
-//     AppSettings,
-//     Chat,
-//     Journey,
-//     Message,
-//     Prompt,
-//     Sidekick,
-//     User,
-//     MessageFeedback,
-//     SidekickListItem,
-//     ChatbotConfig,
-//     FlowData,
-//     FeedbackPayload
-// } from 'types'
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source'
 
 import { AnswersFilters, AppSettings, Chat, Journey, Message, Prompt, Sidekick, User, SidekickListItem, FeedbackPayload } from 'types'
@@ -208,7 +192,6 @@ export function AnswersProvider({
     const [filters, setFilters] = useState<AnswersFilters>(deepmerge({}, appSettings?.filters, journey?.filters, chat?.filters))
     const { data: selectedSidekickData, mutate: mutateSidekickDetails } = useSidekickDetails(sidekick?.id ?? null)
     const chatbotConfig = React.useMemo(() => selectedSidekickData?.chatbotConfig, [selectedSidekickData])
-    console.log('AnswersContext', { selectedSidekickData, chatbotConfig, sidekick })
     // Refs for stable callbacks without message dependency
     const messagesRef = useRef(messages)
     const chatIdRef = useRef(chatId)
@@ -552,10 +535,6 @@ export function AnswersProvider({
                     question: content,
                     chatId: chatIdRef.current,
                     journeyId: journeyIdRef.current,
-                    // history: messagesRef.current?.map(({ content, role }) => ({
-                    //     message: content,
-                    //     type: role === 'assistant' ? 'apiMessage' : 'userMessage'
-                    // })),
                     uploads: files,
                     audio,
                     socketIOClientId: isChatFlowAvailableToStream ? socketIOClientId : undefined,
@@ -692,15 +671,12 @@ export function AnswersProvider({
                 async onopen(response) {
                     if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
                         setIsChatFlowAvailableToStream(true)
-                        // console.log('Connection established successfully')
-                        // Connection established successfully
                     } else {
                         throw new Error('Failed to establish connection')
                     }
                 },
                 async onmessage(ev) {
                     const payload = JSON.parse(ev.data)
-                    // console.log('payload', payload)
                     switch (payload.event) {
                         case 'start':
                             // Already created an empty message when starting the stream

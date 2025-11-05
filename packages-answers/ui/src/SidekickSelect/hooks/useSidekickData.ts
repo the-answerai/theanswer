@@ -71,11 +71,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
     )
 
     // Use the optimized fetcher
-    const { data, isLoading } = useSWR('/api/sidekicks', fetcher, {
-        // fallbackData: { sidekicks: defaultSidekicks, categories: { top: [], more: [] } }
-        // revalidateOnFocus: true // Reduce unnecessary refetches
-        // dedupingInterval: 10000 // Dedupe requests within 10 seconds
-    })
+    const { data, isLoading } = useSWR('/api/sidekicks', fetcher)
 
     const { sidekicks: allSidekicks = [], categories: chatflowCategories = { top: [], more: [] } } = data || {
         sidekicks: defaultSidekicks,

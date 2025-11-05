@@ -16,15 +16,10 @@ const SourcesBasicDocument: React.FC<{
     placeholder: string
 }> = ({ source, label, placeholder }) => {
     const { filters, updateFilter } = useAnswers()
-    const { data: sources, mutate } = useSWR<DocumentFilter[]>(
-        `/api/sources/${source}`,
-        (url) =>
-            fetch(url)
-                .then((res) => res.json())
-                .then((data) => data.sources),
-        {
-            // dedupingInterval: 1000
-        }
+    const { data: sources, mutate } = useSWR<DocumentFilter[]>(`/api/sources/${source}`, (url) =>
+        fetch(url)
+            .then((res) => res.json())
+            .then((data) => data.sources)
     )
 
     const sourceFilterSources: DocumentFilter[] = (filters?.datasources?.[source] as StandardDocumentUrlFilters)?.url?.sources ?? []
