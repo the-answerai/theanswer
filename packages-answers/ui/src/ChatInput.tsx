@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef, ChangeEvent } from 'react'
 
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
-import AttachFileIcon from '@mui/icons-material/PermMedia'
 import MicIcon from '@mui/icons-material/Mic'
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
@@ -45,16 +44,6 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
     const constraints = sidekick?.constraints
     const [isMessageStopping, setIsMessageStopping] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-    // Debug logging
-    useEffect(() => {
-        console.log('🔍 ChatInput Debug:', {
-            isImageUploadAllowed: constraints?.isImageUploadAllowed,
-            isRAGFileUploadAllowed: constraints?.isRAGFileUploadAllowed,
-            fullFileUpload: fullFileUpload,
-            bothEnabled: constraints?.isImageUploadAllowed && (constraints?.isRAGFileUploadAllowed || fullFileUpload)
-        })
-    }, [constraints?.isImageUploadAllowed, constraints?.isRAGFileUploadAllowed, fullFileUpload])
 
     const recordedAudioUrl = React.useMemo(() => {
         if (!recordedAudio) return ''

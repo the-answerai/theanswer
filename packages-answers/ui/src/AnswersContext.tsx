@@ -580,6 +580,7 @@ export function AnswersProvider({
 
                     // Parse followUpPrompts safely - handle double-stringification from backend
                     let followUpPrompts = undefined
+
                     if (data?.followUpPrompts) {
                         try {
                             followUpPrompts = data.followUpPrompts
@@ -597,6 +598,7 @@ export function AnswersProvider({
                             }
                         } catch (e) {
                             console.error('Failed to parse followUpPrompts:', e)
+
                             followUpPrompts = undefined
                         }
                     }
@@ -723,6 +725,19 @@ export function AnswersProvider({
                             }
                             setMessages((prevMessages) => {
                                 if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+
+                                // PArse followupPrompts safely
+                                let followUpPrompts = undefined
+                                if (payload.data.followUpPrompts) {
+                                    try {
+                                        followUpPrompts =
+                                            typeof payload.data.followUpPrompts === 'string'
+                                                ? JSON.parse(payload.data.followUpPrompts)
+                                                : payload.data.followUpPrompts
+                                    } catch (e) {
+                                        console.error('Failed to parse followUpPrompts:', e)
+                                    }
+                                }
                                 return prevMessages.map((msg, idx) => {
                                     if (idx !== prevMessages.length - 1) return msg
                                     return {
@@ -733,7 +748,7 @@ export function AnswersProvider({
                                                 chatId: payload.data.chatId,
                                                 chatflowid: chatflowid
                                             } as any)),
-                                        ...(payload.data.followUpPrompts && { followUpPrompts: payload.data.followUpPrompts })
+                                        ...(followUpPrompts && { followUpPrompts: followUpPrompts })
                                     }
                                 })
                             })
