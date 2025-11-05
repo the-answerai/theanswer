@@ -9,7 +9,8 @@ interface FollowUpPromptsProps {
 
 export const FollowUpPrompts: React.FC<FollowUpPromptsProps> = ({ prompts, onPromptClick }) => {
     // Safety check for prompts
-    if (!prompts || prompts.length === 0) {
+    if (!prompts || prompts.length === 0 || !Array.isArray(prompts)) {
+        console.log('FollowUpPrompts', { prompts })
         return null
     }
 
