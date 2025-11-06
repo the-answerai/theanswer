@@ -3,6 +3,7 @@ import { getBaseClasses } from '../../../src/utils'
 import { ListKeyOptions, RecordManagerInterface, UpdateOptions } from '@langchain/community/indexes/base'
 import { DataSource } from 'typeorm'
 import { generateSecureNamespace } from '../../../src/aaiUtils'
+import { PostgresConnectionManager } from './utils'
 
 class AAIRecordManager_RecordManager implements INode {
     label: string
@@ -164,12 +165,28 @@ class PostgresRecordManager implements RecordManagerInterface {
     config: PostgresRecordManagerOptions
     tableName: string
     namespace: string
+    private configHash: string
+    private isDestroying = false
 
     constructor(namespace: string, config: PostgresRecordManagerOptions) {
         const { tableName } = config
         this.namespace = namespace
         this.tableName = tableName
         this.config = config
+        // Generate config hash for change detection
+        this.configHash = this.generateConfigHash(config.postgresConnectionOptions)
+    }
+
+    /**
+     * Generate a hash of the connection configuration to detect changes
+     */
+    private generateConfigHash(config: any): string {
+        return JSON.stringify({
+            host: config?.host || 'localhost',
+            port: config?.port || 5432,
+            database: config?.database || 'postgres',
+            username: config?.username || 'postgres'
+        })
     }
 
     sanitizeTableName(tableName: string): string {
@@ -194,13 +211,27 @@ class PostgresRecordManager implements RecordManagerInterface {
             throw new Error('Invalid port number')
         }
 
+        // Prevent use after destroy
+        if (this.isDestroying) {
+            throw new Error('RecordManager is being destroyed')
+        }
+
+        // Check if config has changed
+        const currentHash = this.generateConfigHash(postgresConnectionOptions)
+        if (this.configHash !== currentHash) {
+            console.log('AAI PostgresRecordManager - Config changed, will use new connection')
+            // Destroy old connection with old config
+            await PostgresConnectionManager.destroy(JSON.parse(this.configHash))
+            this.configHash = currentHash
+        }
+
+        // Use singleton connection manager
         try {
-            const dataSource = new DataSource(postgresConnectionOptions)
-            await dataSource.initialize()
-            console.log('PostgresRecordManager - Connection successful')
+            const dataSource = await PostgresConnectionManager.getDataSource(postgresConnectionOptions)
+            console.log('AAI PostgresRecordManager - Connection successful')
             return dataSource
         } catch (error) {
-            console.error('PostgresRecordManager - Connection failed:', error)
+            console.error('AAI PostgresRecordManager - Connection failed:', error)
             throw error
         }
     }
@@ -248,8 +279,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error getting time in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -301,8 +330,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error updating in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -328,8 +355,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error checking existence of keys in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -377,8 +402,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error listing keys in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -398,9 +421,17 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error deleting keys')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
+    }
+
+    /**
+     * Cleanup method to explicitly destroy the DataSource connection for this configuration.
+     * This removes the connection from the singleton pool.
+     * Note: This only destroys the connection if no other RecordManager instances are using it.
+     */
+    async destroy(): Promise<void> {
+        this.isDestroying = true
+        await PostgresConnectionManager.destroy(this.config.postgresConnectionOptions)
     }
 }
 

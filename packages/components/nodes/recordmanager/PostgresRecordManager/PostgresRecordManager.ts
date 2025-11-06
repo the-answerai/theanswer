@@ -3,7 +3,7 @@ import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../
 import { ListKeyOptions, RecordManagerInterface, UpdateOptions } from '@langchain/community/indexes/base'
 import { DataSource } from 'typeorm'
 import { getHost, getSSL } from '../../vectorstores/Postgres/utils'
-import { getDatabase, getPort, getTableName } from './utils'
+import { getDatabase, getPort, getTableName, PostgresConnectionManager } from './utils'
 
 const serverCredentialsExists = !!process.env.POSTGRES_RECORDMANAGER_USER && !!process.env.POSTGRES_RECORDMANAGER_PASSWORD
 
@@ -187,12 +187,28 @@ class PostgresRecordManager implements RecordManagerInterface {
     config: PostgresRecordManagerOptions
     tableName: string
     namespace: string
+    private configHash: string
+    private isDestroying = false
 
     constructor(namespace: string, config: PostgresRecordManagerOptions) {
         const { tableName } = config
         this.namespace = namespace
         this.tableName = tableName
         this.config = config
+        // Generate config hash for change detection
+        this.configHash = this.generateConfigHash(config.postgresConnectionOptions)
+    }
+
+    /**
+     * Generate a hash of the connection configuration to detect changes
+     */
+    private generateConfigHash(config: any): string {
+        return JSON.stringify({
+            host: config?.host || 'localhost',
+            port: config?.port || 5432,
+            database: config?.database || 'postgres',
+            username: config?.username || 'postgres'
+        })
     }
 
     sanitizeTableName(tableName: string): string {
@@ -216,9 +232,23 @@ class PostgresRecordManager implements RecordManagerInterface {
         if (postgresConnectionOptions.port === 3006) {
             throw new Error('Invalid port number')
         }
-        const dataSource = new DataSource(postgresConnectionOptions)
-        await dataSource.initialize()
-        return dataSource
+
+        // Prevent use after destroy
+        if (this.isDestroying) {
+            throw new Error('RecordManager is being destroyed')
+        }
+
+        // Check if config has changed
+        const currentHash = this.generateConfigHash(postgresConnectionOptions)
+        if (this.configHash !== currentHash) {
+            console.log('PostgresRecordManager - Config changed, will use new connection')
+            // Destroy old connection with old config
+            await PostgresConnectionManager.destroy(JSON.parse(this.configHash))
+            this.configHash = currentHash
+        }
+
+        // Use singleton connection manager
+        return PostgresConnectionManager.getDataSource(postgresConnectionOptions)
     }
 
     async createSchema(): Promise<void> {
@@ -266,8 +296,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error getting time in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -319,8 +347,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error updating in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -346,8 +372,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error checking existence of keys in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -395,8 +419,6 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error listing keys in PostgresRecordManager:')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
     }
 
@@ -416,9 +438,17 @@ class PostgresRecordManager implements RecordManagerInterface {
         } catch (error) {
             console.error('Error deleting keys')
             throw error
-        } finally {
-            await dataSource.destroy()
         }
+    }
+
+    /**
+     * Cleanup method to explicitly destroy the DataSource connection for this configuration.
+     * This removes the connection from the singleton pool.
+     * Note: This only destroys the connection if no other RecordManager instances are using it.
+     */
+    async destroy(): Promise<void> {
+        this.isDestroying = true
+        await PostgresConnectionManager.destroy(this.config.postgresConnectionOptions)
     }
 }
 
