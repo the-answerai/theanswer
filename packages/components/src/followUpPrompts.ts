@@ -103,6 +103,65 @@ export const generateFollowUpPrompts = async (
                 const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
                 return structuredResponse
             }
+            case FollowUpPromptProvider.AAI_OPENAI: {
+                const aaiOpenAIApiKey = process.env.AAI_DEFAULT_OPENAI_API_KEY
+                if (!aaiOpenAIApiKey) {
+                    throw new Error('AAI_DEFAULT_OPENAI_API_KEY environment variable is not set')
+                }
+                const model = new ChatOpenAI({
+                    apiKey: aaiOpenAIApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`),
+                    useResponsesApi: true
+                })
+                // @ts-ignore
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_ANTHROPIC: {
+                const aaiAnthropicApiKey = process.env.AAI_DEFAULT_ANTHROPHIC
+                if (!aaiAnthropicApiKey) {
+                    throw new Error('AAI_DEFAULT_ANTHROPHIC environment variable is not set')
+                }
+                const llm = new ChatAnthropic({
+                    apiKey: aaiAnthropicApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`)
+                })
+                // @ts-ignore
+                const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_GOOGLE_GENAI: {
+                const aaiGoogleGenAIApiKey = process.env.AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY
+                if (!aaiGoogleGenAIApiKey) {
+                    throw new Error('AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set')
+                }
+                const model = new ChatGoogleGenerativeAI({
+                    apiKey: aaiGoogleGenAIApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`)
+                })
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_GROQ: {
+                const aaiGroqApiKey = process.env.AAI_DEFAULT_GROQ
+                if (!aaiGroqApiKey) {
+                    throw new Error('AAI_DEFAULT_GROQ environment variable is not set')
+                }
+                const llm = new ChatGroq({
+                    apiKey: aaiGroqApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`)
+                })
+                const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                return structuredResponse
+            }
             case FollowUpPromptProvider.GROQ: {
                 const llm = new ChatGroq({
                     apiKey: credentialData.groqApiKey,
