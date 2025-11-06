@@ -31,13 +31,7 @@ const mergeUsers = (initialUser?: Partial<User>, runtimeUser?: Partial<User> | n
     return merged as Partial<User>
 }
 
-export const PermissionProvider = ({
-    initialUser,
-    children
-}: {
-    initialUser?: Partial<User>
-    children: React.ReactNode
-}) => {
+export const PermissionProvider = ({ initialUser, children }: { initialUser?: Partial<User>; children: React.ReactNode }) => {
     const { user: runtimeUser } = useUser()
     const mergedUser = React.useMemo(() => mergeUsers(initialUser, runtimeUser as Partial<User>), [initialUser, runtimeUser])
     const manager = React.useMemo(() => createPermissionManager(mergedUser ?? {}), [mergedUser])

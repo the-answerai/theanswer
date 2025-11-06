@@ -197,22 +197,22 @@ const abortChatMessage = async (chatId: string, chatflowid: string) => {
 async function getAllMessages(user: IUser): Promise<ChatMessage[]> {
     const appServer = getRunningExpressApp()
     // SECURITY: Filter by both userId and organizationId for defense-in-depth
-    return await appServer.AppDataSource.getRepository(ChatMessage).find({ 
-        where: { 
+    return await appServer.AppDataSource.getRepository(ChatMessage).find({
+        where: {
             userId: user.id,
             organizationId: user.organizationId
-        } 
+        }
     })
 }
 
 async function getAllMessagesFeedback(user: IUser): Promise<ChatMessageFeedback[]> {
     const appServer = getRunningExpressApp()
     // SECURITY: Filter by both userId and organizationId for defense-in-depth
-    return await appServer.AppDataSource.getRepository(ChatMessageFeedback).find({ 
-        where: { 
+    return await appServer.AppDataSource.getRepository(ChatMessageFeedback).find({
+        where: {
             userId: user.id,
             organizationId: user.organizationId
-        } 
+        }
     })
 }
 

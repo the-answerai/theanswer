@@ -210,7 +210,9 @@ function CustomLabel({ icon: Icon, itemStatus, children, name, label, data, meta
                 >
                     <IconArrowsMaximize size={15} color={'teal'} />
                 </IconButton>
-                {Icon && <Box component={Icon} className='labelIcon' color={getIconColor(itemStatus || '')} sx={{ ml: 1, fontSize: '1.2rem' }} />}
+                {Icon && (
+                    <Box component={Icon} className='labelIcon' color={getIconColor(itemStatus || '')} sx={{ ml: 1, fontSize: '1.2rem' }} />
+                )}
             </Box>
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth='md' fullWidth>
                 <DialogContent onClick={(e) => e.stopPropagation()}>
@@ -252,11 +254,15 @@ const getIconFromStatus = (status: string, theme: any) => {
         case 'TIMEOUT':
             return ErrorIcon
         case 'TERMINATED':
+            // eslint-disable-next-line react/display-name
             return (props: any) => <IconCircleXFilled {...props} color={theme.palette.error.main} />
         case 'STOPPED':
             return StopCircleIcon
         case 'INPROGRESS':
-            return (props: any) => <IconLoader {...props} color={theme.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
+            // eslint-disable-next-line react/display-name
+            return (props: any) => (
+                <IconLoader {...props} color={theme.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
+            )
     }
 }
 
@@ -425,10 +431,10 @@ const AgentExecutedDataCard = ({ executedData, chatflowId, sessionId }: AgentExe
                 const iterationStatus = childNodes.some((n: any) => n.status === 'ERROR')
                     ? 'ERROR'
                     : childNodes.some((n: any) => n.status === 'INPROGRESS')
-                      ? 'INPROGRESS'
-                      : childNodes.every((n: any) => n.status === 'FINISHED')
-                        ? 'FINISHED'
-                        : 'UNKNOWN'
+                    ? 'INPROGRESS'
+                    : childNodes.every((n: any) => n.status === 'FINISHED')
+                    ? 'FINISHED'
+                    : 'UNKNOWN'
 
                 // Create the virtual node and add to nodeMap
                 const virtualNode = {
@@ -695,7 +701,9 @@ const AgentExecutedDataCard = ({ executedData, chatflowId, sessionId }: AgentExe
                         onSelectedItemsChange={handleNodeSelect}
                         items={executionTree}
                         slots={{
-                            item: (treeItemProps: any) => <CustomTreeItem {...treeItemProps} agentflowId={chatflowId} sessionId={sessionId} />
+                            item: (treeItemProps: any) => (
+                                <CustomTreeItem {...treeItemProps} agentflowId={chatflowId} sessionId={sessionId} />
+                            )
                         }}
                         sx={{ width: '100%' }}
                     />

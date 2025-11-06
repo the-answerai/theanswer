@@ -125,21 +125,24 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError, persistDismissPreference]
     )
 
-    const handleModalSkip = useCallback(async (options) => {
-        const confirmPayload = {
-            title: 'Skip credential setup?',
-            description: 'The chat flow will not work properly without credentials. Are you sure you want to skip setup?',
-            confirmButtonName: 'Skip anyway',
-            cancelButtonName: 'Continue setup'
-        }
-        const isConfirmed = await confirm(confirmPayload)
+    const handleModalSkip = useCallback(
+        async (options) => {
+            const confirmPayload = {
+                title: 'Skip credential setup?',
+                description: 'The chat flow will not work properly without credentials. Are you sure you want to skip setup?',
+                confirmButtonName: 'Skip anyway',
+                cancelButtonName: 'Continue setup'
+            }
+            const isConfirmed = await confirm(confirmPayload)
 
-        if (isConfirmed) {
-            setHasSkipped(true)
-            persistDismissPreference(options)
-            handleURLCleanup()
-        }
-    }, [handleURLCleanup, persistDismissPreference, confirm])
+            if (isConfirmed) {
+                setHasSkipped(true)
+                persistDismissPreference(options)
+                handleURLCleanup()
+            }
+        },
+        [handleURLCleanup, persistDismissPreference, confirm]
+    )
 
     const handleModalCancel = useCallback(
         (options) => {

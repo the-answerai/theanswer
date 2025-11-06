@@ -134,7 +134,11 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                             disabled={isIntegrationEnabled && !expanded}
                                             onClick={handleAuthIntegration}
                                         >
-                                            {expanded && isIntegrationEnabled ? 'Refresh auth' : isIntegrationEnabled ? 'Connected' : 'Connect'}
+                                            {expanded && isIntegrationEnabled
+                                                ? 'Refresh auth'
+                                                : isIntegrationEnabled
+                                                ? 'Connected'
+                                                : 'Connect'}
                                         </Button>
                                     ) : null
                                 }
