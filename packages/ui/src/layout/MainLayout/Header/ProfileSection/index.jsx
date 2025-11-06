@@ -181,8 +181,6 @@ const ProfileSection = ({ username, handleLogout }) => {
         return array[0]
     }
 
-
-
     // ==============================|| Snackbar ||============================== //
 
     useNotifier()

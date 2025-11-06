@@ -21,23 +21,11 @@ import {
     Chip,
     Checkbox,
     FormControlLabel,
-    Collapse,
-    Divider
+    Collapse
 } from '@mui/material'
-import {
-    IconPlus,
-    IconX,
-    IconUserShield,
-    IconShieldCheck,
-    IconEdit,
-    IconLink,
-    IconUnlink,
-    IconChevronDown,
-    IconChevronUp
-} from '@tabler/icons-react'
+import { IconX, IconUserShield, IconShieldCheck, IconEdit } from '@tabler/icons-react'
 
 // project imports
-import { StyledButton } from '@/ui-component/button/StyledButton'
 import AddEditCredentialDialog from '@/views/credentials/AddEditCredentialDialog'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import {
@@ -819,7 +807,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         }
                         label={
                             <Typography variant='body2' color='text.secondary'>
-                                Don't show this again
+                                Don&apos;t show this again
                             </Typography>
                         }
                     />
