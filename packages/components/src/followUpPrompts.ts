@@ -23,6 +23,7 @@ const FollowUpPromptType = z
  */
 const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: FollowUpPromptConfig, providerConfig: any): any[] => {
     const parentLangfuseTrace = options.parentLangfuseTrace
+    const messageId = options.messageId // The message this follow-up is for
 
     // Check if Langfuse is configured via env vars
     if (!process.env.LANGFUSE_SECRET_KEY) {
@@ -30,24 +31,30 @@ const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: 
     }
 
     try {
+        // Build metadata with clear linkage to the conversation message
+        const metadata: any = {
+            chatId: options.chatId,
+            chatflowid: options.chatflowid,
+            component: 'follow-up-prompts',
+            provider: followUpPromptsConfig.selectedProvider,
+            modelName: providerConfig.modelName,
+            // Link to the specific message this follow-up is generated for
+            forMessageId: messageId,
+            traceType: 'follow-up-generation'
+        }
+
         const handlerConfig: any = {
             publicKey: process.env.LANGFUSE_PUBLIC_KEY,
             secretKey: process.env.LANGFUSE_SECRET_KEY,
             baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
             sessionId: options.sessionId,
             userId: options.userId,
-            metadata: {
-                chatId: options.chatId,
-                chatflowid: options.chatflowid,
-                component: 'follow-up-prompts',
-                provider: followUpPromptsConfig.selectedProvider,
-                modelName: providerConfig.modelName
-            },
-            tags: ['follow-up-prompts']
+            metadata,
+            tags: ['follow-up-prompts', `chat:${options.chatId}`, messageId ? `message:${messageId}` : null].filter(Boolean)
         }
 
         // For agentflows: nest under parent trace
-        // For chatflows: create standalone trace linked by sessionId
+        // For chatflows: create standalone trace linked by sessionId + metadata
         if (parentLangfuseTrace) {
             handlerConfig.root = parentLangfuseTrace
             handlerConfig.updateRoot = false
