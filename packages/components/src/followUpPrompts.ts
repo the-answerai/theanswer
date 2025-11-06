@@ -23,12 +23,17 @@ const FollowUpPromptType = z
  */
 const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: FollowUpPromptConfig, providerConfig: any): any[] => {
     const parentLangfuseTrace = options.parentLangfuseTrace
-    if (!parentLangfuseTrace) return []
+
+    // Check if Langfuse is configured via env vars
+    if (!process.env.LANGFUSE_SECRET_KEY) {
+        return []
+    }
 
     try {
-        const handler = new CallbackHandler({
-            root: parentLangfuseTrace,
-            updateRoot: false,
+        const handlerConfig: any = {
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+            secretKey: process.env.LANGFUSE_SECRET_KEY,
+            baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
             sessionId: options.sessionId,
             userId: options.userId,
             metadata: {
@@ -39,7 +44,16 @@ const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: 
                 modelName: providerConfig.modelName
             },
             tags: ['follow-up-prompts']
-        })
+        }
+
+        // For agentflows: nest under parent trace
+        // For chatflows: create standalone trace linked by sessionId
+        if (parentLangfuseTrace) {
+            handlerConfig.root = parentLangfuseTrace
+            handlerConfig.updateRoot = false
+        }
+
+        const handler = new CallbackHandler(handlerConfig)
         return [handler]
     } catch (error) {
         console.warn('Failed to create Langfuse handler for follow-up prompts:', error)
@@ -60,7 +74,7 @@ export const generateFollowUpPrompts = async (
         const credentialData = await getCredentialData(credentialId ?? '', options)
         const followUpPromptsPrompt = providerConfig.prompt.replace('{history}', apiMessageContent)
 
-        // Create Langfuse callback handlers for tracking (if parent trace exists)
+        // Create Langfuse callback handlers for tracking
         const callbacks = createLangfuseCallbacks(options, followUpPromptsConfig, providerConfig)
 
         switch (followUpPromptsConfig.selectedProvider) {
