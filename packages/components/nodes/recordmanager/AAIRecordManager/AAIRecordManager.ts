@@ -237,9 +237,9 @@ class PostgresRecordManager implements RecordManagerInterface {
     }
 
     async createSchema(): Promise<void> {
+        const dataSource = await this.getDataSource()
+        const queryRunner = dataSource.createQueryRunner()
         try {
-            const dataSource = await this.getDataSource()
-            const queryRunner = dataSource.createQueryRunner()
             const tableName = this.sanitizeTableName(this.tableName)
 
             await queryRunner.manager.query(`
@@ -255,8 +255,6 @@ class PostgresRecordManager implements RecordManagerInterface {
   CREATE INDEX IF NOT EXISTS key_index ON "${tableName}" (key);
   CREATE INDEX IF NOT EXISTS namespace_index ON "${tableName}" (namespace);
   CREATE INDEX IF NOT EXISTS group_id_index ON "${tableName}" (group_id);`)
-
-            await queryRunner.release()
         } catch (e: any) {
             // This error indicates that the table already exists
             // Due to asynchronous nature of the code, it is possible that
@@ -266,19 +264,22 @@ class PostgresRecordManager implements RecordManagerInterface {
                 return
             }
             throw e
+        } finally {
+            await queryRunner.release()
         }
     }
 
     async getTime(): Promise<number> {
         const dataSource = await this.getDataSource()
+        const queryRunner = dataSource.createQueryRunner()
         try {
-            const queryRunner = dataSource.createQueryRunner()
             const res = await queryRunner.manager.query('SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)')
-            await queryRunner.release()
             return Number.parseFloat(res[0].extract)
         } catch (error) {
             console.error('Error getting time in PostgresRecordManager:')
             throw error
+        } finally {
+            await queryRunner.release()
         }
     }
 
@@ -326,10 +327,11 @@ class PostgresRecordManager implements RecordManagerInterface {
         const query = `INSERT INTO "${tableName}" (key, namespace, updated_at, group_id) VALUES ${valuesPlaceholders} ON CONFLICT (key, namespace) DO UPDATE SET updated_at = EXCLUDED.updated_at;`
         try {
             await queryRunner.manager.query(query, recordsToUpsert.flat())
-            await queryRunner.release()
         } catch (error) {
             console.error('Error updating in PostgresRecordManager:')
             throw error
+        } finally {
+            await queryRunner.release()
         }
     }
 
@@ -350,11 +352,12 @@ class PostgresRecordManager implements RecordManagerInterface {
         `
         try {
             const res = await queryRunner.manager.query(query, [this.namespace, ...keys.flat()])
-            await queryRunner.release()
             return res.map((row: { ex: boolean }) => row.ex)
         } catch (error) {
             console.error('Error checking existence of keys in PostgresRecordManager:')
             throw error
+        } finally {
+            await queryRunner.release()
         }
     }
 
@@ -397,11 +400,12 @@ class PostgresRecordManager implements RecordManagerInterface {
 
         try {
             const res = await queryRunner.manager.query(query, values)
-            await queryRunner.release()
             return res.map((row: { key: string }) => row.key)
         } catch (error) {
             console.error('Error listing keys in PostgresRecordManager:')
             throw error
+        } finally {
+            await queryRunner.release()
         }
     }
 
@@ -417,10 +421,11 @@ class PostgresRecordManager implements RecordManagerInterface {
         try {
             const query = `DELETE FROM "${tableName}" WHERE namespace = $1 AND key = ANY($2);`
             await queryRunner.manager.query(query, [this.namespace, keys])
-            await queryRunner.release()
         } catch (error) {
             console.error('Error deleting keys')
             throw error
+        } finally {
+            await queryRunner.release()
         }
     }
 
