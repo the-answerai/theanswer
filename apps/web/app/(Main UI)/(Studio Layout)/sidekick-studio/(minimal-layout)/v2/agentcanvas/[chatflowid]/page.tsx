@@ -5,10 +5,10 @@ import dynamic from 'next/dynamic'
 
 const View = dynamic(() => import('@/views/agentflowsv2/Canvas'), { ssr: false })
 
-const Page = () => {
+const Page = ({ params }: { params: { chatflowid: string } }) => {
     return (
         <>
-            <View />
+            <View chatflowid={params.chatflowid} />
         </>
     )
 }

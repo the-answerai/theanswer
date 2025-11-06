@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useContext } from 'react'
+import PropTypes from 'prop-types'
 import ReactFlow, { addEdge, Controls, MiniMap, Background, useNodesState, useEdgesState } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './index.css'
@@ -66,7 +67,7 @@ const edgeTypes = { agentFlow: AgentFlowEdge }
 
 // ==============================|| CANVAS ||============================== //
 
-const AgentflowCanvas = () => {
+const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
     const theme = useTheme()
     const navigate = useNavigate()
     const customization = useSelector((state) => state.customization)
@@ -74,10 +75,7 @@ const AgentflowCanvas = () => {
     const { state } = useLocation()
     const templateFlowData = state ? state.templateFlowData : ''
 
-    const URLpath = document.location.pathname.toString().split('/')
-    const chatflowId =
-        URLpath[URLpath.length - 1] === 'canvas' || URLpath[URLpath.length - 1] === 'agentcanvas' ? '' : URLpath[URLpath.length - 1]
-    const canvasTitle = URLpath.includes('agentcanvas') ? 'Agent' : 'Chatflow'
+    const canvasTitle = 'Agent'
 
     const { confirm } = useConfirm()
 
@@ -619,14 +617,7 @@ const AgentflowCanvas = () => {
                 console.error('[Canvas] Failed to open credential modal:', error)
             }
         })
-    }, [
-        canvasDataStore.chatflow?.flowData,
-        canvasDataStore.chatflow?.id,
-        canvasDataStore.chatflow?.canEdit,
-        canvasDataStore.chatflow?.isOwner,
-        openCredentialModal,
-        reactFlowInstance
-    ])
+    }, [canvasDataStore.chatflow, openCredentialModal, reactFlowInstance])
 
     // Handle QuickSetup URL parameter - opens modal in "manage credentials" mode
     useEffect(() => {
@@ -905,6 +896,10 @@ const AgentflowCanvas = () => {
             />
         </>
     )
+}
+
+AgentflowCanvas.propTypes = {
+    chatflowid: PropTypes.string
 }
 
 export default AgentflowCanvas
