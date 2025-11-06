@@ -24,8 +24,7 @@ const NavGroup = ({ item }) => {
         ?.filter(
             (item) =>
                 // menu list collapse & itemspackages/ui/src/layout/MainLayout/Sidebar/MenuList/NavGroup/index.jsx
-                (MEMBER_ACTIONS?.includes(item.id) && canUseChatflows) ||
-                (BUILDER_ACTIONS?.includes(item.id) && canManageChatflows)
+                (MEMBER_ACTIONS?.includes(item.id) && canUseChatflows) || (BUILDER_ACTIONS?.includes(item.id) && canManageChatflows)
         )
         ?.map((menu) => {
             switch (menu.type) {

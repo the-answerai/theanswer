@@ -10,7 +10,7 @@ interface SafeHTMLProps extends React.HTMLAttributes<HTMLDivElement> {
  * SafeHTML component that sanitizes HTML content before rendering
  * Prevents XSS attacks by using DOMPurify to clean user-generated HTML
  */
-export const SafeHTML: React.FC<SafeHTMLProps> = ({ html, allowedTags, allowedAttributes, ...props }) => {
+export const SafeHTML: React.FC<SafeHTMLProps> = ({ html, allowedTags, allowedAttributes, ...props }: SafeHTMLProps) => {
     // Configure DOMPurify options
     const config = {
         ALLOWED_TAGS: allowedTags || [
@@ -53,6 +53,6 @@ export const SafeHTML: React.FC<SafeHTMLProps> = ({ html, allowedTags, allowedAt
 
     // Sanitize the HTML content
     const sanitizedHTML = DOMPurify.sanitize(html || '', config)
-
+    // @ts-ignore
     return <div {...props} dangerouslySetInnerHTML={{ __html: sanitizedHTML }} />
 }

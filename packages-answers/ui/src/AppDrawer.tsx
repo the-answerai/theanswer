@@ -338,7 +338,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                               ...(userRole === 'admin'
                                   ? [
                                         // Show nested Admin only when enterprise admin flag is disabled
-                              ...(isEnterpriseAdminEnabled
+                                        ...(isEnterpriseAdminEnabled
                                             ? []
                                             : [
                                                   {

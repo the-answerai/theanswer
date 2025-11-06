@@ -52,9 +52,9 @@ const getAllTools = async (user: IUser, exportMode: boolean = false): Promise<To
         // SECURITY: For export operations, only include tools owned by the user
         if (exportMode) {
             const tools = await toolRepo.find({
-                where: { 
-                    organizationId: user.organizationId, 
-                    userId: user.id 
+                where: {
+                    organizationId: user.organizationId,
+                    userId: user.id
                 }
             })
             return tools.map((tool) => ({

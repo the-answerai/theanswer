@@ -44,9 +44,9 @@ const getAllVariables = async (user: IUser, exportMode: boolean = false) => {
         // SECURITY: For export operations, only include variables owned by the user
         if (exportMode) {
             const variables = await variableRepo.find({
-                where: { 
-                    organizationId: user.organizationId, 
-                    userId: user.id 
+                where: {
+                    organizationId: user.organizationId,
+                    userId: user.id
                 }
             })
             return variables.map((variable) => ({
