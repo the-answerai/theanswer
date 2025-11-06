@@ -9,12 +9,43 @@ import { PromptTemplate } from '@langchain/core/prompts'
 import { StructuredOutputParser } from '@langchain/core/output_parsers'
 import { ChatGroq } from '@langchain/groq'
 import { Ollama } from 'ollama'
+import { CallbackHandler } from 'langfuse-langchain'
 
 const FollowUpPromptType = z
     .object({
         questions: z.array(z.string())
     })
     .describe('Generate Follow Up Prompts')
+
+/**
+ * Creates Langfuse callback handlers for follow-up prompts tracking
+ * Extracted to reduce merge conflicts and improve maintainability
+ */
+const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: FollowUpPromptConfig, providerConfig: any): any[] => {
+    const parentLangfuseTrace = options.parentLangfuseTrace
+    if (!parentLangfuseTrace) return []
+
+    try {
+        const handler = new CallbackHandler({
+            root: parentLangfuseTrace,
+            updateRoot: false,
+            sessionId: options.sessionId,
+            userId: options.userId,
+            metadata: {
+                chatId: options.chatId,
+                chatflowid: options.chatflowid,
+                component: 'follow-up-prompts',
+                provider: followUpPromptsConfig.selectedProvider,
+                modelName: providerConfig.modelName
+            },
+            tags: ['follow-up-prompts']
+        })
+        return [handler]
+    } catch (error) {
+        console.warn('Failed to create Langfuse handler for follow-up prompts:', error)
+        return []
+    }
+}
 
 export const generateFollowUpPrompts = async (
     followUpPromptsConfig: FollowUpPromptConfig,
@@ -29,6 +60,9 @@ export const generateFollowUpPrompts = async (
         const credentialData = await getCredentialData(credentialId ?? '', options)
         const followUpPromptsPrompt = providerConfig.prompt.replace('{history}', apiMessageContent)
 
+        // Create Langfuse callback handlers for tracking (if parent trace exists)
+        const callbacks = createLangfuseCallbacks(options, followUpPromptsConfig, providerConfig)
+
         switch (followUpPromptsConfig.selectedProvider) {
             case FollowUpPromptProvider.ANTHROPIC: {
                 const llm = new ChatAnthropic({
@@ -38,7 +72,7 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AZURE_OPENAI: {
@@ -64,10 +98,13 @@ export const generateFollowUpPrompts = async (
                     {format_instructions}
                 `)
                 const chain = prompt.pipe(llm).pipe(parser)
-                const structuredResponse = await chain.invoke({
-                    history: apiMessageContent,
-                    format_instructions: formatInstructions
-                })
+                const structuredResponse = await chain.invoke(
+                    {
+                        history: apiMessageContent,
+                        format_instructions: formatInstructions
+                    },
+                    callbacks.length ? { callbacks } : undefined
+                )
                 return structuredResponse
             }
             case FollowUpPromptProvider.GOOGLE_GENAI: {
@@ -77,7 +114,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.MISTRALAI: {
@@ -88,7 +125,7 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.OPENAI: {
@@ -100,7 +137,7 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AAI_OPENAI: {
@@ -116,7 +153,7 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AAI_ANTHROPIC: {
@@ -131,7 +168,7 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AAI_GOOGLE_GENAI: {
@@ -145,7 +182,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AAI_GROQ: {
@@ -159,7 +196,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.GROQ: {
@@ -169,7 +206,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.OLLAMA: {
