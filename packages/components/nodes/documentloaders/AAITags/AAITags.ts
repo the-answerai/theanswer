@@ -117,11 +117,11 @@ class AAITags_DocumentLoaders implements INode {
 
     async init(nodeData: INodeData): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
-        const limit = nodeData.inputs?.limit as number
+        const limit = nodeData.inputs?.limit ? Number(nodeData.inputs.limit) : undefined
         const searchTerm = nodeData.inputs?.searchTerm as string
-        const parentTagsOnly = nodeData.inputs?.parentTagsOnly as boolean
-        const childTagsOnly = nodeData.inputs?.childTagsOnly as boolean
-        const includeParentInfo = nodeData.inputs?.includeParentInfo as boolean
+        const parentTagsOnly = nodeData.inputs?.parentTagsOnly === true || nodeData.inputs?.parentTagsOnly === 'true'
+        const childTagsOnly = nodeData.inputs?.childTagsOnly === true || nodeData.inputs?.childTagsOnly === 'true'
+        const includeParentInfo = !(nodeData.inputs?.includeParentInfo === false || nodeData.inputs?.includeParentInfo === 'false')
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const output = nodeData.outputs?.output as string
@@ -133,6 +133,9 @@ class AAITags_DocumentLoaders implements INode {
 
         // Validate inputs
         if (limit !== undefined && limit !== null) {
+            if (isNaN(limit)) {
+                throw new Error('Limit must be a valid number')
+            }
             if (limit <= 0) {
                 throw new Error('Limit must be a positive number')
             }
