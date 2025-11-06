@@ -184,7 +184,7 @@ class AAITranscripts_DocumentLoaders implements INode {
 
     async init(nodeData: INodeData): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
-        const limit = nodeData.inputs?.limit as number
+        const limit = nodeData.inputs?.limit ? Number(nodeData.inputs.limit) : undefined
         const searchTerm = nodeData.inputs?.searchTerm as string
         const dateFrom = nodeData.inputs?.dateFrom as string
         const dateTo = nodeData.inputs?.dateTo as string
@@ -192,8 +192,8 @@ class AAITranscripts_DocumentLoaders implements INode {
         const includeTagsLogic = (nodeData.inputs?.includeTagsLogic as string) || 'OR'
         const excludeTags = nodeData.inputs?.excludeTags as string
         const hasAnalysis = (nodeData.inputs?.hasAnalysis as string) || 'all'
-        const sentimentMin = nodeData.inputs?.sentimentMin as number
-        const sentimentMax = nodeData.inputs?.sentimentMax as number
+        const sentimentMin = nodeData.inputs?.sentimentMin ? Number(nodeData.inputs.sentimentMin) : undefined
+        const sentimentMax = nodeData.inputs?.sentimentMax ? Number(nodeData.inputs.sentimentMax) : undefined
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const output = nodeData.outputs?.output as string
@@ -205,6 +205,9 @@ class AAITranscripts_DocumentLoaders implements INode {
 
         // Validate inputs
         if (limit !== undefined && limit !== null) {
+            if (isNaN(limit)) {
+                throw new Error('Limit must be a valid number')
+            }
             if (limit <= 0) {
                 throw new Error('Limit must be a positive number')
             }
@@ -248,8 +251,8 @@ class AAITranscripts_DocumentLoaders implements INode {
         }
 
         if (sentimentMin !== undefined && sentimentMin !== null) {
-            if (typeof sentimentMin !== 'number' || isNaN(sentimentMin)) {
-                throw new Error('Sentiment Min must be a number')
+            if (isNaN(sentimentMin)) {
+                throw new Error('Sentiment Min must be a valid number')
             }
             if (sentimentMin < 1 || sentimentMin > 10) {
                 throw new Error('Sentiment Min must be between 1 and 10')
@@ -257,8 +260,8 @@ class AAITranscripts_DocumentLoaders implements INode {
         }
 
         if (sentimentMax !== undefined && sentimentMax !== null) {
-            if (typeof sentimentMax !== 'number' || isNaN(sentimentMax)) {
-                throw new Error('Sentiment Max must be a number')
+            if (isNaN(sentimentMax)) {
+                throw new Error('Sentiment Max must be a valid number')
             }
             if (sentimentMax < 1 || sentimentMax > 10) {
                 throw new Error('Sentiment Max must be between 1 and 10')

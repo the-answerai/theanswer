@@ -183,7 +183,7 @@ class AAIDomains_DocumentLoaders implements INode {
 
     async init(nodeData: INodeData): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
-        const limit = nodeData.inputs?.limit as number
+        const limit = nodeData.inputs?.limit ? Number(nodeData.inputs.limit) : undefined
         const searchTerm = nodeData.inputs?.searchTerm as string
         const includeTags = nodeData.inputs?.includeTags as string
         const includeTagsLogic = (nodeData.inputs?.includeTagsLogic as string) || 'OR'
@@ -202,6 +202,9 @@ class AAIDomains_DocumentLoaders implements INode {
 
         // Validate inputs
         if (limit !== undefined && limit !== null) {
+            if (isNaN(limit)) {
+                throw new Error('Limit must be a valid number')
+            }
             if (limit <= 0) {
                 throw new Error('Limit must be a positive number')
             }
