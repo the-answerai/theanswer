@@ -16,6 +16,7 @@ import mistralAiIcon from '@/assets/images/mistralai.svg'
 import openAiIcon from '@/assets/images/openai.svg'
 import groqIcon from '@/assets/images/groq.gif'
 import ollamaIcon from '@/assets/images/ollama.svg'
+import googleGeminiIcon from '@/assets/images/google_gemini.svg'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 import CredentialInputHandler from '@/views/canvas/CredentialInputHandler'
 import { Input } from '@/ui-component/input/Input'
@@ -109,7 +110,7 @@ const followUpPromptsOptions = {
     [FollowUpPromptProviders.AAI_GOOGLE_GENAI]: {
         label: 'Answer Google Gemini',
         name: FollowUpPromptProviders.AAI_GOOGLE_GENAI,
-        icon: azureOpenAiIcon,
+        icon: googleGeminiIcon,
         inputs: [
             {
                 label: 'Model Name',
@@ -281,7 +282,7 @@ const followUpPromptsOptions = {
     [FollowUpPromptProviders.GOOGLE_GENAI]: {
         label: 'Google Gemini',
         name: FollowUpPromptProviders.GOOGLE_GENAI,
-        icon: azureOpenAiIcon,
+        icon: googleGeminiIcon,
         inputs: [
             {
                 label: 'Connect Credential',

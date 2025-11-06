@@ -157,9 +157,9 @@ export const generateFollowUpPrompts = async (
                 return structuredResponse
             }
             case FollowUpPromptProvider.AAI_ANTHROPIC: {
-                const aaiAnthropicApiKey = process.env.AAI_DEFAULT_ANTHROPHIC
+                const aaiAnthropicApiKey = process.env.AAI_DEFAULT_ANTHROPIC
                 if (!aaiAnthropicApiKey) {
-                    throw new Error('AAI_DEFAULT_ANTHROPHIC environment variable is not set')
+                    throw new Error('AAI_DEFAULT_ANTHROPIC environment variable is not set')
                 }
                 const llm = new ChatAnthropic({
                     apiKey: aaiAnthropicApiKey,
