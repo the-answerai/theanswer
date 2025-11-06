@@ -16,6 +16,7 @@ import mistralAiIcon from '@/assets/images/mistralai.svg'
 import openAiIcon from '@/assets/images/openai.svg'
 import groqIcon from '@/assets/images/groq.gif'
 import ollamaIcon from '@/assets/images/ollama.svg'
+import googleGeminiIcon from '@/assets/images/google_gemini.svg'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 import CredentialInputHandler from '@/views/canvas/CredentialInputHandler'
 import { Input } from '@/ui-component/input/Input'
@@ -32,6 +33,10 @@ const defaultPrompt =
 
 // update when adding new providers
 const FollowUpPromptProviders = {
+    AAI_OPENAI: 'aaiChatOpenAI',
+    AAI_ANTHROPIC: 'aaiChatAnthropic',
+    AAI_GOOGLE_GENAI: 'aaiChatGoogleGenerativeAI',
+    AAI_GROQ: 'aaiGroqChat',
     ANTHROPIC: 'chatAnthropic',
     AZURE_OPENAI: 'azureChatOpenAI',
     GOOGLE_GENAI: 'chatGoogleGenerativeAI',
@@ -42,6 +47,166 @@ const FollowUpPromptProviders = {
 }
 
 const followUpPromptsOptions = {
+    [FollowUpPromptProviders.AAI_OPENAI]: {
+        label: 'Answer OpenAI',
+        name: FollowUpPromptProviders.AAI_OPENAI,
+        icon: openAiIcon,
+        inputs: [
+            {
+                label: 'Model Name',
+                name: 'modelName',
+                type: 'asyncOptions',
+                loadMethod: 'listModels'
+            },
+            {
+                label: 'Prompt',
+                name: 'prompt',
+                type: 'string',
+                rows: 4,
+                description: promptDescription,
+                optional: true,
+                default: defaultPrompt
+            },
+            {
+                label: 'Temperature',
+                name: 'temperature',
+                type: 'number',
+                step: 0.1,
+                optional: true,
+                default: 0.9
+            }
+        ]
+    },
+    [FollowUpPromptProviders.AAI_ANTHROPIC]: {
+        label: 'Answer Anthropic',
+        name: FollowUpPromptProviders.AAI_ANTHROPIC,
+        icon: anthropicIcon,
+        inputs: [
+            {
+                label: 'Model Name',
+                name: 'modelName',
+                type: 'asyncOptions',
+                loadMethod: 'listModels'
+            },
+            {
+                label: 'Prompt',
+                name: 'prompt',
+                type: 'string',
+                rows: 4,
+                description: promptDescription,
+                optional: true,
+                default: defaultPrompt
+            },
+            {
+                label: 'Temperature',
+                name: 'temperature',
+                type: 'number',
+                step: 0.1,
+                optional: true,
+                default: 0.9
+            }
+        ]
+    },
+    [FollowUpPromptProviders.AAI_GOOGLE_GENAI]: {
+        label: 'Answer Google Gemini',
+        name: FollowUpPromptProviders.AAI_GOOGLE_GENAI,
+        icon: googleGeminiIcon,
+        inputs: [
+            {
+                label: 'Model Name',
+                name: 'modelName',
+                type: 'options',
+                default: 'gemini-1.5-pro-latest',
+                options: [
+                    { label: 'gemini-1.5-flash-latest', name: 'gemini-1.5-flash-latest' },
+                    { label: 'gemini-1.5-pro-latest', name: 'gemini-1.5-pro-latest' }
+                ]
+            },
+            {
+                label: 'Prompt',
+                name: 'prompt',
+                type: 'string',
+                rows: 4,
+                description: promptDescription,
+                optional: true,
+                default: defaultPrompt
+            },
+            {
+                label: 'Temperature',
+                name: 'temperature',
+                type: 'number',
+                step: 0.1,
+                optional: true,
+                default: 0.9
+            }
+        ]
+    },
+    [FollowUpPromptProviders.AAI_GROQ]: {
+        label: 'Answer Groq',
+        name: FollowUpPromptProviders.AAI_GROQ,
+        icon: groqIcon,
+        inputs: [
+            {
+                label: 'Model Name',
+                name: 'modelName',
+                type: 'asyncOptions',
+                loadMethod: 'listModels'
+            },
+            {
+                label: 'Prompt',
+                name: 'prompt',
+                type: 'string',
+                rows: 4,
+                description: promptDescription,
+                optional: true,
+                default: defaultPrompt
+            },
+            {
+                label: 'Temperature',
+                name: 'temperature',
+                type: 'number',
+                step: 0.1,
+                optional: true,
+                default: 0.9
+            }
+        ]
+    },
+    [FollowUpPromptProviders.OPENAI]: {
+        label: 'OpenAI',
+        name: FollowUpPromptProviders.OPENAI,
+        icon: openAiIcon,
+        inputs: [
+            {
+                label: 'Connect Credential',
+                name: 'credential',
+                type: 'credential',
+                credentialNames: ['openAIApi']
+            },
+            {
+                label: 'Model Name',
+                name: 'modelName',
+                type: 'asyncOptions',
+                loadMethod: 'listModels'
+            },
+            {
+                label: 'Prompt',
+                name: 'prompt',
+                type: 'string',
+                rows: 4,
+                description: promptDescription,
+                optional: true,
+                default: defaultPrompt
+            },
+            {
+                label: 'Temperature',
+                name: 'temperature',
+                type: 'number',
+                step: 0.1,
+                optional: true,
+                default: 0.9
+            }
+        ]
+    },
     [FollowUpPromptProviders.ANTHROPIC]: {
         label: 'Anthropic Claude',
         name: FollowUpPromptProviders.ANTHROPIC,
@@ -117,7 +282,7 @@ const followUpPromptsOptions = {
     [FollowUpPromptProviders.GOOGLE_GENAI]: {
         label: 'Google Gemini',
         name: FollowUpPromptProviders.GOOGLE_GENAI,
-        icon: azureOpenAiIcon,
+        icon: googleGeminiIcon,
         inputs: [
             {
                 label: 'Connect Credential',
