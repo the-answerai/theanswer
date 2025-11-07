@@ -10,6 +10,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { FormData, fetch } from 'undici'
 import { Blob } from 'node:buffer'
+import { DEFAULT_CUSTOMER_ID } from '../../aai-utils/billing/config'
 
 const STORAGE_FOLDER = 'generated-videos'
 const OPENAI_MODELS = new Set(['sora-2', 'sora-2-pro'])
@@ -520,7 +521,7 @@ const processOpenAIJob = async (jobId: string, request: VideoGenerationRequest &
         userEmail: request.userEmail,
         jobId,
         // Billing metadata (required for Stripe integration)
-        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        customerId: user.stripeCustomerId || DEFAULT_CUSTOMER_ID || 'cus_default',
         subscriptionTier: 'free', // Defaults to free, billing system will handle actual tier
         aiCredentialsOwnership: 'platform' // Video generation always uses platform credentials
     })
@@ -540,7 +541,7 @@ const processOpenAIJob = async (jobId: string, request: VideoGenerationRequest &
         userEmail: request.userEmail,
         jobId,
         // Billing metadata
-        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        customerId: user.stripeCustomerId || DEFAULT_CUSTOMER_ID || 'cus_default',
         subscriptionTier: 'free',
         aiCredentialsOwnership: 'platform'
     })
@@ -868,7 +869,7 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
         userEmail: request.userEmail,
         jobId,
         // Billing metadata (required for Stripe integration)
-        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        customerId: user.stripeCustomerId || DEFAULT_CUSTOMER_ID || 'cus_default',
         subscriptionTier: 'free', // Defaults to free, billing system will handle actual tier
         aiCredentialsOwnership: 'platform' // Video generation always uses platform credentials
     })
@@ -889,7 +890,7 @@ const processGoogleJob = async (jobId: string, request: VideoGenerationRequest, 
         userEmail: request.userEmail,
         jobId,
         // Billing metadata
-        customerId: user.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+        customerId: user.stripeCustomerId || DEFAULT_CUSTOMER_ID || 'cus_default',
         subscriptionTier: 'free',
         aiCredentialsOwnership: 'platform'
     })
@@ -1446,7 +1447,7 @@ const enhancePromptWithAI = async (
             userId,
             hasDialog: !!dialog,
             // Billing metadata (required for Stripe integration)
-            customerId: user?.stripeCustomerId || process.env.DEFAULT_CUSTOMER_ID || 'cus_default',
+            customerId: user?.stripeCustomerId || DEFAULT_CUSTOMER_ID || 'cus_default',
             subscriptionTier: 'free', // Defaults to free
             aiCredentialsOwnership: 'platform', // Prompt enhancement always uses platform credentials
             // Display name for usage events table
