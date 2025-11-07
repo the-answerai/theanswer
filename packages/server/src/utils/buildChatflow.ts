@@ -65,7 +65,7 @@ import { getErrorMessage } from '../errors/utils'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS, IMetricsProvider } from '../Interface.Metrics'
 import { OMIT_QUEUE_JOB_DATA } from './constants'
 import PlansService from '../services/plans'
-import { BILLING_CONFIG } from '../aai-utils/billing/config'
+import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
 import { Chat } from '../database/entities/Chat'
 import chatflowsService from '../services/chatflows'
 import { User } from '../database/entities/User'
@@ -1025,10 +1025,17 @@ const validateAndSaveChat = async (
         if (user && user.stripeCustomerId) {
             // Use the new BillingService to check usage limits
             try {
-                // Get usage summary for the customer
                 const billingService = new BillingService()
-                const usage = await billingService.getUsageSummary(user.stripeCustomerId)
-                const subscription = await billingService.getActiveSubscription(user.stripeCustomerId)
+                // Apply override: user from DB doesn't have middleware override
+                if (OVERRIDE_CUSTOMER_ID && !DEFAULT_CUSTOMER_ID) {
+                    throw new InternalFlowiseError(
+                        StatusCodes.INTERNAL_SERVER_ERROR,
+                        'Error: buildChatflow - BILLING_OVERRIDE_CUSTOMER_ID is enabled but BILLING_DEFAULT_STRIPE_CUSTOMER_ID is not set'
+                    )
+                }
+                const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : user.stripeCustomerId
+                const usage = await billingService.getUsageSummary(customerId)
+                const subscription = await billingService.getActiveSubscription(customerId)
                 // TODO: Add better error throwing for billing status (account not found, subscription not found, etc.)
                 // Determine plan type and limits
                 const isPro =
