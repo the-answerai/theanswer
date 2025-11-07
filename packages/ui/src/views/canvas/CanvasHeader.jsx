@@ -328,7 +328,7 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                     if (window.history.state && window.history.state.idx > 0) {
                                         navigate(-1)
                                     } else {
-                                        navigate('/', { replace: true })
+                                        navigate(isAgentCanvas ? '/agentflows' : '/', { replace: true })
                                     }
                                 }}
                             >
