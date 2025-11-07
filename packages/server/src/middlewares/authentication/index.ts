@@ -9,6 +9,7 @@ import { findOrCreateOrganization } from './findOrCreateOrganization'
 import { findOrCreateUser } from './findOrCreateUser'
 import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
 import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
+import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
 
 const jwtCheck = auth({
     authRequired: true,
@@ -106,6 +107,12 @@ export const authenticationHandlerMiddleware =
             // Store API key user with additional auth0 org info
             req.user = apiKeyUser as any
             ;(req.user as any).auth0OrgId = organization?.auth0Id
+
+            // Apply billing customer override for organizational billing consolidation
+            if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID && req.user) {
+                req.user.stripeCustomerId = DEFAULT_CUSTOMER_ID
+            }
+
             return next()
         }
 
@@ -173,6 +180,11 @@ export const authenticationHandlerMiddleware =
                         const permissions: string[] = []
                         if (roles?.includes('Admin')) {
                             permissions.push('org:manage')
+                        }
+
+                        // Apply billing customer override for organizational billing consolidation
+                        if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
+                            user.stripeCustomerId = DEFAULT_CUSTOMER_ID
                         }
 
                         req.user = { ...authUser, ...user, roles, permissions }
