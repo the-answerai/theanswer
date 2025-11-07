@@ -1027,6 +1027,12 @@ const validateAndSaveChat = async (
             try {
                 const billingService = new BillingService()
                 // Apply override: user from DB doesn't have middleware override
+                if (OVERRIDE_CUSTOMER_ID && !DEFAULT_CUSTOMER_ID) {
+                    throw new InternalFlowiseError(
+                        StatusCodes.INTERNAL_SERVER_ERROR,
+                        'Error: buildChatflow - BILLING_OVERRIDE_CUSTOMER_ID is enabled but BILLING_DEFAULT_STRIPE_CUSTOMER_ID is not set'
+                    )
+                }
                 const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : user.stripeCustomerId
                 const usage = await billingService.getUsageSummary(customerId)
                 const subscription = await billingService.getActiveSubscription(customerId)

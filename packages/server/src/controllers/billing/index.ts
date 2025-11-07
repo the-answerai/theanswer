@@ -543,10 +543,14 @@ const cancelSubscription = async (req: Request, res: Response, next: NextFunctio
 const getUpcomingInvoice = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
-        const customerId = req.body.customerId || req.user?.stripeCustomerId
+        // Customer ID is already overridden by middleware if organizational billing is enabled
+        const customerId = req.user?.stripeCustomerId
+        if (!customerId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: getUpcomingInvoice - Customer ID not found')
+        }
         const invoice = await billingService.getUpcomingInvoice({
             ...req.body,
-            customerId: customerId!
+            customerId
         })
         return res.json(invoice)
     } catch (error) {
@@ -557,9 +561,13 @@ const getUpcomingInvoice = async (req: Request, res: Response, next: NextFunctio
 const createBillingPortalSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
-        const customerId = req.body.customerId || req.user?.stripeCustomerId
+        // Customer ID is already overridden by middleware if organizational billing is enabled
+        const customerId = req.user?.stripeCustomerId
+        if (!customerId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: createBillingPortalSession - Customer ID not found')
+        }
         const session = await billingService.createBillingPortalSession({
-            customerId: customerId!,
+            customerId,
             returnUrl: req.body.returnUrl
         })
         return res.json(session)
@@ -576,8 +584,8 @@ const getSubscriptionWithUsage = async (req: Request, res: Response, next: NextF
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User not authenticated')
         }
 
-        // Apply organizational billing override if enabled
-        const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : req.user.stripeCustomerId
+        // Customer ID is already overridden by middleware if organizational billing is enabled
+        const customerId = req.user.stripeCustomerId
         if (!customerId) {
             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user/organization')
         }
