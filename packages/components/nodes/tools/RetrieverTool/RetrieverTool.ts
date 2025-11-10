@@ -225,27 +225,33 @@ class Retriever_Tools implements INode {
 
         if (enableDynamicFiltering) {
             // Create tool with dynamic filtering capability
-            return createDynamicRetrieverTool({
-                name,
-                description,
-                retriever,
-                returnSourceDocuments,
-                includeMetadata,
-                retrieverToolMetadataFilter,
-                metadataFieldsDescription,
-                flow
-            })
+            return createDynamicRetrieverTool(
+                {
+                    name,
+                    description,
+                    retriever,
+                    returnSourceDocuments,
+                    includeMetadata,
+                    retrieverToolMetadataFilter,
+                    metadataFieldsDescription,
+                    flow
+                },
+                DynamicStructuredTool // Pass class to avoid circular dependency
+            )
         } else {
             // Create tool with static filter only (v3.0 backward compatible)
-            return createStaticRetrieverTool({
-                name,
-                description,
-                retriever,
-                returnSourceDocuments,
-                includeMetadata,
-                retrieverToolMetadataFilter,
-                flow
-            })
+            return createStaticRetrieverTool(
+                {
+                    name,
+                    description,
+                    retriever,
+                    returnSourceDocuments,
+                    includeMetadata,
+                    retrieverToolMetadataFilter,
+                    flow
+                },
+                DynamicStructuredTool // Pass class to avoid circular dependency
+            )
         }
     }
 }
