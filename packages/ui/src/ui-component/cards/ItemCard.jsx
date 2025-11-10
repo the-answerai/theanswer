@@ -8,22 +8,39 @@ import { Box, Grid, Typography, useTheme } from '@mui/material'
 import MainCard from '@/ui-component/cards/MainCard'
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
+    // Use glassmorphism if available, fallback to card.main
+    ...(theme.palette.glass
+        ? theme.palette.glass.glassSecondary
+        : {
+              background: theme.palette.card.main
+          }),
     color: theme.darkTextPrimary,
     overflow: 'auto',
     position: 'relative',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
     cursor: 'pointer',
     '&:hover': {
-        background: theme.palette.card.hover,
-        boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
+        ...(theme.palette.glass
+            ? {
+                  background: theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(77, 182, 172, 0.15)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(15, 23, 42, 0.15)' : '1px solid rgba(77, 182, 172, 0.3)',
+                  boxShadow: theme.palette.mode === 'light' ? '0 8px 32px 0 rgba(0, 0, 0, 0.15)' : '0 8px 32px 0 rgba(77, 182, 172, 0.2)',
+                  transform: 'translateY(-2px)'
+              }
+            : {
+                  background: theme.palette.card.hover,
+                  boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
+              })
     },
     height: '100%',
     minHeight: '160px',
     maxHeight: '300px',
     width: '100%',
     overflowWrap: 'break-word',
-    whiteSpace: 'pre-line'
+    whiteSpace: 'pre-line',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
 }))
 
 // ===========================|| CONTRACT CARD ||=========================== //

@@ -103,8 +103,18 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                         height: 32,
                         fontSize: '0.875rem',
                         fontWeight: 600,
-                        bgcolor: theme.palette.primary.main,
-                        color: theme.palette.primary.contrastText,
+                        ...(theme.palette.mode === 'light'
+                            ? {
+                                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%)',
+                                  backdropFilter: 'blur(10px)',
+                                  WebkitBackdropFilter: 'blur(10px)',
+                                  border: '1px solid rgba(15, 23, 42, 0.1)',
+                                  color: '#ffffff'
+                              }
+                            : {
+                                  bgcolor: theme.palette.primary.main,
+                                  color: theme.palette.primary.contrastText
+                              }),
                         mr: 2
                     }}
                 >
