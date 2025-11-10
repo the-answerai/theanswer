@@ -9,12 +9,64 @@ import { PromptTemplate } from '@langchain/core/prompts'
 import { StructuredOutputParser } from '@langchain/core/output_parsers'
 import { ChatGroq } from '@langchain/groq'
 import { Ollama } from 'ollama'
+import { CallbackHandler } from 'langfuse-langchain'
 
 const FollowUpPromptType = z
     .object({
         questions: z.array(z.string())
     })
     .describe('Generate Follow Up Prompts')
+
+/**
+ * Creates Langfuse callback handlers for follow-up prompts tracking
+ * Extracted to reduce merge conflicts and improve maintainability
+ */
+const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: FollowUpPromptConfig, providerConfig: any): any[] => {
+    const parentLangfuseTrace = options.parentLangfuseTrace
+    const messageId = options.messageId // The message this follow-up is for
+
+    // Check if Langfuse is configured via env vars
+    if (!process.env.LANGFUSE_SECRET_KEY) {
+        return []
+    }
+
+    try {
+        // Build metadata with clear linkage to the conversation message
+        const metadata: any = {
+            chatId: options.chatId,
+            chatflowid: options.chatflowid,
+            component: 'follow-up-prompts',
+            provider: followUpPromptsConfig.selectedProvider,
+            modelName: providerConfig.modelName,
+            // Link to the specific message this follow-up is generated for
+            forMessageId: messageId,
+            traceType: 'follow-up-generation'
+        }
+
+        const handlerConfig: any = {
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+            secretKey: process.env.LANGFUSE_SECRET_KEY,
+            baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
+            sessionId: options.sessionId,
+            userId: options.userId,
+            metadata,
+            tags: ['follow-up-prompts', `chat:${options.chatId}`, messageId ? `message:${messageId}` : null].filter(Boolean)
+        }
+
+        // For agentflows: nest under parent trace
+        // For chatflows: create standalone trace linked by sessionId + metadata
+        if (parentLangfuseTrace) {
+            handlerConfig.root = parentLangfuseTrace
+            handlerConfig.updateRoot = false
+        }
+
+        const handler = new CallbackHandler(handlerConfig)
+        return [handler]
+    } catch (error) {
+        console.warn('Failed to create Langfuse handler for follow-up prompts:', error)
+        return []
+    }
+}
 
 export const generateFollowUpPrompts = async (
     followUpPromptsConfig: FollowUpPromptConfig,
@@ -26,19 +78,11 @@ export const generateFollowUpPrompts = async (
         const providerConfig = followUpPromptsConfig[followUpPromptsConfig.selectedProvider]
         if (!providerConfig) return undefined
         const credentialId = providerConfig.credentialId as string
-
-        let credentialData: ICommonObject
-        try {
-            credentialData = await getCredentialData(credentialId ?? '', options)
-            if (!credentialData || Object.keys(credentialData).length === 0) {
-                console.warn('No credential data found for follow-up prompts, skipping generation')
-                return undefined
-            }
-        } catch (error) {
-            console.error('Error retrieving credential data for follow-up prompts:', error)
-            return undefined
-        }
+        const credentialData = await getCredentialData(credentialId ?? '', options)
         const followUpPromptsPrompt = providerConfig.prompt.replace('{history}', apiMessageContent)
+
+        // Create Langfuse callback handlers for tracking
+        const callbacks = createLangfuseCallbacks(options, followUpPromptsConfig, providerConfig)
 
         switch (followUpPromptsConfig.selectedProvider) {
             case FollowUpPromptProvider.ANTHROPIC: {
@@ -47,8 +91,9 @@ export const generateFollowUpPrompts = async (
                     model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
+                // @ts-ignore
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.AZURE_OPENAI: {
@@ -66,7 +111,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 // use structured output parser because withStructuredOutput is not working
-                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType)
+                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType as any)
                 const formatInstructions = parser.getFormatInstructions()
                 const prompt = PromptTemplate.fromTemplate(`
                     ${providerConfig.prompt}
@@ -74,31 +119,23 @@ export const generateFollowUpPrompts = async (
                     {format_instructions}
                 `)
                 const chain = prompt.pipe(llm).pipe(parser)
-                const structuredResponse = await chain.invoke({
-                    history: apiMessageContent,
-                    format_instructions: formatInstructions
-                })
+                const structuredResponse = await chain.invoke(
+                    {
+                        history: apiMessageContent,
+                        format_instructions: formatInstructions
+                    },
+                    callbacks.length ? { callbacks } : undefined
+                )
                 return structuredResponse
             }
             case FollowUpPromptProvider.GOOGLE_GENAI: {
-                const llm = new ChatGoogleGenerativeAI({
+                const model = new ChatGoogleGenerativeAI({
                     apiKey: credentialData.googleGenerativeAPIKey,
                     model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
-                // use structured output parser because withStructuredOutput is not working
-                const parser = StructuredOutputParser.fromZodSchema(FollowUpPromptType)
-                const formatInstructions = parser.getFormatInstructions()
-                const prompt = PromptTemplate.fromTemplate(`
-                    ${providerConfig.prompt}
-                     
-                    {format_instructions}
-                `)
-                const chain = prompt.pipe(llm).pipe(parser)
-                const structuredResponse = await chain.invoke({
-                    history: apiMessageContent,
-                    format_instructions: formatInstructions
-                })
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.MISTRALAI: {
@@ -109,17 +146,78 @@ export const generateFollowUpPrompts = async (
                 })
                 // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.OPENAI: {
                 const model = new ChatOpenAI({
                     apiKey: credentialData.openAIApiKey,
                     model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`),
+                    useResponsesApi: true
+                })
+                // @ts-ignore
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_OPENAI: {
+                const aaiOpenAIApiKey = process.env.AAI_DEFAULT_OPENAI_API_KEY
+                if (!aaiOpenAIApiKey) {
+                    throw new Error('AAI_DEFAULT_OPENAI_API_KEY environment variable is not set')
+                }
+                const model = new ChatOpenAI({
+                    apiKey: aaiOpenAIApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`),
+                    useResponsesApi: true
+                })
+                // @ts-ignore
+                const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_ANTHROPIC: {
+                const aaiAnthropicApiKey = process.env.AAI_DEFAULT_ANTHROPHIC
+                if (!aaiAnthropicApiKey) {
+                    throw new Error('AAI_DEFAULT_ANTHROPHIC environment variable is not set')
+                }
+                const llm = new ChatAnthropic({
+                    apiKey: aaiAnthropicApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`)
+                })
+                // @ts-ignore
+                const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_GOOGLE_GENAI: {
+                const aaiGoogleGenAIApiKey = process.env.AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY
+                if (!aaiGoogleGenAIApiKey) {
+                    throw new Error('AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set')
+                }
+                const model = new ChatGoogleGenerativeAI({
+                    apiKey: aaiGoogleGenAIApiKey,
+                    model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
+                return structuredResponse
+            }
+            case FollowUpPromptProvider.AAI_GROQ: {
+                const aaiGroqApiKey = process.env.AAI_DEFAULT_GROQ
+                if (!aaiGroqApiKey) {
+                    throw new Error('AAI_DEFAULT_GROQ environment variable is not set')
+                }
+                const llm = new ChatGroq({
+                    apiKey: aaiGroqApiKey,
+                    model: providerConfig.modelName,
+                    temperature: parseFloat(`${providerConfig.temperature}`)
+                })
+                const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.GROQ: {
@@ -129,7 +227,7 @@ export const generateFollowUpPrompts = async (
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
                 const structuredLLM = llm.withStructuredOutput(FollowUpPromptType)
-                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt)
+                const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse
             }
             case FollowUpPromptProvider.OLLAMA: {

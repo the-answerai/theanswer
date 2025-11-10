@@ -65,7 +65,7 @@ import { getErrorMessage } from '../errors/utils'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS, IMetricsProvider } from '../Interface.Metrics'
 import { OMIT_QUEUE_JOB_DATA } from './constants'
 import PlansService from '../services/plans'
-import { BILLING_CONFIG } from '../aai-utils/billing/config'
+import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
 import { Chat } from '../database/entities/Chat'
 import chatflowsService from '../services/chatflows'
 import { User } from '../database/entities/User'
@@ -590,11 +590,14 @@ export const executeFlow = async ({
 
             if (agentflow.followUpPrompts) {
                 const followUpPromptsConfig = JSON.parse(agentflow.followUpPrompts)
-                const generatedFollowUpPrompts = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
+                const generatedFollowUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
                     chatId,
                     chatflowid: agentflow.id,
                     appDataSource,
-                    databaseEntities
+                    databaseEntities,
+                    parentLangfuseTrace: undefined,
+                    sessionId,
+                    userId: user?.id ?? agentflow.userId
                 })
                 if (generatedFollowUpPrompts?.questions) {
                     apiMessage.followUpPrompts = JSON.stringify(generatedFollowUpPrompts.questions)
@@ -794,11 +797,14 @@ export const executeFlow = async ({
         if (result?.artifacts) apiMessage.artifacts = JSON.stringify(result.artifacts)
         if (chatflow.followUpPrompts) {
             const followUpPromptsConfig = JSON.parse(chatflow.followUpPrompts)
-            const followUpPrompts = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
+            const followUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
                 chatId,
                 chatflowid,
                 appDataSource,
-                databaseEntities
+                databaseEntities,
+                parentLangfuseTrace: undefined,
+                sessionId,
+                userId: user?.id
             })
             if (followUpPrompts?.questions) {
                 apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)
@@ -1019,10 +1025,17 @@ const validateAndSaveChat = async (
         if (user && user.stripeCustomerId) {
             // Use the new BillingService to check usage limits
             try {
-                // Get usage summary for the customer
                 const billingService = new BillingService()
-                const usage = await billingService.getUsageSummary(user.stripeCustomerId)
-                const subscription = await billingService.getActiveSubscription(user.stripeCustomerId)
+                // Apply override: user from DB doesn't have middleware override
+                if (OVERRIDE_CUSTOMER_ID && !DEFAULT_CUSTOMER_ID) {
+                    throw new InternalFlowiseError(
+                        StatusCodes.INTERNAL_SERVER_ERROR,
+                        'Error: buildChatflow - BILLING_OVERRIDE_CUSTOMER_ID is enabled but BILLING_DEFAULT_STRIPE_CUSTOMER_ID is not set'
+                    )
+                }
+                const customerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID! : user.stripeCustomerId
+                const usage = await billingService.getUsageSummary(customerId)
+                const subscription = await billingService.getActiveSubscription(customerId)
                 // TODO: Add better error throwing for billing status (account not found, subscription not found, etc.)
                 // Determine plan type and limits
                 const isPro =

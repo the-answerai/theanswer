@@ -1,6 +1,5 @@
 'use client'
 import React from 'react'
-import { useFlags } from 'flagsmith/react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import Box from '@mui/material/Box'
@@ -20,11 +19,8 @@ export const JourneyAppsDrawer = ({
     activeApp?: string
     journey?: Journey
 }) => {
-    const flags = useFlags(appSettings?.services?.map((s) => s.id) ?? [])
-
     const enabledServices: AppService[] | undefined = appSettings?.services?.filter((service) => {
-        const isServiceEnabledInFlags = (flags?.[service.id] as any)?.enabled
-        return isServiceEnabledInFlags || service.enabled
+        return service.enabled
     })
 
     const [serviceOpen, setServiceOpen] = React.useState<string>('')
@@ -45,7 +41,7 @@ export const JourneyAppsDrawer = ({
                 }}
             >
                 {appSettings?.services
-                    ?.filter((s) => s.enabled || (flags?.[s.id] as any)?.enabled)
+                    ?.filter((s) => s.enabled)
                     ?.map((service) => (
                         <JourneySourceCard
                             appSettings={appSettings}

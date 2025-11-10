@@ -113,8 +113,7 @@ const getChatflowById = async (req: Request, res: Response, next: NextFunction) 
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.getChatflowById - id not provided!`)
         }
-        // Get fresh metadata from database (not S3 draft)
-        const apiResponse = await chatflowsService.getChatflowById(req.params.id, req.user, false)
+        const apiResponse = await chatflowsService.getChatflowById(req.params.id, req.user)
 
         // Check if the chatflow is public (Marketplace) for unauthenticated users
         if (!req.user && (!apiResponse.visibility || !apiResponse.visibility.includes('Marketplace') || !apiResponse.isPublic)) {
@@ -191,8 +190,7 @@ const updateChatflow = async (req: Request, res: Response, next: NextFunction) =
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.updateChatflow - id not provided!`)
         }
 
-        // Get fresh metadata from database for updates (not S3 draft)
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, req.user!, false)
+        const chatflow = await chatflowsService.getChatflowById(req.params.id, req.user!)
         if (!chatflow) {
             return res.status(404).send(`Chatflow ${req.params.id} not found`)
         }

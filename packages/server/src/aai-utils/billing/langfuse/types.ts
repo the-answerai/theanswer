@@ -157,13 +157,24 @@ export interface LangfuseOptions {
     baseUrl?: string
 }
 
+/**
+ * Metadata filter structure for Langfuse API v3.38.6+
+ */
+export interface MetadataFilter {
+    column: string
+    operator: string
+    key?: string
+    value: any
+    type: string
+}
+
 export interface LangfuseClient {
     new (options: LangfuseOptions): LangfuseClient
     trace(id: string, metadata?: { metadata: TraceMetadata }): Promise<LangfuseTrace>
     fetchTrace(id: string): Promise<{ data: LangfuseTrace }>
     fetchObservation(id: string): Promise<Observation>
     fetchTraces(options: {
-        fromTimestamp?: string | null
+        fromTimestamp?: string | null | Date
         limit?: number | null
         name?: string | null
         orderBy?: string | null
@@ -174,7 +185,7 @@ export interface LangfuseClient {
         toTimestamp?: string | null
         userId?: string | null
         version?: string | null
-        filter?: Record<string, any>
+        filter?: MetadataFilter[] // Added in v3.38.6+ API
         cursor?: string
     }): Promise<{
         data: LangfuseTrace[]

@@ -80,7 +80,7 @@ const MarketplaceCanvasV2 = () => {
             <Box>
                 <AppBar
                     enableColorOnDark
-                    position='fixed'
+                    position='relative'
                     color='inherit'
                     elevation={1}
                     sx={{
@@ -91,11 +91,11 @@ const MarketplaceCanvasV2 = () => {
                         <MarketplaceCanvasHeader
                             flowName={name}
                             flowData={JSON.parse(flowData)}
-                            onChatflowCopy={state}
+                            onChatflowCopy={() => onChatflowCopy(state)}
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ pt: '70px', height: '100vh', width: '100%' }}>
+                <Box sx={{ height: '100vh', width: '100%' }}>
                     <div className='reactflow-parent-wrapper'>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow

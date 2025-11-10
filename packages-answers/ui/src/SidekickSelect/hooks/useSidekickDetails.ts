@@ -4,15 +4,10 @@ import { Sidekick } from '../SidekickSelect.types'
 import axios from 'axios'
 
 const fetcher = async (url: string): Promise<Sidekick> => axios.get(url).then((res) => res.data)
-const swrConfig = {
-    retry: 2,
-    retryDelay: 1000,
-    dedupingInterval: 2000
-}
 
 // Pure SWR hook for declarative usage
 export const useSidekickDetails = (sidekickId: string | null) => {
-    const { data, error, mutate, isLoading } = useSWR<Sidekick>(sidekickId ? `/api/sidekicks/${sidekickId}` : null, fetcher, swrConfig)
+    const { data, error, mutate, isLoading } = useSWR<Sidekick>(sidekickId ? `/api/sidekicks/${sidekickId}` : null, fetcher)
 
     return {
         data,

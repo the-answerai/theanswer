@@ -1,6 +1,5 @@
 import React, { ElementType } from 'react'
 import { motion } from 'framer-motion'
-import { useFlags } from 'flagsmith/react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
@@ -15,8 +14,6 @@ interface JourneySourceCardProps {
 }
 
 const DomainCard: React.FC<JourneySourceCardProps> = ({ domain, urls, pageCount, onClick, ...other }) => {
-    const flags = useFlags(['delete_prompt'])
-
     const Wrapper: ElementType = CardActionArea
     return (
         <>

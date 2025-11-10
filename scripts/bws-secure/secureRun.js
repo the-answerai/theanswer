@@ -228,7 +228,7 @@ if (isNestedExecution) {
 
 // 1) Explicitly load .env from the repo root (../../.env) in case we're running from a subdirectory
 const dotenvPath = path.join(dirname, '../../.env');
-dotenv.config({ path: dotenvPath });
+dotenv.config({ path: dotenvPath, quiet: true });
 
 // Platform detection
 const isNetlify = process.env.NETLIFY === 'true';
@@ -1417,7 +1417,7 @@ async function handleUploadCommand() {
     ensureBwsInstalled();
 
     // 1. Always load base .env first (but don't override original env vars)
-    dotenv.config({ override: false });
+    dotenv.config({ override: false, quiet: true });
     log('debug', 'Loaded base environment from .env');
 
     // Only perform BWS setup if this is not a nested execution

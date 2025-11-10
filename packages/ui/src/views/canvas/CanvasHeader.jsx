@@ -17,8 +17,8 @@ import {
     IconX,
     IconCode,
     IconAdjustmentsHorizontal,
-    IconCircleCheck,
-    IconAlertCircle
+    IconLock,
+    IconLockOpen
 } from '@tabler/icons-react'
 
 // project imports
@@ -36,7 +36,7 @@ import chatflowsApi from '@/api/chatflows'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 
 // utils
@@ -48,7 +48,8 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 
 const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, handleDeleteFlow, handleLoadFlow }, ref) => {
     const theme = useTheme()
-    const flags = useFlags(['chatflow:share:external'])
+    const { hasFeature } = usePermissions()
+    const canShareExternally = hasFeature('chatflow:share:external')
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const flowNameRef = useRef()
@@ -327,7 +328,7 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                     if (window.history.state && window.history.state.idx > 0) {
                                         navigate(-1)
                                     } else {
-                                        navigate('/', { replace: true })
+                                        navigate(isAgentCanvas ? '/agentflows' : '/', { replace: true })
                                     }
                                 }}
                             >
@@ -507,7 +508,7 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 window.dispatchEvent(new Event('popstate'))
                             }}
                         >
-                            {needsSetup ? <IconAlertCircle stroke={1.5} size='1.3rem' /> : <IconCircleCheck stroke={1.5} size='1.3rem' />}
+                            {needsSetup ? <IconLockOpen stroke={1.5} size='1.3rem' /> : <IconLock stroke={1.5} size='1.3rem' />}
                         </Avatar>
                     </ButtonBase>
                     <ButtonBase title={`Save ${title}`} sx={{ borderRadius: '50%', mr: 2 }}>

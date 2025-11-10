@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useFlags } from 'flagsmith/react'
 
 import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
@@ -24,14 +23,9 @@ import { Accordion, AccordionDetails, AccordionSummary } from './Accordion'
 import { AppSettings, AppService } from 'types'
 
 export default function SourcesToolbar({ appSettings }: { appSettings: AppSettings }) {
-    const flags = useFlags(appSettings?.services?.map((s) => s.id) ?? [])
-
     const enabledServices: AppService[] | undefined = React.useMemo(
-        () =>
-            appSettings?.services?.filter((service) => {
-                return (flags?.[service.id] as any)?.enabled
-            }) ?? [],
-        [appSettings?.services, flags]
+        () => appSettings?.services?.filter((service) => service.enabled) ?? [],
+        [appSettings?.services]
     )
 
     const { filters, showFilters, updateFilter } = useAnswers()

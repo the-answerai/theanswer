@@ -45,7 +45,7 @@ import { initializeDefaultNodeData } from '@/utils/genericHelper'
 import { baseURL, REDACTED_CREDENTIAL_VALUE } from '@/store/constant'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
-import { useFlags } from 'flagsmith/react'
+import usePermissions from '@/hooks/usePermissions'
 import { GoogleAuthButton } from '@/ui-component/button/GoogleAuthButton'
 import { SalesforceAuthButton } from '@/ui-component/button/SalesforceAuthButton'
 import { AtlassianAuthButton } from '@/ui-component/button/AtlassianAuthButton'
@@ -55,7 +55,8 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
 
     const dispatch = useDispatch()
-    const flags = useFlags(['org:manage', 'chatflow:share:internal'])
+    const { hasFeature } = usePermissions()
+    const canManageOrg = hasFeature('org:manage')
     // ==============================|| Snackbar ||============================== //
 
     useNotifier()
@@ -611,7 +612,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
                     <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
                         <FormGroup>
                             {['Private', 'Organization'].map((type) => {
-                                const isDisabled = type === 'Private' || (type === 'Organization' && !flags['org:manage']?.enabled)
+                                const isDisabled = type === 'Private' || (type === 'Organization' && !canManageOrg)
                                 return (
                                     <FormControlLabel
                                         key={type}

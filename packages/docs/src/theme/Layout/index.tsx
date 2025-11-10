@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import OriginalLayout from '@theme-original/Layout'
 import { useLocation } from '@docusaurus/router'
+import '@site/src/services/trackingService' // Initialize tracking pixels
 import styles from './styles.module.css'
 
 export default function Layout(props) {

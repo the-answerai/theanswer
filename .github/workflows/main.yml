@@ -32,14 +32,7 @@ jobs:
                     --health-retries 5
         env:
             PUPPETEER_SKIP_DOWNLOAD: true
-            # Test database environment variables
-            NODE_ENV: test
-            DATABASE_TYPE: postgres
-            DATABASE_HOST: localhost
-            DATABASE_PORT: 5432
-            DATABASE_NAME: test_flowise_e2e
-            DATABASE_USER: test_user
-            DATABASE_PASSWORD: test_password
+            BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         steps:
             - uses: actions/checkout@v4
               with:

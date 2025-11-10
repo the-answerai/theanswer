@@ -6,7 +6,6 @@ import JourneySetting from '@ui/JourneySetting'
 
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { useFlags } from 'flagsmith/react'
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -16,8 +15,6 @@ import Button from '@mui/material/Button'
 import CardActionArea from '@mui/material/CardActionArea'
 import CardHeader from '@mui/material/CardHeader'
 import Avatar from '@mui/material/Avatar'
-
-import { useAnswers } from './AnswersContext'
 
 import { AppService, AppSettings } from 'types'
 
@@ -40,15 +37,12 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
     editable
 }) => {
     // const [expanded, setExpanded] = React.useState(false);
-    const flags = useFlags(['delete_prompt', id])
-    const integrationFlag = flags[id]
-    const { deletePrompt, updatePrompt } = useAnswers()
     const [lastInteraction, setLastInteraction] = React.useState<string>('')
     // const onClick = () => {
     //   setExpanded(!expanded);
     // };
 
-    enabled = enabled || integrationFlag?.enabled
+    const isIntegrationEnabled = Boolean(enabled)
 
     const handleAuthIntegration = () => {
         signIn(providerId)
@@ -85,10 +79,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                             minHeight: '100%',
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            ...(flags?.delete_prompt?.enabled && {
-                                paddingRight: 4
-                            })
+                            justifyContent: 'space-between'
                             // paddingBottom: 4
                         }}
                         disabled={expanded}
@@ -140,17 +131,21 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                         <Button
                                             variant='contained'
                                             color='secondary'
-                                            disabled={enabled && !expanded}
+                                            disabled={isIntegrationEnabled && !expanded}
                                             onClick={handleAuthIntegration}
                                         >
-                                            {expanded && enabled ? 'Refresh auth' : enabled ? 'Connected' : 'Connect'}
+                                            {expanded && isIntegrationEnabled
+                                                ? 'Refresh auth'
+                                                : isIntegrationEnabled
+                                                ? 'Connected'
+                                                : 'Connect'}
                                         </Button>
                                     ) : null
                                 }
                                 sx={{ p: 0, width: '100%', '.MuiCardHeader-action': { m: 0 } }}
                             />
 
-                            {!enabled ? (
+                            {!isIntegrationEnabled ? (
                                 <Typography
                                     variant='body1'
                                     sx={{
@@ -166,7 +161,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                 </Typography>
                             ) : null}
 
-                            {enabled ? (
+                            {isIntegrationEnabled ? (
                                 <Box
                                     component={motion.div}
                                     sx={{

@@ -2,14 +2,14 @@ import { Link } from 'react-router-dom'
 // material-ui
 import { Container, Stack, Typography, Card, CardContent, CardActions, Button } from '@mui/material'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { useFlags } from 'flagsmith/react'
+import { usePermissions } from '../PermissionProvider'
 
 const AdminDashboard = () => {
     const { user } = useUser()
-    const flags = useFlags(['org:manage'])
+    const { hasFeature } = usePermissions()
 
     // Check if user is admin using multiple methods for compatibility
-    const isAdmin = (Array.isArray(user?.roles) && user.roles.includes('Admin')) || flags['org:manage']?.enabled
+    const isAdmin = (Array.isArray(user?.roles) && user.roles.includes('Admin')) || hasFeature('org:manage')
 
     return (
         <Container>

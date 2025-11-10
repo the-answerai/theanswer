@@ -88,7 +88,7 @@ export async function findSidekickById(user: User, id: string) {
         ...chatflow,
         canEdit: (chatflow.isOwner && user.permissions?.includes('chatflow:manage')) || user.permissions?.includes('org:manage')
     }
-    const allCredentials = extractAllCredentials(chatflow.flowData)
+    const { allCredentials } = extractAllCredentials(chatflow.flowData)
     const needsSetup = allCredentials.some((cred) => !cred.isAssigned)
 
     return {

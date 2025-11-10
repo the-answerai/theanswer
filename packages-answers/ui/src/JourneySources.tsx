@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useFlags } from 'flagsmith/react'
 import Image from 'next/image'
 
 import Avatar from '@mui/material/Avatar'
@@ -23,11 +22,8 @@ import { AppSettings, AppService } from 'types'
 export default function JourneySources({ appSettings }: { appSettings: AppSettings }) {
     const serviceRefs = React.useRef<{ [key: string]: HTMLDivElement }>({})
 
-    const flags = useFlags(appSettings?.services?.map((s) => s.name) ?? [])
-
     const enabledServices: AppService[] | undefined = appSettings?.services?.filter((service) => {
-        const isServiceEnabledInFlags = (flags?.[service.id] as any)?.enabled
-        return isServiceEnabledInFlags || service.enabled
+        return service.enabled
     })
 
     const [serviceOpen, setServiceOpen] = React.useState<string>('')
@@ -98,11 +94,11 @@ export default function JourneySources({ appSettings }: { appSettings: AppSettin
                                 <SourcesSlack appSettings={appSettings} filters={filters} updateFilter={updateFilter} />
                             ) : null}
 
-                            {flags?.codebase?.enabled && selectedService.id === 'codebase' ? <SourcesCodebase /> : null}
+                            {selectedService.id === 'codebase' ? <SourcesCodebase /> : null}
 
-                            {flags?.document?.enabled && selectedService.id === 'document' ? <SourcesDocument /> : null}
+                            {selectedService.id === 'document' ? <SourcesDocument /> : null}
 
-                            {flags?.airtable?.enabled && selectedService.id === 'airtable' ? (
+                            {selectedService.id === 'airtable' ? (
                                 <SourcesAirtable appSettings={appSettings} filters={filters} updateFilter={updateFilter} />
                             ) : null}
 

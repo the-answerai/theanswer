@@ -6,8 +6,8 @@ import {
     Visibility as VisibilityIcon,
     Edit as EditIcon,
     ContentCopy as IconCopy,
-    WarningAmber as WarningAmberIcon,
-    CheckCircle as CheckCircleIcon
+    LockOpen as LockOpenIcon,
+    Lock as LockIcon
 } from '@mui/icons-material'
 import { useCallback, useState } from 'react'
 import { Sidekick } from './SidekickSelect.types'
@@ -285,7 +285,7 @@ const SidekickCard = ({
                                         }
                                     }}
                                 >
-                                    {needsSetup ? <WarningAmberIcon /> : <CheckCircleIcon />}
+                                    {needsSetup ? <LockOpenIcon /> : <LockIcon />}
                                 </WhiteIconButton>
                             </Tooltip>
                         )}

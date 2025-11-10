@@ -1,0 +1,86 @@
+name: Auto Release PR
+
+on:
+    push:
+        branches:
+            - staging
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    create-or-update-release-pr:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: staging
+
+            - name: Configure Git
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            - name: Fetch production branch
+              run: |
+                  git fetch origin production:production
+
+            - name: Generate release date
+              id: date
+              run: echo "date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+
+            - name: Generate PR body
+              id: pr_body
+              run: |
+                  echo "## 🚀 Release: Staging to Production" > pr_body.txt
+                  echo "" >> pr_body.txt
+                  echo "**Release Date:** $(date +'%Y-%m-%d')" >> pr_body.txt
+                  echo "" >> pr_body.txt
+                  echo "### Changes in this release" >> pr_body.txt
+                  echo "" >> pr_body.txt
+                  git log production..staging --pretty=format:"- %s (%h)" --no-merges >> pr_body.txt
+                  echo "" >> pr_body.txt
+                  echo "" >> pr_body.txt
+                  echo "---" >> pr_body.txt
+                  echo "*This PR is automatically created/updated when commits are pushed to staging.*" >> pr_body.txt
+                  echo "*Merging this PR will trigger the release workflow to create a new GitHub release.*" >> pr_body.txt
+
+            - name: Check for existing release PR
+              id: check_pr
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  # Find open PR from staging to production
+                  PR_NUMBER=$(gh pr list --base production --head staging --state open --json number --jq '.[0].number')
+                  if [ -z "$PR_NUMBER" ]; then
+                    echo "exists=false" >> $GITHUB_OUTPUT
+                    echo "No existing PR found"
+                  else
+                    echo "exists=true" >> $GITHUB_OUTPUT
+                    echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                    echo "Found existing PR #$PR_NUMBER"
+                  fi
+
+            - name: Create new release PR
+              if: steps.check_pr.outputs.exists == 'false'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh pr create \
+                    --base production \
+                    --head staging \
+                    --title "chore(release): staging to production - ${{ steps.date.outputs.date }}" \
+                    --body-file pr_body.txt \
+                    --label "release"
+
+            - name: Update existing release PR
+              if: steps.check_pr.outputs.exists == 'true'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh pr edit ${{ steps.check_pr.outputs.number }} \
+                    --title "chore(release): staging to production - ${{ steps.date.outputs.date }}" \
+                    --body-file pr_body.txt
+                  echo "Updated PR #${{ steps.check_pr.outputs.number }}"

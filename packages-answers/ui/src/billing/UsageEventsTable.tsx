@@ -37,7 +37,8 @@ const SkeletonRow = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 
 const UsageEventsTable: React.FC = () => {
     const { user } = useUser()
-    const isAdmin = user?.['https://theanswer.ai/roles']?.includes('Admin')
+    const roles = user?.['https://theanswer.ai/roles'] as unknown as string[] | undefined
+    const isAdmin = Array.isArray(roles) && roles.includes('Admin')
     const { events, pagination, isLoading, isError, setPage, setLimit, setSorting, params } = useUsageEvents()
     const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 

@@ -3,6 +3,7 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import { Code2, Rocket, MessageSquare, Globe, Target, Building2, Lightbulb, Key, Check, BarChart3 } from 'lucide-react'
 
 import styles from './index.module.css'
 
@@ -14,13 +15,14 @@ function HomepageHeader() {
             </div>
             <div className={styles.heroContent}>
                 <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAgentAI Logo' className={styles.heroLogo} />
-                <h1 className={styles.heroTitle}>
-                    AI for ALL, <em>not for the few.</em>{' '}
-                </h1>
-                <p className={styles.heroSubtitle}>Building a decentralized, open, and creative future you can trust.</p>
+                <h1 className={styles.heroTitle}>The AI Agent Orchestration Studio</h1>
+                <p className={styles.heroSubtitle}>
+                    AI is fragmented, risky, and slow to deploy. AnswerAgent is one platform to design, evaluate, and run agents securely
+                    across your business.
+                </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Start Building
+                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                        Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a
@@ -35,7 +37,8 @@ function HomepageHeader() {
                             Download Chrome Extension
                         </a>
                         <a href='/developers/' className={styles.secondaryLink}>
-                            👩‍💻 Call for Developers
+                            <Code2 size={18} className={styles.linkIcon} />
+                            Call for Developers
                         </a>
                     </div>
                 </div>
@@ -46,7 +49,7 @@ function HomepageHeader() {
 
 const LayoutComponent: any = Layout
 
-function MissionSection() {
+function _MissionSection() {
     return (
         <section className={styles.missionSection}>
             <div className='container'>
@@ -167,22 +170,26 @@ function FeaturesSection() {
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🚀</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Rocket size={48} strokeWidth={1.5} />
+                            </div>
                             <div>
-                                <h3>Agent Apps</h3>
+                                <h3>Agents</h3>
                                 <p>
                                     Extend the power of AnswerAgent with a growing ecosystem of applications. Integrate AI seamlessly into
                                     your workflows and daily tasks.
                                 </p>
                                 <a href='/apps' className={styles.featureCardCTA}>
-                                    Explore Apps →
+                                    Explore Agents →
                                 </a>
                             </div>
                         </div>
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>💬</div>
+                            <div className={styles.comingSoonIcon}>
+                                <MessageSquare size={48} strokeWidth={1.5} />
+                            </div>
                             <div>
                                 <h3>Chat</h3>
                                 <p>
@@ -197,7 +204,9 @@ function FeaturesSection() {
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🌐</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Globe size={48} strokeWidth={1.5} />
+                            </div>
                             <div>
                                 <h3>Browser Sidekick</h3>
                                 <p>
@@ -212,7 +221,9 @@ function FeaturesSection() {
                     </div>
                     <div className='col col--6'>
                         <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🎯</div>
+                            <div className={styles.comingSoonIcon}>
+                                <Target size={48} strokeWidth={1.5} />
+                            </div>
                             <div>
                                 <h3>Sidekick Studio</h3>
                                 <p>
@@ -221,6 +232,68 @@ function FeaturesSection() {
                                 </p>
                                 <a href='/sidekick-studio' className={styles.featureCardCTA}>
                                     Try Studio →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={clsx(styles.featureCard, styles.commandment)}>
+                            <div className={styles.comingSoonIcon}>
+                                <Lightbulb size={48} strokeWidth={1.5} />
+                            </div>
+                            <div>
+                                <h3>Deep Research</h3>
+                                <p>
+                                    Run multi-step, source-grounded research with citations and traceable reasoning. Turn complex topics
+                                    into actionable insights.
+                                </p>
+                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
+                                    Schedule a Demo →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={clsx(styles.featureCard, styles.commandment)}>
+                            <div className={styles.comingSoonIcon}>
+                                <Check size={48} strokeWidth={1.5} />
+                            </div>
+                            <div>
+                                <h3>Easy Evals</h3>
+                                <p>
+                                    Measure quality with lightweight evaluations. Track accuracy, safety, and style across prompts and
+                                    models—without the complexity.
+                                </p>
+                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
+                                    Schedule a Demo →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={clsx(styles.featureCard, styles.commandment)}>
+                            <div className={styles.comingSoonIcon}>
+                                <Key size={48} strokeWidth={1.5} />
+                            </div>
+                            <div>
+                                <h3>JLinc Immutable Tracking</h3>
+                                <p>Cryptographically signed lineage and consent. Tamper‑evident data trails for compliance and trust.</p>
+                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
+                                    Schedule a Demo →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={clsx(styles.featureCard, styles.commandment)}>
+                            <div className={styles.comingSoonIcon}>
+                                <BarChart3 size={48} strokeWidth={1.5} />
+                            </div>
+                            <div>
+                                <h3>On‑Demand Dashboards & Reports</h3>
+                                <p>Real‑time dashboards across all your data. Track agents, prompts, and costs in one place.</p>
+                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
+                                    Schedule a Demo →
                                 </a>
                             </div>
                         </div>
@@ -236,177 +309,51 @@ function PricingSection() {
         <section className={styles.pricingSection}>
             <div className='container'>
                 <div className='text--center' style={{ marginBottom: '3rem' }}>
-                    <h2 className='text--center'>Simple, Transparent Pricing</h2>
+                    <h2 className='text--center'>Choose Your Deployment</h2>
                     <p className='text--center' style={{ fontSize: '1.2rem', opacity: 0.9, marginBottom: '0' }}>
-                        Start free, pay only for what you use, with full control over your costs
+                        Flexible options for teams—from secure managed cloud to fully self-hosted
                     </p>
                 </div>
                 <div className='row'>
-                    <div className='col col--4'>
+                    <div className='col col--6'>
                         <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🆓</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Free to Try</h3>
-                                <div className={styles.pricingHighlight}>$0</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Get started immediately with our free tier. Explore all features, test workflows, and see the power of
-                                    AI agents before you commit to anything.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Full feature access</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Limited usage credits</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Community support</div>
-                                </div>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Start Free
-                                    </a>
-                                </div>
+                            <div className={styles.pricingIcon}>
+                                <Globe size={48} strokeWidth={1.5} />
                             </div>
-                        </div>
-                    </div>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.pricingCard, styles.commandment, styles.pricingCardHighlighted)}>
-                            <div className={styles.pricingIcon}>💳</div>
                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Usage-Based</h3>
-                                <div className={styles.pricingHighlight}>$20 to start</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Pay only for what you use with transparent, real-time cost tracking. No subscriptions, no hidden fees,
-                                    just honest usage-based pricing.
+                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Business Cloud</h3>
+                                <p style={{ marginBottom: '1.5rem', flex: 1 }}>
+                                    Secure, organization-ready managed cloud with single-tenant isolation, SSO, and governance. Fastest path
+                                    to value with zero maintenance.
                                 </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Real-time cost calculators</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Transparent metrics dashboard</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Small nominal fees on API usage</div>
-                                </div>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Get Started for Free
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🏢</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Business Account</h3>
-                                <div className={styles.pricingHighlight}>$500 + Usage</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Get a fully segregated cloud environment for your business. Share agents, chatflows, and collaborate
-                                    with your team in a dedicated workspace with enhanced security and controls.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Dedicated cloud environment</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Team collaboration & sharing</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Enhanced security controls</div>
-                                </div>
                                 <div style={{ marginTop: 'auto' }}>
                                     <a
                                         href='https://calendly.com/lastrev/answeragent-demo'
                                         className={clsx(styles.ctaButton, styles.ctaPrimary)}
                                     >
-                                        Request Demo
+                                        Schedule a Demo
                                     </a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🏢</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Enterprise</h3>
-                                <div className={styles.pricingHighlight}>Fully Local</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Complete enterprise solution with full self-hosted licensing and services. Deploy AnswerAgentAI entirely
-                                    within your infrastructure for maximum security and control.
+                            <div className={styles.pricingIcon}>
+                                <Building2 size={48} strokeWidth={1.5} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>On‑Prem Enterprise</h3>
+                                <p style={{ marginBottom: '1.5rem', flex: 1 }}>
+                                    Fully self-hosted deployment with enterprise licensing, advanced security controls, and custom
+                                    integrations—run entirely within your infrastructure.
                                 </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Full self-hosted deployment</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Enterprise licensing & support</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Custom integrations & training</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
+                                <div style={{ marginTop: 'auto' }}>
                                     <a
                                         href='https://calendly.com/lastrev/answeragent-demo'
                                         className={clsx(styles.ctaButton, styles.ctaPrimary)}
                                     >
-                                        Talk to Us
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🤝</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>AI Services</h3>
-                                <div className={styles.pricingHighlight}>Professional Partners</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Connect with Last Rev for custom AI implementations, training, and ongoing support for your specific
-                                    business needs.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Certified implementation partner</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Custom AI workflow development</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Training & ongoing support</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <a
-                                        href='https://lastrev.com'
-                                        target='_blank'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                        rel='noreferrer'
-                                    >
-                                        Contact Last Rev
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className='row' style={{ marginTop: '3rem' }}>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCallout, styles.commandment)}>
-                            <div style={{ textAlign: 'center' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>💡 Full Cost Transparency</h3>
-                                <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                                    We provide completely transparent metrics and cost calculators inside the app. See exactly what
-                                    you&apos;re spending, when, and why. We take only a small nominal fee on commercial AI tools and
-                                    licensed AnswerAgentAI versions to keep the platform running.
-                                </p>
-                                <div style={{ marginTop: '2rem' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Start Free Today
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🔑</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Bring Your Own API Token</h3>
-                                <div className={styles.pricingHighlight}>Maximum Savings</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Use your own API keys from OpenAI, Anthropic, Google, and others to drastically reduce costs. You
-                                    maintain direct control and billing relationships.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Direct API key integration</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Massive cost savings</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Zero markup on your usage</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <a href='/getting-started' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Learn How
+                                        Schedule a Demo
                                     </a>
                                 </div>
                             </div>
@@ -418,7 +365,7 @@ function PricingSection() {
     )
 }
 
-function MacAppTeaser() {
+function _MacAppTeaser() {
     return (
         <section className={styles.macAppTeaserSection}>
             <div className='container text--center'>
@@ -452,8 +399,24 @@ export default function Home(): JSX.Element {
                 />
                 <HomepageHeader />
                 <main>
+                    <section className={styles.missionSection}>
+                        <div className='container'>
+                            <div className='row'>
+                                <div className='col col--8 col--offset-2'>
+                                    <h2 className='text--center'>What is an AI Orchestration Studio?</h2>
+                                    <p style={{ fontSize: '1.1rem', opacity: 0.95 }}>
+                                        It’s where teams design, evaluate, and run AI agents—end to end. Build <strong>Agents</strong> that
+                                        automate real work, collaborate in <strong>Chat</strong>, browse with <strong>Sidekick</strong>, and
+                                        manage at scale in <strong>Sidekick Studio</strong>. Go deeper with <strong>Deep Research</strong>,
+                                        prove quality with <strong>Easy Evals</strong>, track lineage with
+                                        <strong> JLinc Immutable Tracking</strong>, and see everything clearly with
+                                        <strong> On‑Demand Dashboards & Reports</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                     <FeaturesSection />
-                    <MacAppTeaser />
                     {/* <MissionSection /> */}
                     <PricingSection />
                 </main>
