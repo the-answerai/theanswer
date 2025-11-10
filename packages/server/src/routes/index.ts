@@ -61,6 +61,7 @@ import executionsRouter from './executions'
 import validationRouter from './validation'
 import agentflowv2GeneratorRouter from './agentflowv2-generator'
 import adminRouter from './admin'
+import organizationsRouter from './organizations'
 
 const router = express.Router()
 
@@ -127,5 +128,6 @@ router.use('/executions', executionsRouter)
 router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
 router.use('/admin', adminRouter)
+router.use('/organizations', organizationsRouter)
 
 export default router

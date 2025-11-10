@@ -72,6 +72,7 @@ const getOrganizationCredentials = async (req: Request, res: Response, next: Nex
         const apiResponse = await organizationService.getOrganizationCredentials(organizationId, req.user)
         return res.json(apiResponse)
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('=== DEBUG: Organization credentials get controller error ===', error)
         next(error)
     }
@@ -107,9 +108,118 @@ const updateOrganizationCredentials = async (req: Request, res: Response, next: 
     }
 }
 
+const getOrganizationConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        const apiResponse = await organizationService.getOrganizationConfig(organizationId, req.user)
+        return res.json(apiResponse)
+    } catch (error) {
+        console.error('=== DEBUG: Organization config get controller error ===', error)
+        next(error)
+    }
+}
+
+const updateOrganizationConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.body.config) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'Config data required')
+        }
+
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        // Check if user is admin
+        const isAdmin = req.user.roles?.includes('Admin')
+        if (!isAdmin) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Admin access required')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        const apiResponse = await organizationService.updateOrganizationConfig(organizationId, req.body.config, req.user)
+
+        return res.json(apiResponse)
+    } catch (error) {
+        console.error('=== DEBUG: Organization config update controller error ===', error)
+        next(error)
+    }
+}
+
+const getOrganizationGuardrailsConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        const config = await organizationService.getOrganizationConfig(organizationId, req.user)
+        // Return just the guardrails config portion
+        return res.json(config.guardrails || {})
+    } catch (error) {
+        console.error('=== DEBUG: Organization guardrails config get controller error ===', error)
+        next(error)
+    }
+}
+
+const updateOrganizationGuardrailsConfig = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.body.guardrails) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'Guardrails config data required')
+        }
+
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
+        }
+
+        // Check if user is admin
+        const isAdmin = req.user.roles?.includes('Admin')
+        if (!isAdmin) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Admin access required')
+        }
+
+        const organizationId = req.user.organizationId
+        if (!organizationId) {
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User organization ID not found')
+        }
+
+        // Wrap guardrails config in proper structure
+        const apiResponse = await organizationService.updateOrganizationConfig(
+            organizationId,
+            { guardrails: req.body.guardrails },
+            req.user
+        )
+
+        // Return just the guardrails portion
+        return res.json(apiResponse.guardrails || {})
+    } catch (error) {
+        console.error('=== DEBUG: Organization guardrails config update controller error ===', error)
+        next(error)
+    }
+}
+
 export default {
     getOrganizationById,
     updateOrganizationEnabledIntegrations,
     getOrganizationCredentials,
-    updateOrganizationCredentials
+    updateOrganizationCredentials,
+    getOrganizationConfig,
+    updateOrganizationConfig,
+    getOrganizationGuardrailsConfig,
+    updateOrganizationGuardrailsConfig
 }
