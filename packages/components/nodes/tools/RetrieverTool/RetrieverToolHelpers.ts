@@ -110,9 +110,10 @@ export function mergeFilters(staticFilter: any, dynamicFilter: any, flowConfig?:
 
 /**
  * Creates a new retriever instance with the specified filter
+ * Preserves all original retriever configuration (searchType, searchKwargs, etc.)
  * @param retriever - Base retriever to create filtered version from
  * @param filter - Filter to apply
- * @returns New retriever instance with filter applied
+ * @returns New retriever instance with filter applied and original config preserved
  * @throws Error if retriever doesn't support filtering
  */
 export function createFilteredRetriever(retriever: BaseRetriever, filter: any): BaseRetriever {
@@ -124,14 +125,34 @@ export function createFilteredRetriever(retriever: BaseRetriever, filter: any): 
     const vectorStoreRetriever = retriever as VectorStoreRetriever<any>
     const vectorStore = vectorStoreRetriever.vectorStore
 
-    // Create new retriever instance with filter
-    // This avoids shared state mutation and is thread-safe
-    const k = (retriever as any).k || 4
+    // Extract all configuration from original retriever to preserve search behavior
+    const originalRetriever = retriever as any
+    const retrieverConfig: any = {
+        // Core configuration
+        k: originalRetriever.k || 4,
+        filter: filter || undefined,
 
-    const newRetriever = vectorStore.asRetriever({
-        k,
-        filter: filter || undefined
+        // Search configuration (preserve searchType and searchKwargs)
+        searchType: originalRetriever.searchType,
+        searchKwargs: originalRetriever.searchKwargs,
+
+        // Callback configuration
+        callbacks: originalRetriever.callbacks,
+        tags: originalRetriever.tags,
+        metadata: originalRetriever.metadata,
+        verbose: originalRetriever.verbose
+    }
+
+    // Remove undefined values to use vector store defaults only when not specified
+    Object.keys(retrieverConfig).forEach((key) => {
+        if (retrieverConfig[key] === undefined) {
+            delete retrieverConfig[key]
+        }
     })
+
+    // Create new retriever instance with all original configuration preserved
+    // This avoids shared state mutation and is thread-safe while maintaining search behavior
+    const newRetriever = vectorStore.asRetriever(retrieverConfig)
 
     return newRetriever
 }
