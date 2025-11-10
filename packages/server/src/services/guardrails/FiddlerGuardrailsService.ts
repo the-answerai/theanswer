@@ -14,7 +14,18 @@ import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { CircuitBreaker } from './CircuitBreaker'
-import { GuardrailsConfig } from '../../types/guardrails'
+import {
+    GuardrailsConfig,
+    SafetyAPIResponse,
+    SafetyEvaluationResult,
+    SafetyViolation,
+    SafetyDimension,
+    PIIAPIResponse,
+    PIIDetectionResult,
+    PIIDetection,
+    PIIType,
+    InputValidationResult
+} from '../../types/guardrails'
 
 export interface FiddlerCredentials {
     apiKey: string
@@ -114,40 +125,216 @@ export class FiddlerGuardrailsService {
 
     /**
      * Evaluate safety (11 dimensions)
-     * To be implemented in Phase 2
+     * Returns violations for dimensions exceeding threshold
      */
-    public async evaluateSafety(text: string): Promise<any> {
+    public async evaluateSafety(text: string): Promise<SafetyEvaluationResult> {
         if (!this.config.safety.enabled) {
-            return { violations: [] }
+            return { violations: [], isUnsafe: false }
         }
 
-        return this.executeWithCircuitBreaker(
-            async () => {
-                return await this.post('/v3/guardrails/ftl-safety', {
-                    prompt: text
-                })
-            },
-            () => ({ violations: [] }) // Fail-open: return no violations
-        )
+        try {
+            const apiResponse = await this.executeWithCircuitBreaker(
+                async () => {
+                    const response = await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', {
+                        data: { input: text }
+                    })
+                    return response
+                },
+                (): SafetyAPIResponse => {
+                    // Return empty scores for all dimensions
+                    return {
+                        fdl_harmful: 0,
+                        fdl_violent: 0,
+                        fdl_unethical: 0,
+                        fdl_illegal: 0,
+                        fdl_sexual: 0,
+                        fdl_racist: 0,
+                        fdl_jailbreaking: 0,
+                        fdl_harassing: 0,
+                        fdl_hateful: 0,
+                        fdl_sexist: 0,
+                        fdl_roleplaying: 0
+                    }
+                }
+            )
+
+            // Parse API response and evaluate per-dimension thresholds
+            const violations: SafetyViolation[] = []
+            const dimensions = Object.keys(apiResponse) as SafetyDimension[]
+
+            for (const dimension of dimensions) {
+                const score = apiResponse[dimension]
+
+                // Get threshold: per-dimension override or global threshold
+                const threshold = this.config.safety.dimensionThresholds?.[dimension] ?? this.config.safety.threshold
+
+                if (score > threshold) {
+                    // Get action: per-dimension override or global action
+                    const action = this.config.safety.dimensionActions?.[dimension] ?? this.config.safety.action
+
+                    violations.push({
+                        dimension,
+                        score,
+                        threshold,
+                        action
+                    })
+                }
+            }
+
+            return {
+                violations,
+                isUnsafe: violations.length > 0
+            }
+        } catch (error) {
+            // Fail-open: return no violations on error
+            return { violations: [], isUnsafe: false }
+        }
     }
 
     /**
-     * Detect PII (15+ types)
-     * To be implemented in Phase 2
+     * Detect PII (15+ types) with per-type filtering and redaction
+     * Returns filtered detections and optionally redacted text
      */
-    public async detectPII(text: string): Promise<any> {
+    public async detectPII(text: string): Promise<PIIDetectionResult> {
         if (!this.config.pii.enabled) {
-            return { detections: [] }
+            return { detections: [], hasPII: false }
         }
 
-        return this.executeWithCircuitBreaker(
-            async () => {
-                return await this.post('/v3/guardrails/sensitive-information', {
-                    text
-                })
-            },
-            () => ({ detections: [] }) // Fail-open: return no detections
-        )
+        try {
+            const apiResponse = await this.executeWithCircuitBreaker(
+                async () => {
+                    const response = await this.post<PIIAPIResponse>('/v3/guardrails/sensitive-information', {
+                        data: { input: text }
+                    })
+                    return response
+                },
+                (): PIIAPIResponse => {
+                    return { fdl_sensitive_information_scores: [] }
+                }
+            )
+
+            // Filter detections by per-type confidence thresholds and enabled types
+            const rawDetections = apiResponse.fdl_sensitive_information_scores || []
+            const filteredDetections: PIIDetection[] = []
+
+            for (const entity of rawDetections) {
+                const entityLabel = entity.label as PIIType
+
+                // Check if type is enabled (if enabledTypes is specified)
+                if (this.config.pii.enabledTypes && !this.config.pii.enabledTypes.includes(entityLabel)) {
+                    continue
+                }
+
+                // Get confidence threshold: per-type override or global threshold
+                const threshold = this.config.pii.typeConfidenceThresholds?.[entityLabel] ?? this.config.pii.confidenceThreshold
+
+                // Filter by confidence
+                if (entity.score >= threshold) {
+                    // Get action: per-type override or global action
+                    const action = this.config.pii.typeActions?.[entityLabel] ?? this.config.pii.action
+
+                    filteredDetections.push({
+                        label: entityLabel,
+                        score: entity.score,
+                        start: entity.start,
+                        end: entity.end,
+                        text: entity.text,
+                        action
+                    })
+                }
+            }
+
+            // Generate redacted text if any redact actions
+            let redactedText: string | undefined
+            const hasRedactActions = filteredDetections.some((d) => d.action === 'redact' || d.action === 'replace')
+
+            if (hasRedactActions) {
+                redactedText = this.redactPII(
+                    text,
+                    filteredDetections.filter((d) => d.action === 'redact' || d.action === 'replace')
+                )
+            }
+
+            return {
+                detections: filteredDetections,
+                hasPII: filteredDetections.length > 0,
+                redactedText
+            }
+        } catch (error) {
+            // Fail-open: return no detections on error
+            return { detections: [], hasPII: false }
+        }
+    }
+
+    /**
+     * Redact PII entities from text
+     * Sorts entities in reverse order to preserve character positions
+     */
+    private redactPII(text: string, entities: PIIDetection[]): string {
+        // Sort by start position in reverse order (end → start)
+        const sorted = [...entities].sort((a, b) => b.start - a.start)
+
+        let redacted = text
+        for (const entity of sorted) {
+            // Replace text[start:end] with [LABEL]
+            redacted = redacted.slice(0, entity.start) + `[${entity.label}]` + redacted.slice(entity.end)
+        }
+
+        return redacted
+    }
+
+    /**
+     * Validate input text (safety + PII checks in parallel)
+     * Returns combined validation result with blocking/redaction logic
+     */
+    public async validateInput(text: string): Promise<InputValidationResult> {
+        try {
+            // Run safety and PII checks in parallel for best performance
+            const [safetyResult, piiResult] = await Promise.all([this.evaluateSafety(text), this.detectPII(text)])
+
+            // Determine if input should be blocked
+            const shouldBlock =
+                safetyResult.violations.some((v) => v.action === 'block') || piiResult.detections.some((d) => d.action === 'block')
+
+            // Determine if input should be redacted
+            const shouldRedact = piiResult.redactedText !== undefined
+
+            // Build result
+            const result: InputValidationResult = {
+                blocked: shouldBlock,
+                redacted: shouldRedact,
+                redactedText: piiResult.redactedText,
+                violations: {
+                    safety: safetyResult.violations.length > 0 ? safetyResult.violations : undefined,
+                    pii: piiResult.detections.length > 0 ? piiResult.detections : undefined
+                }
+            }
+
+            // Add block message if blocked (combine both safety and PII)
+            if (shouldBlock) {
+                const safetyBlocks = safetyResult.violations.filter((v) => v.action === 'block')
+                const piiBlocks = piiResult.detections.filter((d) => d.action === 'block')
+
+                const messages: string[] = []
+                if (safetyBlocks.length > 0) {
+                    messages.push(`Safety: ${safetyBlocks.map((v) => v.dimension).join(', ')}`)
+                }
+                if (piiBlocks.length > 0) {
+                    messages.push(`PII: ${piiBlocks.map((d) => d.label).join(', ')}`)
+                }
+
+                result.message = `Content blocked - ${messages.join('; ')}`
+            }
+
+            return result
+        } catch (error) {
+            // Fail-open: on error, allow the input to pass through
+            return {
+                blocked: false,
+                redacted: false,
+                violations: {}
+            }
+        }
     }
 
     /**

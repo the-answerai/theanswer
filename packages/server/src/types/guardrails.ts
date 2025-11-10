@@ -270,19 +270,43 @@ export interface ChatflowConfig {
 // ============================================================================
 
 export interface PIIDetection {
-    type: PIIType
+    label: PIIType
+    score: number
     start: number
     end: number
-    confidence: number
     text: string
-    label: string
+    action: GuardrailAction
+}
+
+export interface PIIDetectionResult {
+    detections: PIIDetection[]
+    hasPII: boolean
+    redactedText?: string
+}
+
+export interface PIIAPIResponse {
+    fdl_sensitive_information_scores: Array<{
+        score: number
+        label: string
+        start: number
+        end: number
+        text: string
+    }>
 }
 
 export interface SafetyViolation {
     dimension: SafetyDimension
     score: number
     threshold: number
+    action: GuardrailAction
 }
+
+export interface SafetyEvaluationResult {
+    violations: SafetyViolation[]
+    isUnsafe: boolean
+}
+
+export type SafetyAPIResponse = Record<SafetyDimension, number>
 
 export interface InputValidationResult {
     blocked: boolean

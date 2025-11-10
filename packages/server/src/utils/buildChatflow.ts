@@ -37,11 +37,14 @@ import {
     MODE
 } from '../Interface'
 import { InternalFlowiseError } from '../errors/internalFlowiseError'
-import { databaseEntities } from '.'
+import { databaseEntities, decryptCredentialData } from '.'
 import { ChatFlow } from '../database/entities/ChatFlow'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Variable } from '../database/entities/Variable'
+import { Credential } from '../database/entities/Credential'
 import { getRunningExpressApp } from '../utils/getRunningExpressApp'
+import { FiddlerGuardrailsService } from '../services/guardrails/FiddlerGuardrailsService'
+import { getGuardrailsConfig } from '../services/guardrails/config'
 import {
     isFlowValidForStream,
     buildFlow,
@@ -266,6 +269,66 @@ export const executeFlow = async ({
     const streaming = incomingInput.streaming ?? false
     const userMessageDateTime = new Date()
     const chatflowid = chatflow.id
+
+    /* Input validation with Fiddler Guardrails (Phase 2)
+     * - Safety checks (11 dimensions)
+     * - PII detection and redaction
+     * Actions: block, redact, warn, continue
+     */
+    try {
+        const guardrailsConfig = await getGuardrailsConfig(chatflowid, user!)
+
+        if (guardrailsConfig.enabled) {
+            // Load Fiddler credentials (scoped to organization for multi-tenancy)
+            const appServer = getRunningExpressApp()
+            const credentialRepository = appServer.AppDataSource.getRepository(Credential)
+
+            const credentials = await credentialRepository.find({
+                where: {
+                    credentialName: 'fiddlerApi',
+                    organizationId: user.organizationId
+                }
+            })
+
+            if (credentials && credentials.length > 0) {
+                const credentialData = await decryptCredentialData(credentials[0].encryptedData)
+                const fiddlerService = new FiddlerGuardrailsService(
+                    {
+                        apiKey: credentialData.fiddlerApiKey,
+                        apiUrl: credentialData.fiddlerApiUrl
+                    },
+                    guardrailsConfig
+                )
+
+                const validationResult = await fiddlerService.validateInput(question)
+
+                // Handle blocking
+                if (validationResult.blocked) {
+                    throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, validationResult.message || 'Content blocked by guardrails')
+                }
+
+                // Handle redaction
+                if (validationResult.redacted && validationResult.redactedText) {
+                    question = validationResult.redactedText
+                }
+
+                // Handle warnings (log only)
+                if (validationResult.violations.safety || validationResult.violations.pii) {
+                    console.warn(`Guardrails warnings for chatflow ${chatflowid}:`, {
+                        safety: validationResult.violations.safety,
+                        pii: validationResult.violations.pii
+                    })
+                }
+            }
+        }
+    } catch (error) {
+        // Fail-open by default: log error but continue processing
+        if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.BAD_REQUEST) {
+            // Re-throw blocking errors
+            throw error
+        }
+        console.error('Guardrails validation error (fail-open):', error)
+    }
 
     /* Process file uploads from the chat
      * - Images

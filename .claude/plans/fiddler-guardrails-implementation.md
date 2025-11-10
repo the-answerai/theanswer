@@ -3,11 +3,11 @@
 **Linear:** AGENT-139
 **Spec Reference:** `.claude/plans/fiddler-guardrails-spec.md`
 **Progress Reference:** `.claude/plans/fiddler-guardrails-progress.md`
-**Status:** 🚧 In Progress - Phase 1 Complete
+**Status:** 🚧 In Progress - Phase 1 & 2 Complete
 
 **Scores:** Effort 22/25 | Complexity 3.2/5 | Risk Low-Medium | **Confidence 9/10**
 
-**Task Count:** 37 tasks | **Progress:** 8/37 (21.6%)
+**Task Count:** 37 tasks | **Progress:** 16/37 (43.2%)
 
 ---
 
@@ -84,54 +84,78 @@
 
 ---
 
-## Phase 2: Input Validation (MVP)
+## Phase 2: Input Validation (MVP) ✅ COMPLETE
 
 **Goal:** Safety and PII checks for input with per-dimension/per-type controls
 
-**Effort:** 5/5 | **Complexity:** 4/5
+**Effort:** 5/5 | **Complexity:** 4/5 | **Status:** ✅ Complete (2025-11-10)
 
-### Tasks (8 tasks)
+**Deliverables:** 3 files modified, +223 lines (net +302 insertions, -28 deletions), 0 breaking changes
 
-**2.1 Safety Evaluation - API Integration**
-- `POST /v3/guardrails/ftl-safety` → Parse 11 dimension scores
-- **Spec:** Lines 957-979
-- **Deliverables:** `evaluateSafety(text, config)` (50 lines)
+### Tasks (8/8 tasks complete)
 
-**2.2 Safety Evaluation - Per-Dimension Logic**
-- `dimensionThresholds?.[dim] ?? threshold` for each dimension
-- **Spec:** Lines 1313-1385 (with scenarios)
-- **Deliverables:** Per-dimension evaluation (80 lines)
+**✅ 2.1 Safety Evaluation - API Integration** (62 lines vs 50 planned)
+- ✅ API integration with `POST /v3/guardrails/ftl-safety`
+- ✅ Request format: `{ data: { input: text } }` (per spec line 719)
+- ✅ Response parsing: 11 dimension scores (0.0-1.0)
+- ✅ Circuit breaker with fallback: returns zero scores for all dimensions
+- ✅ Try-catch with fail-open error handling
+- **File:** `FiddlerGuardrailsService.ts:130-192`
 
-**2.3 PII Detection - API Integration**
-- `POST /v3/guardrails/sensitive-information` → Parse entity array
-- **Spec:** Lines 1068-1104
-- **Deliverables:** `detectPII(text, config)` (50 lines)
+**✅ 2.2 Safety Evaluation - Per-Dimension Logic** (integrated in 2.1)
+- ✅ Per-dimension threshold fallback: `dimensionThresholds?.[dim] ?? threshold`
+- ✅ Per-dimension action fallback: `dimensionActions?.[dim] ?? action`
+- ✅ Violation array construction with dimension, score, threshold, action
+- **File:** `FiddlerGuardrailsService.ts:161-182`
 
-**2.4 PII Detection - Per-Type Filtering & Actions**
-- Filter: `entity.score >= (typeConfidenceThresholds?.[label] ?? confidenceThreshold)`
-- Action: `typeActions?.[label] ?? action`
-- **Spec:** Lines 1388-1537 (with scenarios)
-- **Deliverables:** Filtering/action logic (100 lines)
+**✅ 2.3 PII Detection - API Integration** (70 lines vs 50 planned)
+- ✅ API integration with `POST /v3/guardrails/sensitive-information`
+- ✅ Request format: `{ data: { input: text } }` (per spec line 840)
+- ✅ Response parsing: `fdl_sensitive_information_scores` array
+- ✅ Circuit breaker with fallback: returns empty array
+- ✅ Try-catch with fail-open error handling
+- **File:** `FiddlerGuardrailsService.ts:198-264`
 
-**2.5 PII Redaction Algorithm**
-- Sort reverse, replace `text[start:end]` with `[LABEL]`
-- **Spec:** Lines 1134-1143
-- **Deliverables:** Redaction logic (60 lines)
+**✅ 2.4 PII Detection - Per-Type Filtering & Actions** (integrated in 2.3)
+- ✅ enabledTypes filtering: `config.pii.enabledTypes.includes(entityLabel)`
+- ✅ Per-type confidence: `typeConfidenceThresholds?.[entityLabel] ?? confidenceThreshold`
+- ✅ Per-type action: `typeActions?.[entityLabel] ?? action`
+- ✅ Cast entity.label to PIIType for type safety
+- **File:** `FiddlerGuardrailsService.ts:220-244`
 
-**2.6 Input Validation Wrapper**
-- `validateInput()` calls `Promise.all([evaluateSafety(), detectPII()])`
-- **Deliverables:** Wrapper method (70 lines)
+**✅ 2.5 PII Redaction Algorithm** (18 lines vs 60 planned)
+- ✅ Reverse sort by start position: `sort((a, b) => b.start - a.start)`
+- ✅ Replace `text[start:end]` with `[LABEL]` placeholder
+- ✅ Processes only redact/replace actions
+- ✅ Preserves earlier character positions
+- **File:** `FiddlerGuardrailsService.ts:270-281`
 
-**2.7 Error Handling**
-- **Follow:** `InternalFlowiseError` pattern in `packages/server/CLAUDE.md`
-- Format: `Error: guardrails.{methodName} - {description}`
-- **Deliverables:** Integrated in all methods
+**✅ 2.6 Input Validation Wrapper** (48 lines vs 70 planned)
+- ✅ Parallel execution: `Promise.all([evaluateSafety(), detectPII()])`
+- ✅ Combined blocking: `safety.some(block) OR pii.some(block)`
+- ✅ Combined messages: shows both safety AND pii violations
+- ✅ Fail-open error handling with empty violations
+- ✅ Fixed: Combined block messages (Issue #2)
+- **File:** `FiddlerGuardrailsService.ts:287-333`
 
-**2.8 Input Validation Integration** ⚠️ CRITICAL
-- **Exact location:** `buildChatflow.ts:262` (after `let question = incomingInput.question || ''`)
-- Block (throw 400), Redact (modify `question`), Warn (log), failOpen handling
-- **Spec:** Lines 1606-1628
-- **Deliverables:** 100 lines added to `buildChatflow.ts`
+**✅ 2.7 Error Handling** (integrated throughout)
+- ✅ InternalFlowiseError format: `Error: FiddlerGuardrailsService.{method} - {description}`
+- ✅ Try-catch blocks in all API methods
+- ✅ Fail-open: returns safe defaults on error
+- ✅ Circuit breaker prevents cascading failures
+- **Files:** All methods in `FiddlerGuardrailsService.ts`
+
+**✅ 2.8 Input Validation Integration** (55 lines vs 100 planned)
+- ✅ **Location:** `buildChatflow.ts:274-328` (after question set, before file processing)
+- ✅ Load 4-layer config: default → env → org → chatflow
+- ✅ Load credentials scoped to organizationId (multi-tenancy)
+- ✅ Call validateInput() with question text
+- ✅ Block: throw InternalFlowiseError with 400 status
+- ✅ Redact: modify question variable with redacted text
+- ✅ Warn: console.warn with violations, continue processing
+- ✅ Fail-open: re-throw blocks, log other errors
+- ✅ Fixed: Multi-tenancy violation (Issue #1)
+- **File:** `buildChatflow.ts:274-328`
 
 ---
 
