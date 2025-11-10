@@ -78,6 +78,7 @@ export interface IOrganization {
     updatedDate: Date
     createdDate: Date
     enabledIntegrations?: string
+    organizationConfig?: string
 }
 
 export interface IChatFlow {
