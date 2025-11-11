@@ -7,7 +7,9 @@ import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
 import guardrailsApi from 'flowise-ui/src/api/guardrails'
+import MasterConfig from './GuardrailsSettings/MasterConfig'
 import SimpleMode from './GuardrailsSettings/SimpleMode'
+import AdvancedMode from './GuardrailsSettings/AdvancedMode'
 
 interface TabPanelProps {
     children?: React.ReactNode
@@ -26,7 +28,7 @@ function TabPanel(props: TabPanelProps) {
             aria-labelledby={`guardrails-tab-${index}`}
             {...other}
         >
-            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+            {value === index && <Box sx={{ pt: 2, pb: 2 }}>{children}</Box>}
         </div>
     )
 }
@@ -57,6 +59,10 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
         }
     }
 
+    const handleConfigChange = (updates: Partial<any>) => {
+        setConfig({ ...config, ...updates })
+    }
+
     const handleSave = async (newConfig: any) => {
         try {
             setSaving(true)
@@ -82,7 +88,7 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
     }
 
     return (
-        <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', p: 3 }}>
+        <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', p: 0 }}>
             <Typography variant='h4' gutterBottom>
                 Guardrails Settings
             </Typography>
@@ -90,15 +96,27 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
                 Configure AI guardrails to protect your chatflows from unsafe content, PII leaks, and hallucinations.
             </Typography>
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            {/* Master Configuration - Shared across all modes */}
+            <MasterConfig config={config} onConfigChange={handleConfigChange} />
+
+            <Box
+                sx={{
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    ...(!config?.enabled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {})
+                }}
+            >
                 <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)}>
                     <Tab label='Simple' />
-                    <Tab label='Advanced' disabled />
-                    <Tab label='Custom (JSON)' disabled />
+                    <Tab label='Advanced' />
                 </Tabs>
             </Box>
 
-            <TabPanel value={tab} index={0}>
+            <TabPanel
+                value={tab}
+                index={0}
+                sx={{ ...(!config?.enabled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}) }}
+            >
                 <SimpleMode
                     config={config}
                     onSave={handleSave}
@@ -109,12 +127,19 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
                 />
             </TabPanel>
 
-            <TabPanel value={tab} index={1}>
-                <Typography>Advanced mode (per-dimension controls) - Coming soon</Typography>
-            </TabPanel>
-
-            <TabPanel value={tab} index={2}>
-                <Typography>Custom JSON editor - Coming soon</Typography>
+            <TabPanel
+                value={tab}
+                index={1}
+                sx={{ ...(!config?.enabled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}) }}
+            >
+                <AdvancedMode
+                    config={config}
+                    onSave={handleSave}
+                    saving={saving}
+                    error={error}
+                    success={success}
+                    onClearError={() => setError(null)}
+                />
             </TabPanel>
         </Box>
     )
