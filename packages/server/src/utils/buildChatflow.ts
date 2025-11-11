@@ -34,7 +34,8 @@ import {
     IVariable,
     INodeOverrides,
     IVariableOverride,
-    MODE
+    MODE,
+    GuardrailsMetadata
 } from '../Interface'
 import { InternalFlowiseError } from '../errors/internalFlowiseError'
 import { databaseEntities } from '.'
@@ -273,12 +274,33 @@ export const executeFlow = async ({
      * - PII detection and redaction
      * - Actions: block, redact, warn, continue
      */
+    let guardrailsMetadata: Partial<GuardrailsMetadata> | undefined
     if (user?.organizationId) {
         try {
             const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
 
             if (guardrailsService) {
                 const validationResult = await guardrailsService.validateInput(question)
+
+                // Build metadata for client and database
+                if (validationResult) {
+                    guardrailsMetadata = {
+                        inputValidation: validationResult
+                    }
+
+                    // Enhanced structured logging
+                    logger.info({
+                        message: '[Guardrails] Input validation triggered',
+                        chatflowId: chatflowid,
+                        chatId,
+                        userId: user?.id,
+                        organizationId: user?.organizationId,
+                        blocked: validationResult.blocked,
+                        redacted: validationResult.redacted,
+                        safetyViolations: validationResult.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
+                        piiDetections: validationResult.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
+                    })
+                }
 
                 // Handle blocking
                 if (validationResult.blocked) {
@@ -289,14 +311,6 @@ export const executeFlow = async ({
                 if (validationResult.redacted && validationResult.redactedText) {
                     question = validationResult.redactedText
                 }
-
-                // Log warnings
-                if (validationResult.violations.safety || validationResult.violations.pii) {
-                    console.warn(`Guardrails warnings for chatflow ${chatflowid}:`, {
-                        safety: validationResult.violations.safety,
-                        pii: validationResult.violations.pii
-                    })
-                }
             }
         } catch (error) {
             // Fail-open by default: log error but continue processing
@@ -304,7 +318,7 @@ export const executeFlow = async ({
                 // Re-throw blocking errors
                 throw error
             }
-            console.error('Guardrails validation error (fail-open):', error)
+            logger.error('[Guardrails] Validation error (fail-open)', { error, chatflowId: chatflowid, chatId })
         }
     }
 
@@ -606,6 +620,7 @@ export const executeFlow = async ({
                 leadEmail: incomingInput.leadEmail,
                 userId: user?.id ?? agentflow.userId,
                 organizationId: user?.organizationId ?? agentflow.organizationId,
+                guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined,
                 trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
             }
             await utilAddChatMessage(userMessage, appDataSource)
@@ -628,6 +643,7 @@ export const executeFlow = async ({
             if (usedTools?.length) apiMessage.usedTools = JSON.stringify(usedTools)
             if (agentReasoning?.length) apiMessage.agentReasoning = JSON.stringify(agentReasoning)
             if (finalAction && Object.keys(finalAction).length) apiMessage.action = JSON.stringify(finalAction)
+            if (guardrailsMetadata) apiMessage.guardrailsMetadata = JSON.stringify(guardrailsMetadata)
 
             if (agentflow.followUpPrompts) {
                 const followUpPromptsConfig = JSON.parse(agentflow.followUpPrompts)
@@ -694,6 +710,7 @@ export const executeFlow = async ({
             if (agentReasoning?.length) result.agentReasoning = agentReasoning
             if (finalAction && Object.keys(finalAction).length) result.action = finalAction
             if (Object.keys(setVariableNodesOutput).length) result.flowVariables = setVariableNodesOutput
+            if (guardrailsMetadata) result.guardrailsMetadata = guardrailsMetadata
             result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
 
             PlansService.incrementUsedExecutionCount(agentflow.userId, agentflow.organizationId)
@@ -774,6 +791,7 @@ export const executeFlow = async ({
             leadEmail: incomingInput.leadEmail,
             userId: user?.id,
             organizationId: user?.organizationId,
+            guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined,
             trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
         }
         await utilAddChatMessage(userMessage, appDataSource)
@@ -851,6 +869,7 @@ export const executeFlow = async ({
                 apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)
             }
         }
+        if (guardrailsMetadata) apiMessage.guardrailsMetadata = JSON.stringify(guardrailsMetadata)
 
         const chatMessage = await utilAddChatMessage(apiMessage, appDataSource)
 
@@ -874,6 +893,7 @@ export const executeFlow = async ({
         if (sessionId) result.sessionId = sessionId
         if (memoryType) result.memoryType = memoryType
         if (Object.keys(setVariableNodesOutput).length) result.flowVariables = setVariableNodesOutput
+        if (guardrailsMetadata) result.guardrailsMetadata = guardrailsMetadata
 
         return result
     }

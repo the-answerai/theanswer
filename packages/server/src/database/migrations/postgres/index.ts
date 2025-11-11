@@ -64,6 +64,7 @@ import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersion
 import { AddUniqueConstraintDefaultChatflows1753000000001 } from './1753000000001-AddUniqueConstraintDefaultChatflows'
 import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 import { AddOrganizationConfig1753200000001 } from './1753200000001-AddOrganizationConfig'
+import { AddGuardrailsMetadataToChatMessage1753200000002 } from './1753200000002-AddGuardrailsMetadataToChatMessage'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -131,5 +132,6 @@ export const postgresMigrations = [
     AddVersioningToChatFlow1753000000000,
     AddUniqueConstraintDefaultChatflows1753000000001,
     AddTrackingMetadataToChatMessage1753200000000,
-    AddOrganizationConfig1753200000001
+    AddOrganizationConfig1753200000001,
+    AddGuardrailsMetadataToChatMessage1753200000002
 ]
