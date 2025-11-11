@@ -48,7 +48,7 @@ export class FiddlerGuardrailsService {
         // Initialize HTTP client with connection pooling
         this.client = axios.create({
             baseURL: credentials.apiUrl,
-            timeout: 10000, // 10 second timeout
+            timeout: 30_000, // 10 second timeout
             headers: {
                 Authorization: `Bearer ${credentials.apiKey}`,
                 'Content-Type': 'application/json'
@@ -239,9 +239,9 @@ export class FiddlerGuardrailsService {
      * Evaluate safety (11 dimensions)
      * Returns violations for dimensions exceeding threshold
      */
-    public async evaluateSafety(text: string): Promise<SafetyEvaluationResult> {
+    public async evaluateSafety(text: string): Promise<Partial<SafetyEvaluationResult>> {
         if (!this.config.safety.enabled) {
-            return { violations: [], isUnsafe: false }
+            return { dimensions: [], violations: [], isUnsafe: false }
         }
 
         try {
@@ -294,12 +294,13 @@ export class FiddlerGuardrailsService {
             }
 
             return {
+                ...apiResponse,
                 violations,
                 isUnsafe: violations.length > 0
-            }
+            } as SafetyEvaluationResult
         } catch (error) {
             // Fail-open: return no violations on error
-            return { violations: [], isUnsafe: false }
+            return { dimensions: [], violations: [], isUnsafe: false }
         }
     }
 
@@ -368,6 +369,7 @@ export class FiddlerGuardrailsService {
             }
 
             return {
+                ...apiResponse,
                 detections: filteredDetections,
                 hasPII: filteredDetections.length > 0,
                 redactedText
@@ -406,32 +408,34 @@ export class FiddlerGuardrailsService {
 
             // Determine if input should be blocked
             const shouldBlock =
-                safetyResult.violations.some((v) => v.action === 'block') || piiResult.detections.some((d) => d.action === 'block')
+                safetyResult.violations?.some((v) => v.action === 'block') || piiResult.detections.some((d) => d.action === 'block')
 
             // Determine if input should be redacted
             const shouldRedact = piiResult.redactedText !== undefined
 
             // Build result
             const result: InputValidationResult = {
+                safetyResult,
+                piiResult,
                 blocked: shouldBlock,
                 redacted: shouldRedact,
                 redactedText: piiResult.redactedText,
                 violations: {
-                    safety: safetyResult.violations.length > 0 ? safetyResult.violations : undefined,
-                    pii: piiResult.detections.length > 0 ? piiResult.detections : undefined
+                    safety: safetyResult.violations,
+                    pii: piiResult.detections
                 }
             }
 
             // Add block message if blocked (combine both safety and PII)
             if (shouldBlock) {
-                const safetyBlocks = safetyResult.violations.filter((v) => v.action === 'block')
+                const safetyBlocks = safetyResult.violations?.filter((v) => v.action === 'block')
                 const piiBlocks = piiResult.detections.filter((d) => d.action === 'block')
 
                 const messages: string[] = []
-                if (safetyBlocks.length > 0) {
-                    messages.push(`Safety: ${safetyBlocks.map((v) => v.dimension).join(', ')}`)
+                if (safetyBlocks && safetyBlocks.length > 0) {
+                    messages.push(`Safety: ${safetyBlocks?.map((v) => v.dimension).join(', ')}`)
                 }
-                if (piiBlocks.length > 0) {
+                if (piiBlocks && piiBlocks.length > 0) {
                     messages.push(`PII: ${piiBlocks.map((d) => d.label).join(', ')}`)
                 }
 
@@ -442,6 +446,8 @@ export class FiddlerGuardrailsService {
         } catch (error) {
             // Fail-open: on error, allow the input to pass through
             return {
+                safetyResult: { dimensions: [], violations: [], isUnsafe: false },
+                piiResult: { detections: [], hasPII: false },
                 blocked: false,
                 redacted: false,
                 violations: {}

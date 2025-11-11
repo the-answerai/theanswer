@@ -23,8 +23,8 @@ class FiddlerApi implements INodeCredential {
                 label: 'Fiddler API URL',
                 name: 'fiddlerApiUrl',
                 type: 'string',
-                default: 'https://api.fiddler.ai',
-                placeholder: 'https://api.fiddler.ai'
+                default: 'https://guardrails.cloud.fiddler.ai',
+                placeholder: 'https://guardrails.cloud.fiddler.ai'
             }
         ]
     }

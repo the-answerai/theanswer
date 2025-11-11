@@ -308,7 +308,8 @@ export interface SafetyViolation {
     action: GuardrailAction
 }
 
-export interface SafetyEvaluationResult {
+export interface SafetyEvaluationResult extends SafetyAPIResponse {
+    dimensions: SafetyDimension[]
     violations: SafetyViolation[]
     isUnsafe: boolean
 }
@@ -316,6 +317,8 @@ export interface SafetyEvaluationResult {
 export type SafetyAPIResponse = Record<SafetyDimension, number>
 
 export interface InputValidationResult {
+    safetyResult: Partial<SafetyEvaluationResult>
+    piiResult: Partial<PIIDetectionResult>
     blocked: boolean
     redacted: boolean
     redactedText?: string
