@@ -145,7 +145,6 @@ export default function SimpleMode({ config, onSave, saving, error, success, onC
                         onClick={() => {
                             setHasChanges(false)
                             setEnabled(config?.enabled ?? false)
-                            setSelectedCredential(config?.credentialId ?? '')
                         }}
                         disabled={saving}
                     >
