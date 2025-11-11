@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
 import guardrailsApi from 'flowise-ui/src/api/guardrails'
 import SimpleMode from './GuardrailsSettings/SimpleMode'
 
@@ -91,18 +90,6 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
                 Configure AI guardrails to protect your chatflows from unsafe content, PII leaks, and hallucinations.
             </Typography>
 
-            {error && (
-                <Alert severity='error' sx={{ mb: 2 }} onClose={() => setError(null)}>
-                    {error}
-                </Alert>
-            )}
-
-            {success && (
-                <Alert severity='success' sx={{ mb: 2 }}>
-                    Configuration saved successfully
-                </Alert>
-            )}
-
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)}>
                     <Tab label='Simple' />
@@ -112,7 +99,14 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
             </Box>
 
             <TabPanel value={tab} index={0}>
-                <SimpleMode config={config} onSave={handleSave} saving={saving} />
+                <SimpleMode
+                    config={config}
+                    onSave={handleSave}
+                    saving={saving}
+                    error={error}
+                    success={success}
+                    onClearError={() => setError(null)}
+                />
             </TabPanel>
 
             <TabPanel value={tab} index={1}>

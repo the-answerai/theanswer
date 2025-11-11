@@ -190,6 +190,13 @@ export interface GuardrailsConfig {
     enabled: boolean
 
     /**
+     * Fiddler API credential ID
+     * References a credential in the credential table
+     * Falls back to FIDDLER_API_KEY environment variable if not set
+     */
+    credentialId?: string
+
+    /**
      * Safety checks configuration
      */
     safety: SafetyConfig

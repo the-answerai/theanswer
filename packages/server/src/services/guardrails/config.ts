@@ -118,6 +118,11 @@ export function deepMergeConfigs(base: Partial<GuardrailsConfig>, override: Part
         merged.enabled = override.enabled
     }
 
+    // Merge credentialId
+    if (override.credentialId !== undefined) {
+        merged.credentialId = override.credentialId
+    }
+
     // Merge safety config
     if (override.safety) {
         merged.safety = {

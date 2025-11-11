@@ -212,8 +212,13 @@ const updateOrganizationConfig = async (id: string, config: Partial<Organization
         // Get existing config
         const existingConfig = await getOrganizationConfig(id, user)
 
-        // Deep merge existing config with new config
-        const mergedConfig = deepMergeConfigs(existingConfig, config)
+        // Merge configs at organization level
+        const mergedConfig: OrganizationConfig = { ...existingConfig, ...config }
+
+        // If both have guardrails config, deep merge that section
+        if (existingConfig.guardrails && config.guardrails) {
+            mergedConfig.guardrails = deepMergeConfigs(existingConfig.guardrails, config.guardrails)
+        }
 
         // Stringify and save
         const configJson = JSON.stringify(mergedConfig)

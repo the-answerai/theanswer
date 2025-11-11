@@ -278,7 +278,7 @@ export const executeFlow = async ({
     try {
         const guardrailsConfig = await getGuardrailsConfig(chatflowid, user!)
 
-        if (guardrailsConfig.enabled) {
+        if (guardrailsConfig.enabled && user?.organizationId) {
             // Load Fiddler credentials (scoped to organization for multi-tenancy)
             const appServer = getRunningExpressApp()
             const credentialRepository = appServer.AppDataSource.getRepository(Credential)
