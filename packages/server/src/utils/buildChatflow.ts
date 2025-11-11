@@ -37,14 +37,12 @@ import {
     MODE
 } from '../Interface'
 import { InternalFlowiseError } from '../errors/internalFlowiseError'
-import { databaseEntities, decryptCredentialData } from '.'
+import { databaseEntities } from '.'
 import { ChatFlow } from '../database/entities/ChatFlow'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Variable } from '../database/entities/Variable'
-import { Credential } from '../database/entities/Credential'
 import { getRunningExpressApp } from '../utils/getRunningExpressApp'
 import { FiddlerGuardrailsService } from '../services/guardrails/FiddlerGuardrailsService'
-import { getGuardrailsConfig } from '../services/guardrails/config'
 import {
     isFlowValidForStream,
     buildFlow,
@@ -270,37 +268,17 @@ export const executeFlow = async ({
     const userMessageDateTime = new Date()
     const chatflowid = chatflow.id
 
-    /* Input validation with Fiddler Guardrails (Phase 2)
+    /* Input validation with Fiddler Guardrails
      * - Safety checks (11 dimensions)
      * - PII detection and redaction
-     * Actions: block, redact, warn, continue
+     * - Actions: block, redact, warn, continue
      */
-    try {
-        const guardrailsConfig = await getGuardrailsConfig(chatflowid, user!)
+    if (user?.organizationId) {
+        try {
+            const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
 
-        if (guardrailsConfig.enabled && user?.organizationId) {
-            // Load Fiddler credentials (scoped to organization for multi-tenancy)
-            const appServer = getRunningExpressApp()
-            const credentialRepository = appServer.AppDataSource.getRepository(Credential)
-
-            const credentials = await credentialRepository.find({
-                where: {
-                    credentialName: 'fiddlerApi',
-                    organizationId: user.organizationId
-                }
-            })
-
-            if (credentials && credentials.length > 0) {
-                const credentialData = await decryptCredentialData(credentials[0].encryptedData)
-                const fiddlerService = new FiddlerGuardrailsService(
-                    {
-                        apiKey: credentialData.fiddlerApiKey,
-                        apiUrl: credentialData.fiddlerApiUrl
-                    },
-                    guardrailsConfig
-                )
-
-                const validationResult = await fiddlerService.validateInput(question)
+            if (guardrailsService) {
+                const validationResult = await guardrailsService.validateInput(question)
 
                 // Handle blocking
                 if (validationResult.blocked) {
@@ -312,7 +290,7 @@ export const executeFlow = async ({
                     question = validationResult.redactedText
                 }
 
-                // Handle warnings (log only)
+                // Log warnings
                 if (validationResult.violations.safety || validationResult.violations.pii) {
                     console.warn(`Guardrails warnings for chatflow ${chatflowid}:`, {
                         safety: validationResult.violations.safety,
@@ -320,14 +298,14 @@ export const executeFlow = async ({
                     })
                 }
             }
+        } catch (error) {
+            // Fail-open by default: log error but continue processing
+            if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.BAD_REQUEST) {
+                // Re-throw blocking errors
+                throw error
+            }
+            console.error('Guardrails validation error (fail-open):', error)
         }
-    } catch (error) {
-        // Fail-open by default: log error but continue processing
-        if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.BAD_REQUEST) {
-            // Re-throw blocking errors
-            throw error
-        }
-        console.error('Guardrails validation error (fail-open):', error)
     }
 
     /* Process file uploads from the chat

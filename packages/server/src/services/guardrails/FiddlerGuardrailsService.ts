@@ -14,6 +14,11 @@ import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { CircuitBreaker } from './CircuitBreaker'
+import { getGuardrailsConfig } from './config'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import { Credential } from '../../database/entities/Credential'
+import { decryptCredentialData } from '../../utils'
+import { IUser } from '../../Interface'
 import {
     GuardrailsConfig,
     SafetyAPIResponse,
@@ -68,6 +73,113 @@ export class FiddlerGuardrailsService {
             successThreshold: 3
         }
         this.circuitBreaker = new CircuitBreaker(circuitConfig)
+    }
+
+    /**
+     * Factory method to create FiddlerGuardrailsService from chatflow context
+     * Handles config loading, credential resolution, and service initialization
+     *
+     * @param chatflowId - Chatflow ID for config hierarchy
+     * @param user - User context for organization scoping
+     * @returns Initialized service or null if disabled/no credentials
+     *
+     * @example
+     * const service = await FiddlerGuardrailsService.createFromContext(chatflowId, user)
+     * if (service) {
+     *   const result = await service.validateInput(text)
+     * }
+     */
+    public static async createFromContext(chatflowId: string, user: IUser): Promise<FiddlerGuardrailsService | null> {
+        try {
+            // 1. Load configuration (env → org → chatflow)
+            const config = await getGuardrailsConfig(chatflowId, user)
+
+            // 2. Check if guardrails are enabled
+            if (!config.enabled) {
+                return null
+            }
+
+            // 3. Load credentials with fallback chain
+            const credentials = await this.loadCredentials(user.organizationId, config)
+            if (!credentials) {
+                console.warn(`Guardrails enabled but no credentials found for organization ${user.organizationId}`)
+                return null
+            }
+
+            // 4. Initialize and return service
+            return new FiddlerGuardrailsService(credentials, config)
+        } catch (error) {
+            // Fail-open: log error but don't throw
+            console.error('Error initializing Fiddler Guardrails service (fail-open):', error)
+            return null
+        }
+    }
+
+    /**
+     * Load Fiddler credentials with multi-tier fallback
+     * Priority: Config credentialId → Org credential by name → Environment variables
+     *
+     * @param organizationId - Organization ID for scoping
+     * @param config - Guardrails configuration
+     * @returns Credentials or null if not found
+     */
+    private static async loadCredentials(organizationId: string, config: GuardrailsConfig): Promise<FiddlerCredentials | null> {
+        try {
+            const appServer = getRunningExpressApp()
+            const credentialRepository = appServer.AppDataSource.getRepository(Credential)
+
+            // Priority 1: Use credentialId from config (chatflow/org override)
+            if (config.credentialId) {
+                const credential = await credentialRepository.findOne({
+                    where: {
+                        id: config.credentialId,
+                        organizationId
+                    }
+                })
+
+                if (credential) {
+                    const credentialData = await decryptCredentialData(credential.encryptedData)
+                    return {
+                        apiKey: credentialData.fiddlerApiKey,
+                        apiUrl: credentialData.fiddlerApiUrl
+                    }
+                }
+            }
+
+            // Priority 2: Find org's Fiddler credential by name
+            const credentials = await credentialRepository.find({
+                where: {
+                    credentialName: 'fiddlerApi',
+                    organizationId
+                }
+            })
+
+            if (credentials && credentials.length > 0) {
+                const credentialData = await decryptCredentialData(credentials[0].encryptedData)
+                return {
+                    apiKey: credentialData.fiddlerApiKey,
+                    apiUrl: credentialData.fiddlerApiUrl
+                }
+            }
+
+            // Priority 3: Fallback to environment variables
+            const envApiKey = process.env.FIDDLER_API_KEY
+            const envApiUrl = process.env.FIDDLER_API_URL
+
+            if (envApiKey && envApiUrl) {
+                console.log(`Using Fiddler credentials from environment variables for organization ${organizationId}`)
+                return {
+                    apiKey: envApiKey,
+                    apiUrl: envApiUrl
+                }
+            }
+
+            // No credentials found
+            return null
+        } catch (error) {
+            console.error('Error loading Fiddler credentials:', error)
+            return null
+        }
     }
 
     /**
