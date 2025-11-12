@@ -460,7 +460,7 @@ export class StripeProvider {
                                             event_name: stripeMeterEvent.event_name,
                                             payload: stripeMeterEvent.payload
                                         } as Stripe.Billing.MeterEvent
-                                    } else if (error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]') {
+                                    } else if (error.code === 'resource_missing' && error.param?.includes('stripe_customer_id')) {
                                         // Handle "Customer not found" errors
                                         log.warn('Customer not found in Stripe, retrying with default customer', {
                                             traceId: data.traceId,
