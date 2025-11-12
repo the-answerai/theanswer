@@ -1052,6 +1052,12 @@ const _saveChunksToStorage = async (
     const re = new RegExp('^data.*;base64', 'i')
 
     try {
+        // Ensure userId and organizationId are set from entity if not present in data
+        if (!data.userId || !data.organizationId) {
+            data.userId = entity.userId
+            data.organizationId = entity.organizationId
+        }
+
         //step 1: restore the full paths, if any
         await _normalizeFilePaths(appDataSource, data, entity)
 
