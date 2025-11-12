@@ -691,7 +691,7 @@ const config: Config = {
                     items: [
                         {
                             label: 'YouTube',
-                            href: 'https://youtube.com/@digitalatscale'
+                            href: 'https://www.youtube.com/@whatistheanswerai'
                         },
                         {
                             label: 'X',
@@ -699,7 +699,7 @@ const config: Config = {
                         },
                         {
                             label: 'Instagram',
-                            href: 'https://instagram.com/digitalatscale'
+                            href: 'https://www.youtube.com/@whatistheanswerai'
                         }
                     ]
                 },

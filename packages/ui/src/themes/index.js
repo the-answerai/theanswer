@@ -20,25 +20,22 @@ const glassmorphismTokens = {
             color: '#ffffff'
         },
         glassSecondary: {
-            background: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(16px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(150%)',
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(15, 23, 42, 0.1)',
             boxShadow: '0 4px 16px 0 rgba(0, 0, 0, 0.08)'
         },
         glassSubtle: {
-            background: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(12px) saturate(120%)',
-            WebkitBackdropFilter: 'blur(12px) saturate(120%)',
-            border: '1px solid rgba(15, 23, 42, 0.08)',
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(15, 23, 42, 0.15)',
             boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05)'
         },
         glassHover: {
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(15, 23, 42, 0.15)',
-            boxShadow: '0 8px 24px 0 rgba(0, 0, 0, 0.12)'
+            background: 'rgba(255, 255, 255, 0.95)',
+            boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12)'
         },
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     },

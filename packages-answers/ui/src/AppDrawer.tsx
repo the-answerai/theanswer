@@ -48,7 +48,6 @@ import { useThemeMode } from './theme'
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
 import { usePermissions } from './PermissionProvider'
-import AppsIcon from '@mui/icons-material/Apps'
 
 const drawerWidth = 240
 
@@ -162,40 +161,27 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
     // Menu configuration
     let menuConfig: MenuConfig[] = []
 
-    // Answer Agents (Marketplace) - shown at the top
-    menuConfig.push({
-        id: 'marketplaces',
-        text: 'AI Agents',
-        link: '/sidekick-studio/marketplaces',
-        icon: <SmartToyIcon />
-    })
-
     // Answer Apps - expandable menu with chat, image, video, bulk analysis
-    menuConfig.push({
-        id: 'answer-apps',
-        text: 'Apps',
-        icon: <AppsIcon />,
-        subMenu: [
-            {
-                id: 'chat',
-                text: 'Chat',
-                link: '/chat',
-                icon: <ChatBubbleOutlineIcon />
-            },
-            {
-                id: 'image-generation',
-                text: 'Image Generation',
-                link: '/sidekick-studio/media-creator',
-                icon: <ImageIcon />
-            },
-            {
-                id: 'video-generation',
-                text: 'Video Generation',
-                link: '/sidekick-studio/video-creator',
-                icon: <VideoLibraryIcon />
-            }
-        ]
-    })
+    menuConfig.push(
+        {
+            id: 'chat',
+            text: 'Chat',
+            link: '/chat',
+            icon: <ChatBubbleOutlineIcon />
+        },
+        {
+            id: 'image-generation',
+            text: 'Image Generation',
+            link: '/sidekick-studio/media-creator',
+            icon: <ImageIcon />
+        },
+        {
+            id: 'video-generation',
+            text: 'Video Generation',
+            link: '/sidekick-studio/video-creator',
+            icon: <VideoLibraryIcon />
+        }
+    )
 
     // Answer Engine section - shown if domain is configured
     if (answerEngineDomain) {
@@ -249,7 +235,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         if (userRole === 'builder' || userRole === 'admin') {
             menuConfig.push({
                 id: 'studio',
-                text: 'Studio',
+                text: 'Agent Studio',
                 icon: <BuildOutlinedIcon color='primary' />,
                 subMenu: [
                     {
@@ -263,6 +249,12 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         text: 'Agentflows',
                         link: '/sidekick-studio/agentflows',
                         icon: <GroupsOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'marketplaces',
+                        text: 'Agent Templates',
+                        link: '/sidekick-studio/marketplaces',
+                        icon: <SmartToyIcon />
                     },
                     {
                         id: 'assistants',

@@ -10,10 +10,10 @@ export const colorTokens = {
             paper: '#ffffff'
         },
         primary: {
-            main: 'rgba(15, 23, 42, 0.85)', // Neutral dark for buttons to match glass theme
-            light: 'rgba(30, 41, 59, 0.75)',
-            dark: 'rgba(15, 23, 42, 0.95)',
-            gradient: 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%)'
+            main: 'rgba(15, 23, 42, 0.95)', // Increased opacity for better contrast
+            light: 'rgba(30, 41, 59, 0.85)',
+            dark: 'rgb(15, 23, 42)', // Solid for maximum contrast
+            gradient: 'linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)' // Solid gradient for buttons
         },
         secondary: {
             main: '#ff6e40',

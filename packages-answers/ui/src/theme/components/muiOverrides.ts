@@ -163,14 +163,18 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // CARD
+        // CARD - Use solid backgrounds for better hierarchy
         MuiCard: {
             styleOverrides: {
                 root: {
-                    ...glass.glassSecondary,
+                    background: mode === 'light' ? '#ffffff' : '#1a1a1a',
+                    border: `1px solid ${mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
+                    boxShadow: mode === 'light' ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : '0 1px 3px 0 rgba(0, 0, 0, 0.3)',
+                    borderRadius: 12,
                     transition: glass.transition,
                     '&:hover': {
-                        ...glass.glassHover
+                        boxShadow: mode === 'light' ? '0 4px 12px 0 rgba(0, 0, 0, 0.15)' : '0 4px 12px 0 rgba(0, 0, 0, 0.5)',
+                        transform: 'translateY(-2px)'
                     }
                 }
             }
@@ -199,7 +203,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             styleOverrides: {
                 root: {
                     borderRadius: 8,
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflow: 'hidden',
                     position: 'relative',
                     '&::before': {
@@ -209,7 +213,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                         left: '-100%',
                         width: '100%',
                         height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                         pointerEvents: 'none',
                         zIndex: 1
@@ -219,7 +223,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                         zIndex: 2
                     },
                     '&:hover': {
-                        backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.9)' : 'rgba(77, 182, 172, 0.15)',
+                        backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(77, 182, 172, 0.15)',
                         transform: 'translateX(4px)',
                         '&::before': {
                             left: '100%',
@@ -227,9 +231,9 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                         }
                     },
                     '&.Mui-selected': {
-                        backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(77, 182, 172, 0.12)',
+                        backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(77, 182, 172, 0.12)',
                         '&:hover': {
-                            backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.95)' : 'rgba(77, 182, 172, 0.18)'
+                            backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(77, 182, 172, 0.18)'
                         }
                     }
                 }
@@ -249,14 +253,26 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                     }
                 },
                 contained: {
-                    ...glass.glassPrimary,
+                    // Use solid gradients in light mode for better contrast
+                    ...(mode === 'light'
+                        ? {
+                              background: 'linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)',
+                              border: 'none',
+                              boxShadow: '0 4px 12px 0 rgba(59, 130, 246, 0.3)'
+                          }
+                        : glass.glassPrimary),
                     color: '#ffffff',
                     '&:hover': {
-                        ...glass.glassHover,
-                        background:
-                            mode === 'light'
-                                ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)'
-                                : 'rgba(0, 0, 0, 0.8)'
+                        ...(mode === 'light'
+                            ? {
+                                  background: 'linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 58, 138) 100%)',
+                                  boxShadow: '0 6px 20px 0 rgba(59, 130, 246, 0.4)',
+                                  transform: 'translateY(-2px)'
+                              }
+                            : {
+                                  ...glass.glassHover,
+                                  background: 'rgba(0, 0, 0, 0.8)'
+                              })
                     },
                     '&.Mui-disabled': {
                         backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)',
@@ -293,7 +309,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // INPUTS & FORMS
+        // INPUTS & FORMS - Simplified without glass for better hierarchy
         MuiTextField: {
             defaultProps: {
                 variant: 'outlined'
@@ -301,14 +317,14 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             styleOverrides: {
                 root: {
                     '& .MuiOutlinedInput-root': {
-                        ...glass.glassSubtle,
+                        backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)',
                         transition: glass.transition,
                         '&:hover': {
-                            ...glass.glassHover
+                            backgroundColor: mode === 'light' ? '#fafafa' : 'rgba(255, 255, 255, 0.08)'
                         },
                         '&.Mui-focused': {
-                            ...glass.glassHover,
-                            boxShadow: `0 0 0 3px ${mode === 'light' ? 'rgba(48, 114, 108, 0.1)' : 'rgba(77, 182, 172, 0.1)'}`
+                            backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.08)',
+                            boxShadow: `0 0 0 3px ${mode === 'light' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(77, 182, 172, 0.1)'}`
                         }
                     }
                 }
@@ -318,14 +334,14 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    ...glass.glassSubtle,
+                    backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)',
                     transition: glass.transition,
                     borderRadius: 8,
                     '&:hover': {
-                        ...glass.glassHover
+                        backgroundColor: mode === 'light' ? '#fafafa' : 'rgba(255, 255, 255, 0.08)'
                     },
                     '&.Mui-focused': {
-                        ...glass.glassHover
+                        backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.08)'
                     }
                 },
                 notchedOutline: {

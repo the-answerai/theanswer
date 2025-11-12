@@ -32,27 +32,27 @@ export const glassmorphismTokens: Record<'light' | 'dark', GlassTokens> = {
             color: '#ffffff'
         },
 
-        // Secondary glass for cards, panels
+        // Secondary glass for cards, panels - Increased opacity for better text contrast
         glassSecondary: {
-            background: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(15, 23, 42, 0.1)',
             boxShadow: '0 4px 16px 0 rgba(0, 0, 0, 0.08)'
         },
 
-        // Subtle glass for buttons, inputs
+        // Subtle glass for buttons, inputs - Increased opacity for better contrast
         glassSubtle: {
-            background: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(15, 23, 42, 0.15)',
             boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05)'
         },
 
-        // Hover states
+        // Hover states - Increased opacity for better visibility
         glassHover: {
-            background: 'rgba(255, 255, 255, 0.85)',
+            background: 'rgba(255, 255, 255, 0.95)',
             boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.12)',
             transform: 'translateY(-2px)'
         },
