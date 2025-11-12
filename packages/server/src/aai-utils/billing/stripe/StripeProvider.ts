@@ -259,8 +259,6 @@ export class StripeProvider {
 
     async getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice> {
         try {
-            log.info('Getting upcoming invoice', { params })
-
             const invoiceParams: Stripe.InvoiceRetrieveUpcomingParams = {
                 customer: params.customerId
             }
@@ -280,7 +278,6 @@ export class StripeProvider {
             }
 
             const invoice = await this.stripeClient.invoices.retrieveUpcoming(invoiceParams)
-            log.info('Retrieved upcoming invoice', { invoice })
             const customerId = invoice.customer as string
             if (!customerId) {
                 throw new Error('Customer ID is required but was not provided')
