@@ -31,16 +31,34 @@ const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: 
     }
 
     try {
-        // Build metadata with clear linkage to the conversation message
+        // Build metadata matching the exact structure from handler.ts (lines 646-663)
+        // This ensures billing sync works correctly
+        // Note: billingStripeCustomerId comes from billedUserId pattern (req.user?.id || chatflow.userId)
+        // This is who gets billed, which may differ from the authenticated user
         const metadata: any = {
             chatId: options.chatId,
             chatflowid: options.chatflowid,
+            sessionId: options.sessionId,
+            messageId: messageId,
+            // User/billing information - CRITICAL for billing sync
+            // userId and organizationId represent the actual user/context
+            userId: options?.user?.id || options.userId,
+            organizationId: options?.user?.organizationId || options.organizationId,
+            // Billing fields - who gets charged (may be chatflow owner if no authenticated user)
+            customerId: options.billingStripeCustomerId,
+            stripeCustomerId: options.billingStripeCustomerId,
+            // Follow-up prompt specific fields
             component: 'follow-up-prompts',
             provider: followUpPromptsConfig.selectedProvider,
             modelName: providerConfig.modelName,
-            // Link to the specific message this follow-up is generated for
             forMessageId: messageId,
-            traceType: 'follow-up-generation'
+            traceType: 'follow-up-generation',
+            // Tracking metadata (spread with tracking_ prefix, matching handler.ts)
+            ...(options.trackingMetadata &&
+                Object.keys(options.trackingMetadata).reduce((acc, key) => {
+                    acc[`tracking_${key}`] = options.trackingMetadata![key]
+                    return acc
+                }, {} as Record<string, any>))
         }
 
         const handlerConfig: any = {
@@ -48,7 +66,7 @@ const createLangfuseCallbacks = (options: ICommonObject, followUpPromptsConfig: 
             secretKey: process.env.LANGFUSE_SECRET_KEY,
             baseUrl: process.env.LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
             sessionId: options.sessionId,
-            userId: options.userId,
+            userId: options?.user?.id || options.userId,
             metadata,
             tags: ['follow-up-prompts', `chat:${options.chatId}`, messageId ? `message:${messageId}` : null].filter(Boolean)
         }
