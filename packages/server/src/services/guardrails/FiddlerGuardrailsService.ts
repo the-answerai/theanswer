@@ -21,6 +21,7 @@ import { decryptCredentialData } from '../../utils'
 import { IUser } from '../../Interface'
 import {
     GuardrailsConfig,
+    GuardrailAction,
     SafetyAPIResponse,
     SafetyEvaluationResult,
     SafetyViolation,
@@ -29,7 +30,8 @@ import {
     PIIDetectionResult,
     PIIDetection,
     PIIType,
-    InputValidationResult
+    InputValidationResult,
+    OutputValidationResult
 } from '../../types/guardrails'
 
 export interface FiddlerCredentials {
@@ -457,22 +459,125 @@ export class FiddlerGuardrailsService {
 
     /**
      * Evaluate faithfulness (RAG hallucination detection)
-     * To be implemented in Phase 5
+     * Uses Fiddler's Fast Faithfulness model to detect hallucinations
+     *
+     * Note: Fiddler faithfulness score uses inverted scale:
+     * - Score < 0.005 = unfaithful (hallucination/inaccuracy)
+     * - Score ≥ 0.005 = faithful (accurate response)
+     *
+     * @param text - AI-generated response to evaluate
+     * @param context - Source context/documents to compare against
+     * @returns Faithfulness evaluation with score and action
      */
-    public async evaluateFaithfulness(text: string, context: string): Promise<any> {
+    public async evaluateFaithfulness(
+        text: string,
+        context: string
+    ): Promise<{
+        score: number
+        threshold: number
+        action: GuardrailAction
+    }> {
         if (!this.config.faithfulness.enabled) {
-            return { score: 1.0 }
+            return {
+                score: 1.0,
+                threshold: this.config.faithfulness.threshold,
+                action: 'warn'
+            }
         }
 
-        return this.executeWithCircuitBreaker(
-            async () => {
-                return await this.post('/v3/guardrails/ftl-response-faithfulness', {
-                    response: text,
-                    context
+        try {
+            const result = await this.executeWithCircuitBreaker(
+                async () => {
+                    const response = await this.post<{ fdl_faithful_score: number }>('/v3/guardrails/ftl-response-faithfulness', {
+                        data: {
+                            input: context,
+                            output: text
+                        }
+                    })
+                    return response
+                },
+                () => ({
+                    fdl_faithful_score: 1.0 // Fail-open: assume faithful
                 })
-            },
-            () => ({ score: 1.0 }) // Fail-open: assume faithful
-        )
+            )
+
+            const score = result.fdl_faithful_score
+            const threshold = this.config.faithfulness.threshold
+
+            return {
+                score,
+                threshold,
+                action: this.config.faithfulness.action
+            }
+        } catch (error) {
+            // Fail-open: return high faithfulness score on error
+            return {
+                score: 1.0,
+                threshold: this.config.faithfulness.threshold,
+                action: 'warn'
+            }
+        }
+    }
+
+    /**
+     * Validate output text (safety + PII + faithfulness checks in parallel)
+     * Returns combined validation result
+     *
+     * Key Differences from Input Validation:
+     * - Never blocks (always fail-open)
+     * - Includes faithfulness check (if context provided)
+     * - Default action is 'warn' instead of 'block'
+     *
+     * @param text - AI-generated output to validate
+     * @param context - Optional RAG context for faithfulness checking
+     * @returns Output validation result with all violations
+     */
+    public async validateOutput(text: string, context?: string): Promise<OutputValidationResult> {
+        try {
+            // Build array of check promises
+            const checks: Promise<any>[] = [this.evaluateSafety(text), this.detectPII(text)]
+
+            // Only add faithfulness check if context is provided
+            if (context && this.config.faithfulness.enabled) {
+                checks.push(this.evaluateFaithfulness(text, context))
+            }
+
+            // Run all checks in parallel for performance
+            const results = await Promise.all(checks)
+            const [safetyResult, piiResult, faithfulnessResult] = results
+
+            // Output validation never replaces (Phase 5: warn only)
+            const shouldReplace = false
+            const shouldRedact = piiResult.redactedText !== undefined
+
+            // Build result
+            const result: OutputValidationResult = {
+                replaced: shouldReplace,
+                redacted: shouldRedact,
+                redactedText: piiResult.redactedText,
+                violations: {
+                    safety: safetyResult.violations,
+                    pii: piiResult.detections
+                }
+            }
+
+            // Add faithfulness violations if checked
+            if (faithfulnessResult) {
+                result.violations.faithfulness = {
+                    score: faithfulnessResult.score,
+                    threshold: faithfulnessResult.threshold
+                }
+            }
+
+            return result
+        } catch (error) {
+            // Fail-open: on error, allow the output unchanged
+            return {
+                replaced: false,
+                redacted: false,
+                violations: {}
+            }
+        }
     }
 
     /**

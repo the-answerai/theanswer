@@ -7,6 +7,8 @@ import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui
 import { IconTool } from '@tabler/icons-react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
+import ShieldIcon from '@mui/icons-material/Shield'
 
 import { useAnswers } from '../AnswersContext'
 import {
@@ -150,6 +152,92 @@ export const MessageCard = ({
     const isDeveloperMode = hasFeature('developer_mode')
     const { user: currentUser, sendMessageFeedback, sendMessage, appSettings, messages, sidekick } = useAnswers()
     const sourceDocuments = isArray(other.sourceDocuments) ? other.sourceDocuments : JSON.parse(other.sourceDocuments ?? '[]')
+
+    // Parse guardrailsMetadata from message
+    const guardrailsMetadata = React.useMemo(() => {
+        try {
+            return (other as any).guardrailsMetadata ? JSON.parse((other as any).guardrailsMetadata) : null
+        } catch (error) {
+            console.error('Failed to parse guardrailsMetadata', error)
+            return null
+        }
+    }, [(other as any).guardrailsMetadata])
+
+    // Determine overall guardrails status and color
+    const getGuardrailsStatus = () => {
+        if (!guardrailsMetadata) return null
+
+        const hasInputValidation = guardrailsMetadata.inputValidation
+        const hasOutputValidation = guardrailsMetadata.outputValidation
+
+        // If no validations were run, don't show anything
+        if (!hasInputValidation && !hasOutputValidation) return null
+
+        let status: 'good' | 'warning' | 'error' = 'good'
+
+        // Check for critical issues (blocked input)
+        if (hasInputValidation?.blocked) {
+            status = 'error'
+        }
+
+        // Check for warnings (redacted content, safety violations, low faithfulness)
+        if (
+            hasInputValidation?.redacted ||
+            hasInputValidation?.violations?.safety?.length > 0 ||
+            hasInputValidation?.violations?.pii?.length > 0 ||
+            hasOutputValidation?.violations?.safety?.length > 0 ||
+            hasOutputValidation?.violations?.pii?.length > 0
+        ) {
+            if (status !== 'error') status = 'warning'
+        }
+
+        // Check faithfulness score (< 0.005 = unfaithful)
+        if (hasOutputValidation?.faithfulnessScore !== undefined) {
+            if (hasOutputValidation.faithfulnessScore < 0.005) {
+                status = 'error'
+            } else if (hasOutputValidation.faithfulnessScore < 0.01) {
+                if (status !== 'error') status = 'warning'
+            }
+        }
+
+        const colors = {
+            good: '#4caf50', // Green
+            warning: '#ff9800', // Orange
+            error: '#f44336' // Red
+        }
+
+        return { status, color: colors[status] }
+    }
+
+    const guardrailsStatus = getGuardrailsStatus()
+
+    // Helper functions for score display
+    const formatFaithfulnessScore = (score: number) => {
+        // Fiddler faithfulness uses inverted scale: lower = less faithful
+        // Instead of showing tiny percentages, show qualitative assessment + raw score
+        if (score < 0.001) return { text: 'Very Low', color: '#f44336', icon: '⚠️' }
+        if (score < 0.003) return { text: 'Low', color: '#ff9800', icon: '⚠️' }
+        if (score < 0.005) return { text: 'Borderline', color: '#ff9800', icon: '⚠' }
+        if (score < 0.01) return { text: 'Good', color: '#66bb6a', icon: '✓' }
+        return { text: 'Excellent', color: '#4caf50', icon: '✓' }
+    }
+
+    const formatSafetyScore = (score: number) => {
+        // Safety scores: higher = more unsafe
+        // Show as violation severity instead of confusing percentage
+        if (score > 0.5) return { text: 'Critical', color: '#f44336' }
+        if (score > 0.3) return { text: 'High', color: '#ff5722' }
+        if (score > 0.15) return { text: 'Medium', color: '#ff9800' }
+        if (score > 0.1) return { text: 'Low', color: '#ffc107' }
+        return { text: 'Minimal', color: '#4caf50' }
+    }
+
+    const formatPIIConfidence = (score: number) => {
+        // PII confidence: higher = more confident
+        // Percentage makes sense here
+        return `${(score * 100).toFixed(0)}%`
+    }
+
     const contextDocumentsBySource: Record<string, Document[]> = React.useMemo(
         () =>
             sourceDocuments?.reduce((uniqueDocuments: Record<string, Document[]>, current: Document) => {
@@ -1059,6 +1147,120 @@ export const MessageCard = ({
                         </CustomAccordion>
                     ) : null}
 
+                    {guardrailsMetadata ? (
+                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
+                                <Typography variant='overline'>
+                                    🛡️ Guardrails Validation
+                                    {guardrailsMetadata.outputValidation?.faithfulnessScore !== undefined &&
+                                        ` - Faithfulness: ${(guardrailsMetadata.outputValidation.faithfulnessScore * 1000).toFixed(2)}`}
+                                </Typography>
+                            </CustomAccordionSummary>
+                            <CustomAccordionDetails>
+                                {/* Input Validation Section */}
+                                {guardrailsMetadata.inputValidation && (
+                                    <Box mb={2}>
+                                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                            Input Validation
+                                        </Typography>
+                                        {guardrailsMetadata.inputValidation.blocked && (
+                                            <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.redacted && (
+                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
+                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                Safety:{' '}
+                                                {guardrailsMetadata.inputValidation.violations.safety
+                                                    .map((v) => {
+                                                        const severity = formatSafetyScore(v.score)
+                                                        return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                    })
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
+                                            <Typography sx={{ color: '#ff9800' }}>
+                                                PII:{' '}
+                                                {guardrailsMetadata.inputValidation.violations.pii
+                                                    .map(
+                                                        (p) =>
+                                                            `${p.label} (${formatPIIConfidence(
+                                                                p.score
+                                                            )} confidence - score: ${p.score.toFixed(3)})`
+                                                    )
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
+
+                                {/* Output Validation Section */}
+                                {guardrailsMetadata.outputValidation && (
+                                    <Box>
+                                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                            Output Validation
+                                        </Typography>
+
+                                        {/* Faithfulness Score Display */}
+                                        {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
+                                            <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
+                                                {(() => {
+                                                    const faithful = formatFaithfulnessScore(
+                                                        guardrailsMetadata.outputValidation.faithfulnessScore
+                                                    )
+                                                    return (
+                                                        <>
+                                                            <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
+                                                            <Typography>
+                                                                <strong style={{ color: faithful.color }}>
+                                                                    Faithfulness: {faithful.text} {faithful.icon}
+                                                                </strong>
+                                                                <span style={{ opacity: 0.7, marginLeft: '8px' }}>
+                                                                    (Raw Score:{' '}
+                                                                    {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
+                                                                </span>
+                                                            </Typography>
+                                                        </>
+                                                    )
+                                                })()}
+                                            </Box>
+                                        )}
+
+                                        {/* Safety violations */}
+                                        {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
+                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                Safety:{' '}
+                                                {guardrailsMetadata.outputValidation.violations.safety
+                                                    .map((v) => {
+                                                        const severity = formatSafetyScore(v.score)
+                                                        return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                    })
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+
+                                        {/* PII detections */}
+                                        {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
+                                            <Typography sx={{ color: '#ff9800' }}>
+                                                PII:{' '}
+                                                {guardrailsMetadata.outputValidation.violations.pii
+                                                    .map(
+                                                        (p) =>
+                                                            `${p.label} (${formatPIIConfidence(
+                                                                p.score
+                                                            )} confidence - score: ${p.score.toFixed(3)})`
+                                                    )
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
+                            </CustomAccordionDetails>
+                        </CustomAccordion>
+                    ) : null}
+
                     {Object.keys(other)?.length ? (
                         // Use the @mui accordion component to wrap the extra and response
                         <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
@@ -1205,6 +1407,134 @@ export const MessageCard = ({
                             )
                         })}
                     </Box>
+                </Box>
+            )}
+            {/* Guardrails Shield Icon - Regular Users */}
+            {!isUserMessage && guardrailsStatus && (
+                <Box sx={{ mt: 1.5, mb: 1 }}>
+                    <Tooltip
+                        title={
+                            <Box sx={{ p: 1 }}>
+                                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                                    Guardrails Validation
+                                </Typography>
+
+                                {/* Input Validation */}
+                                {guardrailsMetadata.inputValidation && (
+                                    <Box mb={1.5}>
+                                        <Typography variant='caption' sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                                            Input:
+                                        </Typography>
+                                        {guardrailsMetadata.inputValidation.blocked && (
+                                            <Typography variant='caption' sx={{ color: '#f44336', display: 'block' }}>
+                                                ⚠️ Blocked
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.redacted && (
+                                            <Typography variant='caption' sx={{ color: '#ff9800', display: 'block' }}>
+                                                🔒 PII Redacted
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
+                                            <Typography variant='caption' sx={{ display: 'block' }}>
+                                                Safety:{' '}
+                                                {guardrailsMetadata.inputValidation.violations.safety
+                                                    .map((v) => {
+                                                        const severity = formatSafetyScore(v.score)
+                                                        return `${v.dimension.replace('fdl_', '')} (${severity.text} Risk)`
+                                                    })
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
+                                            <Typography variant='caption' sx={{ display: 'block' }}>
+                                                PII:{' '}
+                                                {guardrailsMetadata.inputValidation.violations.pii
+                                                    .map((p) => `${p.label} (${formatPIIConfidence(p.score)} confidence)`)
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
+
+                                {/* Output Validation */}
+                                {guardrailsMetadata.outputValidation && (
+                                    <Box>
+                                        <Typography variant='caption' sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                                            Output:
+                                        </Typography>
+                                        {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
+                                            <Typography variant='caption' sx={{ display: 'block', mb: 0.5 }}>
+                                                {(() => {
+                                                    const faithful = formatFaithfulnessScore(
+                                                        guardrailsMetadata.outputValidation.faithfulnessScore
+                                                    )
+                                                    return (
+                                                        <>
+                                                            <strong style={{ color: faithful.color }}>
+                                                                Faithfulness: {faithful.text} {faithful.icon}
+                                                            </strong>
+                                                            <span style={{ opacity: 0.7, marginLeft: '4px' }}>
+                                                                (score: {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
+                                                            </span>
+                                                        </>
+                                                    )
+                                                })()}
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
+                                            <Typography variant='caption' sx={{ display: 'block' }}>
+                                                Safety:{' '}
+                                                {guardrailsMetadata.outputValidation.violations.safety
+                                                    .map((v) => {
+                                                        const severity = formatSafetyScore(v.score)
+                                                        return `${v.dimension.replace('fdl_', '')} (${severity.text} Risk)`
+                                                    })
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                        {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
+                                            <Typography variant='caption' sx={{ display: 'block' }}>
+                                                PII:{' '}
+                                                {guardrailsMetadata.outputValidation.violations.pii
+                                                    .map((p) => `${p.label} (${formatPIIConfidence(p.score)} confidence)`)
+                                                    .join(', ')}
+                                            </Typography>
+                                        )}
+                                        {!guardrailsMetadata.outputValidation.faithfulnessScore &&
+                                            !guardrailsMetadata.outputValidation.violations?.safety?.length &&
+                                            !guardrailsMetadata.outputValidation.violations?.pii?.length && (
+                                                <Typography variant='caption' sx={{ display: 'block', color: '#4caf50' }}>
+                                                    ✓ No issues detected
+                                                </Typography>
+                                            )}
+                                    </Box>
+                                )}
+                            </Box>
+                        }
+                        arrow
+                        placement='top'
+                    >
+                        <Box
+                            sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                cursor: 'help',
+                                transition: 'transform 0.2s',
+                                '&:hover': {
+                                    transform: 'scale(1.1)'
+                                }
+                            }}
+                        >
+                            <ShieldIcon
+                                sx={{
+                                    fontSize: 20,
+                                    color: guardrailsStatus.color,
+                                    filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'
+                                }}
+                            />
+                        </Box>
+                    </Tooltip>
                 </Box>
             )}
             {/* Tools used section - Enhanced bubble UI */}

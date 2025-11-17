@@ -23,7 +23,8 @@ export function getEnvironmentConfig(): Partial<GuardrailsConfig> {
     const enabled = process.env.FIDDLER_GUARDRAILS_ENABLED !== 'false'
     const safetyThreshold = parseFloat(process.env.FIDDLER_SAFETY_THRESHOLD || '0.1')
     const piiThreshold = parseFloat(process.env.FIDDLER_PII_THRESHOLD || '0.8')
-    const faithfulnessThreshold = parseFloat(process.env.FIDDLER_FAITHFULNESS_THRESHOLD || '0.7')
+    // Fiddler faithfulness uses inverted scale: < 0.005 = unfaithful
+    const faithfulnessThreshold = parseFloat(process.env.FIDDLER_FAITHFULNESS_THRESHOLD || '0.005')
 
     return {
         enabled,

@@ -62,7 +62,13 @@ export interface SafetyConfig {
 
     /**
      * Global safety threshold (0-1)
-     * Higher values = more strict
+     *
+     * INTERPRETATION: Higher scores indicate MORE unsafe content
+     * - Score > threshold = Unsafe (violation detected)
+     * - Fiddler recommends threshold > 0.1 for production
+     * - Lower threshold = MORE strict (catches more violations)
+     * - Higher threshold = LESS strict (catches fewer violations)
+     *
      * @default 0.1
      */
     threshold: number
@@ -110,7 +116,13 @@ export interface PIIConfig {
 
     /**
      * Global confidence threshold (0-1)
-     * Only detections above this threshold are processed
+     *
+     * INTERPRETATION: Higher scores indicate HIGHER confidence in PII detection
+     * - Score > threshold = PII detected with sufficient confidence
+     * - Only detections above this threshold are processed
+     * - Lower threshold = MORE sensitive (detects more PII, more false positives)
+     * - Higher threshold = LESS sensitive (detects less PII, fewer false positives)
+     *
      * @default 0.8
      */
     confidenceThreshold: number
@@ -159,14 +171,22 @@ export interface PIIConfig {
 export interface FaithfulnessConfig {
     /**
      * Enable faithfulness checks
-     * @default true
+     * @default false (disabled by default, opt-in per org/chatflow)
      */
     enabled: boolean
 
     /**
      * Faithfulness threshold (0-1)
-     * Measures how faithful output is to RAG context
-     * @default 0.7
+     *
+     * INTERPRETATION: INVERTED SCALE - Lower scores indicate LESS faithful responses
+     * - Fiddler's Fast Faithfulness uses inverted scale
+     * - Score < 0.005 = Unfaithful (hallucination/inaccuracy detected)
+     * - Score ≥ 0.005 = Faithful (response aligns with source context)
+     * - Fiddler recommends threshold < 0.005 for detection
+     * - Typical faithful scores: 0.01-1.0
+     * - Typical unfaithful scores: 0.0-0.004
+     *
+     * @default 0.005
      */
     threshold: number
 
@@ -362,9 +382,9 @@ export const DEFAULT_GUARDRAILS_CONFIG: GuardrailsConfig = {
         action: 'redact'
     },
     faithfulness: {
-        enabled: true,
-        threshold: 0.7,
-        action: 'warn'
+        enabled: false, // Disabled by default (opt-in per organization/chatflow)
+        threshold: 0.005, // Fiddler's recommendation (inverted scale: < 0.005 = unfaithful)
+        action: 'warn' // Never blocks/replaces output, only logs metadata
     },
     circuitBreaker: {
         failureThreshold: 5,
