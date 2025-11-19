@@ -261,6 +261,95 @@ const sidebars: SidebarsConfig = {
                                     dirName: 'api/vector-upsert'
                                 }
                             ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Data Engine API',
+                            link: {
+                                type: 'doc',
+                                id: 'api/data-engine/data-engine-api'
+                            },
+                            items: [
+                                {
+                                    type: 'category',
+                                    label: 'Domains',
+                                    items: [
+                                        'api/data-engine/create-domain',
+                                        'api/data-engine/list-domains',
+                                        'api/data-engine/get-domain-by-id',
+                                        'api/data-engine/update-domain',
+                                        'api/data-engine/delete-domain'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'URLs',
+                                    items: [
+                                        'api/data-engine/create-url',
+                                        'api/data-engine/list-urls',
+                                        'api/data-engine/get-url-by-id',
+                                        'api/data-engine/update-url',
+                                        'api/data-engine/delete-url'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Calls',
+                                    items: [
+                                        'api/data-engine/create-call',
+                                        'api/data-engine/list-calls',
+                                        'api/data-engine/get-call-by-id',
+                                        'api/data-engine/update-call',
+                                        'api/data-engine/delete-call'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Tags',
+                                    items: [
+                                        'api/data-engine/create-tag',
+                                        'api/data-engine/list-tags',
+                                        'api/data-engine/get-tag-by-id',
+                                        'api/data-engine/get-tag-hierarchy',
+                                        'api/data-engine/update-tag',
+                                        'api/data-engine/delete-tag'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Documents',
+                                    items: [
+                                        'api/data-engine/create-document',
+                                        'api/data-engine/list-documents',
+                                        'api/data-engine/get-document-by-id',
+                                        'api/data-engine/search-documents',
+                                        'api/data-engine/update-document',
+                                        'api/data-engine/delete-document'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Tickets',
+                                    items: [
+                                        'api/data-engine/create-ticket',
+                                        'api/data-engine/list-tickets',
+                                        'api/data-engine/get-ticket-by-id',
+                                        'api/data-engine/update-ticket',
+                                        'api/data-engine/delete-ticket'
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Chats',
+                                    items: [
+                                        'api/data-engine/create-chat',
+                                        'api/data-engine/list-chats',
+                                        'api/data-engine/get-chat-by-id',
+                                        'api/data-engine/update-chat',
+                                        'api/data-engine/delete-chat'
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 }

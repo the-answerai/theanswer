@@ -512,6 +512,61 @@ const config: Config = {
                             },
                             createTagPageMD: () => ''
                         }
+                    } satisfies OpenApiPlugin.Options,
+                    dataEngine: {
+                        specPath: 'openapi/data-engine.yaml',
+                        outputDir: 'docs/api/data-engine',
+                        sidebarOptions: {
+                            groupPathsBy: 'tag',
+                            sidebarCollapsible: true,
+                            sidebarCollapsed: false
+                        },
+                        markdownGenerators: {
+                            createInfoPageMD: (pageData) => {
+                                let markdown = `# Data Engine API\n\n`
+                                markdown += `This section contains the API endpoints for managing structured data resources including domains, URLs, calls, tags, documents, tickets, and chats.\n\n`
+
+                                markdown += `## Overview\n\n`
+                                markdown += `The Data Engine API provides comprehensive CRUD operations for managing data across multiple domains with support for filtering, pagination, and advanced search capabilities.\n\n`
+
+                                markdown += `## Resources\n\n`
+                                markdown += `The API supports the following resource types:\n\n`
+                                markdown += `- **Domains**: Website domain metadata and analysis\n`
+                                markdown += `- **URLs**: Page-level analysis and content tracking\n`
+                                markdown += `- **Calls**: Call logs with transcripts and sentiment analysis\n`
+                                markdown += `- **Tags**: Shared taxonomy and categorization system\n`
+                                markdown += `- **Documents**: Vector-embedded documents for semantic search\n`
+                                markdown += `- **Tickets**: Support ticket management\n`
+                                markdown += `- **Chats**: Chat conversation logs and analytics\n\n`
+
+                                markdown += `## Authentication\n\n`
+                                markdown += `All API requests require authentication using an API key. Include your API key in the Authorization header:\n\n`
+                                markdown += `\`\`\`\n`
+                                markdown += `Authorization: Bearer YOUR_API_KEY\n`
+                                markdown += `\`\`\`\n\n`
+
+                                markdown += `## Base URL\n\n`
+                                markdown += `- **Production**: \`https://prod.studio.theanswer.ai/api/v1/data-engine\`\n`
+                                markdown += `- **Local Development**: \`http://localhost:4000/api/v1/data-engine\`\n\n`
+
+                                markdown += `## Features\n\n`
+                                markdown += `- Full CRUD operations for all resources\n`
+                                markdown += `- Advanced filtering and search capabilities\n`
+                                markdown += `- Pagination support for large datasets\n`
+                                markdown += `- Vector similarity search for documents\n`
+                                markdown += `- Hierarchical tag system\n`
+                                markdown += `- Metadata tracking for source system integration\n\n`
+
+                                markdown += `## Rate Limiting\n\n`
+                                markdown += `API calls are subject to rate limiting to ensure fair usage and system stability.\n\n`
+
+                                markdown += `## Endpoints\n\n`
+                                markdown += `Explore the available endpoints in the sidebar to learn more about specific operations.\n\n`
+
+                                return markdown
+                            },
+                            createTagPageMD: () => ''
+                        }
                     } satisfies OpenApiPlugin.Options
                 }
             }
