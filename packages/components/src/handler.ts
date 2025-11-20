@@ -649,8 +649,10 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         chatId: options.chatId,
                         chatflowid: options.chatflowid,
                         userId: options?.user?.id,
-                        customerId: options.user?.stripeCustomerId,
-                        stripeCustomerId: options.user?.stripeCustomerId,
+                        // Billing fields - use billingStripeCustomerId (billedUserId pattern: req.user?.id || chatflow.userId)
+                        // This is who gets billed, which may differ from the authenticated user
+                        customerId: options.billingStripeCustomerId || options.user?.stripeCustomerId,
+                        stripeCustomerId: options.billingStripeCustomerId || options.user?.stripeCustomerId,
                         organizationId: options.user?.organizationId,
                         aiCredentialsOwnership: aiCredentialsOwnership,
                         messageId: options.messageId,
