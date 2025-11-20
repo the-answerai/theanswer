@@ -13,8 +13,12 @@ info:
 servers:
     - url: https://prod.studio.theanswer.ai/api/v1/data-engine
       description: Production server
+    - url: https://staging.studio.theanswer.ai/api/v1/data-engine
+      description: Staging server
+    - url: http://localhost:3000/api/v1/data-engine
+      description: Local development server (default port)
     - url: http://localhost:4000/api/v1/data-engine
-      description: Local development server
+      description: Local development server (alternative port)
 tags:
     - name: domains
       description: Operations for managing domain records
@@ -619,11 +623,6 @@ paths:
             parameters:
                 - $ref: '#/components/parameters/PageParam'
                 - $ref: '#/components/parameters/PageSizeParam'
-                - name: store_id
-                  in: query
-                  schema:
-                      type: string
-                      format: uuid
             responses:
                 '200':
                     description: Successful operation
@@ -1297,8 +1296,6 @@ components:
                 parent_id:
                     type: integer
                     nullable: true
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
         Tag:
             allOf:
                 - $ref: '#/components/schemas/TagInput'
@@ -1323,8 +1320,6 @@ components:
                     type: string
                 shade:
                     type: string
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
         TagListResponse:
             type: object
             properties:
@@ -1369,9 +1364,6 @@ components:
                     example:
                         title: Document Title
                         source: upload
-                store_id:
-                    type: string
-                    format: uuid
         Document:
             allOf:
                 - $ref: '#/components/schemas/DocumentInput'
@@ -1414,10 +1406,6 @@ components:
                     type: integer
                     default: 10
                     description: Maximum number of results
-                store_id:
-                    type: string
-                    format: uuid
-                    description: Optional store ID to filter by
         DocumentSearchResponse:
             type: object
             properties:
@@ -1443,6 +1431,7 @@ components:
             required:
                 - title
                 - description
+                - created_by
             properties:
                 title:
                     type: string
@@ -1473,8 +1462,11 @@ components:
                     items:
                         type: string
                     example: [urgent, customer]
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
+                created_by:
+                    type: string
+                    format: email
+                    example: user@example.com
+                    description: Email of the user who created the ticket (required)
         Ticket:
             allOf:
                 - $ref: '#/components/schemas/TicketInput'
@@ -1505,8 +1497,6 @@ components:
                     type: array
                     items:
                         type: string
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
         TicketListResponse:
             allOf:
                 - $ref: '#/components/schemas/PaginationInfo'
@@ -1522,7 +1512,7 @@ components:
             required:
                 - chatbot_name
                 - user_message
-                - ai_response
+                - bot_response
             properties:
                 chatbot_name:
                     type: string
@@ -1536,7 +1526,7 @@ components:
                 user_message:
                     type: string
                     example: Hello
-                ai_response:
+                bot_response:
                     type: string
                     example: Hi! How can I help?
                 sentiment_score:
@@ -1551,8 +1541,6 @@ components:
                     items:
                         type: string
                     example: [support, greeting]
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
         Chat:
             allOf:
                 - $ref: '#/components/schemas/ChatInput'
@@ -1579,8 +1567,6 @@ components:
                     type: array
                     items:
                         type: string
-                metadata:
-                    $ref: '#/components/schemas/Metadata'
         ChatListResponse:
             allOf:
                 - $ref: '#/components/schemas/PaginationInfo'

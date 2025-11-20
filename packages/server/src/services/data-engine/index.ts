@@ -33,7 +33,7 @@ class DataEngineService {
             }
         })
 
-        console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
+        // Service initialized with baseURL
     }
 
     // ==================== DOMAINS ====================
@@ -153,15 +153,8 @@ class DataEngineService {
     // ==================== TAGS ====================
 
     async createTag(data: any, user: IUser) {
-        return this.request(
-            'POST',
-            '/tags',
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'create')
-            },
-            user
-        )
+        // Tags table doesn't have metadata column
+        return this.request('POST', '/tags', data, user)
     }
 
     async getAllTags(query: any, user: IUser) {
@@ -177,15 +170,8 @@ class DataEngineService {
     }
 
     async updateTag(id: number, data: any, user: IUser) {
-        return this.request(
-            'PUT',
-            `/tags/${id}`,
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'update')
-            },
-            user
-        )
+        // Tags table doesn't have metadata column
+        return this.request('PUT', `/tags/${id}`, data, user)
     }
 
     async deleteTag(id: number, user: IUser) {
@@ -195,11 +181,13 @@ class DataEngineService {
     // ==================== DOCUMENTS ====================
 
     async createDocument(data: any, user: IUser) {
+        // Documents don't have store_id column, just pass through data with enhanced metadata
+        const { store_id: _store_id, ...documentData } = data
         return this.request(
             'POST',
             '/documents',
             {
-                ...data,
+                ...documentData,
                 metadata: {
                     ...(data.metadata || {}),
                     organization_id: user.organizationId,
@@ -228,14 +216,14 @@ class DataEngineService {
     }
 
     async searchDocuments(queryEmbedding: number[], matchThreshold: number = 0.7, matchCount: number = 10, storeId?: string, user?: IUser) {
+        // Documents don't have store_id column
         return this.request(
             'POST',
             '/documents/search',
             {
                 query_embedding: queryEmbedding,
                 match_threshold: matchThreshold,
-                match_count: matchCount,
-                ...(storeId && { store_id: storeId })
+                match_count: matchCount
             },
             user!
         )
@@ -244,15 +232,8 @@ class DataEngineService {
     // ==================== TICKETS ====================
 
     async createTicket(data: any, user: IUser) {
-        return this.request(
-            'POST',
-            '/tickets',
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'create')
-            },
-            user
-        )
+        // Tickets don't have metadata with source_user_id
+        return this.request('POST', '/tickets', data, user)
     }
 
     async getAllTickets(query: any, user: IUser) {
@@ -264,15 +245,8 @@ class DataEngineService {
     }
 
     async updateTicket(id: string, data: any, user: IUser) {
-        return this.request(
-            'PUT',
-            `/tickets/${id}`,
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'update')
-            },
-            user
-        )
+        // Tickets don't have metadata structure
+        return this.request('PUT', `/tickets/${id}`, data, user)
     }
 
     async deleteTicket(id: string, user: IUser) {
@@ -282,15 +256,8 @@ class DataEngineService {
     // ==================== CHATS ====================
 
     async createChat(data: any, user: IUser) {
-        return this.request(
-            'POST',
-            '/chats',
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'create')
-            },
-            user
-        )
+        // Chats don't have metadata structure
+        return this.request('POST', '/chats', data, user)
     }
 
     async getAllChats(query: any, user: IUser) {
@@ -302,15 +269,8 @@ class DataEngineService {
     }
 
     async updateChat(id: string, data: any, user: IUser) {
-        return this.request(
-            'PUT',
-            `/chats/${id}`,
-            {
-                ...data,
-                metadata: this.buildMetadata(user, 'update')
-            },
-            user
-        )
+        // Chats don't have metadata structure
+        return this.request('PUT', `/chats/${id}`, data, user)
     }
 
     async deleteChat(id: string, user: IUser) {
@@ -337,10 +297,7 @@ class DataEngineService {
                 ...(data && { data })
             }
 
-            console.log(`[DataEngineService] ${method} ${path}`, {
-                organizationId: user.organizationId,
-                userId: user.id
-            })
+            // Request: ${method} ${path} for org: ${user.organizationId}
 
             const response = await this.client.request(config)
             return response.data
