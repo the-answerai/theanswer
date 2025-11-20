@@ -2,9 +2,11 @@ import { EdgeLabelRenderer, getBezierPath } from 'reactflow'
 import { memo, useState, useContext } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
+import { useTheme } from '@mui/material'
 import { SET_DIRTY } from '@/store/actions'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { IconX } from '@tabler/icons-react'
+import { overlayColors } from '@ui/theme/tokens/colors'
 
 function EdgeLabel({ transform, isHumanInput, label, color }) {
     return (
@@ -37,6 +39,8 @@ EdgeLabel.propTypes = {
 const foreignObjectSize = 40
 
 const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, selected }) => {
+    const theme = useTheme()
+    const mode = theme.palette.mode
     const [isHovered, setIsHovered] = useState(false)
     const { deleteEdge } = useContext(flowContext)
     const dispatch = useDispatch()
@@ -61,12 +65,14 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
     })
 
     const gradientId = `edge-gradient-${id}`
+    const shadowColor = overlayColors[mode].black.heavy
+
     return (
         <>
             <defs>
                 <linearGradient id={gradientId}>
-                    <stop offset='0%' stopColor={data?.sourceColor || '#ae53ba'} />
-                    <stop offset='100%' stopColor={data?.targetColor || '#2a8af6'} />
+                    <stop offset='0%' stopColor={data?.sourceColor || theme.vars.palette.primary.main} />
+                    <stop offset='100%' stopColor={data?.targetColor || theme.vars.palette.info.main} />
                 </linearGradient>
             </defs>
             <path
@@ -88,7 +94,7 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
                 style={{
                     strokeWidth: selected ? 3 : 2,
                     stroke: `url(#${gradientId})`,
-                    filter: selected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.3))' : 'none',
+                    filter: selected ? `drop-shadow(0 0 3px ${shadowColor})` : 'none',
                     cursor: 'pointer',
                     opacity: selected ? 1 : 0.75,
                     fill: 'none'
@@ -102,7 +108,7 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
                 <EdgeLabelRenderer>
                     <EdgeLabel
                         isHumanInput={data?.isHumanInput}
-                        color={data?.sourceColor || '#ae53ba'}
+                        color={data?.sourceColor || theme.vars.palette.primary.main}
                         label={data.edgeLabel}
                         transform={`translate(-50%, 0%) translate(${sourceX}px,${sourceY}px)`}
                     />
@@ -135,8 +141,8 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
                             style={{
                                 width: '12px',
                                 height: '12px',
-                                background: `linear-gradient(to right, ${data?.sourceColor || '#ae53ba'}, ${
-                                    data?.targetColor || '#2a8af6'
+                                background: `linear-gradient(to right, ${data?.sourceColor || theme.vars.palette.primary.main}, ${
+                                    data?.targetColor || theme.vars.palette.info.main
                                 })`,
                                 border: 'none',
                                 borderRadius: '50%',
@@ -145,29 +151,29 @@ const AgentFlowEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: 'white',
-                                boxShadow: '0 0 4px rgba(0,0,0,0.3)',
+                                color: theme.vars.palette.text.onGlass,
+                                boxShadow: `0 0 4px ${shadowColor}`,
                                 transition: 'all 0.2s ease-in-out',
                                 padding: '2px'
                             }}
                             onMouseOver={(e) => {
                                 e.currentTarget.style.transform = 'scale(1.2)'
-                                e.currentTarget.style.boxShadow = '0 0 8px rgba(0,0,0,0.4)'
+                                e.currentTarget.style.boxShadow = `0 0 8px ${overlayColors[mode].black.darker}`
                             }}
                             onFocus={(e) => {
                                 e.currentTarget.style.transform = 'scale(1.2)'
-                                e.currentTarget.style.boxShadow = '0 0 8px rgba(0,0,0,0.4)'
+                                e.currentTarget.style.boxShadow = `0 0 8px ${overlayColors[mode].black.darker}`
                             }}
                             onMouseOut={(e) => {
                                 e.currentTarget.style.transform = 'scale(1)'
-                                e.currentTarget.style.boxShadow = '0 0 4px rgba(0,0,0,0.3)'
+                                e.currentTarget.style.boxShadow = `0 0 4px ${shadowColor}`
                             }}
                             onBlur={(e) => {
                                 e.currentTarget.style.transform = 'scale(1)'
-                                e.currentTarget.style.boxShadow = '0 0 4px rgba(0,0,0,0.3)'
+                                e.currentTarget.style.boxShadow = `0 0 4px ${shadowColor}`
                             }}
                         >
-                            <IconX stroke={2} size='12' color='white' />
+                            <IconX stroke={2} size='12' color={theme.vars.palette.text.onGlass} />
                         </button>
                     </div>
                 </foreignObject>

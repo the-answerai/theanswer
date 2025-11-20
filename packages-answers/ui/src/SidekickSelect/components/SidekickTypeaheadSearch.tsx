@@ -1,18 +1,6 @@
 'use client'
 import React, { useState, useMemo } from 'react'
-import {
-    Autocomplete,
-    TextField,
-    Box,
-    Paper,
-    Typography,
-    Avatar,
-    Chip,
-    alpha,
-    useTheme,
-    InputAdornment,
-    CircularProgress
-} from '@mui/material'
+import { Autocomplete, TextField, Box, Paper, Typography, Avatar, Chip, useTheme, InputAdornment, CircularProgress } from '@mui/material'
 import { Search as SearchIcon, Star as StarIcon, StarBorder as StarBorderIcon } from '@mui/icons-material'
 import { Sidekick } from '../SidekickSelect.types'
 
@@ -42,15 +30,21 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
 
     return (
         <Paper
+            role='button'
+            tabIndex={0}
+            aria-label={`Select ${sidekick.chatflow.name}`}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelect(sidekick)
+                }
+            }}
             sx={{
                 p: 2,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
-                    theme.palette.background.paper,
-                    0.95
-                )})`,
+                border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.1)`,
+                background: `linear-gradient(145deg, rgba(${theme.vars.palette.background.paperChannel} / 0.9), rgba(${theme.vars.palette.background.paperChannel} / 0.95))`,
                 backdropFilter: 'blur(10px)',
                 margin: '4px 0',
                 borderRadius: 2,
@@ -58,8 +52,15 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                 boxSizing: 'border-box',
                 '&:hover': {
                     transform: 'translateY(-1px)',
-                    boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.15)}`,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                    boxShadow: `0 4px 16px rgba(${theme.vars.palette.primary.mainChannel} / 0.15)`,
+                    border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.3)`
+                },
+                '&:focus-visible': {
+                    outline: '2px solid',
+                    outlineColor: theme.vars.palette.primary.main,
+                    outlineOffset: '2px',
+                    boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+                    transition: 'box-shadow 0.2s ease-in-out'
                 }
             }}
             onClick={() => onSelect(sidekick)}
@@ -67,6 +68,16 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
             <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                 {/* Favorite button */}
                 <Box
+                    role='button'
+                    tabIndex={0}
+                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleFavorite(sidekick, e as any)
+                        }
+                    }}
                     sx={{
                         position: 'absolute',
                         top: 0,
@@ -79,9 +90,15 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: alpha(theme.palette.background.default, 0.8),
+                        bgcolor: `rgba(${theme.vars.palette.background.defaultChannel} / 0.8)`,
                         '&:hover': {
-                            bgcolor: alpha(theme.palette.background.default, 0.9)
+                            bgcolor: `rgba(${theme.vars.palette.background.defaultChannel} / 0.9)`
+                        },
+                        '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: theme.vars.palette.primary.main,
+                            outlineOffset: '1px',
+                            boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`
                         }
                     }}
                     onClick={(e) => {
@@ -90,9 +107,9 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                     }}
                 >
                     {isFavorite ? (
-                        <StarIcon sx={{ fontSize: 16, color: theme.palette.warning.main }} />
+                        <StarIcon sx={{ fontSize: 16, color: theme.vars.palette.warning.main }} />
                     ) : (
-                        <StarBorderIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
+                        <StarBorderIcon sx={{ fontSize: 16, color: theme.vars.palette.text.secondary }} />
                     )}
                 </Box>
 
@@ -103,18 +120,12 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                         height: 32,
                         fontSize: '0.875rem',
                         fontWeight: 600,
-                        ...(theme.palette.mode === 'light'
-                            ? {
-                                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.85) 100%)',
-                                  backdropFilter: 'blur(10px)',
-                                  WebkitBackdropFilter: 'blur(10px)',
-                                  border: '1px solid rgba(15, 23, 42, 0.1)',
-                                  color: '#ffffff'
-                              }
-                            : {
-                                  bgcolor: theme.palette.primary.main,
-                                  color: theme.palette.primary.contrastText
-                              }),
+                        // Use glassPrimary for consistent theming
+                        background: (theme) => theme.vars.palette.glass.glassPrimary.background,
+                        backdropFilter: (theme) => theme.vars.palette.glass.glassPrimary.backdropFilter,
+                        WebkitBackdropFilter: (theme) => theme.vars.palette.glass.glassPrimary.WebkitBackdropFilter,
+                        border: (theme) => theme.vars.palette.glass.glassPrimary.border,
+                        color: (theme) => theme.vars.palette.glass.glassPrimary.color || theme.vars.palette.primary.contrastText,
                         mr: 2
                     }}
                 >
@@ -127,7 +138,7 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                         variant='subtitle2'
                         sx={{
                             fontWeight: 600,
-                            color: theme.palette.text.primary,
+                            color: theme.vars.palette.text.primary,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -141,7 +152,7 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                     <Typography
                         variant='body2'
                         sx={{
-                            color: theme.palette.text.secondary,
+                            color: theme.vars.palette.text.secondary,
                             fontSize: '0.75rem',
                             lineHeight: 1.3,
                             overflow: 'hidden',
@@ -163,9 +174,9 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                                 sx={{
                                     height: 20,
                                     fontSize: '0.625rem',
-                                    bgcolor: alpha(theme.palette.success.main, 0.1),
-                                    color: theme.palette.success.main,
-                                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                                    bgcolor: `rgba(${theme.vars.palette.success.mainChannel} / 0.1)`,
+                                    color: theme.vars.palette.success.main,
+                                    border: `1px solid rgba(${theme.vars.palette.success.mainChannel} / 0.2)`,
                                     '& .MuiChip-label': { px: 1 }
                                 }}
                             />
@@ -177,9 +188,9 @@ const SidekickOption: React.FC<SidekickOptionProps> = ({ sidekick, favorites, to
                                 sx={{
                                     height: 20,
                                     fontSize: '0.625rem',
-                                    bgcolor: alpha(theme.palette.info.main, 0.1),
-                                    color: theme.palette.info.main,
-                                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                                    bgcolor: `rgba(${theme.vars.palette.info.mainChannel} / 0.1)`,
+                                    color: theme.vars.palette.info.main,
+                                    border: `1px solid rgba(${theme.vars.palette.info.mainChannel} / 0.2)`,
                                     '& .MuiChip-label': { px: 1 }
                                 }}
                             />
@@ -319,16 +330,16 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
                         sx={{
                             width: '100%',
                             '& .MuiOutlinedInput-root': {
-                                backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                                backgroundColor: `rgba(${theme.vars.palette.background.paperChannel} / 0.8)`,
                                 backdropFilter: 'blur(10px)',
                                 '&:hover': {
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: alpha(theme.palette.primary.main, 0.3)
+                                        borderColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.3)`
                                     }
                                 },
                                 '&.Mui-focused': {
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: theme.palette.primary.main
+                                        borderColor: theme.vars.palette.primary.main
                                     }
                                 }
                             }
@@ -355,9 +366,9 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
                 ListboxProps={{
                     sx: {
                         maxHeight: 400,
-                        bgcolor: alpha(theme.palette.background.default, 0.95),
+                        bgcolor: `rgba(${theme.vars.palette.background.defaultChannel} / 0.95)`,
                         backdropFilter: 'blur(20px)',
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                        border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.1)`,
                         borderRadius: 2,
                         p: 1
                     }
@@ -367,7 +378,7 @@ const SidekickTypeaheadSearch: React.FC<SidekickTypeaheadSearchProps> = ({
                         {...props}
                         sx={{
                             bgcolor: 'transparent',
-                            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
+                            boxShadow: `0 8px 32px ${theme.vars.palette.common.alpha20}`,
                             borderRadius: 2,
                             overflow: 'hidden'
                         }}

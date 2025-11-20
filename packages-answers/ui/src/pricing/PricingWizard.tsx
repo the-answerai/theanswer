@@ -129,7 +129,7 @@ const PricingWizard: React.FC = () => {
         <Box
             sx={{
                 minHeight: '100vh',
-                background: `linear-gradient(180deg, ${theme.palette.primary.light} 0%, ${theme.palette.background.default} 100%)`
+                background: `linear-gradient(180deg, ${theme.vars.palette.primary.light} 0%, ${theme.vars.palette.background.default} 100%)`
             }}
         >
             <Container maxWidth='lg' sx={{ py: 8 }}>
@@ -139,8 +139,8 @@ const PricingWizard: React.FC = () => {
                         component='div'
                         sx={{
                             display: 'inline-block',
-                            bgcolor: theme.palette.primary.light,
-                            color: theme.palette.primary.main,
+                            bgcolor: theme.vars.palette.primary.light,
+                            color: theme.vars.palette.primary.main,
                             borderRadius: '16px',
                             px: 2,
                             py: 0.5,
@@ -155,7 +155,7 @@ const PricingWizard: React.FC = () => {
                         component='h1'
                         sx={{
                             fontWeight: 'bold',
-                            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                            background: `linear-gradient(45deg, ${theme.vars.palette.primary.main}, ${theme.vars.palette.primary.light})`,
                             backgroundClip: 'text',
                             textFillColor: 'transparent',
                             mb: 2
@@ -277,7 +277,7 @@ const PricingWizard: React.FC = () => {
                                 <CardHeader
                                     title={pack.name}
                                     titleTypographyProps={{ align: 'center', variant: 'h5' }}
-                                    sx={{ backgroundColor: theme.palette.grey[50] }}
+                                    sx={{ backgroundColor: theme.vars.palette.grey[50] }}
                                 />
                                 <CardContent sx={{ flexGrow: 1 }}>
                                     <Box sx={{ textAlign: 'center', mb: 2 }}>

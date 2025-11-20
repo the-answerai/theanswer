@@ -1,15 +1,15 @@
 import { useEffect } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { createPortal } from 'react-dom'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Dialog, DialogContent, DialogTitle } from '@mui/material'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 import { JsonEditorInput } from '@/ui-component/json/JsonEditor'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
-
 const FormatPromptValuesDialog = ({ show, dialogProps, onChange, onCancel }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -41,7 +41,7 @@ const FormatPromptValuesDialog = ({ show, dialogProps, onChange, onCancel }) => 
                     <JsonEditorInput
                         onChange={(newValue) => onChange(newValue)}
                         value={dialogProps.value}
-                        isDarkMode={customization.isDarkMode}
+                        isDarkMode={mode === 'dark'}
                         inputParam={dialogProps.inputParam}
                         nodes={dialogProps.nodes}
                         edges={dialogProps.edges}

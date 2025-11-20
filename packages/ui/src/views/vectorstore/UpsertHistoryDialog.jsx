@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types'
 import { createPortal } from 'react-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useEffect, useState, forwardRef } from 'react'
+import { useThemeMode } from '@ui/theme'
 import DatePicker from 'react-datepicker'
 import moment from 'moment/moment'
 
@@ -48,7 +49,6 @@ import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { baseURL } from '@/store/constant'
 import useNotifier from '@/utils/useNotifier'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
-
 const DatePickerCustomInput = forwardRef(function DatePickerCustomInput({ value, onClick }, ref) {
     return (
         <ListItemButton style={{ borderRadius: 15, border: '1px solid #e0e0e0' }} onClick={onClick} ref={ref}>
@@ -188,7 +188,7 @@ UpsertHistoryRow.propTypes = {
 const UpsertHistoryDialog = ({ show, dialogProps, onCancel }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const theme = useTheme()
     const getUpsertHistoryApi = useApi(vectorstoreApi.getUpsertHistory)
 
@@ -432,7 +432,7 @@ const UpsertHistoryDialog = ({ show, dialogProps, onCancel }) => {
                                             key={index}
                                             upsertHistory={upsertHistory}
                                             theme={theme}
-                                            isDarkMode={customization.isDarkMode}
+                                            isDarkMode={mode === 'dark'}
                                             selected={selected}
                                             handleSelect={handleSelect}
                                         />

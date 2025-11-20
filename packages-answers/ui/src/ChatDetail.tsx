@@ -139,7 +139,8 @@ export const ChatDetail = ({
                                             fullWidth
                                             sx={{
                                                 textTransform: 'capitalize',
-                                                justifyContent: 'space-between'
+                                                justifyContent: 'space-between',
+                                                color: '#ffffff'
                                             }}
                                         >
                                             New chat

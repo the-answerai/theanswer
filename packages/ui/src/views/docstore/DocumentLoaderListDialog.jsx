@@ -71,7 +71,7 @@ const DocumentLoaderListDialog = ({ show, dialogProps, onCancel, onDocLoaderSele
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '75vh', position: 'relative', px: 3, pb: 3 }}>
                 <Box
                     sx={{
-                        backgroundColor: theme.palette.background.paper,
+                        backgroundColor: theme.vars.palette.background.paper,
                         pt: 2,
                         position: 'sticky',
                         top: 0,
@@ -86,7 +86,7 @@ const DocumentLoaderListDialog = ({ show, dialogProps, onCancel, onDocLoaderSele
                         placeholder='Search'
                         startAdornment={
                             <InputAdornment position='start'>
-                                <IconSearch stroke={1.5} size='1rem' color={theme.palette.grey[500]} />
+                                <IconSearch stroke={1.5} size='1rem' color={theme.vars.palette.grey[500]} />
                             </InputAdornment>
                         }
                         endAdornment={
@@ -94,9 +94,9 @@ const DocumentLoaderListDialog = ({ show, dialogProps, onCancel, onDocLoaderSele
                                 position='end'
                                 sx={{
                                     cursor: 'pointer',
-                                    color: theme.palette.grey[500],
+                                    color: theme.vars.palette.grey[500],
                                     '&:hover': {
-                                        color: theme.palette.grey[900]
+                                        color: theme.vars.palette.grey[900]
                                     }
                                 }}
                                 title='Clear Search'
@@ -138,7 +138,7 @@ const DocumentLoaderListDialog = ({ show, dialogProps, onCancel, onDocLoaderSele
                             onClick={() => onDocLoaderSelected(documentLoader.name)}
                             sx={{
                                 border: 1,
-                                borderColor: theme.palette.grey[900] + 25,
+                                borderColor: theme.vars.palette.grey[900] + 25,
                                 borderRadius: 2,
                                 display: 'flex',
                                 alignItems: 'center',

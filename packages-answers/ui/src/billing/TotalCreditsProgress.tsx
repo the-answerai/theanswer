@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Box, Typography, LinearProgress, Alert, Tooltip, IconButton, Stack, Skeleton, Grid } from '@mui/material'
+import { Box, Typography, LinearProgress, Alert, Tooltip, IconButton, Stack, Skeleton, Grid, useTheme } from '@mui/material'
 import { Info as InfoIcon, Business as BusinessIcon } from '@mui/icons-material'
 import { UsageSummary } from './hooks/useBillingData'
 
@@ -54,11 +54,12 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
     const formattedLimit = totalLimit.toLocaleString()
 
     // Determine progress bar color based on usage
-    let progressColor = 'primary.main'
+    const theme = useTheme()
+    let progressColor = theme.vars.palette.primary.main
     if (isOverLimit) {
-        progressColor = 'error.main'
+        progressColor = theme.vars.palette.error.main
     } else if (percentageUsed > 75) {
-        progressColor = 'warning.main'
+        progressColor = theme.vars.palette.warning.main
     }
 
     // Calculate resource distribution percentages

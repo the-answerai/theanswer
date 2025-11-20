@@ -4,6 +4,7 @@ import { AxiosError } from 'axios'
 import Image from 'next/image'
 import { JsonViewer } from '@textea/json-viewer'
 import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui/material'
+// alpha() removed - migrated to CSS variables
 import { IconTool } from '@tabler/icons-react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
@@ -441,14 +442,14 @@ export const MessageCard = ({
                                                                     return acc + `${key}: ${toolInput[key]}`
                                                                 }, '')}`}
                                                                 size='small'
-                                                                sx={{
+                                                                sx={(theme) => ({
                                                                     height: '24px',
-                                                                    bgcolor: 'rgba(0,0,0,0.3)',
-                                                                    color: '#f48771',
+                                                                    bgcolor: theme.vars.palette.syntax.background,
+                                                                    color: theme.vars.palette.syntax.code,
                                                                     fontSize: '0.75rem',
                                                                     fontFamily: 'monospace',
                                                                     '& .MuiChip-label': { px: 1 }
-                                                                }}
+                                                                })}
                                                             />
                                                         )
                                                     })}
@@ -481,7 +482,6 @@ export const MessageCard = ({
                                                             >,
                                                             idx: number
                                                         ) => {
-                                                            // console.log(agentObjectMessage)
                                                             if (typeof agentObjectMessage === 'string') {
                                                                 return (
                                                                     <Typography
@@ -526,16 +526,17 @@ export const MessageCard = ({
                                                                                                 return acc + `${key}: ${input[key]}`
                                                                                             }, '')}`}
                                                                                             size='small'
-                                                                                            sx={{
+                                                                                            sx={(theme) => ({
                                                                                                 display: 'block',
                                                                                                 height: '24px',
                                                                                                 width: 'fit-content',
-                                                                                                bgcolor: 'rgba(0,0,0,0.3)',
-                                                                                                color: '#f48771',
+                                                                                                bgcolor:
+                                                                                                    theme.vars.palette.syntax.background,
+                                                                                                color: theme.vars.palette.syntax.code,
                                                                                                 fontSize: '0.75rem',
                                                                                                 fontFamily: 'monospace',
                                                                                                 '& .MuiChip-label': { px: 1 }
-                                                                                            }}
+                                                                                            })}
                                                                                         />
                                                                                     )
                                                                                 }
@@ -642,7 +643,7 @@ export const MessageCard = ({
                                     ...(file.mime?.startsWith('audio/')
                                         ? {}
                                         : {
-                                              bgcolor: 'background.paper',
+                                              bgcolor: (theme) => theme.vars.palette.background.paper,
                                               boxShadow: 1
                                           })
                                 }}
@@ -696,59 +697,69 @@ export const MessageCard = ({
                     <LoadingAnimation duration={1200} />
                 ) : hasContent && content && typeof content === 'string' && content !== '[object Object]' ? (
                     <Box
-                        sx={{
+                        sx={(theme) => ({
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 1,
                             ...(isUserMessage
                                 ? {
-                                      bgcolor: 'primary.main',
+                                      bgcolor: 'primary.main', // light mode default
                                       borderRadius: 2,
                                       px: 2,
-                                      py: 1
+                                      py: 1,
+                                      ...theme.applyStyles('dark', {
+                                          bgcolor: theme.vars.palette.overlay.white.heavy // Uses token: rgba(255, 255, 255, 0.9)
+                                      })
                                   }
                                 : {
-                                      // Assistant message with glass background
-                                      background: (theme) =>
-                                          theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.03)',
-                                      backdropFilter: 'blur(10px)',
-                                      WebkitBackdropFilter: 'blur(10px)',
-                                      border: (theme) =>
-                                          theme.palette.mode === 'light'
-                                              ? '1px solid rgba(15, 23, 42, 0.08)'
-                                              : '1px solid rgba(255, 255, 255, 0.08)',
+                                      // Assistant message with glass background - uses CSS variables
+                                      background: theme.vars.palette.glass.glassSecondary.background,
+                                      backdropFilter: theme.vars.palette.glass.glassSecondary.backdropFilter,
+                                      WebkitBackdropFilter: theme.vars.palette.glass.glassSecondary.WebkitBackdropFilter,
+                                      border: theme.vars.palette.glass.glassSecondary.border,
                                       borderRadius: 2,
                                       px: 2,
-                                      py: 1.5,
-                                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                      py: 1,
+                                      transition: theme.vars.palette.glass.transition,
                                       '&:hover': {
-                                          background: (theme) =>
-                                              theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
-                                          transform: 'translateY(-1px)',
-                                          boxShadow: (theme) =>
-                                              theme.palette.mode === 'light'
-                                                  ? '0 4px 12px rgba(0, 0, 0, 0.08)'
-                                                  : '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                          background: theme.vars.palette.glass.glassHover.background,
+                                          transform: theme.vars.palette.glass.glassHover.transform,
+                                          boxShadow: theme.vars.palette.glass.glassHover.boxShadow
                                       }
                                   }),
                             width: '100%',
                             maxWidth: '100%',
                             minWidth: 0,
                             overflowX: 'hidden',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
                             '& > *': {
-                                maxWidth: '100%'
+                                maxWidth: '100%',
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word'
                             }
-                        }}
+                        })}
                     >
                         <Box
-                            sx={{
+                            sx={(theme) => ({
                                 overflow: 'hidden',
                                 fontSize: '0.875rem',
                                 lineHeight: 1.75,
                                 width: '100%',
-                                color: isUserMessage ? 'white' : 'text.primary',
+                                color: isUserMessage
+                                    ? 'white' // light mode default for user messages
+                                    : theme.vars.palette.text.primary, // assistant messages use theme text color
+                                ...(isUserMessage
+                                    ? theme.applyStyles('dark', {
+                                          color: theme.vars.palette.overlay.black.text // Uses token: rgba(0, 0, 0, 0.87)
+                                      })
+                                    : {}),
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word',
                                 '& > *': {
-                                    maxWidth: '100%'
+                                    maxWidth: '100%',
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word'
                                 },
                                 img: {
                                     maxWidth: '100%',
@@ -758,14 +769,25 @@ export const MessageCard = ({
                                 'p,pre,h1,h2,h3,h4,h5,h6,ul,ol': {
                                     ':not(:first-of-type)': {
                                         mt: 2
-                                    }
+                                    },
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word'
                                 },
                                 'ul,ol': {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: 1
+                                },
+                                code: {
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word'
+                                },
+                                pre: {
+                                    whiteSpace: 'pre-wrap',
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word'
                                 }
-                            }}
+                            })}
                         >
                             <SimpleMarkdown content={content} openLinksInNewTab={openLinksInNewTab} setPreviewCode={setPreviewCode} />
                         </Box>
@@ -839,8 +861,6 @@ export const MessageCard = ({
                                                     sidekick,
                                                     action: (other as any).action
                                                 })
-
-                                                // console.log(`Action clicked: ${element.label}`)
                                             } catch (err) {
                                                 console.error('Error handling action click:', err)
                                             }
@@ -920,24 +940,28 @@ export const MessageCard = ({
                                         />
                                     ) : (
                                         <Box
-                                            sx={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                            sx={(theme) => ({
+                                                backgroundColor: theme.vars.palette.overlay.black.subtle, // Uses token: rgba(0, 0, 0, 0.03)
                                                 borderRadius: 1,
                                                 p: 2,
-                                                border: '1px solid rgba(255, 255, 255, 0.1)'
-                                            }}
+                                                border: `1px solid ${theme.vars.palette.overlay.black.heavy}`, // Uses token: rgba(0, 0, 0, 0.1)
+                                                ...theme.applyStyles('dark', {
+                                                    backgroundColor: theme.vars.palette.overlay.white.subtle, // Uses token: rgba(255, 255, 255, 0.05)
+                                                    border: `1px solid ${theme.vars.palette.overlay.white.heavy}` // Uses token: rgba(255, 255, 255, 0.12)
+                                                })
+                                            })}
                                         >
                                             <Typography
                                                 component='pre'
-                                                sx={{
+                                                sx={(theme) => ({
                                                     whiteSpace: 'pre-wrap',
                                                     wordBreak: 'break-word',
                                                     margin: 0,
                                                     fontFamily: 'monospace',
                                                     fontSize: '0.875rem',
                                                     lineHeight: 1.4,
-                                                    color: '#E0E0E0'
-                                                }}
+                                                    color: theme.vars.palette.monochrome.neutral
+                                                })}
                                             >
                                                 {sourceDialogProps.data}
                                             </Typography>
@@ -1002,17 +1026,28 @@ export const MessageCard = ({
                 </Box>
             ) : null}
             {isDeveloperMode ? (
-                <Box>
+                <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {sourceDocuments?.length ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
                                     Source Documents ({countTokensLite(sourceDocuments?.map((d: Document) => d.pageContent)?.join('/n'))}{' '}
-                                    Tokens)
+                                    tokens)
                                 </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
-                                <Typography sx={{ whiteSpace: 'pre-line' }} variant='body1' color='text.secondary' component='div'>
+                                <Typography
+                                    sx={{ whiteSpace: 'pre-line', fontSize: '0.75rem', opacity: 0.8, fontFamily: 'monospace' }}
+                                    variant='body2'
+                                >
                                     {sourceDocuments?.map((d: Document) => d.pageContent)?.join('/n')}
                                 </Typography>
                             </CustomAccordionDetails>
@@ -1020,12 +1055,22 @@ export const MessageCard = ({
                     ) : null}
 
                     {summary ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>Summary ({summary?.length})</Typography>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                                    Summary ({summary?.length} chars)
+                                </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
-                                <Typography sx={{ whiteSpace: 'pre-line' }} variant='body1' color='text.secondary' component='div'>
+                                <Typography sx={{ whiteSpace: 'pre-line', fontSize: '0.75rem', opacity: 0.8 }} variant='body2'>
                                     {summary}
                                 </Typography>
                             </CustomAccordionDetails>
@@ -1033,19 +1078,26 @@ export const MessageCard = ({
                     ) : null}
 
                     {pineconeData ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>Pinecone Data</Typography>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                                    Pinecone Data
+                                </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
                                 <JsonViewer
                                     rootName='pineconeData'
-                                    value={{
-                                        filters,
-                                        pineconeData
-                                    }}
-                                    theme={'dark'}
-                                    // defaultInspectDepth={0}
+                                    value={{ filters, pineconeData }}
+                                    theme='dark'
+                                    defaultInspectDepth={2}
                                     collapseStringsAfterLength={100}
                                 />
                             </CustomAccordionDetails>
@@ -1053,16 +1105,26 @@ export const MessageCard = ({
                     ) : null}
 
                     {completionRequest ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>Completion request</Typography>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                                    Completion Request
+                                </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
                                 <JsonViewer
-                                    rootName='completionRequest'
+                                    rootName='request'
                                     value={completionRequest}
-                                    theme={'dark'}
-                                    // defaultInspectDepth={0}
+                                    theme='dark'
+                                    defaultInspectDepth={2}
                                     collapseStringsAfterLength={100}
                                 />
                             </CustomAccordionDetails>
@@ -1070,16 +1132,26 @@ export const MessageCard = ({
                     ) : null}
 
                     {completionData ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>Completion</Typography>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                                    Completion Data
+                                </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
                                 <JsonViewer
-                                    rootName=''
+                                    rootName='completion'
                                     value={completionData}
-                                    theme={'dark'}
-                                    // defaultInspectDepth={0}
+                                    theme='dark'
+                                    defaultInspectDepth={2}
                                     collapseStringsAfterLength={100}
                                 />
                             </CustomAccordionDetails>
@@ -1087,17 +1159,26 @@ export const MessageCard = ({
                     ) : null}
 
                     {Object.keys(other)?.length ? (
-                        // Use the @mui accordion component to wrap the extra and response
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>Extra</Typography>
+                        <CustomAccordion
+                            TransitionProps={{ unmountOnExit: true }}
+                            sx={{
+                                backdropFilter: 'blur(8px)',
+                                bgcolor: (theme) => theme.vars.palette.background.alpha40,
+                                border: (theme) => `1px solid ${theme.vars.palette.divider.alpha10}`,
+                                '&:before': { display: 'none' }
+                            }}
+                        >
+                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon fontSize='small' />}>
+                                <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                                    Metadata ({Object.keys(other).length})
+                                </Typography>
                             </CustomAccordionSummary>
                             <CustomAccordionDetails>
                                 <JsonViewer
-                                    rootName=''
+                                    rootName='metadata'
                                     value={other}
-                                    theme={'dark'}
-                                    // defaultInspectDepth={0}
+                                    theme='dark'
+                                    defaultInspectDepth={2}
                                     collapseStringsAfterLength={100}
                                 />
                             </CustomAccordionDetails>
@@ -1124,12 +1205,12 @@ export const MessageCard = ({
                                 <Tooltip key={`references-${doc.metadata.url ?? doc.metadata.source}`} title={'Click to view details'}>
                                     <Box
                                         onClick={() => setSelectedDocuments?.(documents)}
-                                        sx={{
+                                        sx={(theme) => ({
                                             textTransform: 'none',
                                             borderRadius: 20,
-                                            color: 'text.secondary',
+                                            color: theme.vars.palette.text.secondary,
                                             border: '1px solid',
-                                            borderColor: 'text.secondary',
+                                            borderColor: theme.vars.palette.text.secondary,
                                             display: 'inline-flex',
                                             alignItems: 'center',
                                             padding: '4px 10px',
@@ -1137,9 +1218,12 @@ export const MessageCard = ({
                                             fontSize: '0.8125rem',
                                             cursor: 'pointer',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                                                backgroundColor: theme.vars.palette.overlay.black.light, // Uses token: rgba(0, 0, 0, 0.04)
+                                                ...theme.applyStyles('dark', {
+                                                    backgroundColor: theme.vars.palette.overlay.white.light // Uses token: rgba(255, 255, 255, 0.08)
+                                                })
                                             }
-                                        }}
+                                        })}
                                     >
                                         {services[doc.source ?? doc.metadata?.source]?.imageURL ? (
                                             <Avatar
@@ -1209,16 +1293,16 @@ export const MessageCard = ({
                                     sx={{
                                         height: '28px',
                                         fontSize: '0.75rem',
-                                        borderColor: 'primary.main',
-                                        color: 'primary.main',
-                                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                        borderColor: (theme) => theme.vars.palette.primary.main,
+                                        color: (theme) => theme.vars.palette.primary.main,
+                                        backgroundColor: (theme) => theme.vars.palette.primary.alpha10,
                                         opacity: 0.9,
                                         '&:hover': {
-                                            backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                                            backgroundColor: (theme) => theme.vars.palette.primary.alpha20,
                                             opacity: 1
                                         },
                                         '& .MuiChip-icon': {
-                                            color: 'primary.main'
+                                            color: (theme) => theme.vars.palette.primary.main
                                         }
                                     }}
                                     onClick={() => {
@@ -1269,27 +1353,16 @@ export const MessageCard = ({
                                         sx={{
                                             width: 36,
                                             height: 36,
-                                            background: (theme) =>
-                                                theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.08)',
-                                            backdropFilter: 'blur(8px)',
-                                            WebkitBackdropFilter: 'blur(8px)',
-                                            border: (theme) =>
-                                                theme.palette.mode === 'light'
-                                                    ? '1px solid rgba(15, 23, 42, 0.12)'
-                                                    : '1px solid rgba(255, 255, 255, 0.12)',
+                                            background: (theme) => theme.vars.palette.glass.glassSubtle.background,
+                                            backdropFilter: (theme) => theme.vars.palette.glass.glassSubtle.backdropFilter,
+                                            WebkitBackdropFilter: (theme) => theme.vars.palette.glass.glassSubtle.WebkitBackdropFilter,
+                                            border: (theme) => theme.vars.palette.glass.glassSubtle.border,
                                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                            color: (theme) =>
-                                                theme.palette.mode === 'light' ? theme.palette.primary.main : theme.palette.primary.light,
+                                            color: (theme) => theme.vars.palette.primary.main,
                                             '&:hover': {
-                                                background: (theme) =>
-                                                    theme.palette.mode === 'light'
-                                                        ? 'rgba(255, 255, 255, 0.95)'
-                                                        : 'rgba(255, 255, 255, 0.12)',
+                                                background: (theme) => theme.vars.palette.glass.glassHover.background,
                                                 transform: 'scale(1.1) translateY(-2px)',
-                                                boxShadow: (theme) =>
-                                                    theme.palette.mode === 'light'
-                                                        ? '0 4px 12px rgba(0, 0, 0, 0.12)'
-                                                        : '0 4px 12px rgba(0, 0, 0, 0.4)'
+                                                boxShadow: (theme) => theme.vars.palette.glass.glassHover.boxShadow
                                             }
                                         }}
                                     >

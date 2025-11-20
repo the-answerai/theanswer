@@ -1,17 +1,19 @@
 import PropTypes from 'prop-types'
 import { createPortal } from 'react-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useEffect } from 'react'
+import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 import ReactJson from 'flowise-react-json-view'
 import { Typography, Card, CardContent, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import StatsCard from '@/ui-component/cards/StatsCard'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import { IconZoomScan } from '@tabler/icons-react'
-
 const UpsertResultDialog = ({ show, dialogProps, onCancel, onGoToRetrievalQuery }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const theme = useTheme()
+    const { mode } = useThemeMode()
 
     useEffect(() => {
         if (show) dispatch({ type: SHOW_CANVAS_DIALOG })
@@ -52,16 +54,13 @@ const UpsertResultDialog = ({ show, dialogProps, onCancel, onGoToRetrievalQuery 
                         dialogProps.addedDocs.length > 0 &&
                         dialogProps.addedDocs.map((docs, index) => {
                             return (
-                                <Card
-                                    key={index}
-                                    sx={{ border: '1px solid #e0e0e0', borderRadius: `${customization.borderRadius}px`, mb: 1 }}
-                                >
+                                <Card key={index} sx={{ border: '1px solid #e0e0e0', borderRadius: theme.shape.borderRadius, mb: 1 }}>
                                     <CardContent>
                                         <Typography sx={{ fontSize: 14 }} color='text.primary' gutterBottom>
                                             {docs.pageContent}
                                         </Typography>
                                         <ReactJson
-                                            theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                            theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                             style={{ padding: 10, borderRadius: 10 }}
                                             src={docs.metadata}
                                             name={null}

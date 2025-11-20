@@ -9,20 +9,20 @@ import { formatDataGridRows } from '@/utils/genericHelper'
 import { styled } from '@mui/material/styles'
 
 const StyledDataGrid = styled(MUIDataGrid)(({ theme }) => ({
-    border: `1px solid ${theme.palette.mode === 'light' ? '#b4b4b4' : '#303030'}`,
+    border: `1px solid ${theme.vars.palette.divider}`,
 
     letterSpacing: 'normal',
     '& .MuiDataGrid-columnsContainer': {
-        backgroundColor: theme.palette.mode === 'light' ? '#fafafa' : '#1d1d1d'
+        backgroundColor: theme.vars.palette.action.hover
     },
     '& .MuiDataGrid-iconSeparator': {
         display: 'none'
     },
     '& .MuiDataGrid-columnHeader, .MuiDataGrid-cell': {
-        borderRight: `1px solid ${theme.palette.mode === 'light' ? '#f0f0f0' : '#303030'}`
+        borderRight: `1px solid ${theme.vars.palette.divider}`
     },
     '& .MuiDataGrid-columnsContainer, .MuiDataGrid-cell': {
-        borderBottom: `1px solid ${theme.palette.mode === 'light' ? '#f0f0f0' : '#303030'}`
+        borderBottom: `1px solid ${theme.vars.palette.divider}`
     },
 
     '& .MuiPaginationItem-root': {

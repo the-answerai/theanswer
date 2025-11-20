@@ -2,15 +2,16 @@ import { getBezierPath, EdgeText } from 'reactflow'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
 import { useContext, memo } from 'react'
+import { useTheme } from '@mui/material'
 import { SET_DIRTY } from '@/store/actions'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { IconX } from '@tabler/icons-react'
-
-import './index.css'
+import { EdgeButton, EdgeButtonForeignObject } from '@/views/shared/ReactFlowStyles'
 
 const foreignObjectSize = 40
 
 const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, data, markerEnd }) => {
+    const theme = useTheme()
     const [edgePath, edgeCenterX, edgeCenterY] = getBezierPath({
         sourceX,
         sourceY,
@@ -38,7 +39,7 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
                     x={sourceX + 10}
                     y={sourceY + 10}
                     label={data.label}
-                    labelStyle={{ fill: 'black' }}
+                    labelStyle={{ fill: theme.vars.palette.text.primary }}
                     labelBgStyle={{ fill: 'transparent' }}
                     labelBgPadding={[2, 4]}
                     labelBgBorderRadius={2}
@@ -52,11 +53,11 @@ const ButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
                 className='edgebutton-foreignobject'
                 requiredExtensions='http://www.w3.org/1999/xhtml'
             >
-                <div>
-                    <button className='edgebutton' onClick={(event) => onEdgeClick(event, id)}>
+                <EdgeButtonForeignObject>
+                    <EdgeButton onClick={(event) => onEdgeClick(event, id)}>
                         <IconX stroke={2} size='12' />
-                    </button>
-                </div>
+                    </EdgeButton>
+                </EdgeButtonForeignObject>
             </foreignObject>
         </>
     )

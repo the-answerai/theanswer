@@ -64,7 +64,8 @@ const ConnectionLine = ({ fromX, fromY, toX, toY, fromPosition, toPosition }) =>
     }
 
     const color =
-        AGENTFLOW_ICONS.find((icon) => icon.name === (connectionHandleId || '').split('_')[0] || '')?.color ?? theme.palette.primary.main
+        AGENTFLOW_ICONS.find((icon) => icon.name === (connectionHandleId || '').split('_')[0] || '')?.color ??
+        theme.vars.palette.primary.main
 
     return (
         <g>

@@ -22,7 +22,7 @@ import Delete from '@mui/icons-material/Delete'
 
 import { Organization, AppSettings, ContextField } from 'types'
 
-interface ContextFieldInput extends Partial<ContextField> {}
+type ContextFieldInput = Partial<ContextField>
 interface OrgInput
     extends Omit<
         Organization,

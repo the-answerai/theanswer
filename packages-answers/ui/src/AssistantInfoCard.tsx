@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Box, Typography, IconButton, Chip, Tooltip, alpha, Button } from '@mui/material'
+import { Box, Typography, IconButton, Chip, Tooltip, Button } from '@mui/material'
 import { Sidekick } from 'types'
 import {
     Star as StarIcon,
@@ -9,8 +9,8 @@ import {
     ContentCopy as ContentCopyIcon
 } from '@mui/icons-material'
 import { styled } from '@mui/system'
-import { useSelector } from 'react-redux'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 import { baseURL } from '@/store/constant'
 import { useNavigate, useNavigationState } from '@/utils/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
@@ -27,10 +27,17 @@ interface AssistantInfoCardProps {
 }
 
 const WhiteIconButton = styled(IconButton)(({ theme }) => ({
-    color: theme.palette?.common?.white,
+    color: theme.vars.palette.common.white,
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        color: theme.palette.primary.main
+        backgroundColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.08)`,
+        color: theme.vars.palette.primary.main
+    },
+    '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: theme.vars.palette.primary.main,
+        outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+        transition: 'box-shadow 0.2s ease-in-out'
     }
 }))
 const DescriptionText = styled(Typography, {
@@ -64,7 +71,7 @@ const AssistantInfoCard = ({
     const [expanded, setExpanded] = useState(false)
     const description = sidekick?.chatflow?.description || 'No description available'
     const theme = useTheme()
-    const customization = useSelector((state: any) => state.customization)
+    const { mode } = useThemeMode()
     const navigate = useNavigate()
     const [, setNavigationState] = useNavigationState()
     const { user } = useUser()
@@ -258,9 +265,10 @@ const AssistantInfoCard = ({
                                                             width: 24,
                                                             height: 24,
                                                             borderRadius: '50%',
-                                                            backgroundColor: customization.isDarkMode
-                                                                ? theme.palette?.common?.white
-                                                                : alpha(theme.palette.grey[300], 0.75)
+                                                            backgroundColor:
+                                                                mode === 'dark'
+                                                                    ? theme.vars.palette.common.white
+                                                                    : `rgba(${theme.vars.palette.grey['300Channel']} / 0.75)`
                                                         }}
                                                     >
                                                         <img
@@ -301,8 +309,17 @@ const AssistantInfoCard = ({
                                         '&:hover': {
                                             backgroundColor: 'transparent',
                                             color: 'primary.main'
+                                        },
+                                        '&:focus-visible': {
+                                            outline: '2px solid',
+                                            outlineColor: (theme) => theme.vars.palette.primary.main,
+                                            outlineOffset: '2px',
+                                            boxShadow: (theme) => `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+                                            transition: 'box-shadow 0.2s ease-in-out'
                                         }
                                     }}
+                                    aria-expanded={expanded}
+                                    aria-label={expanded ? 'Show less information' : 'Show more information'}
                                 >
                                     {expanded ? 'Show less' : 'Show more'}
                                 </Button>

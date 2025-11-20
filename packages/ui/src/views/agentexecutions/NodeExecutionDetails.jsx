@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 
 // MUI
@@ -35,7 +35,6 @@ import ReactJson from 'flowise-react-json-view'
 import { CodeEditor } from '@/ui-component/editor/CodeEditor'
 
 import predictionApi from '@/api/prediction'
-
 export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, onProceedSuccess }) => {
     const [dataView, setDataView] = useState('rendered')
     const [openFeedbackDialog, setOpenFeedbackDialog] = useState(false)
@@ -43,53 +42,53 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
     const [feedbackType, setFeedbackType] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [loadingMessage, setLoadingMessage] = useState('')
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const theme = useTheme()
     const { enqueueSnackbar } = useSnackbar()
 
     // Function to get role-based colors
     const getRoleColors = (role) => {
-        const isDarkMode = customization.isDarkMode
+        const isDarkMode = mode === 'dark'
 
         switch (role) {
             case 'assistant':
             case 'ai':
                 return {
-                    bg: isDarkMode ? darken(theme.palette.success.dark, 0.5) : theme.palette.success.light,
-                    color: isDarkMode ? 'white' : theme.palette.success.dark,
-                    border: theme.palette.success.main
+                    bg: isDarkMode ? darken(theme.vars.palette.success.dark, 0.5) : theme.vars.palette.success.light,
+                    color: isDarkMode ? 'white' : theme.vars.palette.success.dark,
+                    border: theme.vars.palette.success.main
                 }
             case 'system':
                 return {
-                    bg: isDarkMode ? darken(theme.palette.warning.dark, 0.5) : theme.palette.warning.light,
-                    color: isDarkMode ? 'white' : theme.palette.warning.dark,
-                    border: theme.palette.warning.main
+                    bg: isDarkMode ? darken(theme.vars.palette.warning.dark, 0.5) : theme.vars.palette.warning.light,
+                    color: isDarkMode ? 'white' : theme.vars.palette.warning.dark,
+                    border: theme.vars.palette.warning.main
                 }
             case 'developer':
                 return {
-                    bg: isDarkMode ? darken(theme.palette.info.dark, 0.5) : theme.palette.info.light,
-                    color: isDarkMode ? 'white' : theme.palette.info.dark,
-                    border: theme.palette.info.main
+                    bg: isDarkMode ? darken(theme.vars.palette.info.dark, 0.5) : theme.vars.palette.info.light,
+                    color: isDarkMode ? 'white' : theme.vars.palette.info.dark,
+                    border: theme.vars.palette.info.main
                 }
             case 'user':
             case 'human':
                 return {
-                    bg: isDarkMode ? darken(theme.palette.primary.main, 0.5) : theme.palette.primary.light,
-                    color: isDarkMode ? 'white' : theme.palette.primary.dark,
-                    border: theme.palette.primary.main
+                    bg: isDarkMode ? darken(theme.vars.palette.primary.main, 0.5) : theme.vars.palette.primary.light,
+                    color: isDarkMode ? 'white' : theme.vars.palette.primary.dark,
+                    border: theme.vars.palette.primary.main
                 }
             case 'tool':
             case 'function':
                 return {
-                    bg: isDarkMode ? darken(theme.palette.secondary.main, 0.5) : theme.palette.secondary.light,
-                    color: isDarkMode ? 'white' : theme.palette.secondary.dark,
-                    border: theme.palette.secondary.main
+                    bg: isDarkMode ? darken(theme.vars.palette.secondary.main, 0.5) : theme.vars.palette.secondary.light,
+                    color: isDarkMode ? 'white' : theme.vars.palette.secondary.dark,
+                    border: theme.vars.palette.secondary.main
                 }
             default:
                 return {
-                    bg: isDarkMode ? darken(theme.palette.grey[700], 0.5) : theme.palette.grey[300],
-                    color: isDarkMode ? 'white' : theme.palette.grey[800],
-                    border: isDarkMode ? theme.palette.grey[600] : theme.palette.grey[500]
+                    bg: isDarkMode ? darken(theme.vars.palette.grey[700], 0.5) : theme.vars.palette.grey[300],
+                    color: isDarkMode ? 'white' : theme.vars.palette.grey[800],
+                    border: isDarkMode ? theme.vars.palette.grey[600] : theme.vars.palette.grey[500]
                 }
         }
     }
@@ -178,7 +177,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                             borderColor: 'success.main',
                             borderRadius: 1,
                             p: 2,
-                            backgroundColor: theme.palette.background.default
+                            backgroundColor: theme.vars.palette.background.default
                         }}
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -186,7 +185,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                             <Chip
                                 label={condition.isFulfilled ? 'Fulfilled' : 'Not Fulfilled'}
                                 size='small'
-                                sx={{ color: 'white', backgroundColor: theme.palette.success.dark }}
+                                sx={{ color: 'white', backgroundColor: theme.vars.palette.success.dark }}
                                 variant='filled'
                             />
                         </Box>
@@ -201,7 +200,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                         borderColor: 'success.main',
                         borderRadius: 1,
                         p: 2,
-                        backgroundColor: theme.palette.background.default
+                        backgroundColor: theme.vars.palette.background.default
                     }}
                 >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -210,7 +209,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                             label={condition.isFulfilled ? 'Fulfilled' : 'Not Fulfilled'}
                             size='small'
                             variant='filled'
-                            sx={{ color: 'white', backgroundColor: theme.palette.success.dark }}
+                            sx={{ color: 'white', backgroundColor: theme.vars.palette.success.dark }}
                         />
                     </Box>
                     <JSONViewer data={condition} />
@@ -307,9 +306,9 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                 >
                     <ToggleButton
                         sx={{
-                            borderColor: theme.palette.grey[900] + 25,
+                            borderColor: theme.vars.palette.grey[900] + 25,
                             borderRadius: 2,
-                            color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                            color: mode === 'dark' ? 'white' : 'inherit'
                         }}
                         variant='contained'
                         value='rendered'
@@ -319,9 +318,9 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                     </ToggleButton>
                     <ToggleButton
                         sx={{
-                            borderColor: theme.palette.grey[900] + 25,
+                            borderColor: theme.vars.palette.grey[900] + 25,
                             borderRadius: 2,
-                            color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                            color: mode === 'dark' ? 'white' : 'inherit'
                         }}
                         variant='contained'
                         value='raw'
@@ -353,10 +352,10 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                             mb: 1,
                                             '&:before': { display: 'none' },
                                             backgroundColor: isToolUsed
-                                                ? theme?.customization?.isDarkMode
-                                                    ? `${theme.palette.success.dark}22`
-                                                    : `${theme.palette.success.light}44`
-                                                : theme.palette.background.default,
+                                                ? mode === 'dark'
+                                                    ? `${theme.vars.palette.success.dark}22`
+                                                    : `${theme.vars.palette.success.light}44`
+                                                : theme.vars.palette.background.default,
                                             border: 1,
                                             borderRadius: 1,
                                             borderColor: isToolUsed ? 'success.main' : 'divider',
@@ -427,7 +426,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                     <Chip
                                                         label='Used'
                                                         size='small'
-                                                        sx={{ ml: 2, color: 'white', backgroundColor: theme.palette.success.dark }}
+                                                        sx={{ ml: 2, color: 'white', backgroundColor: theme.vars.palette.success.dark }}
                                                     />
                                                 )}
                                             </Box>
@@ -455,7 +454,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                     p: 1,
                                     pl: 2,
                                     pr: 2,
-                                    backgroundColor: theme.palette.background.default
+                                    backgroundColor: theme.vars.palette.background.default
                                 }}
                             >
                                 <Chip
@@ -492,9 +491,10 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                     mt: 1,
                                                     mb: 1,
                                                     '&:before': { display: 'none' },
-                                                    backgroundColor: theme?.customization?.isDarkMode
-                                                        ? `${theme.palette.warning.dark}22`
-                                                        : `${theme.palette.warning.light}44`,
+                                                    backgroundColor:
+                                                        mode === 'dark'
+                                                            ? `${theme.vars.palette.warning.dark}22`
+                                                            : `${theme.vars.palette.warning.light}44`,
 
                                                     border: 1,
                                                     borderRadius: 1,
@@ -505,9 +505,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                 <AccordionSummary
                                                     expandIcon={
                                                         <IconChevronDown
-                                                            color={
-                                                                customization.isDarkMode ? 'white' : darken(theme.palette.warning.dark, 0.5)
-                                                            }
+                                                            color={mode === 'dark' ? 'white' : darken(theme.vars.palette.warning.dark, 0.5)}
                                                         />
                                                     }
                                                     aria-controls={`tool-call-${idx}-content`}
@@ -578,7 +576,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                             sx={{
                                                                 ml: 2,
                                                                 color: 'white',
-                                                                backgroundColor: darken(theme.palette.warning.dark, 0.5)
+                                                                backgroundColor: darken(theme.vars.palette.warning.dark, 0.5)
                                                             }}
                                                         />
                                                     </Box>
@@ -653,7 +651,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                         color: 'info',
                                                         border: 1,
                                                         py: 1.5,
-                                                        borderColor: customization.isDarkMode ? 'white' : 'divider'
+                                                        borderColor: mode === 'dark' ? 'white' : 'divider'
                                                     }}
                                                 />
                                             )}
@@ -705,7 +703,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                                 borderColor: 'divider',
                                                                 borderRadius: 1,
                                                                 p: 2,
-                                                                backgroundColor: theme.palette.background.paper
+                                                                backgroundColor: theme.vars.palette.background.paper
                                                             }}
                                                         >
                                                             <div dangerouslySetInnerHTML={{ __html: artifact.data }}></div>
@@ -721,7 +719,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                                                 borderColor: 'divider',
                                                                 borderRadius: 1,
                                                                 p: 2,
-                                                                backgroundColor: theme.palette.background.paper
+                                                                backgroundColor: theme.vars.palette.background.paper
                                                             }}
                                                         >
                                                             <MemoizedReactMarkdown>{artifact.data}</MemoizedReactMarkdown>
@@ -808,14 +806,14 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                 borderColor: 'divider',
                                 borderRadius: 1,
                                 overflow: 'hidden',
-                                backgroundColor: theme.palette.background.default
+                                backgroundColor: theme.vars.palette.background.default
                             }}
                         >
                             <CodeEditor
                                 disabled={true}
                                 value={data.input.code}
                                 height={'max-content'}
-                                theme={customization.isDarkMode ? 'dark' : 'light'}
+                                theme={mode === 'dark' ? 'dark' : 'light'}
                                 lang={'js'}
                                 basicSetup={{
                                     lineNumbers: false,
@@ -835,7 +833,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                 p: 1,
                                 pl: 2,
                                 pr: 2,
-                                backgroundColor: theme.palette.background.default
+                                backgroundColor: theme.vars.palette.background.default
                             }}
                         >
                             <MemoizedReactMarkdown>{data?.input?.question || `*No data*`}</MemoizedReactMarkdown>
@@ -858,7 +856,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                 p: 1,
                                 pl: 2,
                                 pr: 2,
-                                backgroundColor: theme.palette.background.default
+                                backgroundColor: theme.vars.palette.background.default
                             }}
                         >
                             {(() => {
@@ -897,7 +895,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                                     p: 1,
                                     pl: 2,
                                     pr: 2,
-                                    backgroundColor: theme.palette.background.default
+                                    backgroundColor: theme.vars.palette.background.default
                                 }}
                             >
                                 <MemoizedReactMarkdown>
@@ -928,7 +926,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                     onClick={(e) => e.stopPropagation()}
                 >
                     <ReactJson
-                        theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                        theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                         style={{ padding: 10, borderRadius: 10 }}
                         src={data}
                         name={null}
@@ -947,7 +945,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                             bottom: 15,
                             right: 25,
                             p: 1.5,
-                            backgroundColor: theme.palette.background.paper,
+                            backgroundColor: theme.vars.palette.background.paper,
                             boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                             borderRadius: '25px',
                             display: 'flex',
@@ -1001,7 +999,7 @@ export const NodeExecutionDetails = ({ data, label, status, metadata, isPublic, 
                         open={isLoading}
                         PaperProps={{
                             style: {
-                                backgroundColor: theme.palette.background.paper,
+                                backgroundColor: theme.vars.palette.background.paper,
                                 boxShadow: theme.shadows[5],
                                 borderRadius: 8,
                                 padding: 20

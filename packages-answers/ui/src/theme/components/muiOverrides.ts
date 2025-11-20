@@ -1,134 +1,38 @@
 /**
- * Material-UI Component Overrides with Glassmorphism
- * Applies unified glass styling to all MUI components
+ * Material-UI Component Overrides with Glassmorphism (Legacy Mode-Based)
+ * Applies unified glass styling to all MUI components using mode-based conditionals
  */
 
 import { Components, Theme } from '@mui/material/styles'
 import { glassmorphismTokens } from '../tokens/glassmorphism'
+import { createCommonOverrides, createNavigationOverrides } from './overridesCommon'
 
 export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<Theme, 'components'>> => {
     const glass = glassmorphismTokens[mode]
 
+    // Get common overrides from shared implementation
+    const commonOverrides = createCommonOverrides(
+        () => glass,
+        (path: string) => {
+            // Not used in legacy system, but required for function signature
+            return undefined
+        },
+        mode
+    )
+
+    // Get navigation-specific overrides
+    const navigationOverrides = createNavigationOverrides(() => glass, mode)
+
+    // Merge common, navigation, and legacy-specific overrides
     return {
-        // Global CSS Baseline
-        MuiCssBaseline: {
-            styleOverrides: {
-                body: {
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: mode === 'light' ? 'rgba(15, 23, 42, 0.2) transparent' : 'rgba(255, 255, 255, 0.2) transparent',
-                    '&::-webkit-scrollbar': {
-                        width: '8px',
-                        height: '8px'
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        background: 'transparent'
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.2)',
-                        borderRadius: '20px',
-                        border: '2px solid transparent',
-                        backgroundClip: 'padding-box',
-                        '&:hover': {
-                            backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.3)'
-                        }
-                    }
-                },
-                // Add pulsing gradient keyframes animation
-                '@keyframes pulseGradient': {
-                    '0%, 100%': {
-                        backgroundPosition: '0% 50%'
-                    },
-                    '50%': {
-                        backgroundPosition: '100% 50%'
-                    }
-                }
-            }
-        },
+        ...commonOverrides,
+        ...navigationOverrides,
 
-        // DRAWER (Navigation)
-        MuiDrawer: {
-            styleOverrides: {
-                paper: {
-                    ...glass.glassPrimary,
-                    borderRight: 'none',
-                    transition: glass.transition,
-                    // Add pulsing gradient animation in light mode
-                    ...(mode === 'light' && {
-                        backgroundSize: '200% 200%',
-                        animation: 'pulseGradient 8s ease infinite',
-                        position: 'relative',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
-                            backgroundSize: '100% 200%',
-                            animation: 'pulseGradient 6s ease infinite',
-                            pointerEvents: 'none',
-                            zIndex: 1
-                        }
-                    }),
-                    // Keep icons white for better visibility
-                    '& .MuiSvgIcon-root': {
-                        color: '#ffffff',
-                        position: 'relative',
-                        zIndex: 2
-                    },
-                    '& .MuiListItemIcon-root': {
-                        color: '#ffffff',
-                        position: 'relative',
-                        zIndex: 2
-                    },
-                    '& .MuiListItemButton-root': {
-                        position: 'relative',
-                        zIndex: 2,
-                        color: '#ffffff'
-                    },
-                    '& .MuiListItemText-root': {
-                        position: 'relative',
-                        zIndex: 2,
-                        color: '#ffffff',
-                        '& .MuiTypography-root': {
-                            color: '#ffffff'
-                        }
-                    }
-                }
-            }
-        },
+        // ========================================================================
+        // LEGACY-SPECIFIC OVERRIDES (mode-based with elevation variants)
+        // ========================================================================
 
-        // APP BAR (Header)
-        MuiAppBar: {
-            styleOverrides: {
-                root: {
-                    ...glass.glassPrimary,
-                    boxShadow: 'none',
-                    transition: glass.transition,
-                    // Add pulsing gradient animation in light mode
-                    ...(mode === 'light' && {
-                        backgroundSize: '200% 200%',
-                        animation: 'pulseGradient 8s ease infinite',
-                        position: 'relative',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
-                            backgroundSize: '200% 100%',
-                            animation: 'pulseGradient 4s ease infinite',
-                            pointerEvents: 'none'
-                        }
-                    })
-                }
-            }
-        },
-
-        // PAPER (Cards, Modals, Dialogs)
+        // PAPER - Legacy elevation variants
         MuiPaper: {
             defaultProps: {
                 elevation: 0
@@ -152,17 +56,6 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // DIALOG
-        MuiDialog: {
-            styleOverrides: {
-                paper: {
-                    ...glass.glassSecondary,
-                    backgroundImage: 'none',
-                    transition: glass.transition
-                }
-            }
-        },
-
         // CARD - Use solid backgrounds for better hierarchy
         MuiCard: {
             styleOverrides: {
@@ -180,32 +73,15 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // LIST ITEMS
-        MuiList: {
-            styleOverrides: {
-                root: {
-                    padding: '8px'
-                }
-            }
-        },
-
-        MuiListItem: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 8,
-                    marginBottom: 4,
-                    transition: glass.transition
-                }
-            }
-        },
-
+        // LIST ITEM BUTTON - Mode-specific hover and selected states with white text
         MuiListItemButton: {
             styleOverrides: {
-                root: {
+                root: ({ theme }) => ({
                     borderRadius: 8,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflow: 'hidden',
                     position: 'relative',
+                    color: theme.vars.palette.text.onGlass,
                     '&::before': {
                         content: '""',
                         position: 'absolute',
@@ -220,7 +96,8 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                     },
                     '& .MuiListItemIcon-root, & .MuiListItemText-root': {
                         position: 'relative',
-                        zIndex: 2
+                        zIndex: 2,
+                        color: 'inherit'
                     },
                     '&:hover': {
                         backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(77, 182, 172, 0.15)',
@@ -236,7 +113,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                             backgroundColor: mode === 'light' ? 'rgba(59, 130, 246, 0.35)' : 'rgba(77, 182, 172, 0.18)'
                         }
                     }
-                }
+                })
             }
         },
 
@@ -350,29 +227,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        MuiInputBase: {
-            styleOverrides: {
-                root: {
-                    transition: glass.transition
-                },
-                input: {
-                    '&::placeholder': {
-                        opacity: 0.7
-                    }
-                }
-            }
-        },
-
-        // SELECT
-        MuiSelect: {
-            styleOverrides: {
-                select: {
-                    borderRadius: 8
-                }
-            }
-        },
-
-        // MENU
+        // MENU - Legacy with mode-specific glass
         MuiMenu: {
             styleOverrides: {
                 paper: {
@@ -404,18 +259,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // BACKDROP
-        MuiBackdrop: {
-            styleOverrides: {
-                root: {
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.75)'
-                }
-            }
-        },
-
-        // CHIP
+        // CHIP - Mode-specific glass
         MuiChip: {
             styleOverrides: {
                 root: {
@@ -428,23 +272,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // ACCORDION
-        MuiAccordion: {
-            styleOverrides: {
-                root: {
-                    ...glass.glassSecondary,
-                    transition: glass.transition,
-                    '&:before': {
-                        display: 'none'
-                    },
-                    '&.Mui-expanded': {
-                        margin: 0
-                    }
-                }
-            }
-        },
-
-        // TOOLTIP
+        // TOOLTIP - Mode-specific glass
         MuiTooltip: {
             styleOverrides: {
                 tooltip: {
@@ -476,7 +304,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             }
         },
 
-        // ALERT
+        // ALERT - Mode-specific glass
         MuiAlert: {
             styleOverrides: {
                 root: {
@@ -485,5 +313,5 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                 }
             }
         }
-    }
+    } as Components<Omit<Theme, 'components'>>
 }

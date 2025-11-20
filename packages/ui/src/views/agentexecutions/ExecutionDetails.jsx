@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, forwardRef } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 import moment from 'moment'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 
 // MUI
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView'
@@ -48,7 +49,6 @@ import executionsApi from '@/api/executions'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-
 const getIconColor = (status) => {
     switch (status) {
         case 'FINISHED':
@@ -65,7 +65,7 @@ const getIconColor = (status) => {
 }
 
 const StyledTreeItemRoot = styled(TreeItem2Root)(({ theme }) => ({
-    color: theme.palette.grey[400]
+    color: theme.vars.palette.grey[400]
 }))
 
 const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
@@ -78,9 +78,9 @@ const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
     fontWeight: 500,
     [`&.Mui-expanded `]: {
         '&:not(.Mui-focused, .Mui-selected, .Mui-selected.Mui-focused) .labelIcon': {
-            color: theme.palette.primary.dark,
+            color: theme.vars.palette.primary.dark,
             ...theme.applyStyles('light', {
-                color: theme.palette.primary.main
+                color: theme.vars.palette.primary.main
             })
         },
         '&::before': {
@@ -91,30 +91,30 @@ const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
             top: '44px',
             height: 'calc(100% - 48px)',
             width: '1.5px',
-            backgroundColor: theme.palette.grey[700],
+            backgroundColor: theme.vars.palette.grey[700],
             ...theme.applyStyles('light', {
-                backgroundColor: theme.palette.grey[300]
+                backgroundColor: theme.vars.palette.grey[300]
             })
         }
     },
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        backgroundColor: alpha(theme.vars.palette.primary.main, 0.1),
         color: 'white',
         ...theme.applyStyles('light', {
-            color: theme.palette.primary.main
+            color: theme.vars.palette.primary.main
         })
     },
     [`&.Mui-focused, &.Mui-selected, &.Mui-selected.Mui-focused`]: {
-        backgroundColor: theme.palette.primary.dark,
-        color: theme.palette.primary.contrastText,
+        backgroundColor: theme.vars.palette.primary.dark,
+        color: theme.vars.palette.primary.contrastText,
         ...theme.applyStyles('light', {
-            backgroundColor: theme.palette.primary.main
+            backgroundColor: theme.vars.palette.primary.main
         })
     }
 }))
 
 const StyledTreeItemLabelText = styled(Typography)(({ theme }) => ({
-    color: theme.palette.text.primary
+    color: theme.vars.palette.text.primary
 }))
 
 function CustomLabel({ icon: Icon, itemStatus, children, name, ...other }) {
@@ -198,7 +198,7 @@ const getIconFromStatus = (status, theme) => {
         case 'TERMINATED':
             // eslint-disable-next-line react/display-name
             return (props) => {
-                const IconWrapper = (props) => <IconCircleXFilled {...props} color={theme.palette.error.main} />
+                const IconWrapper = (props) => <IconCircleXFilled {...props} color={theme.vars.palette.error.main} />
                 IconWrapper.displayName = 'TerminatedIcon'
                 return <IconWrapper {...props} />
             }
@@ -209,7 +209,7 @@ const getIconFromStatus = (status, theme) => {
             return (props) => {
                 const IconWrapper = (props) => (
                     // eslint-disable-next-line
-                    <IconLoader {...props} color={theme.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
+                    <IconLoader {...props} color={theme.vars.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
                 )
                 IconWrapper.displayName = 'InProgressIcon'
                 return <IconWrapper {...props} />
@@ -265,7 +265,7 @@ const CustomTreeItem = forwardRef(function CustomTreeItem(props, ref) {
                             borderLeft: `${status.selected ? '3px solid' : '1px dashed'} ${(() => {
                                 const nodeName = item.name || item.id?.split('_')[0]
                                 const foundIcon = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)
-                                return foundIcon ? foundIcon.color : theme.palette.primary.main
+                                return foundIcon ? foundIcon.color : theme.vars.palette.primary.main
                             })()}`,
                             marginLeft: '13px',
                             paddingLeft: '8px'
@@ -299,7 +299,7 @@ export const ExecutionDetails = ({ open, isPublic, execution, metadata, onClose,
     const [copied, setCopied] = useState(false)
     const [localMetadata, setLocalMetadata] = useState({})
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const updateExecutionApi = useApi(executionsApi.updateExecution)
 
     const dispatch = useDispatch()
@@ -732,7 +732,7 @@ export const ExecutionDetails = ({ open, isPublic, execution, metadata, onClose,
                     sx={{
                         pb: 1,
                         mb: 2,
-                        backgroundColor: (theme) => theme.palette.background.paper,
+                        backgroundColor: (theme) => theme.vars.palette.background.paper,
                         borderBottom: 1,
                         borderColor: 'divider'
                     }}
@@ -810,9 +810,9 @@ export const ExecutionDetails = ({ open, isPublic, execution, metadata, onClose,
                                 onClick={() => onRefresh(localMetadata?.id)}
                                 size='small'
                                 sx={{
-                                    color: theme.palette.text.primary,
+                                    color: theme.vars.palette.text.primary,
                                     '&:hover': {
-                                        backgroundColor: (theme) => theme.palette.primary.main + '20'
+                                        backgroundColor: (theme) => theme.vars.palette.primary.main + '20'
                                     }
                                 }}
                                 title='Refresh execution data'
@@ -890,7 +890,7 @@ export const ExecutionDetails = ({ open, isPublic, execution, metadata, onClose,
                 sx={{
                     transform: 'rotate(90deg)',
                     fontSize: '20px',
-                    color: customization.isDarkMode ? 'white' : 'action.disabled'
+                    color: mode === 'dark' ? 'white' : 'action.disabled'
                 }}
             />
         </button>
@@ -907,7 +907,7 @@ export const ExecutionDetails = ({ open, isPublic, execution, metadata, onClose,
                     right: 0,
                     bottom: 0,
                     zIndex: 1300,
-                    backgroundColor: (theme) => theme.palette.background.paper
+                    backgroundColor: (theme) => theme.vars.palette.background.paper
                 }}
             >
                 <Box

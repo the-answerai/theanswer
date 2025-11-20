@@ -137,5 +137,5 @@ export const darkModeTheme = createUnifiedTheme('dark')
 // Also export light mode theme
 export const lightModeTheme = createUnifiedTheme('light')
 
-// Re-export UnifiedThemeProvider and hooks from theme/index.tsx
-export { UnifiedThemeProvider, useThemeMode } from './theme/index'
+// Re-export CSS Variables theme provider and hooks
+export { CssVarsThemeProvider, useThemeMode } from './theme/index'

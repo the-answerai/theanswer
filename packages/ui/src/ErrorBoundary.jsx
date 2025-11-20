@@ -12,7 +12,7 @@ const ErrorBoundary = ({ error }) => {
     }
     console.log('Error', error)
     return (
-        <Box sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2, padding: '20px', maxWidth: '1280px' }}>
+        <Box sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2, padding: '20px', maxWidth: '1280px' }}>
             <Stack flexDirection='column' sx={{ alignItems: 'center', gap: 3 }}>
                 <Stack flexDirection='column' sx={{ alignItems: 'center', gap: 1 }}>
                     <Typography variant='h2'>Oh snap!</Typography>
@@ -23,7 +23,7 @@ const ErrorBoundary = ({ error }) => {
                         <IconButton
                             onClick={copyToClipboard}
                             size='small'
-                            sx={{ position: 'absolute', top: 1, right: 1, color: theme.palette.grey[900] + 25 }}
+                            sx={{ position: 'absolute', top: 1, right: 1, color: theme.vars.palette.grey[900] + 25 }}
                         >
                             <IconCopy />
                         </IconButton>

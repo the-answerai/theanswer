@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Box, Card, Typography, Grid, Button, Stack } from '@mui/material'
+import { Box, Card, Typography, Grid, Button, Stack, useTheme } from '@mui/material'
 import { Bolt as CreditIcon, AddBox as CubeIcon } from '@mui/icons-material'
 
 interface CreditPackage {
@@ -17,6 +17,7 @@ const CREDIT_PACKAGES: CreditPackage[] = [
 ]
 
 const PurchaseCredits = () => {
+    const theme = useTheme()
     const [loading, setLoading] = useState(false)
     const [customAmount, setCustomAmount] = useState('')
 
@@ -51,14 +52,14 @@ const PurchaseCredits = () => {
                         gap: 1,
                         fontSize: '1.5rem',
                         fontWeight: 600,
-                        color: '#fff'
+                        color: theme.vars.palette.text.primary
                     }}
                 >
                     <CreditIcon sx={{ fontSize: 20 }} /> Purchase Credits
                 </Typography>
                 <Typography
                     sx={{
-                        color: '#999',
+                        color: theme.vars.palette.text.secondary,
                         fontSize: '0.875rem'
                     }}
                 >
@@ -74,11 +75,11 @@ const PurchaseCredits = () => {
                             sx={{
                                 p: 3,
                                 position: 'relative',
-                                border: '1px solid #333',
+                                border: `1px solid ${theme.vars.palette.divider}`,
                                 borderRadius: '12px',
-                                bgcolor: '#111',
+                                bgcolor: theme.vars.palette.background.paper,
                                 '&:hover': {
-                                    borderColor: '#444'
+                                    borderColor: theme.vars.palette.action.hover
                                 }
                             }}
                         >
@@ -88,8 +89,8 @@ const PurchaseCredits = () => {
                                         position: 'absolute',
                                         top: 16,
                                         right: 16,
-                                        bgcolor: '#fff',
-                                        color: '#111',
+                                        bgcolor: theme.vars.palette.common.white,
+                                        color: theme.vars.palette.background.paper,
                                         px: 1.5,
                                         py: 0.5,
                                         borderRadius: '100px',
@@ -102,13 +103,13 @@ const PurchaseCredits = () => {
                                 </Box>
                             )}
                             <Stack spacing={3}>
-                                <CubeIcon sx={{ fontSize: 24, color: '#fff' }} />
+                                <CubeIcon sx={{ fontSize: 24, color: theme.vars.palette.text.primary }} />
                                 <Stack spacing={0.5}>
                                     <Typography
                                         sx={{
                                             fontSize: '2rem',
                                             fontWeight: 600,
-                                            color: '#fff',
+                                            color: theme.vars.palette.text.primary,
                                             lineHeight: 1.2
                                         }}
                                     >
@@ -117,7 +118,7 @@ const PurchaseCredits = () => {
                                     <Typography
                                         sx={{
                                             fontSize: '1.125rem',
-                                            color: '#fff',
+                                            color: theme.vars.palette.text.primary,
                                             fontWeight: 500
                                         }}
                                     >
@@ -125,7 +126,7 @@ const PurchaseCredits = () => {
                                     </Typography>
                                     <Typography
                                         sx={{
-                                            color: '#999',
+                                            color: theme.vars.palette.text.secondary,
                                             fontSize: '0.875rem',
                                             mt: 0.5
                                         }}
@@ -139,15 +140,15 @@ const PurchaseCredits = () => {
                                     onClick={() => handlePurchase(pkg.credits, pkg.price)}
                                     disabled={loading}
                                     sx={{
-                                        bgcolor: '#fff',
-                                        color: '#111',
+                                        bgcolor: theme.vars.palette.common.white,
+                                        color: theme.vars.palette.background.paper,
                                         textTransform: 'none',
                                         py: 1.5,
                                         borderRadius: '8px',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         '&:hover': {
-                                            bgcolor: '#eee'
+                                            bgcolor: theme.vars.palette.action.hover
                                         }
                                     }}
                                 >
@@ -164,7 +165,7 @@ const PurchaseCredits = () => {
                     sx={{
                         fontSize: '0.875rem',
                         fontWeight: 600,
-                        color: '#fff',
+                        color: theme.vars.palette.text.primary,
                         mb: 1.5
                     }}
                 >
@@ -174,15 +175,15 @@ const PurchaseCredits = () => {
                     sx={{
                         display: 'flex',
                         gap: 1,
-                        border: '1px solid #333',
+                        border: `1px solid ${theme.vars.palette.divider}`,
                         borderRadius: '12px',
                         overflow: 'hidden',
-                        bgcolor: '#111',
+                        bgcolor: theme.vars.palette.background.paper,
                         '&:hover': {
-                            borderColor: '#444'
+                            borderColor: theme.vars.palette.action.hover
                         },
                         '&:focus-within': {
-                            borderColor: '#444'
+                            borderColor: theme.vars.palette.primary.main
                         }
                     }}
                 >
@@ -198,7 +199,7 @@ const PurchaseCredits = () => {
                             outline: 'none',
                             padding: '12px 16px',
                             fontSize: '0.875rem',
-                            color: '#fff'
+                            color: theme.vars.palette.text.primary
                         }}
                     />
                     <Button
@@ -206,8 +207,8 @@ const PurchaseCredits = () => {
                         onClick={() => handlePurchase(Number(customAmount), Number(customAmount) * 0.001)}
                         disabled={loading || !customAmount}
                         sx={{
-                            bgcolor: '#fff',
-                            color: '#111',
+                            bgcolor: theme.vars.palette.common.white,
+                            color: theme.vars.palette.background.paper,
                             textTransform: 'none',
                             borderRadius: '8px',
                             px: 3,
@@ -215,7 +216,7 @@ const PurchaseCredits = () => {
                             fontSize: '0.875rem',
                             fontWeight: 500,
                             '&:hover': {
-                                bgcolor: '#eee'
+                                bgcolor: theme.vars.palette.action.hover
                             }
                         }}
                     >

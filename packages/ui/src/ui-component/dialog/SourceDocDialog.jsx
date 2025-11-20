@@ -1,13 +1,12 @@
 import { createPortal } from 'react-dom'
 import { useState, useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 import { Box, Dialog, DialogContent, DialogTitle, Typography } from '@mui/material'
 import ReactJson from 'flowise-react-json-view'
-
 const SourceDocDialog = ({ show, dialogProps, onCancel }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const [data, setData] = useState({})
 
@@ -52,7 +51,7 @@ const SourceDocDialog = ({ show, dialogProps, onCancel }) => {
                     </Box>
                 )}
                 <ReactJson
-                    theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                    theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                     style={{ padding: 10, borderRadius: 10 }}
                     src={data}
                     name={null}

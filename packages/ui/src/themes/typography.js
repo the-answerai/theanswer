@@ -1,133 +1,61 @@
 /**
- * Typography used in theme
- * @param {JsonObject} theme theme customization object
+ * @deprecated This file is deprecated as of v3.0.0
+ *
+ * Typography configuration has been migrated to CSS Variables theme.
+ *
+ * Migration Guide:
+ * ================
+ *
+ * Old approach:
+ * ```javascript
+ * const typography = themeTypography(theme)
+ * ```
+ *
+ * New approach:
+ * ```typescript
+ * // Typography is now part of the theme
+ * import { cssVarsTheme } from '@ui/theme/cssVarsTheme'
+ *
+ * // Access in components:
+ * const MyComponent = styled(Box)(({ theme }) => ({
+ *   ...theme.typography.h1,
+ *   // or
+ *   fontSize: theme.typography.h1.fontSize,
+ *   fontFamily: theme.typography.fontFamily
+ * }))
+ * ```
+ *
+ * Typography variants available:
+ * - h1, h2, h3, h4, h5, h6
+ * - subtitle1, subtitle2
+ * - body1, body2
+ * - button, caption, overline
+ *
+ * Benefits:
+ * - Consistent with MUI v6 standards
+ * - Type-safe with TypeScript
+ * - Better IntelliSense support
+ * - Integrated with CSS variables theme
+ *
+ * This file will be removed in v4.0.0
+ *
+ * See: packages/ui/src/themes/MIGRATION.md for complete guide
  */
 
+import { deprecationWarning } from '../../../packages-answers/ui/src/theme/utils/deprecation'
+
+/**
+ * @deprecated Use theme.typography.* instead
+ */
 export default function themeTypography(theme) {
-    return {
-        fontFamily: theme?.customization?.fontFamily,
-        h6: {
-            fontWeight: 500,
-            color: theme.heading,
-            fontSize: '0.75rem'
-        },
-        h5: {
-            fontSize: '0.875rem',
-            color: theme.heading,
-            fontWeight: 500
-        },
-        h4: {
-            fontSize: '1rem',
-            color: theme.heading,
-            fontWeight: 600
-        },
-        h3: {
-            fontSize: '1.25rem',
-            color: theme.heading,
-            fontWeight: 600
-        },
-        h2: {
-            fontSize: '1.5rem',
-            color: theme.heading,
-            fontWeight: 700
-        },
-        h1: {
-            fontSize: '2.125rem',
-            color: theme.heading,
-            fontWeight: 700
-        },
-        subtitle1: {
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color: theme.textDark
-        },
-        subtitle2: {
-            fontSize: '0.75rem',
-            fontWeight: 400,
-            color: theme.darkTextSecondary
-        },
-        caption: {
-            fontSize: '0.75rem',
-            color: theme.darkTextSecondary,
-            fontWeight: 400
-        },
-        body1: {
-            fontSize: '0.875rem',
-            fontWeight: 400,
-            lineHeight: '1.334em'
-        },
-        body2: {
-            letterSpacing: '0em',
-            fontWeight: 400,
-            lineHeight: '1.5em',
-            color: theme.darkTextPrimary
-        },
-        button: {
-            textTransform: 'capitalize'
-        },
-        customInput: {
-            marginTop: 1,
-            marginBottom: 1,
-            '& > label': {
-                top: 23,
-                left: 0,
-                color: theme.grey500,
-                '&[data-shrink="false"]': {
-                    top: 5
-                }
-            },
-            '& > div > input': {
-                padding: '30.5px 14px 11.5px !important'
-            },
-            '& legend': {
-                display: 'none'
-            },
-            '& fieldset': {
-                top: 0
-            }
-        },
-        mainContent: {
-            backgroundColor: theme.background,
-            width: '100%',
-            minHeight: 'calc(100vh - 75px)',
-            flexGrow: 1,
-            padding: '20px',
-            // marginTop: '75px',
-            marginRight: '20px',
-            borderRadius: `${theme?.customization?.borderRadius}px`
-        },
-        menuCaption: {
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color: theme.heading,
-            padding: '6px',
-            textTransform: 'capitalize',
-            marginTop: '10px'
-        },
-        subMenuCaption: {
-            fontSize: '0.6875rem',
-            fontWeight: 500,
-            color: theme.darkTextSecondary,
-            textTransform: 'capitalize'
-        },
-        commonAvatar: {
-            cursor: 'pointer',
-            borderRadius: '8px'
-        },
-        smallAvatar: {
-            width: '22px',
-            height: '22px',
-            fontSize: '1rem'
-        },
-        mediumAvatar: {
-            width: '34px',
-            height: '34px',
-            fontSize: '1.2rem'
-        },
-        largeAvatar: {
-            width: '44px',
-            height: '44px',
-            fontSize: '1.5rem'
-        }
-    }
+    deprecationWarning(
+        'themeTypography() from packages/ui/src/themes/typography.js',
+        'theme.typography.*',
+        'v4.0.0',
+        'Typography is now part of the theme: theme.typography.h1, theme.typography.body1, etc.'
+    )
+
+    // Return empty object for backward compatibility
+    // Typography is now defined in the CSS Variables theme
+    return {}
 }

@@ -1,10 +1,7 @@
 import GlobalStyles from '@mui/material/GlobalStyles'
-import { useTheme } from '@mui/material/styles'
 
 const Styles = () => {
-    const theme = useTheme()
-    const mode = theme.palette.mode
-
+    // No theme hook needed - all styles use CSS variables for reactive theme changes
     return (
         <GlobalStyles
             styles={{
@@ -43,7 +40,7 @@ const Styles = () => {
                         'color 0.3s cubic-bezier(0.4, 0, 0.2, 1), ' +
                         'border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 
-                    // Scrollbar styling
+                    // Scrollbar styling - uses CSS variables for reactive theme changes
                     '::-webkit-scrollbar': {
                         width: '8px',
                         height: '8px'
@@ -52,17 +49,19 @@ const Styles = () => {
                         background: 'transparent'
                     },
                     '::-webkit-scrollbar-thumb': {
-                        backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                        // Use color-mix for dynamic scrollbar colors based on theme
+                        backgroundColor: 'var(--theanswer-palette-action-disabled)',
                         borderRadius: '20px',
                         border: '2px solid transparent',
                         backgroundClip: 'padding-box',
                         '&:hover': {
-                            backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.3)'
+                            backgroundColor: 'var(--theanswer-palette-action-selected)',
+                            opacity: 0.8
                         }
                     }
                 },
                 body: {
-                    background: theme.palette.background.default,
+                    background: 'var(--theanswer-palette-background-default)',
                     transition: 'background 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflowX: 'hidden'
                 },

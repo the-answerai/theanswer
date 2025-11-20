@@ -167,6 +167,11 @@ yarn-error.log*
 **/cypress/screenshots
 **/cypress/videos
 
+# Playwright test results
+apps/web/e2e/playwright-report/
+apps/web/e2e/test-results/
+apps/web/e2e/.cache/
+
 # daisy previews
 daisy/preview
 

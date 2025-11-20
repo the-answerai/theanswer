@@ -100,7 +100,7 @@ const NavItem = ({ item, level, navType, onClick, onUploadFile }) => {
             {...listItemProps}
             disabled={item.disabled}
             sx={{
-                borderRadius: `${customization.borderRadius}px`,
+                borderRadius: 'var(--border-radius)',
                 mb: 0.5,
                 alignItems: 'flex-start',
                 backgroundColor: level > 1 ? 'transparent !important' : 'inherit',
@@ -147,7 +147,7 @@ const NavItem = ({ item, level, navType, onClick, onUploadFile }) => {
                         width: 'max-content',
                         fontWeight: 700,
                         fontSize: '0.65rem',
-                        background: theme.palette.teal.main,
+                        background: theme.vars.palette.teal.main,
                         color: 'white'
                     }}
                     label={'BETA'}

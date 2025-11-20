@@ -17,7 +17,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import { MessageFeedback } from 'types'
 import { FormControlLabel, Checkbox } from '@mui/material'
 
-interface IFormInput extends Partial<MessageFeedback> {}
+type IFormInput = Partial<MessageFeedback>
 
 interface ModalProps {
     messageId: string

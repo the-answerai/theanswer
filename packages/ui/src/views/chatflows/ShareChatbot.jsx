@@ -418,7 +418,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                     sx={{
                         p: 1,
                         borderRadius: 10,
-                        backgroundColor: theme.palette.primary.light,
+                        backgroundColor: theme.vars.palette.primary.light,
                         width: 'max-content',
                         height: 'max-content'
                     }}
@@ -444,7 +444,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                 </IconButton>
             </Stack>
 
-            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
+            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
                 <Stack sx={{ mt: 1, mb: 2, alignItems: 'center' }} direction='row' spacing={2}>
                     <Typography variant='h4'>Title Settings</Typography>
                 </Stack>
@@ -460,7 +460,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                 {colorField(titleTextColor, 'titleTextColor', 'Title TextColor')}
             </Card>
 
-            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
+            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
                 <Stack sx={{ mt: 1, mb: 2, alignItems: 'center' }} direction='row' spacing={2}>
                     <Typography variant='h4'>General Settings</Typography>
                 </Stack>
@@ -475,7 +475,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                     booleanField(generateNewSession, 'generateNewSession', 'Start new session when chatbot link is opened or refreshed')}
             </Card>
 
-            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
+            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
                 <Stack sx={{ mt: 1, mb: 2, alignItems: 'center' }} direction='row' spacing={2}>
                     <Typography variant='h4'>Bot Message</Typography>
                 </Stack>
@@ -491,7 +491,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                 {booleanField(botMessageShowAvatar, 'botMessageShowAvatar', 'Show Avatar')}
             </Card>
 
-            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
+            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
                 <Stack sx={{ mt: 1, mb: 2, alignItems: 'center' }} direction='row' spacing={2}>
                     <Typography variant='h4'>User Message</Typography>
                 </Stack>
@@ -507,7 +507,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                 {booleanField(userMessageShowAvatar, 'userMessageShowAvatar', 'Show Avatar')}
             </Card>
 
-            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
+            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 3, mt: 2 }} variant='outlined'>
                 <Stack sx={{ mt: 1, mb: 2, alignItems: 'center' }} direction='row' spacing={2}>
                     <Typography variant='h4'>Text Input</Typography>
                 </Stack>
@@ -558,7 +558,7 @@ const ShareChatbot = ({ isSessionMemory, isAgentCanvas }) => {
                     horizontal: 'left'
                 }}
             >
-                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.palette.success.dark }}>
+                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.vars.palette.success.dark }}>
                     Copied!
                 </Typography>
             </Popover>

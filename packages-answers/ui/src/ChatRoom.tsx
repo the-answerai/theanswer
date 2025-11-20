@@ -52,7 +52,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         >
             <Box
                 sx={{
-                    ...theme.palette.glass.glassSecondary,
+                    ...theme.vars.palette.glass.glassSecondary,
                     borderRadius: 2,
                     overflow: 'hidden',
                     transition: theme.transitions.create(['all'])

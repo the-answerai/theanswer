@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
 import moment from 'moment'
 import { styled, keyframes } from '@mui/material/styles'
 import {
@@ -23,7 +23,6 @@ import {
 import { tableCellClasses } from '@mui/material/TableCell'
 import FlowListMenu from '../button/FlowListMenu'
 import { Link } from '@/utils/navigation'
-
 // Animated glow effect for dark mode tables
 const glowPulse = keyframes`
   0%, 100% {
@@ -35,16 +34,16 @@ const glowPulse = keyframes`
 `
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.2)',
+    borderColor: theme.vars.palette.divider,
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.text.primary,
+        color: theme.vars.palette.text.primary,
         fontWeight: 600
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
         height: 64,
-        color: theme.palette.text.primary
+        color: theme.vars.palette.text.primary
     }
 }))
 
@@ -61,7 +60,7 @@ const getLocalStorageKeyName = (name, isAgentCanvas) => {
 
 export const FlowListTable = ({ data, images = {}, icons = {}, isLoading, filterFunction, updateFlowsApi, setError, isAgentCanvas }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const localStorageKeyOrder = getLocalStorageKeyName('order', isAgentCanvas)
     const localStorageKeyOrderBy = getLocalStorageKeyName('orderBy', isAgentCanvas)
@@ -104,22 +103,28 @@ export const FlowListTable = ({ data, images = {}, icons = {}, isLoading, filter
             <TableContainer
                 sx={{
                     border: 1,
-                    borderColor: theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)',
+                    borderColor: (theme) => theme.vars.palette.glass.glassSecondary.border,
                     borderRadius: 2,
-                    backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
-                    boxShadow:
-                        theme.palette.mode === 'light' ? '0 2px 14px 0 rgba(0, 0, 0, 0.08)' : '0 4px 16px 0 rgba(59, 130, 246, 0.15)',
-                    animation: theme.palette.mode === 'dark' ? `${glowPulse} 3s ease-in-out infinite` : 'none'
+                    backgroundColor: (theme) => theme.vars.palette.glass.glassSecondary.background,
+                    backdropFilter: (theme) => theme.vars.palette.glass.glassSecondary.backdropFilter,
+                    WebkitBackdropFilter: (theme) => theme.vars.palette.glass.glassSecondary.WebkitBackdropFilter,
+                    boxShadow: (theme) => theme.vars.palette.glass.glassSecondary.boxShadow,
+                    // Dark mode glow animation - use CSS custom property
+                    animation: 'var(--table-glow-animation, none)',
+                    '@media (prefers-color-scheme: dark)': {
+                        '--table-glow-animation': `${glowPulse} 3s ease-in-out infinite`
+                    },
+                    '[data-theme="dark"] &': {
+                        '--table-glow-animation': `${glowPulse} 3s ease-in-out infinite`
+                    }
                 }}
                 component={Paper}
             >
                 <Table sx={{ minWidth: 650 }} size='small' aria-label='a dense table'>
                     <TableHead
                         sx={{
-                            backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : 'rgba(30, 58, 138, 0.1)',
-                            borderBottom: `2px solid ${
-                                theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)'
-                            }`,
+                            backgroundColor: 'action.hover',
+                            borderBottom: (theme) => `2px solid ${theme.vars.palette.divider}`,
                             height: 56
                         }}
                     >
@@ -255,9 +260,10 @@ export const FlowListTable = ({ data, images = {}, icons = {}, isLoading, filter
                                                                         width: 30,
                                                                         height: 30,
                                                                         borderRadius: '50%',
-                                                                        backgroundColor: customization.isDarkMode
-                                                                            ? theme.palette.common.white
-                                                                            : theme.palette.grey[300] + 75
+                                                                        backgroundColor:
+                                                                            mode === 'dark'
+                                                                                ? theme.vars.palette.common.white
+                                                                                : theme.vars.palette.grey[300] + 75
                                                                     }}
                                                                 >
                                                                     <img

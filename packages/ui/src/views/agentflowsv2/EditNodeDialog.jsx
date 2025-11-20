@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useState, useEffect, useRef, useContext, memo } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { useUpdateNodeInternals } from 'reactflow'
 import PropTypes from 'prop-types'
 import { Stack, Box, Typography, TextField, Dialog, DialogContent, ButtonBase, Avatar } from '@mui/material'
@@ -10,12 +11,11 @@ import { IconPencil, IconX, IconCheck, IconInfoCircle } from '@tabler/icons-reac
 import { useTheme } from '@mui/material/styles'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { showHideInputParams } from '@/utils/genericHelper'
-
 const EditNodeDialog = ({ show, dialogProps, onCancel }) => {
     const portalElement = document.getElementById('portal')
     const dispatch = useDispatch()
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const nodeNameRef = useRef()
     const { reactFlowInstance } = useContext(flowContext)
     const updateNodeInternals = useUpdateNodeInternals()
@@ -133,11 +133,11 @@ const EditNodeDialog = ({ show, dialogProps, onCancel }) => {
                                                 ...theme.typography.mediumAvatar,
                                                 transition: 'all .2s ease-in-out',
                                                 ml: 1,
-                                                background: theme.palette.secondary.light,
-                                                color: theme.palette.secondary.dark,
+                                                background: theme.vars.palette.secondary.light,
+                                                color: theme.vars.palette.secondary.dark,
                                                 '&:hover': {
-                                                    background: theme.palette.secondary.dark,
-                                                    color: theme.palette.secondary.light
+                                                    background: theme.vars.palette.secondary.dark,
+                                                    color: theme.vars.palette.secondary.light
                                                 }
                                             }}
                                             color='inherit'
@@ -178,12 +178,12 @@ const EditNodeDialog = ({ show, dialogProps, onCancel }) => {
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.mediumAvatar,
                                             transition: 'all .2s ease-in-out',
-                                            background: theme.palette.success.light,
-                                            color: theme.palette.success.dark,
+                                            background: theme.vars.palette.success.light,
+                                            color: theme.vars.palette.success.dark,
                                             ml: 1,
                                             '&:hover': {
-                                                background: theme.palette.success.dark,
-                                                color: theme.palette.success.light
+                                                background: theme.vars.palette.success.dark,
+                                                color: theme.vars.palette.success.light
                                             }
                                         }}
                                         color='inherit'
@@ -204,12 +204,12 @@ const EditNodeDialog = ({ show, dialogProps, onCancel }) => {
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.mediumAvatar,
                                             transition: 'all .2s ease-in-out',
-                                            background: theme.palette.error.light,
-                                            color: theme.palette.error.dark,
+                                            background: theme.vars.palette.error.light,
+                                            color: theme.vars.palette.error.dark,
                                             ml: 1,
                                             '&:hover': {
-                                                background: theme.palette.error.dark,
-                                                color: theme.palette.error.light
+                                                background: theme.vars.palette.error.dark,
+                                                color: theme.vars.palette.error.light
                                             }
                                         }}
                                         color='inherit'
@@ -228,17 +228,17 @@ const EditNodeDialog = ({ show, dialogProps, onCancel }) => {
                         alignItems='center'
                         sx={{
                             ml: 2,
-                            backgroundColor: customization.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                            backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
                             borderRadius: '8px',
                             mr: 2,
                             px: 1.5,
                             py: 1,
                             mt: 1,
                             mb: 1,
-                            border: `1px solid ${customization.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`
+                            border: `1px solid ${mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`
                         }}
                     >
-                        <IconInfoCircle size='1rem' stroke={1.5} color={theme.palette.info.main} style={{ marginRight: '6px' }} />
+                        <IconInfoCircle size='1rem' stroke={1.5} color={theme.vars.palette.info.main} style={{ marginRight: '6px' }} />
                         <Typography
                             variant='caption'
                             color='text.secondary'

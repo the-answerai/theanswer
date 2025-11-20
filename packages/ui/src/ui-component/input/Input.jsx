@@ -112,7 +112,7 @@ export const Input = ({ inputParam, value, nodes, edges, nodeId, onChange, disab
                         }}
                         sx={{
                             '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.palette.grey[900] + 25
+                                borderColor: theme.vars.palette.grey[900] + 25
                             }
                         }}
                     />

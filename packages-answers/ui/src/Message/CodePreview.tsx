@@ -6,10 +6,13 @@ import Button from '@mui/material/Button'
 import CloseIcon from '@mui/icons-material/Close'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { duotoneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { duotoneDark, duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import GetAppIcon from '@mui/icons-material/GetApp'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DoneIcon from '@mui/icons-material/Done'
+import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
+import { codeEditorColors } from '@ui/theme/tokens/colors'
 
 interface CodePreviewProps {
     code: string
@@ -19,6 +22,8 @@ interface CodePreviewProps {
 }
 
 export const CodePreview: React.FC<CodePreviewProps> = ({ code, language, onClose, title = 'Interactive Preview' }) => {
+    const theme = useTheme()
+    const { mode } = useThemeMode()
     const [tabValue, setTabValue] = React.useState<number>(0)
     const [isReady, setIsReady] = React.useState(true)
     const [error, setError] = React.useState<string | null>(null)
@@ -73,11 +78,11 @@ export const CodePreview: React.FC<CodePreviewProps> = ({ code, language, onClos
                 <Box sx={{ p: 2, maxWidth: '100%', overflow: 'hidden' }}>
                     <SyntaxHighlighter
                         language={language}
-                        style={duotoneDark}
+                        style={mode === 'dark' ? duotoneDark : duotoneLight}
                         customStyle={{
                             margin: 0,
                             borderRadius: '4px',
-                            backgroundColor: '#1E1E1E',
+                            backgroundColor: mode === 'dark' ? codeEditorColors.background : theme.vars.palette.background.paper,
                             padding: '16px',
                             fontSize: '0.875rem',
                             textShadow: 'none'

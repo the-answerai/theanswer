@@ -9,8 +9,8 @@ export const initialState = {
     fontFamily: config.fontFamily,
     borderRadius: config.borderRadius,
     opened: true,
-    isHorizontal: typeof localStorage !== 'undefined' ? localStorage.getItem('isHorizontal') === 'true' : false,
-    isDarkMode: typeof localStorage !== 'undefined' ? localStorage.getItem('isDarkMode') !== 'false' : true
+    isHorizontal: typeof localStorage !== 'undefined' ? localStorage.getItem('isHorizontal') === 'true' : false
+    // ❌ REMOVED: isDarkMode - Migrated to CSS Variables theme
 }
 
 // ==============================|| CUSTOMIZATION REDUCER ||============================== //
@@ -43,11 +43,6 @@ const customizationReducer = (state = initialState, action) => {
             return {
                 ...state,
                 isHorizontal: action.isHorizontal
-            }
-        case actionTypes.SET_DARKMODE:
-            return {
-                ...state,
-                isDarkMode: action.isDarkMode
             }
         default:
             return state

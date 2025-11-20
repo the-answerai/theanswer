@@ -7,7 +7,7 @@ import PropTypes from 'prop-types'
 const BoxShadow = '0 3px 1px rgba(0,0,0,0.1),0 4px 8px rgba(0,0,0,0.13),0 0 0 1px rgba(0,0,0,0.02)'
 
 const CustomInputSlider = styled(Slider)(({ theme }) => ({
-    color: theme.palette.mode === 'dark' ? '#0a84ff' : '#007bff',
+    color: theme.vars.palette.primary.main,
     height: 5,
     padding: '15px 0',
     '& .MuiSlider-thumb': {
@@ -31,13 +31,13 @@ const CustomInputSlider = styled(Slider)(({ theme }) => ({
         fontWeight: 'normal',
         top: -1,
         backgroundColor: 'unset',
-        color: theme.palette.text.primary,
+        color: theme.vars.palette.text.primary,
         '&::before': {
             display: 'none'
         },
         '& *': {
             background: 'transparent',
-            color: theme.palette.mode === 'dark' ? '#000' : '#000'
+            color: theme.vars.palette.text.primary
         }
     },
     '& .MuiSlider-track': {

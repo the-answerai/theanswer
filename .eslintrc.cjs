@@ -1,6 +1,7 @@
 module.exports = {
     extends: [
         'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
         'plugin:markdown/recommended',
         'plugin:react/recommended',
         'plugin:react/jsx-runtime',
@@ -27,12 +28,18 @@ module.exports = {
         '**/coverage/**',
         '**/scripts/bws-secure/**'
     ],
-    plugins: ['unused-imports'],
+    plugins: ['@typescript-eslint', 'unused-imports'],
     rules: {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
+        '@typescript-eslint/no-unused-vars': [
+            'error',
+            {
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_'
+            }
+        ],
         'no-unused-vars': 'off',
         'unused-imports/no-unused-imports': 'warn',
-        'unused-imports/no-unused-vars': ['warn', { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' }],
         'no-undef': 'off',
         'no-console': [process.env.CI ? 'warn' : 'warn', { allow: ['warn', 'error', 'info'] }]
         // 'prettier/prettier': 'error'

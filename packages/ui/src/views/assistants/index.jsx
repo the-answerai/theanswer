@@ -1,7 +1,5 @@
 'use client'
 import { useNavigate } from '@/utils/navigation'
-import { useSelector } from 'react-redux'
-
 // material-ui
 import { Card, CardContent, Stack } from '@mui/material'
 import { useTheme, styled } from '@mui/material/styles'
@@ -12,6 +10,7 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 
 // icons
 import { IconRobotFace, IconBrandOpenai, IconBrandAzure } from '@tabler/icons-react'
+import { useThemeMode } from '@ui/theme'
 
 const cards = [
     {
@@ -62,7 +61,7 @@ const FeatureIcon = styled('div')(() => ({
 const FeatureCards = () => {
     const navigate = useNavigate()
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const onCardClick = (index) => {
         if (index === 0) navigate('/assistants/custom')
@@ -91,9 +90,9 @@ const FeatureCards = () => {
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         border: 1,
-                        borderColor: theme.palette.grey[900] + 25,
+                        borderColor: theme.vars.palette.grey[900] + 25,
                         borderRadius: 2,
-                        color: customization.isDarkMode ? theme.palette.common.white : '#333333',
+                        color: mode === 'dark' ? theme.vars.palette.common.white : '#333333',
                         cursor: index === 2 ? 'not-allowed' : 'pointer',
                         opacity: index === 2 ? 0.6 : 1,
                         '&:hover': {

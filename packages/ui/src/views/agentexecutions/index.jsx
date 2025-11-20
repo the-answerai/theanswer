@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
@@ -33,8 +34,6 @@ import ViewHeader from '@/layout/MainLayout/ViewHeader'
 // API
 import useApi from '@/hooks/useApi'
 import executionsApi from '@/api/executions'
-import { useSelector } from 'react-redux'
-
 // icons
 import execution_empty from '@/assets/images/executions_empty.svg'
 import { IconTrash } from '@tabler/icons-react'
@@ -43,13 +42,12 @@ import { IconTrash } from '@tabler/icons-react'
 import { ExecutionsListTable } from '@/ui-component/table/ExecutionsListTable'
 import { ExecutionDetails } from './ExecutionDetails'
 import { omit } from 'lodash'
-
 // ==============================|| AGENT EXECUTIONS ||============================== //
 
 const AgentExecutions = () => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
-    const borderColor = theme.palette.grey[900] + 25
+    const { mode } = useThemeMode()
+    const borderColor = theme.vars.palette.grey[900] + 25
 
     const getAllExecutions = useApi(executionsApi.getAllExecutions)
     const deleteExecutionsApi = useApi(executionsApi.deleteExecutions)
@@ -253,7 +251,7 @@ const AgentExecutions = () => {
                                                 borderColor: borderColor
                                             },
                                             '& .MuiSvgIcon-root': {
-                                                color: customization.isDarkMode ? '#fff' : 'inherit'
+                                                color: mode === 'dark' ? '#fff' : 'inherit'
                                             }
                                         }}
                                     >
@@ -381,7 +379,7 @@ const AgentExecutions = () => {
                                         borderColor: borderColor
                                     },
                                     '& .MuiSvgIcon-root': {
-                                        color: customization.isDarkMode ? '#fff' : 'inherit'
+                                        color: mode === 'dark' ? '#fff' : 'inherit'
                                     }
                                 }}
                             >

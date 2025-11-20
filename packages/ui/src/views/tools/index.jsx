@@ -24,11 +24,13 @@ import { IconPlus, IconFileUpload, IconLayoutGrid, IconList } from '@tabler/icon
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 
 // ==============================|| CHATFLOWS ||============================== //
 
 const Tools = () => {
     const theme = useTheme()
+    const { mode } = useThemeMode()
     const getAllToolsApi = useApi(toolsApi.getAllTools)
 
     const [isLoading, setLoading] = useState(true)
@@ -155,9 +157,9 @@ const Tools = () => {
                             >
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: mode === 'dark' ? 'white' : 'inherit'
                                     }}
                                     variant='contained'
                                     value='card'
@@ -167,9 +169,9 @@ const Tools = () => {
                                 </ToggleButton>
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: mode === 'dark' ? 'white' : 'inherit'
                                     }}
                                     variant='contained'
                                     value='list'

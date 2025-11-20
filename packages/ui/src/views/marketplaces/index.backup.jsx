@@ -20,6 +20,7 @@ import {
     Tab
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 import { IconLayoutGrid, IconList } from '@tabler/icons-react'
 
 // project imports
@@ -91,6 +92,7 @@ const SelectStyles = {
 const Marketplace = () => {
     const navigate = useNavigate()
     const theme = useTheme()
+    const { mode } = useThemeMode()
 
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -380,9 +382,9 @@ const Marketplace = () => {
                             >
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: mode === 'dark' ? 'white' : 'inherit'
                                     }}
                                     variant='contained'
                                     value='card'
@@ -392,9 +394,9 @@ const Marketplace = () => {
                                 </ToggleButton>
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: mode === 'dark' ? 'white' : 'inherit'
                                     }}
                                     variant='contained'
                                     value='list'

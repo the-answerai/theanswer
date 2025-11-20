@@ -11,7 +11,7 @@ import { User as AnswersUser, AppSettings, ContextField, Organization } from 'ty
 export const USER_EVENTS = ['signIn', 'signOut', 'createUser', 'updateUser', 'linkAccount']
 
 declare module 'next-auth' {
-    interface User extends AnswersUser {}
+    type User = AnswersUser
 
     interface Session extends DefaultSession {
         user?: AnswersUser

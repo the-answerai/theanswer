@@ -1,6 +1,5 @@
-import { ThemeProvider } from '@emotion/react'
-
-import { darkModeTheme } from './theme'
+import { CssBaseline } from '@mui/material'
+import { CssVarsThemeProvider } from './theme/cssVarsTheme'
 import { AnswersProvider } from './AnswersContext'
 import ChatExtensionWidget from './ChatExtensionWidget'
 import { User } from 'types'
@@ -10,9 +9,10 @@ const ExtensionContentApp = ({ apiUrl }: { apiUrl: string }) => {
     return (
         <AnswersProvider user={{} as User} appSettings={{}} apiUrl={apiUrl}>
             <PermissionProvider>
-                <ThemeProvider theme={darkModeTheme}>
+                <CssVarsThemeProvider>
+                    <CssBaseline enableColorScheme />
                     <ChatExtensionWidget />
-                </ThemeProvider>
+                </CssVarsThemeProvider>
             </PermissionProvider>
         </AnswersProvider>
     )

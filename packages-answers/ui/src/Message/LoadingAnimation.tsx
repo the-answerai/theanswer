@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { keyframes } from '@mui/system'
 
 const quirkWordList = [
@@ -55,6 +55,7 @@ interface LoadingAnimationProps {
 }
 
 export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ duration = 1000 }) => {
+    const theme = useTheme()
     const [currentWordIndex, setCurrentWordIndex] = useState(0)
     const [isTyping, setIsTyping] = useState(true)
 
@@ -80,16 +81,16 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ duration = 1
                 gap: 1,
                 py: 2,
                 px: 3,
-                bgcolor: 'rgba(255, 255, 255, 0.02)',
+                bgcolor: theme.vars.palette.background.paper,
                 borderRadius: 2,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${theme.vars.palette.divider}`,
                 minHeight: '60px'
             }}
         >
             <Typography
                 variant='body2'
                 sx={{
-                    color: '#B0B0B0',
+                    color: theme.vars.palette.text.secondary,
                     fontStyle: 'italic',
                     display: 'flex',
                     alignItems: 'center',
@@ -102,10 +103,10 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ duration = 1
                         display: 'inline-block',
                         overflow: 'hidden',
                         whiteSpace: 'nowrap',
-                        borderRight: '2px solid #E0E0E0',
+                        borderRight: `2px solid ${theme.vars.palette.text.primary}`,
                         animation: `${typeWriter} ${duration}ms ease-in-out infinite`,
                         minWidth: '120px',
-                        color: '#E0E0E0',
+                        color: theme.vars.palette.text.primary,
                         fontWeight: 500
                     }}
                 >
@@ -115,7 +116,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ duration = 1
                     component='span'
                     sx={{
                         animation: `${blink} 1s infinite`,
-                        color: '#E0E0E0',
+                        color: theme.vars.palette.text.primary,
                         ml: 0.5
                     }}
                 >

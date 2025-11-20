@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 
 // material-ui
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 
 // project imports
 import NodeCardWrapper from '@/ui-component/cards/NodeCardWrapper'
@@ -17,6 +18,7 @@ import { flowContext } from '@/store/context/ReactFlowContext'
 
 const StickyNote = ({ data }) => {
     const theme = useTheme()
+    const { mode } = useThemeMode()
     const canvas = useSelector((state) => state.canvas)
     const { deleteNode, duplicateNode } = useContext(flowContext)
     const [inputParam] = data.inputParams
@@ -32,9 +34,9 @@ const StickyNote = ({ data }) => {
     }
 
     const getBorderColor = () => {
-        if (data.selected) return theme.palette.primary.main
-        else if (theme?.customization?.isDarkMode) return theme.palette.grey[900] + 25
-        else return theme.palette.grey[900] + 50
+        if (data.selected) return theme.vars.palette.primary.main
+        else if (mode === 'dark') return theme.vars.palette.grey[900] + 25
+        else return theme.vars.palette.grey[900] + 50
     }
 
     return (
@@ -69,7 +71,7 @@ const StickyNote = ({ data }) => {
                                     duplicateNode(data.id)
                                 }}
                                 sx={{ height: '35px', width: '35px', '&:hover': { color: theme?.palette.primary.main } }}
-                                color={theme?.customization?.isDarkMode ? theme.colors?.paper : 'inherit'}
+                                color={mode === 'dark' ? theme.colors?.paper : 'inherit'}
                             >
                                 <IconCopy />
                             </IconButton>
@@ -79,7 +81,7 @@ const StickyNote = ({ data }) => {
                                     deleteNode(data.id)
                                 }}
                                 sx={{ height: '35px', width: '35px', '&:hover': { color: 'red' } }}
-                                color={theme?.customization?.isDarkMode ? theme.colors?.paper : 'inherit'}
+                                color={mode === 'dark' ? theme.colors?.paper : 'inherit'}
                             >
                                 <IconTrash />
                             </IconButton>

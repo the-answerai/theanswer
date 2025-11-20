@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, memo } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import Image from 'next/image'
 import PropTypes from 'prop-types'
 
@@ -48,7 +49,6 @@ import utilNodesPNG from '@/assets/images/utilNodes.png'
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
 import { SET_COMPONENT_NODES } from '@/store/actions'
-
 // ==============================|| ADD NODES||============================== //
 function a11yProps(index) {
     return {
@@ -74,7 +74,7 @@ const blacklistForChatflowCanvas = {
 
 const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerated }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
 
     const [searchValue, setSearchValue] = useState('')
@@ -406,7 +406,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                             placeholder='Search nodes'
                                             startAdornment={
                                                 <InputAdornment position='start'>
-                                                    <IconSearch stroke={1.5} size='1rem' color={theme.palette.grey[500]} />
+                                                    <IconSearch stroke={1.5} size='1rem' color={theme.vars.palette.grey[500]} />
                                                 </InputAdornment>
                                             }
                                             endAdornment={
@@ -414,9 +414,9 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                     position='end'
                                                     sx={{
                                                         cursor: 'pointer',
-                                                        color: theme.palette.grey[500],
+                                                        color: theme.vars.palette.grey[500],
                                                         '&:hover': {
-                                                            color: theme.palette.grey[900]
+                                                            color: theme.vars.palette.grey[900]
                                                         }
                                                     }}
                                                     title='Clear Search'
@@ -467,6 +467,8 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                                                                             border: '2px solid rgba(255, 255, 255, 0.2)'
                                                                         }}
+                                                                        width={32}
+                                                                        height={32}
                                                                         src={getImage(index)}
                                                                         alt={item}
                                                                     />
@@ -547,8 +549,8 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                                 fontSize: '0.65rem',
                                                                                 background:
                                                                                     category.split(';')[1] === 'DEPRECATING'
-                                                                                        ? theme.palette.warning.main
-                                                                                        : theme.palette.teal.main,
+                                                                                        ? theme.vars.palette.warning.main
+                                                                                        : theme.vars.palette.teal.main,
                                                                                 color:
                                                                                     category.split(';')[1] !== 'DEPRECATING'
                                                                                         ? 'white'
@@ -572,7 +574,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                         <ListItemButton
                                                                             sx={{
                                                                                 p: 0,
-                                                                                borderRadius: `${customization.borderRadius}px`,
+                                                                                borderRadius: theme.shape.borderRadius,
                                                                                 cursor: 'move'
                                                                             }}
                                                                         >
@@ -635,10 +637,10 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                                                             fontSize: '0.65rem',
                                                                                                             background:
                                                                                                                 node.badge === 'DEPRECATING'
-                                                                                                                    ? theme.palette.warning
-                                                                                                                          .main
-                                                                                                                    : theme.palette.teal
-                                                                                                                          .main,
+                                                                                                                    ? theme.vars.palette
+                                                                                                                          .warning.main
+                                                                                                                    : theme.vars.palette
+                                                                                                                          .teal.main,
                                                                                                             color:
                                                                                                                 node.badge !== 'DEPRECATING'
                                                                                                                     ? 'white'

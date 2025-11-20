@@ -35,7 +35,7 @@ const Breadcrumbs = ({ card, divider, icon, icons, maxItems, navigation, rightAl
         marginTop: `-${theme.spacing(0.25)}`,
         width: '1rem',
         height: '1rem',
-        color: theme.palette.secondary.main
+        color: theme.vars.palette.secondary.main
     }
 
     const [main, setMain] = useState()
@@ -159,7 +159,9 @@ const Breadcrumbs = ({ card, divider, icon, icons, maxItems, navigation, rightAl
                             )}
                         </Grid>
                     </Box>
-                    {card === false && divider !== false && <Divider sx={{ borderColor: theme.palette.primary.main, mb: gridSpacing }} />}
+                    {card === false && divider !== false && (
+                        <Divider sx={{ borderColor: theme.vars.palette.primary.main, mb: gridSpacing }} />
+                    )}
                 </Card>
             )
         }

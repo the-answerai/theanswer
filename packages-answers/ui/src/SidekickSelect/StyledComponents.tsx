@@ -1,5 +1,5 @@
 import { keyframes } from '@emotion/react'
-import { styled, Dialog, Box, Typography, alpha, Button, Paper, IconButton, Grid, Chip, Skeleton, useScrollTrigger } from '@mui/material'
+import { styled, Dialog, Box, Typography, Button, Paper, IconButton, Grid, Chip, Skeleton, useScrollTrigger } from '@mui/material'
 
 export const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
@@ -7,7 +7,7 @@ export const StyledDialog = styled(Dialog)(({ theme }) => ({
         maxWidth: '1200px',
         height: '60vh',
         maxHeight: '800px',
-        backgroundColor: theme.palette.background.default
+        backgroundColor: theme.vars.palette.background.default
     }
 }))
 
@@ -42,20 +42,20 @@ export const HorizontalScrollContainer = styled(Box)(({ theme }) => ({
         height: '8px'
     },
     '&::-webkit-scrollbar-track': {
-        background: alpha(theme.palette.primary.main, 0.05),
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.05)`,
         borderRadius: '10px'
     },
     '&::-webkit-scrollbar-thumb': {
-        background: alpha(theme.palette.primary.main, 0.2),
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.2)`,
         borderRadius: '10px'
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: alpha(theme.palette.primary.main, 0.3)
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.3)`
     }
 }))
 
 export const ViewAllButton = styled(Button)(({ theme }) => ({
-    color: theme.palette.primary.main,
+    color: theme.vars.palette.primary.main,
     padding: 0,
     minWidth: 'auto',
     fontWeight: 'bold',
@@ -65,10 +65,17 @@ export const ViewAllButton = styled(Button)(({ theme }) => ({
     },
     '&:hover': {
         background: 'none',
-        color: theme.palette.primary.dark,
+        color: theme.vars.palette.primary.dark,
         '& .MuiButton-endIcon': {
             transform: 'translateX(3px)'
         }
+    },
+    '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: theme.vars.palette.primary.main,
+        outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+        transition: 'box-shadow 0.2s ease-in-out'
     }
 }))
 
@@ -95,7 +102,7 @@ export const SidekickCardContainer = styled(Paper)(({ theme, onClick }) => ({
         : {
               cursor: 'pointer',
               '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
+                  backgroundColor: theme.vars.palette.action.hover,
                   transform: 'translateY(-2px)'
                   //   boxShadow: theme.shadows[4]
               }
@@ -144,13 +151,13 @@ export const SidekickFooter = styled(Box)(({ theme }) => ({
     height: '36px', // Fixed height for footer
     gap: theme.spacing(1),
     '& .MuiSvgIcon-root': {
-        color: theme.palette.common.white
+        color: theme.vars.palette.common.white
     },
     '& .MuiButton-contained': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.7),
-        color: theme.palette.common.white,
+        backgroundColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.7)`,
+        color: theme.vars.palette.common.white,
         '&:hover': {
-            backgroundColor: theme.palette.primary.main
+            backgroundColor: theme.vars.palette.primary.main
         }
     }
 }))
@@ -159,27 +166,41 @@ export const ContentWrapper = styled(Box)(({ theme }) => ({
     width: '100%',
     maxWidth: '1200px',
 
-    backgroundColor: theme.palette.background.default,
+    backgroundColor: theme.vars.palette.background.default,
 
     padding: theme.spacing(2),
     borderRadius: theme.shape.borderRadius
 }))
 
 export const WhiteButton = styled(Button)(({ theme }) => ({
-    color: theme.palette.common.white,
-    borderColor: theme.palette.common.white,
+    color: theme.vars.palette.common.white,
+    borderColor: theme.vars.palette.common.white,
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        borderColor: theme.palette.primary.main,
-        color: theme.palette.primary.main
+        backgroundColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.08)`,
+        borderColor: theme.vars.palette.primary.main,
+        color: theme.vars.palette.primary.main
+    },
+    '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: theme.vars.palette.primary.main,
+        outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+        transition: 'box-shadow 0.2s ease-in-out'
     }
 }))
 
 export const WhiteIconButton = styled(IconButton)(({ theme }) => ({
-    color: theme.palette.common.white,
+    color: theme.vars.palette.common.white,
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        color: theme.palette.primary.main
+        backgroundColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.08)`,
+        color: theme.vars.palette.primary.main
+    },
+    '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: theme.vars.palette.primary.main,
+        outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+        transition: 'box-shadow 0.2s ease-in-out'
     }
 }))
 
@@ -199,27 +220,35 @@ export const CategoryFilterContainer = styled(Box)(({ theme }) => ({
         height: '6px'
     },
     '&::-webkit-scrollbar-track': {
-        background: alpha(theme.palette.primary.main, 0.05),
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.05)`,
         borderRadius: '10px'
     },
     '&::-webkit-scrollbar-thumb': {
-        background: alpha(theme.palette.primary.main, 0.2),
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.2)`,
         borderRadius: '10px'
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: alpha(theme.palette.primary.main, 0.3)
+        background: `rgba(${theme.vars.palette.primary.mainChannel} / 0.3)`
     }
 }))
 
 // Add a styled component for the category filter pills
 export const CategoryFilterChip = styled(Chip)<{ selected?: boolean }>(({ theme, selected }) => ({
     transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: theme.vars.palette.primary.main,
+        outlineOffset: '2px',
+        boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+        transition: 'box-shadow 0.2s ease-in-out'
+    },
     ...(selected && {
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.common.white,
+        backgroundColor: theme.vars.palette.primary.main,
+        color: theme.vars.palette.common.white,
         fontWeight: 'bold',
         '&:hover': {
-            backgroundColor: theme.palette.primary.dark
+            backgroundColor: theme.vars.palette.primary.dark
         }
     })
 }))
@@ -240,10 +269,9 @@ export const SkeletonCard = styled(Paper)(({ theme }) => ({
     flexDirection: 'column',
     height: '220px',
     position: 'relative',
-    backgroundColor: theme.palette.background.paper,
-    border: `1px solid ${
-        theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.08)
-    }`,
+    backgroundColor: theme.vars.palette.background.paper,
+    // Use CSS variable for border color that automatically updates with theme
+    border: `1px solid ${theme.vars.palette.divider}`,
     '.horizontal-container &': {
         width: '300px',
         minWidth: '300px',
@@ -265,13 +293,14 @@ export const shimmer = keyframes`
 `
 
 // Styled component for skeleton items with shimmer effect
+// Uses CSS variables with color-mix for theme-aware shimmer animation
 export const SkeletonItem = styled(Skeleton)(({ theme }) => ({
-    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.04),
+    backgroundColor: theme.vars.palette.action.hover,
     backgroundImage: `linear-gradient(
         90deg,
-        ${theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.04)} 25%,
-        ${theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.08)} 37%,
-        ${theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.04)} 63%
+        ${theme.vars.palette.action.hover} 25%,
+        ${theme.vars.palette.action.selected} 37%,
+        ${theme.vars.palette.action.hover} 63%
     )`,
     backgroundSize: '200px 100%',
     backgroundRepeat: 'no-repeat',
@@ -285,5 +314,5 @@ export const OrgSidekicksHeader = styled(Box)(({ theme }) => ({
     zIndex: 1,
     padding: theme.spacing(1, 0),
     transition: theme.transitions && theme.transitions.create ? theme.transitions.create(['box-shadow']) : 'box-shadow 0.3s ease',
-    boxShadow: useScrollTrigger() ? `0 1px 0 ${theme.palette.divider}` : 'none'
+    boxShadow: useScrollTrigger() ? `0 1px 0 ${theme.vars.palette.divider}` : 'none'
 }))

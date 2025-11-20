@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from '@/utils/navigation'
 import ReactJson from 'flowise-react-json-view'
 
@@ -28,16 +29,15 @@ import useNotifier from '@/utils/useNotifier'
 
 // store
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     overflow: 'auto',
     position: 'relative',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
     cursor: 'pointer',
     '&:hover': {
-        background: theme.palette.card.hover,
+        background: theme.vars.palette.card.hover,
         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
     },
     maxHeight: '250px',
@@ -49,7 +49,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 }))
 
 const ShowStoredChunks = () => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const theme = useTheme()
@@ -284,9 +284,10 @@ const ShowStoredChunks = () => {
                                             fontSize: '0.9rem',
                                             width: 'max-content',
                                             borderRadius: '25px',
-                                            boxShadow: customization.isDarkMode
-                                                ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
-                                                : '0 2px 14px 0 rgb(32 40 45 / 20%)',
+                                            boxShadow:
+                                                mode === 'dark'
+                                                    ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
+                                                    : '0 2px 14px 0 rgb(32 40 45 / 20%)',
                                             display: 'flex',
                                             flexDirection: 'row',
                                             alignItems: 'center',
@@ -320,7 +321,7 @@ const ShowStoredChunks = () => {
                                 >
                                     <IconChevronLeft
                                         color={
-                                            customization.isDarkMode
+                                            mode === 'dark'
                                                 ? currentPage === 1
                                                     ? '#616161'
                                                     : 'white'
@@ -340,7 +341,7 @@ const ShowStoredChunks = () => {
                                 >
                                     <IconChevronRight
                                         color={
-                                            customization.isDarkMode
+                                            mode === 'dark'
                                                 ? end >= totalChunks
                                                     ? '#616161'
                                                     : 'white'
@@ -384,7 +385,7 @@ const ShowStoredChunks = () => {
                                         <CardWrapper
                                             content={false}
                                             onClick={() => chunkSelected(row.id)}
-                                            sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                            sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                         >
                                             <Card>
                                                 <CardContent sx={{ p: 2 }}>
@@ -395,7 +396,7 @@ const ShowStoredChunks = () => {
                                                         {row.pageContent}
                                                     </Typography>
                                                     <ReactJson
-                                                        theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                                        theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                                         style={{ paddingTop: 10 }}
                                                         src={row.metadata ? JSON.parse(row.metadata) : {}}
                                                         name={null}

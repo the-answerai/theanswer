@@ -15,7 +15,7 @@ const maxDrawerWidth = 40 // in "vw"
 const minDrawerWidth = 20 // in "vw"
 
 // Update theme color here
-const baseColor = '#000000' //theme.palette.primary.light
+const baseColor = '#000000' //theme.vars.palette.primary.light
 const themeColors = generateThemeColors(baseColor)
 
 const themeConfig = {
@@ -147,7 +147,7 @@ const HelpChatDrawer = ({ apiHost, chatflowid }) => {
                         borderBottomRightRadius: 0,
 
                         '&:hover': {
-                            color: theme.palette.primary.light
+                            color: theme.vars.palette.primary.light
                         }
                     }}
                 >
@@ -169,7 +169,7 @@ const HelpChatDrawer = ({ apiHost, chatflowid }) => {
                         visibility: helpChatOpen ? 'visible' : 'hidden',
 
                         '&:hover': {
-                            color: theme.palette.primary.light
+                            color: theme.vars.palette.primary.light
                         }
                     }}
                 >

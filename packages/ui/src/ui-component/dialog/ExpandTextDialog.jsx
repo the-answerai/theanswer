@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import PropTypes from 'prop-types'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 
@@ -21,13 +22,12 @@ import nodesApi from '@/api/nodes'
 import useApi from '@/hooks/useApi'
 
 import './ExpandTextDialog.css'
-
 const ExpandTextDialog = ({ show, dialogProps, onCancel, onInputHintDialogClicked, onConfirm }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
 
     const theme = useTheme()
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const [inputValue, setInputValue] = useState('')
     const [inputParam, setInputParam] = useState(null)
@@ -115,7 +115,7 @@ const ExpandTextDialog = ({ show, dialogProps, onCancel, onInputHintDialogClicke
                             <PerfectScrollbar
                                 style={{
                                     border: '1px solid',
-                                    borderColor: theme.palette.grey['500'],
+                                    borderColor: theme.vars.palette.grey['500'],
                                     borderRadius: '12px',
                                     height: '100%',
                                     maxHeight: languageType === 'js' ? 'calc(100vh - 330px)' : 'calc(100vh - 220px)',
@@ -127,7 +127,7 @@ const ExpandTextDialog = ({ show, dialogProps, onCancel, onInputHintDialogClicke
                                     disabled={dialogProps.disabled}
                                     value={inputValue}
                                     height={languageType === 'js' ? 'calc(100vh - 330px)' : 'calc(100vh - 220px)'}
-                                    theme={customization.isDarkMode ? 'dark' : 'light'}
+                                    theme={mode === 'dark' ? 'dark' : 'light'}
                                     lang={languageType}
                                     placeholder={inputParam.placeholder}
                                     basicSetup={
@@ -151,11 +151,11 @@ const ExpandTextDialog = ({ show, dialogProps, onCancel, onInputHintDialogClicke
                         sx={{
                             mt: 2,
                             '&:hover': {
-                                backgroundColor: theme.palette.secondary.main,
+                                backgroundColor: theme.vars.palette.secondary.main,
                                 backgroundImage: `linear-gradient(rgb(0 0 0/10%) 0 0)`
                             },
                             '&:disabled': {
-                                backgroundColor: theme.palette.secondary.main,
+                                backgroundColor: theme.vars.palette.secondary.main,
                                 backgroundImage: `linear-gradient(rgb(0 0 0/50%) 0 0)`
                             }
                         }}
@@ -177,7 +177,7 @@ const ExpandTextDialog = ({ show, dialogProps, onCancel, onInputHintDialogClicke
                             disabled={true}
                             value={codeExecutedResult.toString()}
                             height='max-content'
-                            theme={customization.isDarkMode ? 'dark' : 'light'}
+                            theme={mode === 'dark' ? 'dark' : 'light'}
                             lang={'js'}
                             basicSetup={{ lineNumbers: false, foldGutter: false, autocompletion: false, highlightActiveLine: false }}
                         />

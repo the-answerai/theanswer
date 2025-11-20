@@ -3,6 +3,7 @@ import { Box, Button, FormControl, ListItem, ListItemAvatar, ListItemText, MenuI
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 
 // Project Imports
 import { StyledButton } from '@/ui-component/button/StyledButton'
@@ -477,6 +478,7 @@ const FollowUpPrompts = ({ dialogProps }) => {
 
     useNotifier()
     const theme = useTheme()
+    const { mode } = useThemeMode()
 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
@@ -646,7 +648,7 @@ const FollowUpPrompts = ({ dialogProps }) => {
                                 onChange={handleSelectedProviderChange}
                                 sx={{
                                     '& .MuiSvgIcon-root': {
-                                        color: theme?.customization?.isDarkMode ? '#fff' : 'inherit'
+                                        color: mode === 'dark' ? '#fff' : 'inherit'
                                     }
                                 }}
                             >

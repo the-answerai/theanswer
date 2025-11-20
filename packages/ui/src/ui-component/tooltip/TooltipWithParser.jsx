@@ -2,10 +2,10 @@ import { Info } from '@mui/icons-material'
 import { IconButton, Tooltip } from '@mui/material'
 import parser from 'html-react-parser'
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 
 export const TooltipWithParser = ({ title, sx }) => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     return (
         <Tooltip title={parser(title)} placement='right'>
@@ -14,7 +14,7 @@ export const TooltipWithParser = ({ title, sx }) => {
                     sx={{
                         ...sx,
                         background: 'transparent',
-                        color: customization.isDarkMode ? 'white' : 'inherit',
+                        color: mode === 'dark' ? 'white' : 'inherit',
                         height: 15,
                         width: 15
                     }}

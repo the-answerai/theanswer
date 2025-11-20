@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react'
-import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Chip, Box, Button, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 import { IconTrash, IconPlus } from '@tabler/icons-react'
 import NodeInputHandler from '@/views/canvas/NodeInputHandler'
 import { showHideInputs } from '@/utils/genericHelper'
@@ -13,7 +13,7 @@ export const ArrayRenderer = ({ inputParam, data, disabled }) => {
     const [arrayItems, setArrayItems] = useState([]) // these are the actual values. Ex: [{name: 'John', age: 30}, {name: 'Jane', age: 25}]
     const [itemParameters, setItemParameters] = useState([]) // these are the input parameters for each array item. Ex: [{label: 'Name', type: 'string', display: true}, {label: 'age', type: 'number', display: false}]
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const { reactFlowInstance } = useContext(flowContext)
 
     // Handler for when input values change within array items
@@ -187,7 +187,7 @@ export const ArrayRenderer = ({ inputParam, data, disabled }) => {
                             mt: 2,
                             mb: 1,
                             border: 1,
-                            borderColor: theme.palette.grey[900] + 25,
+                            borderColor: theme.vars.palette.grey[900] + 25,
                             borderRadius: 2,
                             position: 'relative'
                         }}
@@ -204,7 +204,7 @@ export const ArrayRenderer = ({ inputParam, data, disabled }) => {
                                     width: '35px',
                                     right: 10,
                                     top: 10,
-                                    color: customization?.isDarkMode ? theme.palette.grey[300] : 'inherit',
+                                    color: mode === 'dark' ? theme.vars.palette.grey[300] : 'inherit',
                                     '&:hover': { color: 'red' }
                                 }}
                             >

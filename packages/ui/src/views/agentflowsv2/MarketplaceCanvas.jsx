@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useContext } from 'react'
 import ReactFlow, { Controls, Background, useNodesState, useEdgesState } from 'reactflow'
 import 'reactflow/dist/style.css'
-import '@/views/canvas/index.css'
+import { ReactFlowParentWrapper } from '@/views/shared/ReactFlowStyles'
 
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -84,7 +84,7 @@ const MarketplaceCanvasV2 = () => {
                     color='inherit'
                     elevation={1}
                     sx={{
-                        bgcolor: theme.palette.background.default
+                        bgcolor: theme.vars.palette.background.default
                     }}
                 >
                     <Toolbar>
@@ -95,8 +95,8 @@ const MarketplaceCanvasV2 = () => {
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ height: '100vh', width: '100%' }}>
-                    <div className='reactflow-parent-wrapper'>
+                <Box sx={{ flexGrow: 1, width: '100%', display: 'flex' }}>
+                    <ReactFlowParentWrapper>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow
                                 nodes={nodes}
@@ -126,7 +126,7 @@ const MarketplaceCanvasV2 = () => {
                                 />
                             </ReactFlow>
                         </div>
-                    </div>
+                    </ReactFlowParentWrapper>
                 </Box>
             </Box>
         </>

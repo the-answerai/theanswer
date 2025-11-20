@@ -1,5 +1,5 @@
 import { useNavigationState } from '@/utils/navigation'
-import { alpha, Box, Tooltip, Chip, Button, CircularProgress, useTheme } from '@mui/material'
+import { Box, Tooltip, Chip, Button, CircularProgress, useTheme } from '@mui/material'
 import {
     Star as StarIcon,
     StarBorder as StarBorderIcon,
@@ -191,11 +191,33 @@ const SidekickCard = ({
             <SidekickCardContainer
                 onClick={handleCardClickWrapper}
                 key={sidekick.id}
+                tabIndex={sidekick.isExecutable ? 0 : -1}
+                role={sidekick.isExecutable ? 'button' : undefined}
+                aria-label={sidekick.isExecutable ? `Use ${sidekick.chatflow.name} sidekick` : undefined}
+                onKeyDown={
+                    sidekick.isExecutable
+                        ? (e: React.KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  handleCardClick(sidekick)
+                              }
+                          }
+                        : undefined
+                }
                 sx={{
                     position: 'relative',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     flexDirection: 'column',
+                    ...(sidekick.isExecutable && {
+                        '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: theme.vars.palette.primary.main,
+                            outlineOffset: '2px',
+                            boxShadow: `0 0 0 3px rgba(${theme.vars.palette.primary.mainChannel} / 0.25)`,
+                            transition: 'box-shadow 0.2s ease-in-out, outline 0.2s ease-in-out'
+                        }
+                    }),
                     ...(!sidekick.isExecutable && {
                         cursor: 'not-allowed',
                         '& .actionButtons': {
@@ -203,9 +225,9 @@ const SidekickCard = ({
                             zIndex: 2,
                             pointerEvents: 'auto'
                         },
-                        backgroundColor: `${theme.palette.background.paper}!important`,
+                        backgroundColor: `${theme.vars.palette.background.paper}!important`,
                         backdropFilter: 'blur(10px)',
-                        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+                        border: `1px solid ${theme.vars.palette.common.alpha10}`,
                         overflow: 'hidden',
                         '&::before': {
                             content: '"MARKETPLACE"',
@@ -213,13 +235,10 @@ const SidekickCard = ({
                             top: 0,
                             right: theme.spacing(2),
                             fontSize: '0.65rem',
-                            color: alpha(theme.palette.primary.main, 0.8),
+                            color: `rgba(${theme.vars.palette.primary.mainChannel} / 0.8)`,
                             letterSpacing: '1px',
                             fontWeight: 500,
-                            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
-                                theme.palette.primary.main,
-                                0.2
-                            )} 100%)`,
+                            background: `linear-gradient(135deg, rgba(${theme.vars.palette.primary.mainChannel} / 0.1) 0%, rgba(${theme.vars.palette.primary.mainChannel} / 0.2) 100%)`,
                             padding: '4px 8px',
                             borderBottomLeftRadius: theme.shape.borderRadius,
                             borderBottomRightRadius: theme.shape.borderRadius,
@@ -275,13 +294,12 @@ const SidekickCard = ({
                                 <WhiteIconButton
                                     size='small'
                                     sx={{
-                                        color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
+                                        color: needsSetup ? theme.vars.palette.warning.main : theme.vars.palette.success.main,
                                         '&:hover': {
-                                            backgroundColor: alpha(
-                                                needsSetup ? theme.palette.warning.main : theme.palette.success.main,
-                                                0.08
-                                            ),
-                                            color: needsSetup ? theme.palette.warning.dark : theme.palette.success.dark
+                                            backgroundColor: needsSetup
+                                                ? `rgba(${theme.vars.palette.warning.mainChannel} / 0.08)`
+                                                : `rgba(${theme.vars.palette.success.mainChannel} / 0.08)`,
+                                            color: needsSetup ? theme.vars.palette.warning.dark : theme.vars.palette.success.dark
                                         }
                                     }}
                                 >

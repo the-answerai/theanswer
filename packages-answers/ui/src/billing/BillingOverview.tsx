@@ -46,9 +46,9 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'active':
-                return theme.palette.success.main
+                return theme.vars.palette.success.main
             case 'past_due':
-                return theme.palette.error.main
+                return theme.vars.palette.error.main
             default:
                 return 'rgba(255, 255, 255, 0.5)'
         }
@@ -69,14 +69,14 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                         mb: 3,
                         borderRadius: '12px',
                         bgcolor: 'rgba(255, 152, 0, 0.1)',
-                        color: theme.palette.warning.light,
-                        border: `1px solid ${theme.palette.warning.light}`,
+                        color: theme.vars.palette.warning.light,
+                        border: `1px solid ${theme.vars.palette.warning.light}`,
                         '& .MuiAlert-icon': {
-                            color: theme.palette.warning.light
+                            color: theme.vars.palette.warning.light
                         }
                     }}
                 >
-                    <AlertTitle sx={{ fontWeight: 600, color: theme.palette.warning.light }}>
+                    <AlertTitle sx={{ fontWeight: 600, color: theme.vars.palette.warning.light }}>
                         You&apos;re approaching your usage limit
                     </AlertTitle>
                     <Typography sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.8)' }}>
@@ -87,9 +87,9 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                         variant='contained'
                         onClick={handleUpgrade}
                         sx={{
-                            bgcolor: theme.palette.warning.main,
+                            bgcolor: theme.vars.palette.warning.main,
                             '&:hover': {
-                                bgcolor: theme.palette.warning.dark
+                                bgcolor: theme.vars.palette.warning.dark
                             }
                         }}
                     >

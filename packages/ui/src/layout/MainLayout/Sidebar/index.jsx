@@ -71,8 +71,8 @@ const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
                 sx={{
                     '& .MuiDrawer-paper': {
                         width: drawerWidth,
-                        background: theme.palette.background.default,
-                        color: theme.palette.text.primary,
+                        background: theme.vars.palette.background.default,
+                        color: theme.vars.palette.text.onGlass,
                         position: 'absolute',
                         ...(!isInIframe
                             ? {
@@ -82,7 +82,7 @@ const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
                               }
                             : null),
                         borderRight: drawerOpen ? '1px solid' : 'none',
-                        borderColor: drawerOpen ? theme.palette.primary[200] + 75 : 'transparent',
+                        borderColor: drawerOpen ? theme.vars.palette.divider : 'transparent',
                         zIndex: 1000
                     }
                 }}

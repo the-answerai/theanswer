@@ -97,7 +97,7 @@ export const CodeBlock = memo(({ language, chatflowid, isFullWidth, value }) => 
                             horizontal: 'left'
                         }}
                     >
-                        <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.palette.success.dark }}>
+                        <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.vars.palette.success.dark }}>
                             Copied!
                         </Typography>
                     </Popover>

@@ -2,7 +2,8 @@
 import * as PropTypes from 'prop-types'
 import moment from 'moment/moment'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 
 // material-ui
@@ -60,15 +61,14 @@ import {
 } from '@tabler/icons-react'
 import APIEmptySVG from '@/assets/images/api_empty.svg'
 import UploadJSONFileDialog from '@/views/apikey/UploadJSONFileDialog'
-
 // ==============================|| APIKey ||============================== //
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
     padding: '6px 16px',
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -118,7 +118,7 @@ function APIKeyRow(props) {
                             horizontal: 'left'
                         }}
                     >
-                        <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: props.theme.palette.success.dark }}>
+                        <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: props.theme.vars.palette.success.dark }}>
                             Copied!
                         </Typography>
                     </Popover>
@@ -147,7 +147,7 @@ function APIKeyRow(props) {
                 <TableRow sx={{ '& td': { border: 0 } }}>
                     <StyledTableCell sx={{ p: 2 }} colSpan={6}>
                         <Collapse in={open} timeout='auto' unmountOnExit>
-                            <Box sx={{ borderRadius: 2, border: 1, borderColor: theme.palette.grey[900] + 25, overflow: 'hidden' }}>
+                            <Box sx={{ borderRadius: 2, border: 1, borderColor: theme.vars.palette.grey[900] + 25, overflow: 'hidden' }}>
                                 <Table aria-label='chatflow table'>
                                     <TableHead sx={{ height: 48 }}>
                                         <TableRow>
@@ -197,7 +197,7 @@ APIKeyRow.propTypes = {
 }
 const APIKey = () => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const dispatch = useDispatch()
     useNotifier()
@@ -447,7 +447,7 @@ const APIKey = () => {
                                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                                 transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                             >
-                                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.palette.success.dark }}>
+                                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.vars.palette.success.dark }}>
                                     Copied!
                                 </Typography>
                             </Popover>
@@ -465,15 +465,14 @@ const APIKey = () => {
                             </Stack>
                         ) : (
                             <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                 component={Paper}
                             >
                                 <Table sx={{ minWidth: 650 }} aria-label='simple table'>
                                     <TableHead
                                         sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
+                                            backgroundColor:
+                                                mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                             height: 56
                                         }}
                                     >

@@ -17,7 +17,8 @@ import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import { alpha, useTheme } from '@mui/material'
+import { useTheme } from '@mui/material'
+import { alphaVar } from '../theme/utils/alpha'
 
 // Button style objects for reusability - following existing codebase patterns
 const appButtonBaseStyles = {
@@ -29,19 +30,19 @@ const appButtonBaseStyles = {
 
 const launchAppButtonStyles = (theme: any) => ({
     ...appButtonBaseStyles,
-    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+    background: `linear-gradient(45deg, ${theme.vars.palette.primary.main}, ${theme.vars.palette.primary.dark})`,
     '&:hover': {
-        background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`
+        background: `linear-gradient(45deg, ${theme.vars.palette.primary.dark}, ${theme.vars.palette.primary.main})`
     }
 })
 
 const getAgentButtonStyles = (theme: any) => ({
     ...appButtonBaseStyles,
-    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-    color: theme.palette.primary.main,
+    border: `2px solid ${theme.vars.palette.primary.alpha30}`,
+    color: theme.vars.palette.primary.main,
     '&:hover': {
-        border: `2px solid ${theme.palette.primary.main}`,
-        backgroundColor: alpha(theme.palette.primary.main, 0.05)
+        border: `2px solid ${theme.vars.palette.primary.main}`,
+        backgroundColor: alphaVar(theme.vars.palette.primary.main, 0.05)
     }
 })
 
@@ -345,9 +346,9 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
             sx={{
                 borderRadius: 3,
                 transition: 'all 0.3s ease',
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
-                    theme.palette.background.paper,
+                border: `1px solid ${theme.vars.palette.primary.alpha10}`,
+                background: `linear-gradient(145deg, ${alphaVar(theme.vars.palette.background.paper, 0.9)}, ${alphaVar(
+                    theme.vars.palette.background.paper,
                     0.95
                 )})`,
                 backdropFilter: 'blur(10px)',
@@ -359,8 +360,8 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                 mb: 2,
                 '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                    boxShadow: `0 8px 32px ${theme.vars.palette.primary.alpha20}`,
+                    border: `1px solid ${theme.vars.palette.primary.alpha30}`
                 },
                 '&:active': {
                     transform: 'translateY(-2px)'
@@ -385,9 +386,9 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                             sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: alpha(theme.palette.warning.main, 0.1),
-                                color: theme.palette.warning.main,
-                                border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                                bgcolor: theme.vars.palette.warning.alpha10,
+                                color: theme.vars.palette.warning.main,
+                                border: `1px solid ${theme.vars.palette.warning.alpha20}`,
                                 '& .MuiChip-label': { px: 1.5 }
                             }}
                         />
@@ -413,7 +414,7 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                             variant='h6'
                             sx={{
                                 fontWeight: 600,
-                                color: theme.palette.text.primary,
+                                color: theme.vars.palette.text.primary,
                                 lineHeight: 1.2,
                                 fontSize: '1.1rem',
                                 mb: 0.5
@@ -427,9 +428,9 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                             sx={{
                                 height: 20,
                                 fontSize: '0.7rem',
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                bgcolor: theme.vars.palette.primary.alpha10,
+                                color: theme.vars.palette.primary.main,
+                                border: `1px solid ${theme.vars.palette.primary.alpha20}`,
                                 '& .MuiChip-label': { px: 1 }
                             }}
                         />
@@ -440,7 +441,7 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                 <Typography
                     variant='body2'
                     sx={{
-                        color: theme.palette.text.secondary,
+                        color: theme.vars.palette.text.secondary,
                         fontSize: '0.875rem',
                         lineHeight: 1.4,
                         height: '63px', // Fixed height for exactly 3 lines (21px per line)
@@ -474,9 +475,9 @@ const AppCard: React.FC<AppCardProps> = ({ app, onGetAgent }) => {
                             sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: alpha(theme.palette.text.secondary, 0.08),
-                                color: theme.palette.text.secondary,
-                                border: `1px solid ${alpha(theme.palette.text.secondary, 0.1)}`,
+                                bgcolor: alphaVar(theme.vars.palette.text.secondary, 0.08),
+                                color: theme.vars.palette.text.secondary,
+                                border: `1px solid ${theme.vars.palette.text.alpha10}`,
                                 '& .MuiChip-label': { px: 1.5 }
                             }}
                         />
@@ -541,7 +542,7 @@ const Apps = () => {
                 <Typography
                     variant='h6'
                     sx={{
-                        color: theme.palette.text.secondary,
+                        color: theme.vars.palette.text.secondary,
                         fontWeight: 400,
                         maxWidth: 600,
                         mx: 'auto',

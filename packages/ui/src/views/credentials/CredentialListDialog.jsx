@@ -58,7 +58,7 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '75vh', position: 'relative', px: 3, pb: 3 }}>
                 <Box
                     sx={{
-                        backgroundColor: theme.palette.background.paper,
+                        backgroundColor: theme.vars.palette.background.paper,
                         pt: 2,
                         position: 'sticky',
                         top: 0,
@@ -73,7 +73,7 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
                         placeholder='Search credential'
                         startAdornment={
                             <InputAdornment position='start'>
-                                <IconSearch stroke={1.5} size='1rem' color={theme.palette.grey[500]} />
+                                <IconSearch stroke={1.5} size='1rem' color={theme.vars.palette.grey[500]} />
                             </InputAdornment>
                         }
                         endAdornment={
@@ -81,9 +81,9 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
                                 position='end'
                                 sx={{
                                     cursor: 'pointer',
-                                    color: theme.palette.grey[500],
+                                    color: theme.vars.palette.grey[500],
                                     '&:hover': {
-                                        color: theme.palette.grey[900]
+                                        color: theme.vars.palette.grey[900]
                                     }
                                 }}
                                 title='Clear Search'
@@ -125,7 +125,7 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
                             onClick={() => onCredentialSelected(componentCredential)}
                             sx={{
                                 border: 1,
-                                borderColor: theme.palette.grey[900] + 25,
+                                borderColor: theme.vars.palette.grey[900] + 25,
                                 borderRadius: 2,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -134,20 +134,16 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
                                 gap: 1,
                                 p: 2,
                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                ...(theme.palette.glass && {
-                                    background: theme.palette.glass.glassSecondary.background,
-                                    backdropFilter: theme.palette.glass.glassSecondary.backdropFilter,
-                                    WebkitBackdropFilter: theme.palette.glass.glassSecondary.WebkitBackdropFilter,
+                                ...(theme.vars?.palette?.glass && {
+                                    background: theme.vars.palette.glass.glassSecondary.background,
+                                    backdropFilter: theme.vars.palette.glass.glassSecondary.backdropFilter,
+                                    WebkitBackdropFilter: theme.vars.palette.glass.glassSecondary.WebkitBackdropFilter,
+                                    border: theme.vars.palette.glass.glassSecondary.border,
                                     '&:hover': {
-                                        background:
-                                            theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(77, 182, 172, 0.15)',
-                                        borderColor:
-                                            theme.palette.mode === 'light' ? theme.palette.grey[900] + 25 : 'rgba(77, 182, 172, 0.3)',
-                                        boxShadow:
-                                            theme.palette.mode === 'light'
-                                                ? '0 4px 16px 0 rgba(0, 0, 0, 0.1)'
-                                                : '0 4px 16px 0 rgba(77, 182, 172, 0.2)',
-                                        transform: 'translateY(-2px)'
+                                        background: theme.vars.palette.glass.glassHover.background,
+                                        borderColor: theme.vars.palette.primary.main,
+                                        boxShadow: theme.vars.palette.glass.glassHover.boxShadow,
+                                        transform: theme.vars.palette.glass.glassHover.transform
                                     }
                                 })
                             }}

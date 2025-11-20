@@ -383,15 +383,15 @@ const ProcessCsv = ({
         () => ({
             ...{
                 ...baseStyle,
-                backgroundColor: theme.palette.grey[50],
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main,
+                backgroundColor: theme.vars.palette.grey[50],
+                borderColor: theme.vars.palette.primary.main,
+                color: theme.vars.palette.primary.main,
                 padding: theme.spacing(4),
                 cursor: 'pointer'
             },
-            ...(isFocused ? { borderColor: theme.palette.secondary.main } : {}),
-            ...(isDragAccept ? { borderColor: theme.palette.primary.main } : {}),
-            ...(isDragReject ? { borderColor: theme.palette.error.main } : {})
+            ...(isFocused ? { borderColor: theme.vars.palette.secondary.main } : {}),
+            ...(isDragAccept ? { borderColor: theme.vars.palette.primary.main } : {}),
+            ...(isDragReject ? { borderColor: theme.vars.palette.error.main } : {})
         }),
         [isFocused, isDragAccept, isDragReject, theme]
     )
@@ -520,10 +520,10 @@ const ProcessCsv = ({
                             <input {...getInputProps()} />
                             {fileName ? (
                                 <Stack flexDirection='row' alignItems='center' justifyContent='space-between' gap={1}>
-                                    <FilePresentOutlined sx={{ background: 'transparent', color: theme.palette.primary.main }} />
+                                    <FilePresentOutlined sx={{ background: 'transparent', color: theme.vars.palette.primary.main }} />
                                     <Typography>{fileName}</Typography>
                                     <IconButton onClick={handleClearFile}>
-                                        <CloseOutlined sx={{ background: 'transparent', color: theme.palette.primary.main }} />
+                                        <CloseOutlined sx={{ background: 'transparent', color: theme.vars.palette.primary.main }} />
                                     </IconButton>
                                 </Stack>
                             ) : (
@@ -1079,8 +1079,8 @@ const ProcessCsv = ({
                                 sx: {
                                     '& .MuiStepIcon-text': { fill: activeStep >= 0 ? 'white' : 'currentColor' },
                                     '&.MuiStepIcon-root': {
-                                        color: activeStep >= 0 ? theme.palette.primary.main : 'transparent',
-                                        border: activeStep >= 0 ? 'none' : `1px solid ${theme.palette.primary.main}`,
+                                        color: activeStep >= 0 ? theme.vars.palette.primary.main : 'transparent',
+                                        border: activeStep >= 0 ? 'none' : `1px solid ${theme.vars.palette.primary.main}`,
                                         borderRadius: '50%'
                                     }
                                 }
@@ -1095,8 +1095,8 @@ const ProcessCsv = ({
                                 sx: {
                                     '& .MuiStepIcon-text': { fill: activeStep >= 1 ? 'white' : 'currentColor' },
                                     '&.MuiStepIcon-root': {
-                                        color: activeStep >= 1 ? theme.palette.primary.main : 'transparent',
-                                        border: activeStep >= 1 ? 'none' : `1px solid ${theme.palette.primary.main}`,
+                                        color: activeStep >= 1 ? theme.vars.palette.primary.main : 'transparent',
+                                        border: activeStep >= 1 ? 'none' : `1px solid ${theme.vars.palette.primary.main}`,
                                         borderRadius: '50%'
                                     }
                                 }
@@ -1111,8 +1111,8 @@ const ProcessCsv = ({
                                 sx: {
                                     '& .MuiStepIcon-text': { fill: activeStep >= 2 ? 'white' : 'currentColor' },
                                     '&.MuiStepIcon-root': {
-                                        color: activeStep >= 2 ? theme.palette.primary.main : 'transparent',
-                                        border: activeStep >= 2 ? 'none' : `1px solid ${theme.palette.primary.main}`,
+                                        color: activeStep >= 2 ? theme.vars.palette.primary.main : 'transparent',
+                                        border: activeStep >= 2 ? 'none' : `1px solid ${theme.vars.palette.primary.main}`,
                                         borderRadius: '50%'
                                     }
                                 }
@@ -1127,8 +1127,8 @@ const ProcessCsv = ({
                                 sx: {
                                     '& .MuiStepIcon-text': { fill: activeStep >= 3 ? 'white' : 'currentColor' },
                                     '&.MuiStepIcon-root': {
-                                        color: activeStep >= 3 ? theme.palette.primary.main : 'transparent',
-                                        border: activeStep >= 3 ? 'none' : `1px solid ${theme.palette.primary.main}`,
+                                        color: activeStep >= 3 ? theme.vars.palette.primary.main : 'transparent',
+                                        border: activeStep >= 3 ? 'none' : `1px solid ${theme.vars.palette.primary.main}`,
                                         borderRadius: '50%'
                                     }
                                 }

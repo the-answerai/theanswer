@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 // material-ui
 import { Box, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useThemeMode } from '@ui/theme'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
@@ -35,6 +36,7 @@ import { IconPlus, IconLayoutGrid, IconList } from '@tabler/icons-react'
 const Chatflows = () => {
     const navigate = useNavigate()
     const theme = useTheme()
+    const { mode } = useThemeMode()
 
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -148,9 +150,9 @@ const Chatflows = () => {
                         >
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: mode === 'dark' ? 'white' : 'inherit'
                                 }}
                                 variant='contained'
                                 value='card'
@@ -160,9 +162,9 @@ const Chatflows = () => {
                             </ToggleButton>
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: mode === 'dark' ? 'white' : 'inherit'
                                 }}
                                 variant='contained'
                                 value='list'

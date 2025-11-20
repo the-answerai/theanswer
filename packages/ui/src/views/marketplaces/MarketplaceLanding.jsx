@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect, forwardRef } from 'react'
+import { useThemeMode } from '@ui/theme'
 import useMarketplaceLanding from '@/hooks/useMarketplaceLanding'
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
 import {
     useTheme,
     Typography,
@@ -32,7 +32,6 @@ import { useUser } from '@auth0/nextjs-auth0/client'
 import { useNavigationState } from '@/utils/navigation'
 import { Star as StarIcon, StarBorder as StarBorderIcon, Edit as EditIcon } from '@mui/icons-material'
 import { styled, alpha } from '@mui/material/styles'
-
 const LoadingSkeleton = () => (
     <Box sx={{ maxWidth: '1080px', width: '100%', mx: 'auto', p: { xs: 2, sm: 3 }, height: '100%' }}>
         {/* Header Section */}
@@ -84,23 +83,23 @@ const LoadingSkeleton = () => (
 )
 
 const WhiteButton = styled(Button)(({ theme }) => ({
-    color: theme.palette.common.white,
-    borderColor: theme.palette.common.white,
+    color: theme.vars.palette.common.white,
+    borderColor: theme.vars.palette.common.white,
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        borderColor: theme.palette.primary.main,
-        color: theme.palette.primary.main
+        backgroundColor: alpha(theme.vars.palette.primary.main, 0.08),
+        borderColor: theme.vars.palette.primary.main,
+        color: theme.vars.palette.primary.main
     }
 }))
 
 const WhiteIconButton = styled(IconButton)(({ theme }) => ({
-    color: theme.palette.common.white,
+    color: theme.vars.palette.common.white,
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-        color: theme.palette.primary.main
+        backgroundColor: alpha(theme.vars.palette.primary.main, 0.08),
+        color: theme.vars.palette.primary.main
     },
     '&.Mui-disabled': {
-        color: alpha(theme.palette.common.white, 0.3)
+        color: alpha(theme.vars.palette.common.white, 0.3)
     }
 }))
 
@@ -120,7 +119,7 @@ const MarketplaceLanding = forwardRef(function MarketplaceLanding({ templateId, 
     const [images, setImages] = useState([])
     const [nodeTypes, setNodeTypes] = useState([])
     const [tabValue, setTabValue] = useState(0)
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const [isFavorite, setIsFavorite] = useState(false)
 
@@ -364,7 +363,7 @@ const MarketplaceLanding = forwardRef(function MarketplaceLanding({ templateId, 
                                     width: 30,
                                     height: 30,
                                     borderRadius: '50%',
-                                    backgroundColor: customization.isDarkMode ? theme.palette.common.white : theme.palette.grey[300] + 75
+                                    backgroundColor: mode === 'dark' ? theme.vars.palette.common.white : theme.vars.palette.grey[300] + 75
                                 }}
                             >
                                 <img style={{ width: '100%', height: '100%', padding: 5, objectFit: 'contain' }} alt='' src={img} />

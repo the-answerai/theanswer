@@ -129,14 +129,14 @@ const ChatbotFull = ({ apiHost, chatflowId: defaultChatflowId }) => {
                                 <Card
                                     variant='outlined'
                                     sx={{
-                                        border: `1px solid ${theme.palette.error.main}`,
+                                        border: `1px solid ${theme.vars.palette.error.main}`,
                                         borderRadius: 2,
                                         padding: '20px',
-                                        boxShadow: `0 4px 8px ${alpha(theme.palette.error.main, 0.15)}`
+                                        boxShadow: `0 4px 8px ${alpha(theme.vars.palette.error.main, 0.15)}`
                                     }}
                                 >
                                     <Stack spacing={2} alignItems='center'>
-                                        <IconCircleXFilled size={50} color={theme.palette.error.main} />
+                                        <IconCircleXFilled size={50} color={theme.vars.palette.error.main} />
                                         <Typography variant='h3' color='error.main' align='center'>
                                             Invalid Chatbot
                                         </Typography>

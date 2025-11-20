@@ -59,11 +59,11 @@ import ErrorBoundary from '@/ErrorBoundary'
 import usePermissions from '@/hooks/usePermissions'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
     padding: '6px 16px',
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -387,7 +387,7 @@ const Credentials = () => {
                             </Stack>
                         ) : (
                             <Stack spacing={3}>
-                                <TableContainer component={Paper} sx={{ border: 1, borderColor: theme.palette.grey[900] + 25 }}>
+                                <TableContainer component={Paper} sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25 }}>
                                     <Table sx={{ minWidth: 650 }} size='small' aria-label='credentials table'>
                                         <TableHead>
                                             <TableRow>

@@ -315,11 +315,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                     ...theme.typography.commonAvatar,
                                     ...theme.typography.mediumAvatar,
                                     transition: 'all .2s ease-in-out',
-                                    background: theme.palette.secondary.light,
-                                    color: theme.palette.secondary.dark,
+                                    background: theme.vars.palette.secondary.light,
+                                    color: theme.vars.palette.secondary.dark,
                                     '&:hover': {
-                                        background: theme.palette.secondary.dark,
-                                        color: theme.palette.secondary.light
+                                        background: theme.vars.palette.secondary.dark,
+                                        color: theme.vars.palette.secondary.light
                                     }
                                 }}
                                 color='inherit'
@@ -348,7 +348,7 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                         whiteSpace: 'nowrap'
                                     }}
                                 >
-                                    {canvas.isDirty && <strong style={{ color: theme.palette.orange.main }}>*</strong>} {flowName}
+                                    {canvas.isDirty && <strong style={{ color: theme.vars.palette.orange.main }}>*</strong>} {flowName}
                                 </Typography>
                                 {chatflow?.id && (
                                     <ButtonBase title='Edit Name' sx={{ borderRadius: '50%' }}>
@@ -359,11 +359,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                                 ...theme.typography.mediumAvatar,
                                                 transition: 'all .2s ease-in-out',
                                                 ml: 1,
-                                                background: theme.palette.secondary.light,
-                                                color: theme.palette.secondary.dark,
+                                                background: theme.vars.palette.secondary.light,
+                                                color: theme.vars.palette.secondary.dark,
                                                 '&:hover': {
-                                                    background: theme.palette.secondary.dark,
-                                                    color: theme.palette.secondary.light
+                                                    background: theme.vars.palette.secondary.dark,
+                                                    color: theme.vars.palette.secondary.light
                                                 }
                                             }}
                                             color='inherit'
@@ -401,12 +401,12 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.mediumAvatar,
                                             transition: 'all .2s ease-in-out',
-                                            background: theme.palette.success.light,
-                                            color: theme.palette.success.dark,
+                                            background: theme.vars.palette.success.light,
+                                            color: theme.vars.palette.success.dark,
                                             ml: 1,
                                             '&:hover': {
-                                                background: theme.palette.success.dark,
-                                                color: theme.palette.success.light
+                                                background: theme.vars.palette.success.dark,
+                                                color: theme.vars.palette.success.light
                                             }
                                         }}
                                         color='inherit'
@@ -422,12 +422,12 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                             ...theme.typography.commonAvatar,
                                             ...theme.typography.mediumAvatar,
                                             transition: 'all .2s ease-in-out',
-                                            background: theme.palette.error.light,
-                                            color: theme.palette.error.dark,
+                                            background: theme.vars.palette.error.light,
+                                            color: theme.vars.palette.error.dark,
                                             ml: 1,
                                             '&:hover': {
-                                                background: theme.palette.error.dark,
-                                                color: theme.palette.error.light
+                                                background: theme.vars.palette.error.dark,
+                                                color: theme.vars.palette.error.light
                                             }
                                         }}
                                         color='inherit'
@@ -448,11 +448,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 ...theme.typography.commonAvatar,
                                 ...theme.typography.mediumAvatar,
                                 transition: 'all .2s ease-in-out',
-                                background: theme.palette.secondary.light,
-                                color: theme.palette.secondary.dark,
+                                background: theme.vars.palette.secondary.light,
+                                color: theme.vars.palette.secondary.dark,
                                 '&:hover': {
-                                    background: theme.palette.secondary.dark,
-                                    color: theme.palette.secondary.light
+                                    background: theme.vars.palette.secondary.dark,
+                                    color: theme.vars.palette.secondary.light
                                 }
                             }}
                             color='inherit'
@@ -469,11 +469,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                     ...theme.typography.commonAvatar,
                                     ...theme.typography.mediumAvatar,
                                     transition: 'all .2s ease-in-out',
-                                    background: theme.palette.canvasHeader.deployLight,
-                                    color: theme.palette.canvasHeader.deployDark,
+                                    background: theme.vars.palette.canvasHeader.deployLight,
+                                    color: theme.vars.palette.canvasHeader.deployDark,
                                     '&:hover': {
-                                        background: theme.palette.canvasHeader.deployDark,
-                                        color: theme.palette.canvasHeader.deployLight
+                                        background: theme.vars.palette.canvasHeader.deployDark,
+                                        color: theme.vars.palette.canvasHeader.deployLight
                                     }
                                 }}
                                 color='inherit'
@@ -500,11 +500,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 ...theme.typography.commonAvatar,
                                 ...theme.typography.mediumAvatar,
                                 transition: 'all .2s ease-in-out',
-                                background: theme.palette.canvasHeader.saveLight,
-                                color: theme.palette.canvasHeader.saveDark,
+                                background: theme.vars.palette.canvasHeader.saveLight,
+                                color: theme.vars.palette.canvasHeader.saveDark,
                                 '&:hover': {
-                                    background: theme.palette.canvasHeader.saveDark,
-                                    color: theme.palette.canvasHeader.saveLight
+                                    background: theme.vars.palette.canvasHeader.saveDark,
+                                    color: theme.vars.palette.canvasHeader.saveLight
                                 }
                             }}
                             color='inherit'
@@ -520,11 +520,11 @@ const CanvasHeader = forwardRef(({ chatflow, isAgentCanvas, isAgentflowV2, handl
                                 ...theme.typography.commonAvatar,
                                 ...theme.typography.mediumAvatar,
                                 transition: 'all .2s ease-in-out',
-                                background: theme.palette.canvasHeader.settingsLight,
-                                color: theme.palette.canvasHeader.settingsDark,
+                                background: theme.vars.palette.canvasHeader.settingsLight,
+                                color: theme.vars.palette.canvasHeader.settingsDark,
                                 '&:hover': {
-                                    background: theme.palette.canvasHeader.settingsDark,
-                                    color: theme.palette.canvasHeader.settingsLight
+                                    background: theme.vars.palette.canvasHeader.settingsDark,
+                                    color: theme.vars.palette.canvasHeader.settingsLight
                                 }
                             }}
                             onClick={() => setSettingsOpen(!isSettingsOpen)}

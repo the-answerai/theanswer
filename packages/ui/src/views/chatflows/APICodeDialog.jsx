@@ -794,7 +794,7 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
                                             </div>
                                         </div>
                                         <Stack direction='column' spacing={2} sx={{ width: '100%', my: 2 }}>
-                                            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 2 }} variant='outlined'>
+                                            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 2 }} variant='outlined'>
                                                 <Stack sx={{ mt: 1, mb: 2, ml: 1, alignItems: 'center' }} direction='row' spacing={2}>
                                                     <IconBox />
                                                     <Typography variant='h4'>Nodes</Typography>
@@ -858,7 +858,7 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
                                                         </Accordion>
                                                     ))}
                                             </Card>
-                                            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 2 }} variant='outlined'>
+                                            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 2 }} variant='outlined'>
                                                 <Stack sx={{ mt: 1, mb: 2, ml: 1, alignItems: 'center' }} direction='row' spacing={2}>
                                                     <IconVariable />
                                                     <Typography variant='h4'>Variables</Typography>

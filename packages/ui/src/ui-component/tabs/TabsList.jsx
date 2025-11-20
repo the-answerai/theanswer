@@ -13,6 +13,6 @@ export const TabsList = styled(BaseTabsList)(
     align-items: center;
     justify-content: center;
     align-content: space-between;
-    box-shadow: 0px 4px 6px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0, 0.4)' : 'rgba(0,0,0, 0.2)'};
+    box-shadow: 0px 4px 6px rgba(0,0,0, 0.3);
     `
 )

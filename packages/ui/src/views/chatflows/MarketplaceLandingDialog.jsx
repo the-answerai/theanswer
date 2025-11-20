@@ -31,7 +31,7 @@ const MarketplaceLandingDialog = ({ open, onClose, templateId, onUse }) => {
                         position: 'absolute',
                         right: 8,
                         top: 8,
-                        color: (theme) => theme.palette.grey[500],
+                        color: (theme) => theme.vars.palette.grey[500],
                         zIndex: 1
                     }}
                 >

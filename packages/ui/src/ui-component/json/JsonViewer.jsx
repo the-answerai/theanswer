@@ -1,7 +1,7 @@
-import { useSelector } from 'react-redux'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import PropTypes from 'prop-types'
+import { useThemeMode } from '@ui/theme'
 
 // Syntax highlighting function for JSON
 function syntaxHighlight(json) {
@@ -32,8 +32,8 @@ function syntaxHighlight(json) {
 
 export const JSONViewer = ({ data, maxHeight = '400px' }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
-    const isDarkMode = customization.isDarkMode
+    const { mode } = useThemeMode()
+    const isDarkMode = mode === 'dark'
 
     return (
         <Box
@@ -42,7 +42,7 @@ export const JSONViewer = ({ data, maxHeight = '400px' }) => {
                 borderColor: 'divider',
                 borderRadius: 1,
                 p: 2,
-                backgroundColor: theme.palette.background.default,
+                backgroundColor: theme.vars.palette.background.default,
                 width: '100%',
                 overflow: 'auto',
                 maxHeight: maxHeight

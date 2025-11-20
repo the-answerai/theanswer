@@ -1,8 +1,9 @@
 'use client'
 import { cloneDeep } from 'lodash'
 import { useEffect, useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { validate as uuidValidate, v4 as uuidv4 } from 'uuid'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from '@/utils/navigation'
 import ReactJson from 'flowise-react-json-view'
 
@@ -36,16 +37,15 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 // Utils
 import { initNode } from '@/utils/genericHelper'
 import useNotifier from '@/utils/useNotifier'
-
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     overflow: 'auto',
     position: 'relative',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
     cursor: 'pointer',
     '&:hover': {
-        background: theme.palette.card.hover,
+        background: theme.vars.palette.card.hover,
         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
     },
     maxHeight: '250px',
@@ -59,7 +59,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 // ===========================|| DOCUMENT LOADER CHUNKS ||=========================== //
 
 const LoaderConfigPreviewChunks = () => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const navigate = useNavigate()
     const theme = useTheme()
 
@@ -551,37 +551,37 @@ const LoaderConfigPreviewChunks = () => {
                                                 <Box display='grid' gridTemplateColumns='repeat(2, 1fr)' gap={gridSpacing}>
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
                                                     <Skeleton
                                                         animation={false}
-                                                        sx={{ bgcolor: customization.isDarkMode ? '#23262c' : '#fafafa' }}
+                                                        sx={{ bgcolor: mode === 'dark' ? '#23262c' : '#fafafa' }}
                                                         variant='rounded'
                                                         height={160}
                                                     />
@@ -651,7 +651,7 @@ const LoaderConfigPreviewChunks = () => {
                                                                 onClick={() => onChunkClick(row, index + 1)}
                                                                 sx={{
                                                                     border: 1,
-                                                                    borderColor: theme.palette.grey[900] + 25,
+                                                                    borderColor: theme.vars.palette.grey[900] + 25,
                                                                     borderRadius: 2
                                                                 }}
                                                             >
@@ -664,7 +664,7 @@ const LoaderConfigPreviewChunks = () => {
                                                                             {row.pageContent}
                                                                         </Typography>
                                                                         <ReactJson
-                                                                            theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                                                            theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                                                             style={{ paddingTop: 10 }}
                                                                             src={row.metadata}
                                                                             name={null}

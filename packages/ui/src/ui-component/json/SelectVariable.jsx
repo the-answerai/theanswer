@@ -1,6 +1,6 @@
-import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Box, List, ListItemButton, ListItem, ListItemAvatar, ListItemText, Typography, Stack } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 import robotPNG from '@/assets/images/robot.png'
 import chatPNG from '@/assets/images/chathistory.png'
@@ -29,7 +29,7 @@ const sequentialStateMessagesSelection = [
 ]
 
 const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectAndReturnVal, isSequentialAgent }) => {
-    const customization = useSelector((state) => state.customization)
+    const theme = useTheme()
 
     const onSelectOutputResponseClick = (node, prefix) => {
         let variablePath = node ? `${node.id}.data.instance` : prefix
@@ -50,7 +50,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                 <ListItemButton
                                     sx={{
                                         p: 0,
-                                        borderRadius: `${customization.borderRadius}px`,
+                                        borderRadius: theme.shape.borderRadius,
                                         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                         mb: 1
                                     }}
@@ -85,7 +85,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                 <ListItemButton
                                     sx={{
                                         p: 0,
-                                        borderRadius: `${customization.borderRadius}px`,
+                                        borderRadius: theme.shape.borderRadius,
                                         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                         mb: 1
                                     }}
@@ -124,7 +124,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                 <ListItemButton
                                     sx={{
                                         p: 0,
-                                        borderRadius: `${customization.borderRadius}px`,
+                                        borderRadius: theme.shape.borderRadius,
                                         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                         mb: 1
                                     }}
@@ -172,7 +172,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                 key={index}
                                                 sx={{
                                                     p: 0,
-                                                    borderRadius: `${customization.borderRadius}px`,
+                                                    borderRadius: theme.shape.borderRadius,
                                                     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                                     mb: 1
                                                 }}
@@ -225,7 +225,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                             key={index}
                                             sx={{
                                                 p: 0,
-                                                borderRadius: `${customization.borderRadius}px`,
+                                                borderRadius: theme.shape.borderRadius,
                                                 boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                                 mb: 1
                                             }}

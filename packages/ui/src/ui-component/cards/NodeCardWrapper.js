@@ -6,8 +6,8 @@ import MainCard from './MainCard'
 
 const NodeCardWrapper = styled(MainCard)(({ theme }) => ({
     background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
-    border: `1px solid ${theme.customization?.isDarkMode ? theme.palette.grey[900] + 25 : theme.palette.primary[200] + 75}`,
+    color: theme.palette.text.primary,
+    border: `1px solid ${theme.palette.mode === 'dark' ? theme.palette.grey[900] + 25 : theme.palette.primary[200] + 75}`,
     width: '300px',
     height: 'auto',
     padding: '10px',

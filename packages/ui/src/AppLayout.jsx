@@ -1,6 +1,6 @@
 'use client'
+import { useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { store } from '@/store'
 
 // style + assets
 import '@/assets/scss/style.scss'
@@ -8,8 +8,9 @@ import '@/assets/scss/style.scss'
 // third party
 
 import { StyledEngineProvider } from '@mui/material'
-import { ThemeProvider } from '@mui/material/styles'
-import themes from '@/themes'
+import { Experimental_CssVarsProvider as CssVarsProvider } from '@mui/material/styles'
+import { cssVarsTheme } from '@ui/theme/cssVarsTheme'
+import { initializeThemeStorage } from '@ui/theme/migrateThemeStorage'
 import AppProvider from './AppProvider'
 
 // Create a new context
@@ -17,13 +18,24 @@ import AppProvider from './AppProvider'
 // New component to wrap Auth0 setup
 
 const AppLayout = ({ children, apiHost, accessToken }) => {
+    // Run theme migration on mount
+    useEffect(() => {
+        initializeThemeStorage()
+    }, [])
+
     return (
         <StyledEngineProvider injectFirst>
-            <ThemeProvider theme={themes(store.getState().customization)}>
+            <CssVarsProvider
+                theme={cssVarsTheme}
+                defaultMode='dark'
+                modeStorageKey='mui-mode'
+                colorSchemeStorageKey='mui-color-scheme'
+                disableNestedContext
+            >
                 <AppProvider apiHost={apiHost} accessToken={accessToken}>
                     {children}
                 </AppProvider>
-            </ThemeProvider>
+            </CssVarsProvider>
         </StyledEngineProvider>
     )
 }

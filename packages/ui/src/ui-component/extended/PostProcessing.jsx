@@ -1,8 +1,7 @@
 import { useDispatch } from 'react-redux'
 import { useState, useEffect } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
-
 // material-ui
 import { IconButton, Button, Box, Typography } from '@mui/material'
 import { IconArrowsMaximize, IconBulb, IconX } from '@tabler/icons-react'
@@ -20,7 +19,6 @@ import useNotifier from '@/utils/useNotifier'
 
 // API
 import chatflowsApi from '@/api/chatflows'
-
 const sampleFunction = `return $flow.rawOutput + " This is a post processed response!";`
 
 const PostProcessing = ({ dialogProps }) => {
@@ -28,7 +26,7 @@ const PostProcessing = ({ dialogProps }) => {
 
     useNotifier()
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
@@ -158,7 +156,7 @@ const PostProcessing = ({ dialogProps }) => {
                     style={{
                         marginTop: '10px',
                         border: '1px solid',
-                        borderColor: theme.palette.grey['300'],
+                        borderColor: theme.vars.palette.grey['300'],
                         borderRadius: '6px',
                         height: '200px',
                         width: '100%'
@@ -167,7 +165,7 @@ const PostProcessing = ({ dialogProps }) => {
                     <CodeEditor
                         value={postProcessingFunction}
                         height='200px'
-                        theme={customization.isDarkMode ? 'dark' : 'light'}
+                        theme={mode === 'dark' ? 'dark' : 'light'}
                         lang={'js'}
                         placeholder={sampleFunction}
                         onValueChange={(code) => setPostProcessingFunction(code)}

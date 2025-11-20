@@ -1,8 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { useNavigate } from '@/utils/navigation'
-import { useSelector } from 'react-redux'
-
 // material-ui
 import {
     Box,
@@ -40,12 +39,11 @@ import doc_store_empty from '@/assets/images/doc_store_empty.svg'
 
 // const
 import { baseURL, gridSpacing } from '@/store/constant'
-
 // ==============================|| DOCUMENTS ||============================== //
 
 const Documents = () => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const navigate = useNavigate()
     const getAllDocumentStores = useApi(documentsApi.getAllDocumentStores)
@@ -162,9 +160,9 @@ const Documents = () => {
                         >
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: mode === 'dark' ? 'white' : 'inherit'
                                 }}
                                 variant='contained'
                                 value='card'
@@ -174,9 +172,9 @@ const Documents = () => {
                             </ToggleButton>
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: mode === 'dark' ? 'white' : 'inherit'
                                 }}
                                 variant='contained'
                                 value='list'
@@ -217,11 +215,14 @@ const Documents = () => {
                             )}
                         </>
                     ) : (
-                        <TableContainer sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
+                        <TableContainer
+                            sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
+                            component={Paper}
+                        >
                             <Table aria-label='documents table'>
                                 <TableHead
                                     sx={{
-                                        backgroundColor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[100],
+                                        backgroundColor: mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                         height: 56
                                     }}
                                 >
@@ -292,9 +293,10 @@ const Documents = () => {
                                                                     width: 30,
                                                                     height: 30,
                                                                     borderRadius: '50%',
-                                                                    backgroundColor: customization.isDarkMode
-                                                                        ? theme.palette.common.white
-                                                                        : theme.palette.grey[300] + 75
+                                                                    backgroundColor:
+                                                                        mode === 'dark'
+                                                                            ? theme.vars.palette.common.white
+                                                                            : theme.vars.palette.grey[300] + 75
                                                                 }}
                                                             >
                                                                 <img

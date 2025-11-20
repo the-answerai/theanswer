@@ -14,7 +14,7 @@ import { MessageFeedback, Document } from 'types'
 import ReactMarkdown from 'react-markdown'
 import Image from 'next/image'
 
-interface IFormInput extends Partial<MessageFeedback> {}
+type IFormInput = Partial<MessageFeedback>
 
 interface ModalProps {
     documents: Document[]

@@ -139,7 +139,7 @@ const Marketplace = () => {
             borderColor: borderColor
         },
         '& .MuiSvgIcon-root': {
-            color: isDarkMode ? '#fff' : 'inherit'
+            color: theme.vars.palette.text.primary
         }
     })
 
@@ -591,7 +591,7 @@ const Marketplace = () => {
                                             input={<OutlinedInput label='Tag' />}
                                             renderValue={(selected) => selected.join(', ')}
                                             MenuProps={MenuProps}
-                                            sx={getSelectStyles(theme.palette.grey[900] + 25, theme?.customization?.isDarkMode)}
+                                            sx={getSelectStyles(theme.vars.palette.grey[900] + 25, theme.palette.mode === 'dark')}
                                         >
                                             {badges.map((name) => (
                                                 <MenuItem
@@ -627,7 +627,7 @@ const Marketplace = () => {
                                             input={<OutlinedInput label='Type' />}
                                             renderValue={(selected) => selected.join(', ')}
                                             MenuProps={MenuProps}
-                                            sx={getSelectStyles(theme.palette.grey[900] + 25, theme?.customization?.isDarkMode)}
+                                            sx={getSelectStyles(theme.vars.palette.grey[900] + 25, theme.palette.mode === 'dark')}
                                         >
                                             {types.map((name) => (
                                                 <MenuItem
@@ -663,7 +663,7 @@ const Marketplace = () => {
                                             input={<OutlinedInput label='Framework' />}
                                             renderValue={(selected) => selected.join(', ')}
                                             MenuProps={MenuProps}
-                                            sx={getSelectStyles(theme.palette.grey[900] + 25, theme?.customization?.isDarkMode)}
+                                            sx={getSelectStyles(theme.vars.palette.grey[900] + 25, theme.palette.mode === 'dark')}
                                         >
                                             {framework.map((name) => (
                                                 <MenuItem
@@ -694,9 +694,9 @@ const Marketplace = () => {
                             >
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: theme.vars.palette.text.primary
                                     }}
                                     variant='contained'
                                     value='card'
@@ -706,9 +706,9 @@ const Marketplace = () => {
                                 </ToggleButton>
                                 <ToggleButton
                                     sx={{
-                                        borderColor: theme.palette.grey[900] + 25,
+                                        borderColor: theme.vars.palette.grey[900] + 25,
                                         borderRadius: 2,
-                                        color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                        color: theme.vars.palette.text.primary
                                     }}
                                     variant='contained'
                                     value='list'

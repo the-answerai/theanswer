@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment/moment'
 
 // material-ui
-import { Button, Stack, Grid, Box, Typography, IconButton, Stepper, Step, StepLabel } from '@mui/material'
+import { Button, Stack, Grid, Box, Typography, IconButton, Stepper, Step, StepLabel, useTheme } from '@mui/material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
@@ -61,6 +61,7 @@ const VectorStoreConfigure = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     useNotifier()
+    const theme = useTheme()
     const customization = useSelector((state) => state.customization)
 
     const { storeId, docId } = useParams()
@@ -527,17 +528,19 @@ const VectorStoreConfigure = () => {
                                                 fullWidth={true}
                                                 startIcon={<Embeddings style={{ background: 'transparent', height: 32, width: 32 }} />}
                                                 sx={{
-                                                    color: customization?.isDarkMode ? 'white' : 'inherit',
+                                                    color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
                                                     borderRadius: '10px',
                                                     minHeight: '200px',
                                                     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)',
-                                                    backgroundImage: customization?.isDarkMode
-                                                        ? `linear-gradient(to right, #e654bc, #4b86e7)`
-                                                        : `linear-gradient(to right, #fadef2, #cfdcf1)`,
+                                                    backgroundImage:
+                                                        theme.palette.mode === 'dark'
+                                                            ? `linear-gradient(to right, #e654bc, #4b86e7)`
+                                                            : `linear-gradient(to right, #fadef2, #cfdcf1)`,
                                                     '&:hover': {
-                                                        backgroundImage: customization?.isDarkMode
-                                                            ? `linear-gradient(to right, #de32ac, #2d73e7)`
-                                                            : `linear-gradient(to right, #f6c2e7, #b4cbf1)`
+                                                        backgroundImage:
+                                                            theme.palette.mode === 'dark'
+                                                                ? `linear-gradient(to right, #de32ac, #2d73e7)`
+                                                                : `linear-gradient(to right, #f6c2e7, #b4cbf1)`
                                                     }
                                                 }}
                                             >
@@ -638,18 +641,20 @@ const VectorStoreConfigure = () => {
                                                 fullWidth={true}
                                                 startIcon={<Storage style={{ background: 'transparent', height: 32, width: 32 }} />}
                                                 sx={{
-                                                    color: customization?.isDarkMode ? 'white' : 'inherit',
+                                                    color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
                                                     borderRadius: '10px',
                                                     minHeight: '200px',
                                                     opacity: isVectorStoreDisabled() ? 0.7 : 1,
                                                     boxShadow: isVectorStoreDisabled() ? 'none' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
-                                                    backgroundImage: customization?.isDarkMode
-                                                        ? `linear-gradient(to right, #4d8ef1, #f1de5c)`
-                                                        : `linear-gradient(to right, #b9d0f4, #fef9d7)`,
+                                                    backgroundImage:
+                                                        theme.palette.mode === 'dark'
+                                                            ? `linear-gradient(to right, #4d8ef1, #f1de5c)`
+                                                            : `linear-gradient(to right, #b9d0f4, #fef9d7)`,
                                                     '&:hover': {
-                                                        backgroundImage: customization?.isDarkMode
-                                                            ? `linear-gradient(to right, #2576f2, #f0d72e)`
-                                                            : `linear-gradient(to right, #9cbdf2, #fcf3b6)`
+                                                        backgroundImage:
+                                                            theme.palette.mode === 'dark'
+                                                                ? `linear-gradient(to right, #2576f2, #f0d72e)`
+                                                                : `linear-gradient(to right, #9cbdf2, #fcf3b6)`
                                                     }
                                                 }}
                                                 disabled={isVectorStoreDisabled()}
@@ -759,18 +764,20 @@ const VectorStoreConfigure = () => {
                                                     )
                                                 }
                                                 sx={{
-                                                    color: customization?.isDarkMode ? 'white' : 'inherit',
+                                                    color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
                                                     borderRadius: '10px',
                                                     minHeight: '200px',
                                                     opacity: isRecordManagerDisabled() ? 0.7 : 1,
                                                     boxShadow: isRecordManagerDisabled() ? 'none' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
-                                                    backgroundImage: customization?.isDarkMode
-                                                        ? `linear-gradient(to right, #f5db3f, #42daa7)`
-                                                        : `linear-gradient(to right, #f9f1c0, #c7f1e3)`,
+                                                    backgroundImage:
+                                                        theme.palette.mode === 'dark'
+                                                            ? `linear-gradient(to right, #f5db3f, #42daa7)`
+                                                            : `linear-gradient(to right, #f9f1c0, #c7f1e3)`,
                                                     '&:hover': {
-                                                        backgroundImage: customization?.isDarkMode
-                                                            ? `linear-gradient(to right, #d9c238, #3dc295)`
-                                                            : `linear-gradient(to right, #f6e99b, #a0f2d7)`
+                                                        backgroundImage:
+                                                            theme.palette.mode === 'dark'
+                                                                ? `linear-gradient(to right, #d9c238, #3dc295)`
+                                                                : `linear-gradient(to right, #f6e99b, #a0f2d7)`
                                                     }
                                                 }}
                                                 disabled={isRecordManagerDisabled()}

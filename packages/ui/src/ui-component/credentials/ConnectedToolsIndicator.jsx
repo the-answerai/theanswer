@@ -1,7 +1,7 @@
 import { Box, Avatar, Tooltip } from '@mui/material'
 import { IconCheck } from '@tabler/icons-react'
 import { useTheme } from '@mui/material/styles'
-import { useSelector } from 'react-redux'
+import { useState } from 'react'
 import PropTypes from 'prop-types'
 import { baseURL } from '@/store/constant'
 import { getGlassStyle } from './glassmorphismStyles'
@@ -12,8 +12,9 @@ import { getGlassStyle } from './glassmorphismStyles'
  */
 const ConnectedToolsIndicator = ({ credentials = [], flowData = null, onClick }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
-    const isDarkMode = customization.isDarkMode
+    // Use theme.palette.mode directly - it's always in sync with color scheme changes
+    const isDarkMode = theme.palette.mode === 'dark'
+    const [imageErrors, setImageErrors] = useState({})
 
     // Extract all items to display: chat models, tools, and credentials
     const extractDisplayItems = () => {
@@ -162,43 +163,46 @@ const ConnectedToolsIndicator = ({ credentials = [], flowData = null, onClick })
                                         height: 28,
                                         borderRadius: '50%',
                                         border: `2px solid ${theme.palette.background.paper}`,
-                                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                        bgcolor: imageErrors[item.icon] ? theme.palette.primary.main : 'rgba(255, 255, 255, 0.9)',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                                         transition: 'transform 0.2s ease',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         overflow: 'hidden',
+                                        fontSize: imageErrors[item.icon] ? '0.65rem' : 'inherit',
+                                        fontWeight: imageErrors[item.icon] ? 600 : 'inherit',
+                                        color: imageErrors[item.icon] ? theme.palette.primary.contrastText : theme.palette.text.primary,
                                         '&:hover': {
                                             transform: 'scale(1.1)',
                                             zIndex: visibleItems.length + 1
                                         }
                                     }}
                                 >
-                                    <img
-                                        src={iconUrl}
-                                        alt={item.label}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            padding: '4px',
-                                            objectFit: 'contain'
-                                        }}
-                                        onError={(e) => {
-                                            // Fallback to initials on error
-                                            e.target.style.display = 'none'
-                                            const parent = e.target.parentElement
-                                            parent.style.fontSize = '0.65rem'
-                                            parent.style.fontWeight = '600'
-                                            parent.style.color = theme.palette.text.primary
-                                            parent.innerHTML = item.label
-                                                .split(' ')
-                                                .map((word) => word[0])
-                                                .join('')
-                                                .toUpperCase()
-                                                .slice(0, 2)
-                                        }}
-                                    />
+                                    {imageErrors[item.icon] ? (
+                                        // Show initials fallback
+                                        item.label
+                                            .split(' ')
+                                            .map((word) => word[0])
+                                            .join('')
+                                            .toUpperCase()
+                                            .slice(0, 2)
+                                    ) : (
+                                        <img
+                                            src={iconUrl}
+                                            alt={item.label}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                padding: '4px',
+                                                objectFit: 'contain'
+                                            }}
+                                            onError={() => {
+                                                // Fallback to initials on error (React way)
+                                                setImageErrors((prev) => ({ ...prev, [item.icon]: true }))
+                                            }}
+                                        />
+                                    )}
                                 </Box>
 
                                 {/* Green checkmark indicator for connected items */}

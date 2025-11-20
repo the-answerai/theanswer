@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { usePathname } from 'next/navigation'
 
-import { styled, alpha } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import Typography from '@mui/material/Typography'
@@ -97,12 +97,7 @@ export default function SettingsDrawer({ settings = DEFAULT_SETTINGS, chats }: S
                 sx={{
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        background: (theme) =>
-                            `linear-gradient(0deg, ${alpha(theme.palette.background.paper, 0)} 10%,  ${alpha(
-                                theme.palette.background.paper,
-                                1
-                            )} )`,
-                        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+                        // REFINED: Removed custom background gradient - now uses glassPrimary from theme via openedMixin/closedMixin
                         position: 'absolute',
                         boxSizing: 'border-box'
                     },

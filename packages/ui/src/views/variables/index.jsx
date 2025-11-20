@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 import moment from 'moment'
 
@@ -50,12 +51,11 @@ import useNotifier from '@/utils/useNotifier'
 // Icons
 import { IconTrash, IconEdit, IconX, IconPlus, IconVariable } from '@tabler/icons-react'
 import VariablesEmptySVG from '@/assets/images/variables_empty.svg'
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -74,7 +74,7 @@ const StyledTableRow = styled(TableRow)(() => ({
 
 const Variables = () => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
     useNotifier()
 
@@ -261,15 +261,14 @@ const Variables = () => {
                             </Stack>
                         ) : (
                             <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                 component={Paper}
                             >
                                 <Table sx={{ minWidth: 650 }} aria-label='simple table'>
                                     <TableHead
                                         sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
+                                            backgroundColor:
+                                                mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                             height: 56
                                         }}
                                     >

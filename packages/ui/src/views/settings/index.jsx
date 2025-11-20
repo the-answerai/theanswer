@@ -86,7 +86,7 @@ const Settings = ({ chatflow, isSettingsOpen, isCustomAssistant, anchorEl, isAge
             <ListItemButton
                 key={menu.id}
                 sx={{
-                    borderRadius: `${customization.borderRadius}px`,
+                    borderRadius: 'var(--border-radius)',
                     mb: 0.5,
                     alignItems: 'flex-start',
                     py: 1.25,

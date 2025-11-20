@@ -2,10 +2,10 @@ import Box from '@mui/material/Box'
 import PropTypes from 'prop-types'
 import { Chip } from '@mui/material'
 import './StarterPromptsCard.css'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 
 const FollowUpPromptsCard = ({ isGrid, followUpPrompts, sx, onPromptClick }) => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     return (
         <Box
@@ -26,7 +26,7 @@ const FollowUpPromptsCard = ({ isGrid, followUpPrompts, sx, onPromptClick }) => 
                             color: '#2196f3',
                             transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
                             '&:hover': {
-                                backgroundColor: customization.isDarkMode ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.05)',
+                                backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.05)',
                                 border: '1px solid'
                             }
                         }}

@@ -1,7 +1,8 @@
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 import { cloneDeep } from 'lodash'
 
@@ -47,7 +48,6 @@ import { generateRandomGradient, formatDataGridRows } from '@/utils/genericHelpe
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import ExportAsTemplateDialog from '@/ui-component/dialog/ExportAsTemplateDialog'
 import usePermissions from '@/hooks/usePermissions'
-
 const exampleAPIFunc = `/*
 * You can use any libraries imported in AnswerAI
 * You can use properties specified in Input Schema as variables. Ex: Property = userid, Variable = $userid
@@ -78,7 +78,7 @@ const TOOL_VISIBILITY_OPTIONS = ['Private', 'Organization']
 const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, setError }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
 
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
 
     // ==============================|| Snackbar ||============================== //
@@ -625,7 +625,7 @@ const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, set
                         <CodeEditor
                             disabled={dialogProps.type === 'TEMPLATE'}
                             value={toolFunc}
-                            theme={customization.isDarkMode ? 'dark' : 'light'}
+                            theme={mode === 'dark' ? 'dark' : 'light'}
                             lang={'js'}
                             onValueChange={(code) => setToolFunc(code)}
                         />

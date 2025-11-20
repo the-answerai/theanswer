@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import { useState } from 'react'
-import { useSelector } from 'react-redux'
-
+import { useThemeMode } from '@ui/theme'
 // material-ui
 import { Box, Typography, IconButton, Button } from '@mui/material'
 import { IconRefresh, IconArrowsMaximize, IconAlertTriangle } from '@tabler/icons-react'
@@ -26,7 +25,6 @@ import { GmailLabelPicker } from '@/ui-component/gmail/GmailLabelPicker'
 // const
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
-
 // ===========================|| DocStoreInputHandler ||=========================== //
 
 const DocStoreInputHandler = ({
@@ -38,7 +36,7 @@ const DocStoreInputHandler = ({
     selectedCredentialData,
     handleCredentialDataChange
 }) => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const [showExpandDialog, setShowExpandDialog] = useState(false)
     const [expandDialogProps, setExpandDialogProps] = useState({})
@@ -177,7 +175,7 @@ const DocStoreInputHandler = ({
                                 onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
                                 value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
                                 nodeData={data}
-                                isDarkMode={customization.isDarkMode}
+                                isDarkMode={mode === 'dark'}
                             />
                         )}
                         {inputParam.type === 'file' && (
@@ -212,7 +210,7 @@ const DocStoreInputHandler = ({
                                         disabled={disabled}
                                         value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
                                         height={inputParam.rows ? '100px' : '200px'}
-                                        theme={customization.isDarkMode ? 'dark' : 'light'}
+                                        theme={mode === 'dark' ? 'dark' : 'light'}
                                         lang={'js'}
                                         placeholder={inputParam.placeholder}
                                         onValueChange={(code) => (data.inputs[inputParam.name] = code)}
@@ -237,7 +235,7 @@ const DocStoreInputHandler = ({
                                 disabled={disabled}
                                 onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
                                 value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
-                                isDarkMode={customization.isDarkMode}
+                                isDarkMode={mode === 'dark'}
                             />
                         )}
                         {inputParam.type === 'options' && (

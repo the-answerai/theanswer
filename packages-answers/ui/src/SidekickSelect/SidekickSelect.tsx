@@ -27,7 +27,7 @@ import { useUser } from '@auth0/nextjs-auth0/client'
 import { useAnswers } from '../AnswersContext'
 import { useNavigate } from '@/utils/navigation'
 import dynamic from 'next/dynamic'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 
 import { StyledDialog } from './StyledComponents'
 import { Sidekick } from './SidekickSelect.types'
@@ -73,11 +73,8 @@ const SimpleSidekickCard: React.FC<{
                 borderRadius: 3,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
-                    theme.palette.background.paper,
-                    0.95
-                )})`,
+                border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.1)`,
+                background: `linear-gradient(145deg, rgba(${theme.vars.palette.background.paperChannel} / 0.9), rgba(${theme.vars.palette.background.paperChannel} / 0.95))`,
                 backdropFilter: 'blur(10px)',
                 position: 'relative',
                 overflow: 'visible',
@@ -85,8 +82,8 @@ const SimpleSidekickCard: React.FC<{
                 minHeight: 140,
                 '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                    boxShadow: `0 8px 32px rgba(${theme.vars.palette.primary.mainChannel} / 0.2)`,
+                    border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.3)`
                 },
                 '&:active': {
                     transform: 'translateY(-2px)'
@@ -109,17 +106,17 @@ const SimpleSidekickCard: React.FC<{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: alpha(theme.palette.background.default, 0.8),
+                        bgcolor: `rgba(${theme.vars.palette.background.defaultChannel} / 0.8)`,
                         '&:hover': {
-                            bgcolor: alpha(theme.palette.background.default, 0.9)
+                            bgcolor: `rgba(${theme.vars.palette.background.defaultChannel} / 0.9)`
                         }
                     }}
                     onClick={(e) => toggleFavorite(sidekick, e)}
                 >
                     {isFavorite ? (
-                        <StarIcon sx={{ fontSize: 18, color: theme.palette.warning.main }} />
+                        <StarIcon sx={{ fontSize: 18, color: theme.vars.palette.warning.main }} />
                     ) : (
-                        <StarBorderIcon sx={{ fontSize: 18, color: theme.palette.text.secondary }} />
+                        <StarBorderIcon sx={{ fontSize: 18, color: theme.vars.palette.text.secondary }} />
                     )}
                 </Box>
 
@@ -131,8 +128,8 @@ const SimpleSidekickCard: React.FC<{
                             height: 40,
                             fontSize: '1rem',
                             fontWeight: 600,
-                            bgcolor: theme.palette.primary.main,
-                            color: theme.palette.primary.contrastText,
+                            bgcolor: theme.vars.palette.primary.main,
+                            color: theme.vars.palette.primary.contrastText,
                             mr: 2
                         }}
                     >
@@ -143,7 +140,7 @@ const SimpleSidekickCard: React.FC<{
                             variant='h6'
                             sx={{
                                 fontWeight: 600,
-                                color: theme.palette.text.primary,
+                                color: theme.vars.palette.text.primary,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -160,7 +157,7 @@ const SimpleSidekickCard: React.FC<{
                 <Typography
                     variant='body2'
                     sx={{
-                        color: theme.palette.text.secondary,
+                        color: theme.vars.palette.text.secondary,
                         fontSize: '0.875rem',
                         lineHeight: 1.4,
                         flex: 1,
@@ -183,9 +180,9 @@ const SimpleSidekickCard: React.FC<{
                             sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: alpha(theme.palette.success.main, 0.1),
-                                color: theme.palette.success.main,
-                                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                                bgcolor: `rgba(${theme.vars.palette.success.mainChannel} / 0.1)`,
+                                color: theme.vars.palette.success.main,
+                                border: `1px solid rgba(${theme.vars.palette.success.mainChannel} / 0.2)`,
                                 '& .MuiChip-label': { px: 1.5 }
                             }}
                         />
@@ -198,9 +195,9 @@ const SimpleSidekickCard: React.FC<{
                             sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                bgcolor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.1)`,
+                                color: theme.vars.palette.primary.main,
+                                border: `1px solid rgba(${theme.vars.palette.primary.mainChannel} / 0.2)`,
                                 '& .MuiChip-label': { px: 1.5 }
                             }}
                         />
@@ -212,9 +209,9 @@ const SimpleSidekickCard: React.FC<{
                             sx={{
                                 height: 24,
                                 fontSize: '0.75rem',
-                                bgcolor: alpha(theme.palette.text.secondary, 0.1),
-                                color: theme.palette.text.secondary,
-                                border: `1px solid ${alpha(theme.palette.text.secondary, 0.2)}`,
+                                bgcolor: `rgba(${theme.vars.palette.text.secondaryChannel} / 0.1)`,
+                                color: theme.vars.palette.text.secondary,
+                                border: `1px solid rgba(${theme.vars.palette.text.secondaryChannel} / 0.2)`,
                                 '& .MuiChip-label': { px: 1.5 }
                             }}
                         />
@@ -332,7 +329,7 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
             <Container maxWidth='lg' sx={{ py: 4 }}>
                 {/* Header - Simplified */}
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Typography variant='body1' sx={{ color: theme.palette.text.secondary, mb: 3 }}>
+                    <Typography variant='body1' sx={{ color: theme.vars.palette.text.secondary, mb: 3 }}>
                         Select from your personal sidekicks or explore more in the marketplace
                     </Typography>
 
@@ -347,9 +344,9 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
                                 py: 1,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                                background: `linear-gradient(45deg, ${theme.vars.palette.primary.main}, ${theme.vars.palette.primary.dark})`,
                                 '&:hover': {
-                                    background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                                    background: `linear-gradient(45deg, ${theme.vars.palette.primary.dark}, ${theme.vars.palette.primary.main})`,
                                     transform: 'translateY(-1px)'
                                 }
                             }}
@@ -367,11 +364,11 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
                                 py: 1,
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                borderColor: theme.palette.primary.main,
-                                color: theme.palette.primary.main,
+                                borderColor: theme.vars.palette.primary.main,
+                                color: theme.vars.palette.primary.main,
                                 '&:hover': {
-                                    borderColor: theme.palette.primary.dark,
-                                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                                    borderColor: theme.vars.palette.primary.dark,
+                                    backgroundColor: `rgba(${theme.vars.palette.primary.mainChannel} / 0.04)`,
                                     transform: 'translateY(-1px)'
                                 }
                             }}
@@ -391,8 +388,10 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
                     <>
                         {/* Personal Sidekicks */}
                         {personal.length > 0 && (
-                            <Paper sx={{ p: 3, mb: 3, borderRadius: 3, bgcolor: alpha(theme.palette.background.paper, 0.6) }}>
-                                <Typography variant='h6' sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.primary }}>
+                            <Paper
+                                sx={{ p: 3, mb: 3, borderRadius: 3, bgcolor: `rgba(${theme.vars.palette.background.paperChannel} / 0.6)` }}
+                            >
+                                <Typography variant='h6' sx={{ fontWeight: 600, mb: 2, color: theme.vars.palette.text.primary }}>
                                     Your Sidekicks ({personal.length})
                                 </Typography>
                                 <Grid container spacing={2}>
@@ -416,7 +415,7 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
                                 <Typography variant='h6' sx={{ mb: 2 }}>
                                     No sidekicks yet
                                 </Typography>
-                                <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 3 }}>
+                                <Typography variant='body2' sx={{ color: theme.vars.palette.text.secondary, mb: 3 }}>
                                     Create your first AI sidekick or explore the marketplace for templates
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>

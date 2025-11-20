@@ -45,29 +45,29 @@ const StyledEditorContent = styled(EditorContent)(({ theme, rows }) => ({
         overflowX: rows ? 'auto' : 'hidden',
         lineHeight: rows ? '1.4375em' : '0.875em',
         fontWeight: 500,
-        color: theme.palette.grey[900],
-        border: `1px solid ${theme.palette.grey[900] + 25}`,
+        color: theme.vars.palette.grey[900],
+        border: `1px solid ${theme.vars.palette.grey[900] + 25}`,
         borderRadius: '10px',
-        backgroundColor: theme.palette.textBackground.main,
+        backgroundColor: theme.vars.palette.textBackground.main,
         boxSizing: 'border-box',
         whiteSpace: rows ? 'pre-wrap' : 'nowrap',
         '&:hover': {
-            borderColor: theme.palette.text.primary,
+            borderColor: theme.vars.palette.text.primary,
             cursor: 'text'
         },
         '&:focus': {
-            borderColor: theme.palette.primary.main,
+            borderColor: theme.vars.palette.primary.main,
             outline: 'none'
         },
         '&[disabled]': {
-            backgroundColor: theme.palette.action.disabledBackground,
-            color: theme.palette.action.disabled
+            backgroundColor: theme.vars.palette.action.disabledBackground,
+            color: theme.vars.palette.action.disabled
         },
         // Placeholder for first paragraph when editor is empty
         '& p.is-editor-empty:first-of-type::before': {
             content: 'attr(data-placeholder)',
             float: 'left',
-            color: theme.palette.text.primary,
+            color: theme.vars.palette.text.primary,
             opacity: 0.4,
             pointerEvents: 'none',
             height: 0

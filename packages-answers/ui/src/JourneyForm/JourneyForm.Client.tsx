@@ -173,7 +173,7 @@ const JourneyForm = ({ appSettings, journey }: { appSettings: AppSettings; journ
                         right: 0,
                         width: '100%',
                         zIndex: 1000,
-                        background: (theme) => theme.palette.background.paper
+                        background: (theme) => theme.vars.palette.background.paper
                     }}
                 >
                     {journey ? (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, Fragment } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 import client from '../../api/client'
 // Material
@@ -14,7 +14,6 @@ import credentialsApi from '@/api/credentials'
 import { baseURL } from '@/store/constant'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { getAvailableNodesForVariable } from '@/utils/genericHelper'
-
 const StyledPopper = styled(Popper)({
     boxShadow: '0px 8px 10px -5px rgb(0 0 0 / 20%), 0px 16px 24px 2px rgb(0 0 0 / 14%), 0px 6px 30px 5px rgb(0 0 0 / 12%)',
     borderRadius: '10px',
@@ -64,7 +63,7 @@ export const AsyncDropdown = ({
     disableClearable = false,
     multiple = false
 }) => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const theme = useTheme()
 
     const [open, setOpen] = useState(false)
@@ -150,6 +149,13 @@ export const AsyncDropdown = ({
 
                     response = await fetchList(body)
                 }
+
+                // CRITICAL FIX: Ensure response is always an array to prevent "Cannot read properties of undefined"
+                // If fetchList or fetchCredentialList returns null/undefined, default to empty array
+                if (!response || !Array.isArray(response)) {
+                    response = []
+                }
+
                 for (let j = 0; j < response.length; j += 1) {
                     if (response[j].imageSrc) {
                         const imageSrc = `${baseURL}/api/v1/node-icon/${response[j].name}`
@@ -220,7 +226,7 @@ export const AsyncDropdown = ({
                                 '& .MuiInputBase-root': {
                                     height: '100%',
                                     '& fieldset': {
-                                        borderColor: theme.palette.grey[900] + 25
+                                        borderColor: theme.vars.palette.grey[900] + 25
                                     }
                                 }
                             }}
@@ -274,7 +280,7 @@ export const AsyncDropdown = ({
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <Typography variant='h5'>{option.label}</Typography>
                             {option.description && (
-                                <Typography sx={{ color: customization.isDarkMode ? '#9e9e9e' : '' }}>{option.description}</Typography>
+                                <Typography sx={{ color: mode === 'dark' ? '#9e9e9e' : '' }}>{option.description}</Typography>
                             )}
                         </div>
                     </Box>

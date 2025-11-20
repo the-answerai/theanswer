@@ -157,7 +157,7 @@ const APIKeyDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) => {
                                 sx={{
                                     p: 1,
                                     borderRadius: 10,
-                                    backgroundColor: theme.palette.primary.light,
+                                    backgroundColor: theme.vars.palette.primary.light,
                                     width: 'max-content',
                                     height: 'max-content'
                                 }}
@@ -191,7 +191,7 @@ const APIKeyDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) => {
                                     horizontal: 'left'
                                 }}
                             >
-                                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.palette.success.dark }}>
+                                <Typography variant='h6' sx={{ pl: 1, pr: 1, color: 'white', background: theme.vars.palette.success.dark }}>
                                     Copied!
                                 </Typography>
                             </Popover>

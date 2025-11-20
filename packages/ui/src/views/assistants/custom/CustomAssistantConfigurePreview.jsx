@@ -852,11 +852,11 @@ const CustomAssistantConfigurePreview = () => {
                                                                 ...theme.typography.commonAvatar,
                                                                 ...theme.typography.mediumAvatar,
                                                                 transition: 'all .2s ease-in-out',
-                                                                background: theme.palette.canvasHeader.deployLight,
-                                                                color: theme.palette.canvasHeader.deployDark,
+                                                                background: theme.vars.palette.canvasHeader.deployLight,
+                                                                color: theme.vars.palette.canvasHeader.deployDark,
                                                                 '&:hover': {
-                                                                    background: theme.palette.canvasHeader.deployDark,
-                                                                    color: theme.palette.canvasHeader.deployLight
+                                                                    background: theme.vars.palette.canvasHeader.deployDark,
+                                                                    color: theme.vars.palette.canvasHeader.deployLight
                                                                 }
                                                             }}
                                                             color='inherit'
@@ -873,11 +873,11 @@ const CustomAssistantConfigurePreview = () => {
                                                             ...theme.typography.commonAvatar,
                                                             ...theme.typography.mediumAvatar,
                                                             transition: 'all .2s ease-in-out',
-                                                            background: theme.palette.canvasHeader.saveLight,
-                                                            color: theme.palette.canvasHeader.saveDark,
+                                                            background: theme.vars.palette.canvasHeader.saveLight,
+                                                            color: theme.vars.palette.canvasHeader.saveDark,
                                                             '&:hover': {
-                                                                background: theme.palette.canvasHeader.saveDark,
-                                                                color: theme.palette.canvasHeader.saveLight
+                                                                background: theme.vars.palette.canvasHeader.saveDark,
+                                                                color: theme.vars.palette.canvasHeader.saveLight
                                                             }
                                                         }}
                                                         color='inherit'
@@ -894,11 +894,11 @@ const CustomAssistantConfigurePreview = () => {
                                                                 ...theme.typography.commonAvatar,
                                                                 ...theme.typography.mediumAvatar,
                                                                 transition: 'all .2s ease-in-out',
-                                                                background: theme.palette.canvasHeader.settingsLight,
-                                                                color: theme.palette.canvasHeader.settingsDark,
+                                                                background: theme.vars.palette.canvasHeader.settingsLight,
+                                                                color: theme.vars.palette.canvasHeader.settingsDark,
                                                                 '&:hover': {
-                                                                    background: theme.palette.canvasHeader.settingsDark,
-                                                                    color: theme.palette.canvasHeader.settingsLight
+                                                                    background: theme.vars.palette.canvasHeader.settingsDark,
+                                                                    color: theme.vars.palette.canvasHeader.settingsLight
                                                                 }
                                                             }}
                                                             onClick={() => setSettingsOpen(!isSettingsOpen)}
@@ -915,11 +915,11 @@ const CustomAssistantConfigurePreview = () => {
                                                                 ...theme.typography.commonAvatar,
                                                                 ...theme.typography.mediumAvatar,
                                                                 transition: 'all .2s ease-in-out',
-                                                                background: theme.palette.error.light,
-                                                                color: theme.palette.error.dark,
+                                                                background: theme.vars.palette.error.light,
+                                                                color: theme.vars.palette.error.dark,
                                                                 '&:hover': {
-                                                                    background: theme.palette.error.dark,
-                                                                    color: theme.palette.error.light
+                                                                    background: theme.vars.palette.error.dark,
+                                                                    color: theme.vars.palette.error.light
                                                                 }
                                                             }}
                                                             onClick={handleDeleteFlow}
@@ -936,7 +936,7 @@ const CustomAssistantConfigurePreview = () => {
                                                 mt: 1,
                                                 mb: 1,
                                                 border: 1,
-                                                borderColor: theme.palette.grey[900] + 25,
+                                                borderColor: theme.vars.palette.grey[900] + 25,
                                                 borderRadius: 2
                                             }}
                                         >
@@ -973,7 +973,7 @@ const CustomAssistantConfigurePreview = () => {
                                                 mt: 1,
                                                 mb: 1,
                                                 border: 1,
-                                                borderColor: theme.palette.grey[900] + 25,
+                                                borderColor: theme.vars.palette.grey[900] + 25,
                                                 borderRadius: 2
                                             }}
                                         >
@@ -1022,7 +1022,7 @@ const CustomAssistantConfigurePreview = () => {
                                                 mt: 1,
                                                 mb: 1,
                                                 border: 1,
-                                                borderColor: theme.palette.grey[900] + 25,
+                                                borderColor: theme.vars.palette.grey[900] + 25,
                                                 borderRadius: 2
                                             }}
                                         >
@@ -1117,7 +1117,7 @@ const CustomAssistantConfigurePreview = () => {
                                                     mt: 1,
                                                     mb: 1,
                                                     border: 1,
-                                                    borderColor: theme.palette.grey[900] + 25,
+                                                    borderColor: theme.vars.palette.grey[900] + 25,
                                                     borderRadius: 2
                                                 }}
                                             >
@@ -1138,7 +1138,7 @@ const CustomAssistantConfigurePreview = () => {
                                                 mt: 1,
                                                 mb: 1,
                                                 border: 1,
-                                                borderColor: theme.palette.grey[900] + 25,
+                                                borderColor: theme.vars.palette.grey[900] + 25,
                                                 borderRadius: 2
                                             }}
                                         >
@@ -1151,7 +1151,7 @@ const CustomAssistantConfigurePreview = () => {
                                                     <Box
                                                         sx={{
                                                             border: 1,
-                                                            borderColor: theme.palette.grey[900] + 25,
+                                                            borderColor: theme.vars.palette.grey[900] + 25,
                                                             borderRadius: 2,
                                                             mt: 2,
                                                             mb: 2
@@ -1257,7 +1257,7 @@ const CustomAssistantConfigurePreview = () => {
                                 {customAssistantFlowId && !loadingAssistant && (
                                     <Grid item xs={12} md={6} lg={6} sm={6}>
                                         <Box sx={{ mt: 2 }}>
-                                            {customization.isDarkMode && (
+                                            {mode === 'dark' && (
                                                 <MemoizedFullPageChat
                                                     chatflowid={customAssistantFlowId}
                                                     chatflow={canvas.chatflow}
@@ -1292,7 +1292,7 @@ const CustomAssistantConfigurePreview = () => {
                                                     }}
                                                 />
                                             )}
-                                            {!customization.isDarkMode && (
+                                            {mode !== 'dark' && (
                                                 <MemoizedFullPageChat
                                                     chatflowid={customAssistantFlowId}
                                                     chatflow={canvas.chatflow}

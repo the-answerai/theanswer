@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 // material-ui
@@ -25,7 +25,6 @@ import { IconX, IconPlus } from '@tabler/icons-react'
 
 // project imports
 import CredentialLogo from '@/ui-component/credentials/CredentialLogo'
-import { getGlassStyle } from '@/ui-component/credentials/glassmorphismStyles'
 import AddEditCredentialDialog from '@/views/credentials/AddEditCredentialDialog'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 import {
@@ -40,14 +39,14 @@ import credentialsApi from '@/api/credentials'
 
 // Hooks
 import useConfirm from '@/hooks/useConfirm'
-import { useSelector } from 'react-redux'
-
 // ==============================|| UnifiedCredentialsModal ||============================== //
 
 const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, onCancel, onError, initialDontShowAgain = false }) => {
     const { confirm } = useConfirm()
-    const customization = useSelector((state) => state.customization)
-    const isDarkMode = customization.isDarkMode
+
+    // Track mounted state to prevent updates during unmount
+    const mountedRef = useRef(true)
+    const [isMounted, setIsMounted] = useState(false)
 
     const [credentialAssignments, setCredentialAssignments] = useState({})
     const [availableCredentials, setAvailableCredentials] = useState({})
@@ -97,6 +96,17 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
         return { groupKey: null, componentName: credentialName }
     }
+
+    // Cleanup effect to track component mount state
+    useEffect(() => {
+        mountedRef.current = true
+        setIsMounted(true) // Set to true on mount to allow dialog to render
+
+        return () => {
+            mountedRef.current = false
+            // Don't set isMounted(false) here to prevent state updates during unmount
+        }
+    }, [])
 
     // Load available credentials when modal opens
     useEffect(() => {
@@ -207,6 +217,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }, [show, initialDontShowAgain])
 
     const handleCredentialChange = (nodeId, credentialId) => {
+        if (!mountedRef.current) return
         setCredentialAssignments((prev) => ({
             ...prev,
             [nodeId]: credentialId
@@ -362,6 +373,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     }
 
     const toggleCredentialExpanded = (groupKey) => {
+        if (!mountedRef.current) return
         setExpandedCredentials((prev) => ({
             ...prev,
             [groupKey]: !prev[groupKey]
@@ -391,21 +403,29 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             <Box
                 key={groupKey}
                 onClick={() => isConnected && toggleCredentialExpanded(groupKey)}
-                sx={{
-                    ...getGlassStyle('credentialCard', isDarkMode),
+                sx={(theme) => ({
+                    // Use theme glass tokens for proper light/dark mode support
+                    background: theme.vars?.palette?.glass?.glassSecondary?.background || 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: theme.vars?.palette?.glass?.glassSecondary?.backdropFilter || 'blur(16px)',
+                    WebkitBackdropFilter: theme.vars?.palette?.glass?.glassSecondary?.WebkitBackdropFilter || 'blur(16px)',
+                    border: theme.vars?.palette?.glass?.glassSecondary?.border || '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '12px',
+                    boxShadow: theme.vars?.palette?.glass?.glassSecondary?.boxShadow || '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    padding: 2,
+                    transition: theme.vars?.palette?.glass?.transition || 'all 0.2s ease',
+
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 1,
                     cursor: isConnected ? 'pointer' : 'default',
-                    transition: 'all 0.2s ease',
                     '&:hover': isConnected
                         ? {
-                              transform: 'translateY(-2px)',
-                              boxShadow: '0 8px 24px 0 rgba(0, 0, 0, 0.2)'
+                              transform: theme.vars?.palette?.glass?.glassHover?.transform || 'translateY(-2px)',
+                              boxShadow: theme.vars?.palette?.glass?.glassHover?.boxShadow || '0 8px 24px 0 rgba(0, 0, 0, 0.2)'
                           }
                         : {}
-                }}
+                })}
             >
                 {/* Logo with status indicator */}
                 <Box>
@@ -580,211 +600,220 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     const hasOptional = organizedCredentials.optional?.length > 0
     const hasConnected = organizedCredentials.connected?.length > 0
 
-    const component = (
-        <Dialog
-            open={show}
-            onClose={handleCancel}
-            maxWidth='md'
-            fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 2,
-                    bgcolor: 'background.paper',
-                    backgroundImage: 'none',
-                    maxHeight: '90vh'
-                }
-            }}
-        >
-            <DialogTitle
-                sx={{
-                    pb: 3,
-                    pt: 4,
-                    px: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderBottom: '2px solid',
-                    borderColor: 'secondary.light'
+    // Render dialogs as siblings to prevent nesting issues
+    return (
+        <>
+            <Dialog
+                open={show && isMounted}
+                onClose={handleCancel}
+                maxWidth='md'
+                fullWidth
+                keepMounted={true}
+                disablePortal={false}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        backgroundImage: 'none',
+                        maxHeight: '90vh'
+                    }
                 }}
             >
-                <Typography
-                    variant='h4'
+                <DialogTitle
                     sx={{
-                        fontWeight: 700,
-                        fontSize: '1.75rem',
-                        letterSpacing: '-0.02em'
+                        pb: 3,
+                        pt: 4,
+                        px: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: '2px solid',
+                        borderColor: 'secondary.light'
                     }}
                 >
-                    {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
-                </Typography>
-                <IconButton
-                    onClick={handleCancel}
-                    size='small'
-                    sx={{
-                        color: 'text.secondary',
-                        '&:hover': {
-                            bgcolor: 'action.hover',
-                            color: 'text.primary'
-                        }
-                    }}
-                >
-                    <IconX />
-                </IconButton>
-            </DialogTitle>
+                    <Typography
+                        component='span'
+                        variant='h4'
+                        sx={{
+                            fontWeight: 700,
+                            fontSize: '1.75rem',
+                            letterSpacing: '-0.02em'
+                        }}
+                    >
+                        {isQuickSetupMode ? 'Manage Credentials' : 'Setup Required Credentials'}
+                    </Typography>
+                    <IconButton
+                        onClick={handleCancel}
+                        size='small'
+                        sx={{
+                            color: 'text.secondary',
+                            '&:hover': {
+                                bgcolor: 'action.hover',
+                                color: 'text.primary'
+                            }
+                        }}
+                    >
+                        <IconX />
+                    </IconButton>
+                </DialogTitle>
 
-            <DialogContent sx={{ p: 3, maxHeight: '60vh', bgcolor: 'background.default', overflow: 'auto' }}>
-                {loading ? (
-                    <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
-                        <CircularProgress color='secondary' />
-                        <Typography sx={{ ml: 2 }}>Loading credentials...</Typography>
-                    </Box>
-                ) : (
-                    <Stack spacing={2.5}>
-                        {/* Required Section */}
-                        {hasRequired && (
-                            <Box>
-                                <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Box>
+                <DialogContent sx={{ p: 3, maxHeight: '60vh', bgcolor: 'background.default', overflow: 'auto' }}>
+                    {loading ? (
+                        <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
+                            <CircularProgress color='secondary' />
+                            <Typography sx={{ ml: 2 }}>Loading credentials...</Typography>
+                        </Box>
+                    ) : (
+                        <Stack spacing={2.5}>
+                            {/* Required Section */}
+                            {hasRequired && (
+                                <Box>
+                                    <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box>
+                                            <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
+                                                Required
+                                            </Typography>
+                                            <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
+                                                Essential for chatflow operation
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Grid container spacing={1.5}>
+                                        {organizedCredentials.required.map((group) => (
+                                            <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
+                                                {renderCredentialCard(group)}
+                                            </Grid>
+                                        ))}
+                                    </Grid>
+                                </Box>
+                            )}
+
+                            {/* Optional Section */}
+                            {hasOptional && (
+                                <Box>
+                                    <Box sx={{ mb: 1.5 }}>
                                         <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
-                                            Required
+                                            Optional
                                         </Typography>
                                         <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
-                                            Essential for chatflow operation
+                                            Additional features
                                         </Typography>
                                     </Box>
+                                    <Grid container spacing={1.5}>
+                                        {organizedCredentials.optional.map((group) => (
+                                            <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
+                                                {renderCredentialCard(group)}
+                                            </Grid>
+                                        ))}
+                                    </Grid>
                                 </Box>
-                                <Grid container spacing={1.5}>
-                                    {organizedCredentials.required.map((group) => (
-                                        <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
-                                            {renderCredentialCard(group)}
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            </Box>
-                        )}
+                            )}
 
-                        {/* Optional Section */}
-                        {hasOptional && (
-                            <Box>
-                                <Box sx={{ mb: 1.5 }}>
-                                    <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
-                                        Optional
-                                    </Typography>
-                                    <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
-                                        Additional features
-                                    </Typography>
+                            {/* Connected Section - Always visible */}
+                            {hasConnected && (
+                                <Box>
+                                    <Box sx={{ mb: 1.5 }}>
+                                        <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
+                                            Connected ({organizedCredentials.connected.length})
+                                        </Typography>
+                                        <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
+                                            Already configured and ready to use
+                                        </Typography>
+                                    </Box>
+                                    <Grid container spacing={1.5}>
+                                        {organizedCredentials.connected.map((group) => (
+                                            <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
+                                                {renderCredentialCard(group)}
+                                            </Grid>
+                                        ))}
+                                    </Grid>
                                 </Box>
-                                <Grid container spacing={1.5}>
-                                    {organizedCredentials.optional.map((group) => (
-                                        <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
-                                            {renderCredentialCard(group)}
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            </Box>
-                        )}
+                            )}
+                        </Stack>
+                    )}
+                </DialogContent>
 
-                        {/* Connected Section - Always visible */}
-                        {hasConnected && (
-                            <Box>
-                                <Box sx={{ mb: 1.5 }}>
-                                    <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
-                                        Connected ({organizedCredentials.connected.length})
-                                    </Typography>
-                                    <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
-                                        Already configured and ready to use
-                                    </Typography>
-                                </Box>
-                                <Grid container spacing={1.5}>
-                                    {organizedCredentials.connected.map((group) => (
-                                        <Grid item xs={6} sm={4} md={3} key={group.groupKey}>
-                                            {renderCredentialCard(group)}
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            </Box>
-                        )}
+                <DialogActions sx={{ px: 4, pb: 3, pt: 3, alignItems: 'center', borderTop: '2px solid', borderColor: 'secondary.light' }}>
+                    {/* Left side: Checkbox */}
+                    <Box sx={{ mr: 'auto' }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={dontShowAgain}
+                                    onChange={(event) => {
+                                        setDontShowAgain(event.target.checked)
+                                        setDontShowDirty(true)
+                                    }}
+                                    color='secondary'
+                                    size='small'
+                                />
+                            }
+                            label={
+                                <Typography variant='body2' color='text.secondary'>
+                                    Don&apos;t show this again
+                                </Typography>
+                            }
+                        />
+                    </Box>
+
+                    <Stack direction='row' spacing={1.5}>
+                        <Button
+                            onClick={isQuickSetupMode ? handleCancel : handleSkip}
+                            color='inherit'
+                            sx={{
+                                textTransform: 'none',
+                                px: 2.5,
+                                fontWeight: 400
+                            }}
+                        >
+                            {isQuickSetupMode ? 'Cancel' : "I'll finish this later"}
+                        </Button>
+                        <Button
+                            variant='contained'
+                            color='secondary'
+                            onClick={handleAssignCredentials}
+                            disabled={
+                                loading ||
+                                assigningCredentials ||
+                                organizedCredentials.required.some((group) => {
+                                    // Check if all nodes in this required group have credential assignments
+                                    const nodes = group.nodes || []
+                                    return nodes.length > 0 && !nodes.every((node) => credentialAssignments[node.nodeId])
+                                })
+                            }
+                            sx={{
+                                textTransform: 'none',
+                                px: 3,
+                                fontWeight: 400
+                            }}
+                        >
+                            {assigningCredentials ? <CircularProgress size={16} sx={{ mr: 1, color: 'inherit' }} /> : null}
+                            {assigningCredentials ? 'Saving...' : 'Continue'}
+                        </Button>
                     </Stack>
-                )}
-            </DialogContent>
+                </DialogActions>
+            </Dialog>
 
-            <DialogActions sx={{ px: 4, pb: 3, pt: 3, alignItems: 'center', borderTop: '2px solid', borderColor: 'secondary.light' }}>
-                {/* Left side: Checkbox */}
-                <Box sx={{ mr: 'auto' }}>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={dontShowAgain}
-                                onChange={(event) => {
-                                    setDontShowAgain(event.target.checked)
-                                    setDontShowDirty(true)
-                                }}
-                                color='secondary'
-                                size='small'
-                            />
-                        }
-                        label={
-                            <Typography variant='body2' color='text.secondary'>
-                                Don&apos;t show this again
-                            </Typography>
-                        }
+            {/* Render nested dialogs as siblings to prevent portal conflicts */}
+            {show && (
+                <>
+                    {/* Confirm Dialog for cancel confirmation */}
+                    <ConfirmDialog />
+
+                    {/* Credential creation dialog */}
+                    <AddEditCredentialDialog
+                        show={showCredentialDialog}
+                        dialogProps={credentialDialogProps}
+                        onCancel={() => {
+                            setShowCredentialDialog(false)
+                            setCreatingCredentialFor(null)
+                        }}
+                        onConfirm={handleCredentialDialogConfirm}
                     />
-                </Box>
-
-                <Stack direction='row' spacing={1.5}>
-                    <Button
-                        onClick={isQuickSetupMode ? handleCancel : handleSkip}
-                        color='inherit'
-                        sx={{
-                            textTransform: 'none',
-                            px: 2.5,
-                            fontWeight: 400
-                        }}
-                    >
-                        {isQuickSetupMode ? 'Cancel' : "I'll finish this later"}
-                    </Button>
-                    <Button
-                        variant='contained'
-                        color='secondary'
-                        onClick={handleAssignCredentials}
-                        disabled={
-                            loading ||
-                            assigningCredentials ||
-                            organizedCredentials.required.some((group) => {
-                                // Check if all nodes in this required group have credential assignments
-                                const nodes = group.nodes || []
-                                return nodes.length > 0 && !nodes.every((node) => credentialAssignments[node.nodeId])
-                            })
-                        }
-                        sx={{
-                            textTransform: 'none',
-                            px: 3,
-                            fontWeight: 400
-                        }}
-                    >
-                        {assigningCredentials ? <CircularProgress size={16} sx={{ mr: 1, color: 'inherit' }} /> : null}
-                        {assigningCredentials ? 'Saving...' : 'Continue'}
-                    </Button>
-                </Stack>
-            </DialogActions>
-
-            {/* Confirm Dialog for cancel confirmation */}
-            <ConfirmDialog />
-
-            {/* Credential creation dialog */}
-            <AddEditCredentialDialog
-                show={showCredentialDialog}
-                dialogProps={credentialDialogProps}
-                onCancel={() => {
-                    setShowCredentialDialog(false)
-                    setCreatingCredentialFor(null)
-                }}
-                onConfirm={handleCredentialDialogConfirm}
-            />
-        </Dialog>
+                </>
+            )}
+        </>
     )
-
-    return component
 }
 
 UnifiedCredentialsModal.propTypes = {

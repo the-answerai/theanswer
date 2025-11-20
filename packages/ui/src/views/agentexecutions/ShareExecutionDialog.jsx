@@ -1,7 +1,8 @@
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import { useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 
 // Material
 import { Typography, Box, Dialog, DialogContent, DialogTitle, Button, Tooltip } from '@mui/material'
@@ -14,12 +15,11 @@ import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackba
 // API
 import executionsApi from '@/api/executions'
 import useApi from '@/hooks/useApi'
-
 const ShareExecutionDialog = ({ show, executionId, onClose, onUnshare }) => {
     const portalElement = document.getElementById('portal')
     const theme = useTheme()
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const [copied, setCopied] = useState(false)
 
     const updateExecutionApi = useApi(executionsApi.updateExecution)
@@ -77,19 +77,19 @@ const ShareExecutionDialog = ({ show, executionId, onClose, onUnshare }) => {
                         alignItems: 'center',
                         mb: 3,
                         p: 1,
-                        border: `1px solid ${theme.palette.divider}`,
+                        border: `1px solid ${theme.vars.palette.divider}`,
                         borderRadius: '8px',
-                        backgroundColor: customization.isDarkMode ? theme.palette.background.paper : theme.palette.grey[100]
+                        backgroundColor: mode === 'dark' ? theme.vars.palette.background.paper : theme.vars.palette.grey[100]
                     }}
                 >
-                    <IconLink size={20} style={{ marginRight: '8px', color: theme.palette.text.secondary }} />
+                    <IconLink size={20} style={{ marginRight: '8px', color: theme.vars.palette.text.secondary }} />
                     <Typography
                         variant='body2'
                         sx={{
                             flex: 1,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            color: theme.palette.primary.main,
+                            color: theme.vars.palette.primary.main,
                             mr: 1
                         }}
                     >

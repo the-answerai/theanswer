@@ -116,7 +116,7 @@ const PurchaseSubscription = () => {
                                 bgcolor: 'rgba(0, 0, 0, 0.2)',
                                 backdropFilter: 'blur(20px)',
                                 '&:hover': {
-                                    borderColor: theme.palette.primary.main
+                                    borderColor: theme.vars.palette.primary.main
                                 }
                             }}
                         >
@@ -126,7 +126,7 @@ const PurchaseSubscription = () => {
                                         position: 'absolute',
                                         top: 12,
                                         right: 12,
-                                        bgcolor: theme.palette.primary.main,
+                                        bgcolor: theme.vars.palette.primary.main,
                                         color: '#fff',
                                         px: 1.5,
                                         py: 0.5,
@@ -178,7 +178,7 @@ const PurchaseSubscription = () => {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                                        <CreditIcon sx={{ fontSize: 16, color: theme.palette.warning.main }} />
+                                        <CreditIcon sx={{ fontSize: 16, color: theme.vars.palette.warning.main }} />
                                         <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
                                             {tier.creditsPerMonth.toLocaleString()} Credits included
                                         </Typography>
@@ -195,7 +195,7 @@ const PurchaseSubscription = () => {
                                                 gap: 1.5
                                             }}
                                         >
-                                            <CheckIcon sx={{ fontSize: 20, color: theme.palette.primary.main, mt: 0.25 }} />
+                                            <CheckIcon sx={{ fontSize: 20, color: theme.vars.palette.primary.main, mt: 0.25 }} />
                                             <Typography
                                                 sx={{
                                                     color: '#fff',
@@ -216,7 +216,7 @@ const PurchaseSubscription = () => {
                                         onClick={() => handleSubscribe(tier)}
                                         disabled={loading}
                                         sx={{
-                                            bgcolor: tier.highlighted ? theme.palette.primary.main : 'rgba(255, 255, 255, 0.1)',
+                                            bgcolor: tier.highlighted ? theme.vars.palette.primary.main : 'rgba(255, 255, 255, 0.1)',
                                             color: '#fff',
                                             textTransform: 'none',
                                             py: 1.5,
@@ -224,7 +224,7 @@ const PurchaseSubscription = () => {
                                             fontSize: '0.875rem',
                                             fontWeight: 500,
                                             '&:hover': {
-                                                bgcolor: tier.highlighted ? theme.palette.primary.dark : 'rgba(255, 255, 255, 0.15)'
+                                                bgcolor: tier.highlighted ? theme.vars.palette.primary.dark : 'rgba(255, 255, 255, 0.15)'
                                             }
                                         }}
                                     >

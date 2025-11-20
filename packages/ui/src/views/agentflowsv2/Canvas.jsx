@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback, useContext } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 import ReactFlow, { addEdge, Controls, MiniMap, Background, useNodesState, useEdgesState } from 'reactflow'
 import 'reactflow/dist/style.css'
-import './index.css'
 import { useReward } from 'react-rewards'
+import { ReactFlowParentWrapper } from '@/views/shared/ReactFlowStyles'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useLocation } from '@/utils/navigation'
@@ -61,7 +62,6 @@ import { usePrompt } from '@/utils/usePrompt'
 
 // const
 import { FLOWISE_CREDENTIAL_ID, AGENTFLOW_ICONS } from '@/store/constant'
-
 const nodeTypes = { agentFlow: CanvasNode, stickyNote: StickyNote, iteration: IterationNode }
 const edgeTypes = { agentFlow: AgentFlowEdge }
 
@@ -70,7 +70,7 @@ const edgeTypes = { agentFlow: AgentFlowEdge }
 const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
     const theme = useTheme()
     const navigate = useNavigate()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const { state } = useLocation()
     const templateFlowData = state ? state.templateFlowData : ''
@@ -133,8 +133,8 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
         const nodeName = params.sourceHandle.split('_')[0]
         const targetNodeName = params.targetHandle.split('_')[0]
 
-        const targetColor = AGENTFLOW_ICONS.find((icon) => icon.name === targetNodeName)?.color ?? theme.palette.primary.main
-        const sourceColor = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)?.color ?? theme.palette.primary.main
+        const targetColor = AGENTFLOW_ICONS.find((icon) => icon.name === targetNodeName)?.color ?? theme.vars.palette.primary.main
+        const sourceColor = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)?.color ?? theme.vars.palette.primary.main
 
         let edgeLabel = undefined
         if (nodeName === 'conditionAgentflow' || nodeName === 'conditionAgentAgentflow') {
@@ -788,7 +788,7 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
                     color='inherit'
                     elevation={1}
                     sx={{
-                        bgcolor: theme.palette.background.default
+                        bgcolor: theme.vars.palette.background.default
                     }}
                 >
                     <Toolbar>
@@ -802,8 +802,8 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ pt: '70px', height: '100vh', width: '100%' }}>
-                    <div className='reactflow-parent-wrapper'>
+                <Box sx={{ pt: '70px', flexGrow: 1, width: '100%', display: 'flex' }}>
+                    <ReactFlowParentWrapper>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow
                                 nodes={nodes}
@@ -830,16 +830,16 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
                                         flexDirection: 'row',
                                         left: '50%',
                                         transform: 'translate(-50%, -50%)',
-                                        backgroundColor: customization.isDarkMode ? theme.palette.background.default : '#fff'
+                                        backgroundColor: mode === 'dark' ? theme.vars.palette.background.default : '#fff'
                                     }}
                                 />
                                 <MiniMap
                                     nodeStrokeWidth={3}
-                                    nodeColor={customization.isDarkMode ? '#2d2d2d' : '#e2e2e2'}
-                                    nodeStrokeColor={customization.isDarkMode ? '#525252' : '#fff'}
-                                    maskColor={customization.isDarkMode ? 'rgb(45, 45, 45, 0.6)' : 'rgb(240, 240, 240, 0.6)'}
+                                    nodeColor={mode === 'dark' ? '#2d2d2d' : '#e2e2e2'}
+                                    nodeStrokeColor={mode === 'dark' ? '#525252' : '#fff'}
+                                    maskColor={mode === 'dark' ? 'rgb(45, 45, 45, 0.6)' : 'rgb(240, 240, 240, 0.6)'}
                                     style={{
-                                        backgroundColor: customization.isDarkMode ? theme.palette.background.default : '#fff'
+                                        backgroundColor: mode === 'dark' ? theme.vars.palette.background.default : '#fff'
                                     }}
                                 />
                                 <Background color='#aaa' gap={16} />
@@ -879,7 +879,7 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
                                 {!chatPopupOpen && <ValidationPopUp isAgentCanvas={true} chatflowid={chatflowId} />}
                             </ReactFlow>
                         </div>
-                    </div>
+                    </ReactFlowParentWrapper>
                 </Box>
                 <ConfirmDialog />
             </Box>

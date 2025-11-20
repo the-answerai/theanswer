@@ -241,7 +241,7 @@ const BillingPeriodProgress: React.FC<{ start: string; end: string }> = ({ start
                 <Typography sx={{ color: '#fff', fontWeight: 500 }}>Billing Period</Typography>
                 <Typography
                     sx={{
-                        color: daysRemaining < 5 ? theme.palette.warning.main : 'rgba(255, 255, 255, 0.7)',
+                        color: daysRemaining < 5 ? theme.vars.palette.warning.main : 'rgba(255, 255, 255, 0.7)',
                         fontSize: '0.875rem',
                         fontWeight: daysRemaining < 5 ? 600 : 400
                     }}
@@ -258,7 +258,7 @@ const BillingPeriodProgress: React.FC<{ start: string; end: string }> = ({ start
                     borderRadius: 4,
                     bgcolor: 'rgba(255, 255, 255, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                        bgcolor: theme.palette.primary.main,
+                        bgcolor: theme.vars.palette.primary.main,
                         borderRadius: 4
                     },
                     mb: 1
@@ -324,7 +324,8 @@ const SubscriptionStatusCard: React.FC<{ subscription: Subscription }> = ({ subs
                             sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: subscription.status === 'active' ? 'success.main' : 'warning.main',
+                                bgcolor:
+                                    subscription.status === 'active' ? theme.vars.palette.success.main : theme.vars.palette.warning.main,
                                 borderRadius: '12px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -358,7 +359,7 @@ const SubscriptionStatusCard: React.FC<{ subscription: Subscription }> = ({ subs
                             borderRadius: 4,
                             bgcolor: 'rgba(255, 255, 255, 0.1)',
                             '& .MuiLinearProgress-bar': {
-                                bgcolor: 'primary.main',
+                                bgcolor: theme.vars.palette.primary.main,
                                 borderRadius: 4
                             }
                         }}
@@ -458,7 +459,7 @@ const SubscriptionStatusCard: React.FC<{ subscription: Subscription }> = ({ subs
                 </Box>
 
                 {subscription.cancelAtPeriodEnd && (
-                    <Typography sx={{ color: theme.palette.warning.main, fontSize: '0.875rem', mt: 2 }}>
+                    <Typography sx={{ color: theme.vars.palette.warning.main, fontSize: '0.875rem', mt: 2 }}>
                         This subscription will be canceled at the end of the current billing period
                     </Typography>
                 )}
@@ -662,13 +663,15 @@ const DailyUsageTable: React.FC<{ data: UsageSummary['dailyUsage'] }> = ({ data 
 }
 
 const UsageStats: React.FC<UsageStatsProps> = ({ usageSummary, isLoading = false, isError = false }) => {
+    const theme = useTheme()
+
     if (isError) {
         return (
             <Box sx={{ p: 3 }}>
                 <Typography variant='h5' sx={{ color: '#fff', fontWeight: 600, mb: 3 }}>
                     Resource Usage Details
                 </Typography>
-                <Box sx={{ p: 3, color: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.1)', borderRadius: '8px' }}>
+                <Box sx={{ p: 3, color: theme.vars.palette.error.main, bgcolor: 'rgba(211, 47, 47, 0.1)', borderRadius: '8px' }}>
                     <Typography>Failed to load usage statistics. Please try again later.</Typography>
                 </Box>
             </Box>

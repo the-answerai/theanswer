@@ -17,16 +17,16 @@ import LlamaindexPNG from '@/assets/images/llamaindex.png'
 import Image from 'next/image'
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     border: 'solid 1px',
-    borderColor: theme.palette.primary[200] + 75,
+    borderColor: theme.vars.palette.primary[200] + 75,
     width: '300px',
     height: 'auto',
     padding: '10px',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
     '&:hover': {
-        borderColor: theme.palette.primary.main
+        borderColor: theme.vars.palette.primary.main
     }
 }))
 
@@ -56,7 +56,7 @@ const MarketplaceCanvasNode = ({ data }) => {
                 content={false}
                 sx={{
                     padding: 0,
-                    borderColor: data.selected ? theme.palette.primary.main : theme.palette.text.secondary
+                    borderColor: data.selected ? theme.vars.palette.primary.main : theme.vars.palette.text.secondary
                 }}
                 border={false}
             >
@@ -100,6 +100,8 @@ const MarketplaceCanvasNode = ({ data }) => {
                                 >
                                     <Image
                                         style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'contain' }}
+                                        width={25}
+                                        height={25}
                                         src={LlamaindexPNG}
                                         alt='LlamaIndex'
                                     />
@@ -110,7 +112,7 @@ const MarketplaceCanvasNode = ({ data }) => {
                     {(data.inputAnchors.length > 0 || data.inputParams.length > 0) && (
                         <>
                             <Divider />
-                            <Box sx={{ background: theme.palette.asyncSelect.main, p: 1 }}>
+                            <Box sx={{ background: theme.vars.palette.asyncSelect.main, p: 1 }}>
                                 <Typography
                                     sx={{
                                         fontWeight: 500,
@@ -148,7 +150,7 @@ const MarketplaceCanvasNode = ({ data }) => {
                         </div>
                     )}
                     <Divider />
-                    <Box sx={{ background: theme.palette.asyncSelect.main, p: 1 }}>
+                    <Box sx={{ background: theme.vars.palette.asyncSelect.main, p: 1 }}>
                         <Typography
                             sx={{
                                 fontWeight: 500,

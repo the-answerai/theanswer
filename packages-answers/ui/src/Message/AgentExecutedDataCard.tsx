@@ -15,7 +15,7 @@ import {
     DialogActions,
     IconButton
 } from '@mui/material'
-import { styled, alpha } from '@mui/material/styles'
+import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import { useTreeItem2 } from '@mui/x-tree-view/useTreeItem2'
 import {
@@ -78,7 +78,7 @@ const getIconColor = (status: string) => {
 }
 
 const StyledTreeItemRoot = styled(TreeItem2Root)(({ theme }) => ({
-    color: theme.palette.grey[400]
+    color: theme.vars.palette.grey[400]
 }))
 
 const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
@@ -91,9 +91,9 @@ const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
     fontWeight: 500,
     [`&.Mui-expanded `]: {
         '&:not(.Mui-focused, .Mui-selected, .Mui-selected.Mui-focused) .labelIcon': {
-            color: theme.palette.primary.dark,
+            color: theme.vars.palette.primary.dark,
             ...theme.applyStyles('light', {
-                color: theme.palette.primary.main
+                color: theme.vars.palette.primary.main
             })
         },
         '&::before': {
@@ -104,30 +104,30 @@ const CustomTreeItemContent = styled(TreeItem2Content)(({ theme }) => ({
             top: '44px',
             height: 'calc(100% - 48px)',
             width: '1.5px',
-            backgroundColor: theme.palette.grey[700],
+            backgroundColor: theme.vars.palette.grey[700],
             ...theme.applyStyles('light', {
-                backgroundColor: theme.palette.grey[300]
+                backgroundColor: theme.vars.palette.grey[300]
             })
         }
     },
     '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        backgroundColor: theme.vars.palette.primary.alpha10,
         color: 'white',
         ...theme.applyStyles('light', {
-            color: theme.palette.primary.main
+            color: theme.vars.palette.primary.main
         })
     },
     [`&.Mui-focused, &.Mui-selected, &.Mui-selected.Mui-focused`]: {
-        backgroundColor: theme.palette.primary.dark,
-        color: theme.palette.primary.contrastText,
+        backgroundColor: theme.vars.palette.primary.dark,
+        color: theme.vars.palette.primary.contrastText,
         ...theme.applyStyles('light', {
-            backgroundColor: theme.palette.primary.main
+            backgroundColor: theme.vars.palette.primary.main
         })
     }
 }))
 
 const StyledTreeItemLabelText = styled(Typography)(({ theme }) => ({
-    color: theme.palette.text.primary
+    color: theme.vars.palette.text.primary
 }))
 
 interface CustomLabelProps {
@@ -228,7 +228,9 @@ function CustomLabel({ icon: Icon, itemStatus, children, name, label, data, meta
                             }}
                         />
                     ) : (
-                        <Typography color='text.secondary'>No data available for this item</Typography>
+                        <Typography sx={{ color: (theme) => theme.vars.palette.text.secondary }}>
+                            No data available for this item
+                        </Typography>
                     )}
                 </DialogContent>
                 <DialogActions>
@@ -255,13 +257,13 @@ const getIconFromStatus = (status: string, theme: any) => {
             return ErrorIcon
         case 'TERMINATED':
             // eslint-disable-next-line react/display-name
-            return (props: any) => <IconCircleXFilled {...props} color={theme.palette.error.main} />
+            return (props: any) => <IconCircleXFilled {...props} color={theme.vars.palette.error.main} />
         case 'STOPPED':
             return StopCircleIcon
         case 'INPROGRESS':
             // eslint-disable-next-line react/display-name
             return (props: any) => (
-                <IconLoader {...props} color={theme.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
+                <IconLoader {...props} color={theme.vars.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
             )
     }
 }
@@ -328,7 +330,7 @@ const CustomTreeItem = forwardRef<HTMLLIElement, CustomTreeItemProps>(function C
                             borderLeft: `${status.selected ? '3px solid' : '1px dashed'} ${(() => {
                                 const nodeName = item.name || item.id?.split('_')[0]
                                 const foundIcon = AGENTFLOW_ICONS.find((icon) => icon.name === nodeName)
-                                return foundIcon ? foundIcon.color : theme.palette.primary.main
+                                return foundIcon ? foundIcon.color : theme.vars.palette.primary.main
                             })()}`,
                             marginLeft: '13px',
                             paddingLeft: '8px'

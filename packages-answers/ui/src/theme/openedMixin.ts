@@ -10,6 +10,14 @@ const openedMixin = ({ theme, width = 200, maxWidth }: OpenedMixinProps): CSSObj
     const cssMaxWidth: number = maxWidth ?? width
 
     return {
+        // REFINED: Apply glassPrimary theme styles
+        background: theme.vars.palette.glass.glassPrimary.background,
+        backdropFilter: theme.vars.palette.glass.glassPrimary.backdropFilter,
+        WebkitBackdropFilter: theme.vars.palette.glass.glassPrimary.WebkitBackdropFilter,
+        border: theme.vars.palette.glass.glassPrimary.border,
+        boxShadow: theme.vars.palette.glass.glassPrimary.boxShadow,
+        borderRight: 'none',
+        // Layout styles
         width: width,
         maxWidth: cssMaxWidth,
         transition: theme.transitions.create('width', {

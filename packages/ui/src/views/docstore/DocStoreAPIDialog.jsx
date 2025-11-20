@@ -308,7 +308,7 @@ curl -X POST http://localhost:3000/api/v1/document-store/upsert/${dialogProps.st
                 <Typography sx={{ mt: 3, mb: 1 }}>You can override existing configurations:</Typography>
 
                 <Stack direction='column' spacing={2} sx={{ width: '100%', my: 2 }}>
-                    <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 2 }} variant='outlined'>
+                    <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 2 }} variant='outlined'>
                         {Object.keys(nodeConfig)
                             .sort()
                             .map((nodeLabel) => (

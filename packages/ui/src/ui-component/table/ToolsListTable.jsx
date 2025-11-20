@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
 import { styled } from '@mui/material/styles'
 import { tableCellClasses } from '@mui/material/TableCell'
 import {
@@ -15,12 +14,13 @@ import {
     Typography,
     useTheme
 } from '@mui/material'
+import { useThemeMode } from '@ui/theme'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -37,15 +37,15 @@ const StyledTableRow = styled(TableRow)(() => ({
 
 export const ToolsTable = ({ data, isLoading, onSelect }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     return (
         <>
-            <TableContainer sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
+            <TableContainer sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
                 <Table sx={{ minWidth: 650 }} size='small' aria-label='a dense table'>
                     <TableHead
                         sx={{
-                            backgroundColor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[100],
+                            backgroundColor: mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                             height: 56
                         }}
                     >

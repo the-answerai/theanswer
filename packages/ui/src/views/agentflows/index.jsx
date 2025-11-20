@@ -172,9 +172,9 @@ const Agentflows = () => {
                         >
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: theme.vars.palette.text.primary
                                 }}
                                 variant='contained'
                                 value='v2'
@@ -185,9 +185,9 @@ const Agentflows = () => {
                             </ToggleButton>
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: theme.vars.palette.text.primary
                                 }}
                                 variant='contained'
                                 value='v1'
@@ -205,9 +205,9 @@ const Agentflows = () => {
                         >
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: theme.vars.palette.text.primary
                                 }}
                                 variant='contained'
                                 value='card'
@@ -217,9 +217,9 @@ const Agentflows = () => {
                             </ToggleButton>
                             <ToggleButton
                                 sx={{
-                                    borderColor: theme.palette.grey[900] + 25,
+                                    borderColor: theme.vars.palette.grey[900] + 25,
                                     borderRadius: 2,
-                                    color: theme?.customization?.isDarkMode ? 'white' : 'inherit'
+                                    color: theme.vars.palette.text.primary
                                 }}
                                 variant='contained'
                                 value='list'

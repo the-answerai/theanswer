@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { useNavigate, useParams } from '@/utils/navigation'
 import ReactJson from 'flowise-react-json-view'
 import { cloneDeep } from 'lodash'
@@ -32,16 +33,15 @@ import useNotifier from '@/utils/useNotifier'
 import { baseURL } from '@/store/constant'
 import { initNode } from '@/utils/genericHelper'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     overflow: 'auto',
     position: 'relative',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
     cursor: 'pointer',
     '&:hover': {
-        background: theme.palette.card.hover,
+        background: theme.vars.palette.card.hover,
         boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
     },
     maxHeight: '250px',
@@ -53,7 +53,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 }))
 
 const VectorStoreQuery = () => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const navigate = useNavigate()
     const theme = useTheme()
     const dispatch = useDispatch()
@@ -436,7 +436,7 @@ const VectorStoreQuery = () => {
                                                     <CardWrapper
                                                         content={false}
                                                         onClick={() => chunkSelected(row.id, row.chunkNo)}
-                                                        sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                                        sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                                     >
                                                         <Card>
                                                             <CardContent sx={{ p: 2 }}>
@@ -447,7 +447,7 @@ const VectorStoreQuery = () => {
                                                                     {row.pageContent}
                                                                 </Typography>
                                                                 <ReactJson
-                                                                    theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                                                    theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                                                     style={{ paddingTop: 10 }}
                                                                     src={row.metadata || {}}
                                                                     name={null}

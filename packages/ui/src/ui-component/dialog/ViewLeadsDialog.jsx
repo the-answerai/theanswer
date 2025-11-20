@@ -141,7 +141,7 @@ const ViewLeadsDialog = ({ show, dialogProps, onCancel }) => {
                         startAdornment={
                             <Box
                                 sx={{
-                                    color: theme.palette.grey[400],
+                                    color: theme.vars.palette.grey[400],
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',

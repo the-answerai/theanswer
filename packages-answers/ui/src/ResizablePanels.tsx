@@ -100,7 +100,7 @@ const ResizePanel = ({ direction, containerClass, handleClass, borderClass, sx, 
 
     const handleDrag = (e: any, ui: any) => {
         const factor = direction === 'e' || direction === 's' ? -1 : 1 // modify the size based on the drag delta
-        let delta = direction === 'n' || direction === 's' ? ui.deltaY : ui.deltaX
+        const delta = direction === 'n' || direction === 's' ? ui.deltaY : ui.deltaX
         setSize((s) => Math.max(10, (s ?? 0) - delta * factor))
     }
 

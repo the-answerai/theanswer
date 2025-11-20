@@ -913,7 +913,7 @@ export function AnswersProvider({
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault()
         setIsDragActive(false)
-        let files = []
+        const files = []
         if (e.dataTransfer.files.length > 0) {
             for (const file of Array.from(e.dataTransfer.files)) {
                 const reader = new FileReader()
@@ -964,7 +964,7 @@ export function AnswersProvider({
         if (!fileObj) {
             return
         }
-        let files = []
+        const files = []
         if (event.target.files) {
             for (const file of Array.from(event.target.files)) {
                 const reader = new FileReader()

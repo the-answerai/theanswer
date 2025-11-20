@@ -368,6 +368,8 @@ const AnalyseFlow = ({ dialogProps }) => {
                                             padding: 10,
                                             objectFit: 'contain'
                                         }}
+                                        width={50}
+                                        height={50}
                                         alt='AI'
                                         src={provider.icon}
                                     />

@@ -365,7 +365,7 @@ const OverrideConfig = ({ dialogProps }) => {
                 {overrideConfigStatus && (
                     <>
                         {nodeOverrides && nodeConfig && (
-                            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 2 }} variant='outlined'>
+                            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 2 }} variant='outlined'>
                                 <Stack sx={{ mt: 1, mb: 2, ml: 1, alignItems: 'center' }} direction='row' spacing={2}>
                                     <IconBox />
                                     <Typography variant='h4'>Nodes</Typography>
@@ -435,7 +435,7 @@ const OverrideConfig = ({ dialogProps }) => {
                             </Card>
                         )}
                         {variableOverrides && variableOverrides.length > 0 && (
-                            <Card sx={{ borderColor: theme.palette.primary[200] + 75, p: 2 }} variant='outlined'>
+                            <Card sx={{ borderColor: theme.vars.palette.primary[200] + 75, p: 2 }} variant='outlined'>
                                 <Stack sx={{ mt: 1, mb: 2, ml: 1, alignItems: 'center' }} direction='row' spacing={2}>
                                     <IconVariable />
                                     <Typography variant='h4'>Variables</Typography>

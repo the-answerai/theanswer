@@ -5,7 +5,7 @@ export const MENU_OPEN = '@customization/MENU_OPEN'
 export const SET_FONT_FAMILY = '@customization/SET_FONT_FAMILY'
 export const SET_BORDER_RADIUS = '@customization/SET_BORDER_RADIUS'
 export const SET_LAYOUT = '@customization/SET_LAYOUT '
-export const SET_DARKMODE = '@customization/SET_DARKMODE'
+// ❌ REMOVED: export const SET_DARKMODE = '@customization/SET_DARKMODE'
 
 // action - canvas reducer
 export const SET_DIRTY = '@canvas/SET_DIRTY'

@@ -42,6 +42,9 @@ import useConfirm from '@/hooks/useConfirm'
 // icons
 import { IconX, IconRefreshAlert } from '@tabler/icons-react'
 
+// styled components
+import { ReactFlowParentWrapper } from '@/views/shared/ReactFlowStyles'
+
 // utils
 import {
     getUniqueNodeId,
@@ -813,7 +816,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     color='inherit'
                     elevation={1}
                     sx={{
-                        bgcolor: theme.palette.background.default
+                        bgcolor: theme.vars.palette.background.default
                     }}
                 >
                     <Toolbar>
@@ -827,8 +830,8 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ height: '100vh', width: '100%' }}>
-                    <div className='reactflow-parent-wrapper'>
+                <Box sx={{ flexGrow: 1, width: '100%', display: 'flex' }}>
+                    <ReactFlowParentWrapper>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow
                                 nodes={nodes}
@@ -882,7 +885,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                                 <ChatPopUp isAgentCanvas={isAgentCanvas} chatflowid={chatflowId} />
                             </ReactFlow>
                         </div>
-                    </div>
+                    </ReactFlowParentWrapper>
                 </Box>
                 <ConfirmDialog />
             </Box>

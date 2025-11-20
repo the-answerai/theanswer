@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import PropTypes from 'prop-types'
 // MUI
 import {
@@ -43,7 +44,6 @@ import promptEmptySVG from '@/assets/images/prompt_empty.svg'
 import useApi from '@/hooks/useApi'
 import promptApi from '@/api/prompt'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
-
 const NewLineToBr = ({ children = '' }) => {
     return children.split('\n').reduce(function (arr, line) {
         return arr.concat(line, <br />)
@@ -51,7 +51,7 @@ const NewLineToBr = ({ children = '' }) => {
 }
 
 const Accordion = styled((props) => <MuiAccordion disableGutters elevation={0} square {...props} />)(({ theme }) => ({
-    border: `1px solid ${theme.palette.divider}`,
+    border: `1px solid ${theme.vars.palette.divider}`,
     '&:not(:last-child)': {
         borderBottom: 0
     },
@@ -63,7 +63,7 @@ const Accordion = styled((props) => <MuiAccordion disableGutters elevation={0} s
 const AccordionSummary = styled((props) => (
     <MuiAccordionSummary expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: '0.9rem' }} />} {...props} />
 ))(({ theme }) => ({
-    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, .05)' : 'rgba(0, 0, 0, .03)',
+    backgroundColor: theme.vars.palette.action.hover,
     flexDirection: 'row-reverse',
     '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
         transform: 'rotate(180deg)'
@@ -81,7 +81,7 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 const PromptLangsmithHubDialog = ({ promptType, show, onCancel, onSubmit }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const getAvailablePromptsApi = useApi(promptApi.getAvailablePrompts)
 
     useEffect(() => {
@@ -282,7 +282,7 @@ const PromptLangsmithHubDialog = ({ promptType, show, onCancel, onSubmit }) => {
                             }
                             sx={{
                                 '.MuiSvgIcon-root ': {
-                                    fill: customization.isDarkMode ? 'white !important' : ''
+                                    fill: mode === 'dark' ? 'white !important' : ''
                                 }
                             }}
                             MenuProps={MenuProps}
@@ -320,7 +320,7 @@ const PromptLangsmithHubDialog = ({ promptType, show, onCancel, onSubmit }) => {
                             }
                             sx={{
                                 '.MuiSvgIcon-root ': {
-                                    fill: customization.isDarkMode ? 'white !important' : ''
+                                    fill: mode === 'dark' ? 'white !important' : ''
                                 }
                             }}
                             MenuProps={MenuProps}
@@ -357,7 +357,7 @@ const PromptLangsmithHubDialog = ({ promptType, show, onCancel, onSubmit }) => {
                             }
                             sx={{
                                 '.MuiSvgIcon-root ': {
-                                    fill: customization.isDarkMode ? 'white !important' : ''
+                                    fill: mode === 'dark' ? 'white !important' : ''
                                 }
                             }}
                             MenuProps={MenuProps}

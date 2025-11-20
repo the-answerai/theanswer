@@ -52,7 +52,7 @@ const Feedback = ({ content, rating }) => {
                     style={{ marginBottom: 14 }}
                     variant='outlined'
                 >
-                    {content ? <span style={{ color: theme.palette.text.primary }}>{content}</span> : null}
+                    {content ? <span style={{ color: theme.vars.palette.text.primary }}>{content}</span> : null}
                 </Alert>
             ) : (
                 <IconButton color={rating === 'THUMBS_UP' ? 'success' : 'error'} style={{ marginBottom: 14 }}>

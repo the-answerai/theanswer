@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
 import { useState, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -20,6 +20,7 @@ import {
     Stack,
     OutlinedInput
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
@@ -122,7 +123,7 @@ const AssistantDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) =
     const dispatch = useDispatch()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
-    const customization = useSelector((state) => state.customization)
+    const theme = useTheme()
     const dialogRef = useRef()
 
     const getSpecificAssistantApi = useApi(assistantsApi.getSpecificAssistant)
@@ -894,7 +895,7 @@ const AssistantDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) =
                             </Box>
                             <Box>
                                 {assistantTools?.length > 0 && assistantTools.includes('code_interpreter') && (
-                                    <Card sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: `${customization.borderRadius}px` }}>
+                                    <Card sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: theme.shape.borderRadius }}>
                                         <CardContent>
                                             <Stack sx={{ position: 'relative', alignItems: 'center' }} direction='row'>
                                                 <Typography variant='overline'>Code Interpreter Files</Typography>
@@ -946,7 +947,7 @@ const AssistantDialog = ({ show, dialogProps, onCancel, onConfirm, setError }) =
                                     </Card>
                                 )}
                                 {assistantTools?.length > 0 && assistantTools.includes('file_search') && (
-                                    <Card sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: `${customization.borderRadius}px` }}>
+                                    <Card sx={{ mb: 2, border: '1px solid #e0e0e0', borderRadius: theme.shape.borderRadius }}>
                                         <CardContent>
                                             <Stack sx={{ position: 'relative', alignItems: 'center' }} direction='row'>
                                                 <Typography variant='overline'>File Search Files</Typography>

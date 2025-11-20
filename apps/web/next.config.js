@@ -103,6 +103,15 @@ let nextConfig = withBundleAnalyzer({
     },
     webpack: (config, { isServer }) => {
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
+
+        // Deduplicate @emotion/react to prevent multiple instances
+        // Use exact match ($) to allow subpath imports like @emotion/react/jsx-runtime
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            '@emotion/react$': require.resolve('@emotion/react'),
+            '@emotion/styled$': require.resolve('@emotion/styled')
+        }
+
         config.plugins = [
             ...config.plugins,
             // new PrismaPlugin(),

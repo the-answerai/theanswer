@@ -1,6 +1,4 @@
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
-
 // material-ui
 import { styled, keyframes } from '@mui/material/styles'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
@@ -11,6 +9,7 @@ import MainCard from '@/ui-component/cards/MainCard'
 import DocumentStoreStatus from '@/views/docstore/DocumentStoreStatus'
 
 import { kFormatter } from '@/utils/genericHelper'
+import { useThemeMode } from '@ui/theme'
 
 // Animated glow effect for dark mode
 const glowPulse = keyframes`
@@ -23,23 +22,29 @@ const glowPulse = keyframes`
 `
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
-    border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)'}`,
-    color: theme.palette.text.primary,
+    background: theme.vars.palette.glass.glassSecondary.background,
+    border: theme.vars.palette.glass.glassSecondary.border,
+    color: theme.vars.palette.text.primary,
     overflow: 'auto',
     position: 'relative',
-    boxShadow: theme.palette.mode === 'light' ? '0 2px 14px 0 rgba(0, 0, 0, 0.08)' : '0 4px 16px 0 rgba(59, 130, 246, 0.15)',
+    boxShadow: theme.vars.palette.glass.glassSecondary.boxShadow,
+    backdropFilter: theme.vars.palette.glass.glassSecondary.backdropFilter,
+    WebkitBackdropFilter: theme.vars.palette.glass.glassSecondary.WebkitBackdropFilter,
     cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    animation: theme.palette.mode === 'dark' ? `${glowPulse} 3s ease-in-out infinite` : 'none',
+    transition: theme.vars.palette.glass.transition,
+    // Dark mode glow animation - use CSS custom property
+    animation: 'var(--card-glow-animation, none)',
+    '@media (prefers-color-scheme: dark)': {
+        '--card-glow-animation': `${glowPulse} 3s ease-in-out infinite`
+    },
+    '[data-theme="dark"] &': {
+        '--card-glow-animation': `${glowPulse} 3s ease-in-out infinite`
+    },
     '&:hover': {
-        background:
-            theme.palette.mode === 'light'
-                ? '#fafafa'
-                : 'linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
-        border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.15)' : 'rgba(59, 130, 246, 0.5)'}`,
-        boxShadow: theme.palette.mode === 'light' ? '0 4px 20px 0 rgba(0, 0, 0, 0.12)' : '0 8px 32px 0 rgba(59, 130, 246, 0.3)',
-        transform: 'translateY(-2px)',
+        background: theme.vars.palette.glass.glassHover.background,
+        border: theme.vars.palette.glass.glassSecondary.border,
+        boxShadow: theme.vars.palette.glass.glassHover.boxShadow,
+        transform: theme.vars.palette.glass.glassHover.transform,
         animation: 'none'
     },
     height: '100%',
@@ -54,7 +59,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 const DocumentStoreCard = ({ data, images, onClick }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     return (
         <CardWrapper
@@ -62,7 +67,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
             onClick={onClick}
             sx={{
                 borderRadius: 2,
-                background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a !important'
+                background: (theme) => theme.vars.palette.glass.glassSecondary.background
             }}
         >
             <Box sx={{ height: '100%', p: 2.25 }}>
@@ -118,9 +123,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                 fontSize: '11px',
                                 width: 'max-content',
                                 borderRadius: '25px',
-                                boxShadow: customization.isDarkMode
-                                    ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
-                                    : '0 2px 14px 0 rgb(32 40 45 / 20%)',
+                                boxShadow: mode === 'dark' ? '0 2px 14px 0 rgb(255 255 255 / 20%)' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
 
                                 display: 'flex',
                                 flexDirection: 'row',
@@ -139,9 +142,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                 fontSize: '11px',
                                 width: 'max-content',
                                 borderRadius: '25px',
-                                boxShadow: customization.isDarkMode
-                                    ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
-                                    : '0 2px 14px 0 rgb(32 40 45 / 20%)',
+                                boxShadow: mode === 'dark' ? '0 2px 14px 0 rgb(255 255 255 / 20%)' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
 
                                 display: 'flex',
                                 flexDirection: 'row',
@@ -160,9 +161,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                 fontSize: '11px',
                                 width: 'max-content',
                                 borderRadius: '25px',
-                                boxShadow: customization.isDarkMode
-                                    ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
-                                    : '0 2px 14px 0 rgb(32 40 45 / 20%)',
+                                boxShadow: mode === 'dark' ? '0 2px 14px 0 rgb(255 255 255 / 20%)' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
                                 display: 'flex',
                                 flexDirection: 'row',
                                 alignItems: 'center'
@@ -188,9 +187,8 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                         width: 30,
                                         height: 30,
                                         borderRadius: '50%',
-                                        backgroundColor: customization.isDarkMode
-                                            ? theme.palette.common.white
-                                            : theme.palette.grey[300] + 75
+                                        backgroundColor:
+                                            mode === 'dark' ? theme.vars.palette.common.white : theme.vars.palette.grey[300] + 75
                                     }}
                                 >
                                     <img style={{ width: '100%', height: '100%', padding: 5, objectFit: 'contain' }} alt='' src={img} />

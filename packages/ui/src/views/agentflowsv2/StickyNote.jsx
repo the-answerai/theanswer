@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { useRef, useContext, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import { NodeToolbar } from 'reactflow'
 
 // material-ui
@@ -14,10 +14,9 @@ import MainCard from '@/ui-component/cards/MainCard'
 
 // const
 import { flowContext } from '@/store/context/ReactFlowContext'
-
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     border: 'solid 1px',
     width: 'max-content',
     height: 'auto',
@@ -26,8 +25,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 }))
 
 const StyledNodeToolbar = styled(NodeToolbar)(({ theme }) => ({
-    backgroundColor: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    backgroundColor: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     padding: '5px',
     borderRadius: '10px',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)'
@@ -35,7 +34,7 @@ const StyledNodeToolbar = styled(NodeToolbar)(({ theme }) => ({
 
 const StickyNote = ({ data }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const ref = useRef(null)
 
     const { reactFlowInstance, deleteNode, duplicateNode } = useContext(flowContext)
@@ -53,7 +52,7 @@ const StickyNote = ({ data }) => {
     }
 
     const getBackgroundColor = () => {
-        if (customization.isDarkMode) {
+        if (mode === 'dark') {
             return isHovered ? darken(nodeColor, 0.7) : darken(nodeColor, 0.8)
         }
         return isHovered ? lighten(nodeColor, 0.8) : lighten(nodeColor, 0.9)
@@ -70,9 +69,9 @@ const StickyNote = ({ data }) => {
                             duplicateNode(data.id)
                         }}
                         sx={{
-                            color: customization.isDarkMode ? 'white' : 'inherit',
+                            color: mode === 'dark' ? 'white' : 'inherit',
                             '&:hover': {
-                                color: theme.palette.primary.main
+                                color: theme.vars.palette.primary.main
                             }
                         }}
                     >
@@ -85,9 +84,9 @@ const StickyNote = ({ data }) => {
                             deleteNode(data.id)
                         }}
                         sx={{
-                            color: customization.isDarkMode ? 'white' : 'inherit',
+                            color: mode === 'dark' ? 'white' : 'inherit',
                             '&:hover': {
-                                color: theme.palette.error.main
+                                color: theme.vars.palette.error.main
                             }
                         }}
                     >

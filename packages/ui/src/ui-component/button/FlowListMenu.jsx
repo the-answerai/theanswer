@@ -52,11 +52,11 @@ const StyledMenu = styled((props) => (
         '& .MuiMenuItem-root': {
             '& .MuiSvgIcon-root': {
                 fontSize: 18,
-                color: theme.palette.text.secondary,
+                color: theme.vars.palette.text.secondary,
                 marginRight: theme.spacing(1.5)
             },
             '&:active': {
-                backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity)
+                backgroundColor: alpha(theme.vars.palette.primary.main, theme.vars.palette.action.selectedOpacity)
             }
         }
     }

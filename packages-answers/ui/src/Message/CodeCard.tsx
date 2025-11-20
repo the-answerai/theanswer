@@ -27,26 +27,26 @@ export const CodeCard: React.FC<CodeCardProps> = ({ code, language, title, onCop
     return (
         <Paper
             variant='outlined'
-            sx={{
+            sx={(theme) => ({
                 overflow: 'hidden',
                 cursor: expandable ? 'pointer' : 'default',
                 '&:hover': expandable
                     ? {
-                          bgcolor: 'rgba(255,255,255,0.03)'
+                          bgcolor: theme.vars.palette.overlay.white.subtle
                       }
                     : {}
-            }}
+            })}
             onClick={handleExpand}
         >
             <Box
-                sx={{
+                sx={(theme) => ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     px: 2,
                     py: 1,
-                    borderBottom: '1px solid rgba(255,255,255,0.1)'
-                }}
+                    borderBottom: `1px solid ${theme.vars.palette.overlay.white.medium}`
+                })}
             >
                 <Typography variant='subtitle2' sx={{ color: 'text.secondary' }}>
                     {title || language}
@@ -86,15 +86,15 @@ export const CodeCard: React.FC<CodeCardProps> = ({ code, language, title, onCop
             {expandable ? (
                 <Box sx={{ maxHeight: '300px', overflow: 'hidden', position: 'relative' }}>
                     <Box
-                        sx={{
+                        sx={(theme) => ({
                             position: 'absolute',
                             bottom: 0,
                             left: 0,
                             right: 0,
                             height: '100px',
-                            background: 'linear-gradient(transparent, #1E1E1E)',
+                            background: `linear-gradient(transparent, ${theme.vars.palette.codeEditor.background})`,
                             pointerEvents: 'none'
-                        }}
+                        })}
                     />
                     <SyntaxHighlighter
                         language={language}
@@ -102,7 +102,7 @@ export const CodeCard: React.FC<CodeCardProps> = ({ code, language, title, onCop
                         customStyle={{
                             margin: 0,
                             padding: '16px',
-                            background: '#1E1E1E'
+                            background: '#1E1E1E' // Intentionally hardcoded: matches syntax highlighter theme
                         }}
                     >
                         {code}
@@ -115,7 +115,7 @@ export const CodeCard: React.FC<CodeCardProps> = ({ code, language, title, onCop
                     customStyle={{
                         margin: 0,
                         padding: '16px',
-                        background: '#1E1E1E'
+                        background: '#1E1E1E' // Intentionally hardcoded: matches syntax highlighter theme
                     }}
                 >
                     {code}

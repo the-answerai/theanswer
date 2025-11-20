@@ -19,11 +19,11 @@ const ProfileAvatar = forwardRef(({ handleToggle }, ref) => {
                     ...theme.typography.commonAvatar,
                     ...theme.typography.mediumAvatar,
                     transition: 'all .2s ease-in-out',
-                    background: theme.palette.secondary.light,
-                    color: theme.palette.secondary.dark,
+                    background: theme.vars.palette.secondary.light,
+                    color: theme.vars.palette.secondary.dark,
                     '&:hover': {
-                        background: theme.palette.secondary.dark,
-                        color: theme.palette.secondary.light
+                        background: theme.vars.palette.secondary.dark,
+                        color: theme.vars.palette.secondary.light
                     }
                 }}
                 onClick={handleToggle}

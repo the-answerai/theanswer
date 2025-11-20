@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { useContext, memo, useRef, useState, useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import { Handle, Position, useUpdateNodeInternals, NodeToolbar } from 'reactflow'
 
 // material-ui
@@ -27,10 +27,9 @@ import CancelIcon from '@mui/icons-material/Cancel'
 
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
-
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     border: 'solid 1px',
     width: 'max-content',
     height: 'auto',
@@ -39,8 +38,8 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 }))
 
 const StyledNodeToolbar = styled(NodeToolbar)(({ theme }) => ({
-    backgroundColor: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    backgroundColor: theme.vars.palette.card.main,
+    color: theme.vars.palette.text.primary,
     padding: '5px',
     borderRadius: '10px',
     boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)'
@@ -50,7 +49,7 @@ const StyledNodeToolbar = styled(NodeToolbar)(({ theme }) => ({
 
 const AgentFlowNode = ({ data }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const ref = useRef(null)
     const updateNodeInternals = useUpdateNodeInternals()
     // eslint-disable-next-line
@@ -94,7 +93,7 @@ const AgentFlowNode = ({ data }) => {
     }
 
     const getBackgroundColor = () => {
-        if (customization.isDarkMode) {
+        if (mode === 'dark') {
             return isHovered ? darken(nodeColor, 0.7) : darken(nodeColor, 0.8)
         }
         return isHovered ? lighten(nodeColor, 0.8) : lighten(nodeColor, 0.9)
@@ -103,16 +102,16 @@ const AgentFlowNode = ({ data }) => {
     const getStatusBackgroundColor = (status) => {
         switch (status) {
             case 'ERROR':
-                return theme.palette.error.dark
+                return theme.vars.palette.error.dark
             case 'INPROGRESS':
-                return theme.palette.warning.dark
+                return theme.vars.palette.warning.dark
             case 'STOPPED':
             case 'TERMINATED':
-                return theme.palette.error.main
+                return theme.vars.palette.error.main
             case 'FINISHED':
-                return theme.palette.success.dark
+                return theme.vars.palette.success.dark
             default:
-                return theme.palette.primary.dark
+                return theme.vars.palette.primary.dark
         }
     }
 
@@ -144,9 +143,9 @@ const AgentFlowNode = ({ data }) => {
                                 duplicateNode(data.id)
                             }}
                             sx={{
-                                color: customization.isDarkMode ? 'white' : 'inherit',
+                                color: mode === 'dark' ? 'white' : 'inherit',
                                 '&:hover': {
-                                    color: theme.palette.primary.main
+                                    color: theme.vars.palette.primary.main
                                 }
                             }}
                         >
@@ -160,9 +159,9 @@ const AgentFlowNode = ({ data }) => {
                             deleteNode(data.id)
                         }}
                         sx={{
-                            color: customization.isDarkMode ? 'white' : 'inherit',
+                            color: mode === 'dark' ? 'white' : 'inherit',
                             '&:hover': {
-                                color: theme.palette.error.main
+                                color: theme.vars.palette.error.main
                             }
                         }}
                     >
@@ -176,9 +175,9 @@ const AgentFlowNode = ({ data }) => {
                             setShowInfoDialog(true)
                         }}
                         sx={{
-                            color: customization.isDarkMode ? 'white' : 'inherit',
+                            color: mode === 'dark' ? 'white' : 'inherit',
                             '&:hover': {
-                                color: theme.palette.info.main
+                                color: theme.vars.palette.info.main
                             }
                         }}
                     >
@@ -326,9 +325,8 @@ const AgentFlowNode = ({ data }) => {
                                         <Box key={`model-${index}`} sx={{ display: 'flex', gap: 1, mt: 1 }}>
                                             <Box
                                                 sx={{
-                                                    backgroundColor: customization.isDarkMode
-                                                        ? 'rgba(255, 255, 255, 0.2)'
-                                                        : 'rgba(255, 255, 255, 0.9)',
+                                                    backgroundColor:
+                                                        mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.9)',
                                                     borderRadius: '16px',
                                                     width: 'max-content',
                                                     height: 24,
@@ -454,7 +452,7 @@ const AgentFlowNode = ({ data }) => {
                                         width: 20,
                                         height: 20,
                                         borderRadius: '50%',
-                                        backgroundColor: theme.palette.background.paper, // or 'white'
+                                        backgroundColor: theme.vars.palette.background.paper, // or 'white'
                                         pointerEvents: 'none'
                                     }}
                                 />

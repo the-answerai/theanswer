@@ -84,7 +84,7 @@ export const File = ({ value, formDataUpload, fileType, onChange, onFormDataChan
                 <span
                     style={{
                         fontStyle: 'italic',
-                        color: theme.palette.grey['800'],
+                        color: theme.vars.palette.grey['800'],
                         marginBottom: '1rem'
                     }}
                 >

@@ -59,6 +59,19 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
     overflowX: 'hidden',
     transition: '.3s',
     ' .MuiDrawer-paper': {
+        // REFINED: Apply glassPrimary theme styles
+        background: theme.vars.palette.glass.glassPrimary.background,
+        backdropFilter: theme.vars.palette.glass.glassPrimary.backdropFilter,
+        WebkitBackdropFilter: theme.vars.palette.glass.glassPrimary.WebkitBackdropFilter,
+        border: theme.vars.palette.glass.glassPrimary.border,
+        boxShadow: theme.vars.palette.glass.glassPrimary.boxShadow,
+        borderRight: 'none',
+        // Fallback for browsers that don't support backdrop-filter
+        '@supports not (backdrop-filter: blur(12px))': {
+            background: 'linear-gradient(180deg, #1e3a8a 0%, #3b82f6 100%)',
+            opacity: 0.98
+        },
+        // Custom AppDrawer styles
         transition: '.3s',
         overflowY: 'hidden',
         overflowX: 'hidden',
@@ -522,6 +535,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     alt='AnswerAI Logo'
                                     width={150}
                                     height={40}
+                                    priority
                                     style={{ objectFit: 'contain' }}
                                 />
                             </Box>
@@ -583,7 +597,10 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 case 'enterprise_admin':
                                     return 'Organization admin and enterprise settings'
                                 case 'account':
+                                case 'profile':
                                     return 'Manage your account settings and preferences'
+                                case 'billing':
+                                    return 'View billing details and manage subscriptions'
                                 default:
                                     return ''
                             }
@@ -614,7 +631,8 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                         display: '-webkit-box',
                                                         WebkitBoxOrient: 'vertical',
                                                         WebkitLineClamp: '1',
-                                                        flex: '1'
+                                                        flex: '1',
+                                                        color: (theme) => theme.vars.palette.text.onGlass
                                                     }}
                                                 >
                                                     {item.text}
@@ -690,7 +708,9 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                             })}
                                                         >
                                                             <ListItemIcon sx={{ minWidth: 40 }}>{subItem.icon}</ListItemIcon>
-                                                            <Typography>{subItem.text}</Typography>
+                                                            <Typography sx={{ color: (theme) => theme.vars.palette.text.onGlass }}>
+                                                                {subItem.text}
+                                                            </Typography>
                                                         </ListItemButton>
                                                     </Tooltip>
                                                 </ListItem>
@@ -704,31 +724,105 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
 
                     {/* Upgrade plan button visibility */}
                     {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && !user?.subscription && (
-                        <ListItem disablePadding>
+                        <ListItem disablePadding sx={{ my: 2 }}>
                             <Tooltip title='Unlock premium features with a subscription' placement='right'>
                                 <ListItemButton
                                     onClick={handleSubscriptionOpen}
                                     sx={{
-                                        bgcolor: 'primary.main',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                        borderRadius: 1,
+                                        // Premium gradient background
+                                        background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
+                                        // Glass overlay for depth
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        borderRadius: 2,
+                                        border: '1px solid rgba(255, 215, 0, 0.3)',
+                                        // Premium shadows
+                                        boxShadow:
+                                            '0 8px 32px 0 rgba(255, 165, 0, 0.3), 0 2px 8px 0 rgba(255, 215, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)',
+                                        py: 1.5,
+                                        px: 2,
                                         mb: 1,
-                                        width: '100%'
+                                        width: '100%',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        // Animated glow effect
+                                        animation: 'pulse-glow 3s ease-in-out infinite',
+                                        '@keyframes pulse-glow': {
+                                            '0%, 100%': {
+                                                boxShadow:
+                                                    '0 8px 32px 0 rgba(255, 165, 0, 0.3), 0 2px 8px 0 rgba(255, 215, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+                                            },
+                                            '50%': {
+                                                boxShadow:
+                                                    '0 8px 40px 0 rgba(255, 165, 0, 0.5), 0 4px 16px 0 rgba(255, 215, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)'
+                                            }
+                                        },
+                                        // Respect user's motion preferences for accessibility
+                                        '@media (prefers-reduced-motion: reduce)': {
+                                            animation: 'none',
+                                            transition: 'none'
+                                        },
+                                        '&:hover': {
+                                            background: 'linear-gradient(135deg, #FFE44D 0%, #FFB347 50%, #FF9500 100%)',
+                                            transform: 'translateY(-2px) scale(1.02)',
+                                            boxShadow:
+                                                '0 12px 48px 0 rgba(255, 165, 0, 0.5), 0 4px 16px 0 rgba(255, 215, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)',
+                                            borderColor: 'rgba(255, 215, 0, 0.5)',
+                                            '@media (prefers-reduced-motion: reduce)': {
+                                                transform: 'none'
+                                            }
+                                        },
+                                        '&:active': {
+                                            transform: 'translateY(0px) scale(1)',
+                                            boxShadow: '0 4px 16px 0 rgba(255, 165, 0, 0.4), 0 2px 8px 0 rgba(255, 215, 0, 0.3)',
+                                            '@media (prefers-reduced-motion: reduce)': {
+                                                transform: 'none'
+                                            }
+                                        },
+                                        // Shine effect overlay
+                                        '&::before': {
+                                            content: '""',
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: '-100%',
+                                            width: '100%',
+                                            height: '100%',
+                                            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                                            animation: 'shine 4s ease-in-out infinite',
+                                            '@keyframes shine': {
+                                                '0%': { left: '-100%' },
+                                                '20%': { left: '100%' },
+                                                '100%': { left: '100%' }
+                                            },
+                                            '@media (prefers-reduced-motion: reduce)': {
+                                                animation: 'none',
+                                                display: 'none'
+                                            }
+                                        }
                                     }}
                                 >
-                                    <ListItemIcon>
-                                        <StarIcon sx={{ color: '#fff' }} />
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <StarIcon
+                                            sx={{
+                                                color: '#fff',
+                                                fontSize: 28,
+                                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+                                            }}
+                                        />
                                     </ListItemIcon>
                                     <Typography
                                         sx={{
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            textTransform: 'capitalize',
                                             display: '-webkit-box',
                                             WebkitBoxOrient: 'vertical',
                                             WebkitLineClamp: '1',
                                             flex: '1',
-                                            color: '#fff'
+                                            color: '#fff',
+                                            fontWeight: 700,
+                                            fontSize: '1rem',
+                                            letterSpacing: '0.5px',
+                                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                                            zIndex: 1
                                         }}
                                     >
                                         Upgrade Plan
@@ -775,7 +869,8 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            color: '#ffffff'
                                         }}
                                     >
                                         {user?.email}
@@ -786,7 +881,8 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            color: '#ffffff'
                                         }}
                                     >
                                         {user?.org_name}

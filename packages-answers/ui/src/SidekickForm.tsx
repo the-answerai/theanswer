@@ -65,11 +65,10 @@ const editorStyles = {
     }
 }
 
-interface SidekickInput
-    extends Omit<
-        Sidekick,
-        'createdAt' | 'updatedAt' | 'createdByUser' | 'favoritedBy' | 'isGlobal' | 'isSystem' | 'isSharedWithOrg' | 'isFavoriteByDefault'
-    > {}
+type SidekickInput = Omit<
+    Sidekick,
+    'createdAt' | 'updatedAt' | 'createdByUser' | 'favoritedBy' | 'isGlobal' | 'isSystem' | 'isSharedWithOrg' | 'isFavoriteByDefault'
+>
 
 const SidekickForm = ({
     appSettings,

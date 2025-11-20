@@ -1,14 +1,12 @@
 import PropTypes from 'prop-types'
 import { useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
-
+import { useThemeMode } from '@ui/theme'
 // material-ui
 import { Box, Typography, IconButton } from '@mui/material'
 import { IconArrowsMaximize, IconAlertTriangle } from '@tabler/icons-react'
 
 // project import
 import dynamic from 'next/dynamic'
-
 const Dropdown = dynamic(() => import('@/ui-component/dropdown/Dropdown').then((mod) => mod.Dropdown), { ssr: true })
 const Input = dynamic(() => import('@/ui-component/input/Input').then((mod) => mod.Input), { ssr: true })
 const SwitchInput = dynamic(() => import('@/ui-component/switch/Switch').then((mod) => mod.SwitchInput), { ssr: true })
@@ -20,7 +18,7 @@ const TooltipWithParser = dynamic(() => import('@/ui-component/tooltip/TooltipWi
 // ===========================|| NodeInputHandler ||=========================== //
 
 const CredentialInputHandler = ({ inputParam, data, disabled = false }) => {
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const ref = useRef(null)
 
     const [showExpandDialog, setShowExpandDialog] = useState(false)
@@ -112,7 +110,7 @@ const CredentialInputHandler = ({ inputParam, data, disabled = false }) => {
                                 disabled={disabled}
                                 onChange={(newValue) => (data[inputParam.name] = newValue)}
                                 value={data[inputParam.name] ?? inputParam.default ?? ''}
-                                isDarkMode={customization.isDarkMode}
+                                isDarkMode={mode === 'dark'}
                             />
                         )}
                         {inputParam.type === 'options' && (

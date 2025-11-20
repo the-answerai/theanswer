@@ -7,7 +7,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 
 import useAI, { syncAi } from '../../../apps/web-extension/src/useAI'
-var activeTabId: any
+let activeTabId: any
 //@ts-ignore
 
 const getCleanedUrl = (url?: string) => (url ? url.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/[/\\]/g, '') : '')
@@ -35,7 +35,7 @@ const Popup = () => {
 
     const handleChange = async (_event: React.MouseEvent<HTMLElement>, newNamespace: string) => {
         setNamespace(newNamespace)
-        let tab = await getActiveTab()
+        const tab = await getActiveTab()
 
         if (tab) {
             if (newNamespace === 'currentPage') {
@@ -50,7 +50,7 @@ const Popup = () => {
 
     React.useEffect(() => {
         ;(async () => {
-            let tab = await getActiveTab()
+            const tab = await getActiveTab()
 
             if (tab) {
                 await syncAi({ url: tab.url })
@@ -66,7 +66,7 @@ const Popup = () => {
         if (!inputValue) return
 
         // let queryOptions = { active: true, lastFocusedWindow: true };
-        let tab = await getActiveTab()
+        const tab = await getActiveTab()
 
         if (tab) {
             // setFilter({ cleanedUrl: getCleanedUrl(tab.url) }); // TODO: update if it should be more general
@@ -85,14 +85,14 @@ const Popup = () => {
     const handleSummarize = async () => {
         // let queryOptions = { active: true, lastFocusedWindow: true };
         //@ts-ignore
-        let tab = await getActiveTab()
+        const tab = await getActiveTab()
 
         if (tab) {
             // const content = turndownService.turndown('<h1>Hello world!</h1>');
 
             // let prompt = `Summarize this page: ${content}`;
-            let prompt = `Summarize`
-            let filter = { cleanedUrl: getCleanedUrl(tab.url) }
+            const prompt = `Summarize`
+            const filter = { cleanedUrl: getCleanedUrl(tab.url) }
             // setFilter(filter);
             setPrompt(prompt)
             addAnswer({ prompt })

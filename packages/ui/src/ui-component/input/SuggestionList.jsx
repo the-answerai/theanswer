@@ -1,12 +1,11 @@
 import { List, ListItem, ListItemButton, Paper, Typography, Divider } from '@mui/material'
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import { useTheme } from '@mui/material/styles'
 import PropTypes from 'prop-types'
-
 const SuggestionList = forwardRef((props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0)
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const theme = useTheme()
 
     useEffect(() => {
@@ -123,7 +122,9 @@ const SuggestionList = forwardRef((props, ref) => {
                         {categoryIndex > 0 && <Divider />}
 
                         {/* Category header */}
-                        <ListItem sx={{ py: 0.5, bgcolor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[50] }}>
+                        <ListItem
+                            sx={{ py: 0.5, bgcolor: mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[50] }}
+                        >
                             <Typography variant='overline' color='text.secondary'>
                                 {category}
                             </Typography>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
 import moment from 'moment'
 import { styled } from '@mui/material/styles'
 import {
@@ -22,12 +22,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import ErrorIcon from '@mui/icons-material/Error'
 import { IconLoader, IconCircleXFilled } from '@tabler/icons-react'
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -52,7 +51,7 @@ const getIconFromStatus = (state, theme) => {
         case 'TERMINATED':
             // eslint-disable-next-line react/display-name
             return (props) => {
-                const IconWrapper = (props) => <IconCircleXFilled {...props} color={theme.palette.error.main} />
+                const IconWrapper = (props) => <IconCircleXFilled {...props} color={theme.vars.palette.error.main} />
                 IconWrapper.displayName = 'TerminatedIcon'
                 return <IconWrapper {...props} />
             }
@@ -63,7 +62,7 @@ const getIconFromStatus = (state, theme) => {
             return (props) => {
                 const IconWrapper = (props) => (
                     // eslint-disable-next-line
-                    <IconLoader {...props} color={theme.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
+                    <IconLoader {...props} color={theme.vars.palette.warning.dark} className={`spin-animation ${props.className || ''}`} />
                 )
                 IconWrapper.displayName = 'InProgressIcon'
                 return <IconWrapper {...props} />
@@ -88,7 +87,7 @@ const getIconColor = (state) => {
 
 export const ExecutionsListTable = ({ data, isLoading, onExecutionRowClick, onSelectionChange }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const localStorageKeyOrder = 'executions_order'
     const localStorageKeyOrderBy = 'executions_orderBy'
@@ -153,11 +152,11 @@ export const ExecutionsListTable = ({ data, isLoading, onExecutionRowClick, onSe
 
     return (
         <>
-            <TableContainer sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
+            <TableContainer sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
                 <Table sx={{ minWidth: 650 }} size='small' aria-label='a dense table'>
                     <TableHead
                         sx={{
-                            backgroundColor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[100],
+                            backgroundColor: mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                             height: 56
                         }}
                     >

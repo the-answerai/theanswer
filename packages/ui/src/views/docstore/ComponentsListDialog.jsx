@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { createPortal } from 'react-dom'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import PropTypes from 'prop-types'
 import { List, ListItemButton, Dialog, DialogContent, DialogTitle, Box, OutlinedInput, InputAdornment, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
@@ -12,10 +13,9 @@ import { IconSearch, IconX } from '@tabler/icons-react'
 import { baseURL } from '@/store/constant'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 import useApi from '@/hooks/useApi'
-
 const ComponentsListDialog = ({ show, dialogProps, onCancel, apiCall, onSelected }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
     const theme = useTheme()
     const [searchValue, setSearchValue] = useState('')
@@ -71,7 +71,7 @@ const ComponentsListDialog = ({ show, dialogProps, onCancel, apiCall, onSelected
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '75vh', position: 'relative', px: 3, pb: 3 }}>
                 <Box
                     sx={{
-                        backgroundColor: customization.isDarkMode ? theme.palette.background.darkPaper : theme.palette.background.paper,
+                        backgroundColor: mode === 'dark' ? theme.vars.palette.background.darkPaper : theme.vars.palette.background.paper,
                         pt: 2,
                         position: 'sticky',
                         top: 0,
@@ -86,7 +86,7 @@ const ComponentsListDialog = ({ show, dialogProps, onCancel, apiCall, onSelected
                         placeholder='Search'
                         startAdornment={
                             <InputAdornment position='start'>
-                                <IconSearch stroke={1.5} size='1rem' color={theme.palette.grey[500]} />
+                                <IconSearch stroke={1.5} size='1rem' color={theme.vars.palette.grey[500]} />
                             </InputAdornment>
                         }
                         endAdornment={
@@ -94,9 +94,9 @@ const ComponentsListDialog = ({ show, dialogProps, onCancel, apiCall, onSelected
                                 position='end'
                                 sx={{
                                     cursor: 'pointer',
-                                    color: theme.palette.grey[500],
+                                    color: theme.vars.palette.grey[500],
                                     '&:hover': {
-                                        color: theme.palette.grey[900]
+                                        color: theme.vars.palette.grey[900]
                                     }
                                 }}
                                 title='Clear Search'
@@ -138,7 +138,7 @@ const ComponentsListDialog = ({ show, dialogProps, onCancel, apiCall, onSelected
                             onClick={() => onSelected(loader)}
                             sx={{
                                 border: 1,
-                                borderColor: theme.palette.grey[900] + 25,
+                                borderColor: theme.vars.palette.grey[900] + 25,
                                 borderRadius: 2,
                                 display: 'flex',
                                 alignItems: 'center',

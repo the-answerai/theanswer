@@ -1,6 +1,7 @@
 import React from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Chip } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Chip, useTheme } from '@mui/material'
 import { JsonViewer } from '@textea/json-viewer'
+import { useThemeMode } from '@ui/theme'
 
 interface NodeExecutionDetailsProps {
     open: boolean
@@ -27,6 +28,9 @@ const getStatusColor = (status: string): string => {
 }
 
 export const NodeExecutionDetails: React.FC<NodeExecutionDetailsProps> = ({ open, onClose, nodeData }) => {
+    const theme = useTheme()
+    const { mode } = useThemeMode()
+
     if (!nodeData) return null
 
     return (
@@ -38,22 +42,22 @@ export const NodeExecutionDetails: React.FC<NodeExecutionDetailsProps> = ({ open
             <DialogContent>
                 <Box sx={{ maxHeight: '60vh', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box>
-                        <Typography variant='subtitle2' sx={{ mb: 1, color: '#B0B0B0' }}>
+                        <Typography variant='subtitle2' sx={{ mb: 1, color: theme.vars.palette.text.secondary }}>
                             Node ID:
                         </Typography>
-                        <Typography variant='body2' sx={{ color: '#E0E0E0', fontFamily: 'monospace' }}>
+                        <Typography variant='body2' sx={{ color: theme.vars.palette.text.primary, fontFamily: 'monospace' }}>
                             {nodeData.nodeId}
                         </Typography>
                     </Box>
 
                     <Box>
-                        <Typography variant='subtitle2' sx={{ mb: 1, color: '#B0B0B0' }}>
+                        <Typography variant='subtitle2' sx={{ mb: 1, color: theme.vars.palette.text.secondary }}>
                             Execution Data:
                         </Typography>
                         <JsonViewer
                             rootName='data'
                             value={nodeData.data}
-                            theme={'dark'}
+                            theme={mode === 'dark' ? 'dark' : 'light'}
                             defaultInspectDepth={2}
                             collapseStringsAfterLength={300}
                             displayDataTypes={true}

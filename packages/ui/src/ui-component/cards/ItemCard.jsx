@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types'
-import { useSelector } from 'react-redux'
 // material-ui
-import { styled, keyframes } from '@mui/material/styles'
+import { styled, keyframes, css } from '@mui/material/styles'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
+import { useThemeMode } from '@ui/theme'
 
 // Animated glow effect for dark mode
 const glowPulse = keyframes`
@@ -17,48 +17,55 @@ const glowPulse = keyframes`
   }
 `
 
-const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
-    border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)'}`,
-    color: theme.palette.text.primary,
-    overflow: 'auto',
-    position: 'relative',
-    boxShadow: theme.palette.mode === 'light' ? '0 2px 14px 0 rgba(0, 0, 0, 0.08)' : '0 4px 16px 0 rgba(59, 130, 246, 0.15)',
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    animation: theme.palette.mode === 'dark' ? `${glowPulse} 3s ease-in-out infinite` : 'none',
-    '&:hover': {
-        background:
-            theme.palette.mode === 'light'
-                ? '#fafafa'
-                : 'linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
-        border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.15)' : 'rgba(59, 130, 246, 0.5)'}`,
-        boxShadow: theme.palette.mode === 'light' ? '0 4px 20px 0 rgba(0, 0, 0, 0.12)' : '0 8px 32px 0 rgba(59, 130, 246, 0.3)',
-        transform: 'translateY(-2px)',
-        animation: 'none'
-    },
-    height: '100%',
-    minHeight: '160px',
-    maxHeight: '300px',
-    width: '100%',
-    overflowWrap: 'break-word',
-    whiteSpace: 'pre-line'
-}))
+const CardWrapper = styled(MainCard)(
+    ({ theme }) => css`
+        background: ${theme.vars.palette.glass.glassSecondary.background};
+        border: ${theme.vars.palette.glass.glassSecondary.border};
+        color: ${theme.vars.palette.text.primary};
+        overflow: auto;
+        position: relative;
+        box-shadow: ${theme.vars.palette.glass.glassSecondary.boxShadow};
+        backdrop-filter: ${theme.vars.palette.glass.glassSecondary.backdropFilter};
+        -webkit-backdrop-filter: ${theme.vars.palette.glass.glassSecondary.WebkitBackdropFilter};
+        cursor: pointer;
+        transition: ${theme.vars.palette.glass.transition};
+        border-radius: 24px;
+
+        @media (prefers-color-scheme: dark) {
+            animation: ${glowPulse} 3s ease-in-out infinite;
+        }
+
+        [data-theme='dark'] & {
+            animation: ${glowPulse} 3s ease-in-out infinite;
+        }
+
+        &:hover {
+            background: ${theme.vars.palette.glass.glassHover.background};
+            border: ${theme.vars.palette.glass.glassSecondary.border};
+            box-shadow: ${theme.vars.palette.glass.glassHover.boxShadow};
+            transform: ${theme.vars.palette.glass.glassHover.transform};
+            animation: none;
+        }
+
+        height: 100%;
+        min-height: 160px;
+        max-height: 300px;
+        width: 100%;
+        overflow-wrap: break-word;
+        white-space: pre-line;
+    `
+)
 
 // ===========================|| CONTRACT CARD ||=========================== //
 
 const ItemCard = ({ data, images, icons, onClick }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     return (
         <CardWrapper
             content={false}
             onClick={onClick}
-            sx={{
-                borderRadius: 2,
-                background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a !important'
-            }}
             // data-href={href}
         >
             <Box sx={{ height: '100%', p: 2.25 }}>
@@ -154,9 +161,8 @@ const ItemCard = ({ data, images, icons, onClick }) => {
                                                 width: 30,
                                                 height: 30,
                                                 borderRadius: '50%',
-                                                backgroundColor: customization.isDarkMode
-                                                    ? theme.palette.common.white
-                                                    : theme.palette.grey[300] + 75
+                                                backgroundColor:
+                                                    mode === 'dark' ? theme.vars.palette.common.white : theme.vars.palette.grey[300] + 75
                                             }}
                                         >
                                             <img

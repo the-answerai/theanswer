@@ -1,10 +1,8 @@
 'use client'
 import { Session } from '@auth0/nextjs-auth0'
+import { CssBaseline } from '@mui/material'
 
-import CssBaseline from '@mui/material/CssBaseline'
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
-
-import { darkModeTheme } from './theme'
+import { CssVarsThemeProvider } from './theme/cssVarsTheme'
 import GlobalStyles from './GlobalStyles'
 import { PermissionProvider } from './PermissionProvider'
 
@@ -22,11 +20,11 @@ const AppWidgetLayout = ({
 }) => {
     return (
         <PermissionProvider initialUser={session?.user as any}>
-            <ThemeProvider theme={darkModeTheme}>
+            <CssVarsThemeProvider>
                 <CssBaseline enableColorScheme />
                 <GlobalStyles />
                 {children}
-            </ThemeProvider>
+            </CssVarsThemeProvider>
         </PermissionProvider>
     )
 }

@@ -33,7 +33,7 @@ export const PreviewDialog: React.FC<PreviewDialogProps> = ({ open, onClose, cod
                     aria-label='close'
                     onClick={onClose}
                     sx={{
-                        color: (theme) => theme.palette.grey[500]
+                        color: (theme) => theme.vars.palette.grey[500]
                     }}
                 >
                     <CloseIcon />

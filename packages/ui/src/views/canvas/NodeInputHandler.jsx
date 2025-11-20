@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types'
 import { Handle, Position, useUpdateNodeInternals } from 'reactflow'
 import { useEffect, useRef, useState, useContext } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import { cloneDeep } from 'lodash'
 
 // material-ui
@@ -80,7 +81,6 @@ import useNotifier from '@/utils/useNotifier'
 // const
 import { baseURL, FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-
 const EDITABLE_OPTIONS = ['selectedTool', 'selectedAssistant']
 
 const CustomWidthTooltip = styled(({ className, ...props }) => <Tooltip {...props} classes={{ popper: className }} />)({
@@ -116,7 +116,7 @@ const NodeInputHandler = ({
     onCustomDataChange
 }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const ref = useRef(null)
     const { reactFlowInstance, deleteEdge, onNodeDataChange } = useContext(flowContext)
     const updateNodeInternals = useUpdateNodeInternals()
@@ -805,7 +805,7 @@ const NodeInputHandler = ({
                             style={{
                                 height: 10,
                                 width: 10,
-                                backgroundColor: data.selected ? theme.palette.primary.main : theme.palette.text.secondary,
+                                backgroundColor: data.selected ? theme.vars.palette.primary.main : theme.vars.palette.text.secondary,
                                 top: position
                             }}
                         />
@@ -833,7 +833,7 @@ const NodeInputHandler = ({
                                 style={{
                                     height: 10,
                                     width: 10,
-                                    backgroundColor: data.selected ? theme.palette.primary.main : theme.palette.text.secondary,
+                                    backgroundColor: data.selected ? theme.vars.palette.primary.main : theme.vars.palette.text.secondary,
                                     top: position
                                 }}
                             />
@@ -1035,7 +1035,7 @@ const NodeInputHandler = ({
                                 onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
                                 value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
                                 nodeData={data}
-                                isDarkMode={customization.isDarkMode}
+                                isDarkMode={mode === 'dark'}
                             />
                         )}
 
@@ -1092,7 +1092,7 @@ const NodeInputHandler = ({
                                     style={{
                                         marginTop: '10px',
                                         border: '1px solid',
-                                        borderColor: theme.palette.grey['300'],
+                                        borderColor: theme.vars.palette.grey['300'],
                                         borderRadius: '6px',
                                         height: inputParam.rows ? '100px' : '200px'
                                     }}
@@ -1101,7 +1101,7 @@ const NodeInputHandler = ({
                                         disabled={disabled}
                                         value={data.inputs[inputParam.name] ?? inputParam.default ?? ''}
                                         height={inputParam.rows ? '100px' : '200px'}
-                                        theme={customization.isDarkMode ? 'dark' : 'light'}
+                                        theme={mode === 'dark' ? 'dark' : 'light'}
                                         lang={'js'}
                                         placeholder={inputParam.placeholder}
                                         onValueChange={(code) => (data.inputs[inputParam.name] = code)}
@@ -1150,7 +1150,7 @@ const NodeInputHandler = ({
                                             ''
                                         }
                                         isSequentialAgent={data.category === 'Sequential Agents'}
-                                        isDarkMode={customization.isDarkMode}
+                                        isDarkMode={mode === 'dark'}
                                     />
                                 )}
                                 {inputParam?.acceptVariable && (

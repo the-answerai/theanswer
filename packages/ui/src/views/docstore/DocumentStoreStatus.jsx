@@ -1,45 +1,45 @@
 import { useTheme } from '@mui/material'
-import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
+import { useThemeMode } from '@ui/theme'
 
 const DocumentStoreStatus = ({ status, isTableView }) => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const getColor = (status) => {
         switch (status) {
             case 'STALE':
-                return customization.isDarkMode
-                    ? [theme.palette.grey[400], theme.palette.grey[600], theme.palette.grey[800]]
-                    : [theme.palette.grey[300], theme.palette.grey[500], theme.palette.grey[700]]
+                return mode === 'dark'
+                    ? [theme.vars.palette.grey[400], theme.vars.palette.grey[600], theme.vars.palette.grey[800]]
+                    : [theme.vars.palette.grey[300], theme.vars.palette.grey[500], theme.vars.palette.grey[700]]
             case 'EMPTY':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#1e3a8a', '#3b82f6', '#ffffff'] // Blue from unified theme
                     : ['#dbeafe', '#93c5fd', '#3b82f6']
             case 'SYNCING':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#ff6f00', '#ff8f00', '#ffffff'] // Amber
                     : ['#fff8e1', '#ffe57f', '#ffc107']
             case 'UPSERTING':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#01579b', '#0277bd', '#ffffff'] // Light Blue
                     : ['#e1f5fe', '#4fc3f7', '#0288d1']
             case 'SYNC':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#1b5e20', '#2e7d32', '#ffffff'] // Green
                     : ['#e8f5e9', '#81c784', '#43a047']
             case 'UPSERTED':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#004d40', '#00695c', '#ffffff'] // Teal
                     : ['#e0f2f1', '#4db6ac', '#00897b']
             case 'NEW':
-                return customization.isDarkMode
+                return mode === 'dark'
                     ? ['#0d47a1', '#1565c0', '#ffffff'] // Blue
                     : ['#e3f2fd', '#64b5f6', '#1e88e5']
             default:
-                return customization.isDarkMode
-                    ? [theme.palette.grey[300], theme.palette.grey[500], theme.palette.grey[700]]
-                    : [theme.palette.grey[200], theme.palette.grey[400], theme.palette.grey[600]]
+                return mode === 'dark'
+                    ? [theme.vars.palette.grey[300], theme.vars.palette.grey[500], theme.vars.palette.grey[700]]
+                    : [theme.vars.palette.grey[200], theme.vars.palette.grey[400], theme.vars.palette.grey[600]]
         }
     }
 

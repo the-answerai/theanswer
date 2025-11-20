@@ -10,7 +10,7 @@ export const Accordion: React.FC<AccordionProps> = styled((props: AccordionProps
     <MuiAccordion disableGutters elevation={0} square {...props} />
 ))(({ theme }) => ({
     border: `none`,
-    // 'border': `1px solid ${theme.palette.divider}`,
+    // 'border': `1px solid ${theme.vars.palette.divider}`,
     '&:not(:last-child)': {
         borderBottom: 0
     },
@@ -19,7 +19,7 @@ export const Accordion: React.FC<AccordionProps> = styled((props: AccordionProps
     },
     '.MuiAccordionDetails-root': {
         padding: theme.spacing(2),
-        background: 'rgba(24,24,24)'
+        background: theme.vars.palette.background.paper
     }
 }))
 
@@ -28,8 +28,6 @@ export const AccordionSummary: React.FC<AccordionSummaryProps> = styled((props: 
 ))(({ theme }) => ({
     backgroundColor: 'transparent',
     padding: theme.spacing(0, 2),
-    // 'backgroundColor':
-    //   theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, .05)' : 'rgba(0, 0, 0, .03)',
     flexDirection: 'row-reverse',
     '& .MuiAccordionSummary-expandIconWrapper.Mui-expanded': {
         transform: 'rotate(180deg)'
@@ -41,5 +39,5 @@ export const AccordionSummary: React.FC<AccordionSummaryProps> = styled((props: 
 
 export const AccordionDetails: React.FC<AccordionDetailsProps> = styled(MuiAccordionDetails)(({ theme }) => ({
     padding: theme.spacing(2),
-    borderTop: '1px solid rgba(0, 0, 0, .125)'
+    borderTop: `1px solid ${theme.vars.palette.divider}`
 }))

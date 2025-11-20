@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { StyledButton } from '@/ui-component/button/StyledButton'
 import { CodeEditor } from '@/ui-component/editor/CodeEditor'
-
 const PasteJSONDialog = ({ show, onCancel, onConfirm, customization }) => {
     const portalElement = document.getElementById('portal')
     const [jsonInput, setJsonInput] = useState('')
@@ -55,7 +54,7 @@ const PasteJSONDialog = ({ show, onCancel, onConfirm, customization }) => {
                     </Button>
                     <CodeEditor
                         value={jsonInput}
-                        theme={customization.isDarkMode ? 'dark' : 'light'}
+                        theme={mode === 'dark' ? 'dark' : 'light'}
                         lang='json'
                         onValueChange={(code) => {
                             setJsonInput(code)

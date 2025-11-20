@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 
 // material-ui
@@ -43,12 +43,11 @@ import EmptySvg from '@/assets/images/workflow_empty.svg'
 // const
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -103,7 +102,7 @@ const Admin = () => {
     const [planHistory, setPlanHistory] = useState([])
     const [meterEventSummaries, setMeterEventSummaries] = useState([])
 
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     const [isLoading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -209,15 +208,14 @@ const Admin = () => {
                         </TabPanel>
                         <TabPanel value={tabValue} index={1}>
                             <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                 component={Paper}
                             >
                                 <Table sx={{ minWidth: 650 }} aria-label='plan history'>
                                     <TableHead
                                         sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
+                                            backgroundColor:
+                                                mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                             height: 56
                                         }}
                                     >
@@ -242,15 +240,14 @@ const Admin = () => {
                         </TabPanel>
                         <TabPanel value={tabValue} index={2}>
                             <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                 component={Paper}
                             >
                                 <Table sx={{ minWidth: 650 }} aria-label='meter event summaries'>
                                     <TableHead
                                         sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
+                                            backgroundColor:
+                                                mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                             height: 56
                                         }}
                                     >

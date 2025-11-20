@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useState, useEffect, forwardRef } from 'react'
+import { useThemeMode } from '@ui/theme'
 import PropTypes from 'prop-types'
 import moment from 'moment'
 import axios from 'axios'
@@ -63,7 +64,6 @@ import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackba
 import '@/views/chatmessage/ChatMessage.css'
 import 'react-datepicker/dist/react-datepicker.css'
 import Image from 'next/image'
-
 const DatePickerCustomInput = forwardRef(function DatePickerCustomInput({ value, onClick }, ref) {
     return (
         <ListItemButton style={{ borderRadius: 15, border: '1px solid #e0e0e0' }} onClick={onClick} ref={ref}>
@@ -133,7 +133,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
     const dispatch = useDispatch()
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const { confirm } = useConfirm()
 
     useNotifier()
@@ -650,7 +650,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                         p: 2,
                         mr: 1,
                         flex: '0 0 auto',
-                        backgroundColor: customization.isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'transparent'
+                        backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'transparent'
                     }}
                     variant='outlined'
                 >
@@ -658,7 +658,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                     <span
                         style={{
                             marginLeft: '5px',
-                            color: customization.isDarkMode ? 'white' : 'inherit'
+                            color: mode === 'dark' ? 'white' : 'inherit'
                         }}
                     >
                         {item.name}
@@ -1005,7 +1005,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                             key={index}
                                             sx={{
                                                 p: 0,
-                                                borderRadius: `${customization.borderRadius}px`,
+                                                borderRadius: theme.shape.borderRadius,
                                                 boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
                                                 mt: 1,
                                                 ml: 1,
@@ -1092,7 +1092,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                     }
                                                     placement='bottom'
                                                 >
-                                                    <h5 style={{ cursor: 'pointer', color: theme.palette.primary.main }}>
+                                                    <h5 style={{ cursor: 'pointer', color: theme.vars.palette.primary.main }}>
                                                         Why my session is not deleted?
                                                     </h5>
                                                 </Tooltip>
@@ -1106,7 +1106,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                         flexDirection: 'column',
                                         marginLeft: '20px',
                                         border: '1px solid #e0e0e0',
-                                        borderRadius: `${customization.borderRadius}px`
+                                        borderRadius: theme.shape.borderRadius
                                     }}
                                     className='cloud-message'
                                 >
@@ -1118,7 +1118,9 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                         <Box
                                                             sx={{
                                                                 background:
-                                                                    message.type === 'apiMessage' ? theme.palette.asyncSelect.main : '',
+                                                                    message.type === 'apiMessage'
+                                                                        ? theme.vars.palette.asyncSelect.main
+                                                                        : '',
                                                                 py: '1rem',
                                                                 px: '1.5rem'
                                                             }}
@@ -1175,7 +1177,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                     key={index}
                                                                                     sx={{
                                                                                         border: '1px solid #e0e0e0',
-                                                                                        borderRadius: `${customization.borderRadius}px`,
+                                                                                        borderRadius: theme.shape.borderRadius,
                                                                                         mb: 1
                                                                                     }}
                                                                                 >
@@ -1411,7 +1413,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                             size={15}
                                                                                             color={
                                                                                                 tool.error
-                                                                                                    ? theme.palette.error.main
+                                                                                                    ? theme.vars.palette.error.main
                                                                                                     : undefined
                                                                                             }
                                                                                         />
@@ -1458,7 +1460,9 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                     variant='outlined'
                                                                                     onClick={() => downloadFile(fileAnnotation)}
                                                                                     endIcon={
-                                                                                        <IconDownload color={theme.palette.primary.main} />
+                                                                                        <IconDownload
+                                                                                            color={theme.vars.palette.primary.main}
+                                                                                        />
                                                                                     }
                                                                                 >
                                                                                     {fileAnnotation.fileName}
@@ -1512,7 +1516,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                     return (
                                                         <Box
                                                             sx={{
-                                                                background: theme.palette.timeMessage.main,
+                                                                background: theme.vars.palette.timeMessage.main,
                                                                 p: 2
                                                             }}
                                                             key={index}

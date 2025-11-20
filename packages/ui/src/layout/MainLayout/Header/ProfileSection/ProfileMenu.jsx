@@ -19,7 +19,6 @@ const ProfileMenu = ({
     anchorEl,
     handleClose,
     username,
-    customization,
     setExportDialogOpen,
     importAll,
     setAboutDialogOpen,
@@ -71,7 +70,7 @@ const ProfileMenu = ({
                                                 width: '100%',
                                                 maxWidth: 250,
                                                 minWidth: 200,
-                                                backgroundColor: theme.palette.background.paper,
+                                                backgroundColor: theme.vars.palette.background.paper,
                                                 borderRadius: '10px',
                                                 [theme.breakpoints.down('md')]: {
                                                     minWidth: '100%'
@@ -82,7 +81,7 @@ const ProfileMenu = ({
                                             }}
                                         >
                                             <ListItemButton
-                                                sx={{ borderRadius: `${customization.borderRadius}px` }}
+                                                sx={{ borderRadius: 'var(--border-radius)' }}
                                                 onClick={() => {
                                                     setExportDialogOpen(true)
                                                 }}
@@ -93,7 +92,7 @@ const ProfileMenu = ({
                                                 <ListItemText primary={<Typography variant='body2'>Export</Typography>} />
                                             </ListItemButton>
                                             <ListItemButton
-                                                sx={{ borderRadius: `${customization.borderRadius}px` }}
+                                                sx={{ borderRadius: 'var(--border-radius)' }}
                                                 onClick={() => {
                                                     importAll()
                                                 }}
@@ -104,7 +103,7 @@ const ProfileMenu = ({
                                                 <ListItemText primary={<Typography variant='body2'>Import</Typography>} />
                                             </ListItemButton>
                                             <ListItemButton
-                                                sx={{ borderRadius: `${customization.borderRadius}px` }}
+                                                sx={{ borderRadius: 'var(--border-radius)' }}
                                                 onClick={() => {
                                                     setOpen(false)
                                                     setAboutDialogOpen(true)
@@ -116,10 +115,7 @@ const ProfileMenu = ({
                                                 <ListItemText primary={<Typography variant='body2'>About Flowise</Typography>} />
                                             </ListItemButton>
                                             {user && (
-                                                <ListItemButton
-                                                    sx={{ borderRadius: `${customization.borderRadius}px` }}
-                                                    onClick={handleLogout}
-                                                >
+                                                <ListItemButton sx={{ borderRadius: 'var(--border-radius)' }} onClick={handleLogout}>
                                                     <ListItemIcon>
                                                         <IconLogout stroke={1.5} size='1.3rem' />
                                                     </ListItemIcon>
@@ -143,7 +139,6 @@ ProfileMenu.propTypes = {
     anchorEl: PropTypes.object,
     handleClose: PropTypes.func,
     username: PropTypes.string,
-    customization: PropTypes.object,
     setExportDialogOpen: PropTypes.func,
     importAll: PropTypes.func,
     setAboutDialogOpen: PropTypes.func,

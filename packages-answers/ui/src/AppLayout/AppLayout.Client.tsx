@@ -4,7 +4,7 @@ import React from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
 
-import { UnifiedThemeProvider } from '../theme'
+import { CssVarsThemeProvider } from '../theme'
 import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
@@ -47,7 +47,7 @@ export default function AppLayout({
         <UserProvider>
             <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.accessToken}>
                 <PermissionProvider initialUser={session?.user as any}>
-                    <UnifiedThemeProvider>
+                    <CssVarsThemeProvider>
                         <CssBaseline enableColorScheme />
                         <GlobalStyles />
                         <SubscriptionDialogProvider>
@@ -66,7 +66,7 @@ export default function AppLayout({
                                 </React.Suspense>
                             </div>
                         </SubscriptionDialogProvider>
-                    </UnifiedThemeProvider>
+                    </CssVarsThemeProvider>
                 </PermissionProvider>
             </Auth0Setup>
         </UserProvider>

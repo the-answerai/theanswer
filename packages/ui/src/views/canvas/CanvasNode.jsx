@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { useContext, useState, useEffect, memo } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { useSelector } from 'react-redux'
-
 // material-ui
 import { useTheme } from '@mui/material/styles'
 import { IconButton, Box, Typography, Divider, Button } from '@mui/material'
@@ -20,11 +20,11 @@ import { baseURL } from '@/store/constant'
 import { IconTrash, IconCopy, IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import LlamaindexPNG from '@/assets/images/llamaindex.png'
-
 // ===========================|| CANVAS NODE ||=========================== //
 
 const CanvasNode = ({ data }) => {
     const theme = useTheme()
+    const { mode } = useThemeMode()
     const canvas = useSelector((state) => state.canvas)
     const { deleteNode, duplicateNode } = useContext(flowContext)
 
@@ -65,9 +65,9 @@ const CanvasNode = ({ data }) => {
     }
 
     const getBorderColor = () => {
-        if (data.selected) return theme.palette.primary.main
-        else if (theme?.customization?.isDarkMode) return theme.palette.grey[900] + 25
-        else return theme.palette.grey[900] + 50
+        if (data.selected) return theme.vars.palette.primary.main
+        else if (mode === 'dark') return theme.vars.palette.grey[900] + 25
+        else return theme.vars.palette.grey[900] + 50
     }
 
     useEffect(() => {
@@ -117,7 +117,7 @@ const CanvasNode = ({ data }) => {
                                     duplicateNode(data.id)
                                 }}
                                 sx={{ height: '35px', width: '35px', '&:hover': { color: theme?.palette.primary.main } }}
-                                color={theme?.customization?.isDarkMode ? theme.colors?.paper : 'inherit'}
+                                color={mode === 'dark' ? theme.vars.palette.background.paper : 'inherit'}
                             >
                                 <IconCopy />
                             </IconButton>
@@ -127,7 +127,7 @@ const CanvasNode = ({ data }) => {
                                     deleteNode(data.id)
                                 }}
                                 sx={{ height: '35px', width: '35px', '&:hover': { color: 'red' } }}
-                                color={theme?.customization?.isDarkMode ? theme.colors?.paper : 'inherit'}
+                                color={mode === 'dark' ? theme.vars.palette.background.paper : 'inherit'}
                             >
                                 <IconTrash />
                             </IconButton>
@@ -138,7 +138,7 @@ const CanvasNode = ({ data }) => {
                                     setShowInfoDialog(true)
                                 }}
                                 sx={{ height: '35px', width: '35px', '&:hover': { color: theme?.palette.secondary.main } }}
-                                color={theme?.customization?.isDarkMode ? theme.colors?.paper : 'inherit'}
+                                color={mode === 'dark' ? theme.vars.palette.background.paper : 'inherit'}
                             >
                                 <IconInfoCircle />
                             </IconButton>
@@ -208,7 +208,7 @@ const CanvasNode = ({ data }) => {
                         {(data.inputAnchors.length > 0 || data.inputParams.length > 0) && (
                             <>
                                 <Divider />
-                                <Box sx={{ background: theme.palette.asyncSelect.main, p: 1 }}>
+                                <Box sx={{ background: theme.vars.palette.asyncSelect.main, p: 1 }}>
                                     <Typography
                                         sx={{
                                             fontWeight: 500,
@@ -259,7 +259,7 @@ const CanvasNode = ({ data }) => {
                         )}
                         {data.outputAnchors.length > 0 && <Divider />}
                         {data.outputAnchors.length > 0 && (
-                            <Box sx={{ background: theme.palette.asyncSelect.main, p: 1 }}>
+                            <Box sx={{ background: theme.vars.palette.asyncSelect.main, p: 1 }}>
                                 <Typography
                                     sx={{
                                         fontWeight: 500,

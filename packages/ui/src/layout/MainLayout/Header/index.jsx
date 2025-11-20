@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
-import { useSelector, useDispatch } from 'react-redux'
-import { useState } from 'react'
 
+import { useThemeMode } from '@ui/theme'
 // material-ui
 import { useTheme } from '@mui/material/styles'
 import { Box, Switch } from '@mui/material'
@@ -12,11 +11,7 @@ import ProfileSection from './ProfileSection'
 
 // assets
 
-// store
-import { SET_DARKMODE } from '@/store/actions'
-
 import { useUser } from '@auth0/nextjs-auth0/client'
-
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
@@ -37,12 +32,12 @@ const MaterialUISwitch = styled(Switch)(({ theme }) => ({
             },
             '& + .MuiSwitch-track': {
                 opacity: 1,
-                backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be'
+                backgroundColor: theme.vars.palette.action.disabled
             }
         }
     },
     '& .MuiSwitch-thumb': {
-        backgroundColor: theme.palette.mode === 'dark' ? '#003892' : '#001e3c',
+        backgroundColor: theme.vars.palette.primary.dark,
         width: 32,
         height: 32,
         '&:before': {
@@ -61,7 +56,7 @@ const MaterialUISwitch = styled(Switch)(({ theme }) => ({
     },
     '& .MuiSwitch-track': {
         opacity: 1,
-        backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+        backgroundColor: theme.vars.palette.action.disabled,
         borderRadius: 20 / 2
     }
 }))
@@ -71,16 +66,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
 
     const { user } = useUser()
 
-    const customization = useSelector((state) => state.customization)
-
-    const [isDark, setIsDark] = useState(customization.isDarkMode)
-    const dispatch = useDispatch()
-
-    const changeDarkMode = () => {
-        dispatch({ type: SET_DARKMODE, isDarkMode: !isDark })
-        setIsDark((isDark) => !isDark)
-        localStorage.setItem('isDarkMode', !isDark)
-    }
+    const { mode, toggleMode } = useThemeMode()
 
     const signOutClicked = () => {
         sessionStorage.removeItem('access_token')
@@ -106,11 +92,11 @@ const Header = ({ handleLeftDrawerToggle }) => {
                             ...theme.typography.commonAvatar,
                             ...theme.typography.mediumAvatar,
                             transition: 'all .2s ease-in-out',
-                            background: theme.palette.secondary.light,
-                            color: theme.palette.secondary.dark,
+                            background: theme.vars.palette.secondary.light,
+                            color: theme.vars.palette.secondary.dark,
                             '&:hover': {
-                                background: theme.palette.secondary.dark,
-                                color: theme.palette.secondary.light
+                                background: theme.vars.palette.secondary.dark,
+                                color: theme.vars.palette.secondary.light
                             }
                         }}
                         onClick={handleLeftDrawerToggle}
@@ -121,7 +107,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
                 </ButtonBase> */}
             </Box>
             <Box sx={{ flexGrow: 1 }} />
-            <MaterialUISwitch checked={isDark} onChange={changeDarkMode} />
+            <MaterialUISwitch checked={mode === 'dark'} onChange={toggleMode} />
             <Box sx={{ ml: 2 }}></Box>
             <ProfileSection handleLogout={signOutClicked} username={user?.name ?? ''} />
         </>

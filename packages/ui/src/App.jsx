@@ -1,15 +1,17 @@
 'use client'
 import React from 'react'
-import { useSelector } from 'react-redux'
 
-import { ThemeProvider } from '@mui/material/styles'
-import { Button, CssBaseline, StyledEngineProvider } from '@mui/material'
+import { CssBaseline, StyledEngineProvider } from '@mui/material'
+import { Experimental_CssVarsProvider as CssVarsProvider } from '@mui/material/styles'
 
 // routing
 import Routes from '@/routes'
 
-// defaultTheme
-import themes from '@/themes'
+// CSS Variables theme - FIXED: Import from packages-answers/ui with colorSchemeSelector
+import { cssVarsTheme } from '@ui/theme/cssVarsTheme'
+
+// Import migration utility for localStorage theme migration
+import { initializeThemeStorage } from '@ui/theme/migrateThemeStorage'
 
 // project imports
 import NavigationScroll from '@/layout/NavigationScroll'
@@ -19,9 +21,14 @@ import useNotifyParentOfNavigation from './utils/useNotifyParentOfNavigation'
 // ==============================|| APP ||============================== //
 
 const App = () => {
-    const customization = useSelector((state) => state.customization)
     const { user, isLoading, getAccessTokenSilently, error, signinWithRedirect } = useAuth0()
     useNotifyParentOfNavigation()
+
+    // Run theme migration ONCE on mount (before theme provider initializes)
+    React.useEffect(() => {
+        initializeThemeStorage()
+    }, [])
+
     React.useEffect(() => {
         if (user?.chatflowDomain) {
             sessionStorage.setItem('baseURL', user.chatflowDomain.replace('8080', '4000'))
@@ -49,18 +56,19 @@ const App = () => {
 
     return (
         <StyledEngineProvider injectFirst>
-            <ThemeProvider theme={themes(customization)}>
-                <CssBaseline />
+            <CssVarsProvider
+                theme={cssVarsTheme}
+                // CRITICAL: Match configuration from CssVarsThemeProvider
+                defaultMode='dark'
+                modeStorageKey='mui-mode'
+                colorSchemeStorageKey='mui-color-scheme'
+                disableNestedContext // Prevent context conflicts when nested inside another provider
+            >
+                <CssBaseline enableColorScheme />
                 <NavigationScroll>
                     <Routes />
                 </NavigationScroll>
-                {error && (
-                    <>
-                        <h1>{error.message}</h1>
-                        <Button onClick={() => loginWithRedirect()}>Try Again</Button>
-                    </>
-                )}
-            </ThemeProvider>
+            </CssVarsProvider>
         </StyledEngineProvider>
     )
 }

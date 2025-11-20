@@ -3,3 +3,6 @@
 
 pnpm quick # prettify
 pnpm lint-staged # eslint lint(also include prettify but prettify support more file extensions than eslint, so run prettify first)
+
+# Run theme validation for theme files
+. "$(dirname "$0")/theme-validate"

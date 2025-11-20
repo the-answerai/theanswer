@@ -270,10 +270,10 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
             return (
                 <Box
                     sx={{
-                        background: theme.palette.grey[100],
+                        background: theme.vars.palette.grey[100],
                         p: 2,
                         textAlign: 'center',
-                        color: theme.palette.text.secondary
+                        color: theme.vars.palette.text.secondary
                     }}
                 >
                     {format(new Date(message.content), 'MMMM do yyyy, h:mm:ss a')}
@@ -285,8 +285,8 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
             <Box
                 sx={{
                     p: 2,
-                    background: message.role === 'apiMessage' ? theme.palette.primary.light : theme.palette.background.paper,
-                    borderBottom: `1px solid ${theme.palette.divider}`
+                    background: message.role === 'apiMessage' ? theme.vars.palette.primary.light : theme.vars.palette.background.paper,
+                    borderBottom: `1px solid ${theme.vars.palette.divider}`
                 }}
             >
                 <Typography variant='body2' sx={{ mb: 1, fontWeight: 'bold' }}>
@@ -483,7 +483,7 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
                                         selected={selectedMessageIndex === index}
                                         onClick={() => handleItemClick(chatlog, index)}
                                         sx={{
-                                            borderBottom: `1px solid ${theme.palette.divider}`,
+                                            borderBottom: `1px solid ${theme.vars.palette.divider}`,
                                             '&.Mui-selected': {
                                                 background: 'rgba(255, 255, 255, 0.1)'
                                             }

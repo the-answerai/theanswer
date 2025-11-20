@@ -3,7 +3,7 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 import PropTypes from 'prop-types'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 
 // material-ui
 import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack } from '@mui/material'
@@ -161,7 +161,6 @@ ErrorAction.propTypes = {
 
 const ProfileSection = ({ username, handleLogout }) => {
     const { user } = useAuth0()
-    const customization = useSelector((state) => state.customization)
 
     const [open, setOpen] = useState(false)
     const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
@@ -354,7 +353,6 @@ const ProfileSection = ({ username, handleLogout }) => {
                 anchorEl={anchorRef.current}
                 handleClose={handleClose}
                 username={username}
-                customization={customization}
                 setExportDialogOpen={setExportDialogOpen}
                 importAll={importAll}
                 setAboutDialogOpen={setAboutDialogOpen}

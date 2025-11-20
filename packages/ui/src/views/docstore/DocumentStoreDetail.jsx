@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import * as PropTypes from 'prop-types'
 import { useNavigate, useParams } from '@/utils/navigation'
 
@@ -63,15 +64,14 @@ import doc_store_details_emptySVG from '@/assets/images/doc_store_details_empty.
 
 // store
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-
 // ==============================|| DOCUMENTS ||============================== //
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.vars.palette.grey[900] + 25,
     padding: '6px 16px',
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.vars.palette.grey[900]
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
@@ -112,11 +112,11 @@ const StyledMenu = styled((props) => (
         '& .MuiMenuItem-root': {
             '& .MuiSvgIcon-root': {
                 fontSize: 18,
-                color: theme.palette.text.secondary,
+                color: theme.vars.palette.text.secondary,
                 marginRight: theme.spacing(1.5)
             },
             '&:active': {
-                backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity)
+                backgroundColor: alpha(theme.vars.palette.primary.main, theme.vars.palette.action.selectedOpacity)
             }
         }
     }
@@ -124,7 +124,7 @@ const StyledMenu = styled((props) => (
 
 const DocumentStoreDetails = () => {
     const theme = useTheme()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const navigate = useNavigate()
     const dispatch = useDispatch()
     useNotifier()
@@ -541,9 +541,8 @@ const DocumentStoreDetails = () => {
                                         style={{
                                             width: 'max-content',
                                             borderRadius: '25px',
-                                            boxShadow: customization.isDarkMode
-                                                ? '0 2px 14px 0 rgb(255 255 255 / 10%)'
-                                                : '0 2px 14px 0 rgb(32 40 45 / 10%)'
+                                            boxShadow:
+                                                mode === 'dark' ? '0 2px 14px 0 rgb(255 255 255 / 10%)' : '0 2px 14px 0 rgb(32 40 45 / 10%)'
                                         }}
                                         label={chatflowUsed.name}
                                         onClick={() => navigate('/canvas/' + chatflowUsed.id)}
@@ -572,15 +571,14 @@ const DocumentStoreDetails = () => {
                             </Stack>
                         ) : (
                             <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                sx={{ border: 1, borderColor: theme.vars.palette.grey[900] + 25, borderRadius: 2 }}
                                 component={Paper}
                             >
                                 <Table sx={{ minWidth: 650 }} aria-label='simple table'>
                                     <TableHead
                                         sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
+                                            backgroundColor:
+                                                mode === 'dark' ? theme.vars.palette.common.black : theme.vars.palette.grey[100],
                                             height: 56
                                         }}
                                     >

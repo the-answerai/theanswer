@@ -25,7 +25,7 @@ const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel,
                 <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {dialogProps.title}
                     <div style={{ flex: 1 }}></div>
-                    {customization.isDarkMode && (
+                    {mode === 'dark' && (
                         <StyledButton
                             variant='outlined'
                             color='error'
@@ -36,7 +36,7 @@ const ChatExpandDialog = ({ show, dialogProps, isAgentCanvas, onClear, onCancel,
                             Clear Chat
                         </StyledButton>
                     )}
-                    {!customization.isDarkMode && (
+                    {mode !== 'dark' && (
                         <Button variant='outlined' color='error' title='Clear Conversation' onClick={onClear} startIcon={<IconEraser />}>
                             Clear Chat
                         </Button>

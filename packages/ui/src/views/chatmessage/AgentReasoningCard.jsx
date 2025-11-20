@@ -3,6 +3,7 @@ import { IconTool, IconDeviceSdCard } from '@tabler/icons-react'
 import { MemoizedReactMarkdown } from '@/ui-component/markdown/MemoizedReactMarkdown'
 import nextAgentGIF from '@/assets/images/next-agent.gif'
 import PropTypes from 'prop-types'
+import { useThemeMode } from '@ui/theme'
 
 const AgentReasoningCard = ({
     agent,
@@ -19,16 +20,16 @@ const AgentReasoningCard = ({
     onURLClick,
     getLabel
 }) => {
+    const { mode } = useThemeMode()
+
     if (agent.nextAgent) {
         return (
             <Card
                 key={index}
                 sx={{
-                    border: customization.isDarkMode ? 'none' : '1px solid #e0e0e0',
+                    border: mode === 'dark' ? 'none' : '1px solid #e0e0e0',
                     borderRadius: `${customization.borderRadius}px`,
-                    background: customization.isDarkMode
-                        ? `linear-gradient(to top, #303030, #212121)`
-                        : `linear-gradient(to top, #f6f3fb, #f2f8fc)`,
+                    background: mode === 'dark' ? `linear-gradient(to top, #303030, #212121)` : `linear-gradient(to top, #f6f3fb, #f2f8fc)`,
                     mb: 1
                 }}
             >

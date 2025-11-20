@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, memo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useThemeMode } from '@ui/theme'
+import { useDispatch } from 'react-redux'
 import PropTypes from 'prop-types'
 
 import { Typography, Box, ClickAwayListener, Paper, Popper, Button } from '@mui/material'
@@ -21,13 +22,12 @@ import useNotifier from '@/utils/useNotifier'
 // Const
 import { enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 import { AGENTFLOW_ICONS } from '@/store/constant'
-
 // Utils
 
 const ValidationPopUp = ({ chatflowid, hidden }) => {
     const theme = useTheme()
     const dispatch = useDispatch()
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
 
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
@@ -208,11 +208,12 @@ const ValidationPopUp = ({ chatflowid, hidden }) => {
                                                     sx={{
                                                         p: 2,
                                                         mb: 2,
-                                                        backgroundColor: customization.isDarkMode
-                                                            ? theme.palette.background.paper
-                                                            : theme.palette.background.neutral,
+                                                        backgroundColor:
+                                                            mode === 'dark'
+                                                                ? theme.vars.palette.background.paper
+                                                                : theme.vars.palette.background.neutral,
                                                         borderRadius: '8px',
-                                                        border: `1px solid ${alpha('#FFB938', customization.isDarkMode ? 0.3 : 0.5)}`
+                                                        border: `1px solid ${alpha('#FFB938', mode === 'dark' ? 0.3 : 0.5)}`
                                                     }}
                                                 >
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -229,9 +230,8 @@ const ValidationPopUp = ({ chatflowid, hidden }) => {
                                                                 pt: 2,
                                                                 px: 2,
                                                                 pb: issueIndex === item.issues.length - 1 ? 2 : 1,
-                                                                backgroundColor: customization.isDarkMode
-                                                                    ? darken('#FFB938', 0.85)
-                                                                    : lighten('#FFB938', 0.9),
+                                                                backgroundColor:
+                                                                    mode === 'dark' ? darken('#FFB938', 0.85) : lighten('#FFB938', 0.9),
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 gap: 2

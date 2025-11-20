@@ -32,7 +32,16 @@ const handleCopyCodeClick = (codeString: string) => {
     navigator.clipboard.writeText(codeString)
 }
 
+// Convert HTML links to markdown format
+const convertHtmlLinksToMarkdown = (text: string): string => {
+    // Match <a href="url">text</a> and convert to [text](url)
+    return text.replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+}
+
 export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLinksInNewTab, setPreviewCode }) => {
+    // Convert HTML links to markdown before rendering
+    const processedContent = convertHtmlLinksToMarkdown(content)
+
     return (
         <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -41,36 +50,39 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                 table: ({ children, ...props }) => (
                     <Box
                         component='table'
-                        sx={{
+                        sx={(theme) => ({
                             width: '100%',
                             borderCollapse: 'collapse',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            border: `1px solid ${theme.vars.palette.overlay.white.medium}`,
                             borderRadius: 1,
                             overflow: 'hidden',
                             my: 2,
+                            tableLayout: 'fixed',
                             '& th, & td': {
                                 padding: '12px 16px',
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                                borderBottom: `1px solid ${theme.vars.palette.overlay.white.medium}`,
                                 textAlign: 'left',
-                                verticalAlign: 'top'
+                                verticalAlign: 'top',
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word'
                             },
                             '& th': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                backgroundColor: theme.vars.palette.overlay.white.light,
                                 fontWeight: 600,
-                                color: '#E0E0E0',
-                                borderBottom: '2px solid rgba(255, 255, 255, 0.2)'
+                                color: theme.vars.palette.monochrome.neutral,
+                                borderBottom: `2px solid ${theme.vars.palette.overlay.white.heavy}`
                             },
                             '& td': {
-                                color: '#E0E0E0',
+                                color: theme.vars.palette.monochrome.neutral,
                                 fontSize: '0.875rem'
                             },
                             '& tr:last-child td': {
                                 borderBottom: 'none'
                             },
                             '& tr:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.04)'
+                                backgroundColor: theme.vars.palette.overlay.white.subtle
                             }
-                        }}
+                        })}
                         {...props}
                     >
                         {children}
@@ -160,7 +172,16 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                         )
                     }
                     return (
-                        <Box component='p' sx={{ mb: 1 }} {...props}>
+                        <Box
+                            component='p'
+                            sx={{
+                                mb: 1,
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                maxWidth: '100%'
+                            }}
+                            {...props}
+                        >
                             {children}
                         </Box>
                     )
@@ -200,13 +221,16 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                     return (
                         <Box
                             component='code'
-                            sx={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            sx={(theme) => ({
+                                backgroundColor: theme.vars.palette.overlay.white.medium,
                                 padding: '2px 6px',
                                 borderRadius: 0.5,
                                 fontSize: '0.875rem',
-                                fontFamily: 'monospace'
-                            }}
+                                fontFamily: 'monospace',
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                whiteSpace: 'pre-wrap'
+                            })}
                             {...props}
                         >
                             {children}
@@ -215,7 +239,7 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                 }
             }}
         >
-            {content}
+            {processedContent}
         </ReactMarkdown>
     )
 }

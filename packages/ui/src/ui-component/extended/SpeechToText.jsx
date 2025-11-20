@@ -363,7 +363,7 @@ const SpeechToText = ({ dialogProps }) => {
                         onChange={handleProviderChange}
                         sx={{
                             '& .MuiSvgIcon-root': {
-                                color: theme?.customization?.isDarkMode ? '#fff' : 'inherit'
+                                color: theme.vars.palette.text.primary
                             }
                         }}
                     >

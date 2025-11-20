@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useThemeMode } from '@ui/theme'
 import { createPortal } from 'react-dom'
 import PropTypes from 'prop-types'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import ReactJson from 'flowise-react-json-view'
 import { HIDE_CANVAS_DIALOG, SHOW_CANVAS_DIALOG } from '@/store/actions'
 
@@ -11,11 +12,10 @@ import { IconEdit, IconTrash, IconX, IconLanguage } from '@tabler/icons-react'
 
 // Project imports
 import { CodeEditor } from '@/ui-component/editor/CodeEditor'
-
 const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDeleteChunk, isReadOnly }) => {
     const portalElement = typeof document !== 'undefined' ? document.getElementById('portal') : null
 
-    const customization = useSelector((state) => state.customization)
+    const { mode } = useThemeMode()
     const dispatch = useDispatch()
 
     const [selectedChunk, setSelectedChunk] = useState()
@@ -136,9 +136,7 @@ const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDelet
                                 fontSize: '15px',
                                 width: 'max-content',
                                 borderRadius: '25px',
-                                boxShadow: customization.isDarkMode
-                                    ? '0 2px 14px 0 rgb(255 255 255 / 20%)'
-                                    : '0 2px 14px 0 rgb(32 40 45 / 20%)',
+                                boxShadow: mode === 'dark' ? '0 2px 14px 0 rgb(255 255 255 / 20%)' : '0 2px 14px 0 rgb(32 40 45 / 20%)',
                                 display: 'flex',
                                 flexDirection: 'row',
                                 alignItems: 'center',
@@ -155,7 +153,7 @@ const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDelet
                                 disabled={true}
                                 height='max-content'
                                 value={contentValue}
-                                theme={customization.isDarkMode ? 'dark' : 'light'}
+                                theme={mode === 'dark' ? 'dark' : 'light'}
                                 basicSetup={{
                                     lineNumbers: false,
                                     foldGutter: false,
@@ -171,7 +169,7 @@ const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDelet
                                 autoFocus={true}
                                 height='max-content'
                                 value={contentValue}
-                                theme={customization.isDarkMode ? 'dark' : 'light'}
+                                theme={mode === 'dark' ? 'dark' : 'light'}
                                 basicSetup={{
                                     lineNumbers: false,
                                     foldGutter: false,
@@ -193,7 +191,7 @@ const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDelet
                         >
                             {!isEdit && (
                                 <ReactJson
-                                    theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                    theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                     src={metadata}
                                     style={{ padding: '10px' }}
                                     name={null}
@@ -205,7 +203,7 @@ const ExpandedChunkDialog = ({ show, dialogProps, onCancel, onChunkEdit, onDelet
                             )}
                             {isEdit && (
                                 <ReactJson
-                                    theme={customization.isDarkMode ? 'ocean' : 'rjv-default'}
+                                    theme={mode === 'dark' ? 'ocean' : 'rjv-default'}
                                     src={metadata}
                                     style={{ padding: '10px' }}
                                     name={null}
