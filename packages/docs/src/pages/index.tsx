@@ -3,7 +3,7 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
-import { Code2, Rocket, MessageSquare, Globe, Target, Building2, Lightbulb, Key, Check, BarChart3 } from 'lucide-react'
+import { Code2, Rocket, MessageSquare, Globe, Target, Building2, Lightbulb, Key, Check, BarChart3, Sparkles } from 'lucide-react'
 
 import styles from './index.module.css'
 
@@ -39,6 +39,10 @@ function HomepageHeader() {
                         <a href='/developers/' className={styles.secondaryLink}>
                             <Code2 size={18} className={styles.linkIcon} />
                             Call for Developers
+                        </a>
+                        <a href='/new-brand' className={styles.secondaryLink}>
+                            <Sparkles size={18} className={styles.linkIcon} />
+                            New Brand
                         </a>
                     </div>
                 </div>
