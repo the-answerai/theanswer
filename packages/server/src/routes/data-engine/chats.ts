@@ -1,13 +1,21 @@
 import express from 'express'
 import chatsController from '../../controllers/data-engine/chats'
+import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { validateCreateChat, validateUpdateChat, validatePaginationParams } from '../../middlewares/validation/dataEngineValidation'
 
 const router = express.Router()
 
-// All routes protected by global authentication middleware (API key or JWT)
-router.post('/', chatsController.createChat)
-router.get('/', chatsController.getAllChats)
-router.get('/:id', chatsController.getChatById)
-router.put('/:id', chatsController.updateChat)
-router.delete('/:id', chatsController.deleteChat)
+// CREATE
+router.post('/', enforceAbility('DataEngineChat'), validateCreateChat, chatsController.createChat)
+
+// READ
+router.get('/', enforceAbility('DataEngineChat'), validatePaginationParams, chatsController.getAllChats)
+router.get('/:id', enforceAbility('DataEngineChat'), chatsController.getChatById)
+
+// UPDATE
+router.put('/:id', enforceAbility('DataEngineChat'), validateUpdateChat, chatsController.updateChat)
+
+// DELETE
+router.delete('/:id', enforceAbility('DataEngineChat'), chatsController.deleteChat)
 
 export default router

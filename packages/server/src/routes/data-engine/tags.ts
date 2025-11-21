@@ -1,14 +1,22 @@
 import express from 'express'
 import tagsController from '../../controllers/data-engine/tags'
+import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { validateCreateTag, validateUpdateTag } from '../../middlewares/validation/dataEngineValidation'
 
 const router = express.Router()
 
-// All routes protected by global authentication middleware (API key or JWT)
-router.post('/', tagsController.createTag)
-router.get('/', tagsController.getAllTags)
-router.get('/hierarchy', tagsController.getTagHierarchy)
-router.get('/:id', tagsController.getTagById)
-router.put('/:id', tagsController.updateTag)
-router.delete('/:id', tagsController.deleteTag)
+// CREATE
+router.post('/', enforceAbility('DataEngineTag'), validateCreateTag, tagsController.createTag)
+
+// READ
+router.get('/', enforceAbility('DataEngineTag'), tagsController.getAllTags)
+router.get('/hierarchy', enforceAbility('DataEngineTag'), tagsController.getTagHierarchy)
+router.get('/:id', enforceAbility('DataEngineTag'), tagsController.getTagById)
+
+// UPDATE
+router.put('/:id', enforceAbility('DataEngineTag'), validateUpdateTag, tagsController.updateTag)
+
+// DELETE
+router.delete('/:id', enforceAbility('DataEngineTag'), tagsController.deleteTag)
 
 export default router

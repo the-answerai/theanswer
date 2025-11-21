@@ -1,13 +1,21 @@
 import express from 'express'
 import callsController from '../../controllers/data-engine/calls'
+import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { validateCreateCall, validateUpdateCall, validatePaginationParams } from '../../middlewares/validation/dataEngineValidation'
 
 const router = express.Router()
 
-// All routes protected by global authentication middleware (API key or JWT)
-router.post('/', callsController.createCall)
-router.get('/', callsController.getAllCalls)
-router.get('/:id', callsController.getCallById)
-router.put('/:id', callsController.updateCall)
-router.delete('/:id', callsController.deleteCall)
+// CREATE
+router.post('/', enforceAbility('DataEngineCall'), validateCreateCall, callsController.createCall)
+
+// READ
+router.get('/', enforceAbility('DataEngineCall'), validatePaginationParams, callsController.getAllCalls)
+router.get('/:id', enforceAbility('DataEngineCall'), callsController.getCallById)
+
+// UPDATE
+router.put('/:id', enforceAbility('DataEngineCall'), validateUpdateCall, callsController.updateCall)
+
+// DELETE
+router.delete('/:id', enforceAbility('DataEngineCall'), callsController.deleteCall)
 
 export default router

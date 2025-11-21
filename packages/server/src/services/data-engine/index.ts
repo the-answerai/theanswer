@@ -40,33 +40,57 @@ class DataEngineService {
 
     /**
      * Get authorization headers with M2M token and user context
-     * Falls back to service key if M2M not configured (backward compatible)
+     * Configurable fallback behavior for authentication failures
      */
     private async getAuthHeaders(user?: IUser): Promise<Record<string, string>> {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json'
         }
 
+        // Configuration: should we fail or fallback on M2M error?
+        const allowFallback = process.env.DATA_ENGINE_AUTH_ALLOW_FALLBACK !== 'false' // Default: true
+
         // Try M2M authentication first
         if (auth0M2MTokenManager.isEnabled()) {
             try {
                 const token = await auth0M2MTokenManager.getAccessToken()
                 headers['Authorization'] = `Bearer ${token}`
-                console.log('[DataEngineService] Using M2M authentication')
+                console.log('[DataEngineService] ✓ Using M2M authentication')
+
+                // Add success metric/log for monitoring
+                this.logAuthMethod('m2m', true)
             } catch (error) {
-                console.warn('[DataEngineService] M2M authentication failed, falling back to service key')
-                // Fall through to service key
+                // Log M2M failure for monitoring/alerts
+                this.logAuthMethod('m2m', false, error)
+                console.error('[DataEngineService] M2M authentication failed:', getErrorMessage(error))
+
+                // Check if fallback is allowed
+                if (!allowFallback) {
+                    console.error('[DataEngineService] Fallback disabled (DATA_ENGINE_AUTH_ALLOW_FALLBACK=false), rejecting request')
+                    throw new InternalFlowiseError(
+                        StatusCodes.UNAUTHORIZED,
+                        'Error: dataEngineService.getAuthHeaders - M2M authentication failed and fallback is disabled'
+                    )
+                }
+
+                // Fall back to service key if configured
                 if (process.env.DATA_ENGINE_SERVICE_KEY) {
+                    console.warn('[DataEngineService] ⚠️  FALLBACK: Using service key authentication (M2M failed)')
                     headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
-                    console.log('[DataEngineService] Using service key authentication (fallback)')
+                    this.logAuthMethod('service-key-fallback', true)
                 } else {
-                    throw error // Re-throw if no fallback available
+                    // No fallback available
+                    throw new InternalFlowiseError(
+                        StatusCodes.UNAUTHORIZED,
+                        'Error: dataEngineService.getAuthHeaders - M2M authentication failed and no service key available for fallback'
+                    )
                 }
             }
         } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
             // Use service key if M2M not configured
             headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
-            console.log('[DataEngineService] Using service key authentication')
+            console.log('[DataEngineService] Using service key authentication (M2M not configured)')
+            this.logAuthMethod('service-key', true)
         } else {
             throw new InternalFlowiseError(
                 StatusCodes.INTERNAL_SERVER_ERROR,
@@ -82,6 +106,29 @@ class DataEngineService {
         }
 
         return headers
+    }
+
+    /**
+     * Log authentication method usage for monitoring and alerting
+     * In production, this should integrate with your metrics/monitoring system
+     */
+    private logAuthMethod(method: string, success: boolean, error?: unknown): void {
+        const logData = {
+            timestamp: new Date().toISOString(),
+            method,
+            success,
+            error: error ? getErrorMessage(error) : undefined
+        }
+
+        // Log to console (in production, send to monitoring system)
+        if (success) {
+            console.log('[DataEngineService] Auth Method:', logData)
+        } else {
+            console.error('[DataEngineService] Auth Method Failed:', logData)
+        }
+
+        // TODO: Integrate with metrics system (Prometheus, OpenTelemetry, etc.)
+        // Example: metrics.counter('data_engine_auth', { method, success: success.toString() }).inc()
     }
 
     // ==================== DOMAINS ====================
@@ -383,7 +430,7 @@ class DataEngineService {
     }
 
     /**
-     * Centralized error handling
+     * Centralized error handling with sanitization
      */
     private handleError(error: unknown, method: string, path: string): never {
         if (axios.isAxiosError(error)) {
@@ -392,26 +439,67 @@ class DataEngineService {
             // Extract status and message from response
             const status = axiosError.response?.status || StatusCodes.INTERNAL_SERVER_ERROR
             const errorData = axiosError.response?.data as any
-            const message = errorData?.error || errorData?.details || axiosError.message
+            const rawMessage = errorData?.error || errorData?.details || axiosError.message
 
+            // Log full error details server-side for debugging
             console.error(`[DataEngineService] ${method} ${path} failed:`, {
                 status,
-                message,
-                data: errorData
+                message: rawMessage,
+                data: errorData,
+                stack: axiosError.stack
             })
+
+            // Sanitize error message for client
+            // Remove internal paths, stack traces, and sensitive data
+            const clientMessage = this.sanitizeErrorMessage(rawMessage, status)
 
             throw new InternalFlowiseError(
                 status,
-                `Error: dataEngineService.${method.toLowerCase()}${this.getMethodName(path)} - ${message}`
+                `Error: dataEngineService.${method.toLowerCase()}${this.getMethodName(path)} - ${clientMessage}`
             )
         }
 
         // Non-Axios errors
         console.error(`[DataEngineService] ${method} ${path} unexpected error:`, error)
+
+        // Sanitize generic errors
+        const clientMessage = this.sanitizeErrorMessage(getErrorMessage(error), StatusCodes.INTERNAL_SERVER_ERROR)
+
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: dataEngineService.${method.toLowerCase()}${this.getMethodName(path)} - ${getErrorMessage(error)}`
+            `Error: dataEngineService.${method.toLowerCase()}${this.getMethodName(path)} - ${clientMessage}`
         )
+    }
+
+    /**
+     * Sanitize error messages to prevent information leakage
+     */
+    private sanitizeErrorMessage(message: string, status: number): string {
+        // Production mode: return generic messages for internal errors
+        if (process.env.NODE_ENV === 'production' && status >= 500) {
+            return 'Internal server error occurred'
+        }
+
+        // Remove file paths
+        message = message.replace(/\/[^\s]+\.(ts|js|json)/gi, '[file]')
+
+        // Remove absolute paths
+        message = message.replace(/[A-Z]:\\[\w\\-]+/gi, '[path]')
+        message = message.replace(/\/[\w/-]+\/[\w/-]+/gi, '[path]')
+
+        // Remove stack trace indicators
+        message = message.replace(/at\s+[\w.]+\s+\([^)]+\)/gi, '')
+
+        // Remove potential SQL/database errors with sensitive info
+        message = message.replace(/Table\s+['"`][\w_]+['"`]/gi, 'Table [redacted]')
+        message = message.replace(/Column\s+['"`][\w_]+['"`]/gi, 'Column [redacted]')
+
+        // Limit message length
+        if (message.length > 200) {
+            message = message.substring(0, 200) + '...'
+        }
+
+        return message.trim()
     }
 
     /**

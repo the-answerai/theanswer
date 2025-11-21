@@ -1,13 +1,21 @@
 import express from 'express'
 import urlsController from '../../controllers/data-engine/urls'
+import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { validateCreateUrl, validateUpdateUrl, validatePaginationParams } from '../../middlewares/validation/dataEngineValidation'
 
 const router = express.Router()
 
-// All routes protected by global authentication middleware (API key or JWT)
-router.post('/', urlsController.createUrl)
-router.get('/', urlsController.getAllUrls)
-router.get('/:id', urlsController.getUrlById)
-router.put('/:id', urlsController.updateUrl)
-router.delete('/:id', urlsController.deleteUrl)
+// CREATE
+router.post('/', enforceAbility('DataEngineUrl'), validateCreateUrl, urlsController.createUrl)
+
+// READ
+router.get('/', enforceAbility('DataEngineUrl'), validatePaginationParams, urlsController.getAllUrls)
+router.get('/:id', enforceAbility('DataEngineUrl'), urlsController.getUrlById)
+
+// UPDATE
+router.put('/:id', enforceAbility('DataEngineUrl'), validateUpdateUrl, urlsController.updateUrl)
+
+// DELETE
+router.delete('/:id', enforceAbility('DataEngineUrl'), urlsController.deleteUrl)
 
 export default router
