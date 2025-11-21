@@ -16,6 +16,8 @@ if (process.env.BILLING_STRIPE_CREDITS_METER_ID && !DEFAULT_CUSTOMER_ID?.trim())
             'Please set a valid Stripe customer ID to use as fallback for invalid customer IDs.'
     )
 }
+// Disable billing checks flag: When true, skip all billing credit limit checks (useful for local development)
+export const DISABLE_BILLING_CHECKS = process.env.DISABLE_BILLING_CHECKS === 'true'
 
 // Load environment variables with defaults
 // Base rate: $20 for 500,000 credits = $0.00004 per credit
