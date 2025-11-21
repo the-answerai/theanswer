@@ -305,7 +305,8 @@ export function validateCreateTicket(req: Request, res: Response, next: NextFunc
     try {
         const { title, status, priority } = req.body
 
-        validateRequiredFields(req.body, ['title', 'created_by'], 'createTicket')
+        // Note: created_by is automatically added from authenticated user in service layer
+        validateRequiredFields(req.body, ['title'], 'createTicket')
 
         if (typeof title !== 'string' || title.trim().length === 0) {
             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: Ticket validation - title must be a non-empty string')

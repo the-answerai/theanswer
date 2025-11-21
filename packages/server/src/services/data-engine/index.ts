@@ -327,8 +327,13 @@ class DataEngineService {
     // ==================== TICKETS ====================
 
     async createTicket(data: any, user: IUser) {
-        // Tickets don't have metadata with source_user_id
-        return this.request('POST', '/tickets', data, user)
+        // Tickets have created_by as a direct field (not in metadata)
+        // Automatically set from authenticated user
+        const ticketData = {
+            ...data,
+            created_by: data.created_by || user.email || user.id
+        }
+        return this.request('POST', '/tickets', ticketData, user)
     }
 
     async getAllTickets(query: any, user: IUser) {

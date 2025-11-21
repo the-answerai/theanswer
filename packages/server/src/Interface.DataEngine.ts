@@ -264,7 +264,7 @@ export interface ICreateTicketRequest {
     assigned_to?: string
     escalated?: boolean
     tags_array?: string[]
-    created_by: string // Required field
+    created_by?: string // Optional - automatically set from authenticated user if not provided
 }
 
 export interface IUpdateTicketRequest {
