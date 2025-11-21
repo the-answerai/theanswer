@@ -1,7 +1,7 @@
 bradtaylorsf:
     name: Bradley Taylor
-    title: Founder & CEO @ The Answer
-    url: https://theanswer.ai
+    title: Founder & CEO
+    url: https://www.linkedin.com/in/bradtaylorsf/
     image_url: /img/brad-blackand-white.png
     page: true
     socials:
@@ -10,3 +10,36 @@ bradtaylorsf:
         linkedin: bradtaylorsf
         youtube: digitalatscale
         instagram: digitalatscale
+bismamajeed:
+    name: Bismam Majeed
+    title: AI solutions architect
+    url: https://www.linkedin.com/in/bisma-majeed-29423a107/
+    image_url: /img/bismamajeed.jpeg
+    page: true
+    socials:
+        x: digitalatscale_
+        github: bradtaylorsf
+        linkedin:
+        youtube: digitalatscale
+        instagram: digitalatscale
+maxtechera:
+    name: Max Techera
+    title: Co-founder & CTO
+    url: https://www.linkedin.com/in/maxtechera/
+    image_url: /img/maxtechera.jpeg
+    page: true
+    socials:
+        x: maxtechera
+        instagram: maxtechera
+        linkedin: maxtechera
+        youtube: maxtechera
+diegocosta:
+    name: Diego Costa Caivano
+    title: Platform Engineer
+    url: https://www.linkedin.com/in/diecoscai/
+    image_url: /img/diegocosta.jpeg
+    page: true
+    socials:
+        x: diecoscai
+        instagram: diecoscai
+        linkedin: diecoscai
