@@ -181,6 +181,8 @@ const JlincSettings = ({ dialogProps }) => {
                                         padding: 10,
                                         objectFit: 'contain'
                                     }}
+                                    width={50}
+                                    height={50}
                                     alt='JLINC'
                                     src={jlincProvider.icon}
                                 />

@@ -5,9 +5,11 @@
 
 import { Components, Theme } from '@mui/material/styles'
 import { glassmorphismTokens } from '../tokens/glassmorphism'
+import { colorTokens } from '../tokens/colors'
 
 export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<Theme, 'components'>> => {
     const glass = glassmorphismTokens[mode]
+    const colors = colorTokens[mode]
 
     return {
         // Global CSS Baseline
@@ -291,6 +293,7 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                     WebkitBackdropFilter: 'none',
                     border: 'none',
                     boxShadow: 'none',
+                    color: colors.text.primary,
                     '&:hover': {
                         backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)'
                     }
@@ -449,7 +452,8 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             styleOverrides: {
                 tooltip: {
                     ...glass.glassSecondary,
-                    fontSize: '0.75rem'
+                    fontSize: '0.75rem',
+                    color: mode === 'light' ? '#1a1a1a' : '#ffffff'
                 }
             }
         },

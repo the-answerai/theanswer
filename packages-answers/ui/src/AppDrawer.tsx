@@ -582,6 +582,10 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     return 'Build and customize your own AI solutions'
                                 case 'enterprise_admin':
                                     return 'Organization admin and enterprise settings'
+                                case 'profile':
+                                    return 'View and manage your personal profile information'
+                                case 'billing':
+                                    return 'View and manage your subscription and payments'
                                 case 'account':
                                     return 'Manage your account settings and preferences'
                                 default:

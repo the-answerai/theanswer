@@ -9,6 +9,8 @@ import { createContext, useContext, useState, useEffect, ReactNode, useMemo } fr
 import { glassmorphismTokens } from './tokens/glassmorphism'
 import { colorTokens, statusColors } from './tokens/colors'
 import { muiComponentOverrides } from './components/muiOverrides'
+import { store } from 'flowise-ui/src/store'
+import { SET_DARKMODE } from 'flowise-ui/src/store/actions'
 
 // Extend MUI theme types
 declare module '@mui/material/styles' {
@@ -44,23 +46,30 @@ interface ThemeProviderProps {
 export const UnifiedThemeProvider = ({ children, initialMode }: ThemeProviderProps) => {
     const [mode, setModeState] = useState<ThemeMode>(initialMode || 'dark')
 
-    // Sync with localStorage on mount
+    // Read from Redux on mount
     useEffect(() => {
-        const stored = localStorage.getItem('isDarkMode')
-        const storedMode = stored === 'false' ? 'light' : 'dark'
-        setModeState(storedMode)
+        const reduxMode = store.getState().customization.isDarkMode
+        setModeState(reduxMode ? 'dark' : 'light')
     }, [])
+
+    // Subscribe to Redux changes
+    useEffect(() => {
+        const unsubscribe = store.subscribe(() => {
+            const reduxMode = store.getState().customization.isDarkMode
+            const newMode = reduxMode ? 'dark' : 'light'
+            if (newMode !== mode) {
+                setModeState(newMode)
+            }
+        })
+        return () => unsubscribe()
+    }, [mode])
 
     const setMode = (newMode: ThemeMode) => {
         setModeState(newMode)
         localStorage.setItem('isDarkMode', newMode === 'dark' ? 'true' : 'false')
 
-        // Dispatch custom event for Flowise Redux sync
-        window.dispatchEvent(
-            new CustomEvent('themeChange', {
-                detail: { isDarkMode: newMode === 'dark' }
-            })
-        )
+        // Dispatch to Redux store
+        store.dispatch({ type: SET_DARKMODE, isDarkMode: newMode === 'dark' })
     }
 
     const toggleMode = () => {
