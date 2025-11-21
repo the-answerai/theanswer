@@ -523,7 +523,7 @@ class DataEngineService {
             const rawMessage = errorData?.error || errorData?.details || axiosError.message
 
             // Log full error details server-side for debugging
-            console.error(`[DataEngineService] ${method} ${path} failed:`, {
+            console.error(`[DataEngineService] %s %s failed:`, method, path, {
                 status,
                 message: rawMessage,
                 data: errorData,
