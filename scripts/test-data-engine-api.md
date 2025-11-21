@@ -88,6 +88,7 @@ node scripts/test-data-engine-api.js --help
 | `--base-url=<url>` | Base URL for the API | `http://localhost:3000/api/v1/data-engine` |
 | `--resource=<name>` | Test only specific resource | All resources |
 | `--verbose` | Show detailed request/response info | `false` |
+| `--no-cleanup` | Skip cleanup (keep test data for verification) | `false` |
 | `--help, -h` | Show help message | - |
 
 ### Valid Resource Names
@@ -261,6 +262,25 @@ node scripts/test-data-engine-api.js \
   --resource=documents \
   --verbose
 ```
+
+### Keep Test Data for Manual Verification
+
+```bash
+# Run tests but don't delete the created data
+node scripts/test-data-engine-api.js --no-cleanup
+
+# Verify data in specific resource
+node scripts/test-data-engine-api.js --resource=domains --no-cleanup --verbose
+
+# After verifying, run again to clean up
+node scripts/test-data-engine-api.js
+```
+
+**Use Cases for `--no-cleanup`:**
+- **Verify API responses** - Check that created data matches expectations
+- **Database inspection** - Examine records in your database
+- **Manual testing** - Use created data for additional testing
+- **Debugging** - Investigate issues with data structure or relationships
 
 ## Custom Domain Support
 

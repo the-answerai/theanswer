@@ -71,12 +71,17 @@ function loadEnvFile(filePath) {
     }
 }
 
-// Load .env file from project root
+// Load .env file - try multiple locations
+// 1. Try project root (when script is in scripts/ subdirectory)
 const projectRoot = path.resolve(__dirname, '..')
 const envPath = path.join(projectRoot, '.env')
 loadEnvFile(envPath)
 
-// Also try loading from scripts directory
+// 2. Try current working directory (when running from project root)
+const cwdEnvPath = path.join(process.cwd(), '.env')
+loadEnvFile(cwdEnvPath)
+
+// 3. Try scripts directory
 const scriptsEnvPath = path.join(__dirname, '.env')
 loadEnvFile(scriptsEnvPath)
 
@@ -85,12 +90,15 @@ loadEnvFile(scriptsEnvPath)
 // =====================================================================
 
 const config = {
-    baseUrl: process.env.DATA_ENGINE_BASE_URL || 'http://localhost:3000/api/v1/data-engine',
+    baseUrl: process.env.DATA_ENGINE_BASE_URL || 'http://localhost:4000/api/v1/data-engine',
     apiKey: process.env.DATA_ENGINE_API_KEY || '',
     verbose: false,
     testResource: null, // Test all resources by default
     setupMode: false,
-    debug: false
+    debug: false,
+    useM2M: false, // Use M2M authentication instead of API key
+    m2mToken: null, // Cached M2M token
+    noCleanup: false // Skip cleanup (keep test data for verification)
 }
 
 // Parse command line arguments
@@ -108,6 +116,10 @@ process.argv.slice(2).forEach((arg) => {
     } else if (arg === '--debug') {
         config.debug = true
         config.verbose = true
+    } else if (arg === '--m2m') {
+        config.useM2M = true
+    } else if (arg === '--no-cleanup') {
+        config.noCleanup = true
     } else if (arg === '--help' || arg === '-h') {
         console.log(`
 Data Engine API Test Suite
@@ -118,10 +130,12 @@ Usage:
 Options:
   --setup             Interactive setup to save API key and base URL to .env
   --api-key=<key>     API key for authentication
-  --base-url=<url>    Base URL (default: http://localhost:3000/api/v1/data-engine)
+  --base-url=<url>    Base URL (default: http://localhost:4000/api/v1/data-engine)
   --resource=<name>   Test only specific resource
   --verbose           Show detailed request/response info
   --debug             Enable debug mode (shows raw responses, enables verbose)
+  --m2m               Use Auth0 M2M authentication (requires M2M env vars)
+  --no-cleanup        Skip cleanup (keep test data for manual verification)
   --help, -h          Show this help message
 
 Resources:
@@ -131,11 +145,17 @@ Examples:
   # First time setup (saves to .env file)
   node test-data-engine-api.js --setup
 
-  # Run all tests
+  # Run all tests with API key
   node test-data-engine-api.js
+
+  # Run all tests with M2M authentication
+  node test-data-engine-api.js --m2m
 
   # Test specific resource with verbose output
   node test-data-engine-api.js --resource=domains --verbose
+
+  # Keep test data for verification (no cleanup)
+  node test-data-engine-api.js --no-cleanup
 
   # Test against custom domain
   node test-data-engine-api.js --base-url=https://your-domain.com/api/v1/data-engine
@@ -235,22 +255,123 @@ if (config.setupMode) {
 }
 
 // Validate configuration
-if (!config.apiKey) {
-    console.error('❌ Error: API key is required')
-    console.error('\n   Option 1: Run setup to save configuration')
+if (!config.useM2M && !config.apiKey) {
+    console.error('❌ Error: Authentication required')
+    console.error('\n   Option 1: Run setup to save API key configuration')
     console.error('   node test-data-engine-api.js --setup')
     console.error('\n   Option 2: Set environment variable')
     console.error('   export DATA_ENGINE_API_KEY="your-key"')
     console.error('\n   Option 3: Use command line option')
-    console.error('   node test-data-engine-api.js --api-key=your-key\n')
+    console.error('   node test-data-engine-api.js --api-key=your-key')
+    console.error('\n   Option 4: Use M2M authentication (requires Auth0 env vars)')
+    console.error('   node test-data-engine-api.js --m2m\n')
     process.exit(1)
+}
+
+// Validate M2M configuration if using M2M
+if (config.useM2M) {
+    const requiredVars = ['AUTH0_ISSUER_BASE_URL', 'DATA_SIDEKICK_CLIENT_ID', 'DATA_SIDEKICK_CLIENT_SECRET']
+    const missing = requiredVars.filter((v) => !process.env[v])
+
+    if (missing.length > 0) {
+        console.error('❌ Error: M2M authentication requires the following environment variables:')
+        missing.forEach((v) => console.error(`   - ${v}`))
+        console.error('\n   Add these to your .env file or set as environment variables\n')
+        process.exit(1)
+    }
 }
 
 // =====================================================================
 // HTTP Helper Functions
 // =====================================================================
 
-function makeRequest(method, path, body = null) {
+/**
+ * Get Auth0 M2M token using client credentials
+ */
+async function getM2MToken() {
+    // Return cached token if available
+    if (config.m2mToken) {
+        return config.m2mToken
+    }
+
+    try {
+        const tokenUrl = `${process.env.AUTH0_ISSUER_BASE_URL}/oauth/token`
+
+        const payload = JSON.stringify({
+            grant_type: 'client_credentials',
+            client_id: process.env.DATA_SIDEKICK_CLIENT_ID,
+            client_secret: process.env.DATA_SIDEKICK_CLIENT_SECRET,
+            audience: process.env.DATA_SIDEKICK_AUDIENCE || 'https://data-sidekick-api'
+        })
+
+        return new Promise((resolve, reject) => {
+            const url = new URL(tokenUrl)
+            const isHttps = url.protocol === 'https:'
+            const client = isHttps ? https : http
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                }
+            }
+
+            const req = client.request(url, options, (res) => {
+                let data = ''
+
+                res.on('data', (chunk) => {
+                    data += chunk
+                })
+
+                res.on('end', () => {
+                    try {
+                        const parsed = JSON.parse(data)
+
+                        if (res.statusCode === 200 && parsed.access_token) {
+                            config.m2mToken = parsed.access_token
+                            console.log('✅ M2M token obtained successfully')
+                            resolve(parsed.access_token)
+                        } else {
+                            reject({
+                                status: res.statusCode,
+                                message: parsed.error_description || parsed.error || 'Failed to get M2M token',
+                                data: parsed
+                            })
+                        }
+                    } catch (error) {
+                        reject({
+                            status: res.statusCode,
+                            message: 'Failed to parse token response',
+                            raw: data
+                        })
+                    }
+                })
+            })
+
+            req.on('error', (error) => {
+                reject({
+                    message: 'Network error getting M2M token',
+                    error: error.message
+                })
+            })
+
+            req.write(payload)
+            req.end()
+        })
+    } catch (error) {
+        console.error('❌ Failed to get M2M token:', error)
+        throw error
+    }
+}
+
+async function makeRequest(method, path, body = null) {
+    // Get auth token (M2M or API key)
+    let authToken = config.apiKey
+    if (config.useM2M) {
+        authToken = await getM2MToken()
+    }
+
     return new Promise((resolve, reject) => {
         // Ensure path starts with /
         const cleanPath = path.startsWith('/') ? path : `/${path}`
@@ -264,7 +385,7 @@ function makeRequest(method, path, body = null) {
         const options = {
             method,
             headers: {
-                Authorization: `Bearer ${config.apiKey}`,
+                Authorization: `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             }
         }
@@ -451,20 +572,25 @@ async function testDomains() {
         const filtered = await makeRequest('GET', '/domains?isValid=false')
         logTest('List domains with filters', 'pass')
 
-        // Test: Delete domain
-        await makeRequest('DELETE', `/domains/${domainId}`)
-        domainId = null
-        logTest('Delete domain', 'pass')
+        if (config.noCleanup) {
+            logTest('Delete domain', 'skip', `Skipped - data kept for verification (ID: ${domainId})`)
+            logTest('Verify deletion', 'skip', 'Skipped - cleanup disabled')
+        } else {
+            // Test: Delete domain
+            await makeRequest('DELETE', `/domains/${domainId}`)
+            domainId = null
+            logTest('Delete domain', 'pass')
 
-        // Verify deletion
-        try {
-            await makeRequest('GET', `/domains/${created.id}`)
-            logTest('Verify deletion', 'fail', 'Domain still exists')
-        } catch (error) {
-            if (error.status === 404) {
-                logTest('Verify deletion', 'pass')
-            } else {
-                logTest('Verify deletion', 'fail', error.message)
+            // Verify deletion
+            try {
+                await makeRequest('GET', `/domains/${created.id}`)
+                logTest('Verify deletion', 'fail', 'Domain still exists')
+            } catch (error) {
+                if (error.status === 404) {
+                    logTest('Verify deletion', 'pass')
+                } else {
+                    logTest('Verify deletion', 'fail', error.message)
+                }
             }
         }
     } catch (error) {
@@ -473,7 +599,7 @@ async function testDomains() {
         logTest('Domain tests', 'fail', errorMsg + errorDetails)
 
         // Cleanup
-        if (domainId) {
+        if (domainId && !config.noCleanup) {
             try {
                 await makeRequest('DELETE', `/domains/${domainId}`)
             } catch (e) {
@@ -565,30 +691,36 @@ async function testUrls() {
         const statusFilter = await makeRequest('GET', '/urls?statusFilter=[200,404]')
         logTest('List URLs with status filter', 'pass')
 
-        // Test: Delete URL
-        await makeRequest('DELETE', `/urls/${urlId}`)
-        urlId = null
-        logTest('Delete URL', 'pass')
+        if (config.noCleanup) {
+            logTest('Delete URL', 'skip', `Skipped - data kept for verification (ID: ${urlId})`)
+        } else {
+            // Test: Delete URL
+            await makeRequest('DELETE', `/urls/${urlId}`)
+            urlId = null
+            logTest('Delete URL', 'pass')
 
-        // Cleanup domain
-        await makeRequest('DELETE', `/domains/${domainId}`)
-        domainId = null
+            // Cleanup domain
+            await makeRequest('DELETE', `/domains/${domainId}`)
+            domainId = null
+        }
     } catch (error) {
         logTest('URL tests', 'fail', error.message || JSON.stringify(error))
 
         // Cleanup
-        if (urlId) {
-            try {
-                await makeRequest('DELETE', `/urls/${urlId}`)
-            } catch (e) {
-                // Cleanup error ignored
+        if (!config.noCleanup) {
+            if (urlId) {
+                try {
+                    await makeRequest('DELETE', `/urls/${urlId}`)
+                } catch (e) {
+                    // Cleanup error ignored
+                }
             }
-        }
-        if (domainId) {
-            try {
-                await makeRequest('DELETE', `/domains/${domainId}`)
-            } catch (e) {
-                // Cleanup error ignored
+            if (domainId) {
+                try {
+                    await makeRequest('DELETE', `/domains/${domainId}`)
+                } catch (e) {
+                    // Cleanup error ignored
+                }
             }
         }
     }
@@ -694,15 +826,19 @@ async function testCalls() {
         // const dateFiltered = await makeRequest('GET', `/calls?dateFrom=${encodeURIComponent(yesterday)}&dateTo=${encodeURIComponent(tomorrow)}`);
         logTest('List calls with date range', 'skip', 'Skipped - data-sidekick date parsing bug')
 
-        // Test: Delete call
-        await makeRequest('DELETE', `/calls/${callId}`)
-        callId = null
-        logTest('Delete call', 'pass')
+        if (config.noCleanup) {
+            logTest('Delete call', 'skip', `Skipped - data kept for verification (ID: ${callId})`)
+        } else {
+            // Test: Delete call
+            await makeRequest('DELETE', `/calls/${callId}`)
+            callId = null
+            logTest('Delete call', 'pass')
+        }
     } catch (error) {
         logTest('Call tests', 'fail', error.message || JSON.stringify(error))
 
         // Cleanup
-        if (callId) {
+        if (callId && !config.noCleanup) {
             try {
                 await makeRequest('DELETE', `/calls/${callId}`)
             } catch (e) {
@@ -789,30 +925,37 @@ async function testTags() {
         const hierarchy = await makeRequest('GET', '/tags/hierarchy')
         logTest('Get tag hierarchy', 'pass')
 
-        // Test: Delete tags
-        await makeRequest('DELETE', `/tags/${tagId}`)
-        tagId = null
-        logTest('Delete child tag', 'pass')
+        if (config.noCleanup) {
+            logTest('Delete child tag', 'skip', `Skipped - data kept for verification (ID: ${tagId})`)
+            logTest('Delete parent tag', 'skip', `Skipped - data kept for verification (ID: ${parentTagId})`)
+        } else {
+            // Test: Delete tags
+            await makeRequest('DELETE', `/tags/${tagId}`)
+            tagId = null
+            logTest('Delete child tag', 'pass')
 
-        await makeRequest('DELETE', `/tags/${parentTagId}`)
-        parentTagId = null
-        logTest('Delete parent tag', 'pass')
+            await makeRequest('DELETE', `/tags/${parentTagId}`)
+            parentTagId = null
+            logTest('Delete parent tag', 'pass')
+        }
     } catch (error) {
         logTest('Tag tests', 'fail', error.message || JSON.stringify(error))
 
         // Cleanup
-        if (tagId) {
-            try {
-                await makeRequest('DELETE', `/tags/${tagId}`)
-            } catch (e) {
-                // Cleanup error ignored
+        if (!config.noCleanup) {
+            if (tagId) {
+                try {
+                    await makeRequest('DELETE', `/tags/${tagId}`)
+                } catch (e) {
+                    // Cleanup error ignored
+                }
             }
-        }
-        if (parentTagId) {
-            try {
-                await makeRequest('DELETE', `/tags/${parentTagId}`)
-            } catch (e) {
-                // Cleanup error ignored
+            if (parentTagId) {
+                try {
+                    await makeRequest('DELETE', `/tags/${parentTagId}`)
+                } catch (e) {
+                    // Cleanup error ignored
+                }
             }
         }
     }
@@ -979,15 +1122,19 @@ async function testTickets() {
         const tagFiltered = await makeRequest('GET', `/tickets?tags=${tagsParam}`)
         logTest('List tickets with tags filter', 'pass')
 
-        // Test: Delete ticket
-        await makeRequest('DELETE', `/tickets/${ticketId}`)
-        ticketId = null
-        logTest('Delete ticket', 'pass')
+        if (config.noCleanup) {
+            logTest('Delete ticket', 'skip', `Skipped - data kept for verification (ID: ${ticketId})`)
+        } else {
+            // Test: Delete ticket
+            await makeRequest('DELETE', `/tickets/${ticketId}`)
+            ticketId = null
+            logTest('Delete ticket', 'pass')
+        }
     } catch (error) {
         logTest('Ticket tests', 'fail', error.message || JSON.stringify(error))
 
         // Cleanup
-        if (ticketId) {
+        if (ticketId && !config.noCleanup) {
             try {
                 await makeRequest('DELETE', `/tickets/${ticketId}`)
             } catch (e) {
@@ -1139,9 +1286,16 @@ async function runTests() {
     console.log('╚════════════════════════════════════════════════════════════╝')
     console.log(`\n🔧 Configuration:`)
     console.log(`   Base URL: ${config.baseUrl}`)
-    console.log(`   API Key: ${config.apiKey.substring(0, 10)}...`)
+    if (config.useM2M) {
+        console.log(`   Auth Method: Auth0 M2M (Client Credentials)`)
+        console.log(`   Client ID: ${process.env.DATA_SIDEKICK_CLIENT_ID?.substring(0, 10)}...`)
+    } else {
+        console.log(`   Auth Method: API Key`)
+        console.log(`   API Key: ${config.apiKey.substring(0, 10)}...`)
+    }
     console.log(`   Verbose: ${config.verbose}`)
     console.log(`   Debug: ${config.debug}`)
+    console.log(`   Cleanup: ${config.noCleanup ? '❌ Disabled (data will persist)' : '✅ Enabled'}`)
     if (config.testResource) {
         console.log(`   Testing: ${config.testResource} only`)
     }
@@ -1195,6 +1349,13 @@ async function runTests() {
         process.exit(1)
     } else {
         console.log('\n🎉 All tests passed!')
+
+        if (config.noCleanup) {
+            console.log('\n💡 Note: Test data was NOT deleted (--no-cleanup mode)')
+            console.log('   You can now verify the data in your database or via the API')
+            console.log('   To clean up manually, run tests again without --no-cleanup')
+        }
+
         process.exit(0)
     }
 }

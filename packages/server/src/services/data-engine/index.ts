@@ -3,37 +3,85 @@ import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { IUser } from '../../Interface'
+import { auth0M2MTokenManager } from './auth'
 
 /**
- * Service for communicating with Data Engine
- * Handles all HTTP requests to the external data API
+ * Service for communicating with Data Engine (data-sidekick)
+ * Uses Auth0 Machine-to-Machine authentication
  */
 class DataEngineService {
     private client: AxiosInstance
     private baseURL: string
-    private serviceKey: string
 
     constructor() {
-        // Base URL should include /api/external path
-        const apiBase = process.env.DATA_ENGINE_API_URL || 'http://localhost:3001'
+        // Get base URL from environment or use default
+        const apiBase = process.env.DATA_SIDEKICK_URL || process.env.DATA_ENGINE_API_URL || 'http://localhost:3001'
         this.baseURL = `${apiBase}/api/external`
-        this.serviceKey = process.env.DATA_ENGINE_SERVICE_KEY || ''
-
-        if (!this.serviceKey) {
-            console.error('[DataEngineService] DATA_ENGINE_SERVICE_KEY environment variable is missing')
-            throw new Error('DATA_ENGINE_SERVICE_KEY is required for Data Engine integration')
-        }
 
         this.client = axios.create({
             baseURL: this.baseURL,
-            timeout: 30000,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Service-Key': this.serviceKey
-            }
+            timeout: 30000
         })
 
-        // Service initialized with baseURL
+        console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
+
+        // Log authentication method
+        if (auth0M2MTokenManager.isEnabled()) {
+            console.log(`[DataEngineService] Auth: M2M (Auth0 Client Credentials)`)
+        } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
+            console.log(`[DataEngineService] Auth: Service Key (backward compatible)`)
+        } else {
+            console.warn(`[DataEngineService] WARNING: No authentication configured! Requests will fail.`)
+            console.warn(`[DataEngineService] Set either:`)
+            console.warn(`[DataEngineService]   - DATA_SIDEKICK_CLIENT_ID + DATA_SIDEKICK_CLIENT_SECRET (M2M)`)
+            console.warn(`[DataEngineService]   - DATA_ENGINE_SERVICE_KEY (legacy)`)
+        }
+    }
+
+    /**
+     * Get authorization headers with M2M token and user context
+     * Falls back to service key if M2M not configured (backward compatible)
+     */
+    private async getAuthHeaders(user?: IUser): Promise<Record<string, string>> {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        }
+
+        // Try M2M authentication first
+        if (auth0M2MTokenManager.isEnabled()) {
+            try {
+                const token = await auth0M2MTokenManager.getAccessToken()
+                headers['Authorization'] = `Bearer ${token}`
+                console.log('[DataEngineService] Using M2M authentication')
+            } catch (error) {
+                console.warn('[DataEngineService] M2M authentication failed, falling back to service key')
+                // Fall through to service key
+                if (process.env.DATA_ENGINE_SERVICE_KEY) {
+                    headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
+                    console.log('[DataEngineService] Using service key authentication (fallback)')
+                } else {
+                    throw error // Re-throw if no fallback available
+                }
+            }
+        } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
+            // Use service key if M2M not configured
+            headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
+            console.log('[DataEngineService] Using service key authentication')
+        } else {
+            throw new InternalFlowiseError(
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                'Error: dataEngineService.getAuthHeaders - Neither M2M nor service key authentication configured. Set either DATA_SIDEKICK_CLIENT_ID/SECRET or DATA_ENGINE_SERVICE_KEY'
+            )
+        }
+
+        // Add user context headers if user provided
+        if (user) {
+            headers['X-Organization-Id'] = user.organizationId
+            headers['X-User-Id'] = user.id
+            headers['X-User-Email'] = user.email || ''
+        }
+
+        return headers
     }
 
     // ==================== DOMAINS ====================
@@ -280,7 +328,7 @@ class DataEngineService {
     // ==================== PRIVATE METHODS ====================
 
     /**
-     * Generic request handler
+     * Generic request handler with M2M authentication
      */
     private async request(
         method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -290,14 +338,18 @@ class DataEngineService {
         params: any = {}
     ): Promise<any> {
         try {
+            // Get auth headers with M2M token + user context
+            const headers = await this.getAuthHeaders(user)
+
             const config = {
                 method,
                 url: path,
-                params: params, // Don't add organizationId - service key handles multi-tenancy
+                params,
+                headers,
                 ...(data && { data })
             }
 
-            // Request: ${method} ${path} for org: ${user.organizationId}
+            console.log(`[DataEngineService] ${method} ${path} (org: ${user.organizationId})`)
 
             const response = await this.client.request(config)
             return response.data
