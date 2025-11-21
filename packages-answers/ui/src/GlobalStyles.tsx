@@ -1,30 +1,77 @@
 import GlobalStyles from '@mui/material/GlobalStyles'
+import { useTheme } from '@mui/material/styles'
 
-const Styles = () => (
-    <GlobalStyles
-        styles={{
-            a: { textDecoration: 'none' },
-            '*': {
-                boxSizing: 'border-box',
+const Styles = () => {
+    const theme = useTheme()
+    const mode = theme.palette.mode
 
-                padding: 0,
-                margin: 0,
-
-                '::-webkit-scrollbar ': {
-                    width: '4px',
-                    padding: '4px'
+    return (
+        <GlobalStyles
+            styles={{
+                // Pulsing gradient animation
+                '@keyframes pulseGradient': {
+                    '0%, 100%': {
+                        backgroundPosition: '0% 50%'
+                    },
+                    '50%': {
+                        backgroundPosition: '100% 50%'
+                    }
                 },
-                '::-webkit-scrollbar-track ': {
-                    background: 'transparent'
+                // Glass flare animation for hover
+                '@keyframes glassFlare': {
+                    '0%': {
+                        transform: 'translateX(-100%)',
+                        opacity: 0
+                    },
+                    '50%': {
+                        opacity: 1
+                    },
+                    '100%': {
+                        transform: 'translateX(100%)',
+                        opacity: 0
+                    }
                 },
-                '::-webkit-scrollbar-thumb ': {
-                    width: '4px',
-                    backgroundColor: 'rgba(155, 155, 155, 0.5)',
-                    borderRadius: '20px,',
-                    border: 'transparent'
+                a: { textDecoration: 'none' },
+                '*': {
+                    boxSizing: 'border-box',
+                    padding: 0,
+                    margin: 0,
+
+                    // Smooth transitions for theme changes
+                    transition:
+                        'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), ' +
+                        'color 0.3s cubic-bezier(0.4, 0, 0.2, 1), ' +
+                        'border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+
+                    // Scrollbar styling
+                    '::-webkit-scrollbar': {
+                        width: '8px',
+                        height: '8px'
+                    },
+                    '::-webkit-scrollbar-track': {
+                        background: 'transparent'
+                    },
+                    '::-webkit-scrollbar-thumb': {
+                        backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '20px',
+                        border: '2px solid transparent',
+                        backgroundClip: 'padding-box',
+                        '&:hover': {
+                            backgroundColor: mode === 'light' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.3)'
+                        }
+                    }
+                },
+                body: {
+                    background: theme.palette.background.default,
+                    transition: 'background 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflowX: 'hidden'
+                },
+                html: {
+                    scrollBehavior: 'smooth'
                 }
-            }
-        }}
-    />
-)
+            }}
+        />
+    )
+}
+
 export default Styles

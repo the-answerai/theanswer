@@ -1,5 +1,6 @@
 'use client'
 import PropTypes from 'prop-types'
+import { useState, useEffect } from 'react'
 import { store } from '@/store'
 
 // style + assets
@@ -17,9 +18,19 @@ import AppProvider from './AppProvider'
 // New component to wrap Auth0 setup
 
 const AppLayout = ({ children, apiHost, accessToken }) => {
+    const [customization, setCustomization] = useState(store.getState().customization)
+
+    // Subscribe to Redux changes
+    useEffect(() => {
+        const unsubscribe = store.subscribe(() => {
+            setCustomization(store.getState().customization)
+        })
+        return () => unsubscribe()
+    }, [])
+
     return (
         <StyledEngineProvider injectFirst>
-            <ThemeProvider theme={themes(store.getState().customization)}>
+            <ThemeProvider theme={themes(customization)}>
                 <AppProvider apiHost={apiHost} accessToken={accessToken}>
                     {children}
                 </AppProvider>
