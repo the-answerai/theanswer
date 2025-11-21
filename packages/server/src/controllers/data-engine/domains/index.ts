@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createDomain = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -59,6 +60,12 @@ const getDomainById = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         const domain = await dataEngineService.getDomainById(req.params.id, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(domain, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDomainsController.getDomainById - Unauthorized')
+        }
+
         return res.json(domain)
     } catch (error) {
         next(error)
@@ -79,6 +86,14 @@ const updateDomain = async (req: Request, res: Response, next: NextFunction) => 
                 StatusCodes.UNAUTHORIZED,
                 'Error: dataEngineDomainsController.updateDomain - user not authenticated'
             )
+        }
+
+        // First get the resource to check ownership
+        const existingDomain = await dataEngineService.getDomainById(req.params.id, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingDomain, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDomainsController.updateDomain - Unauthorized')
         }
 
         const domain = await dataEngineService.updateDomain(req.params.id, req.body, req.user)
@@ -102,6 +117,14 @@ const deleteDomain = async (req: Request, res: Response, next: NextFunction) => 
                 StatusCodes.UNAUTHORIZED,
                 'Error: dataEngineDomainsController.deleteDomain - user not authenticated'
             )
+        }
+
+        // First get the resource to check ownership
+        const existingDomain = await dataEngineService.getDomainById(req.params.id, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingDomain, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDomainsController.deleteDomain - Unauthorized')
         }
 
         const result = await dataEngineService.deleteDomain(req.params.id, req.user)

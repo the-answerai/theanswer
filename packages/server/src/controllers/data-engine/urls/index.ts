@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createUrl = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -44,6 +45,12 @@ const getUrlById = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const url = await dataEngineService.getUrlById(req.params.id, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(url, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineUrlsController.getUrlById - Unauthorized')
+        }
+
         return res.json(url)
     } catch (error) {
         next(error)
@@ -63,6 +70,14 @@ const updateUrl = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineUrlsController.updateUrl - user not authenticated')
         }
 
+        // First get the resource to check ownership
+        const existingUrl = await dataEngineService.getUrlById(req.params.id, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingUrl, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineUrlsController.updateUrl - Unauthorized')
+        }
+
         const url = await dataEngineService.updateUrl(req.params.id, req.body, req.user)
         return res.json(url)
     } catch (error) {
@@ -78,6 +93,14 @@ const deleteUrl = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!req.user) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineUrlsController.deleteUrl - user not authenticated')
+        }
+
+        // First get the resource to check ownership
+        const existingUrl = await dataEngineService.getUrlById(req.params.id, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingUrl, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineUrlsController.deleteUrl - Unauthorized')
         }
 
         const result = await dataEngineService.deleteUrl(req.params.id, req.user)

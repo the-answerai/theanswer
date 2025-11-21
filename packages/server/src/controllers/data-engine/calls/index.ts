@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createCall = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -56,6 +57,12 @@ const getCallById = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const call = await dataEngineService.getCallById(req.params.id, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(call, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineCallsController.getCallById - Unauthorized')
+        }
+
         return res.json(call)
     } catch (error) {
         next(error)
@@ -75,6 +82,14 @@ const updateCall = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineCallsController.updateCall - user not authenticated')
         }
 
+        // First get the resource to check ownership
+        const existingCall = await dataEngineService.getCallById(req.params.id, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingCall, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineCallsController.updateCall - Unauthorized')
+        }
+
         const call = await dataEngineService.updateCall(req.params.id, req.body, req.user)
         return res.json(call)
     } catch (error) {
@@ -90,6 +105,14 @@ const deleteCall = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!req.user) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineCallsController.deleteCall - user not authenticated')
+        }
+
+        // First get the resource to check ownership
+        const existingCall = await dataEngineService.getCallById(req.params.id, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingCall, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineCallsController.deleteCall - Unauthorized')
         }
 
         const result = await dataEngineService.deleteCall(req.params.id, req.user)

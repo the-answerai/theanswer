@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createDocument = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -59,6 +60,12 @@ const getDocumentById = async (req: Request, res: Response, next: NextFunction) 
         }
 
         const document = await dataEngineService.getDocumentById(req.params.id, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(document, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDocumentsController.getDocumentById - Unauthorized')
+        }
+
         return res.json(document)
     } catch (error) {
         next(error)
@@ -79,6 +86,14 @@ const updateDocument = async (req: Request, res: Response, next: NextFunction) =
                 StatusCodes.UNAUTHORIZED,
                 'Error: dataEngineDocumentsController.updateDocument - user not authenticated'
             )
+        }
+
+        // First get the resource to check ownership
+        const existingDocument = await dataEngineService.getDocumentById(req.params.id, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingDocument, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDocumentsController.updateDocument - Unauthorized')
         }
 
         const document = await dataEngineService.updateDocument(req.params.id, req.body, req.user)
@@ -104,6 +119,14 @@ const deleteDocument = async (req: Request, res: Response, next: NextFunction) =
             )
         }
 
+        // First get the resource to check ownership
+        const existingDocument = await dataEngineService.getDocumentById(req.params.id, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingDocument, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineDocumentsController.deleteDocument - Unauthorized')
+        }
+
         const result = await dataEngineService.deleteDocument(req.params.id, req.user)
         return res.json(result)
     } catch (error) {
@@ -113,10 +136,10 @@ const deleteDocument = async (req: Request, res: Response, next: NextFunction) =
 
 const searchDocuments = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        if (!req.body || !req.body.query_embedding) {
+        if (!req.body) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                'Error: dataEngineDocumentsController.searchDocuments - query_embedding not provided'
+                'Error: dataEngineDocumentsController.searchDocuments - body not provided'
             )
         }
 
@@ -127,7 +150,7 @@ const searchDocuments = async (req: Request, res: Response, next: NextFunction) 
             )
         }
 
-        const { query_embedding, match_threshold = 0.7, match_count = 10, store_id } = req.body
+        const { query_embedding, match_threshold, match_count, store_id } = req.body
         const results = await dataEngineService.searchDocuments(query_embedding, match_threshold, match_count, store_id, req.user)
         return res.json(results)
     } catch (error) {

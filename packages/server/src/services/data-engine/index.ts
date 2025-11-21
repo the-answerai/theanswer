@@ -404,9 +404,85 @@ class DataEngineService {
             console.log(`[DataEngineService] ${method} ${path} (org: ${user.organizationId})`)
 
             const response = await this.client.request(config)
+
+            // Validate multi-tenancy for responses
+            this.validateMultiTenancy(response.data, user, method, path)
+
             return response.data
         } catch (error) {
             this.handleError(error, method, path)
+        }
+    }
+
+    /**
+     * Validate multi-tenancy for responses
+     * Ensures Data Engine respects organizationId filtering
+     */
+    private validateMultiTenancy(responseData: any, user: IUser, method: string, path: string): void {
+        if (!responseData || !user?.organizationId) {
+            return
+        }
+
+        // For paginated responses with data array
+        if (responseData.data && Array.isArray(responseData.data)) {
+            const invalidItems = responseData.data.filter((item: any) => {
+                // Check if item has organizationId in metadata or top-level
+                const itemOrgId = item.metadata?.organization_id || item.organizationId || item.organization_id
+                return itemOrgId && itemOrgId !== user.organizationId
+            })
+
+            if (invalidItems.length > 0) {
+                console.error('[DataEngineService] Multi-tenancy violation detected:', {
+                    method,
+                    path,
+                    expectedOrg: user.organizationId,
+                    violatingItems: invalidItems.map((item: any) => ({
+                        id: item.id,
+                        orgId: item.metadata?.organization_id || item.organizationId || item.organization_id
+                    }))
+                })
+                throw new InternalFlowiseError(
+                    StatusCodes.INTERNAL_SERVER_ERROR,
+                    'Error: dataEngineService - Data Engine returned items from different organization'
+                )
+            }
+        }
+        // For single item responses
+        else if (responseData.id) {
+            const itemOrgId = responseData.metadata?.organization_id || responseData.organizationId || responseData.organization_id
+            if (itemOrgId && itemOrgId !== user.organizationId) {
+                console.error('[DataEngineService] Multi-tenancy violation detected:', {
+                    method,
+                    path,
+                    expectedOrg: user.organizationId,
+                    returnedOrg: itemOrgId,
+                    itemId: responseData.id
+                })
+                throw new InternalFlowiseError(
+                    StatusCodes.INTERNAL_SERVER_ERROR,
+                    'Error: dataEngineService - Data Engine returned item from different organization'
+                )
+            }
+        }
+        // For array responses without pagination wrapper
+        else if (Array.isArray(responseData)) {
+            const invalidItems = responseData.filter((item: any) => {
+                const itemOrgId = item.metadata?.organization_id || item.organizationId || item.organization_id
+                return itemOrgId && itemOrgId !== user.organizationId
+            })
+
+            if (invalidItems.length > 0) {
+                console.error('[DataEngineService] Multi-tenancy violation detected:', {
+                    method,
+                    path,
+                    expectedOrg: user.organizationId,
+                    violatingCount: invalidItems.length
+                })
+                throw new InternalFlowiseError(
+                    StatusCodes.INTERNAL_SERVER_ERROR,
+                    'Error: dataEngineService - Data Engine returned items from different organization'
+                )
+            }
         }
     }
 

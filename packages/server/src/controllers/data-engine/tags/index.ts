@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -43,7 +44,18 @@ const getTagById = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.getTagById - user not authenticated')
         }
 
-        const tag = await dataEngineService.getTagById(parseInt(req.params.id), req.user)
+        const tagId = parseInt(req.params.id, 10)
+        if (isNaN(tagId)) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: dataEngineTagsController.getTagById - invalid tag ID')
+        }
+
+        const tag = await dataEngineService.getTagById(tagId, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(tag, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.getTagById - Unauthorized')
+        }
+
         return res.json(tag)
     } catch (error) {
         next(error)
@@ -79,7 +91,20 @@ const updateTag = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.updateTag - user not authenticated')
         }
 
-        const tag = await dataEngineService.updateTag(parseInt(req.params.id), req.body, req.user)
+        const tagId = parseInt(req.params.id, 10)
+        if (isNaN(tagId)) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: dataEngineTagsController.updateTag - invalid tag ID')
+        }
+
+        // First get the resource to check ownership
+        const existingTag = await dataEngineService.getTagById(tagId, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingTag, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.updateTag - Unauthorized')
+        }
+
+        const tag = await dataEngineService.updateTag(tagId, req.body, req.user)
         return res.json(tag)
     } catch (error) {
         next(error)
@@ -96,7 +121,20 @@ const deleteTag = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.deleteTag - user not authenticated')
         }
 
-        const result = await dataEngineService.deleteTag(parseInt(req.params.id), req.user)
+        const tagId = parseInt(req.params.id, 10)
+        if (isNaN(tagId)) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: dataEngineTagsController.deleteTag - invalid tag ID')
+        }
+
+        // First get the resource to check ownership
+        const existingTag = await dataEngineService.getTagById(tagId, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingTag, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTagsController.deleteTag - Unauthorized')
+        }
+
+        const result = await dataEngineService.deleteTag(tagId, req.user)
         return res.json(result)
     } catch (error) {
         next(error)

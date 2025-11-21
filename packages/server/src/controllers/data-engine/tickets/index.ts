@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../../errors/internalFlowiseError'
 import dataEngineService from '../../../services/data-engine'
+import checkOwnership from '../../../utils/checkOwnership'
 
 const createTicket = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -59,6 +60,12 @@ const getTicketById = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         const ticket = await dataEngineService.getTicketById(req.params.id, req.user)
+
+        // Check ownership before returning
+        if (req.user && !(await checkOwnership(ticket, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTicketsController.getTicketById - Unauthorized')
+        }
+
         return res.json(ticket)
     } catch (error) {
         next(error)
@@ -79,6 +86,14 @@ const updateTicket = async (req: Request, res: Response, next: NextFunction) => 
                 StatusCodes.UNAUTHORIZED,
                 'Error: dataEngineTicketsController.updateTicket - user not authenticated'
             )
+        }
+
+        // First get the resource to check ownership
+        const existingTicket = await dataEngineService.getTicketById(req.params.id, req.user)
+
+        // Check ownership before updating
+        if (req.user && !(await checkOwnership(existingTicket, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTicketsController.updateTicket - Unauthorized')
         }
 
         const ticket = await dataEngineService.updateTicket(req.params.id, req.body, req.user)
@@ -102,6 +117,14 @@ const deleteTicket = async (req: Request, res: Response, next: NextFunction) => 
                 StatusCodes.UNAUTHORIZED,
                 'Error: dataEngineTicketsController.deleteTicket - user not authenticated'
             )
+        }
+
+        // First get the resource to check ownership
+        const existingTicket = await dataEngineService.getTicketById(req.params.id, req.user)
+
+        // Check ownership before deleting
+        if (req.user && !(await checkOwnership(existingTicket, req.user, req))) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: dataEngineTicketsController.deleteTicket - Unauthorized')
         }
 
         const result = await dataEngineService.deleteTicket(req.params.id, req.user)
