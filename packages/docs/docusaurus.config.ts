@@ -541,55 +541,19 @@ const config: Config = {
             },
             items: [
                 {
-                    to: '/getting-started',
-                    label: 'Getting Started',
+                    to: '/how-it-works',
+                    label: 'How It Works',
                     position: 'left'
                 },
                 {
-                    type: 'dropdown',
-                    label: 'Using Answer',
-                    position: 'left',
-                    items: [
-                        {
-                            to: '/agents',
-                            label: 'Agents'
-                        },
-                        {
-                            to: '/chat',
-                            label: 'Chat'
-                        },
-                        {
-                            to: '/browser-sidekick',
-                            label: 'Browser Sidekick'
-                        },
-                        {
-                            to: '/sidekick-studio',
-                            label: 'Studio'
-                        }
-                    ]
+                    to: '/pricing',
+                    label: 'Pricing',
+                    position: 'left'
                 },
                 {
-                    type: 'dropdown',
+                    to: '/developers',
                     label: 'Developers',
-                    position: 'left',
-                    items: [
-                        {
-                            to: '/docs/developers',
-                            label: 'Developer Guide'
-                        },
-                        {
-                            to: '/docs/api',
-                            label: 'API Reference'
-                        },
-                        {
-                            to: '/docs/developers/embed',
-                            label: 'Embed Chatbot'
-                        },
-                        {
-                            to: '/docs/api/prediction/create-prediction',
-                            label: 'Prediction API'
-                        }
-                    ]
+                    position: 'left'
                 },
                 {
                     type: 'dropdown',
@@ -620,10 +584,15 @@ const config: Config = {
                     position: 'left'
                 },
                 {
-                    href: 'https://studio.theanswer.ai',
-                    label: 'Sign In',
+                    to: '/get-started',
+                    label: 'Get Started',
                     position: 'right',
                     className: 'button button--primary button--sm'
+                },
+                {
+                    href: 'https://studio.theanswer.ai',
+                    label: 'Sign In',
+                    position: 'right'
                 },
                 {
                     href: 'https://github.com/the-answerai',
@@ -635,65 +604,69 @@ const config: Config = {
         footer: {
             links: [
                 {
-                    title: 'Docs',
+                    title: 'Product',
                     items: [
                         {
-                            to: '/getting-started',
-                            label: 'Getting Started'
+                            to: '/how-it-works',
+                            label: 'How It Works'
                         },
                         {
-                            to: '/agents',
-                            label: 'Agents'
+                            to: '/pricing',
+                            label: 'Pricing'
                         },
                         {
-                            to: '/browser-sidekick',
-                            label: 'Browser Sidekick'
+                            to: '/docs/use-cases',
+                            label: 'Use Cases'
                         },
                         {
-                            to: '/chat',
-                            label: 'Chat'
+                            to: '/jlinc-partnership',
+                            label: 'J-Link Partnership'
+                        }
+                    ]
+                },
+                {
+                    title: 'Developers',
+                    items: [
+                        {
+                            to: '/docs/developers',
+                            label: 'Documentation'
                         },
                         {
-                            to: '/sidekick-studio',
-                            label: 'Studio'
+                            to: '/docs/api',
+                            label: 'API Reference'
+                        },
+                        {
+                            to: '/developers',
+                            label: 'Quick Start'
+                        },
+                        {
+                            label: 'GitHub',
+                            href: 'https://github.com/the-answerai'
+                        },
+                        {
+                            label: 'Discord',
+                            href: 'https://discord.gg/X54ywt8pzj'
+                        }
+                    ]
+                },
+                {
+                    title: 'Resources',
+                    items: [
+                        {
+                            to: '/blog',
+                            label: 'Blog'
                         },
                         {
                             to: '/ai-workshops',
                             label: 'AI Workshops'
                         },
                         {
-                            to: '/docs/developers',
-                            label: 'Developer Docs'
-                        }
-                    ]
-                },
-                {
-                    title: 'Support',
-                    items: [
-                        {
-                            label: 'Discord',
-                            href: 'https://discord.gg/X54ywt8pzj'
+                            to: '/docs/community',
+                            label: 'Help Center'
                         },
                         {
-                            label: 'GitHub',
-                            href: 'https://github.com/the-answerai'
-                        }
-                    ]
-                },
-                {
-                    title: 'Social',
-                    items: [
-                        {
-                            label: 'YouTube',
-                            href: 'https://www.youtube.com/@whatistheanswerai'
-                        },
-                        {
-                            label: 'X',
-                            href: 'https://x.com/digitalatscale_'
-                        },
-                        {
-                            label: 'Instagram',
-                            href: 'https://www.youtube.com/@whatistheanswerai'
+                            label: 'Contact Support',
+                            href: 'https://calendly.com/lastrev/answeragent-demo'
                         }
                     ]
                 },
@@ -701,8 +674,8 @@ const config: Config = {
                     title: 'Company',
                     items: [
                         {
-                            label: 'Website',
-                            href: 'https://theanswer.ai'
+                            label: 'About Us',
+                            href: '/#about'
                         },
                         {
                             label: 'Privacy Policy',
@@ -711,11 +684,15 @@ const config: Config = {
                         {
                             label: 'Terms of Service',
                             href: '/terms-of-service'
+                        },
+                        {
+                            label: 'Security',
+                            href: '/how-it-works#security'
                         }
                     ]
                 }
             ],
-            copyright: `Copyright © ${new Date().getFullYear()}`
+            copyright: `Copyright © ${new Date().getFullYear()} AnswerAI`
         },
         prism: {
             theme: prismThemes.github,
