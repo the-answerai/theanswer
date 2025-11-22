@@ -1,19 +1,19 @@
 // paper & background
 export const paper = '#ffffff'
 
-// primary
+// primary - Unified blue gradient colors
 export const primaryLight = '#e3f2fd'
-export const primaryMain = '#30726c'
-export const primaryDark = '#4db6ac'
-export const primary200 = '#80cbc4'
-export const primary800 = '#00695c'
+export const primaryMain = '#3b82f6' // Blue from unified theme
+export const primaryDark = '#1e3a8a' // Darker blue
+export const primary200 = '#93c5fd'
+export const primary800 = '#1e3a8a'
 
-// secondary
-export const secondaryLight = '#ede7f6'
-export const secondaryMain = '#673ab7'
-export const secondaryDark = '#5e35b1'
-export const secondary200 = '#b39ddb'
-export const secondary800 = '#4527a0'
+// secondary - Also use blue for consistency
+export const secondaryLight = '#e3f2fd'
+export const secondaryMain = '#3b82f6' // Blue from unified theme
+export const secondaryDark = '#1e3a8a'
+export const secondary200 = '#93c5fd'
+export const secondary800 = '#1e3a8a'
 
 // success Colors
 export const successLight = '#cdf5d8'

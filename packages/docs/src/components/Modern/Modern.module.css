@@ -1,0 +1,230 @@
+.gradientText {
+    background: linear-gradient(to right, #ff00cc, #333399, #00ccff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% auto;
+}
+
+.animate {
+    animation: gradientMove 5s ease infinite;
+}
+
+@keyframes gradientMove {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.bentoGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.bentoItem {
+    background: var(--ifm-background-surface-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
+    border-radius: 16px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.bentoItem:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+    border-color: var(--ifm-color-primary);
+}
+
+@media (max-width: 996px) {
+    .bentoGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .bentoGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .bentoItem {
+        grid-column: span 1 !important;
+    }
+}
+
+.glassCard {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border-radius: 16px;
+}
+
+[data-theme='light'] .glassCard {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Magnetic Card */
+.magneticCard {
+    position: relative;
+    border-radius: 16px;
+    background: var(--ifm-card-background-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
+    overflow: hidden;
+    height: 100%;
+}
+
+.magneticContent {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+    height: 100%;
+}
+
+.magneticGlow {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(var(--ifm-color-primary-rgb), 0.3) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Code Typewriter */
+.codeWindow {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #1e1e1e;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'Fira Code', monospace;
+}
+
+.codeHeader {
+    background: #2d2d2d;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.windowControls {
+    display: flex;
+    gap: 8px;
+    margin-right: 1rem;
+}
+
+.control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.fileName {
+    color: #aaa;
+    font-size: 0.8rem;
+    flex: 1;
+    text-align: center;
+}
+
+.runIcon {
+    color: #27c93f;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.runIcon:hover {
+    transform: scale(1.2);
+}
+
+.codeBody {
+    padding: 1.5rem;
+    color: #d4d4d4;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    min-height: 200px;
+}
+
+.cursor {
+    display: inline-block;
+    width: 8px;
+    height: 18px;
+    background: #27c93f;
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Infinite Marquee */
+.marqueeContainer {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: 2rem 0;
+}
+
+.marqueeContainer::before,
+.marqueeContainer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.marqueeContainer::before {
+    left: 0;
+    background: linear-gradient(to right, var(--ifm-background-color), transparent);
+}
+
+.marqueeContainer::after {
+    right: 0;
+    background: linear-gradient(to left, var(--ifm-background-color), transparent);
+}
+
+.marqueeTrack {
+    display: flex;
+    white-space: nowrap;
+    animation: marquee 20s linear infinite;
+    gap: 4rem;
+}
+
+.marqueeContent {
+    display: flex;
+    gap: 4rem;
+    align-items: center;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}

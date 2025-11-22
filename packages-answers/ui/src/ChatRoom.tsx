@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Button, IconButton } from '@mui/material'
+import { Box, Button, IconButton, useTheme } from '@mui/material'
 import type { Message, Sidekick } from 'types'
 import ChatFeedbackContentDialog from './../../../packages/ui/src/ui-component/dialog/ChatFeedbackContentDialog'
 import { useAnswers } from './AnswersContext'
@@ -36,6 +36,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     selectedSidekick,
     setPreviewCode
 }) => {
+    const theme = useTheme()
     const openLinksInNewTab = chatbotConfig?.chatLinksInNewTab?.status ?? false
     const { showFeedbackContentDialog, setShowFeedbackContentDialog, feedbackId, submitFeedbackContent } = useAnswers()
     const { openDialog: openSubscriptionDialog } = useSubscriptionDialog()
@@ -49,7 +50,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                 p: 2
             }}
         >
-            <Box sx={{ bgcolor: 'background.paper' }}>
+            <Box
+                sx={{
+                    ...theme.palette.glass.glassSecondary,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    transition: theme.transitions.create(['all'])
+                }}
+            >
                 <AssistantInfoCard sidekick={selectedSidekick} followers={208000} onShare={() => {}} onSearch={() => {}} />
             </Box>
 

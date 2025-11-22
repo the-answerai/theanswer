@@ -1,0 +1,144 @@
+/* Use Cases Page Styles */
+
+.heroSection {
+    position: relative;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.heroBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+}
+
+.threeJsCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 800px;
+    padding: 2rem;
+}
+
+.heroTitle {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.heroSubtitle {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+/* Use Cases Section */
+.useCasesSection {
+    padding: 6rem 0;
+}
+
+.roleSection {
+    margin-bottom: 5rem;
+}
+
+.roleHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--ifm-color-primary);
+}
+
+.roleIcon {
+    color: var(--ifm-color-primary);
+}
+
+.roleHeader h3 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.useCaseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.useCaseCard {
+    background: var(--ifm-card-background-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.useCaseCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 255, 255, 0.2);
+    border-color: var(--ifm-color-primary);
+}
+
+.useCaseCard h4 {
+    margin-bottom: 1rem;
+    color: var(--ifm-color-primary);
+}
+
+.useCaseCard p {
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.useCaseLink {
+    display: inline-block;
+    color: var(--ifm-color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.useCaseLink:hover {
+    transform: translateX(4px);
+    text-decoration: underline;
+}
+
+/* Bottom CTA */
+.bottomCTASection {
+    padding: 5rem 0;
+    background: linear-gradient(180deg, var(--ifm-background-color) 0%, var(--ifm-color-primary-darkest) 100%);
+}
+
+@media (max-width: 996px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 1.2rem;
+    }
+
+    .useCasesSection {
+        padding: 4rem 0;
+    }
+
+    .roleHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .useCaseGrid {
+        grid-template-columns: 1fr;
+    }
+}
