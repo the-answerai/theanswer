@@ -362,11 +362,11 @@ langfuse.score(
 )
 ```
 
-**[Learn complete annotation workflows →](/blog/automated-evals-ai-agents-langfuse-answer-agent#human-annotation)**
+**[Learn complete annotation workflows →](/blog/automated-evals-ai-agents-langfuse-answer-agent#pattern-4-user-feedback-as-ground-truth)**
 
 **2. LLM-as-Judge for Debugging at Scale**
 
-For detailed LLM-as-judge implementation, see the [Automated Evals guide](/blog/automated-evals-ai-agents-langfuse-answer-agent#llm-as-judge).
+For detailed LLM-as-judge implementation, see the [Automated Evals guide](/blog/automated-evals-ai-agents-langfuse-answer-agent#step-3-write-your-first-evaluator).
 
 In debugging scenarios, LLM-as-judge helps you:
 - **Scan 100+ recent traces** for specific failure patterns
@@ -386,13 +386,13 @@ for trace in recent_traces:
             flag_for_investigation(trace.id)
 ```
 
-**[See complete LLM-as-judge implementation →](/blog/automated-evals-ai-agents-langfuse-answer-agent#llm-as-judge)**
+**[See complete LLM-as-judge implementation →](/blog/automated-evals-ai-agents-langfuse-answer-agent#step-3-write-your-first-evaluator)**
 
 **Need help setting up evaluations? [Schedule a consultation →](https://calendly.com/brad-theanswer/answeragent-intro)**
 
 ### Datasets for Reproducing Bugs
 
-Complete dataset creation guide: [Building Evaluation Datasets](/blog/automated-evals-ai-agents-langfuse-answer-agent#datasets).
+Complete dataset creation guide: [Building Evaluation Datasets](/blog/automated-evals-ai-agents-langfuse-answer-agent#step-2-create-a-dataset-from-production-traces).
 
 **For debugging, datasets help you:**
 - **Reproduce bugs consistently** across environments
@@ -413,7 +413,7 @@ langfuse.create_dataset_item(
 
 ### Running Experiments to Validate Fixes
 
-Complete experiments guide: [Running Experiments](/blog/automated-evals-ai-agents-langfuse-answer-agent#experiments).
+Complete experiments guide: [Running Experiments](/blog/automated-evals-ai-agents-langfuse-answer-agent#pattern-2-comparative-evaluation-ab-testing).
 
 **After fixing a bug, validate your fix:**
 
@@ -433,7 +433,7 @@ for item in dataset.items:
         print(f"Fix verification failed for: {item.id}")
 ```
 
-**[See complete experiment workflows →](/blog/automated-evals-ai-agents-langfuse-answer-agent#experiments)**
+**[See complete experiment workflows →](/blog/automated-evals-ai-agents-langfuse-answer-agent#pattern-2-comparative-evaluation-ab-testing)**
 
 ---
 

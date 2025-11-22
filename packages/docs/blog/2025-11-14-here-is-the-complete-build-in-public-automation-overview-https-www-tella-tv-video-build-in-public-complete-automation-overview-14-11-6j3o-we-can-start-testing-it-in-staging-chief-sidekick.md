@@ -1,14 +1,15 @@
 ---
-slug: here-is-the-complete-build-in-public-automation-overview-https-www-tella-tv-video-build-in-public-complete-automation-overview-14-11-6j3o-we-can-start-testing-it-in-staging-chief-sidekick
-title: <!here> is the complete Build In public Automation Overview:
-https://www.tella.tv/video/build-in-public-complete-automation-overview-14-11-6j3o
-we can start testing it in staging chief sidekick
-authors: [bisma majeed]
-tags: [daily-logs, updates, team]
+slug: build-in-public-automation-overview
+title: "Build In Public: Complete Automation Overview"
+authors: [bismamajeed]
+tags: [daily-logs, updates, team, automation]
 date: 2025-11-14
+description: "Transforming content management with automated workflows! Learn how we integrated Slack, Google Drive, and OpenAI Whisper for seamless video transcription."
 ---
 
 Transforming content management with automated workflows!
+
+<!-- truncate -->
 
 In today's session, Bisma Majeed shares our automated content management process. We faced challenges with video processing, but after tweaking our approach, we're now efficiently using Slack and Google Drive for video transcription. Our new automation is live—test it now and see the difference for yourself!
 

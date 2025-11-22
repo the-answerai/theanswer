@@ -36,7 +36,7 @@ function HomepageHeader() {
                             </svg>
                             Download Chrome Extension
                         </a>
-                        <a href='/developers/' className={styles.secondaryLink}>
+                        <a href='/docs/developers' className={styles.secondaryLink}>
                             <Code2 size={18} className={styles.linkIcon} />
                             Call for Developers
                         </a>

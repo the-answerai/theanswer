@@ -1,13 +1,15 @@
 ---
-slug: here-is-the-tella-link-https-www-tella-tv-video-builder-tip-optimize-your-prompts-with-openai-37vm
-title: Here is the tella link
-https://www.tella.tv/video/builder-tip-optimize-your-prompts-with-openai-37vm
+slug: optimize-your-prompts-with-openai
+title: "Builder Tip: Optimize Your Prompts with OpenAI"
 authors: [diegocosta]
 tags: [builder-tips, automation, tutorial, how-to]
 date: 2025-11-20
+description: "Transform your prompts with OpenAI's powerful Prompt Optimizer tool! Learn how to enhance clarity, structure, and format for better AI output."
 ---
 
 > Transform your prompts with OpenAI's powerful tool!
+
+<!-- truncate -->
 
 Looking to improve your AI prompts? Diego Costa shares a game-changing tool: the Prompt Optimizer by OpenAI. Simply paste your prompt, click 'Optimize', and watch it enhance clarity, structure, and format. Diego uses it for major projects like redesigning AnswerAgent. Ready to boost your productivity? Try it today!
 

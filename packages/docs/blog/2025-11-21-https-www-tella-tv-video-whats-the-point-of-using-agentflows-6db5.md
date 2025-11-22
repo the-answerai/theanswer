@@ -1,12 +1,15 @@
 ---
-slug: https-www-tella-tv-video-whats-the-point-of-using-agentflows-6db5
-title: https://www.tella.tv/video/whats-the-point-of-using-agentflows-6db5
+slug: whats-the-point-of-using-agentflows
+title: "What's the Point of Using AgentFlows?"
 authors: [bismamajeed]
-tags: [builder-tips, automation, tutorial, how-to]
+tags: [builder-tips, automation, tutorial, how-to, ai-agents]
 date: 2025-11-21
+description: "Discover how AI agents outpace traditional chatbots! Learn the evolution from basic chatbots to advanced AI agents capable of dynamic decision-making."
 ---
 
 > Discover how AI agents outpace traditional chatbots!
+
+<!-- truncate -->
 
 Are chatbots outdated? In this video, Bisma Majeed explains how AI systems have transitioned from basic chatbots to advanced AI agents capable of dynamic decision-making. Learn how agent flows adapt to complex tasks while traditional chatbots remain useful for simpler needs. Explore the benefits of implementing agent flows in your business today!
 

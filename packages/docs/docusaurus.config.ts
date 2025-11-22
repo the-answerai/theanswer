@@ -521,6 +521,8 @@ const config: Config = {
 
     scripts: [],
 
+    clientModules: [require.resolve('./src/chatbot-init.js')],
+
     headTags: [],
 
     themeConfig: {
@@ -571,10 +573,6 @@ const config: Config = {
                     label: 'Developers',
                     position: 'left',
                     items: [
-                        {
-                            to: '/developers',
-                            label: 'Join the Sprint'
-                        },
                         {
                             to: '/docs/developers',
                             label: 'Developer Guide'
@@ -662,10 +660,6 @@ const config: Config = {
                         {
                             to: '/ai-workshops',
                             label: 'AI Workshops'
-                        },
-                        {
-                            to: '/developers',
-                            label: 'Join the Sprint'
                         },
                         {
                             to: '/docs/developers',
