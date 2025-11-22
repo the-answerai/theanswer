@@ -1,9 +1,21 @@
 import Layout from '@theme/Layout'
 import styles from '../new-brand.module.css'
-import { AskAlphaButton } from '../../components/AskAlpha/AskAlphaButton'
 import { TiltHero, MagneticGrid, MagneticCard } from '../../components/Modern/CreativeSections'
 import InteractiveGrid from '../../components/Annimations/InteractiveGrid'
-import { PieChart, TrendingUp, ClipboardList, Calendar, FileText, Clock, DollarSign, ArrowUpRight, Activity } from 'lucide-react'
+import {
+    PieChart,
+    TrendingUp,
+    ClipboardList,
+    Calendar,
+    FileText,
+    Clock,
+    DollarSign,
+    ArrowUpRight,
+    Activity,
+    BarChart3,
+    Chrome,
+    Sparkles
+} from 'lucide-react'
 import Link from '@docusaurus/Link'
 
 export default function OnDemandApps(): JSX.Element {
@@ -41,7 +53,6 @@ export default function OnDemandApps(): JSX.Element {
                                 <Link to='#roi-calculator' className='button button--primary button--lg'>
                                     See ROI Calculator
                                 </Link>
-                                <AskAlphaButton variant='button' size='large' />
                             </div>
                             <div style={{ marginTop: '1rem' }}>
                                 <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--link'>
@@ -103,6 +114,215 @@ export default function OnDemandApps(): JSX.Element {
                                     </div>
                                 </div>
                             </TiltHero>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Three Core Features: Dashboards, Reports, Chrome Extension */}
+                <section className={styles.section} style={{ padding: '6rem 0', background: 'var(--ifm-background-surface-color)' }}>
+                    <div className='container'>
+                        <h2 className={styles.sectionTitle} style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                            Three Ways to Get Instant Insights
+                        </h2>
+                        <p className='lead text--center margin-bottom--xl' style={{ maxWidth: '800px', margin: '0 auto 4rem' }}>
+                            Whether you&apos;re at your desk, in a meeting, or on the go—AnswerAgent delivers the insights you need, when
+                            you need them.
+                        </p>
+
+                        <div className='row' style={{ marginBottom: '4rem' }}>
+                            <div className='col col--4'>
+                                <TiltHero>
+                                    <div
+                                        className='card'
+                                        style={{
+                                            padding: '3rem',
+                                            height: '100%',
+                                            background:
+                                                'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                                            border: '2px solid rgba(102, 126, 234, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 20, right: 20, opacity: 0.1 }}>
+                                            <BarChart3 size={100} />
+                                        </div>
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <BarChart3 size={48} className='text--primary margin-bottom--md' />
+                                            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Real-Time Dashboards</h3>
+                                            <p style={{ marginBottom: '2rem', lineHeight: 1.6 }}>
+                                                Live dashboards that auto-update with data from all your tools. No manual refreshes. No
+                                                outdated spreadsheets. Just real-time visibility into what matters.
+                                            </p>
+                                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: 0 }}>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--primary'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Sales pipeline, team velocity, customer health scores</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--primary'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Customizable views per role (executive, manager, IC)</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--primary'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Embeddable in Slack, Teams, or your intranet</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--primary'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Smart alerts when metrics deviate</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </TiltHero>
+                            </div>
+
+                            <div className='col col--4'>
+                                <TiltHero>
+                                    <div
+                                        className='card'
+                                        style={{
+                                            padding: '3rem',
+                                            height: '100%',
+                                            background:
+                                                'linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)',
+                                            border: '2px solid rgba(118, 75, 162, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 20, right: 20, opacity: 0.1 }}>
+                                            <FileText size={100} />
+                                        </div>
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <FileText size={48} className='text--warning margin-bottom--md' />
+                                            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>On-Demand Reports</h3>
+                                            <p style={{ marginBottom: '2rem', lineHeight: 1.6 }}>
+                                                Generate polished reports in seconds, not hours. AnswerAgent pulls data, creates
+                                                visualizations, and writes executive summaries automatically.
+                                            </p>
+                                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: 0 }}>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--warning'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Weekly/monthly/quarterly business reviews</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--warning'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Export to PDF, PowerPoint, or Google Slides</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--warning'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>AI-written summaries and insights</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--warning'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Scheduled delivery to stakeholders</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </TiltHero>
+                            </div>
+
+                            <div className='col col--4'>
+                                <TiltHero>
+                                    <div
+                                        className='card'
+                                        style={{
+                                            padding: '3rem',
+                                            height: '100%',
+                                            background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%)',
+                                            border: '2px solid rgba(76, 175, 80, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 20, right: 20, opacity: 0.1 }}>
+                                            <Chrome size={100} />
+                                        </div>
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <Chrome size={48} className='text--success margin-bottom--md' />
+                                            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Chrome Extension</h3>
+                                            <p style={{ marginBottom: '2rem', lineHeight: 1.6 }}>
+                                                Your AI assistant follows you everywhere on the web. Get context, summaries, and answers
+                                                without leaving your current tab.
+                                            </p>
+                                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: 0 }}>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--success'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Summarize any webpage or document instantly</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--success'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Search your company data from anywhere</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--success'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Side-panel chat with full context awareness</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
+                                                    <Sparkles
+                                                        size={16}
+                                                        className='text--success'
+                                                        style={{ marginTop: '0.2rem', flexShrink: 0 }}
+                                                    />
+                                                    <span>Works in Salesforce, Jira, Gmail, LinkedIn</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </TiltHero>
+                            </div>
+                        </div>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <Link to='/assessment' className='button button--primary button--lg'>
+                                Get AI Assessment
+                            </Link>
                         </div>
                     </div>
                 </section>

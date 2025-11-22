@@ -1,9 +1,9 @@
 import clsx from 'clsx'
+import Link from '@docusaurus/Link'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import ElevenLabsInlineWidget from '@site/src/components/ElevenLabsInlineWidget'
-import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
 import { Phone, MessageSquare, Sparkles } from 'lucide-react'
 
 import styles from './assessment.module.css'
@@ -85,15 +85,9 @@ function AssessmentOptionsSection() {
                             </ul>
 
                             <div className={styles.optionCTA}>
-                                <AskAlphaButton
-                                    context={{
-                                        page: 'assessment',
-                                        section: 'chat-option',
-                                        mode: 'assessment'
-                                    }}
-                                    variant='button'
-                                    size='large'
-                                />
+                                <Link to='/ai-workshops' className='button button--primary button--lg'>
+                                    Start Chat Assessment
+                                </Link>
                             </div>
 
                             <p className={styles.optionNote}>Best for: Those who prefer writing and reviewing</p>
@@ -165,9 +159,12 @@ function WhatYouGetSection() {
     return (
         <section className={styles.whatYouGetSection}>
             <div className='container'>
-                <h2 className='text--center' style={{ marginBottom: '3rem' }}>
+                <h2 className='text--center' style={{ marginBottom: '1.5rem', fontSize: '2.5rem' }}>
                     What You&apos;ll Get
                 </h2>
+                <p className='lead text--center' style={{ marginBottom: '4rem', opacity: 0.9, maxWidth: '700px', margin: '0 auto 4rem' }}>
+                    A detailed, customized proposal unique to your business—emailed to you within 24 hours
+                </p>
                 <div className='row'>
                     <div className='col col--4'>
                         <div className={styles.benefitCard}>
@@ -175,7 +172,15 @@ function WhatYouGetSection() {
                                 <Sparkles size={32} />
                             </div>
                             <h3>Custom Recommendation</h3>
-                            <p>Personalized setup guide based on your specific needs, team size, and use cases.</p>
+                            <p>
+                                Personalized setup guide tailored to your industry, team size, and specific use cases. Not a generic
+                                template—this is built for YOU.
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>
+                                <li>✓ Industry-specific agent configurations</li>
+                                <li>✓ Recommended integrations for your stack</li>
+                                <li>✓ ROI projections based on your data</li>
+                            </ul>
                         </div>
                     </div>
                     <div className='col col--4'>
@@ -184,7 +189,15 @@ function WhatYouGetSection() {
                                 <Sparkles size={32} />
                             </div>
                             <h3>Implementation Plan</h3>
-                            <p>Step-by-step roadmap with timelines, integration priorities, and team training recommendations.</p>
+                            <p>
+                                Step-by-step roadmap with realistic timelines, integration priorities, and team training recommendations.
+                                Know exactly what to expect before you commit.
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>
+                                <li>✓ Phased rollout strategy (pilot → full deployment)</li>
+                                <li>✓ Resource requirements and timeline estimates</li>
+                                <li>✓ Risk mitigation and security considerations</li>
+                            </ul>
                         </div>
                     </div>
                     <div className='col col--4'>
@@ -192,10 +205,33 @@ function WhatYouGetSection() {
                             <div className={styles.benefitIcon}>
                                 <Sparkles size={32} />
                             </div>
-                            <h3>Demo Invitation</h3>
-                            <p>Schedule a personalized demo to see AnswerAgent configured for your specific use cases.</p>
+                            <h3>Personalized Demo Invitation</h3>
+                            <p>
+                                Schedule a live demo where we&apos;ll show AnswerAgent configured for your specific use cases. See your data
+                                in action (securely sandboxed).
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>
+                                <li>✓ Live walkthrough with your use cases</li>
+                                <li>✓ Q&A with technical experts</li>
+                                <li>✓ Optional: POC scoping session</li>
+                            </ul>
                         </div>
                     </div>
+                </div>
+
+                <div
+                    style={{
+                        marginTop: '3rem',
+                        padding: '2rem',
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        border: '2px solid rgba(102, 126, 234, 0.3)',
+                        borderRadius: '12px',
+                        textAlign: 'center'
+                    }}
+                >
+                    <p style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0 }}>
+                        📧 Delivered to your inbox within 24 hours • No sales pressure • 100% customized
+                    </p>
                 </div>
             </div>
         </section>

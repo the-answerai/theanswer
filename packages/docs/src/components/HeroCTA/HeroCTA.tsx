@@ -25,7 +25,7 @@ interface HeroCTAProps {
 export const HeroCTA: React.FC<HeroCTAProps> = ({
     variant = 'primary',
     showScheduleDemo = true,
-    showAskAlpha = true,
+    showAskAlpha = false,
     showAssessment = true,
     scheduleDemoText = 'Schedule Demo',
     assessmentText = 'Start AI Assessment',

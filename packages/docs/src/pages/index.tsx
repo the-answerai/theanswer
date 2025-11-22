@@ -161,10 +161,10 @@ function ThreePillarsSection() {
                             </div>
                             <h3 className={styles.pillarTitle}>Connect Your Data</h3>
                             <p className={styles.pillarDescription}>
-                                All your business tools in one secure place. Salesforce, Jira, Slack, GitHub, and 50+ more.
+                                Unified data lake with intelligent tagging and AI summarization. 20+ integrations, secure and compliant.
                             </p>
-                            <a href='/how-it-works#connect-data' className={styles.pillarLink}>
-                                See How <ArrowRight size={18} />
+                            <a href='/answer-engine' className={styles.pillarLink}>
+                                Learn More <ArrowRight size={18} />
                             </a>
                         </div>
                     </div>
@@ -175,10 +175,10 @@ function ThreePillarsSection() {
                             </div>
                             <h3 className={styles.pillarTitle}>Build Your Agents</h3>
                             <p className={styles.pillarDescription}>
-                                Visual builder on open-source you trust. LangChain + Flowise. Deploy anywhere.
+                                Visual builder, code editor, templates. Create images and videos with AI. Deploy anywhere you want.
                             </p>
-                            <a href='https://studio.theanswer.ai' className={styles.pillarLink} target='_blank' rel='noopener noreferrer'>
-                                Try Free Studio <ArrowRight size={18} />
+                            <a href='/agent-studio' className={styles.pillarLink}>
+                                Explore Studio <ArrowRight size={18} />
                             </a>
                         </div>
                     </div>
@@ -188,9 +188,11 @@ function ThreePillarsSection() {
                                 <BarChart3 size={64} strokeWidth={1.5} />
                             </div>
                             <h3 className={styles.pillarTitle}>Get Instant Insights</h3>
-                            <p className={styles.pillarDescription}>Dashboards and reports on-demand. Stop preparing. Start doing.</p>
-                            <a href='/get-started#roi' className={styles.pillarLink}>
-                                Calculate ROI <ArrowRight size={18} />
+                            <p className={styles.pillarDescription}>
+                                Real-time dashboards, on-demand reports, and Chrome extension. Insights when you need them.
+                            </p>
+                            <a href='/on-demand-apps' className={styles.pillarLink}>
+                                See Insights <ArrowRight size={18} />
                             </a>
                         </div>
                     </div>

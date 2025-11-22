@@ -1,10 +1,33 @@
 import Layout from '@theme/Layout'
 import styles from '../new-brand.module.css'
-import { AskAlphaButton } from '../../components/AskAlpha/AskAlphaButton'
-import { Shield, Lock, Link as LinkIcon, Server, Network, Zap } from 'lucide-react'
+import { Shield, Lock, Link as LinkIcon, Server, Network, Zap, Database, Tags, FileText } from 'lucide-react'
 import Link from '@docusaurus/Link'
 import { MagneticCard, TiltHero, OrchestrationFlow, MagneticGrid } from '../../components/Modern/CreativeSections'
-import InfiniteMarquee from '../../components/Modern/InfiniteMarquee'
+import IntegrationLogo from '../../components/IntegrationLogo'
+
+// All available integrations
+const INTEGRATIONS = [
+    { name: 'Salesforce', domain: 'salesforce.com', category: 'CRM' },
+    { name: 'Jira', domain: 'atlassian.com', category: 'Project Management' },
+    { name: 'Slack', domain: 'slack.com', category: 'Communication' },
+    { name: 'GitHub', domain: 'github.com', category: 'Development' },
+    { name: 'Google Workspace', domain: 'google.com', category: 'Productivity' },
+    { name: 'Microsoft 365', domain: 'microsoft.com', category: 'Productivity' },
+    { name: 'HubSpot', domain: 'hubspot.com', category: 'CRM' },
+    { name: 'Zendesk', domain: 'zendesk.com', category: 'Support' },
+    { name: 'Linear', domain: 'linear.app', category: 'Project Management' },
+    { name: 'Notion', domain: 'notion.so', category: 'Knowledge Management' },
+    { name: 'Asana', domain: 'asana.com', category: 'Project Management' },
+    { name: 'Monday.com', domain: 'monday.com', category: 'Project Management' },
+    { name: 'Airtable', domain: 'airtable.com', category: 'Database' },
+    { name: 'Dropbox', domain: 'dropbox.com', category: 'Storage' },
+    { name: 'Zoom', domain: 'zoom.us', category: 'Communication' },
+    { name: 'Figma', domain: 'figma.com', category: 'Design' },
+    { name: 'Intercom', domain: 'intercom.com', category: 'Support' },
+    { name: 'Stripe', domain: 'stripe.com', category: 'Payments' },
+    { name: 'Shopify', domain: 'shopify.com', category: 'E-commerce' },
+    { name: 'Twilio', domain: 'twilio.com', category: 'Communication' }
+]
 
 export default function AnswerEngine(): JSX.Element {
     return (
@@ -31,7 +54,6 @@ export default function AnswerEngine(): JSX.Element {
                                 <Link to='/ai-workshops' className='button button--primary button--lg'>
                                     Start Data Assessment
                                 </Link>
-                                <AskAlphaButton variant='button' size='large' />
                             </div>
                             <div style={{ marginTop: '1rem' }}>
                                 <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--link'>
@@ -45,52 +67,142 @@ export default function AnswerEngine(): JSX.Element {
                     </div>
                 </section>
 
-                {/* Integrations Marquee */}
+                {/* All Integrations Grid */}
                 <section
                     className={styles.section}
                     style={{
                         borderTop: '1px solid rgba(255,255,255,0.1)',
                         borderBottom: '1px solid rgba(255,255,255,0.1)',
-                        padding: '4rem 0',
+                        padding: '4rem 2rem',
                         background: 'rgba(255,255,255,0.02)'
                     }}
                 >
-                    <h2 style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '1.5rem', opacity: 0.7 }}>
-                        Connects with 50+ Enterprise Data Sources
-                    </h2>
-                    <InfiniteMarquee speed={30}>
-                        <div
-                            style={{
-                                display: 'flex',
-                                gap: '4rem',
-                                opacity: 0.8,
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                color: 'var(--ifm-color-emphasis-800)',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <span>Salesforce</span>
-                            <span>Jira</span>
-                            <span>Slack</span>
-                            <span>GitHub</span>
-                            <span>Google Drive</span>
-                            <span>SharePoint</span>
-                            <span>Zendesk</span>
-                            <span>HubSpot</span>
-                            <span>Notion</span>
-                            <span>Linear</span>
-                            <span>Confluence</span>
-                            <span>ServiceNow</span>
-                            <span>PostgreSQL</span>
-                            <span>Snowflake</span>
-                        </div>
-                    </InfiniteMarquee>
-                    <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                        <Link to='/docs/integrations' className='button button--outline button--primary'>
+                    <h2 style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '2rem' }}>Connect All Your Business Tools</h2>
+                    <p style={{ textAlign: 'center', marginBottom: '3rem', fontSize: '1.1rem', opacity: 0.8 }}>
+                        20+ integrations ready to use, with 50+ more coming soon
+                    </p>
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                            gap: '2rem',
+                            maxWidth: '1200px',
+                            margin: '0 auto'
+                        }}
+                    >
+                        {INTEGRATIONS.map((integration, idx) => (
+                            <div
+                                key={idx}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    padding: '1.5rem',
+                                    background: 'rgba(0,0,0,0.3)',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'pointer'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-4px)'
+                                    e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.5)'
+                                    e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)'
+                                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+                                    e.currentTarget.style.background = 'rgba(0,0,0,0.3)'
+                                }}
+                            >
+                                <IntegrationLogo domain={integration.domain} alt={integration.name} size='md' />
+                                <div
+                                    style={{
+                                        marginTop: '0.75rem',
+                                        fontSize: '0.9rem',
+                                        fontWeight: '500',
+                                        textAlign: 'center',
+                                        color: 'var(--ifm-font-color-base)'
+                                    }}
+                                >
+                                    {integration.name}
+                                </div>
+                                <div
+                                    style={{
+                                        marginTop: '0.25rem',
+                                        fontSize: '0.75rem',
+                                        opacity: 0.6,
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    {integration.category}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                        <Link to='/integrations' className='button button--outline button--primary button--lg'>
                             View All Integrations
                         </Link>
                     </div>
+                </section>
+
+                {/* Data Lake, Tagging, Summarization */}
+                <section className={styles.section} style={{ paddingTop: '4rem' }}>
+                    <h2 className={styles.sectionTitle} style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                        Why Connect Your Data to AnswerAgent?
+                    </h2>
+                    <p className='lead text--center margin-bottom--xl' style={{ maxWidth: '800px', margin: '0 auto 4rem' }}>
+                        Beyond simple integrations—AnswerAgent transforms your scattered data into unified, actionable intelligence.
+                    </p>
+
+                    <MagneticGrid>
+                        <MagneticCard>
+                            <Database size={48} className='text--success margin-bottom--md' />
+                            <h3>Unified Data Lake</h3>
+                            <p>
+                                All your business data in one secure, queryable repository. Stop switching between 20 different tools.
+                                AnswerAgent creates a unified index across every data source while keeping your raw data exactly where it
+                                is.
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', opacity: 0.8, fontSize: '0.9rem' }}>
+                                <li>✓ Cross-platform search in milliseconds</li>
+                                <li>✓ No data migration required</li>
+                                <li>✓ Real-time sync with source systems</li>
+                                <li>✓ Smart de-duplication and merging</li>
+                            </ul>
+                        </MagneticCard>
+
+                        <MagneticCard>
+                            <Tags size={48} className='text--info margin-bottom--md' />
+                            <h3>Intelligent Tagging</h3>
+                            <p>
+                                AI-powered metadata tagging that automatically categorizes, labels, and organizes your data as it flows in.
+                                Find what you need, when you need it—no manual organization required.
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', opacity: 0.8, fontSize: '0.9rem' }}>
+                                <li>✓ Auto-classification by topic, sentiment, priority</li>
+                                <li>✓ Custom taxonomy support</li>
+                                <li>✓ Entity extraction (people, companies, dates)</li>
+                                <li>✓ Smart relationship mapping</li>
+                            </ul>
+                        </MagneticCard>
+
+                        <MagneticCard>
+                            <FileText size={48} className='text--warning margin-bottom--md' />
+                            <h3>AI Summarization</h3>
+                            <p>
+                                Cut through the noise. AnswerAgent automatically generates concise summaries of documents, threads,
+                                meetings, and updates—so you get the insights without the information overload.
+                            </p>
+                            <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem', opacity: 0.8, fontSize: '0.9rem' }}>
+                                <li>✓ Multi-document synthesis</li>
+                                <li>✓ Key takeaways and action items</li>
+                                <li>✓ Trend analysis across time periods</li>
+                                <li>✓ Executive briefings on demand</li>
+                            </ul>
+                        </MagneticCard>
+                    </MagneticGrid>
                 </section>
 
                 {/* Security & Permissions Grid */}

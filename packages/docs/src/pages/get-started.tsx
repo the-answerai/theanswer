@@ -25,11 +25,11 @@ function GetStartedOptions() {
     const options = [
         {
             icon: Zap,
-            title: 'Try Free Studio',
-            description: 'Start building agents immediately. No credit card required.',
-            link: 'https://studio.theanswer.ai',
-            linkText: 'Try Free Studio →',
-            external: true,
+            title: 'Get AI Assessment',
+            description: 'Get a customized proposal for your business, emailed within 24 hours.',
+            link: '/assessment',
+            linkText: 'Start Assessment →',
+            external: false,
             color: 'primary'
         },
         {
@@ -165,7 +165,7 @@ function AssessmentSection() {
                                     <p>Answer a few questions via chat to get personalized recommendations.</p>
                                     <HeroCTA
                                         showScheduleDemo={false}
-                                        showAskAlpha={true}
+                                        showAskAlpha={false}
                                         showAssessment={false}
                                         context={{
                                             page: 'get-started',

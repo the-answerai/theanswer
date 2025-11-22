@@ -1407,6 +1407,9 @@ importers:
             '@vercel/node':
                 specifier: ^5.3.24
                 version: 5.3.24(@swc/core@1.13.5(@swc/helpers@0.5.17))(encoding@0.1.13)(rollup@4.50.1)
+            baseline-browser-mapping:
+                specifier: ^2.8.30
+                version: 2.8.30
             typescript:
                 specifier: ~5.5.4
                 version: 5.5.4
@@ -10102,6 +10105,10 @@ packages:
 
     baseline-browser-mapping@2.8.2:
         resolution: { integrity: sha512-NvcIedLxrs9llVpX7wI+Jz4Hn9vJQkCPKrTaHIE0sW/Rj1iq6Fzby4NbyTZjQJNoypBXNaG7tEHkTgONZpwgxQ== }
+        hasBin: true
+
+    baseline-browser-mapping@2.8.30:
+        resolution: { integrity: sha512-aTUKW4ptQhS64+v2d6IkPzymEzzhw+G0bA1g3uBRV3+ntkH+svttKseW5IOR4Ed6NUVKqnY7qT3dKvzQ7io4AA== }
         hasBin: true
 
     basic-auth@2.0.1:
@@ -33360,6 +33367,8 @@ snapshots:
     base64url@3.0.1: {}
 
     baseline-browser-mapping@2.8.2: {}
+
+    baseline-browser-mapping@2.8.30: {}
 
     basic-auth@2.0.1:
         dependencies:

@@ -114,8 +114,8 @@ function QuickStartSection() {
                             </div>
                         </div>
                         <div className={styles.quickStartCTAs}>
-                            <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                Try Free Studio
+                            <a href='/assessment' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                Get AI Assessment
                             </a>
                             <a href='/docs/developers' className={clsx(styles.ctaButton, styles.ctaSecondary)}>
                                 View Docs

@@ -54,8 +54,8 @@ function ThreePillarsSection() {
             icon: <Cpu size={48} strokeWidth={1.5} />,
             title: 'Build Your Agents',
             description: 'Visual builder on open-source you trust. LangChain + Flowise. Deploy anywhere.',
-            link: '/how-it-works#build',
-            linkText: 'Try Free Studio'
+            link: '/agent-studio',
+            linkText: 'Explore Studio'
         },
         {
             icon: <BarChart3 size={48} strokeWidth={1.5} />,

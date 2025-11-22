@@ -584,19 +584,13 @@ const config: Config = {
                     position: 'left'
                 },
                 {
-                    to: '/get-started',
-                    label: 'Get Started',
+                    type: 'html',
                     position: 'right',
-                    className: 'button button--primary button--sm'
+                    value: '<div id="navbar-ask-alpha"></div>'
                 },
                 {
                     href: 'https://studio.theanswer.ai',
                     label: 'Sign In',
-                    position: 'right'
-                },
-                {
-                    href: 'https://github.com/the-answerai',
-                    label: 'GitHub',
                     position: 'right'
                 }
             ]

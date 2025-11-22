@@ -1,6 +1,5 @@
 import Layout from '@theme/Layout'
 import styles from '../new-brand.module.css'
-import { AskAlphaButton } from '../../components/AskAlpha/AskAlphaButton'
 import { Check, Shield, Zap, Cpu, Globe, Database, Layers, BarChart3, ArrowRight } from 'lucide-react'
 import Link from '@docusaurus/Link'
 import { MagneticGrid, MagneticCard, BeamSection, TiltHero } from '../../components/Modern/CreativeSections'
@@ -50,7 +49,6 @@ export default function AnswerAgentExplained(): JSX.Element {
                             >
                                 Schedule Demo
                             </Link>
-                            <AskAlphaButton variant='button' size='large' className='button--lg' />
                             <Link
                                 to='/ai-workshops'
                                 className='button button--outline button--secondary button--lg'

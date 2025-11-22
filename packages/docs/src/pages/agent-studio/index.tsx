@@ -1,8 +1,7 @@
 import Layout from '@theme/Layout'
 import styles from '../new-brand.module.css'
-import { AskAlphaButton } from '../../components/AskAlpha/AskAlphaButton'
 import { TerminalHero, TiltHero, MagneticGrid, MagneticCard } from '../../components/Modern/CreativeSections'
-import { Code2, Box, Cloud, Server, GitBranch, Puzzle } from 'lucide-react'
+import { Code2, Box, Cloud, Server, GitBranch, Puzzle, Image, Video, Sparkles } from 'lucide-react'
 import Link from '@docusaurus/Link'
 import InfiniteMarquee from '../../components/Modern/InfiniteMarquee'
 
@@ -27,10 +26,9 @@ export default function AgentStudio(): JSX.Element {
                                 on-prem, or hybrid environments.
                             </p>
                             <div className={styles.buttonGrid} style={{ marginTop: '2rem' }}>
-                                <Link to='https://studio.theanswer.ai' className='button button--primary button--lg'>
-                                    Try Free Studio
+                                <Link to='/assessment' className='button button--primary button--lg'>
+                                    Get AI Assessment
                                 </Link>
-                                <AskAlphaButton variant='button' size='large' />
                             </div>
                             <div style={{ marginTop: '1rem' }}>
                                 <Link to='/docs/getting-started' className='button button--link'>
@@ -127,6 +125,151 @@ export default function AgentStudio(): JSX.Element {
                     </div>
                 </section>
 
+                {/* Creative AI Capabilities */}
+                <section className={styles.section} style={{ padding: '6rem 0', background: 'var(--ifm-background-surface-color)' }}>
+                    <div className='container'>
+                        <h2 className={styles.sectionTitle} style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                            Beyond Chat: Creative AI Capabilities
+                        </h2>
+                        <p className='lead text--center margin-bottom--xl' style={{ maxWidth: '800px', margin: '0 auto 4rem' }}>
+                            Build agents that don&apos;t just answer questions—they create images, generate videos, and produce content on
+                            demand.
+                        </p>
+
+                        <div className='row'>
+                            <div className='col col--6'>
+                                <TiltHero>
+                                    <div
+                                        className='card'
+                                        style={{
+                                            padding: '3rem',
+                                            height: '100%',
+                                            background:
+                                                'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                                            border: '2px solid rgba(102, 126, 234, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 20, right: 20, opacity: 0.1 }}>
+                                            <Image size={120} />
+                                        </div>
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <div
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.75rem',
+                                                    marginBottom: '1.5rem'
+                                                }}
+                                            >
+                                                <Image size={48} className='text--primary' />
+                                                <h3 style={{ margin: 0, fontSize: '1.75rem' }}>AI Image Builder</h3>
+                                            </div>
+                                            <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: 1.6 }}>
+                                                Generate production-ready images from text prompts using DALL-E, Midjourney, Stable
+                                                Diffusion, and more. Perfect for marketing teams, designers, and content creators.
+                                            </p>
+                                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem' }}>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--primary' />
+                                                    <span>Multi-model support (DALL-E, Midjourney, Stable Diffusion)</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--primary' />
+                                                    <span>Brand consistency with style guides</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--primary' />
+                                                    <span>Batch generation for campaigns</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--primary' />
+                                                    <span>Auto-resize for social media</span>
+                                                </li>
+                                            </ul>
+                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                                <p style={{ fontSize: '0.9rem', opacity: 0.7, margin: 0 }}>
+                                                    <strong>Use Case:</strong> &quot;Generate 5 variations of a product hero image for our
+                                                    homepage, optimized for desktop and mobile&quot;
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TiltHero>
+                            </div>
+
+                            <div className='col col--6'>
+                                <TiltHero>
+                                    <div
+                                        className='card'
+                                        style={{
+                                            padding: '3rem',
+                                            height: '100%',
+                                            background:
+                                                'linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)',
+                                            border: '2px solid rgba(118, 75, 162, 0.3)',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        <div style={{ position: 'absolute', top: 20, right: 20, opacity: 0.1 }}>
+                                            <Video size={120} />
+                                        </div>
+                                        <div style={{ position: 'relative', zIndex: 1 }}>
+                                            <div
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.75rem',
+                                                    marginBottom: '1.5rem'
+                                                }}
+                                            >
+                                                <Video size={48} className='text--info' />
+                                                <h3 style={{ margin: 0, fontSize: '1.75rem' }}>AI Video Generator</h3>
+                                            </div>
+                                            <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: 1.6 }}>
+                                                Create professional video content from scripts, blogs, or prompts. Turn documentation into
+                                                tutorials, text into talking-head videos, or automate your video marketing.
+                                            </p>
+                                            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem' }}>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--info' />
+                                                    <span>Text-to-video with AI avatars</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--info' />
+                                                    <span>Screen recording + AI narration</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--info' />
+                                                    <span>Auto-generate captions and subtitles</span>
+                                                </li>
+                                                <li style={{ padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Sparkles size={16} className='text--info' />
+                                                    <span>Multi-language dubbing</span>
+                                                </li>
+                                            </ul>
+                                            <div style={{ paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                                <p style={{ fontSize: '0.9rem', opacity: 0.7, margin: 0 }}>
+                                                    <strong>Use Case:</strong> &quot;Convert our product documentation into a 3-minute
+                                                    explainer video with voiceover&quot;
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TiltHero>
+                            </div>
+                        </div>
+
+                        <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                            <Link to='/assessment' className='button button--primary button--lg'>
+                                Get AI Assessment
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+
                 {/* Ecosystem Marquee */}
                 <section
                     className={styles.section}
@@ -206,8 +349,8 @@ export default function AgentStudio(): JSX.Element {
                     <h2 style={{ fontSize: '2.5rem' }}>Start building today.</h2>
                     <p className='lead'>Join thousands of developers building the future of work.</p>
                     <div className={styles.buttonGrid} style={{ justifyContent: 'center', marginTop: '2rem' }}>
-                        <Link to='https://studio.theanswer.ai' className='button button--primary button--lg'>
-                            Try Free Studio
+                        <Link to='/assessment' className='button button--primary button--lg'>
+                            Get AI Assessment
                         </Link>
                     </div>
                 </section>
