@@ -23,18 +23,21 @@ class DataEngineService {
             timeout: 30000
         })
 
-        console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
+        // Only log initialization details in non-production environments
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
 
-        // Log authentication method
-        if (auth0M2MTokenManager.isEnabled()) {
-            console.log(`[DataEngineService] Auth: M2M (Auth0 Client Credentials)`)
-        } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
-            console.log(`[DataEngineService] Auth: Service Key (backward compatible)`)
-        } else {
-            console.warn(`[DataEngineService] WARNING: No authentication configured! Requests will fail.`)
-            console.warn(`[DataEngineService] Set either:`)
-            console.warn(`[DataEngineService]   - DATA_SIDEKICK_CLIENT_ID + DATA_SIDEKICK_CLIENT_SECRET (M2M)`)
-            console.warn(`[DataEngineService]   - DATA_ENGINE_SERVICE_KEY (legacy)`)
+            // Log authentication method
+            if (auth0M2MTokenManager.isEnabled()) {
+                console.log(`[DataEngineService] Auth: M2M (Auth0 Client Credentials)`)
+            } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
+                console.log(`[DataEngineService] Auth: Service Key (backward compatible)`)
+            } else {
+                console.warn(`[DataEngineService] WARNING: No authentication configured! Requests will fail.`)
+                console.warn(`[DataEngineService] Set either:`)
+                console.warn(`[DataEngineService]   - DATA_SIDEKICK_CLIENT_ID + DATA_SIDEKICK_CLIENT_SECRET (M2M)`)
+                console.warn(`[DataEngineService]   - DATA_ENGINE_SERVICE_KEY (legacy)`)
+            }
         }
     }
 
@@ -55,10 +58,8 @@ class DataEngineService {
             try {
                 const token = await auth0M2MTokenManager.getAccessToken()
                 headers['Authorization'] = `Bearer ${token}`
-                console.log('[DataEngineService] ✓ Using M2M authentication')
-
-                // Add success metric/log for monitoring
-                this.logAuthMethod('m2m', true)
+                // Auth success logging removed - was generating noise on every request
+                // TODO: Integrate with metrics system for auth method tracking
             } catch (error) {
                 // Log M2M failure for monitoring/alerts
                 this.logAuthMethod('m2m', false, error)
@@ -76,8 +77,16 @@ class DataEngineService {
                 // Fall back to service key if configured
                 if (process.env.DATA_ENGINE_SERVICE_KEY) {
                     console.warn('[DataEngineService] ⚠️  FALLBACK: Using service key authentication (M2M failed)')
+
+                    // WARN in production - indicates M2M configuration issue
+                    if (process.env.NODE_ENV === 'production') {
+                        console.error(
+                            '[DataEngineService] ⚠️  PRODUCTION WARNING: M2M authentication failed, falling back to service key. ' +
+                                'This indicates a configuration issue and should be investigated immediately.'
+                        )
+                    }
+
                     headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
-                    this.logAuthMethod('service-key-fallback', true)
                 } else {
                     // No fallback available
                     throw new InternalFlowiseError(
@@ -89,8 +98,7 @@ class DataEngineService {
         } else if (process.env.DATA_ENGINE_SERVICE_KEY) {
             // Use service key if M2M not configured
             headers['X-Service-Key'] = process.env.DATA_ENGINE_SERVICE_KEY
-            console.log('[DataEngineService] Using service key authentication (M2M not configured)')
-            this.logAuthMethod('service-key', true)
+            // Auth success logging removed - was generating noise on every request
         } else {
             throw new InternalFlowiseError(
                 StatusCodes.INTERNAL_SERVER_ERROR,
@@ -401,7 +409,10 @@ class DataEngineService {
                 ...(data && { data })
             }
 
-            console.log(`[DataEngineService] ${method} ${path} (org: ${user.organizationId})`)
+            // Only log requests in non-production environments
+            if (process.env.NODE_ENV !== 'production') {
+                console.log(`[DataEngineService] ${method} ${path} (org: ${user.organizationId})`)
+            }
 
             const response = await this.client.request(config)
 
