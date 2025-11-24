@@ -54,6 +54,7 @@ import nvidiaNimRouter from './nvidia-nim'
 import gmailRouter from './gmail'
 import csvParserRouter from './csv-parser'
 import browserExtensionRouter from './browser-extension'
+import dataEngineRouter from './data-engine'
 import dalleImageUploadRouter from './dalle-image-upload'
 import dalleImageRouter from './dalle-image'
 import videoGeneratorRouter from './video-generator'
@@ -123,6 +124,7 @@ router.use('/nvidia-nim', nvidiaNimRouter)
 router.use('/gmail', gmailRouter)
 router.use('/csv-parser', csvParserRouter)
 router.use('/browser-extension', browserExtensionRouter)
+router.use('/data-engine', dataEngineRouter)
 router.use('/executions', executionsRouter)
 router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)

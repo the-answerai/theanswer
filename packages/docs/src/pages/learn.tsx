@@ -1,5 +1,4 @@
 import clsx from 'clsx'
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
@@ -312,7 +311,7 @@ function LearningResources() {
                             <div className={styles.appIcon}>💻</div>
                             <h3>Developer Resources</h3>
                             <p>Contribute to the platform, access source code, and help build the future of ethical AI.</p>
-                            <a href='/developers' className={styles.featureCardCTA}>
+                            <a href='/docs/developers' className={styles.featureCardCTA}>
                                 Explore Development →
                             </a>
                         </div>
@@ -324,8 +323,6 @@ function LearningResources() {
 }
 
 export default function Learn(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
-
     return (
         <div data-theme='dark'>
             <Layout

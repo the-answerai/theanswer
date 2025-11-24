@@ -1,5 +1,4 @@
 import clsx from 'clsx'
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
@@ -51,7 +50,7 @@ function ScheduledHero() {
                     <a href='/ai-workshops' className={clsx(styles.ctaButton, styles.ctaSecondary)}>
                         Back to Workshop Details
                     </a>
-                    <a href='/developers' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                    <a href='/docs/developers' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
                         Talk to AI Agent Now
                     </a>
                 </div>
@@ -72,7 +71,7 @@ function AdditionalResourcesSection() {
                             <div>
                                 <h3>Answer Academy</h3>
                                 <p>Get a preview of our training content with free access to select courses and resources.</p>
-                                <a href='/developers' className={styles.resourceLink}>
+                                <a href='/docs/developers' className={styles.resourceLink}>
                                     Explore Academy →
                                 </a>
                             </div>
@@ -96,7 +95,7 @@ function AdditionalResourcesSection() {
                             <div>
                                 <h3>AI Agents</h3>
                                 <p>Try our AI agents to get a taste of what your team will learn to build and deploy.</p>
-                                <a href='/developers' className={styles.resourceLink}>
+                                <a href='/docs/developers' className={styles.resourceLink}>
                                     Try AI Agents →
                                 </a>
                             </div>
@@ -109,8 +108,6 @@ function AdditionalResourcesSection() {
 }
 
 export default function AIWorkshopsScheduled(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
-
     return (
         <div data-theme='dark'>
             <Layout

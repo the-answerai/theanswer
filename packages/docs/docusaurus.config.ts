@@ -512,6 +512,61 @@ const config: Config = {
                             },
                             createTagPageMD: () => ''
                         }
+                    } satisfies OpenApiPlugin.Options,
+                    dataEngine: {
+                        specPath: 'openapi/data-engine.yaml',
+                        outputDir: 'docs/api/data-engine',
+                        sidebarOptions: {
+                            groupPathsBy: 'tag',
+                            sidebarCollapsible: true,
+                            sidebarCollapsed: false
+                        },
+                        markdownGenerators: {
+                            createInfoPageMD: (pageData) => {
+                                let markdown = `# Data Engine API\n\n`
+                                markdown += `This section contains the API endpoints for managing structured data resources including domains, URLs, calls, tags, documents, tickets, and chats.\n\n`
+
+                                markdown += `## Overview\n\n`
+                                markdown += `The Data Engine API provides comprehensive CRUD operations for managing data across multiple domains with support for filtering, pagination, and advanced search capabilities.\n\n`
+
+                                markdown += `## Resources\n\n`
+                                markdown += `The API supports the following resource types:\n\n`
+                                markdown += `- **Domains**: Website domain metadata and analysis\n`
+                                markdown += `- **URLs**: Page-level analysis and content tracking\n`
+                                markdown += `- **Calls**: Call logs with transcripts and sentiment analysis\n`
+                                markdown += `- **Tags**: Shared taxonomy and categorization system\n`
+                                markdown += `- **Documents**: Vector-embedded documents for semantic search\n`
+                                markdown += `- **Tickets**: Support ticket management\n`
+                                markdown += `- **Chats**: Chat conversation logs and analytics\n\n`
+
+                                markdown += `## Authentication\n\n`
+                                markdown += `All API requests require authentication using an API key. Include your API key in the Authorization header:\n\n`
+                                markdown += `\`\`\`\n`
+                                markdown += `Authorization: Bearer YOUR_API_KEY\n`
+                                markdown += `\`\`\`\n\n`
+
+                                markdown += `## Base URL\n\n`
+                                markdown += `- **Production**: \`https://prod.studio.theanswer.ai/api/v1/data-engine\`\n`
+                                markdown += `- **Local Development**: \`http://localhost:4000/api/v1/data-engine\`\n\n`
+
+                                markdown += `## Features\n\n`
+                                markdown += `- Full CRUD operations for all resources\n`
+                                markdown += `- Advanced filtering and search capabilities\n`
+                                markdown += `- Pagination support for large datasets\n`
+                                markdown += `- Vector similarity search for documents\n`
+                                markdown += `- Hierarchical tag system\n`
+                                markdown += `- Metadata tracking for source system integration\n\n`
+
+                                markdown += `## Rate Limiting\n\n`
+                                markdown += `API calls are subject to rate limiting to ensure fair usage and system stability.\n\n`
+
+                                markdown += `## Endpoints\n\n`
+                                markdown += `Explore the available endpoints in the sidebar to learn more about specific operations.\n\n`
+
+                                return markdown
+                            },
+                            createTagPageMD: () => ''
+                        }
                     } satisfies OpenApiPlugin.Options
                 }
             }
@@ -520,6 +575,8 @@ const config: Config = {
     themes: ['docusaurus-theme-openapi-docs'], // export theme components
 
     scripts: [],
+
+    clientModules: [require.resolve('./src/chatbot-init.js')],
 
     headTags: [],
 
@@ -539,59 +596,19 @@ const config: Config = {
             },
             items: [
                 {
-                    to: '/getting-started',
-                    label: 'Getting Started',
+                    to: '/how-it-works',
+                    label: 'How It Works',
                     position: 'left'
                 },
                 {
-                    type: 'dropdown',
-                    label: 'Using Answer',
-                    position: 'left',
-                    items: [
-                        {
-                            to: '/agents',
-                            label: 'Agents'
-                        },
-                        {
-                            to: '/chat',
-                            label: 'Chat'
-                        },
-                        {
-                            to: '/browser-sidekick',
-                            label: 'Browser Sidekick'
-                        },
-                        {
-                            to: '/sidekick-studio',
-                            label: 'Studio'
-                        }
-                    ]
+                    to: '/pricing',
+                    label: 'Pricing',
+                    position: 'left'
                 },
                 {
-                    type: 'dropdown',
+                    to: '/developers',
                     label: 'Developers',
-                    position: 'left',
-                    items: [
-                        {
-                            to: '/developers',
-                            label: 'Join the Sprint'
-                        },
-                        {
-                            to: '/docs/developers',
-                            label: 'Developer Guide'
-                        },
-                        {
-                            to: '/docs/api',
-                            label: 'API Reference'
-                        },
-                        {
-                            to: '/docs/developers/embed',
-                            label: 'Embed Chatbot'
-                        },
-                        {
-                            to: '/docs/api/prediction/create-prediction',
-                            label: 'Prediction API'
-                        }
-                    ]
+                    position: 'left'
                 },
                 {
                     type: 'dropdown',
@@ -622,14 +639,13 @@ const config: Config = {
                     position: 'left'
                 },
                 {
-                    href: 'https://studio.theanswer.ai',
-                    label: 'Sign In',
+                    type: 'html',
                     position: 'right',
-                    className: 'button button--primary button--sm'
+                    value: '<div id="navbar-ask-alpha"></div>'
                 },
                 {
-                    href: 'https://github.com/the-answerai',
-                    label: 'GitHub',
+                    href: 'https://studio.theanswer.ai',
+                    label: 'Sign In',
                     position: 'right'
                 }
             ]
@@ -637,69 +653,69 @@ const config: Config = {
         footer: {
             links: [
                 {
-                    title: 'Docs',
+                    title: 'Product',
                     items: [
                         {
-                            to: '/getting-started',
-                            label: 'Getting Started'
+                            to: '/how-it-works',
+                            label: 'How It Works'
                         },
                         {
-                            to: '/agents',
-                            label: 'Agents'
+                            to: '/pricing',
+                            label: 'Pricing'
                         },
                         {
-                            to: '/browser-sidekick',
-                            label: 'Browser Sidekick'
+                            to: '/docs/use-cases',
+                            label: 'Use Cases'
                         },
                         {
-                            to: '/chat',
-                            label: 'Chat'
+                            to: '/jlinc-partnership',
+                            label: 'J-Link Partnership'
+                        }
+                    ]
+                },
+                {
+                    title: 'Developers',
+                    items: [
+                        {
+                            to: '/docs/developers',
+                            label: 'Documentation'
                         },
                         {
-                            to: '/sidekick-studio',
-                            label: 'Studio'
+                            to: '/docs/api',
+                            label: 'API Reference'
+                        },
+                        {
+                            to: '/developers',
+                            label: 'Quick Start'
+                        },
+                        {
+                            label: 'GitHub',
+                            href: 'https://github.com/the-answerai'
+                        },
+                        {
+                            label: 'Discord',
+                            href: 'https://discord.gg/X54ywt8pzj'
+                        }
+                    ]
+                },
+                {
+                    title: 'Resources',
+                    items: [
+                        {
+                            to: '/blog',
+                            label: 'Blog'
                         },
                         {
                             to: '/ai-workshops',
                             label: 'AI Workshops'
                         },
                         {
-                            to: '/developers',
-                            label: 'Join the Sprint'
+                            to: '/docs/community',
+                            label: 'Help Center'
                         },
                         {
-                            to: '/docs/developers',
-                            label: 'Developer Docs'
-                        }
-                    ]
-                },
-                {
-                    title: 'Support',
-                    items: [
-                        {
-                            label: 'Discord',
-                            href: 'https://discord.gg/X54ywt8pzj'
-                        },
-                        {
-                            label: 'GitHub',
-                            href: 'https://github.com/the-answerai'
-                        }
-                    ]
-                },
-                {
-                    title: 'Social',
-                    items: [
-                        {
-                            label: 'YouTube',
-                            href: 'https://youtube.com/@digitalatscale'
-                        },
-                        {
-                            label: 'X',
-                            href: 'https://x.com/digitalatscale_'
-                        },
-                        {
-                            label: 'Instagram',
-                            href: 'https://instagram.com/digitalatscale'
+                            label: 'Contact Support',
+                            href: 'https://calendly.com/lastrev/answeragent-demo'
                         }
                     ]
                 },
@@ -707,8 +723,8 @@ const config: Config = {
                     title: 'Company',
                     items: [
                         {
-                            label: 'Website',
-                            href: 'https://theanswer.ai'
+                            label: 'About Us',
+                            href: '/#about'
                         },
                         {
                             label: 'Privacy Policy',
@@ -717,11 +733,15 @@ const config: Config = {
                         {
                             label: 'Terms of Service',
                             href: '/terms-of-service'
+                        },
+                        {
+                            label: 'Security',
+                            href: '/how-it-works#security'
                         }
                     ]
                 }
             ],
-            copyright: `Copyright © ${new Date().getFullYear()}`
+            copyright: `Copyright © ${new Date().getFullYear()} AnswerAI`
         },
         prism: {
             theme: prismThemes.github,

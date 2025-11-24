@@ -51,6 +51,9 @@ BILLING_STRIPE_PAID_PRICE_ID=price_xxx
 # Optional: Organizational Billing
 BILLING_OVERRIDE_CUSTOMER_ID=true              # Routes all billing to one customer
 BILLING_DEFAULT_STRIPE_CUSTOMER_ID=cus_xxx     # Organization's Stripe customer ID
+
+# Optional: Development/Testing
+DISABLE_BILLING_CHECKS=true                    # Skip all billing credit limit checks (useful for local development)
 ```
 
 ### Sync Settings (Optional)

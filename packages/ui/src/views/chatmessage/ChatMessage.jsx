@@ -2357,7 +2357,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                             sx={{
                                 mb: 2,
                                 borderRadius: 20,
-                                background: 'linear-gradient(45deg, #673ab7 30%, #1e88e5 90%)'
+                                background: 'linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)'
                             }}
                         >
                             {loading ? 'Submitting...' : 'Submit'}

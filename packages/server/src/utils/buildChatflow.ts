@@ -65,7 +65,7 @@ import { getErrorMessage } from '../errors/utils'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS, IMetricsProvider } from '../Interface.Metrics'
 import { OMIT_QUEUE_JOB_DATA } from './constants'
 import PlansService from '../services/plans'
-import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
+import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID, DISABLE_BILLING_CHECKS } from '../aai-utils/billing/config'
 import { Chat } from '../database/entities/Chat'
 import chatflowsService from '../services/chatflows'
 import { User } from '../database/entities/User'
@@ -1048,6 +1048,12 @@ const validateAndSaveChat = async (
         const billedUserId = req.user?.id || chatflow.userId
         if (!billedUserId || !chatflow.organizationId) {
             logger.warn(`Chatflow ${chatflowid} does not have a user or organization associated with it`)
+            return
+        }
+
+        // Skip billing checks if disabled (useful for local development)
+        if (DISABLE_BILLING_CHECKS) {
+            logger.debug(`[BuildChatflow] Billing checks disabled via DISABLE_BILLING_CHECKS flag`)
             return
         }
 

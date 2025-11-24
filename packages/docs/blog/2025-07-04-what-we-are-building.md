@@ -98,7 +98,7 @@ We need developers who share our vision of ethical, decentralized AI.
 
 ### Join the Alpha Sprint
 
-Visit our [**developers page**](/developers) to learn how you can:
+Visit our [**developers page**](/docs/developers) to learn how you can:
 
 -   **Contribute to open-source** AI infrastructure
 -   **Build custom nodes and integrations**
@@ -145,7 +145,7 @@ This Alpha is just the beginning. Here's what we're building toward:
 
 1. **[Try the Platform](https://studio.theanswer.ai/)** - Jump in and start building
 2. **[Install the Browser Extension](https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim)** - Experience AI everywhere
-3. **[Join Our Developer Community](/developers)** - Help us build the future
+3. **[Join Our Developer Community](/docs/developers)** - Help us build the future
 4. **[Connect with Us](https://discord.gg/X54ywt8pzj)** - Share ideas and get support
 
 ## The Bottom Line
@@ -160,7 +160,7 @@ With AnswerAgent Alpha 0.42, we're putting that control back where it belongs: i
 
 ---
 
-_Ready to build the future? [Start here.](/developers)_
+_Ready to build the future? [Start here.](/docs/developers)_
 
 **The Answer**  
 _AI for all, not for the few._

@@ -57,11 +57,18 @@ export default function componentStyleOverrides(theme) {
             styleOverrides: {
                 root: {
                     backgroundImage: 'none',
-                    // border: `1px solid`,
+                    backgroundColor: theme?.customization?.isDarkMode ? '#1a1a1a' : '#ffffff',
                     borderColor: theme?.palette?.primary?.main ?? 'grey'
                 },
                 rounded: {
                     borderRadius: `${theme?.customization?.borderRadius ?? 8}px`
+                }
+            }
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: theme?.customization?.isDarkMode ? '#1a1a1a' : '#ffffff'
                 }
             }
         },
