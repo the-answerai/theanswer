@@ -1,18 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
-import { PostHog } from 'posthog-node'
 import path from 'path'
 import fs from 'fs'
 import { getUserHome, getUserSettingsFilePath } from '.'
 
 export class Telemetry {
-    postHog?: PostHog
-
     constructor() {
-        if (process.env.POSTHOG_PUBLIC_API_KEY) {
-            this.postHog = new PostHog(process.env.POSTHOG_PUBLIC_API_KEY)
-        } else {
-            this.postHog = undefined
-        }
+        // PostHog removed due to Shai-Hulud-2 security vulnerability
+        // Telemetry functionality disabled
     }
 
     async id(): Promise<string> {
@@ -34,19 +28,12 @@ export class Telemetry {
     }
 
     async sendTelemetry(event: string, properties = {}): Promise<void> {
-        if (this.postHog) {
-            const distinctId = await this.id()
-            this.postHog.capture({
-                event,
-                distinctId,
-                properties
-            })
-        }
+        // Telemetry disabled - PostHog removed due to Shai-Hulud-2 security vulnerability
+        // No-op implementation to maintain API compatibility
     }
 
     async flush(): Promise<void> {
-        if (this.postHog) {
-            await this.postHog.shutdownAsync()
-        }
+        // Telemetry disabled - PostHog removed due to Shai-Hulud-2 security vulnerability
+        // No-op implementation to maintain API compatibility
     }
 }
