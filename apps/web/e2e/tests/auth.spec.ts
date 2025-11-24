@@ -8,6 +8,7 @@ interface TestUser {
     expectedMenuItems: {
         topLevel: string[]
         studio?: string[]
+        dataEngine?: string[] // New: Data Engine submenu items (conditional)
         upgradeVisible: boolean
         exportImportVisible: boolean
     }
@@ -325,10 +326,6 @@ test.describe('Authentication Flow', () => {
         const orgInfo = page.locator('.MuiTypography-root').filter({ hasText: /local|dev|development/i })
         await expect(orgInfo.first()).toBeVisible({ timeout: 5000 })
 
-        // Verify we can see the drawer navigation elements
-        await expect(page.getByRole('link', { name: 'Start a new conversation with your sidekicks' })).toBeVisible()
-        await expect(page.getByRole('link', { name: 'Manage and configure your applications' })).toBeVisible()
-
         console.log('✅ Login successful - user email and organization verified in AppDrawer')
     })
 
@@ -418,11 +415,11 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             password: process.env.TEST_USER_PASSWORD!,
             role: 'admin',
             expectedMenuItems: {
-                topLevel: ['Sidekick Studio', 'Profile', 'Billing'],
+                topLevel: ['Chat', 'Image Generation', 'Video Generation', 'Agent Studio', 'Profile', 'Billing'],
                 studio: [
-                    'Sidekick Store',
                     'Chatflows',
                     'Agentflows',
+                    'Agent Templates',
                     'Assistants',
                     'Document Stores',
                     'Executions',
@@ -431,6 +428,7 @@ test.describe('User Role-Based Authentication and Permissions', () => {
                     'API Keys',
                     'Credentials'
                 ],
+                dataEngine: ['Content', 'Dashboards', 'Reports', 'Calls', 'Bulk Analysis'],
                 upgradeVisible: true,
                 exportImportVisible: true
             }
@@ -440,11 +438,11 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             password: process.env.TEST_USER_PASSWORD!,
             role: 'builder',
             expectedMenuItems: {
-                topLevel: ['Sidekick Studio', 'Profile'],
+                topLevel: ['Chat', 'Image Generation', 'Video Generation', 'Agent Studio', 'Profile'],
                 studio: [
-                    'Sidekick Store',
                     'Chatflows',
                     'Agentflows',
+                    'Agent Templates',
                     'Assistants',
                     'Document Stores',
                     'Executions',
@@ -453,6 +451,7 @@ test.describe('User Role-Based Authentication and Permissions', () => {
                     'API Keys',
                     'Credentials'
                 ],
+                dataEngine: ['Content', 'Dashboards', 'Reports', 'Calls', 'Bulk Analysis'],
                 upgradeVisible: false,
                 exportImportVisible: false
             }
@@ -462,8 +461,9 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             password: process.env.TEST_USER_PASSWORD!,
             role: 'member',
             expectedMenuItems: {
-                topLevel: ['Profile'],
+                topLevel: ['Chat', 'Image Generation', 'Video Generation', 'Profile'],
                 studio: [], // Members don't see Studio
+                dataEngine: [], // Members don't see Data Engine
                 upgradeVisible: false,
                 exportImportVisible: false
             }
@@ -502,18 +502,39 @@ test.describe('User Role-Based Authentication and Permissions', () => {
                 await expect(orgNameElement).toBeVisible({ timeout: 5000 })
             }
 
+            // Verify AnswerAI logo is visible in header (when drawer is open)
+            console.log(`🎨 Checking AnswerAI logo visibility for ${userType}`)
+            const logo = page.locator('img[alt*="AnswerAI"]').first()
+            await expect(logo).toBeVisible({ timeout: 5000 })
+
             // Verify expected top-level menu items are visible
             console.log(`✅ Checking top-level menu items for ${userType}`)
             for (const menuItem of userData.expectedMenuItems.topLevel) {
-                await expect(page.getByText(menuItem)).toBeVisible({ timeout: 5000 })
+                await expect(page.getByText(menuItem, { exact: true })).toBeVisible({ timeout: 5000 })
             }
 
-            // If user should see Sidekick Studio, expand it and check sub-items
-            if (userData.expectedMenuItems.studio && userData.expectedMenuItems.studio.length > 0) {
-                console.log(`🎭 Expanding Sidekick Studio for ${userType}`)
+            // Verify new top-level menu items have correct functionality
+            // All users should see these items
+            console.log(`✨ Checking new top-level menu items functionality for ${userType}`)
 
-                // Click on Sidekick Studio to expand it
-                const studioButton = page.getByText('Sidekick Studio')
+            // Chat link should navigate to /chat
+            const chatLink = page.locator('a[href="/chat"]').first()
+            await expect(chatLink).toBeVisible({ timeout: 5000 })
+
+            // Image Generation link should navigate to sidekick-studio/media-creator
+            const imageGenLink = page.locator('a[href*="media-creator"]').first()
+            await expect(imageGenLink).toBeVisible({ timeout: 5000 })
+
+            // Video Generation link should navigate to sidekick-studio/video-creator
+            const videoGenLink = page.locator('a[href*="video-creator"]').first()
+            await expect(videoGenLink).toBeVisible({ timeout: 5000 })
+
+            // If user should see Agent Studio, expand it and check sub-items
+            if (userData.expectedMenuItems.studio && userData.expectedMenuItems.studio.length > 0) {
+                console.log(`🎭 Expanding Agent Studio for ${userType}`)
+
+                // Click on Agent Studio to expand it
+                const studioButton = page.getByText('Agent Studio')
                 await studioButton.click()
 
                 // Wait for submenu to expand
@@ -527,12 +548,39 @@ test.describe('User Role-Based Authentication and Permissions', () => {
                 }
             }
 
-            // Check Chat and Apps buttons (should be visible for all users)
-            await expect(page.getByRole('link', { name: 'Start a new conversation with your sidekicks' })).toBeVisible()
+            // If Data Engine should be visible (based on environment and role)
+            if (
+                process.env.NEXT_PUBLIC_ANSWER_ENGINE_DOMAIN &&
+                userData.expectedMenuItems.dataEngine &&
+                userData.expectedMenuItems.dataEngine.length > 0
+            ) {
+                console.log(`🌐 Checking Data Engine menu for ${userType}`)
 
-            // Apps button visibility based on role (builders and admins in private orgs)
-            if (userData.role === 'admin' || userData.role === 'builder') {
-                await expect(page.getByRole('link', { name: 'Manage and configure your applications' })).toBeVisible()
+                // Click on Data Engine to expand it
+                const dataEngineButton = page.getByText('Data Engine')
+                await expect(dataEngineButton).toBeVisible({ timeout: 5000 })
+                await dataEngineButton.click()
+
+                // Wait for submenu to expand
+                await page.waitForTimeout(1000)
+
+                // Check Data Engine sub-items
+                for (const engineItem of userData.expectedMenuItems.dataEngine) {
+                    const menuItem = page.locator('nav, [role="navigation"], .MuiList-root').getByText(engineItem, { exact: true }).first()
+                    await expect(menuItem).toBeVisible({ timeout: 5000 })
+                }
+
+                // Verify external links have target="_blank" (except Bulk Analysis which is internal)
+                const externalLinks = ['Content', 'Dashboards', 'Reports', 'Calls']
+                for (const linkText of externalLinks) {
+                    const link = page.locator(`a:has-text("${linkText}")[target="_blank"]`).first()
+                    await expect(link).toBeVisible({ timeout: 5000 })
+                }
+            } else if (!userData.expectedMenuItems.dataEngine || userData.expectedMenuItems.dataEngine.length === 0) {
+                // Members should not see Data Engine
+                console.log(`🚫 Verifying Data Engine menu is hidden for ${userType}`)
+                const dataEngineButton = page.getByText('Data Engine')
+                await expect(dataEngineButton).not.toBeVisible()
             }
 
             // Check user menu (three dots menu)
@@ -594,4 +642,93 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             console.log(`✅ Navigation test completed for ${userType}`)
         })
     }
+})
+
+test.describe('Theme Toggle Functionality', () => {
+    test('should toggle between light and dark mode and persist theme preference', async ({ page }) => {
+        // Clear any existing auth state
+        await page.context().clearCookies()
+
+        console.log('🎨 Testing theme toggle functionality')
+
+        // Login as admin user for this test
+        await loginAsUser(
+            page,
+            process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!,
+            process.env.TEST_USER_PASSWORD!,
+            process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
+        )
+
+        // Wait for page to be fully loaded
+        await expect(page).toHaveURL(/localhost:3000/)
+        await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/)
+
+        // Open user menu
+        const userMenuButton = page.getByRole('button', { name: 'more options' })
+        await expect(userMenuButton).toBeVisible({ timeout: 5000 })
+        await userMenuButton.click()
+
+        // Wait for menu to open
+        await page.waitForTimeout(500)
+
+        // Verify theme toggle is visible
+        console.log('✅ Verifying theme toggle menu item exists')
+        const themeToggle = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
+        await expect(themeToggle).toBeVisible({ timeout: 2000 })
+
+        // Get current theme text
+        const currentThemeText = await themeToggle.textContent()
+        console.log(`📍 Current theme: ${currentThemeText}`)
+
+        // Click to toggle theme
+        console.log('🔄 Toggling theme...')
+        await themeToggle.click()
+
+        // Wait for theme change to apply
+        await page.waitForTimeout(500)
+
+        // Verify theme changed in localStorage
+        const themeInLocalStorage = await page.evaluate(() => {
+            return localStorage.getItem('isDarkMode')
+        })
+        console.log(`💾 Theme stored in localStorage: isDarkMode=${themeInLocalStorage}`)
+
+        // Open menu again to verify theme toggle text changed
+        await userMenuButton.click()
+        await page.waitForTimeout(500)
+
+        // Verify theme toggle text changed
+        const themeToggleAfter = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
+        await expect(themeToggleAfter).toBeVisible({ timeout: 2000 })
+        const newThemeText = await themeToggleAfter.textContent()
+        console.log(`📍 New theme: ${newThemeText}`)
+
+        // Verify the text changed (Light ↔ Dark)
+        expect(newThemeText).not.toBe(currentThemeText)
+
+        // Close the menu
+        await page.keyboard.press('Escape')
+
+        // Test persistence: Reload page and verify theme persists
+        console.log('🔄 Reloading page to test theme persistence...')
+        await page.reload({ waitUntil: 'networkidle' })
+
+        // Wait for page to be fully loaded after reload
+        await expect(page).toHaveURL(/localhost:3000/)
+
+        // Open menu again after reload
+        await userMenuButton.click()
+        await page.waitForTimeout(500)
+
+        // Verify theme persisted after reload
+        const themeToggleAfterReload = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
+        await expect(themeToggleAfterReload).toBeVisible({ timeout: 2000 })
+        const themeTextAfterReload = await themeToggleAfterReload.textContent()
+        console.log(`📍 Theme after reload: ${themeTextAfterReload}`)
+
+        // Verify the theme is still the same after reload (persisted)
+        expect(themeTextAfterReload).toBe(newThemeText)
+
+        console.log('✅ Theme toggle functionality verified successfully')
+    })
 })

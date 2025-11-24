@@ -3,9 +3,8 @@ import { Session } from '@auth0/nextjs-auth0'
 import React from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
 
-import { darkModeTheme } from '../theme'
+import { UnifiedThemeProvider } from '../theme'
 import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
@@ -48,7 +47,7 @@ export default function AppLayout({
         <UserProvider>
             <Auth0Setup apiHost={session?.user?.chatflowDomain} accessToken={session?.accessToken}>
                 <PermissionProvider initialUser={session?.user as any}>
-                    <ThemeProvider theme={darkModeTheme}>
+                    <UnifiedThemeProvider>
                         <CssBaseline enableColorScheme />
                         <GlobalStyles />
                         <SubscriptionDialogProvider>
@@ -67,7 +66,7 @@ export default function AppLayout({
                                 </React.Suspense>
                             </div>
                         </SubscriptionDialogProvider>
-                    </ThemeProvider>
+                    </UnifiedThemeProvider>
                 </PermissionProvider>
             </Auth0Setup>
         </UserProvider>

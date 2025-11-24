@@ -4,12 +4,13 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 
 ## Quick Start
 
-**4 Core Commands:**
+**5 Core Commands:**
 ```bash
 /ticket-create          # Create new Linear ticket
 /ticket-start AAI-123   # Start work on ticket
 /push                   # Commit + Push + Create/Update PR
 /pr-review 456          # Review pull request
+/blog-write             # Write technical blog posts and articles
 ```
 
 **Daily Workflow:**
@@ -29,16 +30,17 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 ```
 USER
   ↓
-COMMANDS (4 core)
-  /ticket-create  /ticket-start  /push  /pr-review
+COMMANDS (5 core)
+  /ticket-create  /ticket-start  /push  /pr-review  /blog-write
   ↓
-AGENTS (4 specialized)
+AGENTS (5 specialized)
   linear-ticket-creator   linear-ticket-planner
   git-pr-manager         git-pr-reviewer
+  blog-post-writer
   ↓
-SKILLS (7 patterns)
+SKILLS (8 patterns)
   branch-workflow  commit-helper  pr-description-generator
-  ticket-planning-workflow  pr-review-workflow  etc.
+  ticket-planning-workflow  pr-review-workflow  blog-writing-workflow  etc.
 ```
 
 ## Commands
@@ -114,29 +116,51 @@ Review pull requests with comprehensive checks.
 /pr-review 456
 ```
 
+### `/blog-write [topic]`
+Write technical blog posts, articles, and content.
+
+**What it does:**
+- Researches codebase to understand the topic
+- Asks clarifying questions about audience and goals
+- Creates comprehensive blog posts with:
+  - SEO-optimized headlines and meta descriptions
+  - Engaging introductions and clear structure
+  - Code examples and technical details
+  - 10 FAQs for external linking opportunities
+  - Metadata (keywords, tags, internal links)
+- Offers revisions and refinements
+
+**Example:**
+```bash
+/blog-write OAuth2 authentication implementation
+```
+
 ## Directory Structure
 
 ```
 .claude/
 ├── README.md                          # This file
-├── commands/                          # 4 core user commands
+├── commands/                          # 5 core user commands
 │   ├── ticket-create.md
 │   ├── ticket-start.md
 │   ├── push.md                        # ⭐ Main workflow command
-│   └── pr-review.md
-├── agents/                            # 4 specialized agents
+│   ├── pr-review.md
+│   └── blog-write.md                  # Blog post creation
+├── agents/                            # 5 specialized agents
 │   ├── linear-ticket-creator.md
 │   ├── linear-ticket-planner.md
 │   ├── git-pr-manager.md
-│   └── git-pr-reviewer.md
-└── skills/                            # 7 reusable patterns
+│   ├── git-pr-reviewer.md
+│   └── blog-post-writer.md            # Content creation
+└── skills/                            # 8 reusable patterns
     ├── branch-workflow.md             # Branch lifecycle
     ├── commit-helper.md               # Commit validation
     ├── git-branch.md                  # Branch creation
     ├── pr-description-generator.md    # PR descriptions
     ├── pr-review-workflow.md          # Review methodology
     ├── ticket-planning-workflow.md    # Ticket planning
-    └── ticket-status-sync.md          # Linear sync
+    ├── ticket-status-sync.md          # Linear sync
+    └── blog-writing-workflow.md       # Content patterns
 ```
 
 ## TheAnswer-Specific Patterns
@@ -227,6 +251,13 @@ All commands enforce TheAnswer requirements:
 ### Code Review
 ```bash
 /pr-review 789              # Review teammate's PR
+```
+
+### Blog Post Creation
+```bash
+/blog-write OAuth2 authentication  # Create technical content
+# Agent researches codebase, asks clarifying questions,
+# generates comprehensive blog post with SEO optimization
 ```
 
 ## Extending the System

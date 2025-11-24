@@ -67,11 +67,12 @@
 }
 
 .heroTitle {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     text-align: center;
     margin-bottom: 1rem;
     letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .heroSection {
@@ -251,7 +252,7 @@
 
 .heroGrid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
     gap: 3rem;
     align-items: center;
 }
@@ -300,6 +301,52 @@
     letter-spacing: 0.12em;
     color: rgba(255, 255, 255, 0.6);
     margin-bottom: 0.75rem;
+}
+
+.heroCenter {
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.heroVideoWrap {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.heroBulletRow {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem auto 0;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 1100px;
+}
+
+.heroBulletRow li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 0.9rem 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    flex: 1 1 260px;
+    max-width: 360px;
+}
+
+.heroBulletRow li svg {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: var(--accent-indigo);
 }
 
 .heroProofSection {
@@ -672,6 +719,10 @@
     border-radius: 20px;
     padding: 3rem;
     text-align: center;
+}
+
+.carouselCardActive {
+    animation: heroCarouselFade 0.45s ease;
 }
 
 .carouselQuote {
@@ -1091,6 +1142,11 @@
     .desktopStickyHeader {
         display: none;
     }
+
+    .heroBulletRow li {
+        flex: 1 1 100%;
+        max-width: none;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1128,6 +1184,42 @@
     .calendarButtons {
         justify-content: center;
     }
+
+    .verticalSteps {
+        margin-top: 2rem;
+        gap: 1.25rem;
+    }
+
+    .verticalSteps::before {
+        left: 26px;
+    }
+
+    .verticalStepNumberWrap {
+        width: 56px;
+        min-width: 56px;
+    }
+
+    .verticalStepNumber {
+        width: 56px;
+        height: 56px;
+        font-size: 1.4rem;
+    }
+
+    .verticalStepIcon {
+        width: 30px;
+        height: 30px;
+        right: -0.25rem;
+        bottom: -0.25rem;
+    }
+
+    .verticalStepContent {
+        padding: 1rem;
+    }
+
+    .heroBulletRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 @media (min-width: 996px) {
@@ -1162,6 +1254,13 @@
     gap: 1.5rem;
     margin-top: 2rem;
     width: 100%;
+}
+
+.heroCTAInline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
 }
 
 .ctaButton {
@@ -1697,6 +1796,94 @@
     -webkit-text-fill-color: transparent;
     margin-bottom: 1rem;
     font-family: 'Courier New', monospace;
+}
+
+.verticalSteps {
+    position: relative;
+    max-width: 760px;
+    margin: 3rem auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.verticalSteps::before {
+    content: '';
+    position: absolute;
+    left: 36px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.4), rgba(59, 130, 246, 0.2));
+}
+
+.verticalStep {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.verticalStepNumberWrap {
+    position: relative;
+    width: 72px;
+    min-width: 72px;
+    display: flex;
+    justify-content: center;
+}
+
+.verticalStepNumber {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(59, 130, 246, 0.95));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    box-shadow: var(--shadow-md);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.verticalStepIcon {
+    position: absolute;
+    right: -0.35rem;
+    bottom: -0.35rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(20, 184, 166, 0.15);
+    border: 1px solid rgba(20, 184, 166, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-teal);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-sm);
+}
+
+.verticalStepContent {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    backdrop-filter: blur(6px);
+}
+
+.verticalStepContent h3 {
+    margin: 0 0 0.5rem 0;
+    color: #ffffff;
+    font-size: 1.2rem;
+}
+
+.verticalStepContent p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.6;
+    font-size: 0.98rem;
 }
 
 .ctaSection {
@@ -2703,4 +2890,236 @@
 
 .animatedIntegrationsWrapper:hover::before {
     opacity: 1;
+}
+
+/* Three Pillars Section */
+.threePillarsSection {
+    padding: 6rem 0;
+    background: var(--ifm-background-color);
+}
+
+.threePillarsSection .sectionTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: var(--ifm-heading-color);
+}
+
+.pillarCard {
+    background: var(--ifm-background-surface-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
+    border-radius: 16px;
+    padding: 3rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.pillarCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--ifm-color-primary);
+}
+
+.pillarIcon {
+    color: var(--ifm-color-primary);
+    margin-bottom: 1.5rem;
+    align-self: center;
+}
+
+.pillarTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--ifm-heading-color);
+}
+
+.pillarDescription {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+    flex: 1;
+    color: var(--ifm-color-content);
+}
+
+.pillarLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ifm-color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pillarCard:hover .pillarLink {
+    color: var(--ifm-color-primary-dark);
+    transform: translateX(4px);
+}
+
+/* Use Cases Preview Section */
+.useCasesSection {
+    padding: 6rem 0;
+    background: var(--ifm-background-surface-color);
+}
+
+.useCasesSection .sectionTitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: var(--ifm-heading-color);
+}
+
+.useCaseCard {
+    background: var(--ifm-background-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.useCaseCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: var(--ifm-color-primary);
+}
+
+.useCaseCard h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--ifm-heading-color);
+}
+
+.useCaseCard p {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+    color: var(--ifm-color-content);
+}
+
+.useCasesCTA {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+/* Pricing Teaser Section */
+.pricingTeaserSection {
+    padding: 6rem 0;
+    background: var(--ifm-background-color);
+}
+
+.pricingTeaserCard {
+    background: var(--ifm-background-surface-color);
+    border: 2px solid var(--ifm-color-primary);
+    border-radius: 16px;
+    padding: 4rem;
+    text-align: center;
+}
+
+.pricingTeaserTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--ifm-heading-color);
+}
+
+.pricingTeaserAmount {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--ifm-color-primary);
+    line-height: 1;
+}
+
+.pricingTeaserPeriod {
+    font-size: 1.5rem;
+    font-weight: 400;
+    opacity: 0.7;
+    color: var(--ifm-color-content);
+}
+
+.pricingTeaserDescription {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    color: var(--ifm-color-content);
+}
+
+/* Bottom CTA Section */
+.bottomCTASection {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, var(--ifm-color-primary-darkest) 0%, var(--ifm-color-primary-darker) 100%);
+    text-align: center;
+}
+
+.bottomCTATitle {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.ctaButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ctaPrimary {
+    background: var(--ifm-color-primary);
+    color: white;
+}
+
+.ctaPrimary:hover {
+    background: var(--ifm-color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: white;
+    text-decoration: none;
+}
+
+.ctaSecondary {
+    background: transparent;
+    color: var(--ifm-color-primary);
+    border: 2px solid var(--ifm-color-primary);
+}
+
+.ctaSecondary:hover {
+    background: var(--ifm-color-primary);
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 996px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .threePillarsSection .sectionTitle,
+    .useCasesSection .sectionTitle {
+        font-size: 2rem;
+    }
+
+    .pricingTeaserAmount {
+        font-size: 3rem;
+    }
+
+    .bottomCTATitle {
+        font-size: 2rem;
+    }
 }

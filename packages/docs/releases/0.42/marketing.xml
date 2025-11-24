@@ -2753,7 +2753,7 @@ function LearningResources() {
                             </div>
                             <div style={{ marginTop: '1rem' }}>
                                 <a
-                                    href='https://youtube.com/@digitalatscale'
+                                    href='https://www.youtube.com/@whatistheanswerai'
                                     className={clsx(styles.ctaButton, styles.secondaryLink)}
                                     style={{ textTransform: 'none' }}
                                 >
@@ -2967,7 +2967,7 @@ function DigitalAtScaleSection() {
                         </div>
                         <div className={styles.subscriptionBannerButton}>
                             <a
-                                href='https://youtube.com/@digitalatscale'
+                                href='https://www.youtube.com/@whatistheanswerai'
                                 target='_blank'
                                 rel='noopener noreferrer'
                                 className={clsx(styles.ctaButton, styles.ctaPrimary)}
@@ -4453,7 +4453,7 @@ function YouTubeCourses() {
                         </div>
                         <div className={styles.subscriptionBannerButton}>
                             <a
-                                href='https://www.youtube.com/@digitalatscale'
+                                href='https://www.youtube.com/@whatistheanswerai'
                                 target='_blank'
                                 rel='noopener noreferrer'
                                 className={clsx(styles.ctaButton, styles.ctaPrimary)}

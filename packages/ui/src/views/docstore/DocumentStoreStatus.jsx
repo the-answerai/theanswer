@@ -14,8 +14,8 @@ const DocumentStoreStatus = ({ status, isTableView }) => {
                     : [theme.palette.grey[300], theme.palette.grey[500], theme.palette.grey[700]]
             case 'EMPTY':
                 return customization.isDarkMode
-                    ? ['#4a148c', '#6a1b9a', '#ffffff'] // Deep Purple
-                    : ['#d1c4e9', '#9575cd', '#673ab7']
+                    ? ['#1e3a8a', '#3b82f6', '#ffffff'] // Blue from unified theme
+                    : ['#dbeafe', '#93c5fd', '#3b82f6']
             case 'SYNCING':
                 return customization.isDarkMode
                     ? ['#ff6f00', '#ff8f00', '#ffffff'] // Amber
