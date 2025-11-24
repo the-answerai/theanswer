@@ -126,11 +126,11 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/publ
 COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/prisma ./packages-answers/db/prisma
 COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/generated ./packages-answers/db/generated
 
+# Install Prisma CLI globally for runtime migrations
+RUN npm install -g prisma@6
+
 # Copy minimal package.json for workspace resolution
 COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json
-
-# Copy node_modules for runtime (includes Prisma CLI and client)
-COPY --from=installer --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy entrypoint.sh script
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
