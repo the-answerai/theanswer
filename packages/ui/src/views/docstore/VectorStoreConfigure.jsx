@@ -39,10 +39,12 @@ import nodesApi from '@/api/nodes'
 
 // Hooks
 import useApi from '@/hooks/useApi'
+import { useAuth } from '@/hooks/useAuth'
 
 // Store
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 import { baseURL } from '@/store/constant'
+import { useError } from '@/store/context/ErrorContext'
 
 // icons
 import { IconX, IconEditCircle, IconRowInsertTop, IconDeviceFloppy, IconRefresh, IconClock } from '@tabler/icons-react'
@@ -51,7 +53,7 @@ import Storage from '@mui/icons-material/Storage'
 import DynamicFeed from '@mui/icons-material/Filter1'
 
 // utils
-import { initNode } from '@/utils/genericHelper'
+import { initNode, showHideInputParams } from '@/utils/genericHelper'
 import useNotifier from '@/utils/useNotifier'
 
 // const
@@ -60,7 +62,9 @@ const steps = ['Embeddings', 'Vector Store', 'Record Manager']
 const VectorStoreConfigure = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    const { hasAssignedWorkspace } = useAuth()
     useNotifier()
+    const { error, setError } = useError()
     const customization = useSelector((state) => state.customization)
 
     const { storeId, docId } = useParams()
@@ -75,9 +79,7 @@ const VectorStoreConfigure = () => {
     const getVectorStoreNodeDetailsApi = useApi(nodesApi.getSpecificNode)
     const getRecordManagerNodeDetailsApi = useApi(nodesApi.getSpecificNode)
 
-    const [error, setError] = useState(null)
     const [loading, setLoading] = useState(true)
-
     const [documentStore, setDocumentStore] = useState({})
     const [dialogProps, setDialogProps] = useState({})
 
@@ -99,6 +101,33 @@ const VectorStoreConfigure = () => {
 
     const [showUpsertHistoryDetailsDialog, setShowUpsertHistoryDetailsDialog] = useState(false)
     const [upsertDetailsDialogProps, setUpsertDetailsDialogProps] = useState({})
+
+    const handleEmbeddingsProviderDataChange = ({ inputParam, newValue }) => {
+        setSelectedEmbeddingsProvider((prevData) => {
+            const updatedData = { ...prevData }
+            updatedData.inputs[inputParam.name] = newValue
+            updatedData.inputParams = showHideInputParams(updatedData)
+            return updatedData
+        })
+    }
+
+    const handleVectorStoreProviderDataChange = ({ inputParam, newValue }) => {
+        setSelectedVectorStoreProvider((prevData) => {
+            const updatedData = { ...prevData }
+            updatedData.inputs[inputParam.name] = newValue
+            updatedData.inputParams = showHideInputParams(updatedData)
+            return updatedData
+        })
+    }
+
+    const handleRecordManagerProviderDataChange = ({ inputParam, newValue }) => {
+        setSelectedRecordManagerProvider((prevData) => {
+            const updatedData = { ...prevData }
+            updatedData.inputs[inputParam.name] = newValue
+            updatedData.inputParams = showHideInputParams(updatedData)
+            return updatedData
+        })
+    }
 
     const onEmbeddingsSelected = (component) => {
         const nodeData = cloneDeep(initNode(component, uuidv4()))
@@ -390,6 +419,10 @@ const VectorStoreConfigure = () => {
     useEffect(() => {
         if (getSpecificDocumentStoreApi.data) {
             const docStore = getSpecificDocumentStoreApi.data
+            if (!hasAssignedWorkspace(docStore.workspaceId)) {
+                navigate('/unauthorized')
+                return
+            }
             setDocumentStore(docStore)
             if (docStore.embeddingConfig) {
                 getEmbeddingNodeDetailsApi.request(docStore.embeddingConfig.name)
@@ -615,14 +648,17 @@ const VectorStoreConfigure = () => {
                                                             </Box>
                                                             {selectedEmbeddingsProvider &&
                                                                 Object.keys(selectedEmbeddingsProvider).length > 0 &&
-                                                                (selectedEmbeddingsProvider.inputParams ?? [])
-                                                                    .filter((inputParam) => !inputParam.hidden)
+                                                                showHideInputParams(selectedEmbeddingsProvider)
+                                                                    .filter(
+                                                                        (inputParam) => !inputParam.hidden && inputParam.display !== false
+                                                                    )
                                                                     .map((inputParam, index) => (
                                                                         <DocStoreInputHandler
                                                                             key={index}
                                                                             data={selectedEmbeddingsProvider}
                                                                             inputParam={inputParam}
                                                                             isAdditionalParams={inputParam.additionalParams}
+                                                                            onNodeDataChange={handleEmbeddingsProviderDataChange}
                                                                         />
                                                                     ))}
                                                         </div>
@@ -730,14 +766,17 @@ const VectorStoreConfigure = () => {
                                                             </Box>
                                                             {selectedVectorStoreProvider &&
                                                                 Object.keys(selectedVectorStoreProvider).length > 0 &&
-                                                                (selectedVectorStoreProvider.inputParams ?? [])
-                                                                    .filter((inputParam) => !inputParam.hidden)
+                                                                showHideInputParams(selectedVectorStoreProvider)
+                                                                    .filter(
+                                                                        (inputParam) => !inputParam.hidden && inputParam.display !== false
+                                                                    )
                                                                     .map((inputParam, index) => (
                                                                         <DocStoreInputHandler
                                                                             key={index}
                                                                             data={selectedVectorStoreProvider}
                                                                             inputParam={inputParam}
                                                                             isAdditionalParams={inputParam.additionalParams}
+                                                                            onNodeDataChange={handleVectorStoreProviderDataChange}
                                                                         />
                                                                     ))}
                                                         </div>
@@ -853,17 +892,18 @@ const VectorStoreConfigure = () => {
                                                             </Box>
                                                             {selectedRecordManagerProvider &&
                                                                 Object.keys(selectedRecordManagerProvider).length > 0 &&
-                                                                (selectedRecordManagerProvider.inputParams ?? [])
-                                                                    .filter((inputParam) => !inputParam.hidden)
+                                                                showHideInputParams(selectedRecordManagerProvider)
+                                                                    .filter(
+                                                                        (inputParam) => !inputParam.hidden && inputParam.display !== false
+                                                                    )
                                                                     .map((inputParam, index) => (
-                                                                        <>
-                                                                            <DocStoreInputHandler
-                                                                                key={index}
-                                                                                data={selectedRecordManagerProvider}
-                                                                                inputParam={inputParam}
-                                                                                isAdditionalParams={inputParam.additionalParams}
-                                                                            />
-                                                                        </>
+                                                                        <DocStoreInputHandler
+                                                                            key={index}
+                                                                            data={selectedRecordManagerProvider}
+                                                                            inputParam={inputParam}
+                                                                            isAdditionalParams={inputParam.additionalParams}
+                                                                            onNodeDataChange={handleRecordManagerProviderDataChange}
+                                                                        />
                                                                     ))}
                                                         </div>
                                                     </Grid>

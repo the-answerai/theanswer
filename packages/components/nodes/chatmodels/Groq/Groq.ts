@@ -63,6 +63,14 @@ class Groq_ChatModels implements INode {
                 optional: true
             },
             {
+                label: 'Max Tokens',
+                name: 'maxTokens',
+                type: 'number',
+                step: 1,
+                optional: true,
+                additionalParams: true
+            },
+            {
                 label: 'Streaming',
                 name: 'streaming',
                 type: 'boolean',
@@ -78,22 +86,27 @@ class Groq_ChatModels implements INode {
         }
     }
 
-    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<FlowiseChatGroq> {
-        const model = nodeData.inputs?.modelName as string
-        const temperature = parseFloat(nodeData.inputs?.temperature ?? '0.7')
-        const maxTokens = nodeData.inputs?.maxTokens ? parseInt(nodeData.inputs?.maxTokens as string, 10) : undefined
-        const streaming = nodeData.inputs?.streaming ?? true
+    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
+        const modelName = nodeData.inputs?.modelName as string
+        const maxTokens = nodeData.inputs?.maxTokens as string
+        const cache = nodeData.inputs?.cache as BaseCache
+        const temperature = nodeData.inputs?.temperature as string
+        const streaming = nodeData.inputs?.streaming as boolean
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const groqApiKey = getCredentialParam('groqApiKey', credentialData, nodeData)
 
-        return new FlowiseChatGroq({
-            model,
-            temperature,
-            maxTokens,
-            streaming,
-            apiKey: groqApiKey
-        })
+        const obj: ChatGroqInput = {
+            modelName,
+            temperature: parseFloat(temperature),
+            apiKey: groqApiKey,
+            streaming: streaming ?? true
+        }
+        if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)
+        if (cache) obj.cache = cache
+
+        const model = new ChatGroq(obj)
+        return model
     }
 }
 

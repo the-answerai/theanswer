@@ -3,7 +3,7 @@ import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../
 import { ListKeyOptions, RecordManagerInterface, UpdateOptions } from '@langchain/community/indexes/base'
 import { DataSource } from 'typeorm'
 import { getHost, getSSL } from '../../vectorstores/Postgres/utils'
-import { getDatabase, getPort, getTableName, PostgresConnectionManager } from './utils'
+import { getDatabase, getPort, getTableName } from './utils'
 
 const serverCredentialsExists = !!process.env.POSTGRES_RECORDMANAGER_USER && !!process.env.POSTGRES_RECORDMANAGER_PASSWORD
 
@@ -253,8 +253,8 @@ class PostgresRecordManager implements RecordManagerInterface {
 
     async createSchema(): Promise<void> {
         const dataSource = await this.getDataSource()
-        const queryRunner = dataSource.createQueryRunner()
         try {
+            const queryRunner = dataSource.createQueryRunner()
             const tableName = this.sanitizeTableName(this.tableName)
 
             await queryRunner.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
@@ -282,7 +282,7 @@ class PostgresRecordManager implements RecordManagerInterface {
             }
             throw e
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
@@ -290,8 +290,10 @@ class PostgresRecordManager implements RecordManagerInterface {
         const dataSource = await this.getDataSource()
         const queryRunner = dataSource.createQueryRunner()
         try {
-            const res = await queryRunner.manager.query('SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS now')
-            return Number.parseFloat(res[0].now)
+            const queryRunner = dataSource.createQueryRunner()
+            const res = await queryRunner.manager.query('SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS extract')
+            await queryRunner.release()
+            return Number.parseFloat(res[0].extract)
         } catch (error) {
             console.error('Error getting time in PostgresRecordManager:')
             throw error

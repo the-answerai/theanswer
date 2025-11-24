@@ -1,20 +1,4 @@
-/**
- * Document Store Unified Configuration Pattern
- *
- * The Document Store service supports unified configuration for Embeddings, Vector Store, and Record Manager.
- *
- * - The fields `embeddingConfig`, `vectorStoreConfig`, and `recordManagerConfig` are always expected to be managed and saved as a unit.
- * - Backend APIs (e.g., saveVectorStoreConfig, updateDocumentStore) expect all three configs in the request body and persist them together.
- * - When migrating or moving a Document Store, these relationships are preserved.
- * - Partial updates should be avoided to prevent inconsistent state; always send all relevant configs together.
- *
- * See also: VectorStoreConfigure.jsx (frontend) and DocumentStore entity definition.
- *
- * All comments and documentation must be in English.
- */
-import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { DocumentStore } from '../../database/entities/DocumentStore'
-import * as path from 'path'
+import { Document } from '@langchain/core/documents'
 import {
     addArrayFilesToStorage,
     addSingleFileToStorage,
@@ -28,9 +12,15 @@ import {
     removeSpecificFileFromStorage,
     removeSpecificFileFromUpload
 } from 'flowise-components'
+import { StatusCodes } from 'http-status-codes'
+import { cloneDeep, omit } from 'lodash'
+import * as path from 'path'
+import { DataSource, In } from 'typeorm'
+import { v4 as uuidv4 } from 'uuid'
 import {
     addLoaderSource,
     ChatType,
+    DocumentStoreDTO,
     DocumentStoreStatus,
     IComponentNodes,
     IDocumentStoreFileChunkPagedResponse,
@@ -41,50 +31,44 @@ import {
     IDocumentStoreUpsertData,
     IDocumentStoreWhereUsed,
     IExecuteDocStoreUpsert,
+    IExecutePreviewLoader,
     IExecuteProcessLoader,
     IExecuteVectorStoreInsert,
     INodeData,
-    MODE,
     IOverrideConfig,
-    IExecutePreviewLoader,
-    DocumentStoreDTO,
-    IUser
+    IUser,
+    MODE
 } from '../../Interface'
-import { DocumentStoreFileChunk } from '../../database/entities/DocumentStoreFileChunk'
-import { v4 as uuidv4 } from 'uuid'
-import { databaseEntities, getAppVersion, saveUpsertFlowData } from '../../utils'
-import logger from '../../utils/logger'
-import nodesService from '../nodes'
-import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { StatusCodes } from 'http-status-codes'
-import { getErrorMessage } from '../../errors/utils'
+import { UsageCacheManager } from '../../UsageCacheManager'
 import { ChatFlow } from '../../database/entities/ChatFlow'
-import { Document } from '@langchain/core/documents'
+import { DocumentStore } from '../../database/entities/DocumentStore'
+import { DocumentStoreFileChunk } from '../../database/entities/DocumentStoreFileChunk'
 import { UpsertHistory } from '../../database/entities/UpsertHistory'
-import { cloneDeep, omit } from 'lodash'
+import { getWorkspaceSearchOptions } from '../../enterprise/utils/ControllerServiceUtils'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { getErrorMessage } from '../../errors/utils'
+import { databaseEntities, getAppVersion, saveUpsertFlowData } from '../../utils'
+import { DOCUMENT_STORE_BASE_FOLDER, INPUT_PARAMS_TYPE, OMIT_QUEUE_JOB_DATA } from '../../utils/constants'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import logger from '../../utils/logger'
 import { DOCUMENTSTORE_TOOL_DESCRIPTION_PROMPT_GENERATOR } from '../../utils/prompt'
-import { DataSource, FindOptionsWhere } from 'typeorm'
+import { checkStorage, updateStorageUsage } from '../../utils/quotaUsage'
 import { Telemetry } from '../../utils/telemetry'
-import { INPUT_PARAMS_TYPE, OMIT_QUEUE_JOB_DATA } from '../../utils/constants'
+import nodesService from '../nodes'
 
-const DOCUMENT_STORE_BASE_FOLDER = 'docustore'
-
-type AdminDocumentStoreDTO = DocumentStoreDTO & {
-    user: {
-        id?: string
-        name?: string | null
-        email?: string | null
-    }
-    userId?: string
-    organizationId?: string
-    isOwner: boolean
-}
-
-const createDocumentStore = async (newDocumentStore: DocumentStore, userId: string, organizationId: string) => {
+const createDocumentStore = async (newDocumentStore: DocumentStore, orgId: string) => {
     try {
         const appServer = getRunningExpressApp()
-        const documentStore = appServer.AppDataSource.getRepository(DocumentStore).create({ ...newDocumentStore, userId, organizationId })
+
+        const documentStore = appServer.AppDataSource.getRepository(DocumentStore).create(newDocumentStore)
         const dbResponse = await appServer.AppDataSource.getRepository(DocumentStore).save(documentStore)
+        await appServer.telemetry.sendTelemetry(
+            'document_store_created',
+            {
+                version: await getAppVersion()
+            },
+            orgId
+        )
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -94,16 +78,26 @@ const createDocumentStore = async (newDocumentStore: DocumentStore, userId: stri
     }
 }
 
-const getAllDocumentStores = async (user: IUser) => {
+const getAllDocumentStores = async (workspaceId: string, page: number = -1, limit: number = -1) => {
     try {
         const appServer = getRunningExpressApp()
-        let entities
+        const queryBuilder = appServer.AppDataSource.getRepository(DocumentStore)
+            .createQueryBuilder('doc_store')
+            .orderBy('doc_store.updatedDate', 'DESC')
 
-        entities = await appServer.AppDataSource.getRepository(DocumentStore).find({
-            where: { userId: user.id, organizationId: user.organizationId }
-        })
+        if (page > 0 && limit > 0) {
+            queryBuilder.skip((page - 1) * limit)
+            queryBuilder.take(limit)
+        }
+        queryBuilder.andWhere('doc_store.workspaceId = :workspaceId', { workspaceId })
 
-        return entities
+        const [data, total] = await queryBuilder.getManyAndCount()
+
+        if (page > 0 && limit > 0) {
+            return { data, total }
+        } else {
+            return data
+        }
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -112,7 +106,7 @@ const getAllDocumentStores = async (user: IUser) => {
     }
 }
 
-const getAdminDocumentStores = async (user: IUser): Promise<AdminDocumentStoreDTO[]> => {
+const getAdminDocumentStores = async (user: IUser): Promise<DocumentStoreDTO[]> => {
     try {
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions, roles } = user
@@ -172,13 +166,25 @@ const getAllDocumentFileChunks = async (user: IUser) => {
     }
 }
 
-const deleteLoaderFromDocumentStore = async (storeId: string, loaderId: string, userId: string, organizationId: string) => {
+const getAllDocumentFileChunksByDocumentStoreIds = async (documentStoreIds: string[]) => {
+    const appServer = getRunningExpressApp()
+    return await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).find({ where: { storeId: In(documentStoreIds) } })
+}
+
+const deleteLoaderFromDocumentStore = async (
+    storeId: string,
+    docId: string,
+    orgId: string,
+    workspaceId: string,
+    usageCacheManager: UsageCacheManager
+) => {
     try {
         const appServer = getRunningExpressApp()
+
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
-            id: storeId,
-            userId,
-            organizationId
+            id: storeId
+            // userId,
+            // organizationId
         })
         if (!entity) {
             throw new InternalFlowiseError(
@@ -186,14 +192,22 @@ const deleteLoaderFromDocumentStore = async (storeId: string, loaderId: string, 
                 `Error: documentStoreServices.deleteLoaderFromDocumentStore - Document store ${storeId} not found`
             )
         }
+
+        if (workspaceId) {
+            if (entity?.workspaceId !== workspaceId) {
+                throw new Error('Unauthorized access')
+            }
+        }
+
         const existingLoaders = JSON.parse(entity.loaders)
-        const found = existingLoaders.find((loader: IDocumentStoreLoader) => loader.id === loaderId)
+        const found = existingLoaders.find((loader: IDocumentStoreLoader) => loader.id === docId)
         if (found) {
             if (found.files?.length) {
                 for (const file of found.files) {
                     if (file.name) {
                         try {
-                            await removeSpecificFileFromStorage(DOCUMENT_STORE_BASE_FOLDER, storeId, file.name)
+                            const { totalSize } = await removeSpecificFileFromStorage(orgId, DOCUMENT_STORE_BASE_FOLDER, storeId, file.name)
+                            await updateStorageUsage(orgId, workspaceId, totalSize, usageCacheManager)
                         } catch (error) {
                             console.error(error)
                         }
@@ -221,30 +235,13 @@ const deleteLoaderFromDocumentStore = async (storeId: string, loaderId: string, 
     }
 }
 
-const getDocumentStoreById = async (user: IUser, storeId: string) => {
+const getDocumentStoreById = async (storeId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
-        let queryOptions: FindOptionsWhere<DocumentStore> = {
-            id: storeId
-        }
-
-        if (!user?.permissions?.includes('org:manage')) {
-            // Regular users can only see their own document stores
-            queryOptions = {
-                ...queryOptions,
-                userId: user.id,
-                organizationId: user.organizationId
-            }
-        } else {
-            // Admin users can see all document stores in their organization
-            queryOptions = {
-                ...queryOptions,
-                organizationId: user.organizationId
-            }
-        }
-
-        const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy(queryOptions)
-
+        const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
+            id: storeId,
+            workspaceId: workspaceId
+        })
         if (!entity) {
             throw new InternalFlowiseError(
                 StatusCodes.NOT_FOUND,
@@ -260,7 +257,7 @@ const getDocumentStoreById = async (user: IUser, storeId: string) => {
     }
 }
 
-const getUsedChatflowNames = async (user: IUser, entity: DocumentStore) => {
+const getUsedChatflowNames = async (entity: DocumentStore, workspaceId: string, user: IUser) => {
     try {
         const appServer = getRunningExpressApp()
         if (entity.whereUsed) {
@@ -268,7 +265,7 @@ const getUsedChatflowNames = async (user: IUser, entity: DocumentStore) => {
             const updatedWhereUsed: IDocumentStoreWhereUsed[] = []
             for (let i = 0; i < whereUsed.length; i++) {
                 const associatedChatflow = await appServer.AppDataSource.getRepository(ChatFlow).findOne({
-                    where: { id: whereUsed[i] },
+                    where: { id: whereUsed[i], workspaceId: workspaceId },
                     select: ['id', 'name']
                 })
                 if (associatedChatflow) {
@@ -295,15 +292,13 @@ const getDocumentStoreFileChunks = async (
     appDataSource: DataSource,
     storeId: string,
     docId: string,
-    pageNo: number = 1,
-    userId?: string,
-    organizationId?: string
+    workspaceId: string,
+    pageNo: number = 1
 ) => {
     try {
         const entity = await appDataSource.getRepository(DocumentStore).findOneBy({
             id: storeId,
-            userId,
-            organizationId
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(
@@ -340,9 +335,17 @@ const getDocumentStoreFileChunks = async (
         const PAGE_SIZE = 50
         const skip = (pageNo - 1) * PAGE_SIZE
         const take = PAGE_SIZE
-        let whereCondition: any = { docId: docId, userId, organizationId }
+        let whereCondition: any = {
+            docId: docId
+            // userId,
+            // organizationId
+        }
         if (docId === 'all') {
-            whereCondition = { storeId: storeId, userId, organizationId }
+            whereCondition = {
+                storeId: storeId
+                // userId,
+                // organizationId
+            }
         }
         const count = await appDataSource.getRepository(DocumentStoreFileChunk).count({
             where: whereCondition
@@ -367,6 +370,7 @@ const getDocumentStoreFileChunks = async (
             currentPage: pageNo,
             storeName: entity.name,
             description: entity.description,
+            workspaceId: entity.workspaceId,
             docId: docId,
             characters
         }
@@ -380,7 +384,7 @@ const getDocumentStoreFileChunks = async (
 }
 
 // Sync and refresh chunks for a specific loader or store
-const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: string, organizationId: string) => {
+const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: string, organizationId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const componentNodes = appServer.nodesPool.componentNodes
@@ -462,7 +466,7 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
 
         await appServer.AppDataSource.getRepository(DocumentStore).save(entity)
 
-        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, fileId, 1, userId, organizationId)
+        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, fileId, workspaceId, 1)
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -471,25 +475,30 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
     }
 }
 
-const deleteDocumentStore = async (storeId: string, userId: string, organizationId: string) => {
+const deleteDocumentStore = async (storeId: string, orgId: string, workspaceId: string, usageCacheManager: UsageCacheManager) => {
     try {
         const appServer = getRunningExpressApp()
-        // delete all the chunks associated with the store
-        await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).delete({
-            storeId: storeId,
-            userId,
-            organizationId
-        })
-        // now delete the files associated with the store
+
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
             id: storeId,
-            userId,
-            organizationId
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
         }
-        await removeFilesFromStorage(DOCUMENT_STORE_BASE_FOLDER, entity.id)
+
+        // delete all the chunks associated with the store
+        await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).delete({
+            storeId: storeId
+        })
+
+        // now delete the files associated with the store
+        try {
+            const { totalSize } = await removeFilesFromStorage(orgId, DOCUMENT_STORE_BASE_FOLDER, entity.id)
+            await updateStorageUsage(orgId, workspaceId, totalSize, usageCacheManager)
+        } catch (error) {
+            logger.error(`[server]: Error deleting file storage for documentStore ${storeId}`)
+        }
 
         // delete upsert history
         await appServer.AppDataSource.getRepository(UpsertHistory).delete({
@@ -498,9 +507,9 @@ const deleteDocumentStore = async (storeId: string, userId: string, organization
 
         // now delete the store
         const tbd = await appServer.AppDataSource.getRepository(DocumentStore).delete({
-            id: storeId,
-            userId,
-            organizationId
+            id: storeId
+            // userId,
+            // organizationId
         })
 
         return { deleted: tbd.affected }
@@ -512,13 +521,12 @@ const deleteDocumentStore = async (storeId: string, userId: string, organization
     }
 }
 
-const deleteDocumentStoreFileChunk = async (storeId: string, docId: string, chunkId: string, userId: string, organizationId: string) => {
+const deleteDocumentStoreFileChunk = async (storeId: string, docId: string, chunkId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
             id: storeId,
-            userId,
-            organizationId
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
@@ -530,9 +538,9 @@ const deleteDocumentStoreFileChunk = async (storeId: string, docId: string, chun
         }
 
         const tbdChunk = await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).findOneBy({
-            id: chunkId,
-            userId,
-            organizationId
+            id: chunkId
+            // userId,
+            // organizationId
         })
         if (!tbdChunk) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document Chunk ${chunkId} not found`)
@@ -542,7 +550,7 @@ const deleteDocumentStoreFileChunk = async (storeId: string, docId: string, chun
         found.totalChars -= tbdChunk.pageContent.length
         entity.loaders = JSON.stringify(loaders)
         await appServer.AppDataSource.getRepository(DocumentStore).save(entity)
-        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, docId, 1, userId, organizationId)
+        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, docId, workspaceId)
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -551,13 +559,14 @@ const deleteDocumentStoreFileChunk = async (storeId: string, docId: string, chun
     }
 }
 
-const deleteVectorStoreFromStore = async (storeId: string, userId: string, organizationId: string) => {
+const deleteVectorStoreFromStore = async (storeId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const componentNodes = appServer.nodesPool.componentNodes
 
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
-            id: storeId
+            id: storeId,
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
@@ -580,8 +589,8 @@ const deleteVectorStoreFromStore = async (storeId: string, userId: string, organ
 
         const options: ICommonObject = {
             chatflowid: storeId,
-            organizationId,
-            userId,
+            // organizationId,
+            // userId,
             appDataSource: appServer.AppDataSource,
             databaseEntities,
             logger
@@ -638,15 +647,13 @@ const editDocumentStoreFileChunk = async (
     chunkId: string,
     content: string,
     metadata: ICommonObject,
-    userId?: string,
-    organizationId?: string
+    workspaceId: string
 ) => {
     try {
         const appServer = getRunningExpressApp()
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
             id: storeId,
-            userId,
-            organizationId
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
@@ -658,9 +665,9 @@ const editDocumentStoreFileChunk = async (
         }
 
         const editChunk = await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).findOneBy({
-            id: chunkId,
-            userId,
-            organizationId
+            id: chunkId
+            // userId,
+            // organizationId
         })
         if (!editChunk) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document Chunk ${chunkId} not found`)
@@ -672,7 +679,7 @@ const editDocumentStoreFileChunk = async (
         await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).save(editChunk)
         entity.loaders = JSON.stringify(loaders)
         await appServer.AppDataSource.getRepository(DocumentStore).save(entity)
-        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, docId, 1, userId, organizationId)
+        return getDocumentStoreFileChunks(appServer.AppDataSource, storeId, docId, workspaceId)
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -705,7 +712,16 @@ const updateDocumentStore = async (user: IUser, documentStore: DocumentStore, up
     }
 }
 
-const _saveFileToStorage = async (user: IUser, fileBase64: string, entity: DocumentStore) => {
+const _saveFileToStorage = async (
+    fileBase64: string,
+    entity: DocumentStore,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
+) => {
+    await checkStorage(orgId, subscriptionId, usageCacheManager)
+
     const splitDataURI = fileBase64.split(',')
     const filename = splitDataURI.pop()?.split(':')[1] ?? ''
     const bf = Buffer.from(splitDataURI.pop() || '', 'base64')
@@ -714,7 +730,9 @@ const _saveFileToStorage = async (user: IUser, fileBase64: string, entity: Docum
     if (mimePrefix) {
         mime = mimePrefix.split(';')[0].split(':')[1]
     }
-    await addSingleFileToStorage(mime, bf, filename, DOCUMENT_STORE_BASE_FOLDER, entity.id)
+    const { totalSize } = await addSingleFileToStorage(mime, bf, filename, orgId, DOCUMENT_STORE_BASE_FOLDER, entity.id)
+    await updateStorageUsage(orgId, workspaceId, totalSize, usageCacheManager)
+
     return {
         id: uuidv4(),
         name: filename,
@@ -762,7 +780,8 @@ const _splitIntoChunks = async (
             organizationId,
             appDataSource,
             databaseEntities,
-            logger
+            logger,
+            processRaw: true
         }
         const docNodeInstance = new nodeModule.nodeClass()
         let docs: IDocument[] = await docNodeInstance.init(nodeData, '', options)
@@ -775,7 +794,12 @@ const _splitIntoChunks = async (
     }
 }
 
-const _normalizeFilePaths = async (appDataSource: DataSource, data: IDocumentStoreLoaderForPreview, entity: DocumentStore | null) => {
+const _normalizeFilePaths = async (
+    appDataSource: DataSource,
+    data: IDocumentStoreLoaderForPreview,
+    entity: DocumentStore | null,
+    orgId: string
+) => {
     const keys = Object.getOwnPropertyNames(data.loaderConfig)
     let rehydrated = false
     for (let i = 0; i < keys.length; i++) {
@@ -808,7 +832,7 @@ const _normalizeFilePaths = async (appDataSource: DataSource, data: IDocumentSto
             if (currentLoader) {
                 const base64Files: string[] = []
                 for (const file of files) {
-                    const bf = await getFileFromStorage(file, DOCUMENT_STORE_BASE_FOLDER, documentStoreEntity.id)
+                    const bf = await getFileFromStorage(file, orgId, DOCUMENT_STORE_BASE_FOLDER, documentStoreEntity.id)
                     // find the file entry that has the same name as the file
                     const uploadedFile = currentLoader.files.find((uFile: IDocumentStoreLoaderFile) => uFile.name === file)
                     const mimePrefix = 'data:' + uploadedFile.mimePrefix + ';base64'
@@ -823,7 +847,13 @@ const _normalizeFilePaths = async (appDataSource: DataSource, data: IDocumentSto
     data.rehydrated = rehydrated
 }
 
-const previewChunksMiddleware = async (data: IDocumentStoreLoaderForPreview) => {
+const previewChunksMiddleware = async (
+    data: IDocumentStoreLoaderForPreview,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
+) => {
     try {
         const appServer = getRunningExpressApp()
         const appDataSource = appServer.AppDataSource
@@ -832,15 +862,19 @@ const previewChunksMiddleware = async (data: IDocumentStoreLoaderForPreview) => 
         const executeData: IExecutePreviewLoader = {
             appDataSource,
             componentNodes,
+            usageCacheManager,
             data,
             isPreviewOnly: true,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId
         }
 
         if (process.env.MODE === MODE.QUEUE) {
             const upsertQueue = appServer.queueManager.getQueue('upsert')
             const job = await upsertQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-            logger.debug(`[server]: Job added to queue: ${job.id}`)
+            logger.debug(`[server]: [${orgId}]: Job added to queue: ${job.id}`)
 
             const queueEvents = upsertQueue.getQueueEvents()
             const result = await job.waitUntilFinished(queueEvents)
@@ -860,7 +894,7 @@ const previewChunksMiddleware = async (data: IDocumentStoreLoaderForPreview) => 
     }
 }
 
-export const previewChunks = async ({ appDataSource, componentNodes, data }: IExecutePreviewLoader) => {
+export const previewChunks = async ({ appDataSource, componentNodes, data, orgId }: IExecutePreviewLoader) => {
     try {
         if (data.preview) {
             if (
@@ -872,7 +906,7 @@ export const previewChunks = async ({ appDataSource, componentNodes, data }: IEx
             }
         }
         if (!data.rehydrated) {
-            await _normalizeFilePaths(appDataSource, data, null)
+            await _normalizeFilePaths(appDataSource, data, null, orgId)
         }
         let docs = await _splitIntoChunks(appDataSource, componentNodes, data, data.userId, data.organizationId)
         const totalChunks = docs.length
@@ -892,12 +926,15 @@ export const previewChunks = async ({ appDataSource, componentNodes, data }: IEx
     }
 }
 
-const saveProcessingLoader = async (appDataSource: DataSource, data: IDocumentStoreLoaderForPreview): Promise<IDocumentStoreLoader> => {
+const saveProcessingLoader = async (
+    appDataSource: DataSource,
+    data: IDocumentStoreLoaderForPreview,
+    workspaceId: string
+): Promise<IDocumentStoreLoader> => {
     try {
         const entity = await appDataSource.getRepository(DocumentStore).findOneBy({
             id: data.storeId,
-            userId: data.userId,
-            organizationId: data.organizationId
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(
@@ -976,10 +1013,19 @@ const saveProcessingLoader = async (appDataSource: DataSource, data: IDocumentSt
     }
 }
 
-export const processLoader = async ({ appDataSource, componentNodes, data, docLoaderId, user }: IExecuteProcessLoader) => {
+export const processLoader = async ({
+    appDataSource,
+    componentNodes,
+    data,
+    docLoaderId,
+    orgId,
+    workspaceId,
+    subscriptionId,
+    usageCacheManager
+}: IExecuteProcessLoader) => {
     const entity = await appDataSource.getRepository(DocumentStore).findOneBy({
         id: data.storeId,
-        userId: user.id
+        workspaceId: workspaceId
     })
     if (!entity) {
         throw new InternalFlowiseError(
@@ -987,14 +1033,27 @@ export const processLoader = async ({ appDataSource, componentNodes, data, docLo
             `Error: documentStoreServices.processLoader - Document store ${data.storeId} not found`
         )
     }
-    await _saveChunksToStorage(appDataSource, componentNodes, data, entity, docLoaderId)
-    return getDocumentStoreFileChunks(appDataSource, data.storeId as string, docLoaderId)
+    await _saveChunksToStorage(
+        appDataSource,
+        componentNodes,
+        data,
+        entity,
+        docLoaderId,
+        orgId,
+        workspaceId,
+        subscriptionId,
+        usageCacheManager
+    )
+    return getDocumentStoreFileChunks(appDataSource, data.storeId as string, docLoaderId, workspaceId)
 }
 
 const processLoaderMiddleware = async (
-    user: IUser,
     data: IDocumentStoreLoaderForPreview,
     docLoaderId: string,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager,
     isInternalRequest = false
 ) => {
     try {
@@ -1006,17 +1065,27 @@ const processLoaderMiddleware = async (
         const executeData: IExecuteProcessLoader = {
             appDataSource,
             componentNodes,
-            data: { ...data, user },
+            data: { ...data },
             docLoaderId,
             isProcessWithoutUpsert: true,
             telemetry,
-            user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         }
 
         if (process.env.MODE === MODE.QUEUE) {
             const upsertQueue = appServer.queueManager.getQueue('upsert')
             const job = await upsertQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-            logger.debug(`[server]: Job added to queue: ${job.id}`)
+            logger.debug(`[server]: [${orgId}]: Job added to queue: ${job.id}`)
+
+            if (isInternalRequest) {
+                return {
+                    jobId: job.id
+                }
+            }
 
             if (isInternalRequest) {
                 return {
@@ -1047,7 +1116,11 @@ const _saveChunksToStorage = async (
     componentNodes: IComponentNodes,
     data: IDocumentStoreLoaderForPreview,
     entity: DocumentStore,
-    newLoaderId: string
+    newLoaderId: string,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
 ) => {
     const re = new RegExp('^data.*;base64', 'i')
 
@@ -1059,7 +1132,7 @@ const _saveChunksToStorage = async (
         }
 
         //step 1: restore the full paths, if any
-        await _normalizeFilePaths(appDataSource, data, entity)
+        await _normalizeFilePaths(appDataSource, data, entity, orgId)
 
         //step 2: split the file into chunks
         const response = await previewChunks({
@@ -1067,7 +1140,11 @@ const _saveChunksToStorage = async (
             componentNodes,
             data,
             isPreviewOnly: false,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         })
 
         //step 3: remove all files associated with the loader
@@ -1081,7 +1158,13 @@ const _saveChunksToStorage = async (
                     if (loader.files) {
                         loader.files.map(async (file: IDocumentStoreLoaderFile) => {
                             try {
-                                await removeSpecificFileFromStorage(DOCUMENT_STORE_BASE_FOLDER, entity.id, file.name)
+                                const { totalSize } = await removeSpecificFileFromStorage(
+                                    orgId,
+                                    DOCUMENT_STORE_BASE_FOLDER,
+                                    entity.id,
+                                    file.name
+                                )
+                                await updateStorageUsage(orgId, workspaceId, totalSize, usageCacheManager)
                             } catch (error) {
                                 console.error(error)
                             }
@@ -1096,6 +1179,7 @@ const _saveChunksToStorage = async (
         const keys = Object.getOwnPropertyNames(data.loaderConfig)
         for (let i = 0; i < keys.length; i++) {
             const input = data.loaderConfig[keys[i]]
+
             if (!input) {
                 continue
             }
@@ -1108,15 +1192,15 @@ const _saveChunksToStorage = async (
                 for (let j = 0; j < files.length; j++) {
                     const file = files[j]
                     if (re.test(file)) {
-                        const fileMetadata = await _saveFileToStorage(data.user, file, entity)
+                        const fileMetadata = await _saveFileToStorage(file, entity, orgId, workspaceId, subscriptionId, usageCacheManager)
                         fileNames.push(fileMetadata.name)
                         filesWithMetadata.push(fileMetadata)
                     }
                 }
-                if (fileNames.length) data.loaderConfig[keys[i]] = 'FILE-STORAGE::' + JSON.stringify(fileNames)
+                data.loaderConfig[keys[i]] = 'FILE-STORAGE::' + JSON.stringify(fileNames)
             } else if (re.test(input)) {
                 const fileNames: string[] = []
-                const fileMetadata = await _saveFileToStorage(data.user, input, entity)
+                const fileMetadata = await _saveFileToStorage(input, entity, orgId, workspaceId, subscriptionId, usageCacheManager)
                 fileNames.push(fileMetadata.name)
                 filesWithMetadata.push(fileMetadata)
                 data.loaderConfig[keys[i]] = 'FILE-STORAGE::' + JSON.stringify(fileNames)
@@ -1145,20 +1229,29 @@ const _saveChunksToStorage = async (
                 }
                 return acc
             }, 0)
-            response.chunks.map(async (chunk: IDocument, index: number) => {
-                const docChunk: DocumentStoreFileChunk = {
-                    docId: newLoaderId,
-                    storeId: data.storeId || '',
-                    id: uuidv4(),
-                    chunkNo: index + 1,
-                    pageContent: chunk.pageContent,
-                    metadata: JSON.stringify(chunk.metadata),
-                    userId: data.userId,
-                    organizationId: data.organizationId
-                }
-                const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
-            })
+            await Promise.all(
+                response.chunks.map(async (chunk: IDocument, index: number) => {
+                    try {
+                        const docChunk: DocumentStoreFileChunk = {
+                            docId: newLoaderId,
+                            storeId: data.storeId || '',
+                            id: uuidv4(),
+                            chunkNo: index + 1,
+                            pageContent: sanitizeChunkContent(chunk.pageContent),
+                            metadata: JSON.stringify(chunk.metadata),
+                            userId: data.userId,
+                            organizationId: data.organizationId
+                        }
+                        const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
+                        await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                    } catch (chunkError) {
+                        throw new InternalFlowiseError(
+                            StatusCodes.INTERNAL_SERVER_ERROR,
+                            `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
+                        )
+                    }
+                })
+            )
             // update the loader with the new metrics
             loader.totalChunks = response.totalChunks
             loader.totalChars = totalChars
@@ -1181,6 +1274,12 @@ const _saveChunksToStorage = async (
     }
 }
 
+// remove null bytes from chunk content
+const sanitizeChunkContent = (content: string) => {
+    // eslint-disable-next-line no-control-regex
+    return content.replaceAll(/\u0000/g, '')
+}
+
 // Get all component nodes
 const getDocumentLoaders = async (userId?: string, organizationId?: string) => {
     const removeDocumentLoadersWithName = ['documentStore', 'vectorStoreToDocument', 'unstructuredFolderLoader', 'folderFiles']
@@ -1196,12 +1295,12 @@ const getDocumentLoaders = async (userId?: string, organizationId?: string) => {
     }
 }
 
-const updateDocumentStoreUsage = async (chatId: string, storeId: string | undefined, userId?: string) => {
+const updateDocumentStoreUsage = async (chatId: string, storeId: string | undefined, workspaceId?: string) => {
     try {
         // find the document store
         const appServer = getRunningExpressApp()
         // find all entities that have the chatId in their whereUsed
-        const entities = await appServer.AppDataSource.getRepository(DocumentStore).find({ where: { userId } })
+        const entities = await appServer.AppDataSource.getRepository(DocumentStore).findBy(getWorkspaceSearchOptions(workspaceId))
         entities.map(async (entity: DocumentStore) => {
             const whereUsed = JSON.parse(entity.whereUsed)
             const found = whereUsed.find((w: string) => w === chatId)
@@ -1242,11 +1341,12 @@ const updateDocumentStoreUsage = async (chatId: string, storeId: string | undefi
     }
 }
 
-const updateVectorStoreConfigOnly = async (data: ICommonObject) => {
+const updateVectorStoreConfigOnly = async (data: ICommonObject, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
-            id: data.storeId
+            id: data.storeId,
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${data.storeId} not found`)
@@ -1269,10 +1369,11 @@ const updateVectorStoreConfigOnly = async (data: ICommonObject) => {
         )
     }
 }
-const saveVectorStoreConfig = async (user: IUser, appDataSource: DataSource, data: ICommonObject, isStrictSave = true) => {
+const saveVectorStoreConfig = async (appDataSource: DataSource, data: ICommonObject, isStrictSave = true, workspaceId: string) => {
     try {
         const entity = await appDataSource.getRepository(DocumentStore).findOneBy({
-            id: data.storeId
+            id: data.storeId,
+            workspaceId: workspaceId
         })
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${data.storeId} not found`)
@@ -1338,14 +1439,24 @@ export const insertIntoVectorStore = async ({
     telemetry,
     data,
     isStrictSave,
-    user
+    orgId,
+    workspaceId
 }: IExecuteVectorStoreInsert) => {
     try {
-        const entity = await saveVectorStoreConfig(user, appDataSource, data, isStrictSave)
+        const entity = await saveVectorStoreConfig(appDataSource, data, isStrictSave, workspaceId)
         entity.status = DocumentStoreStatus.UPSERTING
         await appDataSource.getRepository(DocumentStore).save(entity)
 
-        const indexResult = await _insertIntoVectorStoreWorkerThread(user, appDataSource, componentNodes, telemetry, data, isStrictSave)
+        const indexResult = await _insertIntoVectorStoreWorkerThread(
+            data.user,
+            appDataSource,
+            componentNodes,
+            telemetry,
+            data,
+            isStrictSave,
+            orgId,
+            workspaceId
+        )
         return indexResult
     } catch (error) {
         throw new InternalFlowiseError(
@@ -1355,7 +1466,14 @@ export const insertIntoVectorStore = async ({
     }
 }
 
-const insertIntoVectorStoreMiddleware = async (user: IUser, data: ICommonObject, isStrictSave = true) => {
+const insertIntoVectorStoreMiddleware = async (
+    data: ICommonObject,
+    isStrictSave = true,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
+) => {
     try {
         const appServer = getRunningExpressApp()
         const appDataSource = appServer.AppDataSource
@@ -1369,13 +1487,17 @@ const insertIntoVectorStoreMiddleware = async (user: IUser, data: ICommonObject,
             data,
             isStrictSave,
             isVectorStoreInsert: true,
-            user
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager,
+            user: data.user
         }
 
         if (process.env.MODE === MODE.QUEUE) {
             const upsertQueue = appServer.queueManager.getQueue('upsert')
             const job = await upsertQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-            logger.debug(`[server]: Job added to queue: ${job.id}`)
+            logger.debug(`[server]: [${orgId}]: Job added to queue: ${job.id}`)
 
             const queueEvents = upsertQueue.getQueueEvents()
             const result = await job.waitUntilFinished(queueEvents)
@@ -1401,10 +1523,12 @@ const _insertIntoVectorStoreWorkerThread = async (
     componentNodes: IComponentNodes,
     telemetry: Telemetry,
     data: ICommonObject,
-    isStrictSave = true
+    isStrictSave = true,
+    orgId: string,
+    workspaceId: string
 ) => {
     try {
-        const entity = await saveVectorStoreConfig(user, appDataSource, data, isStrictSave)
+        const entity = await saveVectorStoreConfig(appDataSource, data, isStrictSave, workspaceId)
         let upsertHistory: Record<string, any> = {}
         const chatflowid = data.storeId // fake chatflowid because this is not tied to any chatflow
 
@@ -1463,12 +1587,16 @@ const _insertIntoVectorStoreWorkerThread = async (
             await appDataSource.getRepository(UpsertHistory).save(upsertHistoryItem)
         }
 
-        await telemetry.sendTelemetry('vector_upserted', {
-            version: await getAppVersion(),
-            chatlowId: chatflowid,
-            type: ChatType.INTERNAL,
-            flowGraph: omit(indexResult['result'], ['totalKeys', 'addedDocs'])
-        })
+        await telemetry.sendTelemetry(
+            'vector_upserted',
+            {
+                version: await getAppVersion(),
+                chatlowId: chatflowid,
+                type: ChatType.INTERNAL,
+                flowGraph: omit(indexResult['result'], ['totalKeys', 'addedDocs'])
+            },
+            orgId
+        )
 
         entity.status = DocumentStoreStatus.UPSERTED
         await appDataSource.getRepository(DocumentStore).save(entity)
@@ -1734,7 +1862,11 @@ const upsertDocStore = async (
     storeId: string,
     data: IDocumentStoreUpsertData,
     files: Express.Multer.File[] = [],
-    isRefreshExisting = false
+    isRefreshExisting = false,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
 ) => {
     const docId = data.docId
     let metadata = {}
@@ -1745,8 +1877,12 @@ const upsertDocStore = async (
             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, `Error: Invalid metadata`)
         }
     }
-    const replaceExisting = data.replaceExisting ?? false
-    const createNewDocStore = data.createNewDocStore ?? false
+    const replaceExisting =
+        typeof data.replaceExisting === 'string' ? (data.replaceExisting as string).toLowerCase() === 'true' : data.replaceExisting ?? false
+    const createNewDocStore =
+        typeof data.createNewDocStore === 'string'
+            ? (data.createNewDocStore as string).toLowerCase() === 'true'
+            : data.createNewDocStore ?? false
     const newLoader = typeof data.loader === 'string' ? JSON.parse(data.loader) : data.loader
     const newSplitter = typeof data.splitter === 'string' ? JSON.parse(data.splitter) : data.splitter
     const newVectorStore = typeof data.vectorStore === 'string' ? JSON.parse(data.vectorStore) : data.vectorStore
@@ -1781,6 +1917,13 @@ const upsertDocStore = async (
         if (!entity) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
         }
+
+        if (workspaceId) {
+            if (entity?.workspaceId !== workspaceId) {
+                throw new Error('Unauthorized access')
+            }
+        }
+
         const loaders = JSON.parse(entity.loaders)
         const loader = loaders.find((ldr: IDocumentStoreLoader) => ldr.id === docId)
         if (!loader) {
@@ -1835,6 +1978,11 @@ const upsertDocStore = async (
         ...newLoader?.config
     }
 
+    // Override loaderName if it's provided directly in data
+    if (data.loaderName) {
+        loaderName = data.loaderName
+    }
+
     splitterName = newSplitter?.name ? getComponentLabelFromName(newSplitter?.name) : splitterName
     splitterId = newSplitter?.name || splitterId
     splitterConfig = {
@@ -1870,7 +2018,17 @@ const upsertDocStore = async (
             file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8')
 
             try {
-                await addArrayFilesToStorage(file.mimetype, fileBuffer, file.originalname, fileNames, DOCUMENT_STORE_BASE_FOLDER, storeId)
+                checkStorage(orgId, subscriptionId, usageCacheManager)
+                const { totalSize } = await addArrayFilesToStorage(
+                    file.mimetype,
+                    fileBuffer,
+                    file.originalname,
+                    fileNames,
+                    orgId,
+                    DOCUMENT_STORE_BASE_FOLDER,
+                    storeId
+                )
+                await updateStorageUsage(orgId, workspaceId, totalSize, usageCacheManager)
             } catch (error) {
                 continue
             }
@@ -1953,7 +2111,7 @@ const upsertDocStore = async (
     }
 
     try {
-        const newLoader = await saveProcessingLoader(appDataSource, processData)
+        const newLoader = await saveProcessingLoader(appDataSource, processData, workspaceId)
         const result = await processLoader({
             appDataSource,
             componentNodes,
@@ -1961,7 +2119,11 @@ const upsertDocStore = async (
             docLoaderId: newLoader.id || '',
             isProcessWithoutUpsert: false,
             telemetry,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         })
         const newDocId = result.docId
 
@@ -1983,10 +2145,13 @@ const upsertDocStore = async (
             data: insertData,
             isStrictSave: false,
             isVectorStoreInsert: true,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         })
         res.docId = newDocId
-        if (createNewDocStore) res.storeId = storeId
 
         return res
     } catch (error) {
@@ -1998,6 +2163,7 @@ const upsertDocStore = async (
 }
 
 export const executeDocStoreUpsert = async ({
+    user,
     appDataSource,
     componentNodes,
     telemetry,
@@ -2005,17 +2171,41 @@ export const executeDocStoreUpsert = async ({
     totalItems,
     files,
     isRefreshAPI,
-    user
+    orgId,
+    workspaceId,
+    subscriptionId,
+    usageCacheManager
 }: IExecuteDocStoreUpsert) => {
     const results = []
     for (const item of totalItems) {
-        const res = await upsertDocStore(user, appDataSource, componentNodes, telemetry, storeId, item, files, isRefreshAPI)
+        const res = await upsertDocStore(
+            user,
+            appDataSource,
+            componentNodes,
+            telemetry,
+            storeId,
+            item,
+            files,
+            isRefreshAPI,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
+        )
         results.push(res)
     }
     return isRefreshAPI ? results : results[0]
 }
 
-const upsertDocStoreMiddleware = async (storeId: string, data: IDocumentStoreUpsertData, files: Express.Multer.File[] = []) => {
+const upsertDocStoreMiddleware = async (
+    storeId: string,
+    data: IDocumentStoreUpsertData,
+    files: Express.Multer.File[] = [],
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
+) => {
     const appServer = getRunningExpressApp()
     const componentNodes = appServer.nodesPool.componentNodes
     const appDataSource = appServer.AppDataSource
@@ -2030,13 +2220,17 @@ const upsertDocStoreMiddleware = async (storeId: string, data: IDocumentStoreUps
             totalItems: [data],
             files,
             isRefreshAPI: false,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         }
 
         if (process.env.MODE === MODE.QUEUE) {
             const upsertQueue = appServer.queueManager.getQueue('upsert')
             const job = await upsertQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-            logger.debug(`[server]: Job added to queue: ${job.id}`)
+            logger.debug(`[server]: [${orgId}]: Job added to queue: ${job.id}`)
 
             const queueEvents = upsertQueue.getQueueEvents()
             const result = await job.waitUntilFinished(queueEvents)
@@ -2056,7 +2250,14 @@ const upsertDocStoreMiddleware = async (storeId: string, data: IDocumentStoreUps
     }
 }
 
-const refreshDocStoreMiddleware = async (storeId: string, data: IDocumentStoreRefreshData) => {
+const refreshDocStoreMiddleware = async (
+    storeId: string,
+    data: IDocumentStoreRefreshData,
+    orgId: string,
+    workspaceId: string,
+    subscriptionId: string,
+    usageCacheManager: UsageCacheManager
+) => {
     const appServer = getRunningExpressApp()
     const componentNodes = appServer.nodesPool.componentNodes
     const appDataSource = appServer.AppDataSource
@@ -2069,6 +2270,12 @@ const refreshDocStoreMiddleware = async (storeId: string, data: IDocumentStoreRe
             const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({ id: storeId })
             if (!entity) {
                 throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${storeId} not found`)
+            }
+
+            if (workspaceId) {
+                if (entity?.workspaceId !== workspaceId) {
+                    throw new Error('Unauthorized access')
+                }
             }
 
             const loaders = JSON.parse(entity.loaders)
@@ -2090,13 +2297,17 @@ const refreshDocStoreMiddleware = async (storeId: string, data: IDocumentStoreRe
             totalItems,
             files: [],
             isRefreshAPI: true,
-            user: data.user
+            user: data.user,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            usageCacheManager
         }
 
         if (process.env.MODE === MODE.QUEUE) {
             const upsertQueue = appServer.queueManager.getQueue('upsert')
             const job = await upsertQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-            logger.debug(`[server]: Job added to queue: ${job.id}`)
+            logger.debug(`[server]: [${orgId}]: Job added to queue: ${job.id}`)
 
             const queueEvents = upsertQueue.getQueueEvents()
             const result = await job.waitUntilFinished(queueEvents)
@@ -2328,6 +2539,7 @@ export default {
     getAllDocumentStores,
     getAdminDocumentStores,
     getAllDocumentFileChunks,
+    getAllDocumentFileChunksByDocumentStoreIds,
     getDocumentStoreById,
     getUsedChatflowNames,
     getDocumentStoreFileChunks,

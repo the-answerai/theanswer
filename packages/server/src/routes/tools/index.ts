@@ -1,20 +1,20 @@
 import express from 'express'
 import toolsController from '../../controllers/tools'
-import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { checkAnyPermission, checkPermission } from '../../enterprise/rbac/PermissionCheck'
 
 const router = express.Router()
 
 // CREATE
-router.post('/', enforceAbility('Tool'), toolsController.createTool)
+router.post('/', checkPermission('tools:create'), toolsController.createTool)
 
 // READ
-router.get('/', enforceAbility('Tool'), toolsController.getAllTools)
-router.get(['/', '/:id'], enforceAbility('Tool'), toolsController.getToolById)
+router.get('/', checkPermission('tools:view'), toolsController.getAllTools)
+router.get(['/', '/:id'], checkAnyPermission('tools:view'), toolsController.getToolById)
 
 // UPDATE
-router.put(['/', '/:id'], enforceAbility('Tool'), toolsController.updateTool)
+router.put(['/', '/:id'], checkAnyPermission('tools:update,tools:create'), toolsController.updateTool)
 
 // DELETE
-router.delete(['/', '/:id'], enforceAbility('Tool'), toolsController.deleteTool)
+router.delete(['/', '/:id'], checkPermission('tools:delete'), toolsController.deleteTool)
 
 export default router

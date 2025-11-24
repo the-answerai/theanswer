@@ -24,6 +24,7 @@ class AutoGPT_Agents implements INode {
     category: string
     baseClasses: string[]
     inputs: INodeParams[]
+    badge: string
 
     constructor() {
         this.label = 'AutoGPT'
@@ -31,6 +32,7 @@ class AutoGPT_Agents implements INode {
         this.version = 2.0
         this.type = 'AutoGPT'
         this.category = 'Agents'
+        this.badge = 'DEPRECATING'
         this.icon = 'autogpt.svg'
         this.description = 'Autonomous agent with chain of thoughts for self-guided task completion'
         this.baseClasses = ['AutoGPT']

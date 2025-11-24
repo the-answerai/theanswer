@@ -7,7 +7,7 @@ description: Model Context Protocol integrations for Answer Agent
 
 ## What is MCP?
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open standard allows models like OpenAI, Anthropic, Google, and Answer Agent to interact with external systems through standardized interfaces. MCP servers act as intermediaries that translate natural language requests into API calls, allowing models to:
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open standard allows models like OpenAI, Anthropic, Google, and Answer Agent to interact with external systems through standardized interfaces. Tools (MCP) act as intermediaries that translate natural language requests into API calls, allowing models to:
 
 1. **Query and manipulate data** in various systems
 2. **Create and manage content** in CMS platforms
@@ -15,7 +15,7 @@ description: Model Context Protocol integrations for Answer Agent
 4. **Perform searches** across different data sources
 5. **Execute database operations** securely
 
-MCP servers follow a standardized protocol for exposing tools and handling requests, making it easy to add new integrations to Answer Agent.
+Tools (MCP) follow a standardized protocol for exposing tools and handling requests, making it easy to add new integrations to Answer Agent.
 
 ## Available MCP Integrations
 

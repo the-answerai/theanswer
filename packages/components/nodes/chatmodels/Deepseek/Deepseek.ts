@@ -1,4 +1,4 @@
-import { ChatDeepSeek, ChatDeepSeekInput } from '@langchain/deepseek'
+import { ChatDeepSeek } from '@langchain/deepseek'
 
 import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { getModels, MODEL_TYPE } from '../../../src/modelLoader'
@@ -151,11 +151,12 @@ class Deepseek_ChatModels implements INode {
 
         // const cache = nodeData.inputs?.cache as BaseCache
 
-        const obj: ChatDeepSeekInput = {
-            model: modelName,
-            temperature: temperature ? parseFloat(temperature) : undefined,
-            streaming: streaming ?? true,
-            apiKey: deepseekAIApiKey
+        const obj: ChatOpenAIFields = {
+            temperature: parseFloat(temperature),
+            modelName,
+            openAIApiKey,
+            apiKey: openAIApiKey,
+            streaming: streaming ?? true
         }
 
         if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)

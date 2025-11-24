@@ -18,9 +18,12 @@ import { AddUpsertHistoryEntity1709814301358 } from './1709814301358-AddUpsertHi
 import { FieldTypes1710497452584 } from './1710497452584-FieldTypes'
 import { AddLead1710832137905 } from './1710832137905-AddLead'
 import { AddLeadToChatMessage1711538016098 } from './1711538016098-AddLeadToChatMessage'
-import { AddVectorStoreConfigToDocStore1715861032479 } from './1715861032479-AddVectorStoreConfigToDocStore'
 import { AddDocumentStore1711637331047 } from './1711637331047-AddDocumentStore'
+import { AddEvaluation1714548873039 } from './1714548873039-AddEvaluation'
+import { AddDatasets1714548903384 } from './1714548903384-AddDataset'
 import { AddAgentReasoningToChatMessage1714679514451 } from './1714679514451-AddAgentReasoningToChatMessage'
+import { AddEvaluator1714808591644 } from './1714808591644-AddEvaluator'
+import { AddVectorStoreConfigToDocStore1715861032479 } from './1715861032479-AddVectorStoreConfigToDocStore'
 import { AddTypeToChatFlow1716300000000 } from './1716300000000-AddTypeToChatFlow'
 import { AddApiKey1720230151480 } from './1720230151480-AddApiKey'
 import { AddActionToChatMessage1721078251523 } from './1721078251523-AddActionToChatMessage'
@@ -64,6 +67,26 @@ import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersion
 import { AddUniqueConstraintDefaultChatflows1753000000001 } from './1753000000001-AddUniqueConstraintDefaultChatflows'
 import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './1731429600000-BackfillDocumentStoreFileChunkUserScoping'
+import { AddSeqNoToDatasetRow1733752119696 } from './1733752119696-AddSeqNoToDatasetRow'
+import { FixOpenSourceAssistantTable1743758056188 } from './1743758056188-FixOpenSourceAssistantTable'
+import { AddErrorToEvaluationRun1744964560174 } from './1744964560174-AddErrorToEvaluationRun'
+import { ModifyExecutionSessionIdFieldType1748450230238 } from './1748450230238-ModifyExecutionSessionIdFieldType'
+import { AddTextToSpeechToChatFlow1754986480347 } from './1754986480347-AddTextToSpeechToChatFlow'
+import { ModifyChatflowType1755066758601 } from './1755066758601-ModifyChatflowType'
+import { AddTextToSpeechToChatFlow1759419194331 } from './1759419194331-AddTextToSpeechToChatFlow'
+import { AddChatFlowNameIndex1759424903973 } from './1759424903973-AddChatFlowNameIndex'
+
+import { AddAuthTables1720230151482 } from '../../../enterprise/database/migrations/postgres/1720230151482-AddAuthTables'
+import { AddWorkspace1720230151484 } from '../../../enterprise/database/migrations/postgres/1720230151484-AddWorkspace'
+import { AddWorkspaceShared1726654922034 } from '../../../enterprise/database/migrations/postgres/1726654922034-AddWorkspaceShared'
+import { AddWorkspaceIdToCustomTemplate1726655750383 } from '../../../enterprise/database/migrations/postgres/1726655750383-AddWorkspaceIdToCustomTemplate'
+import { AddOrganization1727798417345 } from '../../../enterprise/database/migrations/postgres/1727798417345-AddOrganization'
+import { LinkWorkspaceId1729130948686 } from '../../../enterprise/database/migrations/postgres/1729130948686-LinkWorkspaceId'
+import { LinkOrganizationId1729133111652 } from '../../../enterprise/database/migrations/postgres/1729133111652-LinkOrganizationId'
+import { AddSSOColumns1730519457880 } from '../../../enterprise/database/migrations/postgres/1730519457880-AddSSOColumns'
+import { AddPersonalWorkspace1734074497540 } from '../../../enterprise/database/migrations/postgres/1734074497540-AddPersonalWorkspace'
+import { RefactorEnterpriseDatabase1737076223692 } from '../../../enterprise/database/migrations/postgres/1737076223692-RefactorEnterpriseDatabase'
+import { ExecutionLinkWorkspaceId1746862866554 } from '../../../enterprise/database/migrations/postgres/1746862866554-ExecutionLinkWorkspaceId'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -86,12 +109,15 @@ export const postgresMigrations = [
     FieldTypes1710497452584,
     AddAnswersConfig1714692854264,
     AddUser1716422641414,
+    AddEvaluation1714548873039,
+    AddDatasets1714548903384,
+    AddEvaluator1714808591644,
     AddDocumentStore1711637331047,
     AddLead1710832137905,
     AddLeadToChatMessage1711538016098,
     AddAgentReasoningToChatMessage1714679514451,
-    AddTypeToChatFlow1716300000000,
     AddVectorStoreConfigToDocStore1715861032479,
+    AddTypeToChatFlow1716300000000,
     AddApiKey1720230151480,
     ApiKeyEnhancement1720230151481,
     AddActionToChatMessage1721078251523,
@@ -119,7 +145,6 @@ export const postgresMigrations = [
     UpdateUserUniqueAuth0Id1741898609435,
     AppCsvRuns1744553414309,
     AddBrowserExtConfig1746508019300,
-    AddExecutionEntity1738090872625,
     AddUserScopingToExecution1738091000000,
     AddDefaultChatflowIdToUser1746508019301,
     AddOrganizationToCustomTemplate1752612517000,
@@ -131,5 +156,25 @@ export const postgresMigrations = [
     AddVersioningToChatFlow1753000000000,
     AddUniqueConstraintDefaultChatflows1753000000001,
     AddTrackingMetadataToChatMessage1753200000000,
-    BackfillDocumentStoreFileChunkUserScoping1731429600000
+    BackfillDocumentStoreFileChunkUserScoping1731429600000,
+    AddAuthTables1720230151482,
+    AddWorkspace1720230151484,
+    AddWorkspaceShared1726654922034,
+    AddWorkspaceIdToCustomTemplate1726655750383,
+    AddOrganization1727798417345,
+    LinkWorkspaceId1729130948686,
+    LinkOrganizationId1729133111652,
+    AddSSOColumns1730519457880,
+    AddSeqNoToDatasetRow1733752119696,
+    AddPersonalWorkspace1734074497540,
+    RefactorEnterpriseDatabase1737076223692,
+    AddExecutionEntity1738090872625,
+    FixOpenSourceAssistantTable1743758056188,
+    AddErrorToEvaluationRun1744964560174,
+    ExecutionLinkWorkspaceId1746862866554,
+    ModifyExecutionSessionIdFieldType1748450230238,
+    AddTextToSpeechToChatFlow1754986480347,
+    ModifyChatflowType1755066758601,
+    AddTextToSpeechToChatFlow1759419194331,
+    AddChatFlowNameIndex1759424903973
 ]

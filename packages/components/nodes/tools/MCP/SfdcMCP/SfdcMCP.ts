@@ -6,7 +6,7 @@
  * Key requirements:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: Sfdc_MCP }
  *
@@ -38,7 +38,7 @@ class Sfdc_MCP implements INode {
         this.version = 1.0
         this.type = 'Salesforce MCP Tool'
         this.icon = 'sfdc.png'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP server that integrates the Salesforce API'
         this.documentation = 'https://github.com/tsmztech/mcp-server-salesforce'

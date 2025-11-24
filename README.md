@@ -2,12 +2,14 @@
 <!-- TODO: Add banner for answerAI  -->
 <!-- <img width="100%" src="https://github.com/the-answerai/theanswer/blob/main/images/flowise.png?raw=true"></a> -->
 
-<!-- <p align="center">
-<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_white.svg#gh-light-mode-only">
-<img src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_dark.svg#gh-dark-mode-only">
-</p> -->
+<p align="center">
+<img src="https://github.com/FlowiseAI/Flowise/blob/main/images/flowise_white.svg#gh-light-mode-only">
+<img src="https://github.com/FlowiseAI/Flowise/blob/main/images/flowise_dark.svg#gh-dark-mode-only">
+</p>
 
-[![Release Notes](https://img.shields.io/github/release/the-answerai/theanswer)](https://github.com/the-answerai/theanswer/releases)
+<div align="center">
+
+[![Release Notes](https://img.shields.io/github/release/FlowiseAI/Flowise)](https://github.com/FlowiseAI/Flowise/releases)
 [![Discord](https://img.shields.io/discord/1087698854775881778?label=Discord&logo=discord)](https://discord.gg/jbaHfsRVBW)
 [![Twitter Follow](https://img.shields.io/twitter/follow/TheAnswerAI?style=social)](https://twitter.com/TheAnswerAI)
 [![GitHub star chart](https://img.shields.io/github/stars/the-answerai/theanswer?style=social)](https://star-history.com/#the-answerai/theanswer)
@@ -15,9 +17,24 @@
 
 English | [繁體中文](./i18n/README-TW.md) | [简体中文](./i18n/README-ZH.md) | [日本語](./i18n/README-JA.md) | [한국어](./i18n/README-KR.md)
 
+</div>
+
 <h3>Build AI Agents, Visually</h3>
-<a href="https://github.com/the-answerai/theanswer">
-<img width="100%" src="https://github.com/the-answerai/theanswer/blob/main/images/flowise_agentflow.gif?raw=true"></a>
+<a href="https://github.com/FlowiseAI/Flowise">
+<img width="100%" src="https://github.com/FlowiseAI/Flowise/blob/main/images/flowise_agentflow.gif?raw=true"></a>
+
+## 📚 Table of Contents
+
+-   [⚡ Quick Start](#-quick-start)
+-   [🐳 Docker](#-docker)
+-   [👨‍💻 Developers](#-developers)
+-   [🌱 Env Variables](#-env-variables)
+-   [📖 Documentation](#-documentation)
+-   [🌐 Self Host](#-self-host)
+-   [☁️ Flowise Cloud](#️-flowise-cloud)
+-   [🙋 Support](#-support)
+-   [🙌 Contributing](#-contributing)
+-   [📄 License](#-license)
 
 ## ⚡Quick Start
 
@@ -33,113 +50,7 @@ There are two main ways to get started with TheAnswer: local development setup a
     cd theanswer
     ```
 
-    **Alternative:** If you already cloned without submodules:
-
-    ```bash
-    git clone https://github.com/the-answerai/theanswer.git
-    cd theanswer
-    git submodule update --init
-    ```
-
-2. **Set up environment variables:**
-
-    - Create a `.env` file in the root directory
-    - If `.env.example` files are not available, contact The AnswerAI team for required environment variables
-    - Use `API_HOST` to specify your API server host. All API requests automatically include the `/api/v1` prefix.
-    - `API_BASE_URL` is deprecated and should not be used.
-    - **Note:** For local development, you'll need Auth0 development team access (Member role or above)
-
-3. **Verify submodules are initialized:**
-
-    ```bash
-    git submodule status
-    ```
-
-    You should see output like:
-
-    ```
-    +050ca236891420946884c68ff8d74cbeb0cbe7ef packages/embed (aai-embed@3.0.3-23-g050ca23)
-    ```
-
-    **If submodules are not initialized** (empty directories or missing files), or if you need to update to the correct version, run:
-
-    ```bash
-    # This will initialize, update, and force reset submodules to the correct commits
-    pnpm submodule:init
-    ```
-
-    **For a complete reset** (if you're having persistent issues):
-
-    ```bash
-    # Remove and reinitialize all submodules
-    pnpm submodule:reset
-    ```
-
-    **Note:** This repository uses git submodules. The `packages/embed` submodule contains the chat embed functionality. See [CONTRIBUTING.md](CONTRIBUTING.md#git-submodules) for detailed submodule management instructions.
-
-4. **Install dependencies:**
-
-    ```bash
-    pnpm install
-    ```
-
-5. **Install Docker Desktop:**
-
-    - Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-    - Ensure Docker is running before proceeding
-
-6. **Set up database and redis locally:**
-
-    ```bash
-    pnpm dev-docker
-    ```
-
-7. **Optional: Install database tool**
-
-    - Install [DBeaver](https://dbeaver.io/) for database management
-    - Connect to PostgreSQL: localhost, example_user, example_password
-
-8. **Build and migrate the initial database:**
-
-    ```bash
-    pnpm build && pnpm db:migrate
-    ```
-
-9. **Run the application:**
-
-    ```bash
-    pnpm start
-    ```
-
-10. **Access TheAnswer:**
-
-    - After the build completes and the app starts, you should see logs stating that the server started on 'http://localhost:3000'
-    - Open [http://localhost:3000](http://localhost:3000) in your browser
-    - Verify you can login and access the application
-
-11. **For development:**
-    - After initial setup, you can fast reload to test your changes using:
-    ```bash
-    pnpm dev
-    ```
-
-### Deploy on Render (Recommended for Easy Setup)
-
-For a quick and easy setup, we recommend deploying TheAnswer on Render:
-
-1. Click the "Deploy to Render" button below:
-
-    [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/the-answerai/theanswer)
-
-2. Follow the prompts on Render to complete the deployment process.
-
-3. Once deployed, you'll receive a URL to access your TheAnswer instance.
-
-For detailed instructions on both local development and Render deployment, please refer to our [documentation](https://docs.theanswer.ai/).
-
-Note: The standalone TheAnswer CLI tool is currently under development. Stay tuned for updates on its release and installation process.
-
-Note: The TheAnswer package is currently under development and not yet published to npm. Stay tuned for updates on when it will be available as a standalone CLI tool.
+3. Open [http://localhost:3000](http://localhost:3000)
 
 ## 🐳 Docker
 
@@ -155,9 +66,11 @@ Note: The TheAnswer package is currently under development and not yet published
 ### Docker Image
 
 1. Build the image locally:
+
     ```bash
     docker build --no-cache -t flowise .
     ```
+
 2. Run image:
 
     ```bash
@@ -165,6 +78,7 @@ Note: The TheAnswer package is currently under development and not yet published
     ```
 
 3. Stop image:
+
     ```bash
     docker stop flowise
     ```
@@ -208,13 +122,13 @@ This structure allows TheAnswer to build upon Flowise's core functionality while
 
 ### Setup
 
-1.  Clone the repository
+1.  Clone the repository:
 
     ```bash
     git clone https://github.com/the-answerai/theanswer.git
     ```
 
-2.  Go into repository folder
+2.  Go into repository folder:
 
     ```bash
     cd theanswer
@@ -234,10 +148,24 @@ This structure allows TheAnswer to build upon Flowise's core functionality while
 
     <details>
     <summary>Exit code 134 (JavaScript heap out of memory)</summary>  
-      If you get this error when running the above `build` script, try increasing the Node.js heap size and run the script again:
+    If you get this error when running the above `build` script, try increasing the Node.js heap size and run the script again:
 
-        export NODE_OPTIONS="--max-old-space-size=4096"
-        pnpm build
+    ```bash
+    # macOS / Linux / Git Bash
+    export NODE_OPTIONS="--max-old-space-size=4096"
+
+    # Windows PowerShell
+    $env:NODE_OPTIONS="--max-old-space-size=4096"
+
+    # Windows CMD
+    set NODE_OPTIONS=--max-old-space-size=4096
+    ```
+
+    Then run:
+
+    ```bash
+    pnpm build
+    ```
 
     </details>
 
@@ -253,7 +181,7 @@ This structure allows TheAnswer to build upon Flowise's core functionality while
 
     -   Create `.env` file and specify the `VITE_PORT` (refer to `.env.example`) in `packages/ui`
     -   Create `.env` file and specify the `PORT` (refer to `.env.example`) in `packages/server`
-    -   Run
+    -   Run:
 
         ```bash
         pnpm dev
@@ -261,85 +189,13 @@ This structure allows TheAnswer to build upon Flowise's core functionality while
 
     Any code changes will reload the app automatically on [http://localhost:3000](http://localhost:3000)
 
-## 🔒 Authentication
-
-To enable app level authentication, add `FLOWISE_USERNAME` and `FLOWISE_PASSWORD` to the `.env` file in `packages/server`:
-
-```
-FLOWISE_USERNAME=user
-FLOWISE_PASSWORD=1234
-```
-
 ## 🌱 Env Variables
 
-TheAnswer supports different environment variables to configure your instance. You can specify the following variables in the `.env` file inside `packages/server` folder. Read [more](https://github.com/the-answerai/theanswer/blob/main/CONTRIBUTING.md#-env-variables)
-
-## 🧪 Testing
-
-TheAnswer includes comprehensive end-to-end testing with Playwright for critical user journeys including role-based authentication and menu permissions.
-
-### Quick Start Testing
-
-```bash
-# Install Playwright browsers (required first time)
-pnpm test:e2e:setup
-
-# Run tests with visual UI interface (recommended)
-pnpm test:e2e
-
-# Debug mode with step-by-step inspection
-pnpm test:e2e:debug
-```
-
-### Testing Features
-
--   **🎨 Playwright UI Mode**: Visual test execution with real-time screenshots
--   **🔐 Auth0 Integration**: Automated authentication flow testing with organization selection
--   **👥 Role-Based Testing**: Tests for Admin, Builder, and Member user permissions with menu visibility verification
--   **🎯 Precise Organization Selection**: Uses Auth0 organization ID for accurate organization matching
--   **📊 Organized Output**: Test results, reports, and artifacts in organized folders
--   **🚀 Auto Dev Server**: Tests automatically start/stop the development server
--   **🔍 Debug Tools**: Step-by-step debugging with browser inspection
--   **🤖 Auto Browser Setup**: Automatic browser installation when needed
-
-### Test Setup
-
-1. **Install Playwright browsers:**
-
-    ```bash
-    pnpm test:e2e:setup
-    ```
-
-2. **Copy test environment file:**
-
-    ```bash
-    cp apps/web/e2e/env.example apps/web/.env.test
-    ```
-
-3. **Configure test credentials in `.env.test`:**
-
-    - `TEST_USER_ENTERPRISE_ADMIN_EMAIL`: Your Auth0 admin test user email (e.g., `alpha+enterprise-admin@domain.ai`)
-    - `TEST_USER_ENTERPRISE_BUILDER_EMAIL`: Your Auth0 builder test user email (e.g., `alpha+enterprise-builder@domain.ai`)
-    - `TEST_USER_ENTERPRISE_MEMBER_EMAIL`: Your Auth0 member test user email (e.g., `alpha+enterprise-member@domain.ai`)
-    - `TEST_USER_PASSWORD`: Shared password for all test users
-    - `TEST_ENTERPRISE_AUTH0_ORG_ID`: Auth0 organization ID for precise selection (e.g., `org_unQ8OLmTNsxVTJCT`)
-    - `TEST_ENTERPRISE_ORG_NAME`: Organization display name (e.g., "Local Dev")
-    - Auth0 configuration (matching your dev environment)
-
-4. **Run tests:**
-    ```bash
-    pnpm test:e2e:dev  # Visual UI mode
-    pnpm test:e2e:debug  # Step-by-step debugging
-    ```
-
-For detailed testing documentation, see:
-
--   [E2E Testing Guide](apps/web/e2e/README.md)
--   [Testing Strategy](TESTING_STRATEGY.md)
+Flowise supports different environment variables to configure your instance. You can specify the following variables in the `.env` file inside `packages/server` folder. Read [more](https://github.com/FlowiseAI/Flowise/blob/main/CONTRIBUTING.md#-env-variables)
 
 ## 📖 Documentation
 
-[AnswerAgent Docs](https://answeragent.ai/docs)
+You can view the Flowise Docs [here](https://docs.flowiseai.com/)
 
 ## 🌐 Self Host
 
@@ -395,6 +251,10 @@ For detailed AWS deployment instructions, see [AWS Deployment Guide](https://ans
     -   [Railway](https://answeragent.ai/docs/developers/deployment/railway)
 
         [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/pn4G8S?referralCode=WVNPD9)
+        
+    -   [Northflank](https://northflank.com/stacks/deploy-flowiseai)
+
+        [![Deploy to Northflank](https://assets.northflank.com/deploy_to_northflank_smm_36700fb050.svg)](https://northflank.com/stacks/deploy-flowiseai)
 
     -   [Render](https://answeragent.ai/docs/developers/deployment/render)
 
@@ -420,45 +280,23 @@ For detailed AWS deployment instructions, see [AWS Deployment Guide](https://ans
 
 ## ☁️ Flowise Cloud
 
-[Get Started with Flowise Cloud](https://theanswer.ai/)
+Get Started with [Flowise Cloud](https://flowiseai.com/).
 
 ## 🙋 Support
 
-Feel free to ask any questions, raise problems, and request new features in [discussion](https://github.com/the-answerai/theanswer/discussions)
+Feel free to ask any questions, raise problems, and request new features in [Discussion](https://github.com/FlowiseAI/Flowise/discussions).
 
 ## 🙌 Contributing
 
 We welcome contributions to TheAnswer! Whether you're fixing bugs, improving documentation, or proposing new features, your efforts are appreciated. Here's how you can contribute:
 
-1. **Fork the Repository**: Start by forking the TheAnswer repository to your GitHub account.
+<a href="https://github.com/FlowiseAI/Flowise/graphs/contributors">
+<img src="https://contrib.rocks/image?repo=FlowiseAI/Flowise" />
+</a><br><br>
 
-2. **Create a Branch**: Create a new branch for your contribution.
+See [Contributing Guide](CONTRIBUTING.md). Reach out to us at [Discord](https://discord.gg/jbaHfsRVBW) if you have any questions or issues.
 
-3. **Make Your Changes**:
-
-    - For bug fixes and minor improvements, feel free to submit a pull request directly.
-    - For new features or significant changes, please open an issue first to discuss the proposed changes.
-    - When extending Flowise functionality, ensure your changes are compatible with both Flowise and TheAnswer.
-
-4. **Test Your Changes**: Ensure your changes don't break existing functionality and add tests if applicable.
-
-5. **Submit a Pull Request**: Once you're satisfied with your changes, submit a pull request to the main TheAnswer repository.
-
-6. **Code Review**: Wait for the maintainers to review your pull request. Be open to feedback and make necessary adjustments.
-
-For detailed contribution guidelines, please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-### Contribution to Flowise Core
-
-If your contribution is related to Flowise core functionality, consider submitting it to the [Flowise repository](https://github.com/theanswer/Flowise) first. Once accepted, we can integrate it into TheAnswer.
-
-Thanks go to these awesome contributors of both TheAnswer and the original Flowise project:
-
-<a href="https://github.com/the-answerai/theanswer/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=the-answerai/theanswer" />
-</a>
-
-Reach out to us on [Discord](https://discord.gg/jbaHfsRVBW) if you have any questions or need assistance with your contribution.
+[![Star History Chart](https://api.star-history.com/svg?repos=FlowiseAI/Flowise&type=Timeline)](https://star-history.com/#FlowiseAI/Flowise&Date)
 
 ## 📄 License
 

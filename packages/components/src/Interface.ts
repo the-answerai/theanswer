@@ -144,6 +144,7 @@ export interface INodeProperties {
     documentation?: string
     color?: string
     hint?: string
+    warning?: string
 }
 
 export interface INode extends INodeProperties {
@@ -429,10 +430,13 @@ export interface IVisionChatModal {
     revertToOriginalModel(): void
     setMultiModalOption(multiModalOption: IMultiModalOption): void
 }
+
 export interface IStateWithMessages extends ICommonObject {
     messages: BaseMessage[]
     [key: string]: any
 }
+
+export * from './Interface.Evaluation'
 
 export interface IServerSideEventStreamer {
     streamStartEvent(chatId: string, data: any): void
@@ -453,6 +457,9 @@ export interface IServerSideEventStreamer {
     streamAbortEvent(chatId: string): void
     streamEndEvent(chatId: string): void
     streamUsageMetadataEvent(chatId: string, data: any): void
+    streamTTSStartEvent(chatId: string, chatMessageId: string, format: string): void
+    streamTTSDataEvent(chatId: string, chatMessageId: string, audioChunk: string): void
+    streamTTSEndEvent(chatId: string, chatMessageId: string): void
 }
 
 export enum FollowUpPromptProvider {

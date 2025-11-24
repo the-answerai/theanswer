@@ -22,7 +22,7 @@ class ChatOpenAI_ChatModels implements INode {
     constructor() {
         this.label = 'ChatOpenAI'
         this.name = 'chatOpenAI'
-        this.version = 8.2
+        this.version = 8.3
         this.type = 'ChatOpenAI'
         this.icon = 'openai.svg'
         this.category = 'Chat Models'
@@ -179,8 +179,17 @@ class ChatOpenAI_ChatModels implements INode {
                 }
             },
             {
+                label: 'Reasoning',
+                description: 'Whether the model supports reasoning. Only applicable for reasoning models.',
+                name: 'reasoning',
+                type: 'boolean',
+                default: false,
+                optional: true,
+                additionalParams: true
+            },
+            {
                 label: 'Reasoning Effort',
-                description: 'Constrains effort on reasoning for reasoning models. Only applicable for o1 and o3 models.',
+                description: 'Constrains effort on reasoning for reasoning models',
                 name: 'reasoningEffort',
                 type: 'options',
                 options: [
@@ -197,17 +206,34 @@ class ChatOpenAI_ChatModels implements INode {
                         name: 'high'
                     }
                 ],
-                default: 'medium',
-                optional: false,
-                additionalParams: true
+                additionalParams: true,
+                show: {
+                    reasoning: true
+                }
             },
             {
-                label: 'Prompt Cache Key',
-                name: 'promptCacheKey',
-                type: 'string',
-                description: 'Cache key for OpenAI prompt caching to optimize cache hit rates and reduce costs',
-                optional: true,
-                additionalParams: true
+                label: 'Reasoning Summary',
+                description: `A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process`,
+                name: 'reasoningSummary',
+                type: 'options',
+                options: [
+                    {
+                        label: 'Auto',
+                        name: 'auto'
+                    },
+                    {
+                        label: 'Concise',
+                        name: 'concise'
+                    },
+                    {
+                        label: 'Detailed',
+                        name: 'detailed'
+                    }
+                ],
+                additionalParams: true,
+                show: {
+                    reasoning: true
+                }
             }
         ]
     }
@@ -234,7 +260,7 @@ class ChatOpenAI_ChatModels implements INode {
         const proxyUrl = nodeData.inputs?.proxyUrl as string
         const baseOptions = nodeData.inputs?.baseOptions
         const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.ReasoningEffort | null
-        const promptCacheKey = nodeData.inputs?.promptCacheKey as string
+        const reasoningSummary = nodeData.inputs?.reasoningSummary as 'auto' | 'concise' | 'detailed' | null
 
         const allowImageUploads = nodeData.inputs?.allowImageUploads as boolean
         const imageResolution = nodeData.inputs?.imageResolution as string
@@ -255,15 +281,6 @@ class ChatOpenAI_ChatModels implements INode {
             streaming: streaming ?? true
         }
 
-        if (modelName.includes('o1') || modelName.includes('o3') || modelName.includes('gpt-5')) {
-            delete obj.temperature
-            delete obj.stop
-            const reasoning: OpenAIClient.Reasoning = {}
-            if (reasoningEffort) {
-                reasoning.effort = reasoningEffort
-            }
-            obj.reasoning = reasoning
-        }
         if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)
         if (topP) obj.topP = parseFloat(topP)
         if (frequencyPenalty) obj.frequencyPenalty = parseFloat(frequencyPenalty)
@@ -276,6 +293,19 @@ class ChatOpenAI_ChatModels implements INode {
         }
         if (strictToolCalling) obj.supportsStrictToolCalling = strictToolCalling
         if (promptCacheKey) (obj as any).prompt_cache_key = promptCacheKey
+
+        if (modelName.includes('o1') || modelName.includes('o3') || modelName.includes('gpt-5')) {
+            delete obj.temperature
+            delete obj.stop
+            const reasoning: OpenAIClient.Reasoning = {}
+            if (reasoningEffort) {
+                reasoning.effort = reasoningEffort
+            }
+            if (reasoningSummary) {
+                reasoning.summary = reasoningSummary
+            }
+            obj.reasoning = reasoning
+        }
 
         let parsedBaseOptions: any | undefined = undefined
 

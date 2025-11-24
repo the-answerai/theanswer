@@ -43,4 +43,6 @@ export class Variable implements IVariable {
         default: 'Private'
     })
     visibility?: VariableVisibility[]
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

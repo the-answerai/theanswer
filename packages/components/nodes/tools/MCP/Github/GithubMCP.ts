@@ -6,7 +6,7 @@
  * Key requirements:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: Github_MCP }
  *
@@ -38,7 +38,7 @@ class Github_MCP implements INode {
         this.version = 1.0
         this.type = 'Github MCP Tool'
         this.icon = 'github.svg'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP Server for the GitHub API'
         this.documentation = 'https://github.com/modelcontextprotocol/servers/tree/main/src/github'

@@ -1,31 +1,23 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
+    // Use ts-jest preset for testing TypeScript files with Jest
     preset: 'ts-jest',
+    // Set the test environment to Node.js
     testEnvironment: 'node',
-    testMatch: ['**/*.test.ts'],
+
+    // Define the root directory for tests and modules
+    roots: ['<rootDir>/test'],
+
+    // Use ts-jest to transform TypeScript files
     transform: {
-        '^.+\\.ts$': [
-            'ts-jest',
-            {
-                tsconfig: 'tsconfig.json',
-                useESM: true
-            }
-        ]
+        '^.+\\.tsx?$': 'ts-jest'
     },
-    moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1'
-    },
-    extensionsToTreatAsEsm: ['.ts'],
-    globals: {
-        'ts-jest': {
-            useESM: true
-        }
-    },
-    setupFiles: ['./test/setup.ts'],
-    testTimeout: 30000,
-    transformIgnorePatterns: [
-        'node_modules/(?!(langfuse-node|@langfuse/web|@langfuse/shared|@langfuse/node|@langfuse/web|@langfuse/shared)/)'
-    ],
-    globalSetup: './test/globalSetup.ts',
-    globalTeardown: './test/globalTeardown.ts'
+
+    // Regular expression to find test files
+    testRegex: '((\\.|/)index\\.test)\\.tsx?$',
+
+    // File extensions to recognize in module resolution
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+    // Display individual test results with the test suite hierarchy.
+    verbose: true
 }

@@ -44,4 +44,7 @@ export class DocumentStore implements IDocumentStore {
     @Index()
     @Column({ type: 'uuid', nullable: true })
     organizationId: string
+
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

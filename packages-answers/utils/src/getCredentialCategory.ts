@@ -1,6 +1,6 @@
 /**
  * Determine credential category based on node category and type
- * @param {string} nodeCategory - Node category (e.g., "Chat Models", "Tools", "MCP Servers")
+ * @param {string} nodeCategory - Node category (e.g., "Chat Models", "Tools", "Tools (MCP)")
  * @param {string} credentialType - Credential type name
  * @returns {object} Category info with type, display name, and isCore flag
  */
@@ -14,7 +14,7 @@ export const getCredentialCategory = (nodeCategory?: string, credentialType?: st
         return { type: 'chatModel', displayName: 'Chat Model', isCore: true }
     }
 
-    // MCP Servers - optional tools
+    // Tools (MCP) - optional tools
     if (category.includes('mcp server') || credType.includes('mcp')) {
         return { type: 'mcpServer', displayName: 'MCP Server', isCore: false }
     }
@@ -52,4 +52,3 @@ export const getCredentialCategory = (nodeCategory?: string, credentialType?: st
     // Default
     return { type: 'other', displayName: 'Other', isCore: false }
 }
-

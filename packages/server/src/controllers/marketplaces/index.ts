@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from 'express'
-import marketplacesService from '../../services/marketplaces'
-import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import checkOwnership from '../../utils/checkOwnership'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import marketplacesService from '../../services/marketplaces'
 
 // Get all templates for marketplaces
 const getAllTemplates = async (req: Request, res: Response, next: NextFunction) => {
@@ -53,10 +52,14 @@ const deleteCustomTemplate = async (req: Request, res: Response, next: NextFunct
                 `Error: marketplacesService.deleteCustomTemplate - id not provided!`
             )
         }
-        if (!req.user) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User authentication required')
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: marketplacesController.deleteCustomTemplate - workspace ${workspaceId} not found!`
+            )
         }
-        const apiResponse = await marketplacesService.deleteCustomTemplate(req.params.id, req.user)
+        const apiResponse = await marketplacesService.deleteCustomTemplate(req.params.id, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -65,10 +68,7 @@ const deleteCustomTemplate = async (req: Request, res: Response, next: NextFunct
 
 const getAllCustomTemplates = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        if (!req.user) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Authentication required')
-        }
-        const apiResponse = await marketplacesService.getAllCustomTemplates(req.user!)
+        const apiResponse = await marketplacesService.getAllCustomTemplates(req.user?.activeWorkspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -83,10 +83,15 @@ const saveCustomTemplate = async (req: Request, res: Response, next: NextFunctio
                 `Error: marketplacesService.saveCustomTemplate - body not provided!`
             )
         }
-        if (!req.user) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User authentication required')
+        const body = req.body
+        body.workspaceId = req.user?.activeWorkspaceId
+        if (!body.workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: marketplacesController.saveCustomTemplate - workspace ${body.workspaceId} not found!`
+            )
         }
-        const apiResponse = await marketplacesService.saveCustomTemplate(req.body, req.user)
+        const apiResponse = await marketplacesService.saveCustomTemplate(body)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

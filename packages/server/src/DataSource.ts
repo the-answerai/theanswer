@@ -81,7 +81,17 @@ export const init = async (): Promise<void> => {
                 synchronize: false,
                 migrationsRun: false,
                 entities: Object.values(entities),
-                migrations: postgresMigrations
+                migrations: postgresMigrations,
+                extra: {
+                    idleTimeoutMillis: 120000
+                },
+                logging: ['error', 'warn', 'info', 'log'],
+                logger: 'advanced-console',
+                logNotifications: true,
+                poolErrorHandler: (err) => {
+                    logger.error(`Database pool error: ${JSON.stringify(err)}`)
+                },
+                applicationName: 'Flowise'
             })
             break
         default:
@@ -105,10 +115,10 @@ export function getDataSource(): DataSource {
     return appDataSource
 }
 
-const getDatabaseSSLFromEnv = () => {
+export const getDatabaseSSLFromEnv = () => {
     if (process.env.DATABASE_SSL_KEY_BASE64) {
         return {
-            rejectUnauthorized: false,
+            rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
             ca: Buffer.from(process.env.DATABASE_SSL_KEY_BASE64, 'base64')
         }
     } else if (process.env.DATABASE_SSL === 'true') {

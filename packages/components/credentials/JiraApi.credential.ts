@@ -9,20 +9,23 @@ class JiraApi implements INodeCredential {
 
     constructor() {
         this.label = 'Jira API'
-        this.name = 'JiraApi'
+        this.name = 'jiraApi'
         this.version = 1.0
         this.description =
-            'Create an API token by going to <a target="_blank" href="https://id.atlassian.com/manage-profile/security/api-tokens">Atlassian API token management page</a>'
+            'Refer to <a target="_blank" href="https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/">official guide</a> on how to get accessToken on Github'
         this.inputs = [
             {
-                label: 'Jira API Key',
-                name: 'accessToken',
-                type: 'password'
-            },
-            {
-                label: 'Jira API Email',
+                label: 'User Name',
                 name: 'username',
-                type: 'string'
+                type: 'string',
+                placeholder: 'username@example.com'
+            },
+
+            {
+                label: 'Access Token',
+                name: 'accessToken',
+                type: 'password',
+                placeholder: '<JIRA_ACCESS_TOKEN>'
             },
             {
                 label: 'Jira URL',

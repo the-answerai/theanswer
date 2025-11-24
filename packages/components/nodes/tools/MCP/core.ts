@@ -14,12 +14,14 @@ export class MCPToolkit extends BaseToolkit {
     client: Client | null = null
     serverParams: StdioServerParameters | any
     transportType: 'stdio' | 'sse'
-    accessToken: string | null = null
     constructor(serverParams: StdioServerParameters | any, transportType: 'stdio' | 'sse', accessToken: string | null = null) {
         super()
         this.serverParams = serverParams
         this.transportType = transportType
-        this.accessToken = accessToken
+        this.serverParams.headers = {
+            ...this.serverParams.headers,
+            Authorization: `Bearer ${accessToken}`
+        }
     }
 
     // Method to create a new client with transport
@@ -54,31 +56,31 @@ export class MCPToolkit extends BaseToolkit {
             }
 
             const baseUrl = new URL(this.serverParams.url)
-
             try {
-                console.log('Attempting StreamableHTTP connection to:', baseUrl.href)
-                console.log('Using token length:', this.accessToken?.length)
-                transport = new StreamableHTTPClientTransport(baseUrl, {
-                    requestInit: {
-                        headers: {
-                            Authorization: `Bearer ${this.accessToken}`
+                if (this.serverParams.headers) {
+                    transport = new StreamableHTTPClientTransport(baseUrl, {
+                        requestInit: {
+                            headers: this.serverParams.headers
                         }
-                    }
-                })
+                    })
+                } else {
+                    transport = new StreamableHTTPClientTransport(baseUrl)
+                }
                 await client.connect(transport)
-                console.log('StreamableHTTP connection successful')
             } catch (error) {
-                console.log('StreamableHTTP failed, trying SSE. Error:', error.message)
-
-                transport = new SSEClientTransport(baseUrl, {
-                    requestInit: {
-                        headers: {
-                            Authorization: `Bearer ${this.accessToken}`
+                if (this.serverParams.headers) {
+                    transport = new SSEClientTransport(baseUrl, {
+                        requestInit: {
+                            headers: this.serverParams.headers
+                        },
+                        eventSourceInit: {
+                            fetch: (url, init) => fetch(url, { ...init, headers: this.serverParams.headers })
                         }
-                    }
-                })
+                    })
+                } else {
+                    transport = new SSEClientTransport(baseUrl)
+                }
                 await client.connect(transport)
-                console.log('SSE connection successful')
             }
         }
 
@@ -116,24 +118,24 @@ export class MCPToolkit extends BaseToolkit {
             console.error('MCP Toolkit: get_tools called before initialization, returning empty array')
             return []
         }
-        if (this.client === null) {
-            console.error('MCP Toolkit: Client not initialized, returning empty array')
-            return []
-        }
-        try {
-            const toolsPromises = this._tools.tools.map(async (tool: any) => {
-                return await MCPTool({
-                    toolkit: this,
-                    name: tool.name,
-                    description: tool.description || '',
-                    argsSchema: createSchemaModel(tool.inputSchema)
-                })
+        const toolsPromises = this._tools.tools.map(async (tool: any) => {
+            if (this.client === null) {
+                throw new Error('Client is not initialized')
+            }
+            return await MCPTool({
+                toolkit: this,
+                name: tool.name,
+                description: tool.description || '',
+                argsSchema: createSchemaModel(tool.inputSchema)
             })
-            return Promise.all(toolsPromises)
-        } catch (error) {
-            console.error('MCP Toolkit: Error creating tools, returning empty array:', error)
-            return []
+        })
+        const res = await Promise.allSettled(toolsPromises)
+        const errors = res.filter((r) => r.status === 'rejected')
+        if (errors.length !== 0) {
+            console.error('MCP Tools failed to be resolved', errors)
         }
+        const successes = res.filter((r) => r.status === 'fulfilled').map((r) => r.value)
+        return successes
     }
 }
 
@@ -172,16 +174,130 @@ export async function MCPTool({
     )
 }
 
-function createSchemaModel(inputSchema: any): any {
+function createSchemaModel(
+    inputSchema: {
+        type: 'object'
+        properties?: import('zod').objectOutputType<{}, import('zod').ZodTypeAny, 'passthrough'> | undefined
+    } & { [k: string]: unknown }
+): any {
     if (inputSchema.type !== 'object' || !inputSchema.properties) {
         throw new Error('Invalid schema type or missing properties')
     }
 
-    const props = inputSchema.properties
-    const schemaProperties: Record<string, import('zod').ZodTypeAny> = {}
-    for (const key of Object.keys(props)) {
-        schemaProperties[key] = z.any()
-    }
+    const schemaProperties = Object.entries(inputSchema.properties).reduce((acc, [key, _]) => {
+        acc[key] = z.any()
+        return acc
+    }, {} as Record<string, import('zod').ZodTypeAny>)
 
     return z.object(schemaProperties)
+}
+
+export const validateArgsForLocalFileAccess = (args: string[]): void => {
+    const dangerousPatterns = [
+        // Absolute paths
+        /^\/[^/]/, // Unix absolute paths starting with /
+        /^[a-zA-Z]:\\/, // Windows absolute paths like C:\
+
+        // Relative paths that could escape current directory
+        /\.\.\//, // Parent directory traversal with ../
+        /\.\.\\/, // Parent directory traversal with ..\
+        /^\.\./, // Starting with ..
+
+        // Local file access patterns
+        /^\.\//, // Current directory with ./
+        /^~\//, // Home directory with ~/
+        /^file:\/\//, // File protocol
+
+        // Common file extensions that shouldn't be accessed
+        /\.(exe|bat|cmd|sh|ps1|vbs|scr|com|pif|dll|sys)$/i,
+
+        // File flags and options that could access local files
+        /^--?(?:file|input|output|config|load|save|import|export|read|write)=/i,
+        /^--?(?:file|input|output|config|load|save|import|export|read|write)$/i
+    ]
+
+    for (const arg of args) {
+        if (typeof arg !== 'string') continue
+
+        // Check for dangerous patterns
+        for (const pattern of dangerousPatterns) {
+            if (pattern.test(arg)) {
+                throw new Error(`Argument contains potential local file access: "${arg}"`)
+            }
+        }
+
+        // Check for null bytes
+        if (arg.includes('\0')) {
+            throw new Error(`Argument contains null byte: "${arg}"`)
+        }
+
+        // Check for very long paths that might be used for buffer overflow attacks
+        if (arg.length > 1000) {
+            throw new Error(`Argument is suspiciously long (${arg.length} characters): "${arg.substring(0, 100)}..."`)
+        }
+    }
+}
+
+export const validateCommandInjection = (args: string[]): void => {
+    const dangerousPatterns = [
+        // Shell metacharacters
+        /[;&|`$(){}[\]<>]/,
+        // Command chaining
+        /&&|\|\||;;/,
+        // Redirections
+        />>|<<|>/,
+        // Backticks and command substitution
+        /`|\$\(/,
+        // Process substitution
+        /<\(|>\(/
+    ]
+
+    for (const arg of args) {
+        if (typeof arg !== 'string') continue
+
+        for (const pattern of dangerousPatterns) {
+            if (pattern.test(arg)) {
+                throw new Error(`Argument contains potentially dangerous characters: "${arg}"`)
+            }
+        }
+    }
+}
+
+export const validateEnvironmentVariables = (env: Record<string, any>): void => {
+    const dangerousEnvVars = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']
+
+    for (const [key, value] of Object.entries(env)) {
+        if (dangerousEnvVars.includes(key)) {
+            throw new Error(`Environment variable '${key}' modification is not allowed`)
+        }
+
+        if (typeof value === 'string' && value.includes('\0')) {
+            throw new Error(`Environment variable '${key}' contains null byte`)
+        }
+    }
+}
+
+export const validateMCPServerConfig = (serverParams: any): void => {
+    // Validate the entire server configuration
+    if (!serverParams || typeof serverParams !== 'object') {
+        throw new Error('Invalid server configuration')
+    }
+
+    // Command allowlist - only allow specific safe commands
+    const allowedCommands = ['node', 'npx', 'python', 'python3', 'docker']
+
+    if (serverParams.command && !allowedCommands.includes(serverParams.command)) {
+        throw new Error(`Command '${serverParams.command}' is not allowed. Allowed commands: ${allowedCommands.join(', ')}`)
+    }
+
+    // Validate arguments if present
+    if (serverParams.args && Array.isArray(serverParams.args)) {
+        validateArgsForLocalFileAccess(serverParams.args)
+        validateCommandInjection(serverParams.args)
+    }
+
+    // Validate environment variables
+    if (serverParams.env) {
+        validateEnvironmentVariables(serverParams.env)
+    }
 }

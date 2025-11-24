@@ -3,6 +3,7 @@ import { convertSchemaToZod, getBaseClasses, getVars } from '../../../src/utils'
 import { DynamicStructuredTool } from './core'
 import { z } from 'zod'
 import { DataSource, IsNull, Like } from 'typeorm'
+import { SecureZodSchemaParser } from '../../../src/secureZodParser'
 
 class CustomTool_Tools implements INode {
     label: string
@@ -82,11 +83,10 @@ class CustomTool_Tools implements INode {
                 return returnData
             }
 
-            const toolRepo = appDataSource.getRepository(databaseEntities['Tool'])
-
-            // Match the same visibility logic as the tools service
-            const tools = await toolRepo.find({
-                where: isAdmin
+            const searchOptions = options.searchOptions || {}
+            searchOptions.where = {
+                ...searchOptions.where,
+                ...(isAdmin
                     ? [{ organizationId }, { organizationId, userId: IsNull() }]
                     : [
                           { organizationId, userId },
@@ -95,8 +95,9 @@ class CustomTool_Tools implements INode {
                               organizationId,
                               visibility: Like('%Organization%')
                           }
-                      ]
-            })
+                      ])
+            }
+            const tools = await appDataSource.getRepository(databaseEntities['Tool']).findBy(searchOptions)
 
             for (let i = 0; i < tools.length; i += 1) {
                 const data = {
@@ -157,11 +158,10 @@ class CustomTool_Tools implements INode {
             if (customToolName) obj.name = customToolName
             if (customToolDesc) obj.description = customToolDesc
             if (customToolSchema) {
-                const zodSchemaFunction = new Function('z', `return ${customToolSchema}`)
-                obj.schema = zodSchemaFunction(z)
+                obj.schema = SecureZodSchemaParser.parseZodSchema(customToolSchema) as z.ZodObject<ICommonObject, 'strip', z.ZodTypeAny>
             }
 
-            const variables = await getVars(appDataSource, databaseEntities, nodeData)
+            const variables = await getVars(appDataSource, databaseEntities, nodeData, options)
 
             const flow = { chatflowId: options.chatflowid }
 

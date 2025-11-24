@@ -1,21 +1,22 @@
 import express from 'express'
 import marketplacesController from '../../controllers/marketplaces'
-import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { checkPermission, checkAnyPermission } from '../../enterprise/rbac/PermissionCheck'
 const router = express.Router()
 
-// READ - Templates del marketplace (public)
-router.get('/templates', marketplacesController.getAllTemplates)
 router.get('/templates/:id', marketplacesController.getMarketplaceTemplate)
 
-// READ - Custom templates (req authentication)
-router.get('/custom', enforceAbility('Marketplace'), marketplacesController.getAllCustomTemplates)
-
 // 🆕 Add - Organization templates
-router.get('/organization', enforceAbility('Marketplace'), marketplacesController.getOrganizationTemplates)
-// CREATE - Create custom template
-router.post('/custom', enforceAbility('Marketplace'), marketplacesController.saveCustomTemplate)
+router.get('/organization', checkPermission('templates:marketplace'), marketplacesController.getOrganizationTemplates)
 
-// DELETE - Delete custom template
-router.delete('/custom/:id', enforceAbility('Marketplace'), marketplacesController.deleteCustomTemplate)
+// READ
+router.get('/templates', checkPermission('templates:marketplace'), marketplacesController.getAllTemplates)
+
+router.post('/custom', checkAnyPermission('templates:flowexport,templates:toolexport'), marketplacesController.saveCustomTemplate)
+
+// READ
+router.get('/custom', checkPermission('templates:custom'), marketplacesController.getAllCustomTemplates)
+
+// DELETE
+router.delete(['/', '/custom/:id'], checkPermission('templates:custom-delete'), marketplacesController.deleteCustomTemplate)
 
 export default router

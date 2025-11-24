@@ -1,26 +1,43 @@
 import express from 'express'
 import chatflowsController from '../../controllers/chatflows'
-import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { checkAnyPermission } from '../../enterprise/rbac/PermissionCheck'
 const router = express.Router()
 
 // CREATE
-router.post('/', enforceAbility('ChatFlow'), chatflowsController.saveChatflow)
-router.post('/importchatflows', enforceAbility('ChatFlow'), chatflowsController.importChatflows)
+router.post(
+    '/',
+    checkAnyPermission('chatflows:create,chatflows:update,agentflows:create,agentflows:update'),
+    chatflowsController.saveChatflow
+)
 
 // READ
-router.get('/', enforceAbility('ChatFlow'), chatflowsController.getAllChatflows)
-router.get(['/', '/:id'], enforceAbility('ChatFlow'), chatflowsController.getChatflowById)
-router.get(['/apikey/', '/apikey/:apikey'], enforceAbility('ChatFlow'), chatflowsController.getChatflowByApiKey)
+router.get(
+    '/',
+    checkAnyPermission('chatflows:view,chatflows:update,agentflows:view,agentflows:update'),
+    chatflowsController.getAllChatflows
+)
+router.get(
+    ['/', '/:id'],
+    checkAnyPermission('chatflows:view,chatflows:update,chatflows:delete,agentflows:view,agentflows:update,agentflows:delete'),
+    chatflowsController.getChatflowById
+)
+router.get(['/apikey/', '/apikey/:apikey'], chatflowsController.getChatflowByApiKey)
 
 // UPDATE
-router.put(['/', '/:id'], enforceAbility('ChatFlow'), chatflowsController.updateChatflow)
+router.put(
+    ['/', '/:id'],
+    checkAnyPermission('chatflows:create,chatflows:update,agentflows:create,agentflows:update'),
+    chatflowsController.updateChatflow
+)
 
 // DELETE
-router.delete('/:id', enforceAbility('ChatFlow'), chatflowsController.deleteChatflow)
+router.delete(['/', '/:id'], checkAnyPermission('chatflows:delete,agentflows:delete'), chatflowsController.deleteChatflow)
 
-// VERSIONING
-router.get('/:id/versions', enforceAbility('ChatFlow'), chatflowsController.getChatflowVersions)
-router.get('/:id/versions/:version', enforceAbility('ChatFlow'), chatflowsController.getChatflowVersion)
-router.post('/:id/rollback/:version', enforceAbility('ChatFlow'), chatflowsController.rollbackChatflowToVersion)
+// CHECK FOR CHANGE
+router.get(
+    '/has-changed/:id/:lastUpdatedDateTime',
+    checkAnyPermission('chatflows:update,agentflows:update'),
+    chatflowsController.checkIfChatflowHasChanged
+)
 
 export default router

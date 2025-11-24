@@ -33,4 +33,6 @@ export class ApiKey implements IApiKey {
 
     @Column({ type: 'simple-json', nullable: true })
     metadata: IApiKeyMetadata
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

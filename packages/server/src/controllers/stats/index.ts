@@ -46,14 +46,14 @@ const getChatflowStats = async (req: Request, res: Response, next: NextFunction)
             }
         }
         const apiResponse = await statsService.getChatflowStats(
-            req.user!,
             chatflowid,
             chatTypes,
             startDate,
             endDate,
             '',
             true,
-            feedbackTypeFilters
+            feedbackTypeFilters,
+            req.user?.activeWorkspaceId
         )
         return res.json(apiResponse)
     } catch (error) {

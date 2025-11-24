@@ -10,6 +10,7 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
 import { utilGetChatMessage } from '../../utils/getChatMessage'
 import { validateEnumArray } from 'flowise-components'
+import { getPageAndLimitParams } from '../../utils/pagination'
 
 const getFeedbackTypeFilters = (_feedbackTypeFilters: ChatMessageRatingType[]): ChatMessageRatingType[] | undefined => {
     try {
@@ -51,7 +52,19 @@ const createChatMessage = async (req: Request, res: Response, next: NextFunction
 const getAllChatMessages = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const _chatTypes = req.query?.chatType as string | undefined
-        const chatTypes = validateEnumArray(_chatTypes, Object.values(ChatType))
+        let chatTypes: ChatType[] | undefined
+        if (_chatTypes) {
+            try {
+                if (Array.isArray(_chatTypes)) {
+                    chatTypes = _chatTypes
+                } else {
+                    chatTypes = JSON.parse(_chatTypes)
+                }
+            } catch (e) {
+                chatTypes = [_chatTypes as ChatType]
+            }
+        }
+        const activeWorkspaceId = req.user?.activeWorkspaceId
         const sortOrder = req.query?.order as string | undefined
         const chatflowId = (req.query?.chatflowId ?? req.query?.id ?? req.params.id) as string
 
@@ -63,11 +76,13 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
         const endDate = req.query?.endDate as string | undefined
         const feedback = req.query?.feedback as boolean | undefined
 
-        const _feedbackTypeFilters = req.query?.feedbackType
-        const feedbackTypeFilters = _feedbackTypeFilters
-            ? getFeedbackTypeFilters(validateEnumArray(_feedbackTypeFilters, Object.values(ChatMessageRatingType)) || [])
-            : undefined
-        if (!chatflowId && !chatId) {
+        const { page, limit } = getPageAndLimitParams(req)
+
+        let feedbackTypeFilters = req.query?.feedbackType as ChatMessageRatingType[] | undefined
+        if (feedbackTypeFilters) {
+            feedbackTypeFilters = getFeedbackTypeFilters(feedbackTypeFilters)
+        }
+        if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
                 `Error: chatMessageController.getAllChatMessages - id not provided!`
@@ -85,9 +100,11 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
             endDate,
             messageId,
             feedback,
-            feedbackTypeFilters
+            feedbackTypeFilters,
+            activeWorkspaceId,
+            page,
+            limit
         )
-
         return res.json(parseAPIResponse(apiResponse))
     } catch (error) {
         next(error)
@@ -96,6 +113,7 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
 
 const getAllInternalChatMessages = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const activeWorkspaceId = req.user?.activeWorkspaceId
         const sortOrder = req.query?.order as string | undefined
         const chatId = req.query?.chatId as string | undefined
         const memoryType = req.query?.memoryType as string | undefined
@@ -121,7 +139,8 @@ const getAllInternalChatMessages = async (req: Request, res: Response, next: Nex
             endDate,
             messageId,
             feedback,
-            feedbackTypeFilters
+            feedbackTypeFilters,
+            activeWorkspaceId
         )
         return res.json(parseAPIResponse(apiResponse))
     } catch (error) {
@@ -138,8 +157,22 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                 'Error: chatMessagesController.removeAllChatMessages - id not provided!'
             )
         }
+        const orgId = req.user?.activeOrganizationId
+        if (!orgId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatMessagesController.removeAllChatMessages - organization ${orgId} not found!`
+            )
+        }
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatMessagesController.removeAllChatMessages - workspace ${workspaceId} not found!`
+            )
+        }
         const chatflowid = req.params.id
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, req.user!)
+        const chatflow = await chatflowsService.getChatflowById(req.params.id, workspaceId)
         if (!chatflow) {
             return res.status(404).send(`Chatflow ${req.params.id} not found`)
         }
@@ -162,6 +195,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
         if (!chatId) {
             const isFeedback = feedbackTypeFilters?.length ? true : false
             const hardDelete = req.query?.hardDelete as boolean | undefined
+
             const messages = await utilGetChatMessage({
                 user: req.user!,
                 chatflowid,
@@ -170,7 +204,8 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                 startDate,
                 endDate,
                 feedback: isFeedback,
-                feedbackTypes: feedbackTypeFilters
+                feedbackTypes: feedbackTypeFilters,
+                activeWorkspaceId: workspaceId
             })
             const messageIds = messages.map((message) => message.id)
 
@@ -203,6 +238,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                             appServer.nodesPool.componentNodes,
                             chatId,
                             appServer.AppDataSource,
+                            orgId,
                             sessionId,
                             memoryType,
                             isClearFromViewMessageDialog
@@ -213,7 +249,14 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                 }
             }
 
-            const apiResponse = await chatMessagesService.removeChatMessagesByMessageIds(chatflowid, chatIdMap, messageIds)
+            const apiResponse = await chatMessagesService.removeChatMessagesByMessageIds(
+                chatflowid,
+                chatIdMap,
+                messageIds,
+                orgId,
+                workspaceId,
+                appServer.usageCacheManager
+            )
             return res.json(apiResponse)
         } else {
             try {
@@ -223,6 +266,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                     appServer.nodesPool.componentNodes,
                     chatId,
                     appServer.AppDataSource,
+                    orgId,
                     sessionId,
                     memoryType,
                     isClearFromViewMessageDialog
@@ -243,7 +287,14 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                 const toDate = new Date(endDate)
                 deleteOptions.createdDate = Between(fromDate ?? aMonthAgo(), toDate ?? new Date())
             }
-            const apiResponse = await chatMessagesService.removeAllChatMessages(chatId, chatflowid, deleteOptions)
+            const apiResponse = await chatMessagesService.removeAllChatMessages(
+                chatId,
+                chatflowid,
+                deleteOptions,
+                orgId,
+                workspaceId,
+                appServer.usageCacheManager
+            )
             return res.json(apiResponse)
         }
     } catch (error) {
@@ -270,26 +321,30 @@ const parseAPIResponse = (apiResponse: ChatMessage | ChatMessage[]): ChatMessage
     const parseResponse = (response: ChatMessage): ChatMessage => {
         const parsedResponse = { ...response }
 
-        if (parsedResponse.sourceDocuments) {
-            parsedResponse.sourceDocuments = JSON.parse(parsedResponse.sourceDocuments)
-        }
-        if (parsedResponse.usedTools) {
-            parsedResponse.usedTools = JSON.parse(parsedResponse.usedTools)
-        }
-        if (parsedResponse.fileAnnotations) {
-            parsedResponse.fileAnnotations = JSON.parse(parsedResponse.fileAnnotations)
-        }
-        if (parsedResponse.agentReasoning) {
-            parsedResponse.agentReasoning = JSON.parse(parsedResponse.agentReasoning)
-        }
-        if (parsedResponse.fileUploads) {
-            parsedResponse.fileUploads = JSON.parse(parsedResponse.fileUploads)
-        }
-        if (parsedResponse.action) {
-            parsedResponse.action = JSON.parse(parsedResponse.action)
-        }
-        if (parsedResponse.artifacts) {
-            parsedResponse.artifacts = JSON.parse(parsedResponse.artifacts)
+        try {
+            if (parsedResponse.sourceDocuments) {
+                parsedResponse.sourceDocuments = JSON.parse(parsedResponse.sourceDocuments)
+            }
+            if (parsedResponse.usedTools) {
+                parsedResponse.usedTools = JSON.parse(parsedResponse.usedTools)
+            }
+            if (parsedResponse.fileAnnotations) {
+                parsedResponse.fileAnnotations = JSON.parse(parsedResponse.fileAnnotations)
+            }
+            if (parsedResponse.agentReasoning) {
+                parsedResponse.agentReasoning = JSON.parse(parsedResponse.agentReasoning)
+            }
+            if (parsedResponse.fileUploads) {
+                parsedResponse.fileUploads = JSON.parse(parsedResponse.fileUploads)
+            }
+            if (parsedResponse.action) {
+                parsedResponse.action = JSON.parse(parsedResponse.action)
+            }
+            if (parsedResponse.artifacts) {
+                parsedResponse.artifacts = JSON.parse(parsedResponse.artifacts)
+            }
+        } catch (e) {
+            console.error('Error parsing chat message response', e)
         }
 
         return parsedResponse

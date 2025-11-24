@@ -143,7 +143,7 @@ const AddEditVariableDialog = ({ show, dialogProps, onCancel, onConfirm, setErro
             if (setError) setError(error)
             enqueueSnackbar({
                 message: `Failed to add new Variable: ${
-                    typeof error.response.data === 'object' ? error.response.data.message : error.response.data
+                    typeof err.response.data === 'object' ? err.response.data.message : err.response.data
                 }`,
                 options: {
                     key: new Date().getTime() + Math.random(),
@@ -185,11 +185,11 @@ const AddEditVariableDialog = ({ show, dialogProps, onCancel, onConfirm, setErro
                 })
                 onConfirm(saveResp.data.id)
             }
-        } catch (error) {
-            if (setError) setError(error)
+        } catch (err) {
+            if (setError) setError(err)
             enqueueSnackbar({
                 message: `Failed to save Variable: ${
-                    typeof error.response.data === 'object' ? error.response.data.message : error.response.data
+                    typeof err.response.data === 'object' ? err.response.data.message : err.response.data
                 }`,
                 options: {
                     key: new Date().getTime() + Math.random(),

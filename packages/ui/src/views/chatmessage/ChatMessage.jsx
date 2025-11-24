@@ -714,8 +714,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
         setMessages((prevMessages) => {
             let allMessages = [...cloneDeep(prevMessages)]
             if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages
-            console.log('calledTools', calledTools)
-            allMessages[allMessages.length - 1].calledTools = typeof calledTools === 'string' ? JSON.parse(calledTools) : calledTools
+            allMessages[allMessages.length - 1].calledTools = calledTools
             return allMessages
         })
     }
@@ -1067,7 +1066,6 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: token ? `Bearer ${token}` : username && password ? `Basic ${btoa(`${username}:${password}`)}` : undefined,
-
                 'x-request-from': 'internal'
             },
             async onopen(response) {
@@ -1260,8 +1258,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                 }
                 if (message.sourceDocuments) obj.sourceDocuments = message.sourceDocuments
                 if (message.usedTools) obj.usedTools = message.usedTools
-                if (message.calledTools)
-                    obj.calledTools = typeof message.calledTools === 'string' ? JSON.parse(message.calledTools) : message.calledTools
+                if (message.calledTools) obj.calledTools = message.calledTools
                 if (message.fileAnnotations) obj.fileAnnotations = message.fileAnnotations
                 if (message.agentReasoning) obj.agentReasoning = message.agentReasoning
                 if (message.action) obj.action = message.action

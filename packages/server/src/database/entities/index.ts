@@ -9,6 +9,11 @@ import { DocumentStore } from './DocumentStore'
 import { DocumentStoreFileChunk } from './DocumentStoreFileChunk'
 import { Lead } from './Lead'
 import { UpsertHistory } from './UpsertHistory'
+import { Dataset } from './Dataset'
+import { DatasetRow } from './DatasetRow'
+import { EvaluationRun } from './EvaluationRun'
+import { Evaluation } from './Evaluation'
+import { Evaluator } from './Evaluator'
 import { ApiKey } from './ApiKey'
 import { User } from './User'
 import { Organization } from './Organization'
@@ -23,6 +28,15 @@ import { CustomTemplate } from './CustomTemplate'
 import { AppCsvParseRuns } from './AppCsvParseRuns'
 import { AppCsvParseRows } from './AppCsvParseRows'
 import { Execution } from './Execution'
+import { LoginActivity, WorkspaceShared, WorkspaceUsers } from '../../enterprise/database/entities/EnterpriseEntities'
+// import { User } from '../../enterprise/database/entities/user.entity'
+// import { Organization } from '../../enterprise/database/entities/organization.entity'
+import { Role } from '../../enterprise/database/entities/role.entity'
+import { OrganizationUser } from '../../enterprise/database/entities/organization-user.entity'
+import { Workspace } from '../../enterprise/database/entities/workspace.entity'
+import { WorkspaceUser } from '../../enterprise/database/entities/workspace-user.entity'
+import { LoginMethod } from '../../enterprise/database/entities/login-method.entity'
+import { LoginSession } from '../../enterprise/database/entities/login-session.entity'
 
 export const entities = {
     ChatFlow,
@@ -32,10 +46,15 @@ export const entities = {
     Tool,
     Assistant,
     Variable,
+    UpsertHistory,
     DocumentStore,
     DocumentStoreFileChunk,
     Lead,
-    UpsertHistory,
+    Dataset,
+    DatasetRow,
+    Evaluation,
+    EvaluationRun,
+    Evaluator,
     ApiKey,
     User,
     Organization,
@@ -49,7 +68,16 @@ export const entities = {
     CustomTemplate,
     AppCsvParseRuns,
     AppCsvParseRows,
-    Execution
+    Execution,
+    WorkspaceUsers,
+    LoginActivity,
+    WorkspaceShared,
+    Role,
+    OrganizationUser,
+    Workspace,
+    WorkspaceUser,
+    LoginMethod,
+    LoginSession
 }
 
 export * from './Subscription'
