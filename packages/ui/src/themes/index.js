@@ -1,12 +1,15 @@
 import { createTheme } from '@mui/material/styles'
 
 // assets
-import * as colors from '@/assets/theme-vars'
+import colors from '@/assets/scss/_themes-vars.module.scss'
 
 // project imports
 import componentStyleOverrides from './compStyleOverride'
 import themePalette from './palette'
 import themeTypography from './typography'
+
+// Import unified glassmorphism tokens
+import { glassmorphismTokens } from '../../../../packages-answers/ui/src/theme/tokens/glassmorphism'
 
 /**
  * Represent theme style and structure as per Material-UI
@@ -47,7 +50,11 @@ export const theme = (customization) => {
 
     const themeOptions = {
         direction: 'ltr',
-        palette: themePalette(themeOption),
+        palette: {
+            ...themePalette(themeOption),
+            // Add unified glass tokens
+            glass: glassmorphismTokens[customization.isDarkMode ? 'dark' : 'light']
+        },
         mixins: {
             toolbar: {
                 minHeight: '48px',
@@ -57,7 +64,15 @@ export const theme = (customization) => {
                 }
             }
         },
-        typography: themeTypography(themeOption)
+        typography: themeTypography(themeOption),
+        transitions: {
+            duration: {
+                standard: 300
+            },
+            easing: {
+                easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)'
+            }
+        }
     }
 
     const themes = createTheme(themeOptions)

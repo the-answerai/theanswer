@@ -102,9 +102,10 @@ const ThreeJsScene: React.FC<ThreeJsSceneProps> = ({ className }) => {
         const controls = new OrbitControls(camera, renderer.domElement)
         controls.enableDamping = true
         controls.dampingFactor = 0.05
-        controls.enableZoom = true // Enable zooming
-        controls.minDistance = 1 // Set minimum zoom distance
-        controls.maxDistance = 10 // Set maximum zoom distance
+        controls.enableZoom = false // Disable zoom to prevent scroll blocking
+        controls.enablePan = false // Disable panning
+        controls.enableRotate = false // Disable rotation to make it non-intrusive
+        controls.enabled = false // Completely disable controls to allow smooth scrolling
 
         // Add raycaster for particle interaction
         const raycaster = new THREE.Raycaster()

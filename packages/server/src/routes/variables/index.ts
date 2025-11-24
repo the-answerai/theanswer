@@ -3,6 +3,7 @@ import variablesController from '../../controllers/variables'
 import { checkAnyPermission, checkPermission } from '../../enterprise/rbac/PermissionCheck'
 
 const router = express.Router()
+
 // CREATE
 router.post('/', checkPermission('variables:create'), variablesController.createVariable)
 

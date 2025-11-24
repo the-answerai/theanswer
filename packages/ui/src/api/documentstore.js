@@ -1,6 +1,5 @@
 import client from './client'
 
-const getAdminDocumentStores = () => client.get('/admin/document-stores')
 const getAllDocumentStores = (params) => client.get('/document-store/store', { params })
 const getDocumentLoaders = () => client.get('/document-store/components/loaders')
 const getSpecificDocumentStore = (id) => client.get(`/document-store/store/${id}`)
@@ -15,7 +14,6 @@ const editChunkFromStore = (storeId, loaderId, chunkId, body) =>
     client.put(`/document-store/chunks/${storeId}/${loaderId}/${chunkId}`, body)
 
 const getFileChunks = (storeId, fileId, pageNo) => client.get(`/document-store/chunks/${storeId}/${fileId}/${pageNo}`)
-const syncAndRefreshChunks = (storeId, fileId) => client.post(`/document-store/chunks/sync/${storeId}/${fileId}`)
 const previewChunks = (body) => client.post('/document-store/loader/preview', body)
 const processLoader = (body, loaderId) => client.post(`/document-store/loader/process/${loaderId}`, body)
 const saveProcessingLoader = (body) => client.post(`/document-store/loader/save`, body)
@@ -32,9 +30,13 @@ const getRecordManagerProviders = () => client.get('/document-store/components/r
 
 const generateDocStoreToolDesc = (storeId, body) => client.post('/document-store/generate-tool-desc/' + storeId, body)
 
+
+// AAI 
+const getAdminDocumentStores = () => client.get('/admin/document-stores')
+const syncAndRefreshChunks = (storeId, fileId) => client.post(`/document-store/chunks/sync/${storeId}/${fileId}`)
+
 export default {
     getAllDocumentStores,
-    getAdminDocumentStores,
     getSpecificDocumentStore,
     createDocumentStore,
     deleteLoaderFromStore,
@@ -54,9 +56,11 @@ export default {
     queryVectorStore,
     deleteVectorStoreDataFromStore,
     updateVectorStoreConfig,
-    syncAndRefreshChunks,
     saveProcessingLoader,
     refreshLoader,
     generateDocStoreToolDesc,
-    getDocumentStoreConfig
+    getDocumentStoreConfig,
+    // AAI
+    getAdminDocumentStores,
+    syncAndRefreshChunks
 }

@@ -1,12 +1,12 @@
-import { useRoutes } from '@/utils/navigation'
+import { useRoutes } from 'react-router-dom'
 
 // routes
 import MainRoutes from './MainRoutes'
 import CanvasRoutes from './CanvasRoutes'
 import ChatbotRoutes from './ChatbotRoutes'
-import ExecutionRoutes from './ExecutionRoutes'
 import config from '@/config'
 import AuthRoutes from '@/routes/AuthRoutes'
+import ExecutionRoutes from './ExecutionRoutes'
 
 // ==============================|| ROUTING RENDER ||============================== //
 

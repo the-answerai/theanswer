@@ -454,7 +454,7 @@ class Qdrant_VectorStores implements INode {
         if (queryFilter) {
             retrieverConfig.filter = typeof queryFilter === 'object' ? queryFilter : parseJsonBody(queryFilter)
         }
-        if (isFileUploadEnabled && options.chatId && retrieverConfig?.filter) {
+        if (isFileUploadEnabled && options.chatId) {
             retrieverConfig.filter = retrieverConfig.filter || {}
 
             retrieverConfig.filter.should = Array.isArray(retrieverConfig.filter.should) ? retrieverConfig.filter.should : []

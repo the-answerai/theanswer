@@ -1,4 +1,4 @@
-import { useNavigationState } from '@/utils/navigation'
+import { useNavigationState } from 'react-router-dom'
 import { alpha, Box, Tooltip, Chip, Button, CircularProgress, useTheme } from '@mui/material'
 import {
     Star as StarIcon,

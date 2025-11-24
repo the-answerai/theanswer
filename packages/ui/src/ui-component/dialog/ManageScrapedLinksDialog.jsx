@@ -40,20 +40,10 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
-    const newUrlInputRef = useRef(null)
 
     const [loading, setLoading] = useState(false)
     const [selectedLinks, setSelectedLinks] = useState([])
     const [url, setUrl] = useState('')
-    const [newUrl, setNewUrl] = useState('')
-
-    // Function to handle adding a new URL to the top of the list
-    const handleAddUrl = () => {
-        if (newUrl.trim() !== '') {
-            setSelectedLinks([newUrl, ...selectedLinks])
-            setNewUrl('') // Clear the input after adding
-        }
-    }
 
     useEffect(() => {
         if (dialogProps.url) setUrl(dialogProps.url)
@@ -198,26 +188,6 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
                     ) : null}
                 </Box>
                 <>
-                    <OutlinedInput
-                        sx={{ mb: 2 }}
-                        fullWidth
-                        value={newUrl}
-                        onChange={(e) => setNewUrl(e.target.value)}
-                        placeholder='Enter new URL'
-                        inputRef={newUrlInputRef}
-                        onFocus={() => newUrlInputRef.current.select()}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && newUrl.trim() !== '') {
-                                handleAddUrl()
-                                e.preventDefault() // Prevent form submission if this input is part of a form
-                            }
-                        }}
-                        endAdornment={
-                            <IconButton onClick={handleAddUrl}>
-                                <IconPlus />
-                            </IconButton>
-                        }
-                    />
                     {loading && <BackdropLoader open={loading} />}
                     {selectedLinks.length > 0 ? (
                         <PerfectScrollbar

@@ -221,7 +221,7 @@ class Retriever_Tools implements INode {
             if (includeMetadata) {
                 return stringifiedDocs
             } else {
-                const content = docs.map((doc) => doc.pageContent).join('\n\n')
+            const content = docs.map((doc) => doc.pageContent).join('\n\n')
                 return returnSourceDocuments ? content + SOURCE_DOCUMENTS_PREFIX + stringifiedDocs : content
             }
         }

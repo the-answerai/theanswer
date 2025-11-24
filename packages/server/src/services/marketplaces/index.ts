@@ -11,8 +11,7 @@ import { getErrorMessage } from '../../errors/utils'
 import { IReactFlowEdge, IReactFlowNode, IUser } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import chatflowsService from '../chatflows'
-import { omit } from 'lodash'
-// import checkOwnership from '../../utils/checkOwnership'
+
 type ITemplate = {
     badge?: string
     description: string
@@ -34,63 +33,14 @@ type ITemplate = {
 }
 
 const getCategories = (fileDataObj: ITemplate) => {
-    return Array.from(new Set(fileDataObj?.nodes?.map((node) => node.data?.category).filter((category) => category)))
-}
-
-// Helper function to create template object
-const TEMPLATE_FIELD_BLOCKLIST = ['userId', 'apikeyid', 'deletedDate', '']
-const createTemplate = (fileDataObj: ITemplate, file: string, fileData: string, type: string) => {
-    return {
-        ...omit(fileDataObj, TEMPLATE_FIELD_BLOCKLIST),
-        id: uuidv4(),
-        name: fileDataObj?.name || file.split('.json')[0],
-        templateName: file.split('.json')[0],
-        flowData: fileData,
-        categories: type === 'Tool' ? [] : getCategories(fileDataObj),
-        type,
-        requiresClone: true
-    }
-}
-
-// Add prefix to file-based template IDs to avoid collisions
-const TEMPLATE_TYPE_PREFIXES = {
-    CHATFLOW: 'cf_',
-    TOOL: 'tool_',
-    AGENTFLOW: 'af_',
-    ANSWERAI: 'ai_'
+    return Array.from(new Set(fileDataObj?.nodes?.map((node) => node.data.category).filter((category) => category)))
 }
 
 // Get all templates for marketplaces
 const getAllTemplates = async (user: IUser | undefined) => {
     try {
-        // let templates: any[] = []
-
-        // // Database templates (keep existing ID as is since they're UUIDs)
-        // const appServer = getRunningExpressApp()
-        // let chatflows = await appServer.AppDataSource.getRepository(ChatFlow).find()
-        // chatflows = chatflows.filter((chatflow) => chatflow.visibility?.includes(ChatflowVisibility.MARKETPLACE))
-        // chatflows = chatflows.filter((chatflow) => checkOwnership(chatflow, user))
-
-        // if (chatflows) {
-        //     chatflows.forEach((chatflow) => {
-        //         const chatbotConfig = JSON.parse(chatflow.chatbotConfig || '{}')
-        //         const template = {
-        //             id: chatflow.id, // UUID from database
-        //             templateName: chatflow.name,
-        //             flowData: chatflow.flowData,
-        //             badge: chatflow.userId === user?.id ? `SHARED BY ME` : `SHARED BY OTHERS`,
-        //             categories: chatflow.category?.includes(';') ? chatflow.category.split(';') : chatflow.category,
-        //             type: chatflow.type === 'MULTIAGENT' ? 'Agent Community' : 'Chatflow Community',
-        //             description: chatflow.description,
-        //             requiresClone: chatbotConfig.requiresClone || false,
-        //             isExecutable:
-        //                 chatflow.userId === user?.id ||
-        //                 (chatflow.visibility?.includes(ChatflowVisibility.ANSWERAI) && chatflow.organizationId === user?.organizationId)
-        //         }
-        //         templates.push(template)
-        //     })
-        // }
-
+        let marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows')
+        let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
         let templates: any[] = []
         jsonsInDir.forEach((file) => {
             const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows', file)
@@ -108,9 +58,9 @@ const getAllTemplates = async (user: IUser | undefined) => {
                 type: 'Chatflow',
                 description: fileDataObj?.description || ''
             }
+            templates.push(template)
         })
 
-        // Tool templates
         marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'tools')
         jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
         jsonsInDir.forEach((file) => {
@@ -127,6 +77,7 @@ const getAllTemplates = async (user: IUser | undefined) => {
                 categories: [],
                 templateName: file.split('.json')[0]
             }
+            templates.push(template)
         })
 
         /*
@@ -377,7 +328,7 @@ const _generateExportFlowData = (flowData: any) => {
             }
         }
 
-        // Check for Answer Agent framework
+      // Check for Answer Agent framework
         if (
             node.data.category &&
             (node.data.category.includes('MCP Tools') ||
@@ -401,18 +352,13 @@ const _generateExportFlowData = (flowData: any) => {
             newNodeData.inputs = nodeDataInputs
         }
 
-        nodes[i] = {
-            ...node,
-            data: newNodeData
-        }
+        nodes[i].data = newNodeData
     }
-
     const exportJson = {
         nodes,
         edges
     }
-
-    return { framework, exportJson }
+    return { exportJson, framework }
 }
 
 /**
@@ -448,6 +394,6 @@ export default {
     getOrganizationTemplates,
     saveCustomTemplate,
     deleteCustomTemplate,
-    getMarketplaceTemplate,
+    // getMarketplaceTemplate,
     formatTemplateResponse
 }

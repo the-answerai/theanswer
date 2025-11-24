@@ -200,7 +200,7 @@ This rule documents the standardized patterns for implementing resources (like "
 - **Structure**:
   ```javascript
   import { useEffect, useState } from 'react'
-  import { useNavigate } from '@/utils/navigation'
+  import { useNavigate } from 'react-router-dom'
   import {resource}Api from '@/api/{resource}'
   import useApi from '@/hooks/useApi'
   

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useSelector } from 'react-redux'
 import moment from 'moment'
-import { styled } from '@mui/material/styles'
+import { styled, keyframes } from '@mui/material/styles'
 import {
     Box,
     Chip,
@@ -27,15 +27,27 @@ import { useAuth } from '@/hooks/useAuth'
 
 import MoreItemsTooltip from '../tooltip/MoreItemsTooltip'
 
+// Animated glow effect for dark mode tables
+const glowPulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 4px 16px 0 rgba(59, 130, 246, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 20px 0 rgba(59, 130, 246, 0.25), 0 0 30px 0 rgba(59, 130, 246, 0.15);
+  }
+`
+
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    borderColor: theme.palette.grey[900] + 25,
+    borderColor: theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.2)',
 
     [`&.${tableCellClasses.head}`]: {
-        color: theme.palette.grey[900]
+        color: theme.palette.text.primary,
+        fontWeight: 600
     },
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
-        height: 64
+        height: 64,
+        color: theme.palette.text.primary
     }
 }))
 
@@ -106,11 +118,25 @@ export const FlowListTable = ({
 
     return (
         <>
-            <TableContainer sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }} component={Paper}>
+            <TableContainer
+                sx={{
+                    border: 1,
+                    borderColor: theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)',
+                    borderRadius: 2,
+                    backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
+                    boxShadow:
+                        theme.palette.mode === 'light' ? '0 2px 14px 0 rgba(0, 0, 0, 0.08)' : '0 4px 16px 0 rgba(59, 130, 246, 0.15)',
+                    animation: theme.palette.mode === 'dark' ? `${glowPulse} 3s ease-in-out infinite` : 'none'
+                }}
+                component={Paper}
+            >
                 <Table sx={{ minWidth: 650 }} size='small' aria-label='a dense table'>
                     <TableHead
                         sx={{
-                            backgroundColor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[100],
+                            backgroundColor: theme.palette.mode === 'light' ? theme.palette.grey[100] : 'rgba(30, 58, 138, 0.1)',
+                            borderBottom: `2px solid ${
+                                theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)'
+                            }`,
                             height: 56
                         }}
                     >

@@ -1,28 +1,37 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
+import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom'
+
+// https://stackoverflow.com/questions/71572678/react-router-v-6-useprompt-typescript
 
 export function useBlocker(blocker, when = true) {
+    const { navigator } = useContext(NavigationContext)
+
     useEffect(() => {
         if (!when) return
 
-        const handleBeforePopState = () => {
-            if (window.confirm(blocker)) {
-                return true
-            } else {
-                return false
+        const unblock = navigator.block((tx) => {
+            const autoUnblockingTx = {
+                ...tx,
+                retry() {
+                    unblock()
+                    tx.retry()
+                }
             }
-        }
 
-        window.history.pushState(null, '', window.location.href)
-        window.addEventListener('popstate', handleBeforePopState)
+            blocker(autoUnblockingTx)
+        })
 
-        return () => {
-            window.removeEventListener('popstate', handleBeforePopState)
-        }
-    }, [blocker, when])
+        return unblock
+    }, [navigator, blocker, when])
 }
 
 export function usePrompt(message, when = true) {
-    const blocker = useCallback(message, [message])
+    const blocker = useCallback(
+        (tx) => {
+            if (window.confirm(message)) tx.retry()
+        },
+        [message]
+    )
 
     useBlocker(blocker, when)
 }

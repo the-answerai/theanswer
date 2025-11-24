@@ -11,7 +11,7 @@ const createAssistant = async (req: Request, res: Response, next: NextFunction) 
         if (!req.body) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                'Error: assistantsController.createAssistant - body not provided!'
+                `Error: assistantsController.createAssistant - body not provided!`
             )
         }
         const body = req.body

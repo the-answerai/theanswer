@@ -6,18 +6,17 @@ import {
     StarBorder as StarBorderIcon,
     Edit as EditIcon,
     ExpandMore as ExpandMoreIcon,
-    ContentCopy as ContentCopyIcon,
-    LockOpen as LockOpenIcon,
-    Lock as LockIcon
+    ContentCopy as ContentCopyIcon
 } from '@mui/icons-material'
 import { styled } from '@mui/system'
 import { useSelector } from 'react-redux'
 import { useTheme } from '@mui/material/styles'
 import { baseURL } from '@/store/constant'
-import { useNavigate, useNavigationState } from '@/utils/navigation'
+import { useNavigate, useNavigationState } from 'react-router-dom'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 import { useSidekickDetails } from './SidekickSelect/hooks/useSidekickDetails'
+import ConnectedToolsIndicator from '@/ui-component/credentials/ConnectedToolsIndicator'
 
 interface AssistantInfoCardProps {
     sidekick?: Sidekick
@@ -320,31 +319,18 @@ const AssistantInfoCard = ({
                             </Tooltip>
                         )}
 
-                        {/* Validation Status Button */}
+                        {/* Connected Tools Indicator */}
                         {sidekick?.isExecutable && hasValidation && (
-                            <Tooltip title={needsSetup ? 'Configuration required - Missing credentials' : 'Sidekick is fully configured'}>
-                                <WhiteIconButton
-                                    size='small'
-                                    onClick={() => {
-                                        const searchParams = new URLSearchParams(window.location.search)
-                                        searchParams.set('QuickSetup', 'true')
-                                        const newUrl = `${window.location.pathname}?${searchParams.toString()}`
-                                        router.replace(newUrl)
-                                    }}
-                                    sx={{
-                                        color: needsSetup ? theme.palette.warning.main : theme.palette.success.main,
-                                        '&:hover': {
-                                            backgroundColor: alpha(
-                                                needsSetup ? theme.palette.warning.main : theme.palette.success.main,
-                                                0.08
-                                            ),
-                                            color: needsSetup ? theme.palette.warning.dark : theme.palette.success.dark
-                                        }
-                                    }}
-                                >
-                                    {needsSetup ? <LockOpenIcon /> : <LockIcon />}
-                                </WhiteIconButton>
-                            </Tooltip>
+                            <ConnectedToolsIndicator
+                                credentials={sidekick?.credentialsToShow || []}
+                                flowData={sidekick?.flowData}
+                                onClick={() => {
+                                    const searchParams = new URLSearchParams(window.location.search)
+                                    searchParams.set('QuickSetup', 'true')
+                                    const newUrl = `${window.location.pathname}?${searchParams.toString()}`
+                                    router.replace(newUrl)
+                                }}
+                            />
                         )}
 
                         {sidekick?.isExecutable ? (

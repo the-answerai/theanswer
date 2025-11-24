@@ -1,4 +1,3 @@
-'use client'
 import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { useSelector } from 'react-redux'
@@ -40,7 +39,7 @@ const Settings = ({ chatflow, isSettingsOpen, isCustomAssistant, anchorEl, isAge
                 return
             }
             const { result } = evt.target
-            onUploadFile(result, file.name)
+            onUploadFile(result)
         }
         reader.readAsText(file)
     }

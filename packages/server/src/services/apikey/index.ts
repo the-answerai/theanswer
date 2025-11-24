@@ -122,7 +122,7 @@ const deleteApiKey = async (id: string, workspaceId: string) => {
     }
 }
 
-const importKeys = async (body: any, user: IUser) => {
+const importKeys = async (body: any) => {
     try {
         const jsonFile = body.jsonFile
         const workspaceId = body.workspaceId
@@ -230,7 +230,7 @@ const importKeys = async (body: any, user: IUser) => {
     }
 }
 
-const verifyApiKey = async (paramApiKey: string): Promise<ApiKey | null> => {
+const verifyApiKey = async (paramApiKey: string): Promise<string> => {
     try {
         const appServer = getRunningExpressApp()
         const apiKey = await appServer.AppDataSource.getRepository(ApiKey).findOneBy({
@@ -244,7 +244,6 @@ const verifyApiKey = async (paramApiKey: string): Promise<ApiKey | null> => {
         if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.UNAUTHORIZED) {
             throw error
         } else {
-            console.error(`[ApiKey] Verification error:`, error)
             throw new InternalFlowiseError(
                 StatusCodes.INTERNAL_SERVER_ERROR,
                 `Error: apikeyService.verifyApiKey - ${getErrorMessage(error)}`

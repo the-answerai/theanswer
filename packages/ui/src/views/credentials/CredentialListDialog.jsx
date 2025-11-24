@@ -132,7 +132,24 @@ const CredentialListDialog = ({ show, dialogProps, onCancel, onCredentialSelecte
                                 justifyContent: 'start',
                                 textAlign: 'left',
                                 gap: 1,
-                                p: 2
+                                p: 2,
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                ...(theme.palette.glass && {
+                                    background: theme.palette.glass.glassSecondary.background,
+                                    backdropFilter: theme.palette.glass.glassSecondary.backdropFilter,
+                                    WebkitBackdropFilter: theme.palette.glass.glassSecondary.WebkitBackdropFilter,
+                                    '&:hover': {
+                                        background:
+                                            theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(77, 182, 172, 0.15)',
+                                        borderColor:
+                                            theme.palette.mode === 'light' ? theme.palette.grey[900] + 25 : 'rgba(77, 182, 172, 0.3)',
+                                        boxShadow:
+                                            theme.palette.mode === 'light'
+                                                ? '0 4px 16px 0 rgba(0, 0, 0, 0.1)'
+                                                : '0 4px 16px 0 rgba(77, 182, 172, 0.2)',
+                                        transform: 'translateY(-2px)'
+                                    }
+                                })
                             }}
                         >
                             <div

@@ -9,7 +9,6 @@ import { ChatMessage } from '../../database/entities/ChatMessage'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
 import { utilGetChatMessage } from '../../utils/getChatMessage'
-import { validateEnumArray } from 'flowise-components'
 import { getPageAndLimitParams } from '../../utils/pagination'
 
 const getFeedbackTypeFilters = (_feedbackTypeFilters: ChatMessageRatingType[]): ChatMessageRatingType[] | undefined => {
@@ -42,7 +41,7 @@ const createChatMessage = async (req: Request, res: Response, next: NextFunction
                 'Error: chatMessagesController.createChatMessage - request body not provided!'
             )
         }
-        const apiResponse = await chatMessagesService.createChatMessage(req.body, req.user?.id)
+        const apiResponse = await chatMessagesService.createChatMessage(req.body)
         return res.json(parseAPIResponse(apiResponse))
     } catch (error) {
         next(error)
@@ -66,8 +65,6 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
         }
         const activeWorkspaceId = req.user?.activeWorkspaceId
         const sortOrder = req.query?.order as string | undefined
-        const chatflowId = (req.query?.chatflowId ?? req.query?.id ?? req.params.id) as string
-
         const chatId = req.query?.chatId as string | undefined
         const memoryType = req.query?.memoryType as string | undefined
         const sessionId = req.query?.sessionId as string | undefined
@@ -89,8 +86,7 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
             )
         }
         const apiResponse = await chatMessagesService.getAllChatMessages(
-            req.user!,
-            chatflowId,
+            req.params.id,
             chatTypes,
             sortOrder,
             chatId,
@@ -118,17 +114,15 @@ const getAllInternalChatMessages = async (req: Request, res: Response, next: Nex
         const chatId = req.query?.chatId as string | undefined
         const memoryType = req.query?.memoryType as string | undefined
         const sessionId = req.query?.sessionId as string | undefined
-        const userId = req.query?.userId as string | undefined
         const messageId = req.query?.messageId as string | undefined
         const startDate = req.query?.startDate as string | undefined
         const endDate = req.query?.endDate as string | undefined
         const feedback = req.query?.feedback as boolean | undefined
-        const _feedbackTypeFilters = req.query?.feedbackType
-        const feedbackTypeFilters = _feedbackTypeFilters
-            ? getFeedbackTypeFilters(validateEnumArray(_feedbackTypeFilters, Object.values(ChatMessageRatingType)) || [])
-            : undefined
+        let feedbackTypeFilters = req.query?.feedbackType as ChatMessageRatingType[] | undefined
+        if (feedbackTypeFilters) {
+            feedbackTypeFilters = getFeedbackTypeFilters(feedbackTypeFilters)
+        }
         const apiResponse = await chatMessagesService.getAllInternalChatMessages(
-            req.user!,
             req.params.id,
             [ChatType.INTERNAL],
             sortOrder,
@@ -183,21 +177,31 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
         const memoryType = req.query?.memoryType as string | undefined
         const sessionId = req.query?.sessionId as string | undefined
         const _chatTypes = req.query?.chatType as string | undefined
-        const chatTypes = validateEnumArray(_chatTypes, Object.values(ChatType))
+        let chatTypes: ChatType[] | undefined
+        if (_chatTypes) {
+            try {
+                if (Array.isArray(_chatTypes)) {
+                    chatTypes = _chatTypes
+                } else {
+                    chatTypes = JSON.parse(_chatTypes)
+                }
+            } catch (e) {
+                chatTypes = [_chatTypes as ChatType]
+            }
+        }
         const startDate = req.query?.startDate as string | undefined
         const endDate = req.query?.endDate as string | undefined
         const isClearFromViewMessageDialog = req.query?.isClearFromViewMessageDialog as string | undefined
-        const _feedbackTypeFilters = req.query?.feedbackType
-        const feedbackTypeFilters = _feedbackTypeFilters
-            ? getFeedbackTypeFilters(validateEnumArray(_feedbackTypeFilters, Object.values(ChatMessageRatingType)) || [])
-            : undefined
+        let feedbackTypeFilters = req.query?.feedbackType as ChatMessageRatingType[] | undefined
+        if (feedbackTypeFilters) {
+            feedbackTypeFilters = getFeedbackTypeFilters(feedbackTypeFilters)
+        }
 
         if (!chatId) {
             const isFeedback = feedbackTypeFilters?.length ? true : false
             const hardDelete = req.query?.hardDelete as boolean | undefined
 
             const messages = await utilGetChatMessage({
-                user: req.user!,
                 chatflowid,
                 chatTypes,
                 sessionId,
@@ -233,7 +237,6 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                     const [chatId, memoryType, sessionId] = composite_key.split('_')
                     try {
                         await clearSessionMemory(
-                            req.user!,
                             nodes,
                             appServer.nodesPool.componentNodes,
                             chatId,
@@ -261,7 +264,6 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
         } else {
             try {
                 await clearSessionMemory(
-                    req.user!,
                     nodes,
                     appServer.nodesPool.componentNodes,
                     chatId,

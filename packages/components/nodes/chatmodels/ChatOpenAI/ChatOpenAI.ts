@@ -18,7 +18,7 @@ class ChatOpenAI_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
+
     constructor() {
         this.label = 'ChatOpenAI'
         this.name = 'chatOpenAI'
@@ -34,7 +34,6 @@ class ChatOpenAI_ChatModels implements INode {
             type: 'credential',
             credentialNames: ['openAIApi']
         }
-        // Note: AAI tag removed - use AAIChatOpenAI for Answer tab
         this.inputs = [
             {
                 label: 'Cache',
@@ -292,7 +291,6 @@ class ChatOpenAI_ChatModels implements INode {
             obj.stop = stopSequenceArray
         }
         if (strictToolCalling) obj.supportsStrictToolCalling = strictToolCalling
-        if (promptCacheKey) (obj as any).prompt_cache_key = promptCacheKey
 
         if (modelName.includes('o1') || modelName.includes('o3') || modelName.includes('gpt-5')) {
             delete obj.temperature

@@ -9,6 +9,7 @@ import { cloneDeep } from 'lodash'
 // material-ui
 import {
     Button,
+    Tooltip,
     ListItemButton,
     Box,
     Stack,
@@ -27,7 +28,8 @@ import {
     Pagination,
     Typography,
     Menu,
-    MenuItem
+    MenuItem,
+    IconButton
 } from '@mui/material'
 import { useTheme, styled, alpha } from '@mui/material/styles'
 import DatePicker from 'react-datepicker'
@@ -37,7 +39,7 @@ import userPNG from '@/assets/images/account.png'
 import msgEmptySVG from '@/assets/images/message_empty.svg'
 import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
 import multiagent_workerPNG from '@/assets/images/multiagent_worker.png'
-import { IconTool, IconDeviceSdCard, IconFileExport, IconEraser, IconX, IconDownload, IconPaperclip } from '@tabler/icons-react'
+import { IconTool, IconDeviceSdCard, IconFileExport, IconEraser, IconX, IconDownload, IconPaperclip, IconBulb } from '@tabler/icons-react'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
 // Project import
@@ -67,7 +69,6 @@ import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackba
 
 import '@/views/chatmessage/ChatMessage.css'
 import 'react-datepicker/dist/react-datepicker.css'
-import Image from 'next/image'
 
 const StyledMenu = styled((props) => (
     <Menu
@@ -351,11 +352,6 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
     }
 
     const exportMessages = async () => {
-        // Prevent export if messages are still loading
-        if (getChatmessageApi.loading || getChatmessageFromPKApi.loading || !allChatlogs.length) {
-            return
-        }
-
         if (!storagePath && getStoragePathFromServer.data) {
             storagePath = getStoragePathFromServer.data.storagePath
         }
@@ -396,10 +392,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
             if (chatmsg.sourceDocuments) msg.sourceDocuments = chatmsg.sourceDocuments
             if (chatmsg.usedTools) msg.usedTools = chatmsg.usedTools
             if (chatmsg.fileAnnotations) msg.fileAnnotations = chatmsg.fileAnnotations
-            if (chatmsg.feedback) {
-                msg.feedback = chatmsg.feedback?.content
-                msg.rating = chatmsg.feedback?.rating
-            }
+            if (chatmsg.feedback) msg.feedback = chatmsg.feedback?.content
             if (chatmsg.agentReasoning) msg.agentReasoning = chatmsg.agentReasoning
             if (chatmsg.artifacts) {
                 msg.artifacts = chatmsg.artifacts
@@ -524,8 +517,6 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
         for (let i = 0; i < chatmessages.length; i += 1) {
             const chatmsg = chatmessages[i]
             setSelectedChatId(chatmsg.chatId)
-            // TODO: Remove if issue not happening
-            // if (!chatmsg.createdDate) continue
             if (!prevDate) {
                 prevDate = chatmsg.createdDate.split('T')[0]
                 loadedMessages.push({
@@ -1068,12 +1059,10 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                         {chatlogs && chatlogs.length === 0 && (
                             <Stack sx={{ alignItems: 'center', justifyContent: 'center', width: '100%' }} flexDirection='column'>
                                 <Box sx={{ p: 5, height: 'auto' }}>
-                                    <Image
+                                    <img
                                         style={{ objectFit: 'cover', height: '20vh', width: 'auto' }}
                                         src={msgEmptySVG}
                                         alt='msgEmptySVG'
-                                        width={200}
-                                        height={200}
                                     />
                                 </Box>
                                 <div>No Messages</div>
@@ -1179,7 +1168,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                 </div>
                                             )}
                                         </div>
-                                        {/* <div
+                                        <div
                                             style={{
                                                 display: 'flex',
                                                 flexDirection: 'row',
@@ -1204,7 +1193,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                     </IconButton>
                                                 </Tooltip>
                                             )}
-                                        </div> */}
+                                        </div>
                                     </div>
                                 )}
                                 <div
@@ -1237,7 +1226,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                         >
                                                             {/* Display the correct icon depending on the message type */}
                                                             {message.type === 'apiMessage' ? (
-                                                                <Image
+                                                                <img
                                                                     style={{ marginLeft: '10px' }}
                                                                     src={robotPNG}
                                                                     alt='AI'
@@ -1246,7 +1235,7 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                     className='boticon'
                                                                 />
                                                             ) : (
-                                                                <Image
+                                                                <img
                                                                     style={{ marginLeft: '10px' }}
                                                                     src={userPNG}
                                                                     alt='Me'
@@ -1301,14 +1290,12 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                                                             flexDirection='row'
                                                                                         >
                                                                                             <Box sx={{ height: 'auto', pr: 1 }}>
-                                                                                                <Image
+                                                                                                <img
                                                                                                     style={{
                                                                                                         objectFit: 'cover',
                                                                                                         height: '25px',
                                                                                                         width: 'auto'
                                                                                                     }}
-                                                                                                    height={25}
-                                                                                                    width={25}
                                                                                                     src={
                                                                                                         agent.instructions
                                                                                                             ? multiagent_supervisorPNG

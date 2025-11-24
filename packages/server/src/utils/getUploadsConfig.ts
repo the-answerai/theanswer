@@ -80,7 +80,7 @@ export const utilGetUploadsConfig = async (chatflowid: string): Promise<IUploadC
     /*
      * Condition for isImageUploadAllowed
      * 1.) one of the imgUploadAllowedNodes exists
-     * 2.) any chat model with allowImageUploads is ON
+     * 2.) one of the imgUploadLLMNodes exists + allowImageUploads is ON
      */
     const imgUploadSizeAndTypes: IUploadFileSizeAndTypes[] = []
     const imgUploadAllowedNodes = [

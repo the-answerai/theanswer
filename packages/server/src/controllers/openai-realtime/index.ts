@@ -11,7 +11,7 @@ const getAgentTools = async (req: Request, res: Response, next: NextFunction) =>
                 `Error: openaiRealTimeController.getAgentTools - id not provided!`
             )
         }
-        const apiResponse = await openaiRealTimeService.getAgentTools(req.user!, req.params.id)
+        const apiResponse = await openaiRealTimeService.getAgentTools(req.params.id)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -51,7 +51,6 @@ const executeAgentTool = async (req: Request, res: Response, next: NextFunction)
             )
         }
         const apiResponse = await openaiRealTimeService.executeAgentTool(
-            req.user!,
             req.params.id,
             req.body.chatId,
             req.body.toolName,

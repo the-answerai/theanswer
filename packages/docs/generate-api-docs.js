@@ -17,6 +17,10 @@ try {
     console.log('Generating new API docs...')
     execSync('npx docusaurus gen-api-docs all', { stdio: 'inherit' })
 
+    // Fix Data Engine sidebar ordering
+    console.log('Fixing Data Engine API sidebar ordering...')
+    execSync('node scripts/fix-data-engine-sidebar.js', { stdio: 'inherit' })
+
     // Generate full OpenAPI spec
     console.log('Generating full OpenAPI spec...')
     execSync('node devscripts/generate-full-openapi.js', { stdio: 'inherit' })

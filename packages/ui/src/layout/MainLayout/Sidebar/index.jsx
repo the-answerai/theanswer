@@ -11,6 +11,7 @@ import { BrowserView, MobileView } from 'react-device-detect'
 
 // project imports
 import MenuList from './MenuList'
+import LogoSection from '../LogoSection'
 import CloudMenuList from '@/layout/MainLayout/Sidebar/CloudMenuList'
 
 // store
@@ -18,7 +19,7 @@ import { drawerWidth, headerHeight } from '@/store/constant'
 
 // ==============================|| SIDEBAR DRAWER ||============================== //
 
-const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
+const Sidebar = ({ drawerOpen, drawerToggle, window }) => {
     const theme = useTheme()
     const matchUpMd = useMediaQuery(theme.breakpoints.up('md'))
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
@@ -57,15 +58,14 @@ const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
         </>
     )
 
-    const container = typeof window !== 'undefined' ? () => window.document.body : undefined
+    const container = window !== undefined ? () => window.document.body : undefined
 
     return (
         <Box
             component='nav'
             sx={{
                 flexShrink: { md: 0 },
-                // width: matchUpMd ? drawerWidth : 'auto'
-                width: drawerWidth
+                width: matchUpMd ? drawerWidth : 'auto'
             }}
             aria-label='mailbox folders'
         >
@@ -99,7 +99,6 @@ const Sidebar = ({ drawerOpen, drawerToggle, window, isInIframe }) => {
 }
 
 Sidebar.propTypes = {
-    isInIframe: PropTypes.bool,
     drawerOpen: PropTypes.bool,
     drawerToggle: PropTypes.func,
     window: PropTypes.object

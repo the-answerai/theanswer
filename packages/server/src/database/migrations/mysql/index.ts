@@ -27,18 +27,11 @@ import { AddTypeToChatFlow1716300000000 } from './1716300000000-AddTypeToChatFlo
 import { AddApiKey1720230151480 } from './1720230151480-AddApiKey'
 import { AddActionToChatMessage1721078251523 } from './1721078251523-AddActionToChatMessage'
 import { LongTextColumn1722301395521 } from './1722301395521-LongTextColumn'
-import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
-import { AddUser1716422641414 } from './1716422641414-AddUser'
-import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
-import { AddPlans1722954685054 } from './1722954685053-AddPlans'
 import { AddCustomTemplate1725629836652 } from './1725629836652-AddCustomTemplate'
 import { AddArtifactsToChatMessage1726156258465 } from './1726156258465-AddArtifactsToChatMessage'
 import { AddFollowUpPrompts1726666302024 } from './1726666302024-AddFollowUpPrompts'
 import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssistant'
 import { AddExecutionEntity1738090872625 } from './1738090872625-AddExecutionEntity'
-import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
-import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
-import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 import { AddSeqNoToDatasetRow1733752119696 } from './1733752119696-AddSeqNoToDatasetRow'
 import { FixOpenSourceAssistantTable1743758056188 } from './1743758056188-FixOpenSourceAssistantTable'
 import { AddErrorToEvaluationRun1744964560174 } from './1744964560174-AddErrorToEvaluationRun'
@@ -60,6 +53,16 @@ import { AddSSOColumns1730519457880 } from '../../../enterprise/database/migrati
 import { AddPersonalWorkspace1734074497540 } from '../../../enterprise/database/migrations/mysql/1734074497540-AddPersonalWorkspace'
 import { RefactorEnterpriseDatabase1737076223692 } from '../../../enterprise/database/migrations/mysql/1737076223692-RefactorEnterpriseDatabase'
 import { ExecutionLinkWorkspaceId1746862866554 } from '../../../enterprise/database/migrations/mysql/1746862866554-ExecutionLinkWorkspaceId'
+
+
+// AAI 
+import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
+import { AddUser1716422641414 } from './1716422641414-AddUser'
+import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
+import { AddPlans1722954685054 } from './1722954685053-AddPlans'
+import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
+import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
+import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 
 export const mysqlMigrations = [
     Init1693840429259,

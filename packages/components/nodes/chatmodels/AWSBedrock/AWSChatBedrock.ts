@@ -19,7 +19,7 @@ class AWSChatBedrock_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
+
     constructor() {
         this.label = 'AWS ChatBedrock'
         this.name = 'awsChatBedrock'

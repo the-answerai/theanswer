@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from '@/utils/navigation'
+import { useParams } from 'react-router-dom'
 import { ExecutionDetails } from './ExecutionDetails'
 import { omit } from 'lodash'
 

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { useEffect, useRef, useState, useImperativeHandle } from 'react'
 
@@ -20,6 +20,7 @@ import {
 } from '@tabler/icons-react'
 
 // project imports
+import ConnectedToolsIndicator from '@/ui-component/credentials/ConnectedToolsIndicator'
 import Settings from '@/views/settings'
 import SaveChatflowDialog from '@/ui-component/dialog/SaveChatflowDialog'
 import APICodeDialog from '@/views/chatflows/APICodeDialog'
@@ -35,8 +36,6 @@ import chatflowsApi from '@/api/chatflows'
 
 // Hooks
 import useApi from '@/hooks/useApi'
-import usePermissions from '@/hooks/usePermissions'
-import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 
 // utils
 import { generateExportFlowData } from '@/utils/genericHelper'
@@ -47,8 +46,6 @@ import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackba
 
 const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, handleDeleteFlow, handleLoadFlow }) => {
     const theme = useTheme()
-    const { hasFeature } = usePermissions()
-    const canShareExternally = hasFeature('chatflow:share:external')
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const flowNameRef = useRef()
@@ -81,8 +78,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
     const updateChatflowApi = useApi(chatflowsApi.updateChatflow)
     const canvas = useSelector((state) => state.canvas)
 
-    // Get needsSetup status from chatflow
-    const { needsSetup } = useSidekickWithCredentials(chatflow?.id)
+    // Get needsSetup status and credentials from chatflow
+    const { needsSetup, credentialsToShow } = useSidekickWithCredentials(chatflow?.id)
 
     // Expose triggerSaveDialog function to parent component
     useImperativeHandle(
@@ -186,7 +183,8 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
             }
         } else if (setting === 'exportChatflow') {
             try {
-                let dataStr = JSON.stringify(generateExportFlowData(chatflow), null, 2)
+                const flowData = JSON.parse(chatflow.flowData)
+                let dataStr = JSON.stringify(generateExportFlowData(flowData), null, 2)
                 //let dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
                 const blob = new Blob([dataStr], { type: 'application/json' })
                 const dataUri = URL.createObjectURL(blob)
@@ -203,9 +201,9 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
         }
     }
 
-    const onUploadFile = (file, fileName) => {
+    const onUploadFile = (file) => {
         setSettingsOpen(false)
-        handleLoadFlow(file, fileName)
+        handleLoadFlow(file)
     }
 
     const submitFlowName = () => {
@@ -262,14 +260,11 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
     }
 
     const onSaveChatflowClick = () => {
-        if (chatflow.id) {
-            handleSaveFlow(chatflow.name)
-        } else {
-            setFlowDialogOpen(true)
-        }
+        if (chatflow.id) handleSaveFlow(flowName)
+        else setFlowDialogOpen(true)
     }
 
-    const onConfirmSaveName = (newName, configs = {}) => {
+    const onConfirmSaveName = (flowName) => {
         setFlowDialogOpen(false)
         setSavePermission(isAgentCanvas ? 'agentflows:update' : 'chatflows:update')
         handleSaveFlow(flowName)
@@ -482,6 +477,16 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
                             </Avatar>
                         </ButtonBase>
                     )}
+                    <ConnectedToolsIndicator
+                        credentials={credentialsToShow}
+                        flowData={chatflow?.flowData}
+                        onClick={() => {
+                            const currentUrl = new URL(window.location.href)
+                            currentUrl.searchParams.set('QuickSetup', 'true')
+                            window.history.pushState({}, '', currentUrl.toString())
+                            window.dispatchEvent(new Event('popstate'))
+                        }}
+                    />
                     <Available permission={savePermission}>
                         <ButtonBase title={`Save ${title}`} sx={{ borderRadius: '50%', mr: 2 }}>
                             <Avatar

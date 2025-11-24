@@ -1,8 +1,7 @@
-'use client'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import * as PropTypes from 'prop-types'
-import { useNavigate, useParams } from '@/utils/navigation'
+import { useNavigate, useParams } from 'react-router-dom'
 
 // material-ui
 import {
@@ -287,7 +286,6 @@ const DocumentStoreDetails = () => {
             vectorStoreConfig,
             recordManagerConfig,
             type: 'LOADER',
-            loaderId: file.id,
             file
         }
 

@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { useAnswers } from '../AnswersContext'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 import dynamic from 'next/dynamic'
 import { alpha, useTheme } from '@mui/material/styles'
 

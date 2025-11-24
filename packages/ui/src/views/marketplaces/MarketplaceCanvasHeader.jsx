@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 
 // material-ui
 import { useTheme } from '@mui/material/styles'

@@ -1,6 +1,5 @@
-'use client'
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 
 // material-ui
 import { Box, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'

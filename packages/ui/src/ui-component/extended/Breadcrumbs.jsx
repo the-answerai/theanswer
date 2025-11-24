@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
-import { Link } from '@/utils/navigation'
+import { Link } from 'react-router-dom'
 
 // material-ui
 import { useTheme } from '@mui/material/styles'

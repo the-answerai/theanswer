@@ -1,5 +1,5 @@
-import { ChatDeepSeek } from '@langchain/deepseek'
-
+import { BaseCache } from '@langchain/core/caches'
+import { ChatOpenAI, ChatOpenAIFields } from '@langchain/openai'
 import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { getModels, MODEL_TYPE } from '../../../src/modelLoader'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
@@ -16,18 +16,16 @@ class Deepseek_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
 
     constructor() {
         this.label = 'ChatDeepseek'
         this.name = 'chatDeepseek'
-        // Note: AAI tag removed - use AAIDeepseek for Answer tab
         this.version = 1.0
         this.type = 'chatDeepseek'
         this.icon = 'deepseek.svg'
         this.category = 'Chat Models'
         this.description = 'Wrapper around Deepseek large language models that use the Chat endpoint'
-        this.baseClasses = [this.type, ...getBaseClasses(ChatDeepSeek)]
+        this.baseClasses = [this.type, ...getBaseClasses(ChatOpenAI)]
         this.credential = {
             label: 'Connect Credential',
             name: 'credential',
@@ -147,9 +145,9 @@ class Deepseek_ChatModels implements INode {
             nodeData.credential = nodeData.inputs?.credentialId
         }
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
-        const deepseekAIApiKey = getCredentialParam('deepseekApiKey', credentialData, nodeData)
+        const openAIApiKey = getCredentialParam('deepseekApiKey', credentialData, nodeData)
 
-        // const cache = nodeData.inputs?.cache as BaseCache
+        const cache = nodeData.inputs?.cache as BaseCache
 
         const obj: ChatOpenAIFields = {
             temperature: parseFloat(temperature),
@@ -164,29 +162,33 @@ class Deepseek_ChatModels implements INode {
         if (frequencyPenalty) obj.frequencyPenalty = parseFloat(frequencyPenalty)
         if (presencePenalty) obj.presencePenalty = parseFloat(presencePenalty)
         if (timeout) obj.timeout = parseInt(timeout, 10)
-        // if (cache) obj.cache = cache as boolean | BaseCache<Generation[]> | undefined
-
+        if (cache) obj.cache = cache
         if (stopSequence) {
             const stopSequenceArray = stopSequence.split(',').map((item) => item.trim())
             obj.stop = stopSequenceArray
         }
 
         let parsedBaseOptions: any | undefined = undefined
+
         if (baseOptions) {
             try {
                 parsedBaseOptions = typeof baseOptions === 'object' ? baseOptions : JSON.parse(baseOptions)
-                // Remove baseURL if present in baseOptions
                 if (parsedBaseOptions.baseURL) {
                     console.warn("The 'baseURL' parameter is not allowed when using the ChatDeepseek node.")
-                    delete parsedBaseOptions.baseURL
+                    parsedBaseOptions.baseURL = undefined
                 }
-                Object.assign(obj, parsedBaseOptions)
             } catch (exception) {
                 throw new Error('Invalid JSON in the BaseOptions: ' + exception)
             }
         }
 
-        const model = new ChatDeepSeek(obj)
+        const model = new ChatOpenAI({
+            ...obj,
+            configuration: {
+                baseURL: this.baseURL,
+                ...parsedBaseOptions
+            }
+        })
         return model
     }
 }

@@ -1,6 +1,6 @@
 'use client'
 import { useMemo, useState, type ChangeEvent } from 'react'
-import { Link } from '@/utils/navigation'
+import { Link } from 'react-router-dom'
 import {
     Box,
     Button,

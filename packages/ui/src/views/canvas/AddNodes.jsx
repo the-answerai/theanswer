@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, memo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import Image from 'next/image'
 import PropTypes from 'prop-types'
 
 // material-ui
@@ -44,7 +43,7 @@ import AAIPNG from '@/assets/images/aai.png'
 import LlamaindexPNG from '@/assets/images/llamaindex.png'
 import LangChainPNG from '@/assets/images/langchain.png'
 import utilNodesPNG from '@/assets/images/utilNodes.png'
-// import answerPNG from '@/static/images/logos/answerai-logo.png'
+
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
 import { SET_COMPONENT_NODES } from '@/store/actions'
@@ -461,6 +460,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                 placement='bottom-end'
                 open={open}
                 anchorEl={anchorRef.current}
+                role={undefined}
                 transition
                 disablePortal
                 popperOptions={{
@@ -525,50 +525,41 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                             }}
                                         />
                                         {!isAgentCanvas && (
-                                            <>
-                                                <Tabs
-                                                    sx={{ position: 'relative', minHeight: '60px', height: '60px' }}
-                                                    variant='fullWidth'
-                                                    value={tabValue}
-                                                    onChange={handleTabChange}
-                                                    aria-label='tabs'
-                                                >
-                                                    {['Answer', 'LangChain', 'LlamaIndex', 'Utilities & Tools'].map((item, index) => (
-                                                        <Tab
-                                                            icon={
-                                                                <div
+                                            <Tabs
+                                                sx={{ position: 'relative', minHeight: '50px', height: '50px' }}
+                                                variant='fullWidth'
+                                                value={tabValue}
+                                                onChange={handleTabChange}
+                                                aria-label='tabs'
+                                            >
+                                                {['Answer', 'LangChain', 'LlamaIndex', 'Utilities'].map((item, index) => (
+                                                    <Tab
+                                                        icon={
+                                                            <div
+                                                                style={{
+                                                                    borderRadius: '50%'
+                                                                }}
+                                                            >
+                                                                <img
                                                                     style={{
+                                                                        width: '20px',
+                                                                        height: '20px',
                                                                         borderRadius: '50%',
-                                                                        padding: '4px',
-                                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center'
+                                                                        objectFit: 'contain'
                                                                     }}
-                                                                >
-                                                                    <Image
-                                                                        style={{
-                                                                            width: '32px',
-                                                                            height: '32px',
-                                                                            borderRadius: '50%',
-                                                                            objectFit: 'cover',
-                                                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                                                                            border: '2px solid rgba(255, 255, 255, 0.2)'
-                                                                        }}
-                                                                        src={getImage(index)}
-                                                                        alt={item}
-                                                                    />
-                                                                </div>
-                                                            }
-                                                            iconPosition='start'
-                                                            sx={{ minHeight: '60px', height: '60px' }}
-                                                            key={index}
-                                                            label={item}
-                                                            {...a11yProps(index)}
-                                                        />
-                                                    ))}
-                                                </Tabs>
-                                            </>
+                                                                    src={getImage(index)}
+                                                                    alt={item}
+                                                                />
+                                                            </div>
+                                                        }
+                                                        iconPosition='start'
+                                                        sx={{ minHeight: '50px', height: '50px' }}
+                                                        key={index}
+                                                        label={item}
+                                                        {...a11yProps(index)}
+                                                    ></Tab>
+                                                ))}
+                                            </Tabs>
                                         )}
 
                                         <Divider />
@@ -579,7 +570,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                         }}
                                         style={{
                                             height: '100%',
-                                            maxHeight: `calc(100vh - ${isAgentCanvas ? '300' : '390'}px)`,
+                                            maxHeight: `calc(100vh - ${isAgentCanvas ? '300' : '380'}px)`,
                                             overflowX: 'hidden'
                                         }}
                                     >

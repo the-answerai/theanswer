@@ -1,4 +1,4 @@
-import { uniq, get, isEqual, omit } from 'lodash'
+import { uniq, get, isEqual } from 'lodash'
 import moment from 'moment'
 
 export const getUniqueNodeId = (nodeData, nodes) => {
@@ -106,9 +106,6 @@ const initializeOutputAnchors = (nodeData, newNodeId, isAgentflow) => {
 
 export const initializeDefaultNodeData = (nodeParams) => {
     const initialValues = {}
-    if (!nodeParams || !Array.isArray(nodeParams)) {
-        return initialValues
-    }
 
     for (let i = 0; i < nodeParams.length; i += 1) {
         const input = nodeParams[i]
@@ -140,9 +137,7 @@ export const initNode = (nodeData, newNodeId, isAgentflow) => {
         'file',
         'folder',
         'tabs',
-        'conditionFunction', // This is a special type for condition functions
-        'contentfulConfig',
-        'googleDrive'
+        'conditionFunction' // This is a special type for condition functions
     ]
 
     // Inputs
@@ -1014,7 +1009,7 @@ export const getConfigExamplesForCurl = (configData, bodyType, isMultiple, stopN
 }
 
 export const getOS = () => {
-    let userAgent = typeof window !== 'undefined' ? window.navigator.userAgent.toLowerCase() : '',
+    let userAgent = window.navigator.userAgent.toLowerCase(),
         macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos)/i,
         windowsPlatforms = /(win32|win64|windows|wince)/i,
         iosPlatforms = /(iphone|ipad|ipod)/i,

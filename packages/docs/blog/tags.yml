@@ -68,3 +68,158 @@ ai-ethics:
     label: AI Ethics
     permalink: /ai-ethics
     description: AI ethics and responsible AI
+
+ai-agents:
+    label: AI Agents
+    permalink: /ai-agents
+    description: Topics related to autonomous AI agents
+
+human-in-the-loop:
+    label: Human-in-the-loop
+    permalink: /human-in-the-loop
+    description: Incorporating human feedback and oversight in AI
+
+evaluations:
+    label: Evaluations
+    permalink: /evaluations
+    description: Evaluating AI performance and quality
+
+observability:
+    label: Observability
+    permalink: /observability
+    description: Monitoring and understanding AI system behavior
+
+ai-quality:
+    label: AI Quality
+    permalink: /ai-quality
+    description: Ensuring quality and reliability in AI systems
+
+langfuse:
+    label: Langfuse
+    permalink: /langfuse
+    description: Integration and usage of Langfuse
+
+reliability:
+    label: Reliability
+    permalink: /reliability
+    description: Building reliable AI systems
+
+evals:
+    label: Evals
+    permalink: /evals
+    description: Evaluation metrics and methods
+
+production-ai:
+    label: Production AI
+    permalink: /production-ai
+    description: Deploying and managing AI in production
+
+ai-first-company:
+    label: AI-First Company
+    permalink: /ai-first-company
+    description: Building a company with an AI-first mindset
+
+build-in-public:
+    label: Build in Public
+    permalink: /build-in-public
+    description: Sharing our journey and progress openly
+
+marketing-automation:
+    label: Marketing Automation
+    permalink: /marketing-automation
+    description: Automating marketing tasks with AI
+
+transparency:
+    label: Transparency
+    permalink: /transparency
+    description: Operating with transparency
+
+content-marketing:
+    label: Content Marketing
+    permalink: /content-marketing
+    description: Strategies for content marketing
+
+builder-tips:
+    label: Builder Tips
+    permalink: /builder-tips
+    description: Tips and tricks for builders
+
+automation:
+    label: Automation
+    permalink: /automation
+    description: Automating workflows and processes
+
+tutorial:
+    label: Tutorial
+    permalink: /tutorial
+    description: Step-by-step guides and tutorials
+
+how-to:
+    label: How-to
+    permalink: /how-to
+    description: Practical how-to guides
+
+continuous-improvement:
+    label: Continuous Improvement
+    permalink: /continuous-improvement
+    description: Iteratively improving AI agents
+
+daily-logs:
+    label: Daily Logs
+    permalink: /daily-logs
+    description: Daily updates and logs
+
+updates:
+    label: Updates
+    permalink: /updates
+    description: General updates
+
+team:
+    label: Team
+    permalink: /team
+    description: Team updates and stories
+
+evaluation:
+    label: Evaluation
+    permalink: /evaluation
+    description: Methods for evaluating AI
+
+training:
+    label: Training
+    permalink: /training
+    description: Training AI models and agents
+
+product-update:
+    label: Product Update
+    permalink: /product-update
+    description: Updates on new product features
+
+design:
+    label: Design
+    permalink: /design
+    description: Design principles and updates
+
+ui-ux:
+    label: UI/UX
+    permalink: /ui-ux
+    description: User interface and user experience design
+
+glassmorphism:
+    label: Glassmorphism
+    permalink: /glassmorphism
+    description: Glassmorphism design trend
+
+theming:
+    label: Theming
+    permalink: /theming
+    description: Customizing themes and styles
+
+debugging:
+    label: Debugging
+    permalink: /debugging
+    description: Debugging AI agents and workflows
+
+llm-ops:
+    label: LLM Ops
+    permalink: /llm-ops
+    description: Operations for Large Language Models

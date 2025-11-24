@@ -1,13 +1,14 @@
 import PropTypes from 'prop-types'
 import { useSelector, useDispatch } from 'react-redux'
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 
 // material-ui
 import { Button, Avatar, Box, ButtonBase, Switch, Typography, Link } from '@mui/material'
 import { useTheme, styled, darken } from '@mui/material/styles'
 
 // project imports
+import LogoSection from '../LogoSection'
 import ProfileSection from './ProfileSection'
 import WorkspaceSwitcher from '@/layout/MainLayout/Header/WorkspaceSwitcher'
 import OrgWorkspaceBreadcrumbs from '@/layout/MainLayout/Header/OrgWorkspaceBreadcrumbs'

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Box, Stack, Typography, CircularProgress, Button } from '@mui/material'
-import { Link } from '@/utils/navigation'
+import { Link } from 'react-router-dom'
 import TotalCreditsProgress from './TotalCreditsProgress'
 import { useBillingData } from './hooks/useBillingData'
 import BillingOverview from './BillingOverview'

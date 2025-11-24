@@ -4,17 +4,6 @@ import GithubSSO from '../enterprise/sso/GithubSSO'
 import GoogleSSO from '../enterprise/sso/GoogleSSO'
 
 export const WHITELIST_URLS = [
-    '/api/v1/google-auth',
-    process.env.GOOGLE_CALLBACK_URL ?? '/api/v1/google-auth/callback',
-    '/api/v1/salesforce-auth',
-    '/api/v1/salesforce-auth/callback',
-    '/api/v1/atlassian-auth',
-    '/api/v1/atlassian-auth/callback',
-    '/api/v1/atlassian-auth/mcp-initialize',
-    '/api/v1/gmail/labels',
-    '/api/v1/gmail/messages',
-    '/api/v1/gmail/message',
-    // Flowise API
     '/api/v1/verify/apikey/',
     '/api/v1/chatflows/apikey/',
     '/api/v1/public-chatflows',
@@ -32,9 +21,6 @@ export const WHITELIST_URLS = [
     '/api/v1/get-upload-file',
     '/api/v1/ip',
     '/api/v1/ping',
-    '/api/v1/marketplaces/templates',
-    '/api/v1/billing/usage/sync',
-    '/api/v1/langfuse/healthcheck',
     '/api/v1/version',
     '/api/v1/attachments',
     '/api/v1/metrics',
@@ -68,7 +54,22 @@ export const WHITELIST_URLS = [
     Auth0SSO.CALLBACK_URI,
     GithubSSO.LOGIN_URI,
     GithubSSO.LOGOUT_URI,
-    GithubSSO.CALLBACK_URI
+    GithubSSO.CALLBACK_URI,
+
+    // AAI
+    '/api/v1/google-auth',
+    process.env.GOOGLE_CALLBACK_URL ?? '/api/v1/google-auth/callback',
+    '/api/v1/salesforce-auth',
+    '/api/v1/salesforce-auth/callback',
+    '/api/v1/atlassian-auth',
+    '/api/v1/atlassian-auth/callback',
+    '/api/v1/atlassian-auth/mcp-initialize',
+    '/api/v1/gmail/labels',
+    '/api/v1/gmail/messages',
+    '/api/v1/gmail/message',
+    '/api/v1/marketplaces/templates',
+    '/api/v1/billing/usage/sync',
+    '/api/v1/langfuse/healthcheck',
 ]
 
 export const enum GeneralErrorMessage {

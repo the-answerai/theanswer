@@ -1,4 +1,4 @@
-import { Link } from '@/utils/navigation'
+import { Link } from 'react-router-dom'
 // material-ui
 import { Container, Stack, Typography, Card, CardContent, CardActions, Button } from '@mui/material'
 import { useUser } from '@auth0/nextjs-auth0/client'

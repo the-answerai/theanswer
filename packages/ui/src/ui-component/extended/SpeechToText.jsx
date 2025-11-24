@@ -19,7 +19,7 @@ import openAISVG from '@/assets/images/openai.svg'
 import assemblyAIPng from '@/assets/images/assemblyai.png'
 import localAiPng from '@/assets/images/localai.png'
 import azureSvg from '@/assets/images/azure_openai.svg'
-import groqPng from '@/assets/images/groq.gif'
+import groqPng from '@/assets/images/groq.png'
 
 // store
 import useNotifier from '@/utils/useNotifier'
@@ -392,7 +392,7 @@ const SpeechToText = ({ dialogProps }) => {
                                     justifyContent: 'center'
                                 }}
                             >
-                                {/* <Image
+                                <img
                                     style={{
                                         width: '100%',
                                         height: '100%',
@@ -401,7 +401,7 @@ const SpeechToText = ({ dialogProps }) => {
                                     }}
                                     alt='AI'
                                     src={speechToTextProviders[selectedProvider].icon}
-                                /> */}
+                                />
                             </div>
                         </ListItemAvatar>
                         <ListItemText

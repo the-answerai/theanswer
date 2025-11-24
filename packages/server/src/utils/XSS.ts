@@ -1,12 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
-import { sanitizeUrl } from '@braintree/sanitize-url'
 import sanitizeHtml from 'sanitize-html'
 import { isPredictionRequest, extractChatflowId, validateChatflowDomain } from './domainValidation'
 
 export function sanitizeMiddleware(req: Request, res: Response, next: NextFunction): void {
     // decoding is necessary as the url is encoded by the browser
     const decodedURI = decodeURI(req.url)
-    req.url = sanitizeUrl(decodedURI)
+    req.url = sanitizeHtml(decodedURI)
     for (let p in req.query) {
         if (Array.isArray(req.query[p])) {
             const sanitizedQ = []

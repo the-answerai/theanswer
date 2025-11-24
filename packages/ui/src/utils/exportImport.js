@@ -22,7 +22,7 @@ const sanitizeTool = (Tool) => {
 const sanitizeChatflow = (ChatFlow) => {
     try {
         return ChatFlow.map((chatFlow) => {
-            const sanitizeFlowData = generateExportFlowData(chatFlow)
+            const sanitizeFlowData = generateExportFlowData(JSON.parse(chatFlow.flowData))
             return {
                 id: chatFlow.id,
                 name: chatFlow.name,
@@ -116,7 +116,6 @@ export const exportData = (exportAllData) => {
             AssistantCustom: sanitizeAssistant(exportAllData.AssistantCustom),
             AssistantOpenAI: sanitizeAssistant(exportAllData.AssistantOpenAI),
             AssistantAzure: sanitizeAssistant(exportAllData.AssistantAzure),
-            Chat: exportAllData.Chat,
             ChatFlow: sanitizeChatflow(exportAllData.ChatFlow),
             ChatMessage: exportAllData.ChatMessage,
             ChatMessageFeedback: exportAllData.ChatMessageFeedback,

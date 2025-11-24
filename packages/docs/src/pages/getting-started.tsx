@@ -214,29 +214,7 @@ function LearningResources() {
                 </div>
 
                 <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>
-                                <MessageSquare size={48} strokeWidth={1.5} />
-                            </div>
-                            <div className={styles.commandmentText}>
-                                <strong>Community Support</strong>
-                                <br />
-                                Join thousands of AI builders sharing workflows, troubleshooting, and collaborating on the future of
-                                AI-powered productivity.
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <a
-                                    href='https://discord.gg/X54ywt8pzj'
-                                    className={clsx(styles.ctaButton, styles.secondaryLink)}
-                                    style={{ textTransform: 'none' }}
-                                >
-                                    Join Discord →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--4'>
+                    <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
                             <div className={styles.comingSoonIcon}>
                                 <BookOpen size={48} strokeWidth={1.5} />
@@ -258,7 +236,7 @@ function LearningResources() {
                             </div>
                         </div>
                     </div>
-                    <div className='col col--4'>
+                    <div className='col col--6'>
                         <div className={clsx(styles.commandment, styles.comingSoonCard)}>
                             <div className={styles.comingSoonIcon}>
                                 <Wrench size={48} strokeWidth={1.5} />

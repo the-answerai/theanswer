@@ -1,4 +1,3 @@
-'use client'
 import * as PropTypes from 'prop-types'
 import moment from 'moment/moment'
 import { useEffect, useState } from 'react'
@@ -36,8 +35,6 @@ import { PermissionButton, StyledPermissionButton } from '@/ui-component/button/
 import { Available } from '@/ui-component/rbac/available'
 import UploadJSONFileDialog from '@/views/apikey/UploadJSONFileDialog'
 import TablePagination, { DEFAULT_ITEMS_PER_PAGE } from '@/ui-component/pagination/TablePagination'
-
-// AAI
 
 // API
 import apiKeyApi from '@/api/apikey'
@@ -219,10 +216,8 @@ const APIKey = () => {
     const [dialogProps, setDialogProps] = useState({})
     const [apiKeys, setAPIKeys] = useState([])
     const [anchorEl, setAnchorEl] = useState(null)
-    const [urlAnchorEl, setUrlAnchorEl] = useState(null)
     const [showApiKeys, setShowApiKeys] = useState([])
     const openPopOver = Boolean(anchorEl)
-    const openUrlPopOver = Boolean(urlAnchorEl)
 
     const [showUploadDialog, setShowUploadDialog] = useState(false)
     const [uploadDialogProps, setUploadDialogProps] = useState({})
@@ -274,10 +269,6 @@ const APIKey = () => {
 
     const handleClosePopOver = () => {
         setAnchorEl(null)
-    }
-
-    const handleCloseUrlPopOver = () => {
-        setUrlAnchorEl(null)
     }
 
     const addNew = () => {

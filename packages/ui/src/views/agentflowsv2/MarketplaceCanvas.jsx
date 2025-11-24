@@ -3,7 +3,7 @@ import ReactFlow, { Controls, Background, useNodesState, useEdgesState } from 'r
 import 'reactflow/dist/style.css'
 import '@/views/canvas/index.css'
 
-import { useLocation, useNavigate } from '@/utils/navigation'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 // material-ui

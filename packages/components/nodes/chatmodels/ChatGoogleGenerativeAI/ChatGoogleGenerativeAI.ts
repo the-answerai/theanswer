@@ -18,7 +18,6 @@ class GoogleGenerativeAI_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
 
     constructor() {
         this.label = 'ChatGoogleGenerativeAI'
@@ -55,7 +54,7 @@ class GoogleGenerativeAI_ChatModels implements INode {
                 name: 'modelName',
                 type: 'asyncOptions',
                 loadMethod: 'listModels',
-                default: 'gemini-1.5-flash'
+                default: 'gemini-1.5-flash-latest'
             },
             {
                 label: 'Custom Model Name',

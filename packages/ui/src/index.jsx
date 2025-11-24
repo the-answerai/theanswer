@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client'
 import '@/assets/scss/style.scss'
 
 // third party
-import { BrowserRouter } from '@/utils/navigation'
+import { BrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { SnackbarProvider } from 'notistack'
 import ConfirmContextProvider from '@/store/context/ConfirmContextProvider'

@@ -79,7 +79,6 @@ export const AsyncDropdown = ({
     const [open, setOpen] = useState(false)
     const [options, setOptions] = useState([])
     const [loading, setLoading] = useState(false)
-
     const findMatchingOptions = (options = [], value) => {
         if (multiple) {
             let values = []

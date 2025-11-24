@@ -1,0 +1,43 @@
+.logoContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.logoContainer:hover {
+    transform: translateY(-2px);
+}
+
+.logoImage {
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.logoFallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ifm-color-emphasis-100);
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--ifm-color-content);
+}
+
+.sm {
+    width: 24px;
+    height: 24px;
+}
+
+.md {
+    width: 60px;
+    height: 60px;
+}
+
+.lg {
+    width: 120px;
+    height: 120px;
+}

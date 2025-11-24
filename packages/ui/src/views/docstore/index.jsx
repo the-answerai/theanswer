@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 
 // material-ui
 import { Box, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'

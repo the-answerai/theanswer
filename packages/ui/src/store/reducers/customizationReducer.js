@@ -9,8 +9,8 @@ export const initialState = {
     fontFamily: config.fontFamily,
     borderRadius: config.borderRadius,
     opened: true,
-    isHorizontal: typeof localStorage !== 'undefined' ? localStorage.getItem('isHorizontal') === 'true' : false,
-    isDarkMode: typeof localStorage !== 'undefined' ? localStorage.getItem('isDarkMode') !== 'false' : true
+    isHorizontal: localStorage.getItem('isHorizontal') === 'true' ? true : false,
+    isDarkMode: localStorage.getItem('isDarkMode') === 'true' ? true : false
 }
 
 // ==============================|| CUSTOMIZATION REDUCER ||============================== //

@@ -20,7 +20,6 @@ class JiraApi implements INodeCredential {
                 type: 'string',
                 placeholder: 'username@example.com'
             },
-
             {
                 label: 'Access Token',
                 name: 'accessToken',

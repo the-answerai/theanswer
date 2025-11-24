@@ -1,19 +1,6 @@
-/**
- * Document Store Unified Configuration Pattern (Frontend)
- *
- * This UI component manages the configuration for Embeddings, Vector Store, and Record Manager as a single unit.
- * - All three configs are prepared and sent together to the backend for saving/updating.
- * - The backend expects and persists these configs as a unit; partial updates may cause inconsistent state.
- * - When configuring or migrating a Document Store, always ensure all three configs are set and saved together.
- *
- * See also: documentstore service (backend) and DocumentStore entity definition.
- *
- * All comments and documentation must be in English.
- */
-'use client'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useParams } from '@/utils/navigation'
+import { useNavigate, useParams } from 'react-router-dom'
 import { cloneDeep } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import moment from 'moment/moment'
@@ -542,15 +529,6 @@ const VectorStoreConfigure = () => {
                                         <IconClock />
                                     </IconButton>
                                 </ViewHeader>
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant='body1' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <span role='img' aria-label='info'>
-                                            ℹ️
-                                        </span>
-                                        <b>Embeddings, Vector Store, and Record Manager are configured and saved as a unit.</b> All changes
-                                        are applied together. Partial updates are not allowed.
-                                    </Typography>
-                                </Box>
                                 <Steps />
                                 <Grid container spacing={1}>
                                     <Grid item xs={12} sm={4} md={4}>

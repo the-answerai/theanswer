@@ -25,7 +25,7 @@ const ChatFeedback = ({ dialogProps }) => {
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
-    const [chatFeedbackStatus, setChatFeedbackStatus] = useState(true)
+    const [chatFeedbackStatus, setChatFeedbackStatus] = useState(false)
     const [chatbotConfig, setChatbotConfig] = useState({})
 
     const handleChange = (value) => {
@@ -40,13 +40,6 @@ const ChatFeedback = ({ dialogProps }) => {
                 }
             }
             chatbotConfig.chatFeedback = value.chatFeedback
-
-            if (!dialogProps.chatflow.id && dialogProps.handleSaveFlow) {
-                return dialogProps.handleSaveFlow(dialogProps.chatflow.name, {
-                    chatbotConfig: JSON.stringify(chatbotConfig)
-                })
-            }
-
             const saveResp = await chatflowsApi.updateChatflow(dialogProps.chatflow.id, {
                 chatbotConfig: JSON.stringify(chatbotConfig)
             })
@@ -88,10 +81,9 @@ const ChatFeedback = ({ dialogProps }) => {
         if (dialogProps.chatflow && dialogProps.chatflow.chatbotConfig) {
             let chatbotConfig = JSON.parse(dialogProps.chatflow.chatbotConfig)
             setChatbotConfig(chatbotConfig || {})
-            if (chatbotConfig.chatFeedback && chatbotConfig.chatFeedback.status !== undefined) {
+            if (chatbotConfig.chatFeedback) {
                 setChatFeedbackStatus(chatbotConfig.chatFeedback.status)
             }
-            // If chatFeedback is not defined or status is not set, keep the default (true)
         }
 
         return () => {}

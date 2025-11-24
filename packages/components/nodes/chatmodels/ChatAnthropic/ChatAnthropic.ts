@@ -17,7 +17,7 @@ class ChatAnthropic_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
+
     constructor() {
         this.label = 'ChatAnthropic'
         this.name = 'chatAnthropic'
@@ -45,7 +45,7 @@ class ChatAnthropic_ChatModels implements INode {
                 name: 'modelName',
                 type: 'asyncOptions',
                 loadMethod: 'listModels',
-                default: 'claude-3-sonnet-20240229'
+                default: 'claude-3-haiku'
             },
             {
                 label: 'Temperature',
@@ -115,7 +115,6 @@ class ChatAnthropic_ChatModels implements INode {
                 optional: true
             }
         ]
-        // Note: AAI tag removed - use AAIChatAnthropic for Answer tab
     }
 
     //@ts-ignore

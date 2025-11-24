@@ -1,207 +1,141 @@
+/**
+ * Legacy theme export for backward compatibility
+ * This file now uses the unified glassmorphism theme system
+ * @deprecated - Use UnifiedThemeProvider from ./theme/index.tsx instead
+ */
+
 'use client'
-import { PaletteMode } from '@mui/material'
 import createTheme from '@mui/material/styles/createTheme'
-import { teal, grey, deepOrange } from '@mui/material/colors'
 import { theme as studioTheme } from '@/themes'
 import { deepmerge } from '@mui/utils'
+import { colorTokens } from './theme/tokens/colors'
+import { glassmorphismTokens } from './theme/tokens/glassmorphism'
+import { muiComponentOverrides } from './theme/components/muiOverrides'
+
 declare module '@mui/material/Avatar' {
     interface AvatarPropsVariantOverrides {
         source: true
     }
 }
 
-const getDesignTokens = (mode: PaletteMode) => ({
-    typography: {
-        fontFamily: ['var(--font-poppins)']
-    },
-    shape: {
-        borderRadius: 12
-    },
-    breakpoints: {
-        values: {
-            xs: 0,
-            sm: 600,
-            md: 900,
-            lg: 1200,
-            xl: 1536,
-            xxl: 1920
-        }
-    },
-    palette: {
-        mode,
-        primary: {
-            ...teal,
-            ...(mode === 'dark' && {
-                main: teal[300]
-            })
-        },
-        secondary: {
-            ...deepOrange,
-            main: deepOrange[200]
-        },
-
-        ...(mode === 'dark' && {
-            background: {
-                default: '#0b0b0b',
-                paper: '#161616'
-            }
-        }),
-        text: {
-            ...(mode === 'light'
-                ? {
-                      primary: grey[900],
-                      secondary: grey[800]
-                  }
-                : {
-                      primary: '#fff',
-                      secondary: grey[500]
-                  })
-        }
-    }
-})
 declare module '@mui/material/styles' {
     interface BreakpointOverrides {
         xxl: true
     }
+    interface Palette {
+        glass: typeof glassmorphismTokens.light
+        asyncSelect?: { main: string }
+        card?: { main: string; light: string; hover: string }
+        nodeToolTip?: { background: string; color: string }
+    }
+    interface PaletteOptions {
+        glass?: typeof glassmorphismTokens.light
+        asyncSelect?: { main: string }
+        card?: { main: string; light: string; hover: string }
+        nodeToolTip?: { background: string; color: string }
+    }
 }
-// @ts-ignore
-const theme = createTheme({
-    ...getDesignTokens('dark')
-})
-const studioThemeDark = studioTheme({ isDarkMode: true })
 
+// Get Flowise theme for backward compatibility
+const studioThemeDark = studioTheme({ isDarkMode: true })
 const { background, paper, ...studioPalette } = studioThemeDark.palette
-// @ts-ignore
-export const darkModeTheme = createTheme(
-    deepmerge(
-        {
-            // customization: studioThemeDark.customization,
-            // colors:{},
-            palette: {
-                // ...studioPalette
-                asyncSelect: studioPalette.asyncSelect,
-                card: studioPalette.card,
-                nodeToolTip: studioPalette.nodeToolTip
-            }
-        },
-        {
-            ...getDesignTokens('dark'),
-            components: {
-                MuiTypography: {
-                    styleOverrides: {
-                        root: {
-                            'ul, ol': {
-                                paddingLeft: theme.spacing(3)
+
+// Helper to create theme for a specific mode
+const createUnifiedTheme = (mode: 'light' | 'dark') => {
+    const colors = colorTokens[mode]
+    const glass = glassmorphismTokens[mode]
+
+    return createTheme(
+        deepmerge(
+            {
+                palette: {
+                    mode,
+                    primary: {
+                        main: colors.primary.main,
+                        light: colors.primary.light,
+                        dark: colors.primary.dark
+                    },
+                    secondary: {
+                        main: colors.secondary.main,
+                        light: colors.secondary.light,
+                        dark: colors.secondary.dark
+                    },
+                    background: {
+                        default: colors.background.default,
+                        paper: colors.background.paper
+                    },
+                    text: {
+                        primary: colors.text.primary,
+                        secondary: colors.text.secondary,
+                        disabled: colors.text.disabled
+                    },
+                    divider: colors.divider,
+                    glass: glass,
+                    // Maintain Flowise compatibility
+                    asyncSelect: studioPalette.asyncSelect,
+                    card: studioPalette.card,
+                    nodeToolTip: studioPalette.nodeToolTip
+                },
+                typography: {
+                    fontFamily: 'var(--font-poppins), system-ui, -apple-system, sans-serif'
+                },
+                shape: {
+                    borderRadius: 12
+                },
+                breakpoints: {
+                    values: {
+                        xs: 0,
+                        sm: 600,
+                        md: 900,
+                        lg: 1200,
+                        xl: 1536,
+                        xxl: 1920
+                    }
+                },
+                transitions: {
+                    duration: {
+                        standard: 300
+                    },
+                    easing: {
+                        easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                    }
+                }
+            },
+            {
+                components: {
+                    ...muiComponentOverrides(mode),
+                    // Preserve specific overrides
+                    MuiTypography: {
+                        styleOverrides: {
+                            root: {
+                                'ul, ol': {
+                                    paddingLeft: '24px'
+                                }
                             }
                         }
-                    }
-                },
-                MuiDrawer: {
-                    styleOverrides: {
-                        paper: {
-                            border: 'none'
-                        }
-                    }
-                },
-                MuiBackdrop: {
-                    styleOverrides: {
-                        root: {
-                            background: 'rgba(0, 0, 0, 0.75)'
-                        }
-                    }
-                },
-                MuiButton: {
-                    defaultProps: {},
-                    styleOverrides: {
-                        root: {
-                            // borderRadius: theme.spacing(0),
-                            padding: theme.spacing(0.5, 1)
-                        }
-                    }
-                },
-
-                MuiContainer: {
-                    defaultProps: { maxWidth: 'xxl' }
-                },
-                MuiList: {
-                    styleOverrides: {
-                        root: {
-                            display: 'flex',
-                            flexDirection: 'column',
-                            padding: theme.spacing(1),
-                            gap: theme.spacing(1)
-                        }
-                    }
-                },
-                MuiListSubheader: {
-                    styleOverrides: {
-                        root: {
-                            backgroundColor: 'transparent',
-                            paddingLeft: theme.spacing(0)
-                        }
-                    }
-                },
-                MuiListItemButton: {
-                    styleOverrides: {
-                        root: {
-                            borderRadius: 8,
-                            padding: theme.spacing(0.5, 1)
-                        }
-                    }
-                },
-                MuiListItemIcon: {
-                    styleOverrides: {
-                        root: {}
-                    }
-                },
-                MuiListItemText: {
-                    styleOverrides: {
-                        primary: {
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        },
-                        secondary: {
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }
-                    }
-                },
-                MuiTextField: {
-                    defaultProps: { size: 'small' }
-                },
-                MuiAvatar: {
-                    variants: [
-                        {
-                            props: { variant: 'source' },
-                            style: { backgroundColor: 'white', img: { padding: 4, objectFit: 'contain' } }
-                        }
-                    ]
-                },
-                MuiAccordion: {
-                    styleOverrides: {
-                        root: {
-                            width: '100%',
-                            overflow: 'hidden',
-                            margin: 0,
-                            background: 'none',
-                            boxShadow: 'none',
-                            '.MuiAccordionSummary-root': {
-                                minHeight: 0,
-                                '&.Mui-expanded': { minHeight: 1 },
-                                gap: 2
-                            },
-                            '&.Mui-expanded': { margin: 0 },
-                            '.MuiAccordionSummary-content': {
-                                margin: 0,
-                                '&.Mui-expanded': { margin: 0 }
-                            },
-                            '.MuiAccordionDetails-root': { padding: 0 }
-                        }
+                    },
+                    MuiContainer: {
+                        defaultProps: { maxWidth: 'xxl' }
+                    },
+                    MuiAvatar: {
+                        variants: [
+                            {
+                                props: { variant: 'source' },
+                                style: { backgroundColor: 'white', img: { padding: 4, objectFit: 'contain' } }
+                            }
+                        ]
                     }
                 }
             }
-        }
+        )
     )
-)
+}
+
+// Export dark mode theme as default (for backward compatibility)
+export const darkModeTheme = createUnifiedTheme('dark')
+
+// Also export light mode theme
+export const lightModeTheme = createUnifiedTheme('light')
+
+// Re-export UnifiedThemeProvider and hooks from theme/index.tsx
+export { UnifiedThemeProvider, useThemeMode } from './theme/index'

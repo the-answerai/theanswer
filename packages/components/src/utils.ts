@@ -354,7 +354,7 @@ export const getAvailableURLs = async (url: string, limit: number) => {
         }
 
         return availableUrls
-    } catch (err: any) {
+    } catch (err) {
         throw new Error(`getAvailableURLs: ${err?.message}`)
     }
 }
@@ -373,7 +373,7 @@ function getURLsFromHTML(htmlBody: string, baseURL: string): string[] {
         try {
             const urlObj = new URL(linkElement.href, baseURL)
             urls.push(urlObj.href)
-        } catch (err: any) {
+        } catch (err) {
             if (process.env.DEBUG === 'true') console.error(`error with scraped URL: ${err.message}`)
             continue
         }
@@ -440,7 +440,7 @@ async function crawl(baseURL: string, currentURL: string, pages: string[], limit
         for (const nextURL of nextURLs) {
             pages = await crawl(baseURL, nextURL, pages, limit)
         }
-    } catch (err: any) {
+    } catch (err) {
         if (process.env.DEBUG === 'true') console.error(`error in fetch url: ${err.message}, on page: ${currentURL}`)
     }
     return pages
@@ -474,7 +474,6 @@ export function getURLsFromXML(xmlBody: string, limit: number): string[] {
     return urls
 }
 
-// TODO: Update this to handle nested XML Sitemaps
 export async function xmlScrape(currentURL: string, limit: number): Promise<string[]> {
     let urls: string[] = []
     if (process.env.DEBUG === 'true') console.info(`actively scarping ${currentURL}`)
@@ -494,7 +493,7 @@ export async function xmlScrape(currentURL: string, limit: number): Promise<stri
 
         const xmlBody = await resp.text()
         urls = getURLsFromXML(xmlBody, limit)
-    } catch (err: any) {
+    } catch (err) {
         if (process.env.DEBUG === 'true') console.error(`error in fetch url: ${err.message}, on page: ${currentURL}`)
     }
     return urls
@@ -560,7 +559,7 @@ const getEncryptionKey = async (): Promise<string> => {
             }
         }
         return await fs.promises.readFile(getEncryptionKeyPath(), 'utf8')
-    } catch (error: any) {
+    } catch (error) {
         throw new Error(error)
     }
 }
@@ -619,15 +618,11 @@ const decryptCredentialData = async (encryptedData: string): Promise<ICommonObje
  * @returns {Promise<ICommonObject>}
  */
 export const getCredentialData = async (selectedCredentialId: string, options: ICommonObject): Promise<ICommonObject> => {
-    if (!options?.appDataSource || !options?.databaseEntities || !selectedCredentialId) {
-        return {}
-    }
-
     const appDataSource = options.appDataSource as DataSource
     const databaseEntities = options.databaseEntities as IDatabaseEntity
 
     try {
-        if (!appDataSource || !databaseEntities) {
+        if (!selectedCredentialId) {
             return {}
         }
 
@@ -641,7 +636,7 @@ export const getCredentialData = async (selectedCredentialId: string, options: I
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
 
         return decryptedCredentialData
-    } catch (e: any) {
+    } catch (e) {
         throw new Error(e)
     }
 }
@@ -869,7 +864,7 @@ export const convertSchemaToZod = (schema: string | object): ICommonObject => {
             }
         }
         return zodObj
-    } catch (e: any) {
+    } catch (e) {
         throw new Error(e)
     }
 }
@@ -959,7 +954,7 @@ export const getVars = async (
     const variables =
         ((await appDataSource
             .getRepository(databaseEntities['Variable'])
-            .findBy({ workspaceId: Equal(options.workspaceId), userId: nodeData.userId })) as IVariable[]) ?? []
+            .findBy({ workspaceId: Equal(options.workspaceId) })) as IVariable[]) ?? []
 
     // override variables defined in overrideConfig
     // nodeData.inputs.vars is an Object, check each property and override the variable

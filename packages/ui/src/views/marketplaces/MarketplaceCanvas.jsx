@@ -3,7 +3,7 @@ import ReactFlow, { Controls, Background, useNodesState, useEdgesState } from 'r
 import 'reactflow/dist/style.css'
 import '@/views/canvas/index.css'
 
-import { useLocation, useNavigate } from '@/utils/navigation'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 // material-ui
@@ -14,7 +14,6 @@ import { useTheme } from '@mui/material/styles'
 import MarketplaceCanvasNode from './MarketplaceCanvasNode'
 import MarketplaceCanvasHeader from './MarketplaceCanvasHeader'
 import StickyNote from '../canvas/StickyNote'
-import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 // icons
 import { IconMagnetFilled, IconMagnetOff, IconArtboard, IconArtboardOff } from '@tabler/icons-react'
@@ -49,29 +48,16 @@ const MarketplaceCanvas = () => {
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
         }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
-    const onChatflowCopy = (stateData) => {
-        // stateData is now the complete state with all template information
-        const flowDataParsed = stateData.flowData ? JSON.parse(stateData.flowData) : {}
-
-        const isAgentCanvas = (flowDataParsed?.nodes || []).some(
+    const onChatflowCopy = (flowData) => {
+        const isAgentCanvas = (flowData?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
-
-        // Use the complete state data which includes all template information
-        const chatflowData = {
-            ...stateData,
-            name: name || 'Copied Template',
-            nodes: flowDataParsed.nodes || [],
-            edges: flowDataParsed.edges || [],
-            parentChatflowId: stateData?.parentChatflowId
-        }
-
-        localStorage.setItem('duplicatedFlowData', JSON.stringify(chatflowData))
-
-        const targetPath = `/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`
-        navigate(targetPath)
+        const templateFlowData = JSON.stringify(flowData)
+        navigate(`/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`, { state: { templateFlowData } })
     }
 
     return (
@@ -89,11 +75,8 @@ const MarketplaceCanvas = () => {
                     <Toolbar>
                         <MarketplaceCanvasHeader
                             flowName={name}
-                            flowData={flowData ? JSON.parse(flowData) : null}
-                            onChatflowCopy={(flowData) => {
-                                // Pass the complete state instead of just flowData
-                                onChatflowCopy(state)
-                            }}
+                            flowData={JSON.parse(flowData)}
+                            onChatflowCopy={(flowData) => onChatflowCopy(flowData)}
                         />
                     </Toolbar>
                 </AppBar>
@@ -149,9 +132,6 @@ const MarketplaceCanvas = () => {
                     </div>
                 </Box>
             </Box>
-
-            {/* Confirm Dialog */}
-            <ConfirmDialog />
         </>
     )
 }
