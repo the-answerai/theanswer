@@ -43,14 +43,14 @@ export default function AnswerAgentExplained(): JSX.Element {
 
                         <div className={styles.buttonGrid} style={{ justifyContent: 'center' }}>
                             <Link
-                                to='https://calendly.com/answerai/enterprise-ai-fit-call'
+                                to='https://calendly.com/brad-theanswer/answeragent-intro'
                                 className='button button--primary button--lg'
                                 style={{ minWidth: '200px', fontSize: '1.2rem' }}
                             >
                                 Schedule Demo
                             </Link>
                             <Link
-                                to='/ai-workshops'
+                                to='/assessment'
                                 className='button button--outline button--secondary button--lg'
                                 style={{ minWidth: '200px', fontSize: '1.2rem' }}
                             >
@@ -96,7 +96,7 @@ export default function AnswerAgentExplained(): JSX.Element {
                                             </p>
                                         </div>
                                         <div className='margin-top--lg'>
-                                            <Link to='/answer-engine' className='button button--primary button--outline button--block'>
+                                            <Link to='/data-engine' className='button button--primary button--outline button--block'>
                                                 Explore AnswerEngine{' '}
                                                 <ArrowRight size={16} style={{ verticalAlign: 'middle', marginLeft: '5px' }} />
                                             </Link>
@@ -170,7 +170,7 @@ export default function AnswerAgentExplained(): JSX.Element {
                                             <p style={{ opacity: 0.8 }}>Stop preparing. Start doing. Real-time dashboards and reports.</p>
                                         </div>
                                         <div className='margin-top--lg'>
-                                            <Link to='/on-demand-apps' className='button button--secondary button--outline button--block'>
+                                            <Link to='/intelligence-hub' className='button button--secondary button--outline button--block'>
                                                 Explore Apps <ArrowRight size={16} style={{ verticalAlign: 'middle', marginLeft: '5px' }} />
                                             </Link>
                                         </div>
@@ -336,14 +336,14 @@ export default function AnswerAgentExplained(): JSX.Element {
                     <p className='lead margin-bottom--xl'>Join the enterprise teams already shipping agents in weeks, not months.</p>
                     <div className={styles.buttonGrid} style={{ justifyContent: 'center', marginTop: '2rem' }}>
                         <Link
-                            to='https://calendly.com/answerai/enterprise-ai-fit-call'
+                            to='https://calendly.com/brad-theanswer/answeragent-intro'
                             className='button button--primary button--lg'
                             style={{ minWidth: '200px', padding: '1rem 2rem', fontSize: '1.2rem' }}
                         >
                             Schedule Demo
                         </Link>
                         <Link
-                            to='/ai-workshops'
+                            to='/assessment'
                             className='button button--secondary button--lg'
                             style={{ minWidth: '200px', padding: '1rem 2rem', fontSize: '1.2rem' }}
                         >

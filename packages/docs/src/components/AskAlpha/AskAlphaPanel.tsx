@@ -138,8 +138,7 @@ export const AskAlphaPanel: React.FC<AskAlphaPanelProps> = ({
                             textColor: '#999999',
                             text: '',
                             company: 'Download Chrome Extension',
-                            companyLink:
-                                'https://chromewebstore.google.com/detail/answerai-ai-copilot-for-a/paadmncfnipigbanaghhgfgeoemhbbgk'
+                            companyLink: 'https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
                         }
                     }
                 }

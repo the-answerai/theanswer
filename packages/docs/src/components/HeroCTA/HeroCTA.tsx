@@ -5,7 +5,7 @@ import ElevenLabsInlineWidget from '../ElevenLabsInlineWidget'
 import styles from './HeroCTA.module.css'
 
 const ELEVEN_LABS_AGENT_ID = 'agent_01k03gnw7xe11btz2vprkf7ay5' as const
-const CALENDLY_DEMO_URL = 'https://calendly.com/lastrev/answeragent-demo'
+const CALENDLY_DEMO_URL = 'https://calendly.com/brad-theanswer/answeragent-intro'
 
 interface HeroCTAProps {
     variant?: 'primary' | 'secondary'

@@ -601,13 +601,18 @@ const config: Config = {
                     position: 'left'
                 },
                 {
-                    to: '/pricing',
-                    label: 'Pricing',
+                    to: '/data-engine',
+                    label: 'Data Engine',
                     position: 'left'
                 },
                 {
-                    to: '/developers',
-                    label: 'Developers',
+                    to: '/agent-studio',
+                    label: 'Agent Studio',
+                    position: 'left'
+                },
+                {
+                    to: '/intelligence-hub',
+                    label: 'Intelligence Hub',
                     position: 'left'
                 },
                 {
@@ -615,6 +620,14 @@ const config: Config = {
                     label: 'Resources',
                     position: 'left',
                     items: [
+                        {
+                            to: '/docs/intro',
+                            label: 'Documentation'
+                        },
+                        {
+                            to: '/docs/api',
+                            label: 'API Documentation'
+                        },
                         {
                             to: '/learn',
                             label: 'Learn'
