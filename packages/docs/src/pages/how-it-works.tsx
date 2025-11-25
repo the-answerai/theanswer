@@ -24,7 +24,16 @@ const LayoutComponent: any = Layout
 
 function HowItWorksHero() {
     return (
-        <header className='hero hero--primary' style={{ position: 'relative', minHeight: '70vh', display: 'flex', alignItems: 'center' }}>
+        <header
+            className='hero'
+            style={{
+                position: 'relative',
+                minHeight: '70vh',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%)'
+            }}
+        >
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.3 }}>
                 <ThreeJsScene />
             </div>
@@ -39,7 +48,7 @@ function HowItWorksHero() {
                     <Link to='/assessment' className='button button--primary button--lg'>
                         Get AI Assessment
                     </Link>
-                    <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--secondary button--lg'>
+                    <Link to='https://calendly.com/brad-theanswer/answeragent-intro' className='button button--secondary button--lg'>
                         Schedule Demo
                     </Link>
                 </div>
@@ -54,7 +63,7 @@ function ThreeStepsOverview() {
             <div className='container'>
                 <div className='row'>
                     <div className='col col--4'>
-                        <Link to='/answer-engine' style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Link to='/data-engine' style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div
                                 style={{
                                     padding: '3rem 2rem',
@@ -177,7 +186,7 @@ function ThreeStepsOverview() {
                     </div>
 
                     <div className='col col--4'>
-                        <Link to='/on-demand-apps' style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <Link to='/intelligence-hub' style={{ textDecoration: 'none', color: 'inherit' }}>
                             <div
                                 style={{
                                     padding: '3rem 2rem',
@@ -317,7 +326,7 @@ function DetailedStep1() {
                                         </div>
                                     ))}
                                 </div>
-                                <Link to='/answer-engine' className='button button--primary button--block'>
+                                <Link to='/data-engine' className='button button--primary button--block'>
                                     View All Integrations →
                                 </Link>
                             </div>
@@ -620,7 +629,7 @@ function DetailedStep3() {
                 </div>
 
                 <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-                    <Link to='/on-demand-apps' className='button button--primary button--lg'>
+                    <Link to='/intelligence-hub' className='button button--primary button--lg'>
                         Explore Insights Platform →
                     </Link>
                 </div>
@@ -645,7 +654,7 @@ function FinalCTA() {
                                     Get AI Assessment
                                 </Link>
                                 <Link
-                                    to='https://calendly.com/answerai/enterprise-ai-fit-call'
+                                    to='https://calendly.com/brad-theanswer/answeragent-intro'
                                     className='button button--secondary button--lg'
                                     style={{ minWidth: '200px' }}
                                 >

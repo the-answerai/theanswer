@@ -1,0 +1,3869 @@
+{
+    "zepMemoryApi": {
+        "credential": {
+            "label": "Zep Memory API",
+            "name": "zepMemoryApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ZepMemoryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Zep Collection - Cloud",
+                "name": "zepCloud",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity or mmr search upon query using Zep, a fast and scalable building block for LLM apps",
+                "icon": "zep.svg",
+                "category": "Vector Stores",
+                "credential": ["zepMemoryApi"],
+                "filePath": "packages/components/nodes/vectorstores/ZepCloud/ZepCloud.ts",
+                "type": "vectorStore"
+            },
+            {
+                "label": "Zep Collection - Open Source",
+                "name": "zep",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity or mmr search upon query using Zep, a fast and scalable building block for LLM apps",
+                "icon": "zep.svg",
+                "category": "Vector Stores",
+                "credential": ["zepMemoryApi"],
+                "filePath": "packages/components/nodes/vectorstores/Zep/Zep.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Zep Memory - Cloud",
+                "name": "ZepMemoryCloud",
+                "version": 2,
+                "description": "Summarizes the conversation and stores the memory in zep server",
+                "icon": "zep.svg",
+                "category": "Memory",
+                "credential": ["zepMemoryApi"],
+                "filePath": "packages/components/nodes/memory/ZepMemoryCloud/ZepMemoryCloud.ts",
+                "type": "memory"
+            },
+            {
+                "label": "Zep Memory - Open Source",
+                "name": "ZepMemory",
+                "version": 2,
+                "description": "Summarizes the conversation and stores the memory in zep server",
+                "icon": "zep.svg",
+                "category": "Memory",
+                "credential": ["zepMemoryApi"],
+                "filePath": "packages/components/nodes/memory/ZepMemory/ZepMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "youtubeApi": {
+        "credential": {
+            "label": "Youtube API",
+            "name": "youtubeApi",
+            "version": 1,
+            "description": "Provide your Youtube API key more information <a target=",
+            "filePath": "packages/components/credentials/YoutubeApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Youtube MCP",
+                "name": "youtubeMCP",
+                "version": 1,
+                "description": "MCP server that integrates the Youtube API",
+                "icon": "youtube.png",
+                "category": "MCP Servers",
+                "credential": ["youtubeApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Youtube/YoutubeMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "xaiApi": {
+        "credential": {
+            "label": "Xai API",
+            "name": "xaiApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/XaiApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatXAI",
+                "name": "chatXAI",
+                "version": 1,
+                "description": "Wrapper around Grok from XAI",
+                "icon": "xai.png",
+                "category": "Chat Models",
+                "credential": ["xaiApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatXAI/ChatXAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "wolframAlphaAppId": {
+        "credential": {
+            "label": "WolframAlpha App ID",
+            "name": "wolframAlphaAppId",
+            "version": 1,
+            "description": "Get an App Id from <a target=",
+            "filePath": "packages/components/credentials/WolframAlphaApp.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "WolframAlpha",
+                "name": "wolframAlpha",
+                "version": 1,
+                "description": "Wrapper around WolframAlpha - a powerful computational knowledge engine",
+                "icon": "wolframalpha.png",
+                "category": "Tools",
+                "credential": ["wolframAlphaAppId"],
+                "filePath": "packages/components/nodes/tools/WolframAlpha/WolframAlpha.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "weaviateApi": {
+        "credential": {
+            "label": "Weaviate API",
+            "name": "weaviateApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/WeaviateApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Weaviate",
+                "name": "weaviate",
+                "version": 4,
+                "description": "Upsert embedded data and perform similarity or mmr search using Weaviate, a scalable open-source vector database",
+                "icon": "weaviate.png",
+                "category": "Vector Stores",
+                "credential": ["weaviateApi"],
+                "filePath": "packages/components/nodes/vectorstores/Weaviate/Weaviate.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "voyageAIApi": {
+        "credential": {
+            "label": "Voyage AI API",
+            "name": "voyageAIApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/VoyageAIApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "VoyageAI Embeddings",
+                "name": "voyageAIEmbeddings",
+                "version": 2,
+                "description": "Voyage AI API to generate embeddings for a given text",
+                "icon": "voyageai.png",
+                "category": "Embeddings",
+                "credential": ["voyageAIApi"],
+                "filePath": "packages/components/nodes/embeddings/VoyageAIEmbedding/VoyageAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [
+            {
+                "label": "Voyage AI Rerank Retriever",
+                "name": "voyageAIRerankRetriever",
+                "version": 1,
+                "description": "Voyage AI Rerank indexes the documents from most to least semantically relevant to the query.",
+                "icon": "voyageai.png",
+                "category": "Retrievers",
+                "credential": ["voyageAIApi"],
+                "filePath": "packages/components/nodes/retrievers/VoyageAIRetriever/VoyageAIRerankRetriever.ts",
+                "type": "retriever"
+            }
+        ],
+        "memory": []
+    },
+    "vectaraApi": {
+        "credential": {
+            "label": "Vectara API",
+            "name": "vectaraApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/VectaraApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Vectara",
+                "name": "vectara",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity search upon query using Vectara, a LLM-powered search-as-a-service",
+                "icon": "vectara.png",
+                "category": "Vector Stores",
+                "credential": ["vectaraApi"],
+                "filePath": "packages/components/nodes/vectorstores/Vectara/Vectara.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "upstashVectorApi": {
+        "credential": {
+            "label": "Upstash Vector API",
+            "name": "upstashVectorApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/UpstashVectorApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Upstash Vector",
+                "name": "upstash",
+                "version": 2,
+                "description": "Upsert data as embedding or string and perform similarity search with Upstash, the leading serverless data platform",
+                "icon": "upstash.svg",
+                "category": "Vector Stores",
+                "credential": ["upstashVectorApi"],
+                "filePath": "packages/components/nodes/vectorstores/Upstash/Upstash.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "upstashRedisMemoryApi": {
+        "credential": {
+            "label": "Upstash Redis Memory API",
+            "name": "upstashRedisMemoryApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/UpstashRedisMemoryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Upstash Redis-Backed Chat Memory",
+                "name": "upstashRedisBackedChatMemory",
+                "version": 2,
+                "description": "Summarizes the conversation and stores the memory in Upstash Redis server",
+                "icon": "upstash.svg",
+                "category": "Memory",
+                "credential": ["upstashRedisMemoryApi"],
+                "filePath": "packages/components/nodes/memory/UpstashRedisBackedChatMemory/UpstashRedisBackedChatMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "upstashRedisApi": {
+        "credential": {
+            "label": "Upstash Redis API",
+            "name": "upstashRedisApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/UpstashRedisApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "unstructuredApi": {
+        "credential": {
+            "label": "Unstructured API",
+            "name": "unstructuredApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/UnstructuredApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Unstructured Folder Loader",
+                "name": "unstructuredFolderLoader",
+                "version": 3,
+                "description": "Use Unstructured.io to load data from a folder. Note: Currently doesn",
+                "icon": "unstructured-folder.svg",
+                "category": "Document Loaders",
+                "credential": ["unstructuredApi"],
+                "filePath": "packages/components/nodes/documentloaders/Unstructured/UnstructuredFolder.ts",
+                "type": "documentLoader"
+            },
+            {
+                "label": "Unstructured File Loader",
+                "name": "unstructuredFileLoader",
+                "version": 4,
+                "description": "Use Unstructured.io to load data from a file path",
+                "icon": "unstructured-file.svg",
+                "category": "Document Loaders",
+                "credential": ["unstructuredApi"],
+                "filePath": "packages/components/nodes/documentloaders/Unstructured/UnstructuredFile.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "togetherAIApi": {
+        "credential": {
+            "label": "TogetherAI API",
+            "name": "togetherAIApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/TogetherAIApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatTogetherAI",
+                "name": "chatTogetherAI_LlamaIndex",
+                "version": 1,
+                "description": "Wrapper around ChatTogetherAI LLM specific for LlamaIndex",
+                "icon": "togetherai.png",
+                "category": "Chat Models",
+                "credential": ["togetherAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatTogetherAI/ChatTogether_LlamaIndex.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatTogetherAI",
+                "name": "chatTogetherAI",
+                "version": 2,
+                "description": "Wrapper around TogetherAI large language models",
+                "icon": "togetherai.png",
+                "category": "Chat Models",
+                "credential": ["togetherAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatTogetherAI/ChatTogetherAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "TogetherAI",
+                "name": "togetherAI",
+                "version": 1,
+                "description": "Wrapper around TogetherAI large language models",
+                "icon": "togetherai.png",
+                "category": "LLMs",
+                "credential": ["togetherAIApi"],
+                "filePath": "packages/components/nodes/llms/TogetherAI/TogetherAI.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "TogetherAIEmbedding",
+                "name": "togetherAIEmbedding",
+                "version": 1,
+                "description": "TogetherAI Embedding models to generate embeddings for a given text",
+                "icon": "togetherai.png",
+                "category": "Embeddings",
+                "credential": ["togetherAIApi"],
+                "filePath": "packages/components/nodes/embeddings/TogetherAIEmbedding/TogetherAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "tavilyApi": {
+        "credential": {
+            "label": "Tavily API",
+            "name": "tavilyApi",
+            "version": 1.1,
+            "description": "Tavily API is a search engine designed for LLMs and AI agents",
+            "filePath": "packages/components/credentials/TavilyApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Tavily API",
+                "name": "tavilyAPI",
+                "version": 1.2,
+                "description": "Wrapper around TavilyAPI - A specialized search engine designed for LLMs and AI agents",
+                "icon": "tavily.svg",
+                "category": "Tools",
+                "credential": ["tavilyApi"],
+                "filePath": "packages/components/nodes/tools/TavilyAPI/TavilyAPI.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "supabaseApi": {
+        "credential": {
+            "label": "Supabase API",
+            "name": "supabaseApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/SupabaseApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Supabase",
+                "name": "supabase",
+                "version": 4,
+                "description": "Upsert embedded data and perform similarity or mmr search upon query using Supabase via pgvector extension",
+                "icon": "supabase.svg",
+                "category": "Vector Stores",
+                "credential": ["supabaseApi"],
+                "filePath": "packages/components/nodes/vectorstores/Supabase/Supabase.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "stripeApi": {
+        "credential": {
+            "label": "Stripe API",
+            "name": "stripeApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/StripeApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "StripeAgentTool",
+                "name": "stripeAgentTool",
+                "version": 1,
+                "description": "Use Stripe Agent function calling for financial transactions",
+                "icon": "stripe.png",
+                "category": "Tools",
+                "credential": ["stripeApi"],
+                "filePath": "packages/components/nodes/tools/StripeTool/StripeTool.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "spiderApi": {
+        "credential": {
+            "label": "Spider API",
+            "name": "spiderApi",
+            "version": 1,
+            "description": "Get your API key from the <a target=",
+            "filePath": "packages/components/credentials/SpiderApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Spider Document Loaders",
+                "name": "spiderDocumentLoaders",
+                "version": 2,
+                "description": "Scrape & Crawl the web with Spider",
+                "icon": "spider.svg",
+                "category": "Document Loaders",
+                "credential": ["spiderApi"],
+                "filePath": "packages/components/nodes/documentloaders/Spider/Spider.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "slackApi": {
+        "credential": {
+            "label": "Slack API",
+            "name": "slackApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/SlackApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Slack MCP",
+                "name": "slackMCP",
+                "version": 1,
+                "description": "MCP Server for the Slack API",
+                "icon": "slack.svg",
+                "category": "MCP Servers",
+                "credential": ["slackApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Slack/SlackMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "singleStoreApi": {
+        "credential": {
+            "label": "SingleStore API",
+            "name": "singleStoreApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/SingleStoreApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "SingleStore",
+                "name": "singlestore",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity search upon query using SingleStore, a fast and distributed cloud relational database",
+                "icon": "singlestore.svg",
+                "category": "Vector Stores",
+                "credential": ["singleStoreApi"],
+                "filePath": "packages/components/nodes/vectorstores/Singlestore/Singlestore.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "serperApi": {
+        "credential": {
+            "label": "Serper API",
+            "name": "serperApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/SerperApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Serper",
+                "name": "serper",
+                "version": 1,
+                "description": "Wrapper around Serper.dev - Google Search API",
+                "icon": "serper.svg",
+                "category": "Tools",
+                "credential": ["serperApi"],
+                "filePath": "packages/components/nodes/tools/Serper/Serper.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "serpApi": {
+        "credential": {
+            "label": "Serp API",
+            "name": "serpApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/SerpApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "SerpApi For Web Search",
+                "name": "serpApi",
+                "version": 2,
+                "description": "Load and process data from web search results",
+                "icon": "serp.svg",
+                "category": "Document Loaders",
+                "credential": ["serpApi"],
+                "filePath": "packages/components/nodes/documentloaders/SerpApi/SerpAPI.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [
+            {
+                "label": "Serp API",
+                "name": "serpAPI",
+                "version": 1,
+                "description": "Wrapper around SerpAPI - a real-time API to access Google search results",
+                "icon": "serp.svg",
+                "category": "Tools",
+                "credential": ["serpApi"],
+                "filePath": "packages/components/nodes/tools/SerpAPI/SerpAPI.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "searchApi": {
+        "credential": {
+            "label": "Search API",
+            "name": "searchApi",
+            "version": 1,
+            "description": "Sign in to <a target=",
+            "filePath": "packages/components/credentials/SearchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "SearchApi For Web Search",
+                "name": "searchApi",
+                "version": 2,
+                "description": "Load data from real-time search results",
+                "icon": "searchapi.svg",
+                "category": "Document Loaders",
+                "credential": ["searchApi"],
+                "filePath": "packages/components/nodes/documentloaders/SearchApi/SearchAPI.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [
+            {
+                "label": "SearchApi",
+                "name": "searchAPI",
+                "version": 1,
+                "description": "Real-time API for accessing Google Search data",
+                "icon": "searchapi.svg",
+                "category": "Tools",
+                "credential": ["searchApi"],
+                "filePath": "packages/components/nodes/tools/SearchApi/SearchAPI.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "salesforceOAuth": {
+        "credential": {
+            "label": "Salesforce OAuth",
+            "name": "salesforceOAuth",
+            "version": 1,
+            "description": "Salesforce OAuth Credentials",
+            "filePath": "packages/components/credentials/SalesforceOauth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Salesforce OAuth MCP",
+                "name": "salesforceOauthMcp",
+                "version": 1,
+                "description": "MCP server that integrates the Salesforce API using OAuth authentication",
+                "icon": "salesforce.png",
+                "category": "MCP Servers",
+                "credential": ["salesforceOAuth"],
+                "filePath": "packages/components/nodes/tools/MCP/SalesforceOauthMcp/SalesforceOauthMcp.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "salesforceApi": {
+        "credential": {
+            "label": "Salesforce API",
+            "name": "salesforceApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/SFDCApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Salesforce MCP",
+                "name": "sfdcMCP",
+                "version": 1,
+                "description": "MCP server that integrates the Salesforce API",
+                "icon": "sfdc.png",
+                "category": "MCP Servers",
+                "credential": ["salesforceApi"],
+                "filePath": "packages/components/nodes/tools/MCP/SfdcMCP/SfdcMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "replicateApi": {
+        "credential": {
+            "label": "Replicate API",
+            "name": "replicateApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/ReplicateApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [
+            {
+                "label": "Replicate",
+                "name": "replicate",
+                "version": 2,
+                "description": "Use Replicate to run open source models on cloud",
+                "icon": "replicate.svg",
+                "category": "LLMs",
+                "credential": ["replicateApi"],
+                "filePath": "packages/components/nodes/llms/Replicate/Replicate.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "redisCacheUrlApi": {
+        "credential": {
+            "label": "Redis URL",
+            "name": "redisCacheUrlApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/RedisCacheUrlApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Redis",
+                "name": "redis",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity search upon query using Redis, an open source, in-memory data structure store",
+                "icon": "redis.svg",
+                "category": "Vector Stores",
+                "credential": ["redisCacheUrlApi", "redisCacheApi"],
+                "filePath": "packages/components/nodes/vectorstores/Redis/Redis.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Redis-Backed Chat Memory",
+                "name": "RedisBackedChatMemory",
+                "version": 2,
+                "description": "Summarizes the conversation and stores the memory in Redis server",
+                "icon": "redis.svg",
+                "category": "Memory",
+                "credential": ["redisCacheApi", "redisCacheUrlApi"],
+                "filePath": "packages/components/nodes/memory/RedisBackedChatMemory/RedisBackedChatMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "redisCacheApi": {
+        "credential": {
+            "label": "Redis API",
+            "name": "redisCacheApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/RedisCacheApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Redis",
+                "name": "redis",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity search upon query using Redis, an open source, in-memory data structure store",
+                "icon": "redis.svg",
+                "category": "Vector Stores",
+                "credential": ["redisCacheUrlApi", "redisCacheApi"],
+                "filePath": "packages/components/nodes/vectorstores/Redis/Redis.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Redis-Backed Chat Memory",
+                "name": "RedisBackedChatMemory",
+                "version": 2,
+                "description": "Summarizes the conversation and stores the memory in Redis server",
+                "icon": "redis.svg",
+                "category": "Memory",
+                "credential": ["redisCacheApi", "redisCacheUrlApi"],
+                "filePath": "packages/components/nodes/memory/RedisBackedChatMemory/RedisBackedChatMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "qdrantApi": {
+        "credential": {
+            "label": "Qdrant API",
+            "name": "qdrantApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/QdrantApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Qdrant",
+                "name": "qdrant",
+                "version": 5,
+                "description": "Upsert embedded data and perform similarity search upon query using Qdrant, a scalable open source vector database written in Rust",
+                "icon": "qdrant.png",
+                "category": "Vector Stores",
+                "credential": ["qdrantApi"],
+                "filePath": "packages/components/nodes/vectorstores/Qdrant/Qdrant.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "PostgresUrl": {
+        "credential": {
+            "label": "Postgres URL",
+            "name": "PostgresUrl",
+            "version": 1,
+            "filePath": "packages/components/credentials/PostgresUrl.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "PostgreSQL MCP",
+                "name": "postgreSQLMCP",
+                "version": 1,
+                "description": "MCP server that provides read-only access to PostgreSQL databases",
+                "icon": "postgres.svg",
+                "category": "MCP Servers",
+                "credential": ["PostgresUrl"],
+                "filePath": "packages/components/nodes/tools/MCP/PostgreSQL/PostgreSQLMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "PostgresApi": {
+        "credential": {
+            "label": "Postgres API",
+            "name": "PostgresApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/PostgresApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Postgres",
+                "name": "postgres",
+                "version": 7,
+                "description": "Upsert embedded data and perform similarity search upon query using pgvector on Postgres",
+                "icon": "postgres.svg",
+                "category": "Vector Stores",
+                "credential": ["PostgresApi"],
+                "filePath": "packages/components/nodes/vectorstores/Postgres/Postgres.ts",
+                "type": "vectorStore"
+            },
+            {
+                "label": "AAI Vector (Postgres)",
+                "name": "aaiPostgres",
+                "version": 1,
+                "description": "Use Answer Agent Postgres database for vector storage and retrieval with automatic configuration",
+                "icon": "aaipostgres.svg",
+                "category": "Vector Stores",
+                "credential": ["PostgresApi"],
+                "filePath": "packages/components/nodes/vectorstores/AAIPostgres/AAIPostgres.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Agent Memory",
+                "name": "agentMemory",
+                "version": 2,
+                "description": "Memory for agentflow to remember the state of the conversation",
+                "icon": "agentmemory.svg",
+                "category": "Memory",
+                "credential": ["PostgresApi", "MySQLApi"],
+                "filePath": "packages/components/nodes/memory/AgentMemory/AgentMemory.ts",
+                "type": "memory"
+            },
+            {
+                "label": "Postgres Agent Memory",
+                "name": "postgresAgentMemory",
+                "version": 1,
+                "description": "Memory for agentflow to remember the state of the conversation using Postgres database",
+                "icon": "postgres.svg",
+                "category": "Memory",
+                "credential": ["PostgresApi"],
+                "filePath": "packages/components/nodes/memory/AgentMemory/PostgresAgentMemory/PostgresAgentMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "pineconeApi": {
+        "credential": {
+            "label": "Pinecone API",
+            "name": "pineconeApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/PineconeApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Pinecone",
+                "name": "pineconeLlamaIndex",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity search upon query using Pinecone, a leading fully managed hosted vector database",
+                "icon": "pinecone.svg",
+                "category": "Vector Stores",
+                "credential": ["pineconeApi"],
+                "filePath": "packages/components/nodes/vectorstores/Pinecone/Pinecone_LlamaIndex.ts",
+                "type": "vectorStore"
+            },
+            {
+                "label": "Pinecone",
+                "name": "pinecone",
+                "version": 5,
+                "description": "Upsert embedded data and perform similarity or mmr search using Pinecone, a leading fully managed hosted vector database",
+                "icon": "pinecone.svg",
+                "category": "Vector Stores",
+                "credential": ["pineconeApi"],
+                "filePath": "packages/components/nodes/vectorstores/Pinecone/Pinecone.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "phoenixApi": {
+        "credential": {
+            "label": "Phoenix API",
+            "name": "phoenixApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/PhoenixApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "perplexityApi": {
+        "credential": {
+            "label": "Perplexity API",
+            "name": "perplexityApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/PerplexityApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatPerplexity",
+                "name": "chatPerplexity",
+                "version": 0.1,
+                "description": "Wrapper around Perplexity large language models that use the Chat endpoint",
+                "icon": "perplexity.svg",
+                "category": "Chat Models",
+                "credential": ["perplexityApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatPerplexity/ChatPerplexity.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "opikApi": {
+        "credential": {
+            "label": "Opik API",
+            "name": "opikApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/OpikApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "openSearchUrl": {
+        "credential": {
+            "label": "OpenSearch",
+            "name": "openSearchUrl",
+            "version": 2,
+            "filePath": "packages/components/credentials/OpenSearchUrl.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "OpenSearch",
+                "name": "openSearch",
+                "version": 3,
+                "description": "Upsert embedded data and perform similarity search upon query using OpenSearch, an open-source, all-in-one vector database",
+                "icon": "opensearch.svg",
+                "category": "Vector Stores",
+                "credential": ["openSearchUrl"],
+                "filePath": "packages/components/nodes/vectorstores/OpenSearch/OpenSearch.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "openRouterApi": {
+        "credential": {
+            "label": "OpenRouter API Key",
+            "name": "openRouterApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/OpenRouterApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatOpenRouter",
+                "name": "chatOpenRouter",
+                "version": 1,
+                "description": "Wrapper around Open Router Inference API",
+                "icon": "openRouter.svg",
+                "category": "Chat Models",
+                "credential": ["openRouterApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatOpenRouter/ChatOpenRouter.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "openAIApi": {
+        "credential": {
+            "label": "OpenAI API",
+            "name": "openAIApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/OpenAIApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Dall-E Post",
+                "name": "dallePost",
+                "version": 1.1,
+                "description": "Creates an image using Dall-E",
+                "icon": "openai.svg",
+                "category": "Tools",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/tools/CreateDalleImage/CreateDalleImage.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatOpenAI Custom",
+                "name": "chatOpenAICustom",
+                "version": 4,
+                "description": "Custom/FineTuned model using OpenAI Chat compatible API",
+                "icon": "openai.svg",
+                "category": "Chat Models",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatOpenAICustom/ChatOpenAICustom.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatOpenAI",
+                "name": "chatOpenAI_LlamaIndex",
+                "version": 2,
+                "description": "Wrapper around OpenAI Chat LLM specific for LlamaIndex",
+                "icon": "openai.svg",
+                "category": "Chat Models",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatOpenAI/ChatOpenAI_LlamaIndex.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatOpenAI",
+                "name": "chatOpenAI",
+                "version": 8.2,
+                "description": "Wrapper around OpenAI large language models that use the Chat endpoint",
+                "icon": "openai.svg",
+                "category": "Chat Models",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatOpenAI/ChatOpenAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "OpenAI",
+                "name": "openAI",
+                "version": 4,
+                "description": "Wrapper around OpenAI large language models",
+                "icon": "openai.svg",
+                "category": "LLMs",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/llms/OpenAI/OpenAI.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "OpenAI Embedding",
+                "name": "openAIEmbedding_LlamaIndex",
+                "version": 2,
+                "description": "OpenAI Embedding specific for LlamaIndex",
+                "icon": "openai.svg",
+                "category": "Embeddings",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/embeddings/OpenAIEmbedding/OpenAIEmbedding_LlamaIndex.ts",
+                "type": "embedding"
+            },
+            {
+                "label": "OpenAI Embeddings",
+                "name": "openAIEmbeddings",
+                "version": 4,
+                "description": "OpenAI API to generate embeddings for a given text",
+                "icon": "openai.svg",
+                "category": "Embeddings",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/embeddings/OpenAIEmbedding/OpenAIEmbedding.ts",
+                "type": "embedding"
+            },
+            {
+                "label": "OpenAI Embeddings Custom",
+                "name": "openAIEmbeddingsCustom",
+                "version": 3,
+                "description": "OpenAI API to generate embeddings for a given text",
+                "icon": "openai.svg",
+                "category": "Embeddings",
+                "credential": ["openAIApi"],
+                "filePath": "packages/components/nodes/embeddings/OpenAIEmbeddingCustom/OpenAIEmbeddingCustom.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "googleOAuth": {
+        "credential": {
+            "label": "Google OAuth",
+            "name": "googleOAuth",
+            "version": 1,
+            "description": "Google OAuth Credentials",
+            "filePath": "packages/components/credentials/Oauth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Google Drive",
+                "name": "googleDrive",
+                "version": 1,
+                "description": "Load documents from Google Drive",
+                "icon": "drive.svg",
+                "category": "Document Loaders",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/documentloaders/GoogleDrive/GoogleDrive.ts",
+                "type": "documentLoader"
+            },
+            {
+                "label": "Gmail",
+                "name": "gmail",
+                "version": 1,
+                "description": "Load emails from Gmail",
+                "icon": "gmail.svg",
+                "category": "Document Loaders",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/documentloaders/Gmail/Gmail.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [
+            {
+                "label": "Update Google Calendar Event",
+                "name": "updateGoogleCalendar",
+                "version": 1,
+                "description": "Update existing events in Google Calendar",
+                "icon": "google-calendar.svg",
+                "category": "Tools",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/tools/UpdateCalendarEvent/UpdateCalendarEvent.ts",
+                "type": "tool"
+            },
+            {
+                "label": "Retrieve Google Calendar Events",
+                "name": "retrieveGoogleCalendar",
+                "version": 1,
+                "description": "Retrieve events from Google Calendar",
+                "icon": "google-calendar.svg",
+                "category": "Tools",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/tools/RetrieveCalendarEvent/RetrieveCalendarEvent.ts",
+                "type": "tool"
+            },
+            {
+                "label": "Delete Google Calendar Event",
+                "name": "deleteGoogleCalendar",
+                "version": 1,
+                "description": "Delete events from Google Calendar",
+                "icon": "google-calendar.svg",
+                "category": "Tools",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/tools/DeleteCalendarEvent/DeleteCalendarEvent.ts",
+                "type": "tool"
+            },
+            {
+                "label": "Create Google Calendar Event",
+                "name": "createGoogleCalendar",
+                "version": 1,
+                "description": "Create new events in Google Calendar",
+                "icon": "google-calendar.svg",
+                "category": "Tools",
+                "credential": ["googleOAuth"],
+                "filePath": "packages/components/nodes/tools/CreateCalendarEvent/CreateCalendarEvent.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "nvidiaNIMApi": {
+        "credential": {
+            "label": "NVIDIA NGC API Key",
+            "name": "nvidiaNIMApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/NvdiaNIMApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "Chat NVIDIA NIM",
+                "name": "Chat NVIDIA NIM",
+                "version": 1.1,
+                "description": "Wrapper around NVIDIA NIM Inference API",
+                "icon": "nvdia.svg",
+                "category": "Chat Models",
+                "credential": ["nvidiaNIMApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatNvdiaNIM/ChatNvdiaNIM.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "notionApi": {
+        "credential": {
+            "label": "Notion API",
+            "name": "notionApi",
+            "version": 1,
+            "description": "You can find integration token <a target=",
+            "filePath": "packages/components/credentials/NotionApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Notion Page",
+                "name": "notionPage",
+                "version": 2,
+                "description": "Load data from Notion Page (including child pages all as separate documents)",
+                "icon": "notion-page.svg",
+                "category": "Document Loaders",
+                "credential": ["notionApi"],
+                "filePath": "packages/components/nodes/documentloaders/Notion/NotionPage.ts",
+                "type": "documentLoader"
+            },
+            {
+                "label": "Notion Database",
+                "name": "notionDB",
+                "version": 2,
+                "description": "Load data from Notion Database (each row is a separate document with all properties as metadata)",
+                "icon": "notion-db.svg",
+                "category": "Document Loaders",
+                "credential": ["notionApi"],
+                "filePath": "packages/components/nodes/documentloaders/Notion/NotionDB.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "neo4jApi": {
+        "credential": {
+            "label": "Neo4j API",
+            "name": "neo4jApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/Neo4jApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "n8nApi": {
+        "credential": {
+            "label": "N8n API",
+            "name": "n8nApi",
+            "version": 1,
+            "description": "Credentials for N8n API",
+            "filePath": "packages/components/credentials/N8nApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "N8n",
+                "name": "n8n",
+                "version": 1.1,
+                "description": "Execute N8N workflows using webhook triggers",
+                "icon": "N8n.svg",
+                "category": "Tools",
+                "credential": ["n8nApi"],
+                "filePath": "packages/components/nodes/tools/N8n/N8n.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "MySQLApi": {
+        "credential": {
+            "label": "MySQL API",
+            "name": "MySQLApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/MySQLApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Agent Memory",
+                "name": "agentMemory",
+                "version": 2,
+                "description": "Memory for agentflow to remember the state of the conversation",
+                "icon": "agentmemory.svg",
+                "category": "Memory",
+                "credential": ["PostgresApi", "MySQLApi"],
+                "filePath": "packages/components/nodes/memory/AgentMemory/AgentMemory.ts",
+                "type": "memory"
+            },
+            {
+                "label": "MySQL Agent Memory",
+                "name": "mySQLAgentMemory",
+                "version": 1,
+                "description": "Memory for agentflow to remember the state of the conversation using MySQL database",
+                "icon": "mysql.png",
+                "category": "Memory",
+                "credential": ["MySQLApi"],
+                "filePath": "packages/components/nodes/memory/AgentMemory/MySQLAgentMemory/MySQLAgentMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "mongoDBUrlApi": {
+        "credential": {
+            "label": "MongoDB ATLAS",
+            "name": "mongoDBUrlApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/MongoDBUrlApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "MongoDB Atlas",
+                "name": "mongoDBAtlas",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity or mmr search upon query using MongoDB Atlas, a managed cloud mongodb database",
+                "icon": "mongodb.svg",
+                "category": "Vector Stores",
+                "credential": ["mongoDBUrlApi"],
+                "filePath": "packages/components/nodes/vectorstores/MongoDBAtlas/MongoDBAtlas.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "MongoDB Atlas Chat Memory",
+                "name": "MongoDBAtlasChatMemory",
+                "version": 1,
+                "description": "Stores the conversation in MongoDB Atlas",
+                "icon": "mongodb.svg",
+                "category": "Memory",
+                "credential": ["mongoDBUrlApi"],
+                "filePath": "packages/components/nodes/memory/MongoDBMemory/MongoDBMemory.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "momentoCacheApi": {
+        "credential": {
+            "label": "Momento Cache API",
+            "name": "momentoCacheApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/MomentoCacheApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "mistralAIApi": {
+        "credential": {
+            "label": "MistralAI API",
+            "name": "mistralAIApi",
+            "version": 1,
+            "description": "You can get your API key from official <a target=",
+            "filePath": "packages/components/credentials/MistralApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatMistral",
+                "name": "chatMistral_LlamaIndex",
+                "version": 1,
+                "description": "Wrapper around ChatMistral LLM specific for LlamaIndex",
+                "icon": "MistralAI.svg",
+                "category": "Chat Models",
+                "credential": ["mistralAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatMistral/ChatMistral_LlamaIndex.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatMistralAI",
+                "name": "chatMistralAI",
+                "version": 4,
+                "description": "Wrapper around Mistral large language models that use the Chat endpoint",
+                "icon": "MistralAI.svg",
+                "category": "Chat Models",
+                "credential": ["mistralAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatMistral/ChatMistral.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "MistralAI Embeddings",
+                "name": "mistralAIEmbeddings",
+                "version": 2,
+                "description": "MistralAI API to generate embeddings for a given text",
+                "icon": "MistralAI.svg",
+                "category": "Embeddings",
+                "credential": ["mistralAIApi"],
+                "filePath": "packages/components/nodes/embeddings/MistralEmbedding/MistralEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "milvusAuth": {
+        "credential": {
+            "label": "Milvus Auth",
+            "name": "milvusAuth",
+            "version": 1,
+            "description": "You can find the Milvus Authentication from <a target=",
+            "filePath": "packages/components/credentials/MilvusAuth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Milvus",
+                "name": "milvus",
+                "version": 2.1,
+                "description": "Upsert embedded data and perform similarity search upon query using Milvus, world",
+                "icon": "milvus.svg",
+                "category": "Vector Stores",
+                "credential": ["milvusAuth"],
+                "filePath": "packages/components/nodes/vectorstores/Milvus/Milvus.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "mem0MemoryApi": {
+        "credential": {
+            "label": "Mem0 Memory API",
+            "name": "mem0MemoryApi",
+            "version": 1,
+            "description": "Visit <a target=",
+            "filePath": "packages/components/credentials/Mem0MemoryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "Mem0",
+                "name": "mem0",
+                "version": 1.1,
+                "description": "Stores and manages chat memory using Mem0 service",
+                "icon": "mem0.svg",
+                "category": "Memory",
+                "credential": ["mem0MemoryApi"],
+                "filePath": "packages/components/nodes/memory/Mem0/Mem0.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "meilisearchApi": {
+        "credential": {
+            "label": "Meilisearch API",
+            "name": "meilisearchApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/MeilisearchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Meilisearch",
+                "name": "meilisearch",
+                "version": 1,
+                "description": "Upsert embedded data and perform similarity search upon query using Meilisearch hybrid search functionality",
+                "icon": "Meilisearch.png",
+                "category": "Vector Stores",
+                "credential": ["meilisearchApi"],
+                "filePath": "packages/components/nodes/vectorstores/Meilisearch/Meilisearch.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "makeComApi": {
+        "credential": {
+            "label": "Make.Com API",
+            "name": "makeComApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/MakeComApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "MakeComWebhook",
+                "name": "makeComWebhook",
+                "version": 1,
+                "description": "Execute MakeComWebhook webhook triggers",
+                "icon": "makecom.svg",
+                "category": "Tools",
+                "credential": ["makeComApi"],
+                "filePath": "packages/components/nodes/tools/MakeComWebhook/MakeComWebhook.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "lunaryApi": {
+        "credential": {
+            "label": "Lunary AI",
+            "name": "lunaryApi",
+            "version": 1,
+            "description": "Refer to the <a target=",
+            "filePath": "packages/components/credentials/LunaryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "localAIApi": {
+        "credential": {
+            "label": "LocalAI API",
+            "name": "localAIApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/LocalAIApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatLocalAI",
+                "name": "chatLocalAI",
+                "version": 3,
+                "description": "Use local LLMs like llama.cpp, gpt4all using LocalAI",
+                "icon": "localai.png",
+                "category": "Chat Models",
+                "credential": ["localAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatLocalAI/ChatLocalAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "LocalAI Embeddings",
+                "name": "localAIEmbeddings",
+                "version": 1,
+                "description": "Use local embeddings models like llama.cpp",
+                "icon": "localai.png",
+                "category": "Embeddings",
+                "credential": ["localAIApi"],
+                "filePath": "packages/components/nodes/embeddings/LocalAIEmbedding/LocalAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "litellmApi": {
+        "credential": {
+            "label": "Litellm API",
+            "name": "litellmApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/LitellmApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatLitellm",
+                "name": "chatLitellm",
+                "version": 1,
+                "description": "Connect to a Litellm server using OpenAI-compatible API",
+                "icon": "litellm.jpg",
+                "category": "Chat Models",
+                "credential": ["litellmApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatLitellm/ChatLitellm.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "linearApi": {
+        "credential": {
+            "label": "Linear API",
+            "name": "linearApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/LinearApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Linear MCP",
+                "name": "linearMCP",
+                "version": 1,
+                "description": "MCP Server for the Linear API - manage issues, projects, and teams",
+                "icon": "linear.svg",
+                "category": "MCP Servers",
+                "credential": ["linearApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Linear/LinearMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "langsmithApi": {
+        "credential": {
+            "label": "Langsmith API",
+            "name": "langsmithApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/LangsmithApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "langfuseApi": {
+        "credential": {
+            "label": "Langfuse API",
+            "name": "langfuseApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/LangfuseApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "langwatchApi": {
+        "credential": {
+            "label": "LangWatch API",
+            "name": "langwatchApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/LangWatchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "jlincApi": {
+        "credential": {
+            "label": "JLINC API",
+            "name": "jlincApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/JlincApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "JiraApi": {
+        "credential": {
+            "label": "Jira API",
+            "name": "JiraApi",
+            "version": 1,
+            "description": "Create an API token by going to <a target=",
+            "filePath": "packages/components/credentials/JiraApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Jira MCP",
+                "name": "jiraMCP",
+                "version": 1,
+                "description": "MCP server that integrates the Jira API",
+                "icon": "jira.svg",
+                "category": "MCP Servers",
+                "credential": ["JiraApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Jira/JiraMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "jinaAIApi": {
+        "credential": {
+            "label": "JinaAI API",
+            "name": "jinaAIApi",
+            "version": 1,
+            "description": "You can get your API key from official <a target=",
+            "filePath": "packages/components/credentials/JinaApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "Jina Embeddings",
+                "name": "jinaEmbeddings",
+                "version": 3,
+                "description": "JinaAI API to generate embeddings for a given text",
+                "icon": "JinaAIEmbedding.svg",
+                "category": "Embeddings",
+                "credential": ["jinaAIApi"],
+                "filePath": "packages/components/nodes/embeddings/JinaAIEmbedding/JinaAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [
+            {
+                "label": "Jina AI Rerank Retriever",
+                "name": "JinaRerankRetriever",
+                "version": 1,
+                "description": "Jina AI Rerank indexes the documents from most to least semantically relevant to the query.",
+                "icon": "JinaAI.svg",
+                "category": "Retrievers",
+                "credential": ["jinaAIApi"],
+                "filePath": "packages/components/nodes/retrievers/JinaRerankRetriever/JinaRerankRetriever.ts",
+                "type": "retriever"
+            }
+        ],
+        "memory": []
+    },
+    "ibmWatsonx": {
+        "credential": {
+            "label": "IBM Watsonx",
+            "name": "ibmWatsonx",
+            "version": 1,
+            "filePath": "packages/components/credentials/IBMWatsonx.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatIBMWatsonx",
+                "name": "chatIBMWatsonx",
+                "version": 2,
+                "description": "Wrapper around IBM watsonx.ai foundation models",
+                "icon": "ibm.png",
+                "category": "Chat Models",
+                "credential": ["ibmWatsonx"],
+                "filePath": "packages/components/nodes/chatmodels/ChatIBMWatsonx/ChatIBMWatsonx.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "IBMWatsonx",
+                "name": "ibmWatsonx",
+                "version": 1,
+                "description": "Wrapper around IBM watsonx.ai foundation models",
+                "icon": "ibm.png",
+                "category": "LLMs",
+                "credential": ["ibmWatsonx"],
+                "filePath": "packages/components/nodes/llms/IBMWatsonx/IBMWatsonx.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "IBM Watsonx Embeddings",
+                "name": "ibmEmbedding",
+                "version": 1,
+                "description": "Generate embeddings for a given text using open source model on IBM Watsonx",
+                "icon": "ibm.png",
+                "category": "Embeddings",
+                "credential": ["ibmWatsonx"],
+                "filePath": "packages/components/nodes/embeddings/IBMWatsonxEmbedding/IBMWatsonxEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "huggingFaceApi": {
+        "credential": {
+            "label": "HuggingFace API",
+            "name": "huggingFaceApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/HuggingFaceApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatHuggingFace",
+                "name": "chatHuggingFace",
+                "version": 3,
+                "description": "Wrapper around HuggingFace large language models",
+                "icon": "HuggingFace.svg",
+                "category": "Chat Models",
+                "credential": ["huggingFaceApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatHuggingFace/ChatHuggingFace.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "HuggingFace Inference",
+                "name": "huggingFaceInference_LLMs",
+                "version": 2,
+                "description": "Wrapper around HuggingFace large language models",
+                "icon": "HuggingFace.svg",
+                "category": "LLMs",
+                "credential": ["huggingFaceApi"],
+                "filePath": "packages/components/nodes/llms/HuggingFaceInference/HuggingFaceInference.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "HuggingFace Inference Embeddings",
+                "name": "huggingFaceInferenceEmbeddings",
+                "version": 1,
+                "description": "HuggingFace Inference API to generate embeddings for a given text",
+                "icon": "HuggingFace.svg",
+                "category": "Embeddings",
+                "credential": ["huggingFaceApi"],
+                "filePath": "packages/components/nodes/embeddings/HuggingFaceInferenceEmbedding/HuggingFaceInferenceEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "httpBearerToken": {
+        "credential": {
+            "label": "HTTP Bearer Token",
+            "name": "httpBearerToken",
+            "version": 1,
+            "filePath": "packages/components/credentials/HTTPBearerToken.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "httpBasicAuth": {
+        "credential": {
+            "label": "HTTP Basic Auth",
+            "name": "httpBasicAuth",
+            "version": 1,
+            "filePath": "packages/components/credentials/HTTPBasicAuth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "httpApiKey": {
+        "credential": {
+            "label": "HTTP Api Key",
+            "name": "httpApiKey",
+            "version": 1,
+            "filePath": "packages/components/credentials/HTTPApiKey.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "groqApi": {
+        "credential": {
+            "label": "Groq API",
+            "name": "groqApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/GroqApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "GroqChat",
+                "name": "groqChat",
+                "version": 4,
+                "description": "Wrapper around Groq API with LPU Inference Engine",
+                "icon": "groq.png",
+                "category": "Chat Models",
+                "credential": ["groqApi"],
+                "filePath": "packages/components/nodes/chatmodels/Groq/Groq.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatGroq",
+                "name": "chatGroq_LlamaIndex",
+                "version": 1,
+                "description": "Wrapper around Groq LLM specific for LlamaIndex",
+                "icon": "groq.png",
+                "category": "Chat Models",
+                "credential": ["groqApi"],
+                "filePath": "packages/components/nodes/chatmodels/Groq/ChatGroq_LlamaIndex.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "googleCustomSearchApi": {
+        "credential": {
+            "label": "Google Custom Search API",
+            "name": "googleCustomSearchApi",
+            "version": 1,
+            "description": "Please refer to the <a target=",
+            "filePath": "packages/components/credentials/GoogleSearchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Google Custom Search",
+                "name": "googleCustomSearch",
+                "version": 1,
+                "description": "Wrapper around Google Custom Search API - a real-time API to access Google search results",
+                "icon": "google.svg",
+                "category": "Tools",
+                "credential": ["googleCustomSearchApi"],
+                "filePath": "packages/components/nodes/tools/GoogleSearchAPI/GoogleSearchAPI.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "googleMakerSuite": {
+        "credential": {
+            "label": "Google MakerSuite",
+            "name": "googleMakerSuite",
+            "version": 1,
+            "description": "Use the <a target=",
+            "filePath": "packages/components/credentials/GoogleMakerSuite.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "googleGenerativeAI": {
+        "credential": {
+            "label": "Google Generative AI",
+            "name": "googleGenerativeAI",
+            "version": 1,
+            "description": "You can get your API key from official <a target=",
+            "filePath": "packages/components/credentials/GoogleGenerativeAI.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatGoogleGenerativeAI",
+                "name": "chatGoogleGenerativeAI",
+                "version": 3,
+                "description": "Wrapper around Google Gemini large language models that use the Chat endpoint",
+                "icon": "GoogleGemini.svg",
+                "category": "Chat Models",
+                "credential": ["googleGenerativeAI"],
+                "filePath": "packages/components/nodes/chatmodels/ChatGoogleGenerativeAI/ChatGoogleGenerativeAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "GoogleGenerativeAI Embeddings",
+                "name": "googleGenerativeAiEmbeddings",
+                "version": 2,
+                "description": "Google Generative API to generate embeddings for a given text",
+                "icon": "GoogleGemini.svg",
+                "category": "Embeddings",
+                "credential": ["googleGenerativeAI"],
+                "filePath": "packages/components/nodes/embeddings/GoogleGenerativeAIEmbedding/GoogleGenerativeAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "googleVertexAuth": {
+        "credential": {
+            "label": "Google Vertex Auth",
+            "name": "googleVertexAuth",
+            "version": 1,
+            "filePath": "packages/components/credentials/GoogleAuth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatGoogleVertexAI",
+                "name": "chatGoogleVertexAI",
+                "version": 5.1,
+                "description": "Wrapper around VertexAI large language models that use the Chat endpoint",
+                "icon": "GoogleVertex.svg",
+                "category": "Chat Models",
+                "credential": ["googleVertexAuth"],
+                "filePath": "packages/components/nodes/chatmodels/ChatGoogleVertexAI/ChatGoogleVertexAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "GoogleVertexAI",
+                "name": "googlevertexai",
+                "version": 3,
+                "description": "Wrapper around GoogleVertexAI large language models",
+                "icon": "GoogleVertex.svg",
+                "category": "LLMs",
+                "credential": ["googleVertexAuth"],
+                "filePath": "packages/components/nodes/llms/GoogleVertexAI/GoogleVertexAI.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "GoogleVertexAI Embeddings",
+                "name": "googlevertexaiEmbeddings",
+                "version": 2,
+                "description": "Google vertexAI API to generate embeddings for a given text",
+                "icon": "GoogleVertex.svg",
+                "category": "Embeddings",
+                "credential": ["googleVertexAuth"],
+                "filePath": "packages/components/nodes/embeddings/GoogleVertexAIEmbedding/GoogleVertexAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "githubApi": {
+        "credential": {
+            "label": "Github API",
+            "name": "githubApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/GithubApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Github",
+                "name": "github",
+                "version": 3,
+                "description": "Load data from a GitHub repository",
+                "icon": "github.svg",
+                "category": "Document Loaders",
+                "credential": ["githubApi"],
+                "filePath": "packages/components/nodes/documentloaders/Github/Github.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Github MCP",
+                "name": "githubMCP",
+                "version": 1,
+                "description": "MCP Server for the GitHub API",
+                "icon": "github.svg",
+                "category": "MCP Servers",
+                "credential": ["githubApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Github/GithubMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "gammaApi": {
+        "credential": {
+            "label": "Gamma API",
+            "name": "gammaApi",
+            "version": 1,
+            "description": "Authentication for Gamma public API. Provide your API key.",
+            "filePath": "packages/components/credentials/GammaApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Gamma",
+                "name": "gamma",
+                "version": 1,
+                "description": "Generate Gamma presentations, documents, or social content via Gamma API",
+                "icon": "gamma.svg",
+                "category": "Tools",
+                "credential": ["gammaApi"],
+                "filePath": "packages/components/nodes/tools/Gamma/Gamma.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "fireworksApi": {
+        "credential": {
+            "label": "Fireworks API",
+            "name": "fireworksApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/FireworksApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatFireworks",
+                "name": "chatFireworks",
+                "version": 2,
+                "description": "Wrapper around Fireworks Chat Endpoints",
+                "icon": "Fireworks.png",
+                "category": "Chat Models",
+                "credential": ["fireworksApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatFireworks/ChatFireworks.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "Fireworks",
+                "name": "fireworks",
+                "version": 1,
+                "description": "Wrapper around Fireworks API for large language models",
+                "icon": "fireworks.png",
+                "category": "LLMs",
+                "credential": ["fireworksApi"],
+                "filePath": "packages/components/nodes/llms/Fireworks/Fireworks.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "fireCrawlApi": {
+        "credential": {
+            "label": "FireCrawl API",
+            "name": "fireCrawlApi",
+            "version": 2,
+            "description": "You can find the FireCrawl API token on your <a target=",
+            "filePath": "packages/components/credentials/FireCrawlApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "FireCrawl",
+                "name": "fireCrawl",
+                "version": 2.1,
+                "description": "Load data from URL using FireCrawl",
+                "icon": "firecrawl.png",
+                "category": "Document Loaders",
+                "credential": ["fireCrawlApi"],
+                "filePath": "packages/components/nodes/documentloaders/FireCrawl/FireCrawl.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "figmaApi": {
+        "credential": {
+            "label": "Figma API",
+            "name": "figmaApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/FigmaApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Figma",
+                "name": "figma",
+                "version": 2,
+                "description": "Load data from a Figma file",
+                "icon": "figma.svg",
+                "category": "Document Loaders",
+                "credential": ["figmaApi"],
+                "filePath": "packages/components/nodes/documentloaders/Figma/Figma.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "exaSearchApi": {
+        "credential": {
+            "label": "Exa Search API",
+            "name": "exaSearchApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ExaSearchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Exa Search",
+                "name": "exaSearch",
+                "version": 1.1,
+                "description": "Wrapper around Exa Search API - search engine fully designed for use by LLMs",
+                "icon": "exa.svg",
+                "category": "Tools",
+                "credential": ["exaSearchApi"],
+                "filePath": "packages/components/nodes/tools/ExaSearch/ExaSearch.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "elasticSearchUserPassword": {
+        "credential": {
+            "label": "ElasticSearch User Password",
+            "name": "elasticSearchUserPassword",
+            "version": 1,
+            "description": "Use Cloud ID field to enter your Elastic Cloud ID or the URL of the Elastic server instance.\n        Refer to <a target=",
+            "filePath": "packages/components/credentials/ElectricsearchUserPassword.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Elasticsearch",
+                "name": "elasticsearch",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity search upon query using Elasticsearch, a distributed search and analytics engine",
+                "icon": "elasticsearch.png",
+                "category": "Vector Stores",
+                "credential": ["elasticsearchApi", "elasticSearchUserPassword"],
+                "filePath": "packages/components/nodes/vectorstores/Elasticsearch/Elasticsearch.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "elasticsearchApi": {
+        "credential": {
+            "label": "Elasticsearch API",
+            "name": "elasticsearchApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ElasticsearchAPI.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Elasticsearch",
+                "name": "elasticsearch",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity search upon query using Elasticsearch, a distributed search and analytics engine",
+                "icon": "elasticsearch.png",
+                "category": "Vector Stores",
+                "credential": ["elasticsearchApi", "elasticSearchUserPassword"],
+                "filePath": "packages/components/nodes/vectorstores/Elasticsearch/Elasticsearch.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "E2BApi": {
+        "credential": {
+            "label": "E2B API",
+            "name": "E2BApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/E2B.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Code Interpreter by E2B",
+                "name": "codeInterpreterE2B",
+                "version": 1,
+                "description": "Execute code in a sandbox environment",
+                "icon": "e2b.png",
+                "category": "Tools",
+                "credential": ["E2BApi"],
+                "filePath": "packages/components/nodes/tools/CodeInterpreterE2B/CodeInterpreterE2B.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "dynamodbMemoryApi": {
+        "credential": {
+            "label": "DynamodbMemory API",
+            "name": "dynamodbMemoryApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/DynamodbMemoryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": [
+            {
+                "label": "DynamoDB Chat Memory",
+                "name": "DynamoDBChatMemory",
+                "version": 1,
+                "description": "Stores the conversation in dynamo db table",
+                "icon": "dynamodb.svg",
+                "category": "Memory",
+                "credential": ["dynamodbMemoryApi"],
+                "filePath": "packages/components/nodes/memory/DynamoDb/DynamoDb.ts",
+                "type": "memory"
+            }
+        ]
+    },
+    "deepseekApi": {
+        "credential": {
+            "label": "DeepseekAI API",
+            "name": "deepseekApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/DeepseekApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatDeepseek",
+                "name": "chatDeepseek",
+                "version": 1,
+                "description": "Wrapper around Deepseek large language models that use the Chat endpoint",
+                "icon": "deepseek.svg",
+                "category": "Chat Models",
+                "credential": ["deepseekApi"],
+                "filePath": "packages/components/nodes/chatmodels/Deepseek/Deepseek.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "couchbaseApi": {
+        "credential": {
+            "label": "Couchbase API",
+            "name": "couchbaseApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/CouchbaseApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Couchbase",
+                "name": "couchbase",
+                "version": 1,
+                "description": "Upsert embedded data and load existing index using Couchbase, a award-winning distributed NoSQL database",
+                "icon": "couchbase.svg",
+                "category": "Vector Stores",
+                "credential": ["couchbaseApi"],
+                "filePath": "packages/components/nodes/vectorstores/Couchbase/Couchbase.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "contentfulManagementApi": {
+        "credential": {
+            "label": "Contentful Management API",
+            "name": "contentfulManagementApi",
+            "version": 1.1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ContentfulManagementApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Contentful MCP",
+                "name": "contentfulMCP",
+                "version": 1,
+                "description": "MCP Server for the Contentful API",
+                "icon": "contentful.svg",
+                "category": "MCP Servers",
+                "credential": ["contentfulManagementApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Contentful/ContentfulMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "contentfulDeliveryApi": {
+        "credential": {
+            "label": "Contentful Delivery API",
+            "name": "contentfulDeliveryApi",
+            "version": 1.1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ContentfulDeliveryApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Contentful",
+                "name": "contentful",
+                "version": 1.1,
+                "description": "Load data from a Contentful Space",
+                "icon": "contentful.png",
+                "category": "Document Loaders",
+                "credential": ["contentfulDeliveryApi"],
+                "filePath": "packages/components/nodes/documentloaders/Contentful/Contentful.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "confluenceServerDCApi": {
+        "credential": {
+            "label": "Confluence Server/Data Center API",
+            "name": "confluenceServerDCApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ConfluenceServerDCApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Confluence",
+                "name": "confluence",
+                "version": 2,
+                "description": "Load data from a Confluence Document",
+                "icon": "confluence.svg",
+                "category": "Document Loaders",
+                "credential": ["confluenceCloudApi", "confluenceServerDCApi"],
+                "filePath": "packages/components/nodes/documentloaders/Confluence/Confluence.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "confluenceCloudApi": {
+        "credential": {
+            "label": "Confluence Cloud API",
+            "name": "confluenceCloudApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ConfluenceCloudApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Confluence",
+                "name": "confluence",
+                "version": 2,
+                "description": "Load data from a Confluence Document",
+                "icon": "confluence.svg",
+                "category": "Document Loaders",
+                "credential": ["confluenceCloudApi", "confluenceServerDCApi"],
+                "filePath": "packages/components/nodes/documentloaders/Confluence/Confluence.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Confluence MCP",
+                "name": "confluenceMCP",
+                "version": 1,
+                "description": "MCP server that integrates the Confluence API",
+                "icon": "confluence.svg",
+                "category": "MCP Servers",
+                "credential": ["confluenceCloudApi"],
+                "filePath": "packages/components/nodes/tools/MCP/Confluence/ConfluenceMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "composioApi": {
+        "credential": {
+            "label": "Composio API",
+            "name": "composioApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/ComposioApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Composio",
+                "name": "composio",
+                "version": 2,
+                "description": "Toolset with over 250+ Apps for building AI-powered applications",
+                "icon": "composio.svg",
+                "category": "Tools",
+                "credential": ["composioApi"],
+                "filePath": "packages/components/nodes/tools/Composio/Composio.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "cohereApi": {
+        "credential": {
+            "label": "Cohere API",
+            "name": "cohereApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/CohereApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatCohere",
+                "name": "chatCohere",
+                "version": 2,
+                "description": "Wrapper around Cohere Chat Endpoints",
+                "icon": "Cohere.svg",
+                "category": "Chat Models",
+                "credential": ["cohereApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatCohere/ChatCohere.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "Cohere",
+                "name": "cohere",
+                "version": 3,
+                "description": "Wrapper around Cohere large language models",
+                "icon": "Cohere.svg",
+                "category": "LLMs",
+                "credential": ["cohereApi"],
+                "filePath": "packages/components/nodes/llms/Cohere/Cohere.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "Cohere Embeddings",
+                "name": "cohereEmbeddings",
+                "version": 3,
+                "description": "Cohere API to generate embeddings for a given text",
+                "icon": "Cohere.svg",
+                "category": "Embeddings",
+                "credential": ["cohereApi"],
+                "filePath": "packages/components/nodes/embeddings/CohereEmbedding/CohereEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [
+            {
+                "label": "Cohere Rerank Retriever",
+                "name": "cohereRerankRetriever",
+                "version": 1,
+                "description": "Cohere Rerank indexes the documents from most to least semantically relevant to the query.",
+                "icon": "Cohere.svg",
+                "category": "Retrievers",
+                "credential": ["cohereApi"],
+                "filePath": "packages/components/nodes/retrievers/CohereRerankRetriever/CohereRerankRetriever.ts",
+                "type": "retriever"
+            }
+        ],
+        "memory": []
+    },
+    "chromaApi": {
+        "credential": {
+            "label": "Chroma API",
+            "name": "chromaApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/ChromaApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Chroma",
+                "name": "chroma",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity search upon query using Chroma, an open-source embedding database",
+                "icon": "chroma.svg",
+                "category": "Vector Stores",
+                "credential": ["chromaApi"],
+                "filePath": "packages/components/nodes/vectorstores/Chroma/Chroma.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "chatflowApi": {
+        "credential": {
+            "label": "Chatflow API",
+            "name": "chatflowApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/ChatflowApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [
+            {
+                "label": "Chatflow Tool",
+                "name": "ChatflowTool",
+                "version": 5,
+                "description": "Use as a tool to execute another chatflow",
+                "icon": "chatflowTool.svg",
+                "category": "Tools",
+                "credential": ["chatflowApi"],
+                "filePath": "packages/components/nodes/tools/ChatflowTool/ChatflowTool.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "cerebrasAIApi": {
+        "credential": {
+            "label": "Cerebras API Key",
+            "name": "cerebrasAIApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/CerebrasApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatCerebras",
+                "name": "chatCerebras",
+                "version": 2,
+                "description": "Wrapper around Cerebras Inference API",
+                "icon": "cerebras.png",
+                "category": "Chat Models",
+                "credential": ["cerebrasAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatCerebras/ChatCerebras.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "braveSearchApi": {
+        "credential": {
+            "label": "Brave Search API",
+            "name": "braveSearchApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/BraveSearchApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "BraveSearch API Document Loader",
+                "name": "braveSearchApiLoader",
+                "version": 2,
+                "description": "Load and process data from BraveSearch results",
+                "icon": "brave.svg",
+                "category": "Document Loaders",
+                "credential": ["braveSearchApi"],
+                "filePath": "packages/components/nodes/documentloaders/BraveSearchAPI/BraveSearchAPI.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [
+            {
+                "label": "BraveSearch API",
+                "name": "braveSearchAPI",
+                "version": 1,
+                "description": "Wrapper around BraveSearch API - a real-time API to access Brave search results",
+                "icon": "brave.svg",
+                "category": "Tools",
+                "credential": ["braveSearchApi"],
+                "filePath": "packages/components/nodes/tools/BraveSearchAPI/BraveSearchAPI.ts",
+                "type": "tool"
+            }
+        ],
+        "mcpServers": [
+            {
+                "label": "Brave Search MCP",
+                "name": "braveSearchMCP",
+                "version": 1,
+                "description": "MCP server that integrates the Brave Search API - a real-time API to access web search capabilities",
+                "icon": "brave.svg",
+                "category": "MCP Servers",
+                "credential": ["braveSearchApi"],
+                "filePath": "packages/components/nodes/tools/MCP/BraveSearch/BraveSearchMCP.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "baiduQianfanApi": {
+        "credential": {
+            "label": "Baidu Qianfan API",
+            "name": "baiduQianfanApi",
+            "version": 2,
+            "filePath": "packages/components/credentials/BaiduApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatBaiduWenxin",
+                "name": "chatBaiduWenxin",
+                "version": 2,
+                "description": "Wrapper around BaiduWenxin Chat Endpoints",
+                "icon": "baiduwenxin.svg",
+                "category": "Chat Models",
+                "credential": ["baiduQianfanApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatBaiduWenxin/ChatBaiduWenxin.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "azureOpenAIApi": {
+        "credential": {
+            "label": "Azure OpenAI API",
+            "name": "azureOpenAIApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/AzureOpenAIApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "AzureChatOpenAI",
+                "name": "azureChatOpenAI_LlamaIndex",
+                "version": 2,
+                "description": "Wrapper around Azure OpenAI Chat LLM specific for LlamaIndex",
+                "icon": "Azure.svg",
+                "category": "Chat Models",
+                "credential": ["azureOpenAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/AzureChatOpenAI/AzureChatOpenAI_LlamaIndex.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "Azure ChatOpenAI",
+                "name": "azureChatOpenAI",
+                "version": 7,
+                "description": "Wrapper around Azure OpenAI large language models that use the Chat endpoint",
+                "icon": "Azure.svg",
+                "category": "Chat Models",
+                "credential": ["azureOpenAIApi"],
+                "filePath": "packages/components/nodes/chatmodels/AzureChatOpenAI/AzureChatOpenAI.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "Azure OpenAI",
+                "name": "azureOpenAI",
+                "version": 4,
+                "description": "Wrapper around Azure OpenAI large language models",
+                "icon": "Azure.svg",
+                "category": "LLMs",
+                "credential": ["azureOpenAIApi"],
+                "filePath": "packages/components/nodes/llms/Azure OpenAI/AzureOpenAI.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "Azure OpenAI Embeddings",
+                "name": "azureOpenAIEmbeddingsLlamaIndex",
+                "version": 1,
+                "description": "Azure OpenAI API embeddings specific for LlamaIndex",
+                "icon": "Azure.svg",
+                "category": "Embeddings",
+                "credential": ["azureOpenAIApi"],
+                "filePath": "packages/components/nodes/embeddings/AzureOpenAIEmbedding/AzureOpenAIEmbedding_LlamaIndex.ts",
+                "type": "embedding"
+            },
+            {
+                "label": "Azure OpenAI Embeddings",
+                "name": "azureOpenAIEmbeddings",
+                "version": 2,
+                "description": "Azure OpenAI API to generate embeddings for a given text",
+                "icon": "Azure.svg",
+                "category": "Embeddings",
+                "credential": ["azureOpenAIApi"],
+                "filePath": "packages/components/nodes/embeddings/AzureOpenAIEmbedding/AzureOpenAIEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "azureCognitiveServices": {
+        "credential": {
+            "label": "Azure Cognitive Services",
+            "name": "azureCognitiveServices",
+            "version": 1,
+            "filePath": "packages/components/credentials/AzureCognitiveServices.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "atlassianOAuth": {
+        "credential": {
+            "label": "Atlassian OAuth",
+            "name": "atlassianOAuth",
+            "version": 1,
+            "description": "Atlassian OAuth Credentials for JIRA and Confluence",
+            "filePath": "packages/components/credentials/AtlassianOauth.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [
+            {
+                "label": "Atlassian MCP",
+                "name": "atlassianMcp",
+                "version": 1,
+                "description": "MCP server that integrates with Atlassian JIRA and Confluence using OAuth authentication",
+                "icon": "atlassian.svg",
+                "category": "MCP Servers",
+                "credential": ["atlassianOAuth"],
+                "filePath": "packages/components/nodes/tools/MCP/Atlassian/AtlassianMcp.ts",
+                "type": "mcp"
+            }
+        ],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "AstraDBApi": {
+        "credential": {
+            "label": "Astra DB API",
+            "name": "AstraDBApi",
+            "version": 2,
+            "filePath": "packages/components/credentials/AstraApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [
+            {
+                "label": "Astra",
+                "name": "Astra",
+                "version": 2,
+                "description": "Upsert embedded data and perform similarity or mmr search upon query using DataStax Astra DB, a serverless vector database that’s perfect for managing mission-critical AI workloads",
+                "icon": "astra.svg",
+                "category": "Vector Stores",
+                "credential": ["AstraDBApi"],
+                "filePath": "packages/components/nodes/vectorstores/Astra/Astra.ts",
+                "type": "vectorStore"
+            }
+        ],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "assemblyAIApi": {
+        "credential": {
+            "label": "AssemblyAI API",
+            "name": "assemblyAIApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/AssemblyAI.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "arizeApi": {
+        "credential": {
+            "label": "Arize API",
+            "name": "arizeApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/ArizeApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "apifyApi": {
+        "credential": {
+            "label": "Apify API",
+            "name": "apifyApi",
+            "version": 1,
+            "description": "You can find the Apify API token on your <a target=",
+            "filePath": "packages/components/credentials/ApifyApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Apify Website Content Crawler",
+                "name": "apifyWebsiteContentCrawler",
+                "version": 3,
+                "description": "Load data from Apify Website Content Crawler",
+                "icon": "apify-symbol-transparent.svg",
+                "category": "Document Loaders",
+                "credential": ["apifyApi"],
+                "filePath": "packages/components/nodes/documentloaders/ApifyWebsiteContentCrawler/ApifyWebsiteContentCrawler.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "anthropicApi": {
+        "credential": {
+            "label": "Anthropic API",
+            "name": "anthropicApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/AnthropicApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatAnthropic",
+                "name": "chatAnthropic_LlamaIndex",
+                "version": 3,
+                "description": "Wrapper around ChatAnthropic LLM specific for LlamaIndex",
+                "icon": "Anthropic.svg",
+                "category": "Chat Models",
+                "credential": ["anthropicApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatAnthropic/ChatAnthropic_LlamaIndex.ts",
+                "type": "chatModel"
+            },
+            {
+                "label": "ChatAnthropic",
+                "name": "chatAnthropic",
+                "version": 8,
+                "description": "Wrapper around ChatAnthropic large language models that use the Chat endpoint",
+                "icon": "Anthropic.svg",
+                "category": "Chat Models",
+                "credential": ["anthropicApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatAnthropic/ChatAnthropic.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "AlibabaApi": {
+        "credential": {
+            "label": "Alibaba API",
+            "name": "AlibabaApi",
+            "version": 1,
+            "filePath": "packages/components/credentials/AlibabaApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "ChatAlibabaTongyi",
+                "name": "chatAlibabaTongyi",
+                "version": 2,
+                "description": "Wrapper around Alibaba Tongyi Chat Endpoints",
+                "icon": "alibaba-svgrepo-com.svg",
+                "category": "Chat Models",
+                "credential": ["AlibabaApi"],
+                "filePath": "packages/components/nodes/chatmodels/ChatAlibabaTongyi/ChatAlibabaTongyi.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "airtableApi": {
+        "credential": {
+            "label": "Airtable API",
+            "name": "airtableApi",
+            "version": 1,
+            "description": "Refer to <a target=",
+            "filePath": "packages/components/credentials/AirtableApi.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "Airtable",
+                "name": "airtable",
+                "version": 3.02,
+                "description": "Load data from Airtable table",
+                "icon": "airtable.svg",
+                "category": "Document Loaders",
+                "credential": ["airtableApi"],
+                "filePath": "packages/components/nodes/documentloaders/Airtable/Airtable.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [],
+        "llms": [],
+        "vectorStores": [],
+        "embeddings": [],
+        "agents": [
+            {
+                "label": "Airtable Agent",
+                "name": "airtableAgent",
+                "version": 2,
+                "description": "Agent used to answer queries on Airtable table",
+                "icon": "airtable.svg",
+                "category": "Agents",
+                "credential": ["airtableApi"],
+                "filePath": "packages/components/nodes/agents/AirtableAgent/AirtableAgent.ts",
+                "type": "agent"
+            }
+        ],
+        "chains": [],
+        "retrievers": [],
+        "memory": []
+    },
+    "awsApi": {
+        "credential": {
+            "label": "AWS security credentials",
+            "name": "awsApi",
+            "version": 1,
+            "description": "Your <a target=",
+            "filePath": "packages/components/credentials/AWSCredential.credential.ts",
+            "type": "credential"
+        },
+        "documentLoaders": [
+            {
+                "label": "S3",
+                "name": "S3",
+                "version": 4,
+                "description": "Load Data from S3 Buckets",
+                "icon": "s3.svg",
+                "category": "Document Loaders",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/documentloaders/S3File/S3File.ts",
+                "type": "documentLoader"
+            },
+            {
+                "label": "S3 Directory",
+                "name": "s3Directory",
+                "version": 4,
+                "description": "Load Data from S3 Buckets",
+                "icon": "s3.svg",
+                "category": "Document Loaders",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/documentloaders/S3Directory/S3Directory.ts",
+                "type": "documentLoader"
+            }
+        ],
+        "tools": [],
+        "mcpServers": [],
+        "chatModels": [
+            {
+                "label": "AWS ChatBedrock",
+                "name": "awsChatBedrock",
+                "version": 6,
+                "description": "Wrapper around AWS Bedrock large language models that use the Converse API",
+                "icon": "aws.svg",
+                "category": "Chat Models",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/chatmodels/AWSBedrock/AWSChatBedrock.ts",
+                "type": "chatModel"
+            }
+        ],
+        "llms": [
+            {
+                "label": "AWS Bedrock",
+                "name": "awsBedrock",
+                "version": 4,
+                "description": "Wrapper around AWS Bedrock large language models",
+                "icon": "aws.svg",
+                "category": "LLMs",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/llms/AWSBedrock/AWSBedrock.ts",
+                "type": "llm"
+            }
+        ],
+        "vectorStores": [],
+        "embeddings": [
+            {
+                "label": "AWS Bedrock Embeddings",
+                "name": "AWSBedrockEmbeddings",
+                "version": 5,
+                "description": "AWSBedrock embedding models to generate embeddings for a given text",
+                "icon": "aws.svg",
+                "category": "Embeddings",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/embeddings/AWSBedrockEmbedding/AWSBedrockEmbedding.ts",
+                "type": "embedding"
+            }
+        ],
+        "agents": [],
+        "chains": [],
+        "retrievers": [
+            {
+                "label": "AWS Bedrock Knowledge Base Retriever",
+                "name": "awsBedrockKBRetriever",
+                "version": 1,
+                "description": "Connect to AWS Bedrock Knowledge Base API and retrieve relevant chunks",
+                "icon": "AWSBedrockKBRetriever.svg",
+                "category": "Retrievers",
+                "credential": ["awsApi"],
+                "filePath": "packages/components/nodes/retrievers/AWSBedrockKBRetriever/AWSBedrockKBRetriever.ts",
+                "type": "retriever"
+            }
+        ],
+        "memory": []
+    }
+}

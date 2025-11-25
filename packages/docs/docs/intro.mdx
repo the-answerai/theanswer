@@ -4,6 +4,8 @@ jsonld:
     type: TechArticle
 ---
 
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
 ---
 
 # Getting Started
@@ -11,6 +13,41 @@ jsonld:
 ## What is Answer Agent AI?
 
 Answer Agent AI is a revolutionary platform for building and managing your internal AI agent workforce. By leveraging cutting-edge AI technology, Answer Agent AI provides a comprehensive suite of tools designed to create, deploy, and integrate intelligent agents that enhance productivity and automate workflows across your organization.
+
+## Need Help? Ask Alpha!
+
+Have questions about AnswerAgent? Want to learn how to use specific features or explore what the platform can do? **Meet Alpha**, your AI assistant who knows everything about AnswerAgent!
+
+<div
+    style={{
+        margin: '1.5rem 0',
+        padding: '1.5rem',
+        background: 'var(--ifm-background-surface-color)',
+        borderRadius: '8px',
+        border: '1px solid var(--ifm-color-emphasis-300)'
+    }}
+>
+    <p style={{ marginBottom: '1rem' }}>Click below to start a conversation with Alpha:</p>
+    <AskAlphaButton
+        variant='button'
+        size='large'
+        context={{
+            page: 'documentation',
+            section: 'intro',
+            content: 'Getting started with AnswerAgent documentation'
+        }}
+    />
+</div>
+
+**Alpha can help you with:**
+
+-   Understanding AnswerAgent features and capabilities
+-   Getting started with your first agent or workflow
+-   Troubleshooting and best practices
+-   Integration guidance and API documentation
+-   Scheduling a demo or connecting with our support team
+
+Don't hesitate to ask Alpha anything - from basic questions to complex implementation scenarios!
 
 ### Key Features
 
