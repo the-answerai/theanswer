@@ -11,15 +11,25 @@ import styles from './index.module.css'
 
 function HomepageHeader() {
     return (
-        <header className={clsx('hero hero--primary', styles.heroSection)}>
-            <div className={styles.heroBackground}>
-                <ThreeJsScene className={styles.threeJsCanvas} />
+        <header
+            className='hero'
+            style={{
+                position: 'relative',
+                minHeight: '70vh',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%)'
+            }}
+        >
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.3 }}>
+                <ThreeJsScene />
             </div>
-            <div className={styles.heroContent}>
-                <h1 className={styles.heroTitle}>
-                    Stop Managing AI Tools. <GradientText>Start Using AI.</GradientText>
-                </h1>
-                <p className={styles.heroSubtitle}>
+            <div className='container' style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <h1 style={{ fontSize: '4rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>Build AI Agents That Work.</h1>
+                <h2 style={{ fontSize: '2.7rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+                    <GradientText>Get Insights That Matter.</GradientText>
+                </h2>
+                <p className='hero__subtitle' style={{ fontSize: '1.5rem', maxWidth: '800px', margin: '0 auto 3rem', opacity: 0.9 }}>
                     AnswerAgent connects your data, builds your agents, and delivers instant insights—all in one platform.
                 </p>
                 <HeroCTA
@@ -163,7 +173,7 @@ function ThreePillarsSection() {
                             <p className={styles.pillarDescription}>
                                 Unified data lake with intelligent tagging and AI summarization. 20+ integrations, secure and compliant.
                             </p>
-                            <a href='/answer-engine' className={styles.pillarLink}>
+                            <a href='/data-engine' className={styles.pillarLink}>
                                 Learn More <ArrowRight size={18} />
                             </a>
                         </div>
@@ -191,7 +201,7 @@ function ThreePillarsSection() {
                             <p className={styles.pillarDescription}>
                                 Real-time dashboards, on-demand reports, and Chrome extension. Insights when you need them.
                             </p>
-                            <a href='/on-demand-apps' className={styles.pillarLink}>
+                            <a href='/intelligence-hub' className={styles.pillarLink}>
                                 See Insights <ArrowRight size={18} />
                             </a>
                         </div>

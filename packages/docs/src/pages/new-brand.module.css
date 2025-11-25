@@ -1,3 +1,16 @@
+/* Subtle pulsing gradient animation for text */
+@keyframes subtlePulseGradient {
+    0%,
+    100% {
+        background-position: 0% 50%;
+        filter: brightness(1);
+    }
+    50% {
+        background-position: 100% 50%;
+        filter: brightness(1.15);
+    }
+}
+
 .container {
     padding: 4rem 2rem;
     max-width: 1200px;
@@ -217,9 +230,13 @@
     font-weight: 800;
     line-height: 1.1;
     margin-bottom: 1.5rem;
-    background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-lightest) 100%);
+    /* Subtle blue gradient with pulsing animation */
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: subtlePulseGradient 15s ease-in-out infinite;
 }
 
 .heroSubtitle {
@@ -329,14 +346,21 @@
     margin-top: 1.5rem;
 }
 
-/* CTA Section */
+/* CTA Section - Blue gradient matching app design */
 .ctaSection {
     text-align: center;
     padding: 5rem 2rem;
-    background: linear-gradient(135deg, var(--ifm-color-primary-darkest) 0%, var(--ifm-color-primary-dark) 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     border-radius: 24px;
     color: white;
     margin-top: 4rem;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.ctaSection:hover {
+    box-shadow: 0 12px 48px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 .ctaSection h2 {

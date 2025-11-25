@@ -1,0 +1,91 @@
+name: Sync Documentation to Document Store
+
+# Trigger on:
+# - Push to staging or main branches
+# - Manual workflow dispatch
+on:
+    push:
+        branches:
+            - staging
+            - main
+        paths:
+            - 'packages/docs/**'
+            - '.github/workflows/sync-docs-to-docstore.yml'
+    workflow_dispatch:
+        inputs:
+            docs_store_id:
+                description: 'Documentation Store ID (optional - uses secret if not provided)'
+                required: false
+                type: string
+
+jobs:
+    sync-docs:
+        name: Sync Documentation
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 1
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'pnpm'
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Install dependencies
+              run: |
+                  pnpm install --frozen-lockfile
+                  pnpm --filter flowise-docs install
+
+            - name: Build documentation
+              run: pnpm --filter flowise-docs build
+
+            - name: Verify sitemap exists
+              run: |
+                  if [ ! -f packages/docs/build/sitemap.xml ]; then
+                    echo "❌ Sitemap not found at packages/docs/build/sitemap.xml"
+                    exit 1
+                  fi
+                  echo "✅ Sitemap found"
+                  echo "URLs in sitemap:"
+                  grep -o '<loc>https://[^<]*</loc>' packages/docs/build/sitemap.xml | wc -l
+
+            - name: Sync documentation to document store
+              env:
+                  DOCS_API_HOST: ${{ secrets.DOCS_API_HOST || 'https://prod.studio.theanswer.ai' }}
+                  DOCS_API_KEY: ${{ secrets.DOCS_API_KEY }}
+                  DOCS_STORE_ID: ${{ inputs.docs_store_id || secrets.DOCS_STORE_ID }}
+              run: |
+                  echo "🚀 Starting documentation sync..."
+                  echo "📍 API Host configured"
+                  echo "📍 Document Store ID configured"
+                  pnpm sync-docs
+
+            - name: Upload sync logs
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: sync-logs
+                  path: |
+                      *.log
+                  retention-days: 7
+
+            - name: Notify on failure
+              if: failure()
+              run: |
+                  echo "❌ Documentation sync failed!"
+                  echo "Check the logs for details."
+
+            - name: Summary
+              if: success()
+              run: |
+                  echo "✅ Documentation sync completed successfully!"
+                  echo "All documentation has been synced to the document store."

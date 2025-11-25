@@ -12,7 +12,7 @@ import styles from './index.module.css'
 
 const LayoutComponent: any = Layout
 
-const SCHEDULE_DEMO_URL = 'https://calendly.com/lastrev/answeragent-demo'
+const SCHEDULE_DEMO_URL = 'https://calendly.com/brad-theanswer/answeragent-intro'
 const GAMMA_VIDEO_URL = 'https://www.youtube.com/embed/hgghHXmYCmU'
 const GAMMA_DECK_URL = 'https://gamma.app/docs/Acme-Quarterly-Business-Review-3xyyirgqj4pziac'
 

@@ -4,7 +4,7 @@ import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import ElevenLabsInlineWidget from '@site/src/components/ElevenLabsInlineWidget'
-import { Phone, MessageSquare, Sparkles } from 'lucide-react'
+import { Phone, MessageSquare, Sparkles, Calendar } from 'lucide-react'
 
 import styles from './assessment.module.css'
 
@@ -37,7 +37,7 @@ function AssessmentOptionsSection() {
 
                 <div className='row'>
                     {/* Voice Assessment Option */}
-                    <div className='col col--6'>
+                    <div className='col col--4'>
                         <div className={styles.optionCard}>
                             <div className={styles.optionIcon}>
                                 <Phone size={48} />
@@ -69,7 +69,7 @@ function AssessmentOptionsSection() {
                     </div>
 
                     {/* Chat Assessment Option */}
-                    <div className='col col--6'>
+                    <div className='col col--4'>
                         <div className={styles.optionCard}>
                             <div className={styles.optionIcon}>
                                 <MessageSquare size={48} />
@@ -85,12 +85,43 @@ function AssessmentOptionsSection() {
                             </ul>
 
                             <div className={styles.optionCTA}>
-                                <Link to='/ai-workshops' className='button button--primary button--lg'>
+                                <Link to='/assessment' className='button button--primary button--lg'>
                                     Start Chat Assessment
                                 </Link>
                             </div>
 
                             <p className={styles.optionNote}>Best for: Those who prefer writing and reviewing</p>
+                        </div>
+                    </div>
+
+                    {/* Schedule Team Meeting Option */}
+                    <div className='col col--4'>
+                        <div className={styles.optionCard}>
+                            <div className={styles.optionIcon}>
+                                <Calendar size={48} />
+                            </div>
+                            <h3>Talk to Our Team</h3>
+                            <p>Schedule a personalized conversation with our team to discuss your needs and get expert guidance.</p>
+
+                            <ul className={styles.featuresList}>
+                                <li>⏱️ ~30 minutes</li>
+                                <li>👥 1-on-1 with expert</li>
+                                <li>💡 Custom recommendations</li>
+                                <li>📊 Live demo walkthrough</li>
+                            </ul>
+
+                            <div className={styles.optionCTA}>
+                                <a
+                                    href='https://calendly.com/brad-theanswer/answeragent-intro'
+                                    className='button button--primary button--lg'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                >
+                                    Schedule Meeting
+                                </a>
+                            </div>
+
+                            <p className={styles.optionNote}>Best for: Those who want direct expert guidance</p>
                         </div>
                     </div>
                 </div>
@@ -248,7 +279,7 @@ function BottomCTASection() {
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <a
-                        href='https://calendly.com/lastrev/answeragent-demo'
+                        href='https://calendly.com/brad-theanswer/answeragent-intro'
                         className='button button--primary button--lg'
                         target='_blank'
                         rel='noopener noreferrer'
