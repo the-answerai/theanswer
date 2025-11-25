@@ -89,6 +89,37 @@ A new Gamma tool has been added, allowing AI agents to create beautiful presenta
 
 ---
 
+### 🚀 Gamma API v1.0 Upgrade
+
+The Gamma tool has been upgraded to use the v1.0 API (previously v0.2). The v0.2 API will be deprecated on January 16, 2026, so this upgrade ensures continued compatibility and access to new features.
+
+**What Changed:**
+- **API Endpoints**: Updated from `/v0.2/generations` to `/v1.0/generations`
+- **Component Version**: Updated to v1.1 to reflect the API upgrade
+
+**New Features in v1.0:**
+- **Webpage Generation**: Now supports generating webpages in addition to presentations, documents, and social content
+- **Headers and Footers**: Configure custom header and footer text for your generated content
+- **Image URL Input**: Provide image URLs directly instead of relying solely on AI generation or stock images
+- **Folder Organization**: Assign generated content to specific folders for better organization
+- **Email Sharing**: Share generated content directly via email addresses
+
+**New Configuration Options:**
+- **Header Text**: Custom text to display in the header
+- **Footer Text**: Custom text to display in the footer
+- **Image URLs**: Comma-separated list of image URLs to use in the content
+- **Folder ID**: ID of the folder where the generated content should be saved
+- **Share Emails**: Comma-separated list of email addresses to share the content with
+
+All new options support the "Ask User" pattern, allowing AI agents to dynamically request these values when needed.
+
+**Migration Notes:**
+- Existing workflows using the Gamma tool will automatically use the v1.0 API
+- No changes required to existing configurations - all existing options remain compatible
+- The v0.2 API endpoints will stop working after January 16, 2026
+
+---
+
 ### ✨ Enhanced Credentials Modal Experience
 
 Significant improvements to the credentials management interface for a smoother user experience.

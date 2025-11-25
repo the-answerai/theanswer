@@ -37,6 +37,16 @@ class GammaTool extends Tool {
     configCardDimensions?: string
     configSharingWorkspaceAccess?: string
     configSharingExternalAccess?: string
+    configHeaderText?: string
+    configHeaderTextAskUser?: boolean
+    configFooterText?: string
+    configFooterTextAskUser?: boolean
+    configImageUrls?: string
+    configImageUrlsAskUser?: boolean
+    configFolderId?: string
+    configFolderIdAskUser?: boolean
+    configShareEmails?: string
+    configShareEmailsAskUser?: boolean
 
     constructor(args: {
         name: string
@@ -73,6 +83,16 @@ class GammaTool extends Tool {
         configCardDimensions?: string
         configSharingWorkspaceAccess?: string
         configSharingExternalAccess?: string
+        configHeaderText?: string
+        configHeaderTextAskUser?: boolean
+        configFooterText?: string
+        configFooterTextAskUser?: boolean
+        configImageUrls?: string
+        configImageUrlsAskUser?: boolean
+        configFolderId?: string
+        configFolderIdAskUser?: boolean
+        configShareEmails?: string
+        configShareEmailsAskUser?: boolean
     }) {
         super()
         this.name = args.name
@@ -109,6 +129,16 @@ class GammaTool extends Tool {
         this.configCardDimensions = args.configCardDimensions
         this.configSharingWorkspaceAccess = args.configSharingWorkspaceAccess
         this.configSharingExternalAccess = args.configSharingExternalAccess
+        this.configHeaderText = args.configHeaderText
+        this.configHeaderTextAskUser = args.configHeaderTextAskUser
+        this.configFooterText = args.configFooterText
+        this.configFooterTextAskUser = args.configFooterTextAskUser
+        this.configImageUrls = args.configImageUrls
+        this.configImageUrlsAskUser = args.configImageUrlsAskUser
+        this.configFolderId = args.configFolderId
+        this.configFolderIdAskUser = args.configFolderIdAskUser
+        this.configShareEmails = args.configShareEmails
+        this.configShareEmailsAskUser = args.configShareEmailsAskUser
     }
 
     /** @ignore */
@@ -191,6 +221,49 @@ class GammaTool extends Tool {
                 this.configSharingWorkspaceAccess === ASK
             )
             setFixedOrAsk(['sharingOptions', 'externalAccess'], this.configSharingExternalAccess, this.configSharingExternalAccess === ASK)
+            setFixedOrAsk(['headerText'], this.configHeaderText, this.configHeaderTextAskUser === true)
+            setFixedOrAsk(['footerText'], this.configFooterText, this.configFooterTextAskUser === true)
+            setFixedOrAsk(['folderId'], this.configFolderId, this.configFolderIdAskUser === true)
+
+            // Handle imageUrls - parse comma-separated string to array
+            if (this.configImageUrlsAskUser === true) {
+                const provided = body.imageUrls
+                if (provided === undefined || provided === null || provided === '' || provided === ASK) {
+                    missing.push('imageUrls')
+                }
+            } else if (
+                this.configImageUrls &&
+                this.configImageUrls !== ASK &&
+                this.configImageUrls.trim() !== '' &&
+                (body.imageUrls === undefined || body.imageUrls === null || body.imageUrls === '')
+            ) {
+                body.imageUrls = this.configImageUrls
+                    .split(',')
+                    .map((url: string) => url.trim())
+                    .filter((url: string) => url.length > 0)
+            }
+
+            // Handle recipientEmails - parse comma-separated string to array in sharingOptions
+            if (this.configShareEmailsAskUser === true) {
+                if (!body.sharingOptions) body.sharingOptions = {}
+                const provided = body.sharingOptions.recipientEmails
+                if (provided === undefined || provided === null || (Array.isArray(provided) && provided.length === 0)) {
+                    missing.push('sharingOptions.recipientEmails')
+                }
+            } else if (this.configShareEmails && this.configShareEmails !== ASK && this.configShareEmails.trim() !== '') {
+                if (!body.sharingOptions) body.sharingOptions = {}
+                // Only set if not already provided in input
+                if (
+                    body.sharingOptions.recipientEmails === undefined ||
+                    body.sharingOptions.recipientEmails === null ||
+                    (Array.isArray(body.sharingOptions.recipientEmails) && body.sharingOptions.recipientEmails.length === 0)
+                ) {
+                    body.sharingOptions.recipientEmails = this.configShareEmails
+                        .split(',')
+                        .map((email: string) => email.trim())
+                        .filter((email: string) => email.length > 0)
+                }
+            }
 
             if (missing.length) {
                 return JSON.stringify({
@@ -203,7 +276,7 @@ class GammaTool extends Tool {
                                     case 'textMode':
                                         return 'textMode (generate, condense, preserve)'
                                     case 'format':
-                                        return 'format (presentation, document, social)'
+                                        return 'format (presentation, document, webpage, social)'
                                     case 'cardSplit':
                                         return 'cardSplit (auto, inputTextBreaks)'
                                     case 'exportAs':
@@ -218,6 +291,16 @@ class GammaTool extends Tool {
                                         return 'sharingOptions.workspaceAccess (noAccess, view, comment, edit, fullAccess)'
                                     case 'sharingOptions.externalAccess':
                                         return 'sharingOptions.externalAccess (noAccess, view, comment, edit)'
+                                    case 'headerText':
+                                        return 'headerText (text string for header)'
+                                    case 'footerText':
+                                        return 'footerText (text string for footer)'
+                                    case 'imageUrls':
+                                        return 'imageUrls (comma-separated list of image URLs)'
+                                    case 'folderId':
+                                        return 'folderId (folder ID to organize the gamma)'
+                                    case 'sharingOptions.recipientEmails':
+                                        return 'sharingOptions.recipientEmails (comma-separated list of email addresses)'
                                     default:
                                         return m
                                 }
@@ -233,7 +316,7 @@ class GammaTool extends Tool {
                 if (Number.isFinite(n)) body.numCards = Math.max(1, Math.floor(n))
             }
 
-            const createUrl = `${this.baseUrl}/v0.2/generations`
+            const createUrl = `${this.baseUrl}/v1.0/generations`
             const postHeaders = buildHeaders(false)
             let usingAuthorizationHeader = false
             let createResp = await fetch(createUrl, {
@@ -284,7 +367,7 @@ class GammaTool extends Tool {
             const id = (createJson && (createJson.id || createJson.generationId || createJson?.data?.id)) || ''
             if (!id) return JSON.stringify(createJson ?? createText)
 
-            const statusUrl = `${this.baseUrl}/v0.2/generations/${id}`
+            const statusUrl = `${this.baseUrl}/v1.0/generations/${id}`
             const start = Date.now()
             // poll for completion
             // expected statuses: pending, processing, completed; but we handle generically
@@ -341,11 +424,11 @@ class Gamma_Tools implements INode {
     constructor() {
         this.label = 'Gamma'
         this.name = 'gamma'
-        this.version = 1.0
+        this.version = 1.1
         this.type = 'Gamma'
         this.icon = 'gamma.svg'
         this.category = 'Tools'
-        this.description = 'Generate Gamma presentations, documents, or social content via Gamma API'
+        this.description = 'Generate Gamma presentations, documents, webpages, or social content via Gamma API'
         this.tags = ['AAI']
         this.baseClasses = [this.type, ...getBaseClasses(GammaTool)]
         this.credential = {
@@ -367,7 +450,7 @@ class Gamma_Tools implements INode {
                 type: 'string',
                 rows: 4,
                 default:
-                    'Create Gamma content with POST /v0.2/generations. Input can be JSON with fields like inputText, format, textMode, etc., or a plain prompt string.'
+                    'Create Gamma content with POST /v1.0/generations. Input can be JSON with fields like inputText, format, textMode, etc., or a plain prompt string. Supports presentations, documents, webpages, and social content.'
             },
             {
                 label: 'Text Mode',
@@ -389,6 +472,7 @@ class Gamma_Tools implements INode {
                     { label: 'Ask User', name: 'ASK_USER' },
                     { label: 'presentation', name: 'presentation' },
                     { label: 'document', name: 'document' },
+                    { label: 'webpage', name: 'webpage' },
                     { label: 'social', name: 'social' }
                 ],
                 default: 'ASK_USER'
@@ -536,6 +620,30 @@ class Gamma_Tools implements INode {
                 ],
                 default: 'ASK_USER'
             },
+            { label: 'Header Text', name: 'headerText', type: 'string', optional: true },
+            { label: 'Header Text: Ask User', name: 'headerTextAskUser', type: 'boolean', default: false },
+            { label: 'Footer Text', name: 'footerText', type: 'string', optional: true },
+            { label: 'Footer Text: Ask User', name: 'footerTextAskUser', type: 'boolean', default: false },
+            {
+                label: 'Image URLs',
+                name: 'imageUrls',
+                type: 'string',
+                rows: 3,
+                optional: true,
+                placeholder: 'Comma-separated URLs (e.g., https://example.com/image1.jpg, https://example.com/image2.jpg)'
+            },
+            { label: 'Image URLs: Ask User', name: 'imageUrlsAskUser', type: 'boolean', default: false },
+            { label: 'Folder ID', name: 'folderId', type: 'string', optional: true },
+            { label: 'Folder ID: Ask User', name: 'folderIdAskUser', type: 'boolean', default: false },
+            {
+                label: 'Share Emails',
+                name: 'shareEmails',
+                type: 'string',
+                rows: 3,
+                optional: true,
+                placeholder: 'Comma-separated emails (e.g., user1@example.com, user2@example.com)'
+            },
+            { label: 'Share Emails: Ask User', name: 'shareEmailsAskUser', type: 'boolean', default: false },
             {
                 label: 'Poll Until Complete',
                 name: 'pollUntilComplete',
@@ -611,7 +719,17 @@ class Gamma_Tools implements INode {
             configImageStyleAskUser: Boolean(nodeData.inputs?.imageStyleAskUser),
             configCardDimensions: nodeData.inputs?.cardDimensions as string,
             configSharingWorkspaceAccess: nodeData.inputs?.sharingWorkspaceAccess as string,
-            configSharingExternalAccess: nodeData.inputs?.sharingExternalAccess as string
+            configSharingExternalAccess: nodeData.inputs?.sharingExternalAccess as string,
+            configHeaderText: nodeData.inputs?.headerText as string,
+            configHeaderTextAskUser: Boolean(nodeData.inputs?.headerTextAskUser),
+            configFooterText: nodeData.inputs?.footerText as string,
+            configFooterTextAskUser: Boolean(nodeData.inputs?.footerTextAskUser),
+            configImageUrls: nodeData.inputs?.imageUrls as string,
+            configImageUrlsAskUser: Boolean(nodeData.inputs?.imageUrlsAskUser),
+            configFolderId: nodeData.inputs?.folderId as string,
+            configFolderIdAskUser: Boolean(nodeData.inputs?.folderIdAskUser),
+            configShareEmails: nodeData.inputs?.shareEmails as string,
+            configShareEmailsAskUser: Boolean(nodeData.inputs?.shareEmailsAskUser)
         })
 
         return tool
