@@ -65,8 +65,8 @@ jobs:
                   DOCS_STORE_ID: ${{ inputs.docs_store_id || secrets.DOCS_STORE_ID }}
               run: |
                   echo "🚀 Starting documentation sync..."
-                  echo "📍 API Host: $DOCS_API_HOST"
-                  echo "📍 Document Store ID: $DOCS_STORE_ID"
+                  echo "📍 API Host configured"
+                  echo "📍 Document Store ID configured"
                   pnpm sync-docs
 
             - name: Upload sync logs

@@ -131,14 +131,9 @@ async function fetchContent(url: string): Promise<{ content: string; metadata: D
 }
 
 /**
- * Upload document to document store via API
+ * Get the loader ID from the document store
  */
-// Get the loader ID from the document store (fetch once at startup)
-let LOADER_DOC_ID: string | null = null
-
 async function getLoaderDocId(): Promise<string> {
-    if (LOADER_DOC_ID) return LOADER_DOC_ID
-
     const response = await axios.get(`${DOCS_API_HOST}/api/v1/document-store/store/${DOCS_STORE_ID}`, {
         headers: {
             Authorization: `Bearer ${DOCS_API_KEY}`
@@ -151,12 +146,16 @@ async function getLoaderDocId(): Promise<string> {
     }
 
     // Use the first loader (should be the Text File loader)
-    LOADER_DOC_ID = loaders[0].id
-    console.log(`📋 Using loader: ${loaders[0].loaderName} (${LOADER_DOC_ID})`)
-    return LOADER_DOC_ID
+    const loaderId = loaders[0].id
+    console.log(`📋 Using loader: ${loaders[0].loaderName} (${loaderId})`)
+    return loaderId
 }
 
-async function uploadDocument(content: string, metadata: DocumentMetadata): Promise<void> {
+/**
+ * Upload document to document store via API
+ */
+
+async function uploadDocument(content: string, metadata: DocumentMetadata, loaderId: string): Promise<void> {
     if (!DOCS_API_KEY) {
         throw new Error('DOCS_API_KEY environment variable is required')
     }
@@ -168,8 +167,8 @@ async function uploadDocument(content: string, metadata: DocumentMetadata): Prom
     console.log(`📤 Uploading to document store: ${metadata.url}`)
 
     try {
-        // Get the loader doc ID
-        const docId = await getLoaderDocId()
+        // Use the pre-fetched loader ID
+        const docId = loaderId
 
         // Create a text file with metadata embedded
         const contentWithMetadata = `---
@@ -205,6 +204,11 @@ ${content}`
         console.log(`✅ Successfully uploaded: ${metadata.url} (${response.data.numAdded} chunks added)`)
         return response.data
     } catch (error: any) {
+        // Check if it's a quota/capacity error
+        if (error.response?.status === 413 || error.response?.status === 507) {
+            console.warn(`⚠️  Document store may be full, skipping: ${metadata.url}`)
+            return // Don't throw, just skip this document
+        }
         console.error(`❌ Error uploading ${metadata.url}:`, error.response?.data?.message || error.message)
         throw error
     }
@@ -213,7 +217,7 @@ ${content}`
 /**
  * Process a single URL
  */
-async function processUrl(url: string): Promise<void> {
+async function processUrl(url: string, loaderId: string): Promise<void> {
     try {
         const { content, metadata } = await fetchContent(url)
 
@@ -222,7 +226,7 @@ async function processUrl(url: string): Promise<void> {
             return
         }
 
-        await uploadDocument(content, metadata)
+        await uploadDocument(content, metadata, loaderId)
     } catch (error: any) {
         console.error(`❌ Failed to process ${url}:`, error.message)
         // Continue processing other URLs
@@ -251,6 +255,9 @@ async function main() {
     console.log(`📍 Chunk Size: ${CHUNK_SIZE}`)
     console.log(`📍 Chunk Overlap: ${CHUNK_OVERLAP}\n`)
 
+    // Fetch loader ID once at startup to avoid race conditions
+    const loaderId = await getLoaderDocId()
+
     // Parse sitemap
     const urls = await parseSitemap()
 
@@ -275,7 +282,7 @@ async function main() {
         console.log(`\n[${i + 1}/${filteredUrls.length}] Processing: ${url}`)
 
         try {
-            await processUrl(url)
+            await processUrl(url, loaderId)
             successCount++
         } catch (error) {
             failureCount++
