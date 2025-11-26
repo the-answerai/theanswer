@@ -609,6 +609,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
             >
                 <Typography
                     variant='h4'
+                    component='span'
                     sx={{
                         fontWeight: 700,
                         fontSize: '1.75rem',
