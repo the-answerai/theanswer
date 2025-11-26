@@ -409,14 +409,14 @@ const buildScenarioSeedConfig = (scenario: string, user: SeedTestConfig['user'])
             return {
                 user,
                 credentials: {
-                    openai: { name: 'Seed OpenAI', assigned: true }
+                    openai: { name: 'Seed OpenAI', assigned: false }
                 }
             }
         case 'user-with-exa':
             return {
                 user,
                 credentials: {
-                    exa: { name: 'Seed Exa', assigned: true }
+                    exa: { name: 'Seed Exa', assigned: false }
                 }
             }
         case 'user-with-both-credentials':
@@ -543,7 +543,7 @@ export const seedScenario = async (
             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, `Error: test-utils.seedScenario - Unsupported scenario: ${scenario}`)
         }
 
-        scenarioConfig.options = { preserveExistingChatflow: true }
+        scenarioConfig.options = { preserveExistingChatflow: false }
 
         await seedTestData(scenarioConfig, ds)
 

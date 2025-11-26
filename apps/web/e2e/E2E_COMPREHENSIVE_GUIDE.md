@@ -1,5 +1,20 @@
 # E2E Testing Comprehensive Guide
 
+**Deep dive into TheAnswer.ai E2E testing architecture and advanced patterns**
+
+## Recent Improvements (January 2025)
+
+Major enhancements have been made to the test suite:
+
+- ✅ **Centralized Timeout Constants** - All tests use `TIMEOUTS` from `helpers/selectors.ts`
+- ✅ **Refactored Auth Helpers** - Login flow broken into smaller, composable functions
+- ✅ **Enhanced Playwright Config** - Conditional browser strategy (CI: Chromium only, Local: All browsers)
+- ✅ **No Arbitrary Waits** - All `waitForTimeout()` replaced with explicit condition waits
+- ✅ **Comprehensive JSDoc** - All helper functions fully documented
+- ✅ **Better Error Messages** - Database and auth helpers provide clear validation errors
+
+For quick start and common patterns, see [TESTING_QUICKSTART.md](TESTING_QUICKSTART.md).
+
 ## 📋 Table of Contents
 - [Architecture Overview](#architecture-overview)
 - [Quick Start](#quick-start)
@@ -26,27 +41,33 @@ Our E2E testing infrastructure is built on **Playwright** with a sophisticated h
 ### Directory Structure
 ```
 apps/web/e2e/
-├── playwright.config.ts         # Main Playwright configuration
+├── playwright.config.ts         # Main Playwright configuration (with TIMEOUTS import)
 ├── auth.setup.ts               # Authentication setup for all tests
 ├── .env.test                   # Environment variables for testing
-├── helpers/                    # Reusable testing utilities
-│   ├── auth.ts                 # Authentication helpers
+├── helpers/                    # Reusable testing utilities (all with JSDoc)
+│   ├── auth.ts                 # Authentication helpers (refactored into small functions)
 │   ├── credentials.ts          # Credential management utilities
 │   ├── database.ts            # Enhanced database operations
 │   ├── test-db.ts            # Low-level database API calls
-│   └── selectors.ts           # UI element selectors & constants
+│   └── selectors.ts           # UI selectors & TIMEOUTS constants
 ├── tests/                     # Test suites organized by feature
 │   ├── auth.spec.ts          # Authentication tests
-│   └── Screen 1 - Credential Modal/  # Feature-specific tests
-│       ├── creds-001.autoload.spec.ts
-│       ├── creds-002.list-loading.spec.ts
-│       ├── creds-003.select-credential.spec.ts
-│       ├── creds-004.add-new-credential.spec.ts
-│       ├── creds-005.assign-and-continue.spec.ts
-│       └── creds-006.cancel.spec.ts
+│   └── credential-modal/     # Feature-specific tests
+│       ├── autoload.spec.ts           # Uses TIMEOUTS constants
+│       ├── list-loading.spec.ts       # Uses refactored helpers
+│       ├── select-credential.spec.ts
+│       ├── add-new-credential.spec.ts
+│       ├── assign-and-continue.spec.ts
+│       └── cancel.spec.ts
 └── .auth/                     # Stored authentication state
     └── user.json             # Cached login sessions
 ```
+
+**Key changes:**
+- All test files now use `TIMEOUTS` constants instead of hardcoded values
+- Auth helpers refactored into composable functions (`fillEmailStep`, `fillPasswordStep`, etc.)
+- Playwright config imports `TIMEOUTS` for consistent assertion timeouts
+- All helpers have comprehensive JSDoc documentation
 
 ## 🚀 Quick Start
 
@@ -259,15 +280,36 @@ await loginAsUser(page, 'user@example.com', 'password', 'org-123')
 
 ## 📚 Helper Libraries
 
+For detailed usage examples, see [TESTING_QUICKSTART.md - Using Helper Functions](TESTING_QUICKSTART.md#using-helper-functions).
+
 ### Authentication Helper (`auth.ts`)
+
+**Recent improvements:**
+- Refactored into smaller, composable functions
+- All functions use `TIMEOUTS` constants
+- Comprehensive JSDoc documentation
+- 3-level organization fallback strategy
+
 ```typescript
-import { loginWithTestUser, TEST_USERS } from '../helpers/auth'
+import { loginWithTestUser, loginAsUser, TEST_USERS } from '../helpers/auth'
 
 // Login as different user types
 await loginWithTestUser(page, 'admin')    // Enterprise admin
 await loginWithTestUser(page, 'builder')  // Content builder
 await loginWithTestUser(page, 'member')   // Regular member
+
+// Force fresh login (clears cookies)
+await loginWithTestUser(page, 'admin', true)
+
+// Direct login with credentials
+await loginAsUser(page, 'user@example.com', 'password', 'org-id')
 ```
+
+**Composable functions** (used internally, but available for advanced use):
+- `fillEmailStep()` - Handle email input step
+- `fillPasswordStep()` - Handle password input step
+- `handleOrganizationSelection()` - Multi-strategy org selection
+- `waitForAuthRedirect()` - Verify redirect completion
 
 ### Database Helper (`database.ts`)
 ```typescript
@@ -299,19 +341,38 @@ await expectCredentialStatus(modal, 'openai', 'assigned')
 ```
 
 ### Selectors Helper (`selectors.ts`)
+
+**New in January 2025:** `TIMEOUTS` constants
+
 ```typescript
 import {
     MODAL_TITLES,
     CREDENTIAL_LABELS,
     TEST_IDS,
-    BUTTON_TEXTS
+    BUTTON_TEXTS,
+    TIMEOUTS  // ← NEW: Centralized timeout constants
 } from '../helpers/selectors'
 
 // Use centralized selectors
 const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
 const openaiCard = getCredentialCard(modal, CREDENTIAL_LABELS.openai)
 const loadingSpinner = modal.getByTestId(TEST_IDS.credentialsLoading)
+
+// Use TIMEOUTS instead of hardcoded values
+await expect(modal).toBeVisible({ timeout: TIMEOUTS.MODAL_APPEAR })
+await page.waitForURL(/\/chat\//, { timeout: TIMEOUTS.LONG })
 ```
+
+**Available TIMEOUTS:**
+| Constant | Duration | Use Case |
+|----------|----------|----------|
+| `SHORT` | 5s | Quick UI updates |
+| `MEDIUM` | 10s | Standard operations |
+| `LONG` | 20s | Complex operations |
+| `AUTH_REDIRECT` | 15s | Auth0 redirects |
+| `MODAL_APPEAR` | 10s | Modal visibility |
+| `PAGE_LOAD` | 30s | Full page loads |
+| `NETWORK_IDLE` | 30s | Network idle |
 
 ## ✨ Creating New Test Scenarios
 
@@ -468,15 +529,29 @@ const button = page.locator('.btn.btn-primary.save-button')
 ```
 
 ### 3. Wait Strategies
-```typescript
-// ✅ Wait for specific states
-await page.waitForURL(/\/chat\//)
-await expect(element).toBeVisible({ timeout: 10000 })
-await waitForLoadingToResolve(modal)
 
-// ❌ Avoid arbitrary timeouts
-await page.waitForTimeout(5000)  // Use only when necessary
+**Use `TIMEOUTS` constants for all waits:**
+
+```typescript
+import { TIMEOUTS } from '../helpers/selectors'
+
+// ✅ Wait for specific states with proper timeouts
+await page.waitForURL(/\/chat\//, { timeout: TIMEOUTS.LONG })
+await expect(element).toBeVisible({ timeout: TIMEOUTS.MODAL_APPEAR })
+await waitForLoadingToResolve(modal, TIMEOUTS.MEDIUM)
+
+// ❌ Avoid hardcoded timeouts
+await expect(element).toBeVisible({ timeout: 10000 })  // Don't do this
+
+// ❌ NEVER use arbitrary waits
+await page.waitForTimeout(5000)  // Removed from all tests
 ```
+
+**Why this matters:**
+- Consistent timeout behavior across all tests
+- Easy to adjust globally if needed
+- Self-documenting code (TIMEOUTS.MODAL_APPEAR vs 10000)
+- Matches Playwright config expect timeout
 
 ### 4. Error Handling
 ```typescript
@@ -637,6 +712,76 @@ test('full stack integration', async ({ page, request }) => {
 
 ---
 
+## 📝 Summary of Improvements (Waves 1-4)
+
+### Wave 1: Centralized Timeout Constants
+- Added `TIMEOUTS` constant to `helpers/selectors.ts`
+- Defined 7 timeout constants for different use cases
+- Added JSDoc documentation for all constants
+- Updated all existing tests to use constants
+- Improved error handling in helper functions
+
+### Wave 2: Enhanced Playwright Configuration
+- Updated timeout configuration to use `TIMEOUTS.MEDIUM` (10s)
+- Added conditional browser strategy (CI vs local)
+- Enhanced comments explaining timeout and browser choices
+- Improved web server configuration
+
+### Wave 3: Refactored Auth Helpers
+- Split `loginAsUser` into smaller functions:
+  - `fillEmailStep()` - Email input handling
+  - `fillPasswordStep()` - Password input handling
+  - `handleOrganizationSelection()` - Multi-strategy org selection
+  - `waitForAuthRedirect()` - Redirect verification
+- Added comprehensive JSDoc to all functions
+- Improved organization selection with 3-level fallback
+- Better error messages and console logging
+
+### Wave 4: Updated Test Files
+- All test files now use `TIMEOUTS` constants
+- Updated imports to include new constants
+- Removed all hardcoded timeout values
+- Consistent timeout usage across all tests
+
+### Wave 5: Documentation Consolidation (This Update)
+- Updated README.md with improvements summary
+- Enhanced TESTING_QUICKSTART.md with helper function guide
+- Updated E2E_COMPREHENSIVE_GUIDE.md with recent changes
+- Added cross-references between documentation files
+- Created helper function reference tables
+
+## 📚 Documentation Hierarchy
+
+The E2E documentation is organized in three levels:
+
+1. **[README.md](README.md)** - Quick start (5 minutes)
+   - Installation and setup
+   - Running tests
+   - Common commands
+   - Helper function reference table
+   - Link to detailed guides
+
+2. **[TESTING_QUICKSTART.md](TESTING_QUICKSTART.md)** - Common patterns (15 minutes)
+   - Step-by-step setup
+   - Using helper functions
+   - Example test structure
+   - Pro tips and troubleshooting
+   - Link to comprehensive guide
+
+3. **[E2E_COMPREHENSIVE_GUIDE.md](E2E_COMPREHENSIVE_GUIDE.md)** - Advanced topics (this file)
+   - Architecture deep dive
+   - Helper library details
+   - Advanced patterns
+   - Page Object Model
+   - Custom fixtures
+
+**Navigation:**
+- Need to get started? → [README.md](README.md)
+- Need common patterns? → [TESTING_QUICKSTART.md](TESTING_QUICKSTART.md)
+- Need advanced topics? → You're reading it!
+
+---
+
 ## 📝 Summary
 
 This E2E testing framework provides:
@@ -645,7 +790,9 @@ This E2E testing framework provides:
 - **🗄️ Database Management**: Complete reset/seed cycle for test isolation
 - **📚 Rich Helpers**: Domain-specific utilities for common testing patterns
 - **🎯 Best Practices**: Comprehensive patterns for reliable test development
+- **⏱️ Centralized Timeouts**: Consistent timeout behavior across all tests
+- **📖 Comprehensive Documentation**: JSDoc on all functions, multiple documentation levels
 
 The system is designed to scale with your application while maintaining test reliability and developer productivity. Follow the patterns outlined in this guide to ensure consistent, maintainable tests that accurately reflect your application's behavior.
 
-For questions or contributions, refer to the existing test examples in `/tests/Screen 1 - Credential Modal/` for practical implementation patterns.
+For questions or contributions, refer to the existing test examples in `/tests/credential-modal/` for practical implementation patterns.

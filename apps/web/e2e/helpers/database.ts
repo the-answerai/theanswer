@@ -1,4 +1,4 @@
-import { resetTestDb, seedTestData, resetAndSeed as dbResetAndSeed, seedScenario as seedScenarioApi } from './test-db'
+import { resetTestDb, seedTestData, resetAndSeed as dbResetAndSeed, seedScenario as seedScenarioApi, resetDatabase } from './test-db'
 import { TEST_USERS } from './auth'
 
 /**
@@ -69,30 +69,46 @@ const mergeSeedPayload = (overrides: SeedOverrides): SeedPayload => {
  * for a test scenario.
  */
 export const resetAndSeed = async (overrides: SeedOverrides): Promise<void> => {
-    const payload = mergeSeedPayload(overrides)
-    await dbResetAndSeed(payload)
+    try {
+        const payload = mergeSeedPayload(overrides)
+        await dbResetAndSeed(payload)
+        console.log('✅ Successfully reset database and seeded with custom data')
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        throw new Error(`Failed to reset and seed database: ${errorMessage}`)
+    }
 }
 
 export const seedScenario = async (scenario: string, userType: keyof typeof TEST_USERS = 'admin'): Promise<void> => {
+    // Validation: Scenario name is required
     if (!scenario) {
         throw new Error('seedScenario requires a scenario name')
     }
 
+    // Validation: userType must be valid
+    const validUserTypes = ['admin', 'builder', 'member'] as const
+    if (!validUserTypes.includes(userType)) {
+        throw new Error(`Invalid userType "${userType}". Must be one of: ${validUserTypes.join(', ')}`)
+    }
+
     const user = TEST_USERS[userType]
 
-    await seedScenarioApi(scenario, {
-        userEmail: user.email
-    })
-}
+    // Validation: User must have an email configured
+    if (!user || !user.email) {
+        throw new Error(
+            `Missing configuration for ${userType} user. Check TEST_USER_ENTERPRISE_${userType.toUpperCase()}_EMAIL in .env.test`
+        )
+    }
 
-/**
- * @deprecated Use resetAndSeed for custom payloads or seedScenario for
- * scenario aliases. This helper remains for backwards compatibility with existing
- * tests but still performs a full reset under the hood.
- */
-export const seedOnly = async (overrides: SeedOverrides): Promise<void> => {
-    const payload = mergeSeedPayload(overrides)
-    await seedTestData(payload)
+    try {
+        await seedScenarioApi(scenario, {
+            userEmail: user.email
+        })
+        console.log(`✅ Successfully seeded scenario "${scenario}" for ${userType} user (${user.email})`)
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        throw new Error(`Failed to seed scenario "${scenario}" for ${userType} user (${user.email}): ${errorMessage}`)
+    }
 }
 
 export const resetOnly = async (): Promise<void> => {
@@ -100,4 +116,4 @@ export const resetOnly = async (): Promise<void> => {
 }
 
 // Re-export base functions for compatibility
-export { resetTestDb, seedTestData, dbResetAndSeed }
+export { resetTestDb, seedTestData, resetAndSeed as dbResetAndSeed, resetDatabase } from './test-db'

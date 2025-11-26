@@ -4,6 +4,16 @@
 
 This guide will help you run your first end-to-end test on TheAnswer.ai web application. If you need more details later, check out the [comprehensive guide](./E2E_COMPREHENSIVE_GUIDE.md).
 
+## What's New (January 2025)
+
+This guide reflects recent improvements to the E2E test suite:
+
+- ✅ **Centralized Timeouts** - Use `TIMEOUTS` constants instead of hardcoded values
+- ✅ **Refactored Helpers** - Smaller, composable auth and database functions
+- ✅ **Better Documentation** - JSDoc comments on all helper functions
+- ✅ **No Arbitrary Waits** - All tests use explicit waits for conditions
+- ✅ **Enhanced Config** - Playwright config with conditional browser strategy
+
 ---
 
 ## Prerequisites Checklist
@@ -140,7 +150,7 @@ Open a **new terminal** and run a single test:
 cd apps/web
 
 # Run a single test file
-pnpm test:e2e e2e/tests/Screen\ 1\ -\ Credential\ Modal/creds-001.autoload.spec.ts
+pnpm test:e2e e2e/tests/credential-modal/autoload.spec.ts
 ```
 
 ⏱️ **Time:** ~10-15 seconds
@@ -161,7 +171,7 @@ Running 1 test using 1 worker
 🔧 Ensuring baseline scenario for member user...
 ✅ Setup complete
 
-  ✓  [chromium] › creds-001.autoload.spec.ts:21:5 › shows the credentials modal after login (8.2s)
+  ✓  [chromium] › autoload.spec.ts:21:5 › shows the credentials modal after login (8.2s)
 
   1 passed (12.3s)
 ```
@@ -195,10 +205,10 @@ Behind the scenes, the test framework:
 pnpm test:e2e
 
 # Run single test file
-pnpm test:e2e e2e/tests/Screen\ 1\ -\ Credential\ Modal/creds-001.autoload.spec.ts
+pnpm test:e2e e2e/tests/credential-modal/autoload.spec.ts
 
 # Run all tests in a directory
-pnpm test:e2e e2e/tests/Screen\ 1\ -\ Credential\ Modal/
+pnpm test:e2e e2e/tests/credential-modal/
 
 # Run tests matching a pattern
 pnpm test:e2e --grep "credentials modal"
@@ -321,7 +331,7 @@ Now that you've run your first test, explore more:
 
 ### Write Your Own Tests
 
-1. **Explore existing tests** in `e2e/tests/Screen 1 - Credential Modal/`
+1. **Explore existing tests** in `e2e/tests/credential-modal/`
 2. **Use helper libraries** for auth, database, and UI interactions
 3. **Follow naming convention:** `feature-###.description.spec.ts`
 4. **Test in isolation:** Always use `resetAndSeed()` or `resetOnly()` + `seedScenario()`
@@ -330,8 +340,8 @@ Now that you've run your first test, explore more:
 
 ```typescript
 import { test, expect } from '@playwright/test'
-import { resetAndSeed, loginWithTestUser } from '../../helpers'
-import { MODAL_TITLES } from '../../helpers/selectors'
+import { resetAndSeed, loginWithTestUser } from '../../helpers/database'
+import { MODAL_TITLES, TIMEOUTS } from '../../helpers/selectors'
 
 test.describe('My New Feature', () => {
     test.beforeEach(async ({ page }) => {
@@ -345,16 +355,191 @@ test.describe('My New Feature', () => {
 
         // Login as admin user
         await loginWithTestUser(page, 'admin')
-        await page.waitForURL(/\/chat\//, { timeout: 20000 })
+        await page.waitForURL(/\/chat\//, { timeout: TIMEOUTS.LONG })
     })
 
     test('should do something amazing', async ({ page }) => {
-        // Your test implementation
+        // Your test implementation with proper timeouts
         const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
-        await expect(modal).toBeVisible()
+        await expect(modal).toBeVisible({ timeout: TIMEOUTS.MODAL_APPEAR })
     })
 })
 ```
+
+---
+
+## Using Helper Functions
+
+The E2E test suite provides several helper modules to simplify test development. All helpers are fully documented with JSDoc comments.
+
+### Authentication Helpers (`helpers/auth.ts`)
+
+The auth helpers provide reusable functions for Auth0 login:
+
+```typescript
+import { loginAsUser, loginWithTestUser, TEST_USERS } from '../helpers/auth'
+
+// Simple login with user role
+await loginWithTestUser(page, 'admin')  // Uses cached auth when possible
+await loginWithTestUser(page, 'member', true)  // Force fresh login
+
+// Direct login with specific credentials
+await loginAsUser(page, 'user@example.com', 'password', 'org-id-123')
+
+// The helper automatically handles:
+// - Email input and Continue button
+// - Password input and Submit button
+// - Organization selection (with fallbacks)
+// - Redirect verification
+```
+
+**Available functions:**
+- `loginAsUser()` - Main auth orchestrator
+- `loginWithTestUser()` - Login with predefined test user role
+- `fillEmailStep()` - Email input handling
+- `fillPasswordStep()` - Password input handling
+- `handleOrganizationSelection()` - Org selection with fallbacks
+- `waitForAuthRedirect()` - Redirect verification
+
+**Key improvements:**
+- All auth functions use `TIMEOUTS` constants
+- Organization selection has 3-level fallback (ID → Name → First available)
+- Comprehensive console logging for debugging
+- JSDoc documentation on all functions
+
+### Timeout Constants (`helpers/selectors.ts`)
+
+Always use `TIMEOUTS` instead of hardcoded values:
+
+```typescript
+import { TIMEOUTS } from '../helpers/selectors'
+
+// ❌ Don't do this:
+await expect(modal).toBeVisible({ timeout: 10000 })
+await page.waitForURL(/\/chat\//, { timeout: 20000 })
+
+// ✅ Do this instead:
+await expect(modal).toBeVisible({ timeout: TIMEOUTS.MODAL_APPEAR })
+await page.waitForURL(/\/chat\//, { timeout: TIMEOUTS.LONG })
+```
+
+**Available timeouts:**
+- `TIMEOUTS.SHORT` (5s) - Quick UI updates
+- `TIMEOUTS.MEDIUM` (10s) - Standard operations, assertions
+- `TIMEOUTS.LONG` (20s) - Complex operations
+- `TIMEOUTS.AUTH_REDIRECT` (15s) - Auth0 redirects
+- `TIMEOUTS.MODAL_APPEAR` (10s) - Modal visibility
+- `TIMEOUTS.PAGE_LOAD` (30s) - Full page loads
+- `TIMEOUTS.NETWORK_IDLE` (30s) - Network idle state
+
+**Why use constants?**
+- Consistency across all tests
+- Easy to adjust globally if needed
+- Self-documenting code
+- Matches Playwright config expect timeout
+
+### Database Helpers (`helpers/database.ts`)
+
+Seed test data with scenarios or custom payloads:
+
+```typescript
+import { resetOnly, seedScenario, resetAndSeed } from '../helpers/database'
+
+// Pattern 1: Reset + Scenario (recommended for standard test setups)
+await resetOnly()
+await loginWithTestUser(page, 'member')
+await seedScenario('baseline', 'member')  // Predefined scenario for member user
+
+// Pattern 2: Reset + Custom Payload (for specific test data)
+await resetAndSeed({
+    chatflow: { name: 'Test Chatflow' },
+    credentials: {
+        openai: { assigned: true, name: 'My OpenAI Key' },
+        jira: { assigned: false },
+        slack: { create: false }  // Don't create this credential
+    }
+})
+```
+
+**Key functions:**
+- `resetOnly()` - Clear database completely
+- `seedScenario(scenario, userType)` - Seed with predefined scenario
+- `resetAndSeed(overrides)` - Reset + custom seed in one call
+
+**Predefined scenarios:**
+- `'baseline'` - Standard setup with basic credentials
+- `'user-with-both-credentials'` - OpenAI and Exa assigned
+- `'user-with-openai'` - Only OpenAI assigned
+- `'user-with-all-but-slack-assigned'` - All except Slack
+
+**Error handling:**
+The helpers provide clear error messages:
+- Invalid scenario names
+- Missing environment variables
+- User type validation
+- Network/API errors
+
+### Credential Helpers (`helpers/credentials.ts`)
+
+Work with credential cards and modal states:
+
+```typescript
+import {
+    waitForLoadingToResolve,
+    getCredentialCard,
+    expectCredentialStatus
+} from '../helpers/credentials'
+
+// Wait for credential loading spinner to disappear
+const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
+await waitForLoadingToResolve(modal)
+
+// Get specific credential card
+const openaiCard = getCredentialCard(modal, CREDENTIAL_LABELS.openai)
+await expect(openaiCard).toBeVisible()
+
+// Verify credential status
+await expectCredentialStatus(modal, 'openai', 'assigned')
+await expectCredentialStatus(modal, 'jira', 'setupRequired')
+```
+
+**Available functions:**
+- `waitForLoadingToResolve()` - Wait for modal loading state
+- `getCredentialCard()` - Locate credential card by label
+- `expectCredentialStatus()` - Assert credential status
+- `expectModalVisible()` - Verify modal visibility
+
+### Selector Constants (`helpers/selectors.ts`)
+
+Use centralized selectors for consistency:
+
+```typescript
+import {
+    MODAL_TITLES,
+    CREDENTIAL_LABELS,
+    STATUS_CHIP,
+    BUTTON_TEXTS,
+    TEST_IDS
+} from '../helpers/selectors'
+
+// Modal titles
+const modal = page.getByRole('dialog', { name: MODAL_TITLES.credentials })
+
+// Credential labels (regex patterns)
+const openaiCard = getCredentialCard(modal, CREDENTIAL_LABELS.openai)
+
+// Status chips
+await expect(modal.getByText(STATUS_CHIP.assigned)).toBeVisible()
+
+// Test IDs
+const loading = modal.getByTestId(TEST_IDS.credentialsLoading)
+```
+
+**Why centralized selectors?**
+- Update once, apply everywhere
+- Avoid typos and inconsistencies
+- Self-documenting test code
+- Easy to maintain as UI changes
 
 ---
 
