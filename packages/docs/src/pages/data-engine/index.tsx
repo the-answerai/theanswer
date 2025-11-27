@@ -51,12 +51,12 @@ export default function AnswerEngine(): JSX.Element {
                             </p>
 
                             <div className={styles.buttonGrid} style={{ marginTop: '2rem' }}>
-                                <Link to='/ai-workshops' className='button button--primary button--lg'>
+                                <Link to='/assessment' className='button button--primary button--lg'>
                                     Start Data Assessment
                                 </Link>
                             </div>
                             <div style={{ marginTop: '1rem' }}>
-                                <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--link'>
+                                <Link to='https://calendly.com/brad-theanswer/answeragent-intro' className='button button--link'>
                                     Schedule Demo &rarr;
                                 </Link>
                             </div>
@@ -375,7 +375,7 @@ export default function AnswerEngine(): JSX.Element {
                     <h2 style={{ fontSize: '2.5rem' }}>Ready to secure your AI data layer?</h2>
                     <p className='lead'>Start your free data assessment today.</p>
                     <div className={styles.buttonGrid} style={{ justifyContent: 'center', marginTop: '2rem' }}>
-                        <Link to='/ai-workshops' className='button button--primary button--lg' style={{ minWidth: '200px' }}>
+                        <Link to='/assessment' className='button button--primary button--lg' style={{ minWidth: '200px' }}>
                             Start Assessment
                         </Link>
                     </div>

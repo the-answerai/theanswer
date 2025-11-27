@@ -2,20 +2,7 @@ import Layout from '@theme/Layout'
 import styles from '../new-brand.module.css'
 import { TiltHero, MagneticGrid, MagneticCard } from '../../components/Modern/CreativeSections'
 import InteractiveGrid from '../../components/Annimations/InteractiveGrid'
-import {
-    PieChart,
-    TrendingUp,
-    ClipboardList,
-    Calendar,
-    FileText,
-    Clock,
-    DollarSign,
-    ArrowUpRight,
-    Activity,
-    BarChart3,
-    Chrome,
-    Sparkles
-} from 'lucide-react'
+import { PieChart, TrendingUp, ClipboardList, Calendar, FileText, Activity, BarChart3, Chrome, Sparkles } from 'lucide-react'
 import Link from '@docusaurus/Link'
 
 export default function OnDemandApps(): JSX.Element {
@@ -50,12 +37,12 @@ export default function OnDemandApps(): JSX.Element {
                                 can focus on your actual job.
                             </p>
                             <div className={styles.buttonGrid} style={{ marginTop: '2rem' }}>
-                                <Link to='#roi-calculator' className='button button--primary button--lg'>
-                                    See ROI Calculator
+                                <Link to='/assessment' className='button button--primary button--lg'>
+                                    Start AI Assessment
                                 </Link>
                             </div>
                             <div style={{ marginTop: '1rem' }}>
-                                <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--link'>
+                                <Link to='https://calendly.com/brad-theanswer/answeragent-intro' className='button button--link'>
                                     Schedule Demo &rarr;
                                 </Link>
                             </div>
@@ -330,7 +317,7 @@ export default function OnDemandApps(): JSX.Element {
                 {/* Use Cases Grid */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle} style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                        Apps for Every Workflow
+                        Agents for Every Workflow
                     </h2>
                     <MagneticGrid>
                         <MagneticCard>
@@ -378,55 +365,12 @@ export default function OnDemandApps(): JSX.Element {
                     </MagneticGrid>
                 </section>
 
-                {/* ROI Calculator Teaser */}
-                <section
-                    className={styles.section}
-                    id='roi-calculator'
-                    style={{
-                        background: 'var(--ifm-background-surface-color)',
-                        padding: '6rem 2rem',
-                        borderRadius: '24px',
-                        margin: '4rem 0',
-                        textAlign: 'center'
-                    }}
-                >
-                    <div className='container' style={{ maxWidth: '800px' }}>
-                        <div className='badge badge--success margin-bottom--md'>ROI Estimator</div>
-                        <h2 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Do you really consider this your job?</h2>
-                        <p className='lead margin-bottom--xl'>
-                            You were hired to engineer, market, and close deals. Not to copy-paste between Jira and Slack.
-                        </p>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
-                            <div className='card' style={{ padding: '2rem', background: 'rgba(255,255,255,0.05)' }}>
-                                <Clock size={32} className='margin-bottom--md text--danger' />
-                                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>12h</div>
-                                <p>Avg. admin time per week</p>
-                            </div>
-                            <div className='card' style={{ padding: '2rem', background: 'rgba(255,255,255,0.05)' }}>
-                                <DollarSign size={32} className='margin-bottom--md text--danger' />
-                                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>$24k</div>
-                                <p>Lost productivity per year</p>
-                            </div>
-                            <div className='card' style={{ padding: '2rem', background: 'rgba(255,255,255,0.05)' }}>
-                                <ArrowUpRight size={32} className='margin-bottom--md text--success' />
-                                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>30%</div>
-                                <p>Efficiency gain with AnswerAgent</p>
-                            </div>
-                        </div>
-
-                        <Link to='/ai-workshops' className='button button--primary button--lg'>
-                            Calculate Your Team&apos;s Savings
-                        </Link>
-                    </div>
-                </section>
-
                 {/* CTA */}
                 <section className={styles.section} style={{ textAlign: 'center', marginTop: '4rem', marginBottom: '4rem' }}>
                     <h2 style={{ fontSize: '2.5rem' }}>Stop preparing. Start doing.</h2>
                     <p className='lead'>Get back to the work that actually matters.</p>
                     <div className={styles.buttonGrid} style={{ justifyContent: 'center', marginTop: '2rem' }}>
-                        <Link to='https://calendly.com/answerai/enterprise-ai-fit-call' className='button button--primary button--lg'>
+                        <Link to='https://calendly.com/brad-theanswer/answeragent-intro' className='button button--primary button--lg'>
                             Schedule Demo
                         </Link>
                     </div>

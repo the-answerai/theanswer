@@ -23,7 +23,7 @@ function SidekickStudioHero() {
                     flows to automate your processes.
                 </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                    <a href='https://calendly.com/brad-theanswer/answeragent-intro' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
                         Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>

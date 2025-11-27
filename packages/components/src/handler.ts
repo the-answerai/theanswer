@@ -1628,6 +1628,7 @@ export class AnalyticHandler {
 
         return returnIds
     }
+}
 
     async onLLMEnd(returnIds: ICommonObject, output: string) {
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langSmith')) {

@@ -8,14 +8,9 @@ export enum TelemetryEventType {
 }
 
 export class Telemetry {
-    postHog?: PostHog
-
     constructor() {
-        if (process.env.POSTHOG_PUBLIC_API_KEY) {
-            this.postHog = new PostHog(process.env.POSTHOG_PUBLIC_API_KEY)
-        } else {
-            this.postHog = undefined
-        }
+        // PostHog removed due to Shai-Hulud-2 security vulnerability
+        // Telemetry functionality disabled
     }
 
     async sendTelemetry(event: string, properties: Record<string, any> = {}, orgId = ''): Promise<void> {
@@ -31,8 +26,7 @@ export class Telemetry {
     }
 
     async flush(): Promise<void> {
-        if (this.postHog) {
-            await this.postHog.shutdownAsync()
-        }
+        // Telemetry disabled - PostHog removed due to Shai-Hulud-2 security vulnerability
+        // No-op implementation to maintain API compatibility
     }
 }

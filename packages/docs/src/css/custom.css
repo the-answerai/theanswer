@@ -6,13 +6,14 @@
 
 /* You can override the default Infima variables here. */
 :root {
-    --ifm-color-primary: #2e8555;
-    --ifm-color-primary-dark: #29784c;
-    --ifm-color-primary-darker: #277148;
-    --ifm-color-primary-darkest: #205d3b;
-    --ifm-color-primary-light: #33925d;
-    --ifm-color-primary-lighter: #359962;
-    --ifm-color-primary-lightest: #3cad6e;
+    /* Blue theme matching the app design system */
+    --ifm-color-primary: #3b82f6;
+    --ifm-color-primary-dark: #2563eb;
+    --ifm-color-primary-darker: #1d4ed8;
+    --ifm-color-primary-darkest: #1e3a8a;
+    --ifm-color-primary-light: #60a5fa;
+    --ifm-color-primary-lighter: #93c5fd;
+    --ifm-color-primary-lightest: #bfdbfe;
     --ifm-code-font-size: 95%;
 
     --ifm-footer-background-color: #303846;
@@ -28,13 +29,14 @@
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-    --ifm-color-primary: #25c2a0;
-    --ifm-color-primary-dark: #21af90;
-    --ifm-color-primary-darker: #1fa588;
-    --ifm-color-primary-darkest: #1a8870;
-    --ifm-color-primary-light: #29d5b0;
-    --ifm-color-primary-lighter: #32d8b4;
-    --ifm-color-primary-lightest: #4fddbf;
+    /* Blue theme for dark mode */
+    --ifm-color-primary: #60a5fa;
+    --ifm-color-primary-dark: #3b82f6;
+    --ifm-color-primary-darker: #2563eb;
+    --ifm-color-primary-darkest: #1d4ed8;
+    --ifm-color-primary-light: #93c5fd;
+    --ifm-color-primary-lighter: #bfdbfe;
+    --ifm-color-primary-lightest: #dbeafe;
 
     --ifm-footer-background-color: #303846;
     --ifm-footer-color: var(--ifm-footer-link-color);
@@ -49,6 +51,21 @@
 .button--primary:not(.button--outline),
 .button--primary:hover {
     color: var(--color-primary-contrast);
+}
+
+/* Enhanced button styles for light mode - Blue gradient matching app */
+:root .button--primary {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+:root .button--primary:hover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 /* Marketing Pages Dark Theme Enforcement */
@@ -84,10 +101,10 @@ body[data-theme='dark'] .navbar__toggle,
 
 /* Enhanced Marketing Page Styles */
 [data-theme='dark'] .navbar {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(10, 0, 20, 0.95));
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(15, 23, 42, 0.95));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 [data-theme='dark'] .navbar__brand img {
@@ -100,44 +117,44 @@ body[data-theme='dark'] .navbar__toggle,
 }
 
 [data-theme='dark'] .navbar__link:hover {
-    color: #00ffff;
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    color: #60a5fa;
+    text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 [data-theme='dark'] .navbar__link--active {
-    color: #00ffff;
+    color: #60a5fa;
 }
 
 /* Footer enhancements for dark theme */
 [data-theme='dark'] .footer {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.98), rgba(10, 0, 20, 0.95));
-    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.98), rgba(15, 23, 42, 0.95));
+    border-top: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-/* Enhanced button styles for marketing pages */
+/* Enhanced button styles for marketing pages - Blue gradient matching app */
 [data-theme='dark'] .button--primary {
-    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
     border: none;
     color: #fff;
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     transition: all 0.3s ease;
 }
 
 [data-theme='dark'] .button--primary:hover {
-    background: linear-gradient(45deg, #00ffff, #ff00ff);
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     transform: translateY(-2px);
 }
 
 /* Responsive navbar enhancements */
 @media (max-width: 996px) {
     [data-theme='dark'] .navbar-sidebar {
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.98), rgba(10, 0, 20, 0.95));
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.98), rgba(15, 23, 42, 0.95));
         backdrop-filter: blur(20px);
     }
 
     [data-theme='dark'] .navbar-sidebar__brand {
-        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(59, 130, 246, 0.2);
     }
 }
 
@@ -153,4 +170,15 @@ canvas {
 [class*='threeJs'] canvas {
     pointer-events: none !important;
     touch-action: auto !important;
+}
+
+/* Uniform Hero Section Styling */
+/* Ensure all hero text has good contrast */
+[data-theme='dark'] .hero .hero__title,
+[data-theme='dark'] .hero .hero__subtitle,
+[data-theme='dark'] .hero h1,
+[data-theme='dark'] .hero h2,
+[data-theme='dark'] .hero h3,
+[data-theme='dark'] .hero p {
+    color: #ffffff !important;
 }
