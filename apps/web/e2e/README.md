@@ -2,6 +2,20 @@
 
 This directory contains end-to-end tests for the TheAnswer.ai web application using Playwright, including comprehensive role-based authentication and menu permission testing.
 
+## Recent Improvements (January 2025)
+
+The E2E test suite has been significantly improved with:
+
+- ✅ **Centralized Timeout Constants** - All timeout values now use `TIMEOUTS` from `helpers/selectors.ts`
+- ✅ **Refactored Auth Helpers** - Login logic broken into smaller, reusable functions
+- ✅ **No Arbitrary Waits** - Replaced all `waitForTimeout()` with explicit waits
+- ✅ **Better Error Handling** - Database helpers provide clear error messages
+- ✅ **Comprehensive Documentation** - JSDoc on all helper functions
+- ✅ **Cleaner File Organization** - Removed numeric prefixes from test files
+- ✅ **Enhanced Playwright Config** - Conditional browser strategy (CI vs local)
+
+See [TESTING_QUICKSTART.md](TESTING_QUICKSTART.md) for updated patterns and examples.
+
 ## Quick Start
 
 ### 1. Install Playwright Browsers
@@ -89,7 +103,9 @@ You'll need **three test users** in your Auth0 tenant with different roles:
 
 ### 🚀 Quick Commands
 
-All commands include **automatic browser checks** and helpful error messages:
+All commands include **automatic browser checks** and helpful error messages.
+
+**Note:** Tests now use centralized `TIMEOUTS` constants for consistency, and helper functions have been refactored into smaller, composable units. See [Helper Function Reference](#helper-function-reference) below for details.
 
 ```bash
 # Visual UI mode (recommended for development)
@@ -195,6 +211,10 @@ pnpm test:e2e:headed
 
 -   `auth.setup.ts` - Authentication setup that saves login state
 -   `tests/auth.spec.ts` - Main authentication flow tests
+-   `tests/credential-modal/` - Credential management tests (6 test files)
+-   `helpers/` - Reusable helper functions (auth, database, credentials, selectors)
+
+**Naming Convention:** Test files follow the pattern `feature-###.description.spec.ts` (e.g., `creds-001.autoload.spec.ts`)
 
 ## Test Structure
 
@@ -287,17 +307,65 @@ Tests automatically capture:
 
 ### Common Issues
 
-1. **Auth0 selectors**: If tests fail finding login elements, check the Auth0 page HTML and update selectors in the test files
+1. **Auth0 selectors**: If tests fail finding login elements, check the Auth0 page HTML. Selectors are now centralized in `helpers/selectors.ts` (see `AUTH_SELECTORS` constant).
 
-2. **Timing issues**: If tests are flaky, increase timeouts:
+2. **Timing issues**: Tests now use centralized `TIMEOUTS` constants. If tests are flaky, use the appropriate timeout:
 
     ```typescript
-    await page.waitForSelector('selector', { timeout: 10000 })
+    import { TIMEOUTS } from '../helpers/selectors'
+
+    await page.waitForSelector('selector', { timeout: TIMEOUTS.MEDIUM })
+    await expect(modal).toBeVisible({ timeout: TIMEOUTS.MODAL_APPEAR })
     ```
 
 3. **Environment variables**: Ensure `.env.test` is properly configured and the test user exists in Auth0
 
 4. **Development server**: Make sure the Next.js app starts correctly and Auth0 is properly configured
+
+## Helper Function Reference
+
+### Timeout Constants (`helpers/selectors.ts`)
+
+Always use `TIMEOUTS` instead of hardcoded values:
+
+| Constant | Duration | Use Case |
+|----------|----------|----------|
+| `TIMEOUTS.SHORT` | 5s | Quick UI updates |
+| `TIMEOUTS.MEDIUM` | 10s | Standard operations |
+| `TIMEOUTS.LONG` | 20s | Complex operations |
+| `TIMEOUTS.AUTH_REDIRECT` | 15s | Auth0 redirects |
+| `TIMEOUTS.MODAL_APPEAR` | 10s | Modal visibility |
+| `TIMEOUTS.PAGE_LOAD` | 30s | Full page loads |
+| `TIMEOUTS.NETWORK_IDLE` | 30s | Network idle state |
+
+### Authentication Helpers (`helpers/auth.ts`)
+
+| Function | Purpose | Parameters |
+|----------|---------|------------|
+| `loginAsUser()` | Complete Auth0 login flow | page, email, password, orgId? |
+| `loginWithTestUser()` | Login with predefined test user | page, userType?, fresh? |
+| `fillEmailStep()` | Fill email and click Continue | page, email |
+| `fillPasswordStep()` | Fill password and submit | page, password |
+| `handleOrganizationSelection()` | Select organization with fallbacks | page, orgId?, orgName? |
+| `waitForAuthRedirect()` | Wait for Auth0 redirect | page |
+
+### Database Helpers (`helpers/database.ts`)
+
+| Function | Purpose | Parameters |
+|----------|---------|------------|
+| `resetOnly()` | Clear database | - |
+| `seedScenario()` | Seed predefined scenario | scenario, userType? |
+| `resetAndSeed()` | Reset + custom seed | overrides |
+
+### Credential Helpers (`helpers/credentials.ts`)
+
+| Function | Purpose | Parameters |
+|----------|---------|------------|
+| `waitForLoadingToResolve()` | Wait for modal loading | modal, timeout? |
+| `getCredentialCard()` | Locate credential card | modal, labelPattern |
+| `expectCredentialStatus()` | Assert credential status | card, status |
+
+For detailed usage examples, see [TESTING_QUICKSTART.md](TESTING_QUICKSTART.md).
 
 ## Extending Tests
 

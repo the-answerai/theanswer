@@ -52,4 +52,3 @@ export const getCredentialCategory = (nodeCategory?: string, credentialType?: st
     // Default
     return { type: 'other', displayName: 'Other', isCore: false }
 }
-

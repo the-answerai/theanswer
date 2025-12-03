@@ -371,6 +371,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
     // Render a single credential in compact grid format
     const renderCredentialCard = (group) => {
         const { groupKey, label, credentialTypes, nodes, isAssigned, isRequired } = group
+        const cardTestId = `credential-card-${groupKey}`
         const credentialsForGroup = availableCredentials[groupKey] || []
         const isConnected = isAssigned || false
         const isExpanded = expandedCredentials[groupKey] || false
@@ -390,6 +391,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
         return (
             <Box
                 key={groupKey}
+                data-testid={cardTestId}
                 onClick={() => isConnected && toggleCredentialExpanded(groupKey)}
                 sx={{
                     ...getGlassStyle('credentialCard', isDarkMode),
@@ -458,6 +460,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                             variant='contained'
                             color='secondary'
                             size='small'
+                            data-testid={`credential-add-${groupKey}`}
                             startIcon={<IconPlus size={14} />}
                             onClick={(e) => {
                                 e.stopPropagation()
@@ -478,6 +481,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         {credentialsForGroup.length > 0 && (
                             <FormControl fullWidth size='small' sx={{ mt: 1 }}>
                                 <Select
+                                    data-testid={`credential-dropdown-${groupKey}`}
                                     value={nodes?.[0] ? credentialAssignments[nodes[0].nodeId] || '' : ''}
                                     onChange={(e) => {
                                         e.stopPropagation()
@@ -523,6 +527,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                                         Change connection:
                                     </Typography>
                                     <Select
+                                        data-testid={`credential-change-${groupKey}`}
                                         value={assignedCredentialId}
                                         onChange={(e) => {
                                             e.stopPropagation()
@@ -642,7 +647,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                     <Stack spacing={2.5}>
                         {/* Required Section */}
                         {hasRequired && (
-                            <Box>
+                            <Box data-testid='credential-section-required'>
                                 <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <Box>
                                         <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
@@ -665,7 +670,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
                         {/* Optional Section */}
                         {hasOptional && (
-                            <Box>
+                            <Box data-testid='credential-section-optional'>
                                 <Box sx={{ mb: 1.5 }}>
                                     <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
                                         Optional
@@ -686,7 +691,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
                         {/* Connected Section - Always visible */}
                         {hasConnected && (
-                            <Box>
+                            <Box data-testid='credential-section-connected'>
                                 <Box sx={{ mb: 1.5 }}>
                                     <Typography variant='subtitle1' fontWeight='600' sx={{ fontSize: '0.95rem', mb: 0.25 }}>
                                         Connected ({organizedCredentials.connected.length})
@@ -733,6 +738,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
 
                 <Stack direction='row' spacing={1.5}>
                     <Button
+                        data-testid='credential-modal-skip'
                         onClick={isQuickSetupMode ? handleCancel : handleSkip}
                         color='inherit'
                         sx={{
@@ -744,6 +750,7 @@ const UnifiedCredentialsModal = ({ show, missingCredentials, onAssign, onSkip, o
                         {isQuickSetupMode ? 'Cancel' : "I'll finish this later"}
                     </Button>
                     <Button
+                        data-testid='credential-modal-continue'
                         variant='contained'
                         color='secondary'
                         onClick={handleAssignCredentials}

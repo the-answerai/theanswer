@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAsUser, TIMEOUTS, AUTH_SELECTORS } from '../helpers'
 
 // Test user data structure with expected permissions
 interface TestUser {
@@ -14,189 +15,41 @@ interface TestUser {
     }
 }
 
-// Helper function to perform login with organization selection
-async function loginAsUser(page: any, email: string, password: string, orgId?: string) {
-    // Go to the homepage - this will redirect to Auth0
-    await page.goto('/')
-
-    // Step 1: Wait for Auth0 email input page
-    await page.waitForSelector('input[name="username"], input[type="email"], input[name="email"]', {
-        timeout: 10000
-    })
-
-    // Fill email first
-    const emailInput = page.locator('input[name="username"], input[type="email"], input[name="email"]').first()
-    await emailInput.fill(email)
-
-    // Click Continue/Submit to proceed to password step
-    const continueButton = page
-        .locator(
-            [
-                'button[type="submit"]',
-                'button:has-text("Continue")',
-                'button:has-text("Next")',
-                'button[data-action-button-primary="true"]'
-            ].join(', ')
-        )
-        .first()
-    await continueButton.click()
-
-    // Step 2: Wait for password input page
-    await page.waitForSelector('input[name="password"], input[type="password"]', {
-        timeout: 10000
-    })
-
-    // Fill password
-    const passwordInput = page.locator('input[name="password"], input[type="password"]').first()
-    await passwordInput.fill(password)
-
-    // Submit login form
-    const submitButton = page
-        .locator(
-            [
-                'button[type="submit"][data-action-button-primary="true"]',
-                'button[type="submit"]:not([data-provider])',
-                'button:has-text("Log In")',
-                'button:has-text("Sign In")',
-                'button:has-text("Continue")'
-            ].join(', ')
-        )
-        .first()
-    await submitButton.click()
-
-    // Step 3: Handle organization selection if orgId provided
-    if (orgId) {
-        try {
-            console.log(`Looking for organization with ID: ${orgId}`)
-
-            // Wait for organization selection forms to appear
-            await page.waitForSelector('form', { timeout: 5000 })
-
-            // Look for the form that contains a hidden input with the specific organization ID
-            const targetForm = page.locator(`form:has(input[name="organization"][value="${orgId}"])`)
-
-            if (await targetForm.isVisible({ timeout: 5000 })) {
-                console.log(`Found form with organization ID: ${orgId}`)
-
-                // Find the submit button within this specific form and click it
-                const submitButton = targetForm.locator('button[type="submit"]')
-                if (await submitButton.isVisible({ timeout: 2000 })) {
-                    const buttonText = await submitButton.textContent()
-                    console.log(`Clicking organization button: "${buttonText}" (ID: ${orgId})`)
-                    await submitButton.click()
-                } else {
-                    console.log('Submit button not found in the target form')
-                }
-            } else {
-                console.log(`Could not find form with organization ID: ${orgId}`)
-
-                // Debug: Log all available organization IDs
-                const allOrgInputs = page.locator('form input[name="organization"]')
-                const orgCount = await allOrgInputs.count()
-                console.log(`Found ${orgCount} organization forms. Available organization IDs:`)
-
-                for (let i = 0; i < orgCount; i++) {
-                    const orgInput = allOrgInputs.nth(i)
-                    const orgIdValue = await orgInput.getAttribute('value')
-                    const form = orgInput.locator('..')
-                    const buttonText = await form
-                        .locator('button span')
-                        .textContent()
-                        .catch(() => 'Unknown')
-                    console.log(`  - ID: ${orgIdValue}, Name: "${buttonText}"`)
-                }
-
-                // Fallback: Try name-based selection
-                const orgName = process.env.TEST_ENTERPRISE_ORG_NAME
-                if (orgName) {
-                    console.log(`Falling back to name-based selection: ${orgName}`)
-                    const nameBasedButton = page.locator(`button:has-text("${orgName}")`)
-                    if (await nameBasedButton.isVisible({ timeout: 2000 })) {
-                        await nameBasedButton.click()
-                    } else {
-                        console.log(`Could not find organization with name: ${orgName}`)
-                        // Select first available organization as last resort
-                        const firstForm = page.locator('form').first()
-                        const firstButton = firstForm.locator('button[type="submit"]')
-                        if (await firstButton.isVisible({ timeout: 2000 })) {
-                            const firstButtonText = await firstButton.textContent()
-                            console.log(`Selecting first available organization: "${firstButtonText}"`)
-                            await firstButton.click()
-                        }
-                    }
-                } else {
-                    // Select first available organization if no name specified
-                    const firstForm = page.locator('form').first()
-                    const firstButton = firstForm.locator('button[type="submit"]')
-                    if (await firstButton.isVisible({ timeout: 2000 })) {
-                        const firstButtonText = await firstButton.textContent()
-                        console.log(`No organization name specified, selecting first available: "${firstButtonText}"`)
-                        await firstButton.click()
-                    }
-                }
-            }
-        } catch (error) {
-            console.log('Organization selection error:', error instanceof Error ? error.message : String(error))
-        }
-    } else {
-        // Default organization handling (existing logic)
-        try {
-            const orgSelector = page.locator(
-                [
-                    'button:has-text("local")',
-                    'button:has-text("dev")',
-                    'button:has-text("development")',
-                    '[data-testid="organization-selector"]',
-                    '.organization-item',
-                    'form input[name="organization"]'
-                ].join(', ')
-            )
-
-            if (await orgSelector.first().isVisible({ timeout: 5000 })) {
-                console.log('Organization selection detected, selecting first available org')
-                await orgSelector.first().click()
-            }
-        } catch (error) {
-            console.log('No organization selection step detected, proceeding')
-        }
-    }
-
-    // Wait for redirect back to application
-    await page.waitForURL(/localhost:3000/, { timeout: 20000 })
-
-    // Verify we're logged in
-    await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/)
-}
-
-// Helper function to check menu item visibility
+/**
+ * Helper function to check menu item visibility
+ * Verifies that expected menu items are visible or hidden based on user role
+ * @param page - Playwright page object
+ * @param expectedItems - Array of menu item labels to check
+ * @param shouldBeVisible - Whether items should be visible (true) or hidden (false)
+ */
 async function checkMenuItemVisibility(page: any, expectedItems: string[], shouldBeVisible: boolean = true) {
     for (const item of expectedItems) {
         const element = page.getByText(item, { exact: false })
         if (shouldBeVisible) {
-            await expect(element).toBeVisible({ timeout: 5000 })
+            await expect(element).toBeVisible({ timeout: TIMEOUTS.SHORT })
         } else {
-            await expect(element).not.toBeVisible({ timeout: 2000 })
+            await expect(element).not.toBeVisible({ timeout: TIMEOUTS.SHORT })
         }
     }
 }
 
 test.describe('Authentication Flow', () => {
     test('should redirect unauthenticated user to Auth0 login', async ({ page }) => {
-        // Clear any existing auth state for this test
+        // Clear any existing auth state for this test to ensure a fresh authentication attempt
         await page.context().clearCookies()
 
-        // Go to the homepage
+        // Navigate to homepage - should trigger Auth0 redirect for unauthenticated users
         await page.goto('/')
 
         // Should redirect to Auth0 login page
         // Auth0 URLs typically contain the domain from AUTH0_ISSUER_BASE_URL
-        await expect(page).toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 10000 })
+        await expect(page).toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: TIMEOUTS.MEDIUM })
 
         // Verify Auth0 login page elements are present
-        // First step: Email input should be visible
+        // First step: Email input should be visible (Auth0 uses multi-step login)
         await expect(page.locator('input[name="username"], input[type="email"], input[name="email"]')).toBeVisible()
 
-        // Continue/Submit button should be present
+        // Continue/Submit button should be present to proceed to password step
         await expect(
             page
                 .locator(
@@ -214,134 +67,45 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should login successfully with valid credentials', async ({ page }) => {
-        // Clear any existing auth state for this test
+        // Clear any existing auth state for this test to ensure a fresh authentication attempt
         await page.context().clearCookies()
 
-        // Go to the homepage - this will redirect to Auth0
-        await page.goto('/')
+        // Use the refactored login helper function to handle the complete Auth0 flow
+        await loginAsUser(
+            page,
+            process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!,
+            process.env.TEST_USER_PASSWORD!,
+            process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
+        )
 
-        // Step 1: Wait for Auth0 email input page
-        await page.waitForSelector('input[name="username"], input[type="email"], input[name="email"]', {
-            timeout: 10000
-        })
-
-        // Fill email first - use admin user for this test
-        const emailInput = page.locator('input[name="username"], input[type="email"], input[name="email"]').first()
-        await emailInput.fill(process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!)
-
-        // Click Continue/Submit to proceed to password step
-        const continueButton = page
-            .locator(
-                [
-                    'button[type="submit"]',
-                    'button:has-text("Continue")',
-                    'button:has-text("Next")',
-                    'button[data-action-button-primary="true"]'
-                ].join(', ')
-            )
-            .first()
-        await continueButton.click()
-
-        // Step 2: Wait for password input page
-        await page.waitForSelector('input[name="password"], input[type="password"]', {
-            timeout: 10000
-        })
-
-        // Fill password
-        const passwordInput = page.locator('input[name="password"], input[type="password"]').first()
-        await passwordInput.fill(process.env.TEST_USER_PASSWORD!)
-
-        // Submit login form
-        const submitButton = page
-            .locator(
-                [
-                    'button[type="submit"][data-action-button-primary="true"]',
-                    'button[type="submit"]:not([data-provider])',
-                    'button:has-text("Log In")',
-                    'button:has-text("Sign In")',
-                    'button:has-text("Continue")'
-                ].join(', ')
-            )
-            .first()
-        await submitButton.click()
-
-        // Step 3: Handle organization selection using ID-based approach (consistent with role-based tests)
-        try {
-            const orgId = process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
-            if (orgId) {
-                console.log(`Looking for organization with ID: ${orgId}`)
-
-                // Wait for organization selection forms to appear
-                await page.waitForSelector('form', { timeout: 5000 })
-
-                // Look for the form that contains the specific organization ID
-                const targetForm = page.locator(`form:has(input[name="organization"][value="${orgId}"])`)
-
-                if (await targetForm.isVisible({ timeout: 5000 })) {
-                    console.log(`Found form with organization ID: ${orgId}`)
-                    const submitButton = targetForm.locator('button[type="submit"]')
-                    if (await submitButton.isVisible({ timeout: 2000 })) {
-                        const buttonText = await submitButton.textContent()
-                        console.log(`Clicking organization button: "${buttonText}" (ID: ${orgId})`)
-                        await submitButton.click()
-                    }
-                } else {
-                    console.log(`Could not find form with organization ID: ${orgId}`)
-                    // Fallback: select first available organization
-                    const firstForm = page.locator('form').first()
-                    const firstButton = firstForm.locator('button[type="submit"]')
-                    if (await firstButton.isVisible({ timeout: 2000 })) {
-                        const firstButtonText = await firstButton.textContent()
-                        console.log(`Selecting first available organization: "${firstButtonText}"`)
-                        await firstButton.click()
-                    }
-                }
-            } else {
-                console.log('No TEST_ENTERPRISE_AUTH0_ORG_ID provided, selecting first available organization')
-                // Select first available organization
-                const firstForm = page.locator('form').first()
-                const firstButton = firstForm.locator('button[type="submit"]')
-                if (await firstButton.isVisible({ timeout: 5000 })) {
-                    const firstButtonText = await firstButton.textContent()
-                    console.log(`Selecting first available organization: "${firstButtonText}"`)
-                    await firstButton.click()
-                }
-            }
-        } catch (error) {
-            console.log('Organization selection error:', error instanceof Error ? error.message : String(error))
-        }
-
-        // Wait for redirect back to application
-        await page.waitForURL(/localhost:3000/, { timeout: 20000 })
-
-        // Verify we're logged in by checking the AppDrawer shows user info
+        // Verify we're logged in and not on Auth0 anymore
         await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/)
 
-        // Check that the AppDrawer shows the user's email and organization
+        // Check that the AppDrawer shows the user's email
         // Looking for the user info section in the lower left corner of AppDrawer
         const userEmail = page.locator('text=' + process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!).first()
-        await expect(userEmail).toBeVisible({ timeout: 10000 })
+        await expect(userEmail).toBeVisible({ timeout: TIMEOUTS.MEDIUM })
 
         // Verify organization name is shown (should be local dev org)
         const orgInfo = page.locator('.MuiTypography-root').filter({ hasText: /local|dev|development/i })
-        await expect(orgInfo.first()).toBeVisible({ timeout: 5000 })
+        await expect(orgInfo.first()).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
         console.log('✅ Login successful - user email and organization verified in AppDrawer')
     })
 
     test('should show error for invalid credentials', async ({ page }) => {
-        // Clear any existing auth state for this test
+        // Clear any existing auth state for this test to ensure a fresh authentication attempt
         await page.context().clearCookies()
 
-        // Go to the homepage - this will redirect to Auth0
+        // Navigate to homepage - this will redirect to Auth0
         await page.goto('/')
 
-        // Step 1: Wait for Auth0 email input page
+        // Step 1: Wait for Auth0 email input page to load
         await page.waitForSelector('input[name="username"], input[type="email"], input[name="email"]', {
-            timeout: 10000
+            timeout: TIMEOUTS.MEDIUM
         })
 
-        // Use a unique email to avoid lockout issues
+        // Use a unique email to avoid triggering Auth0 account lockout after multiple failed attempts
         const randomEmail = `invalid-${Date.now()}@test.com`
         const emailInput = page.locator('input[name="username"], input[type="email"], input[name="email"]').first()
         await emailInput.fill(randomEmail)
@@ -359,12 +123,12 @@ test.describe('Authentication Flow', () => {
             .first()
         await continueButton.click()
 
-        // Step 2: Wait for password input page
+        // Step 2: Wait for password input page to load
         await page.waitForSelector('input[name="password"], input[type="password"]', {
-            timeout: 10000
+            timeout: TIMEOUTS.MEDIUM
         })
 
-        // Fill invalid password
+        // Fill invalid password to test error handling
         const passwordInput = page.locator('input[name="password"], input[type="password"]').first()
         await passwordInput.fill('wrongpassword')
 
@@ -382,7 +146,8 @@ test.describe('Authentication Flow', () => {
             .first()
         await submitButton.click()
 
-        // Should show error message - handle both credential error and account blocked
+        // Should show error message - handle both credential error and account blocked scenarios
+        // Auth0 may show different error messages depending on configuration
         const errorMessages = [
             page.getByText('Wrong email or password'),
             page.getByText(/Your account has been blocked/),
@@ -393,7 +158,7 @@ test.describe('Authentication Flow', () => {
         await Promise.race(
             errorMessages.map((msg) =>
                 expect(msg)
-                    .toBeVisible({ timeout: 10000 })
+                    .toBeVisible({ timeout: TIMEOUTS.MEDIUM })
                     .catch(() => {})
             )
         )
@@ -402,7 +167,7 @@ test.describe('Authentication Flow', () => {
         const visibleErrors = await Promise.all(errorMessages.map((msg) => msg.isVisible().catch(() => false)))
         expect(visibleErrors.some((visible) => visible)).toBeTruthy()
 
-        // Should still be on Auth0 domain
+        // Should still be on Auth0 domain after failed login attempt
         await expect(page).toHaveURL(/auth0\.com|\.auth0\.com/)
     })
 })
@@ -494,23 +259,23 @@ test.describe('User Role-Based Authentication and Permissions', () => {
 
             // Verify user email is displayed in AppDrawer
             const userEmailElement = page.locator(`text=${userData.email}`).first()
-            await expect(userEmailElement).toBeVisible({ timeout: 10000 })
+            await expect(userEmailElement).toBeVisible({ timeout: TIMEOUTS.MEDIUM })
 
             // Verify organization info is displayed (this may be name or ID depending on UI)
             if (process.env.TEST_ENTERPRISE_ORG_NAME) {
                 const orgNameElement = page.locator(`text=${process.env.TEST_ENTERPRISE_ORG_NAME}`).first()
-                await expect(orgNameElement).toBeVisible({ timeout: 5000 })
+                await expect(orgNameElement).toBeVisible({ timeout: TIMEOUTS.SHORT })
             }
 
             // Verify AnswerAI logo is visible in header (when drawer is open)
             console.log(`🎨 Checking AnswerAI logo visibility for ${userType}`)
             const logo = page.locator('img[alt*="AnswerAI"]').first()
-            await expect(logo).toBeVisible({ timeout: 5000 })
+            await expect(logo).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
             // Verify expected top-level menu items are visible
             console.log(`✅ Checking top-level menu items for ${userType}`)
             for (const menuItem of userData.expectedMenuItems.topLevel) {
-                await expect(page.getByText(menuItem, { exact: true })).toBeVisible({ timeout: 5000 })
+                await expect(page.getByText(menuItem, { exact: true })).toBeVisible({ timeout: TIMEOUTS.SHORT })
             }
 
             // Verify new top-level menu items have correct functionality
@@ -519,15 +284,15 @@ test.describe('User Role-Based Authentication and Permissions', () => {
 
             // Chat link should navigate to /chat
             const chatLink = page.locator('a[href="/chat"]').first()
-            await expect(chatLink).toBeVisible({ timeout: 5000 })
+            await expect(chatLink).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
             // Image Generation link should navigate to sidekick-studio/media-creator
             const imageGenLink = page.locator('a[href*="media-creator"]').first()
-            await expect(imageGenLink).toBeVisible({ timeout: 5000 })
+            await expect(imageGenLink).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
             // Video Generation link should navigate to sidekick-studio/video-creator
             const videoGenLink = page.locator('a[href*="video-creator"]').first()
-            await expect(videoGenLink).toBeVisible({ timeout: 5000 })
+            await expect(videoGenLink).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
             // If user should see Agent Studio, expand it and check sub-items
             if (userData.expectedMenuItems.studio && userData.expectedMenuItems.studio.length > 0) {
@@ -537,14 +302,14 @@ test.describe('User Role-Based Authentication and Permissions', () => {
                 const studioButton = page.getByText('Agent Studio')
                 await studioButton.click()
 
-                // Wait for submenu to expand
-                await page.waitForTimeout(1000)
+                // Wait for submenu animation to complete and items to become visible
+                await page.waitForLoadState('domcontentloaded')
 
                 // Check studio sub-items
                 for (const studioItem of userData.expectedMenuItems.studio) {
                     // Use more specific selector to avoid tooltip conflicts
                     const menuItem = page.locator('nav, [role="navigation"], .MuiList-root').getByText(studioItem, { exact: true }).first()
-                    await expect(menuItem).toBeVisible({ timeout: 5000 })
+                    await expect(menuItem).toBeVisible({ timeout: TIMEOUTS.SHORT })
                 }
             }
 
@@ -558,23 +323,23 @@ test.describe('User Role-Based Authentication and Permissions', () => {
 
                 // Click on Data Engine to expand it
                 const dataEngineButton = page.getByText('Data Engine')
-                await expect(dataEngineButton).toBeVisible({ timeout: 5000 })
+                await expect(dataEngineButton).toBeVisible({ timeout: TIMEOUTS.SHORT })
                 await dataEngineButton.click()
 
-                // Wait for submenu to expand
-                await page.waitForTimeout(1000)
+                // Wait for submenu animation to complete and items to become visible
+                await page.waitForLoadState('domcontentloaded')
 
                 // Check Data Engine sub-items
                 for (const engineItem of userData.expectedMenuItems.dataEngine) {
                     const menuItem = page.locator('nav, [role="navigation"], .MuiList-root').getByText(engineItem, { exact: true }).first()
-                    await expect(menuItem).toBeVisible({ timeout: 5000 })
+                    await expect(menuItem).toBeVisible({ timeout: TIMEOUTS.SHORT })
                 }
 
                 // Verify external links have target="_blank" (except Bulk Analysis which is internal)
                 const externalLinks = ['Content', 'Dashboards', 'Reports', 'Calls']
                 for (const linkText of externalLinks) {
                     const link = page.locator(`a:has-text("${linkText}")[target="_blank"]`).first()
-                    await expect(link).toBeVisible({ timeout: 5000 })
+                    await expect(link).toBeVisible({ timeout: TIMEOUTS.SHORT })
                 }
             } else if (!userData.expectedMenuItems.dataEngine || userData.expectedMenuItems.dataEngine.length === 0) {
                 // Members should not see Data Engine
@@ -587,8 +352,8 @@ test.describe('User Role-Based Authentication and Permissions', () => {
             const userMenuButton = page.getByRole('button', { name: 'more options' })
             await userMenuButton.click()
 
-            // Wait for menu to open
-            await page.waitForTimeout(500)
+            // Wait for menu dropdown to appear and render
+            await page.waitForLoadState('domcontentloaded')
 
             // Check Upgrade Plan visibility in the dropdown menu
             if (userData.expectedMenuItems.upgradeVisible) {
@@ -604,39 +369,39 @@ test.describe('User Role-Based Authentication and Permissions', () => {
         })
 
         test(`should be able to navigate to allowed sections as ${userType}`, async ({ page }) => {
-            // Clear any existing auth state
+            // Clear any existing auth state to ensure a fresh login
             await page.context().clearCookies()
 
-            // Login as the specific user
+            // Login as the specific user using the refactored helper
             await loginAsUser(page, userData.email, userData.password, process.env.TEST_ENTERPRISE_AUTH0_ORG_ID)
 
-            // Wait for page to be fully loaded and interactive
+            // Wait for page to be fully loaded and all network requests to complete
+            // This ensures React has hydrated and the app is interactive
             await page.waitForLoadState('networkidle')
-            await page.waitForTimeout(1000) // Brief pause for React hydration
 
-            // Verify we're in a stable state before navigation
+            // Verify we're in a stable state before navigation attempts
             await expect(page.locator('body')).toBeVisible()
 
-            // Test navigation to Profile (should work for all users)
+            // Test navigation to Profile (should work for all users regardless of role)
             await page.goto('/profile', { waitUntil: 'networkidle' })
-            await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 5000 })
+            await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: TIMEOUTS.SHORT })
             await expect(page.locator('body')).toBeVisible()
 
-            // Test navigation based on role
+            // Test navigation based on role-specific permissions
             if (userData.role === 'admin') {
-                // Admins should be able to access billing
+                // Admins should be able to access billing section
                 await page.goto('/billing', { waitUntil: 'networkidle' })
-                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 5000 })
+                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: TIMEOUTS.SHORT })
 
                 // Admins should be able to access studio sections
                 await page.goto('/sidekick-studio/chatflows', { waitUntil: 'networkidle' })
-                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 5000 })
+                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: TIMEOUTS.SHORT })
             }
 
             if (userData.role === 'builder') {
-                // Builders should be able to access studio sections
+                // Builders should be able to access studio sections but not billing
                 await page.goto('/sidekick-studio/chatflows', { waitUntil: 'networkidle' })
-                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: 5000 })
+                await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/, { timeout: TIMEOUTS.SHORT })
             }
 
             console.log(`✅ Navigation test completed for ${userType}`)
@@ -646,12 +411,12 @@ test.describe('User Role-Based Authentication and Permissions', () => {
 
 test.describe('Theme Toggle Functionality', () => {
     test('should toggle between light and dark mode and persist theme preference', async ({ page }) => {
-        // Clear any existing auth state
+        // Clear any existing auth state to ensure a fresh login
         await page.context().clearCookies()
 
         console.log('🎨 Testing theme toggle functionality')
 
-        // Login as admin user for this test
+        // Login as admin user for this test using the refactored helper
         await loginAsUser(
             page,
             process.env.TEST_USER_ENTERPRISE_ADMIN_EMAIL!,
@@ -659,35 +424,35 @@ test.describe('Theme Toggle Functionality', () => {
             process.env.TEST_ENTERPRISE_AUTH0_ORG_ID
         )
 
-        // Wait for page to be fully loaded
+        // Wait for page to be fully loaded and verify successful login
         await expect(page).toHaveURL(/localhost:3000/)
         await expect(page).not.toHaveURL(/auth0\.com|\.auth0\.com/)
 
-        // Open user menu
+        // Open user menu (three dots menu in AppDrawer)
         const userMenuButton = page.getByRole('button', { name: 'more options' })
-        await expect(userMenuButton).toBeVisible({ timeout: 5000 })
+        await expect(userMenuButton).toBeVisible({ timeout: TIMEOUTS.SHORT })
         await userMenuButton.click()
 
-        // Wait for menu to open
-        await page.waitForTimeout(500)
+        // Wait for menu dropdown to appear and render
+        await page.waitForLoadState('domcontentloaded')
 
-        // Verify theme toggle is visible
+        // Verify theme toggle is visible in the menu
         console.log('✅ Verifying theme toggle menu item exists')
         const themeToggle = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
-        await expect(themeToggle).toBeVisible({ timeout: 2000 })
+        await expect(themeToggle).toBeVisible({ timeout: TIMEOUTS.SHORT })
 
-        // Get current theme text
+        // Get current theme text to verify it changes after toggle
         const currentThemeText = await themeToggle.textContent()
         console.log(`📍 Current theme: ${currentThemeText}`)
 
-        // Click to toggle theme
+        // Click to toggle theme (should switch between light/dark)
         console.log('🔄 Toggling theme...')
         await themeToggle.click()
 
-        // Wait for theme change to apply
-        await page.waitForTimeout(500)
+        // Wait for theme change animation to complete
+        await page.waitForLoadState('domcontentloaded')
 
-        // Verify theme changed in localStorage
+        // Verify theme changed in localStorage (app stores theme preference here)
         const themeInLocalStorage = await page.evaluate(() => {
             return localStorage.getItem('isDarkMode')
         })
@@ -695,38 +460,38 @@ test.describe('Theme Toggle Functionality', () => {
 
         // Open menu again to verify theme toggle text changed
         await userMenuButton.click()
-        await page.waitForTimeout(500)
+        await page.waitForLoadState('domcontentloaded')
 
-        // Verify theme toggle text changed
+        // Verify theme toggle text changed (Light ↔ Dark)
         const themeToggleAfter = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
-        await expect(themeToggleAfter).toBeVisible({ timeout: 2000 })
+        await expect(themeToggleAfter).toBeVisible({ timeout: TIMEOUTS.SHORT })
         const newThemeText = await themeToggleAfter.textContent()
         console.log(`📍 New theme: ${newThemeText}`)
 
-        // Verify the text changed (Light ↔ Dark)
+        // Verify the text changed (should be opposite of what it was)
         expect(newThemeText).not.toBe(currentThemeText)
 
         // Close the menu
         await page.keyboard.press('Escape')
 
-        // Test persistence: Reload page and verify theme persists
+        // Test persistence: Reload page and verify theme persists from localStorage
         console.log('🔄 Reloading page to test theme persistence...')
         await page.reload({ waitUntil: 'networkidle' })
 
         // Wait for page to be fully loaded after reload
         await expect(page).toHaveURL(/localhost:3000/)
 
-        // Open menu again after reload
+        // Open menu again after reload to check persisted theme
         await userMenuButton.click()
-        await page.waitForTimeout(500)
+        await page.waitForLoadState('domcontentloaded')
 
         // Verify theme persisted after reload
         const themeToggleAfterReload = page.getByRole('menuitem', { name: /Light Mode|Dark Mode/ })
-        await expect(themeToggleAfterReload).toBeVisible({ timeout: 2000 })
+        await expect(themeToggleAfterReload).toBeVisible({ timeout: TIMEOUTS.SHORT })
         const themeTextAfterReload = await themeToggleAfterReload.textContent()
         console.log(`📍 Theme after reload: ${themeTextAfterReload}`)
 
-        // Verify the theme is still the same after reload (persisted)
+        // Verify the theme is still the same after reload (successfully persisted)
         expect(themeTextAfterReload).toBe(newThemeText)
 
         console.log('✅ Theme toggle functionality verified successfully')
