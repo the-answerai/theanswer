@@ -34,10 +34,10 @@ function GetStartedOptions() {
         },
         {
             icon: Calculator,
-            title: 'See ROI Calculator',
-            description: 'Calculate time your team will save with AnswerAgent.',
-            link: '/get-started#roi',
-            linkText: 'Calculate ROI →',
+            title: 'Start AI Assessment',
+            description: 'Get personalized insights on how AnswerAgent can transform your team.',
+            link: '/assessment',
+            linkText: 'Start Assessment →',
             external: false,
             color: 'secondary'
         },
@@ -45,7 +45,7 @@ function GetStartedOptions() {
             icon: Calendar,
             title: 'Schedule Demo',
             description: 'Talk to our team (30 minutes). See AnswerAgent in action.',
-            link: 'https://calendly.com/lastrev/answeragent-demo',
+            link: 'https://calendly.com/brad-theanswer/answeragent-intro',
             linkText: 'Schedule Demo →',
             external: true,
             color: 'primary'
@@ -103,25 +103,20 @@ function ROICalculatorSection() {
             <div className='container'>
                 <div className='row'>
                     <div className='col col--8 col--offset-2'>
-                        <h2 className={styles.sectionTitle}>Time Savings Calculator</h2>
+                        <h2 className={styles.sectionTitle}>Get Your AI Assessment</h2>
                         <p className={styles.sectionDescription}>
-                            Do you really consider this your job? Calculate how much time your team spends on administrative work that could
-                            be automated.
+                            Do you really consider this your job? Take our AI Assessment to discover how much time your team spends on
+                            administrative work that could be automated.
                         </p>
                         <div className={styles.roiCard}>
                             <div className={styles.roiPlaceholder}>
                                 <Calculator size={64} className={styles.roiIcon} />
-                                <p>ROI Calculator coming soon</p>
+                                <p>AI Assessment Available Now</p>
                                 <p className={styles.roiPlaceholderSubtext}>
-                                    In the meantime, schedule a demo to see how AnswerAgent can save your team time.
+                                    Chat with our AI to discover how AnswerAgent can save your team time and boost productivity.
                                 </p>
-                                <a
-                                    href='https://calendly.com/lastrev/answeragent-demo'
-                                    className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                >
-                                    Schedule Demo
+                                <a href='/assessment' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                    Start Assessment
                                 </a>
                             </div>
                         </div>
@@ -214,7 +209,7 @@ export default function GetStarted(): JSX.Element {
                 <GetStartedHero />
                 <main>
                     <GetStartedOptions />
-                    <ROICalculatorSection />
+                    {/* <ROICalculatorSection /> */}
                     <AssessmentSection />
                     <BottomCTASection />
                 </main>

@@ -37,26 +37,30 @@ function PricingCards() {
                             <div className={styles.pricingIcon}>
                                 <Globe size={48} strokeWidth={1.5} />
                             </div>
-                            <h3 className={styles.pricingTitle}>Secure Cloud</h3>
+                            <h3 className={styles.pricingTitle}>Shared Cloud</h3>
                             <div className={styles.pricingAmount}>
-                                $500<span className={styles.pricingPeriod}>/month</span>
+                                Starting at $500<span className={styles.pricingPeriod}>/month</span>
                             </div>
                             <p className={styles.pricingDescription}>
-                                Secure, organization-ready managed cloud with single-tenant isolation, SSO, and governance. Fastest path to
-                                value with zero maintenance.
+                                Usage-based pricing for compute and storage. Secure, organization-ready managed cloud with SSO and
+                                governance. Fastest path to value with zero maintenance.
                             </p>
                             <ul className={styles.pricingFeatures}>
                                 <li>
                                     <Check size={20} className='text--success' />
-                                    <span>Unlimited users</span>
+                                    <span>Unlimited seats</span>
+                                </li>
+                                <li>
+                                    <Check size={20} className='text--success' />
+                                    <span>200,000 credits + usage included</span>
+                                </li>
+                                <li>
+                                    <Check size={20} className='text--success' />
+                                    <span>Compute & storage based pricing</span>
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
                                     <span>Secure managed cloud</span>
-                                </li>
-                                <li>
-                                    <Check size={20} className='text--success' />
-                                    <span>Single-tenant isolation</span>
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
@@ -72,7 +76,7 @@ function PricingCards() {
                                 </li>
                             </ul>
                             <a
-                                href='https://calendly.com/lastrev/answeragent-demo'
+                                href='https://calendly.com/brad-theanswer/answeragent-intro'
                                 className={clsx(styles.ctaButton, styles.ctaPrimary)}
                                 target='_blank'
                                 rel='noopener noreferrer'
@@ -86,26 +90,26 @@ function PricingCards() {
                             <div className={styles.pricingIcon}>
                                 <Building2 size={48} strokeWidth={1.5} />
                             </div>
-                            <h3 className={styles.pricingTitle}>Self-Hosted Enterprise</h3>
+                            <h3 className={styles.pricingTitle}>Private Cloud</h3>
                             <div className={styles.pricingAmount}>
                                 Custom<span className={styles.pricingPeriod}> Pricing</span>
                             </div>
                             <p className={styles.pricingDescription}>
-                                Fully self-hosted deployment with enterprise licensing, advanced security controls, and custom
-                                integrations—run entirely within your infrastructure.
+                                Dedicated single-tenant cloud deployment with enhanced security, compliance controls, and custom SLAs. Fully
+                                managed infrastructure with enterprise support.
                             </p>
                             <ul className={styles.pricingFeatures}>
                                 <li>
                                     <Check size={20} className='text--success' />
-                                    <span>Full infrastructure control</span>
+                                    <span>Single-tenant isolation</span>
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
-                                    <span>On-premise or hybrid</span>
+                                    <span>Dedicated resources</span>
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
-                                    <span>Custom integrations</span>
+                                    <span>Custom compliance controls</span>
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
@@ -117,11 +121,11 @@ function PricingCards() {
                                 </li>
                                 <li>
                                     <Check size={20} className='text--success' />
-                                    <span>SLA guarantees</span>
+                                    <span>Custom SLA guarantees</span>
                                 </li>
                             </ul>
                             <a
-                                href='https://calendly.com/lastrev/answeragent-demo'
+                                href='https://calendly.com/brad-theanswer/answeragent-intro'
                                 className={clsx(styles.ctaButton, styles.ctaSecondary)}
                                 target='_blank'
                                 rel='noopener noreferrer'
@@ -157,7 +161,7 @@ function AddOnsSection() {
                                     Learn More
                                 </a>
                                 <a
-                                    href='https://calendly.com/lastrev/answeragent-demo'
+                                    href='https://calendly.com/brad-theanswer/answeragent-intro'
                                     className={clsx(styles.ctaButton, styles.ctaSecondary)}
                                     target='_blank'
                                     rel='noopener noreferrer'

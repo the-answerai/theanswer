@@ -61,8 +61,8 @@ function ThreePillarsSection() {
             icon: <BarChart3 size={48} strokeWidth={1.5} />,
             title: 'Get Instant Insights',
             description: 'Dashboards and reports on-demand. Stop preparing. Start doing.',
-            link: '/how-it-works#insights',
-            linkText: 'Calculate ROI'
+            link: '/assessment',
+            linkText: 'Start Assessment'
         }
     ]
 

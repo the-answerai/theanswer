@@ -260,7 +260,7 @@ function CalculatorSection() {
                                     for—and less time on administrative overhead.
                                 </p>
                                 <a
-                                    href='https://calendly.com/lastrev/answeragent-demo'
+                                    href='https://calendly.com/brad-theanswer/answeragent-intro'
                                     className='button button--primary button--block'
                                     target='_blank'
                                     rel='noopener noreferrer'
