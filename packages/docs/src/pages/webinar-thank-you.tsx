@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React, { FormEvent, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import Layout from '@theme/Layout'
@@ -10,8 +11,34 @@ import { marketingConfig } from '@site/src/config/marketingConfig'
 import { webinarConfig, getWebinarDateTime, getLocalWebinarDateTime } from '@site/src/config/webinarContent'
 import { mailerLiteService } from '@site/src/services/mailerLiteService'
 import { trackingService } from '@site/src/services/trackingService'
+import {
+    CheckCircle2,
+    Star,
+    ClipboardList,
+    Target,
+    Lightbulb,
+    BarChart3,
+    Settings,
+    TrendingUp,
+    Briefcase,
+    Zap,
+    Clock,
+    Lock,
+    Gift,
+    Users,
+    Circle,
+    FileText,
+    Mail,
+    Bot,
+    Compass,
+    Calendar,
+    PartyPopper
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 const ELEVEN_LABS_AGENT_ID = 'agent_01k03gnw7xe11btz2vprkf7ay5' as const
 
@@ -44,7 +71,7 @@ function ThankYouHero() {
             </div>
             <div className={styles.heroContent}>
                 <span className={styles.heroCelebration} aria-hidden='true'>
-                    🎉
+                    <PartyPopper size={48} strokeWidth={1.5} />
                 </span>
                 <p className={styles.heroEyebrow}>Registration confirmed</p>
                 <h1 className={styles.heroHeadline}>You&apos;re locked in for Thursday&apos;s Enterprise AI playbook</h1>
@@ -55,15 +82,21 @@ function ThankYouHero() {
 
                 <ul className={styles.heroChecklist}>
                     <li className={styles.heroChecklistItem}>
-                        <span className={styles.heroChecklistIcon}>📅</span>
+                        <span className={styles.heroChecklistIcon}>
+                            <Calendar size={32} strokeWidth={1.5} />
+                        </span>
                         Add the calendar invite and forward the join link to your decision-makers.
                     </li>
                     <li className={styles.heroChecklistItem}>
-                        <span className={styles.heroChecklistIcon}>🧭</span>
+                        <span className={styles.heroChecklistIcon}>
+                            <Compass size={32} strokeWidth={1.5} />
+                        </span>
                         Tell us the metric or workflow you want solved in the form below—Bradley will prioritize it live.
                     </li>
                     <li className={styles.heroChecklistItem}>
-                        <span className={styles.heroChecklistIcon}>🤖</span>
+                        <span className={styles.heroChecklistIcon}>
+                            <Bot size={32} strokeWidth={1.5} />
+                        </span>
                         Prefer a conversation? Jump into our AI voice coach to pressure-test the agenda in 2 minutes.
                     </li>
                 </ul>
@@ -104,10 +137,12 @@ function ThankYouHero() {
 
                 <div className={styles.heroSecondaryLinks}>
                     <a href='#what-to-expect' className={styles.secondaryLink}>
-                        📋 See the agenda
+                        <ClipboardList size={18} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                        See the agenda
                     </a>
                     <a href='#prep' className={styles.secondaryLink}>
-                        🎁 Prep materials
+                        <Gift size={18} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                        Prep materials
                     </a>
                 </div>
             </div>
@@ -139,7 +174,9 @@ function ConfirmationDetails() {
                                     </p>
                                 </div>
                                 <div className={styles.confirmationItem}>
-                                    <span className={styles.confirmationIcon}>📅</span>
+                                    <span className={styles.confirmationIcon}>
+                                        <Calendar size={48} strokeWidth={1.5} />
+                                    </span>
                                     <h3>Calendar invite</h3>
                                     <p className={styles.confirmationCopy}>
                                         {getWebinarDateTime()} — add it now so you get the automatic reminders and can loop in stakeholders
@@ -147,7 +184,9 @@ function ConfirmationDetails() {
                                     </p>
                                 </div>
                                 <div className={styles.confirmationItem}>
-                                    <span className={styles.confirmationIcon}>🎯</span>
+                                    <span className={styles.confirmationIcon}>
+                                        <Target size={48} strokeWidth={1.5} />
+                                    </span>
                                     <h3>4-week deployment roadmap</h3>
                                     <p className={styles.confirmationCopy}>
                                         The note links to our live demo outline and the KPI worksheet you’ll use during the session.
@@ -156,7 +195,9 @@ function ConfirmationDetails() {
                             </div>
 
                             <div className={styles.confirmationProTip}>
-                                <span className={styles.confirmationProTipIcon}>💡</span>
+                                <span className={styles.confirmationProTipIcon}>
+                                    <Lightbulb size={24} strokeWidth={1.5} />
+                                </span>
                                 <div>
                                     <strong>Pro tip:</strong> Add the calendar invite now, then jump to “Tailor the workshop” so we know
                                     which workflow or metric to prioritize for your team.
@@ -188,9 +229,27 @@ function PrepResources() {
                                     stakeholders so you ship outcomes the Monday after.
                                 </p>
                                 <ul className={styles.videoTakeaways}>
-                                    <li>👥 Who to invite so approvals happen fast</li>
-                                    <li>📊 The 3 metrics he’ll ask you to benchmark during the live build</li>
-                                    <li>⚙️ How to prep your data sources for the 4-week deployment sprint</li>
+                                    <li>
+                                        <Users
+                                            size={16}
+                                            style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                        />{' '}
+                                        Who to invite so approvals happen fast
+                                    </li>
+                                    <li>
+                                        <BarChart3
+                                            size={16}
+                                            style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                        />{' '}
+                                        The 3 metrics he&apos;ll ask you to benchmark during the live build
+                                    </li>
+                                    <li>
+                                        <Settings
+                                            size={16}
+                                            style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                        />{' '}
+                                        How to prep your data sources for the 4-week deployment sprint
+                                    </li>
                                 </ul>
                             </div>
                             {videoReady ? (
@@ -213,13 +272,17 @@ function PrepResources() {
                             <div className={styles.videoResources}>
                                 <div className={styles.bonusGrid}>
                                     <div className={styles.bonusCard}>
-                                        <span className={styles.bonusIcon}>🧭</span>
+                                        <span className={styles.bonusIcon}>
+                                            <Compass size={32} strokeWidth={1.5} />
+                                        </span>
                                         <h3>Readiness Checklist</h3>
                                         <p>Hand it to IT, data, and compliance so provisioning happens before Thursday.</p>
                                         <div className={styles.bonusMeta}>Includes SOC 2 & privacy prompts</div>
                                     </div>
                                     <div className={styles.bonusCard}>
-                                        <span className={styles.bonusIcon}>📈</span>
+                                        <span className={styles.bonusIcon}>
+                                            <TrendingUp size={32} strokeWidth={1.5} />
+                                        </span>
                                         <h3>Executive Briefing Deck</h3>
                                         <p>Forward-ready slides with ROI benchmarks and the exact 4-week rollout sequence.</p>
                                         <div className={styles.bonusMeta}>Perfect for leadership updates</div>
@@ -292,7 +355,10 @@ function ProgressiveProfileForm() {
     }, [])
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value, type, checked } = event.target
+        const target = event.target as HTMLInputElement | HTMLTextAreaElement
+        const name = (target as HTMLInputElement).name
+        const isCheckbox = (target as HTMLInputElement).type === 'checkbox'
+        const nextValue = isCheckbox ? (target as HTMLInputElement).checked : (target as HTMLInputElement | HTMLTextAreaElement).value
 
         if (status === 'error') {
             setStatus('idle')
@@ -301,7 +367,7 @@ function ProgressiveProfileForm() {
 
         setFormState((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: nextValue
         }))
     }
 
@@ -472,7 +538,13 @@ function ProgressiveProfileForm() {
 
                                 {error && <div className={styles.formError}>{error}</div>}
                                 {status === 'success' && (
-                                    <div className={styles.formSuccess}>✅ Got it! We’ll tailor the workshop follow-ups to your goals.</div>
+                                    <div className={styles.formSuccess}>
+                                        <CheckCircle2
+                                            size={18}
+                                            style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                        />
+                                        Got it! We&#39;ll tailor the workshop follow-ups to your goals.
+                                    </div>
                                 )}
 
                                 <button type='submit' className={styles.formSubmit} disabled={status === 'saving'}>
@@ -481,7 +553,9 @@ function ProgressiveProfileForm() {
                             </form>
 
                             <div className={styles.progressiveProof}>
-                                <span>⭐️</span>
+                                <span>
+                                    <Star size={24} fill='currentColor' />
+                                </span>
                                 <p>
                                     Last month’s attendees who used the form or voice coach were 3× more likely to book a pilot follow-up
                                     because the team had their roadmap ready.
@@ -515,9 +589,15 @@ function WhatToExpect() {
                                 disconnected tools collapse into one governed assistant in under 15 minutes.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🔴 Live, not pre-recorded</span>
-                                <span>💼 Metrics surfaced from your submissions</span>
-                                <span>⚡ Interactive Q&A</span>
+                                <span>
+                                    <Circle size={16} fill='red' color='red' /> Live, not pre-recorded
+                                </span>
+                                <span>
+                                    <Briefcase size={16} /> Metrics surfaced from your submissions
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Interactive Q&A
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -531,9 +611,15 @@ function WhatToExpect() {
                                 Moonstruck unified nine reps—complete with dashboards, compliance notes, and stakeholder scripts.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📊 Real ROI numbers</span>
-                                <span>⏱️ Deployment timelines</span>
-                                <span>✅ Measurable outcomes</span>
+                                <span>
+                                    <BarChart3 size={16} /> Real ROI numbers
+                                </span>
+                                <span>
+                                    <Clock size={16} /> Deployment timelines
+                                </span>
+                                <span>
+                                    <CheckCircle2 size={16} /> Measurable outcomes
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -549,9 +635,15 @@ function WhatToExpect() {
                                 sample Jira boards, and governance checkpoints.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📋 Weekly deliverables</span>
-                                <span>🎯 Success criteria</span>
-                                <span>⚡ Implementation tips</span>
+                                <span>
+                                    <ClipboardList size={16} /> Weekly deliverables
+                                </span>
+                                <span>
+                                    <Target size={16} /> Success criteria
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Implementation tips
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -565,16 +657,24 @@ function WhatToExpect() {
                                 handle exec reviews for Fortune 500 clients.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🔒 No vendor lock-in</span>
-                                <span>📈 Measurable ROI</span>
-                                <span>🎯 90-day timeline</span>
+                                <span>
+                                    <Lock size={16} /> No vendor lock-in
+                                </span>
+                                <span>
+                                    <TrendingUp size={16} /> Measurable ROI
+                                </span>
+                                <span>
+                                    <Target size={16} /> 90-day timeline
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className={styles.expectationVoiceNote}>
-                    <span>🤖</span>
+                    <span>
+                        <Bot size={24} strokeWidth={1.5} />
+                    </span>
                     <p>
                         Want your scenario featured? Share it via the form or the voice coach before Friday and we’ll weave it into the live
                         demo.
@@ -600,9 +700,27 @@ function FitCallCTA() {
                             desired ROI—they’re designed to confirm if the 90-day pilot is a match.
                         </p>
                         <ul className={styles.fitCallList}>
-                            <li>✅ We map your fastest measurable win</li>
-                            <li>✅ Security & compliance checklist walkthrough</li>
-                            <li>✅ Pilot timeline aligned to your stakeholders</li>
+                            <li>
+                                <CheckCircle2
+                                    size={16}
+                                    style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                />{' '}
+                                We map your fastest measurable win
+                            </li>
+                            <li>
+                                <CheckCircle2
+                                    size={16}
+                                    style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                />{' '}
+                                Security & compliance checklist walkthrough
+                            </li>
+                            <li>
+                                <CheckCircle2
+                                    size={16}
+                                    style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
+                                />{' '}
+                                Pilot timeline aligned to your stakeholders
+                            </li>
                         </ul>
                         <a
                             className={styles.fitCallButton}
@@ -779,9 +897,18 @@ function FinalAssurance() {
                             review. No cold calls, no surprise sequences.
                         </p>
                         <ul className={styles.finalAssuranceList}>
-                            <li>🔒 Secure ElevenLabs session with end-to-end encryption</li>
-                            <li>🧾 Transcript and highlights emailed only to you (or teammates you specify)</li>
-                            <li>📬 Opt out anytime—every follow-up email includes a one-click preference link</li>
+                            <li>
+                                <Lock size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />{' '}
+                                Secure ElevenLabs session with end-to-end encryption
+                            </li>
+                            <li>
+                                <FileText size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />{' '}
+                                Transcript and highlights emailed only to you (or teammates you specify)
+                            </li>
+                            <li>
+                                <Mail size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} /> Opt
+                                out anytime—every follow-up email includes a one-click preference link
+                            </li>
                         </ul>
                         <div className={styles.finalAssuranceFaqs}>
                             <div>
@@ -827,7 +954,14 @@ function FinalAssurance() {
 export default function WebinarThankYou(): JSX.Element {
     // Initialize page tracking
     useEffect(() => {
-        trackingService.trackPageView('/webinar-thank-you', 'Webinar Registration Confirmed')
+        // Track ViewContent for Facebook Pixel (PageView fires on init)
+        if (window.fbq) {
+            window.fbq('track', 'ViewContent', {
+                content_name: 'Webinar Registration Confirmed',
+                content_category: 'webinar',
+                content_type: 'product'
+            })
+        }
 
         // Track successful conversion landing
         trackingService.trackEvent({
@@ -840,7 +974,7 @@ export default function WebinarThankYou(): JSX.Element {
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='Registration Confirmed - Enterprise AI Webinar'
                 description="You're registered for Thursday's enterprise AI webinar. Check your email for the webinar link, calendar invitation, and bonus Enterprise AI Readiness Checklist."
             >
@@ -855,7 +989,7 @@ export default function WebinarThankYou(): JSX.Element {
                     <FinalAssurance />
                 </main>
                 <WebinarLegalFooter />
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

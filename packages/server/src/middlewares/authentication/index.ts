@@ -9,6 +9,7 @@ import { findOrCreateOrganization } from './findOrCreateOrganization'
 import { findOrCreateUser } from './findOrCreateUser'
 import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
 import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
+import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
 
 const jwtCheck = auth({
     authRequired: true,
@@ -24,15 +25,29 @@ const jwtCheckPublic = auth({
     tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'RS256'
 })
 
+/**
+ * Check if a token looks like a JWT (has three parts separated by dots)
+ */
+const looksLikeJWT = (token: string): boolean => {
+    const parts = token.split('.')
+    return parts.length === 3
+}
+
 const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<User | null> => {
     const authHeader = req.headers.authorization
     if (!authHeader?.startsWith('Bearer ')) {
         return null
     }
 
-    const apiKey = authHeader.split(' ')[1]
+    const token = authHeader.split(' ')[1]
+
+    // If token looks like a JWT, skip API key authentication
+    if (looksLikeJWT(token)) {
+        return null
+    }
+
     try {
-        const apiKeyData = await apikeyService.verifyApiKey(apiKey)
+        const apiKeyData = await apikeyService.verifyApiKey(token)
         if (!apiKeyData) {
             return null
         }
@@ -48,7 +63,8 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
 
         return user
     } catch (error) {
-        throw new Error('Invalid API key')
+        // Re-throw the error so the main middleware can handle it
+        throw error
     }
 }
 
@@ -85,10 +101,17 @@ export const authenticationHandlerMiddleware =
         // Try API key authentication first
         let apiKeyUser: User | null = null
         let apiKeyError: any
-        try {
-            apiKeyUser = await tryApiKeyAuth(req, AppDataSource)
-        } catch (error) {
-            apiKeyError = error
+        const authHeader = req.headers.authorization
+        const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
+        const isTokenJWT = token ? looksLikeJWT(token) : false
+
+        // Only try API key auth if token doesn't look like a JWT
+        if (token && !isTokenJWT) {
+            try {
+                apiKeyUser = await tryApiKeyAuth(req, AppDataSource)
+            } catch (error) {
+                apiKeyError = error
+            }
         }
 
         if (apiKeyUser) {
@@ -106,7 +129,28 @@ export const authenticationHandlerMiddleware =
             // Store API key user with additional auth0 org info
             req.user = apiKeyUser as any
             ;(req.user as any).auth0OrgId = organization?.auth0Id
+
+            // Apply billing customer override for organizational billing consolidation
+            if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID && req.user) {
+                req.user.stripeCustomerId = DEFAULT_CUSTOMER_ID
+            }
+
             return next()
+        }
+
+        // If we have a token that doesn't look like a JWT and API key auth failed, return error
+        if (token && !isTokenJWT && !apiKeyUser) {
+            if (apiKeyError) {
+                console.error('[Auth] API key verification failed:', {
+                    error: apiKeyError instanceof Error ? apiKeyError.message : apiKeyError,
+                    keyPrefix: token.substring(0, 8) + '...'
+                })
+                // If it's an InternalFlowiseError with UNAUTHORIZED, use its message
+                if (apiKeyError.statusCode === 401) {
+                    return res.status(401).json({ error: 'Unauthorized: Invalid API key' })
+                }
+            }
+            return res.status(401).json({ error: 'Unauthorized: Invalid API key' })
         }
 
         // Fall back to JWT authentication
@@ -173,6 +217,11 @@ export const authenticationHandlerMiddleware =
                         const permissions: string[] = []
                         if (roles?.includes('Admin')) {
                             permissions.push('org:manage')
+                        }
+
+                        // Apply billing customer override for organizational billing consolidation
+                        if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
+                            user.stripeCustomerId = DEFAULT_CUSTOMER_ID
                         }
 
                         req.user = { ...authUser, ...user, roles, permissions }

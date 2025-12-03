@@ -1,49 +1,85 @@
 -- PostgreSQL initialization script for test databases
--- This script runs automatically when the PostgreSQL container is initialized for the first time
--- It creates test databases and users to support E2E testing with safety prefixes
+-- This script is idempotent: safe to run multiple times (first-time and rerun)
+-- Runs after 01-init-flowise.sql when PostgreSQL container is initialized
 
--- Create test databases (common naming patterns)
-SELECT 'CREATE DATABASE test_flowise_e2e'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_flowise_e2e')\gexec
+-- ============================================================
+-- CREATE TEST DATABASES (idempotent)
+-- ============================================================
 
+-- Create test_flowise (for Flowise backend tests)
+-- When NODE_ENV=test, BWS provides DATABASE_NAME=flowise which auto-prefixes to test_flowise
+SELECT 'CREATE DATABASE test_flowise'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_flowise')\gexec
+
+-- Create test_theanswer (fallback when DATABASE_NAME missing)
 SELECT 'CREATE DATABASE test_theanswer'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_theanswer')\gexec
 
-SELECT 'CREATE DATABASE test_example_db'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'test_example_db')\gexec
+-- ============================================================
+-- CREATE TEST USERS (idempotent)
+-- ============================================================
 
--- Create test users if they don't exist
-DO
-$do$
+-- Create test_example_user (matches BWS auto-prefix: example_user → test_example_user)
+DO $$
 BEGIN
-   IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'test_user') THEN
-      CREATE USER test_user WITH PASSWORD 'test_password';
-   END IF;
-   IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'test_example_user') THEN
-      CREATE USER test_example_user WITH PASSWORD 'example_password';
-   END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'test_example_user') THEN
+        CREATE USER test_example_user WITH PASSWORD 'example_password';
+        RAISE NOTICE 'Created user: test_example_user';
+    ELSE
+        RAISE NOTICE 'User test_example_user already exists, skipping';
+    END IF;
 END
-$do$;
+$$;
 
--- Grant all privileges on test databases to test users
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_flowise_e2e TO example_user;
+-- Create test_user (fallback when DATABASE_USER missing)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'test_user') THEN
+        CREATE USER test_user WITH PASSWORD 'test_password';
+        RAISE NOTICE 'Created user: test_user';
+    ELSE
+        RAISE NOTICE 'User test_user already exists, skipping';
+    END IF;
+END
+$$;
 
+-- ============================================================
+-- GRANT PRIVILEGES
+-- ============================================================
+
+-- Grant privileges on test database
+GRANT ALL PRIVILEGES ON DATABASE test_flowise TO test_example_user;
+
+-- Grant privileges on fallback test database
 GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_theanswer TO example_user;
 
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_user;
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO test_example_user;
-GRANT ALL PRIVILEGES ON DATABASE test_example_db TO example_user;
+-- Note: We do NOT revoke or modify existing grants to example_user
+-- from 01-init-flowise.sql to avoid collisions
 
--- Enable pgvector extension on test databases
-\c test_flowise_e2e
+-- ============================================================
+-- ENABLE EXTENSIONS & PERMISSIONS
+-- ============================================================
+
+-- Switch to test_flowise and setup permissions
+\c test_flowise
+
+-- Create pgvector extension if not exists (idempotent)
 CREATE EXTENSION IF NOT EXISTS vector;
 
+-- Grant usage on schema to test_example_user
+GRANT ALL ON SCHEMA public TO test_example_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test_example_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO test_example_user;
+
+-- Switch to test_theanswer and setup permissions
 \c test_theanswer
+
+-- Create pgvector extension if not exists (idempotent)
 CREATE EXTENSION IF NOT EXISTS vector;
 
-\c test_example_db
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Grant usage on schema to test_user
+GRANT ALL ON SCHEMA public TO test_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO test_user;
+
+\echo 'Test database initialization completed successfully'

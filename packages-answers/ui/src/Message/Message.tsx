@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react'
 import { AxiosError } from 'axios'
-import { useFlags } from 'flagsmith/react'
 import Image from 'next/image'
 import { JsonViewer } from '@textea/json-viewer'
 import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui/material'
@@ -25,6 +24,10 @@ import { FileUpload } from '../types'
 import isArray from 'lodash/isArray'
 import { SimpleMarkdown } from './SimpleMarkdown'
 import { LoadingAnimation } from './LoadingAnimation'
+import { FollowUpPrompts } from '../FollowUpPrompts'
+import { usePermissions } from '../PermissionProvider'
+import { ArtifactRenderer, Artifact } from './ArtifactRenderer'
+import AgentExecutedDataCard from './AgentExecutedDataCard'
 const CodeCard = dynamic(() => import('./CodeCard').then((mod) => ({ default: mod.CodeCard })))
 const Dialog = dynamic(() => import('@mui/material/Dialog'))
 const DialogActions = dynamic(() => import('@mui/material/DialogActions'))
@@ -68,6 +71,8 @@ interface MessageCardProps extends Partial<Omit<Message, 'content'>>, MessageExt
     ) => void
     isFeedbackAllowed?: boolean
     chatflowid?: string
+    isLastMessage?: boolean
+    followUpPrompts?: string[]
 }
 
 const getLanguageFromClassName = (className: string | undefined) => {
@@ -136,10 +141,13 @@ export const MessageCard = ({
     chatflowid,
     id: messageId,
     usedTools,
+    isLastMessage,
+    followUpPrompts,
     ...other
 }: MessageCardProps) => {
     other = { ...other, role, user } as any
-    const { developer_mode } = useFlags(['developer_mode']) // only causes re-render if specified flag values / traits change
+    const { hasFeature } = usePermissions()
+    const isDeveloperMode = hasFeature('developer_mode')
     const { user: currentUser, sendMessageFeedback, sendMessage, appSettings, messages, sidekick } = useAnswers()
     const sourceDocuments = isArray(other.sourceDocuments) ? other.sourceDocuments : JSON.parse(other.sourceDocuments ?? '[]')
     const contextDocumentsBySource: Record<string, Document[]> = React.useMemo(
@@ -259,17 +267,6 @@ export const MessageCard = ({
         return fileUploads
     }, [fileUploads])
 
-    // Update the isLastMessage check to use content instead of ID
-    const isLastMessage = React.useMemo(() => {
-        if (!messages || !content) return false
-
-        // Get the last non-user message
-        const lastAiMessage = [...messages].reverse().find((msg) => msg.role !== 'userMessage' && msg.role !== 'user')
-
-        // Compare content to identify if this is the last message
-        return lastAiMessage?.content === content
-    }, [messages, content])
-
     // Modify the effect to detect partial code blocks
     React.useEffect(() => {
         if (content && !isUserMessage && setPreviewCode && isLastMessage) {
@@ -358,6 +355,28 @@ export const MessageCard = ({
                     Array.isArray((other as any).agentReasoning) &&
                     (other as any).agentReasoning.length > 0 &&
                     (other as any).agentReasoning.map((agentObject: any) => {
+                        // Check if this is a nextAgent transition indicator
+                        if (agentObject.nextAgent) {
+                            return (
+                                <Box
+                                    key={`next-agent-${agentObject.nextAgent}`}
+                                    sx={{
+                                        background: 'linear-gradient(to top, #303030, #212121)',
+                                        borderRadius: 1,
+                                        p: 2,
+                                        mb: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1
+                                    }}
+                                >
+                                    <img src='/next-agent.gif' alt='Next agent transition' style={{ height: '35px', width: 'auto' }} />
+                                    <Typography sx={{ color: '#e0e0e0' }}>{agentObject.nextAgent}</Typography>
+                                </Box>
+                            )
+                        }
+
+                        // Regular agent reasoning accordion
                         return (
                             <CustomAccordion
                                 defaultExpanded={agentObject?.messages?.length > 1}
@@ -537,42 +556,22 @@ export const MessageCard = ({
                                             Array.isArray(agentObject.artifacts) &&
                                             agentObject.artifacts.length > 0 &&
                                             agentObject.artifacts[0] !== null && (
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    <Typography
-                                                        variant='caption'
-                                                        component='span'
-                                                        sx={{
-                                                            color: '#9e9e9e',
-                                                            mr: 0.5,
-                                                            alignSelf: 'center'
-                                                        }}
-                                                    >
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                                                    <Typography variant='caption' sx={{ color: '#9e9e9e' }}>
                                                         Artifacts:
                                                     </Typography>
-                                                    {agentObject.artifacts.map((artifact: any, idx: number) => {
-                                                        if (!artifact) return null
-                                                        return (
-                                                            <Chip
+                                                    {agentObject.artifacts.map((artifact: Artifact, idx: number) =>
+                                                        artifact ? (
+                                                            <ArtifactRenderer
                                                                 key={idx}
-                                                                label={typeof artifact.name === 'string' ? artifact.name : 'Artifact'}
-                                                                size='small'
-                                                                variant='outlined'
-                                                                sx={{
-                                                                    height: '20px',
-                                                                    fontSize: '0.65rem',
-                                                                    color: 'success.light',
-                                                                    borderColor: 'rgba(76, 175, 80, 0.5)'
-                                                                }}
-                                                                onClick={() =>
-                                                                    artifact.data &&
-                                                                    onSourceDialogClick(
-                                                                        artifact.data,
-                                                                        `${typeof artifact.name === 'string' ? artifact.name : 'Artifact'}`
-                                                                    )
-                                                                }
+                                                                artifact={artifact}
+                                                                index={idx}
+                                                                isAgentReasoning={true}
+                                                                chatflowId={chatflowid}
+                                                                chatId={chatId}
                                                             />
-                                                        )
-                                                    })}
+                                                        ) : null
+                                                    )}
                                                 </Box>
                                             )}
                                     </Box>
@@ -580,6 +579,45 @@ export const MessageCard = ({
                             </CustomAccordion>
                         )
                     })}
+
+                {/* Top-level Artifacts Section */}
+                {(other as any).artifacts && Array.isArray((other as any).artifacts) && (other as any).artifacts.length > 0 && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            width: '100%',
+                            mb: 2
+                        }}
+                    >
+                        {(other as any).artifacts.map((artifact: Artifact, index: number) =>
+                            artifact ? (
+                                <ArtifactRenderer
+                                    key={index}
+                                    artifact={artifact}
+                                    index={index}
+                                    isAgentReasoning={false}
+                                    chatflowId={chatflowid}
+                                    chatId={chatId}
+                                />
+                            ) : null
+                        )}
+                    </Box>
+                )}
+
+                {/* AgentFlow Execution Tree Visualization */}
+                {(other as any).agentFlowExecutedData &&
+                    Array.isArray((other as any).agentFlowExecutedData) &&
+                    (other as any).agentFlowExecutedData.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                            <AgentExecutedDataCard
+                                executedData={(other as any).agentFlowExecutedData}
+                                chatflowId={chatflowid ?? ''}
+                                sessionId={chatId ?? ''}
+                            />
+                        </Box>
+                    )}
 
                 {/* Files and Audio section */}
                 {parsedFileUploads?.length > 0 && (
@@ -662,10 +700,37 @@ export const MessageCard = ({
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 1,
-                            bgcolor: isUserMessage ? 'primary.main' : 'transparent',
-                            borderRadius: isUserMessage ? 2 : 0,
-                            px: isUserMessage ? 2 : 0,
-                            py: isUserMessage ? 1 : 0,
+                            ...(isUserMessage
+                                ? {
+                                      bgcolor: 'primary.main',
+                                      borderRadius: 2,
+                                      px: 2,
+                                      py: 1
+                                  }
+                                : {
+                                      // Assistant message with glass background
+                                      background: (theme) =>
+                                          theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.03)',
+                                      backdropFilter: 'blur(10px)',
+                                      WebkitBackdropFilter: 'blur(10px)',
+                                      border: (theme) =>
+                                          theme.palette.mode === 'light'
+                                              ? '1px solid rgba(15, 23, 42, 0.08)'
+                                              : '1px solid rgba(255, 255, 255, 0.08)',
+                                      borderRadius: 2,
+                                      px: 2,
+                                      py: 1.5,
+                                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                      '&:hover': {
+                                          background: (theme) =>
+                                              theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
+                                          transform: 'translateY(-1px)',
+                                          boxShadow: (theme) =>
+                                              theme.palette.mode === 'light'
+                                                  ? '0 4px 12px rgba(0, 0, 0, 0.08)'
+                                                  : '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                      }
+                                  }),
                             width: '100%',
                             maxWidth: '100%',
                             minWidth: 0,
@@ -681,7 +746,7 @@ export const MessageCard = ({
                                 fontSize: '0.875rem',
                                 lineHeight: 1.75,
                                 width: '100%',
-                                color: isUserMessage ? 'white' : '#E0E0E0',
+                                color: isUserMessage ? 'white' : 'text.primary',
                                 '& > *': {
                                     maxWidth: '100%'
                                 },
@@ -707,6 +772,19 @@ export const MessageCard = ({
                     </Box>
                 ) : null}
             </Box>
+            {/* Follow-up prompts - only show for assistant messages that are the last message */}
+            {role === 'assistant' && isLastMessage && followUpPrompts && followUpPrompts.length > 0 && (
+                <FollowUpPrompts
+                    prompts={followUpPrompts}
+                    onPromptClick={(prompt) => {
+                        // Send the follow-up prompt as a new message
+                        sendMessage({
+                            content: prompt,
+                            sidekick
+                        })
+                    }}
+                />
+            )}
             {(other as any).action && (
                 <Box sx={{ mt: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     {(other as any).action.text && (
@@ -923,7 +1001,7 @@ export const MessageCard = ({
                     )}
                 </Box>
             ) : null}
-            {developer_mode?.enabled ? (
+            {isDeveloperMode ? (
                 <Box>
                     {sourceDocuments?.length ? (
                         <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
@@ -1080,10 +1158,9 @@ export const MessageCard = ({
                     </Box>
                 </>
             ) : null}
-            {/* Tools used section - Enhanced bubble UI */}
-            {usedTools && usedTools.length > 0 && (
+            {/* Called tools section - Progressive display with spinner */}
+            {(other as any).calledTools && Array.isArray((other as any).calledTools) && (other as any).calledTools.length > 0 && (
                 <Box sx={{ mt: 2, mb: 1 }}>
-                    Tools Used
                     <Box
                         sx={{
                             display: 'flex',
@@ -1092,47 +1169,136 @@ export const MessageCard = ({
                             alignItems: 'center'
                         }}
                     >
-                        {usedTools.map(({ tool, toolInput, toolOutput }: any, toolIdx: number) => {
-                            if (!tool || !toolOutput) return null
+                        {(other as any).calledTools.map(({ tool }: any, toolIdx: number) => {
+                            if (!tool) return null
+                            return (
+                                <Chip
+                                    key={`called-${toolIdx}`}
+                                    icon={
+                                        <Box
+                                            component='span'
+                                            sx={{
+                                                width: 15,
+                                                height: 15,
+                                                display: 'inline-flex',
+                                                '& .MuiCircularProgress-root': { width: '15px !important', height: '15px !important' }
+                                            }}
+                                        >
+                                            <svg className='MuiCircularProgress-root' viewBox='22 22 44 44'>
+                                                <circle
+                                                    className='MuiCircularProgress-circle'
+                                                    cx='44'
+                                                    cy='44'
+                                                    r='20'
+                                                    fill='none'
+                                                    stroke='currentColor'
+                                                    strokeWidth='4'
+                                                    style={{
+                                                        strokeDasharray: '80px, 200px',
+                                                        strokeDashoffset: '0px',
+                                                        animation: 'circular-rotate 1.4s linear infinite'
+                                                    }}
+                                                />
+                                            </svg>
+                                        </Box>
+                                    }
+                                    label={tool}
+                                    size='small'
+                                    variant='outlined'
+                                    clickable
+                                    sx={{
+                                        height: '28px',
+                                        fontSize: '0.75rem',
+                                        borderColor: 'primary.main',
+                                        color: 'primary.main',
+                                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                        opacity: 0.9,
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                                            opacity: 1
+                                        },
+                                        '& .MuiChip-icon': {
+                                            color: 'primary.main'
+                                        }
+                                    }}
+                                    onClick={() => {
+                                        setSourceDialogProps({
+                                            data: (other as any).calledTools[toolIdx],
+                                            title: 'Called Tool'
+                                        })
+                                        setSourceDialogOpen(true)
+                                    }}
+                                />
+                            )
+                        })}
+                    </Box>
+                </Box>
+            )}
+            {/* Tools used section - Icon bubbles */}
+            {usedTools && usedTools.length > 0 && (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        alignItems: 'center',
+                        mt: 2
+                    }}
+                >
+                    {usedTools.map(({ tool, toolInput, toolOutput }: any, toolIdx: number) => {
+                        if (!tool || !toolOutput) return null
 
-                            // Handle toolOutput as array - create bubbles for each result
-                            const outputArray = Array.isArray(toolOutput) ? toolOutput : [toolOutput]
+                        // Handle toolOutput as array - create bubbles for each result
+                        const outputArray = Array.isArray(toolOutput) ? toolOutput : [toolOutput]
 
-                            return outputArray.map((output: any, outputIdx: number) => {
-                                return (
-                                    <Chip
-                                        key={`tool-${toolIdx}-output-${outputIdx}`}
-                                        icon={<IconTool size={14} />}
-                                        label={`${tool}${outputArray.length > 1 ? ` (${outputIdx + 1})` : ''}`}
-                                        variant='outlined'
-                                        clickable
-                                        sx={{
-                                            height: '28px',
-                                            fontSize: '0.75rem',
-                                            color: '#e0e0e0',
-                                            borderColor: 'rgba(224, 224, 224, 0.3)',
-                                            backgroundColor: 'rgba(224, 224, 224, 0.05)',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(224, 224, 224, 0.1)',
-                                                borderColor: 'rgba(224, 224, 224, 0.5)'
-                                            },
-                                            '& .MuiChip-icon': {
-                                                color: '#e0e0e0'
-                                            }
-                                        }}
+                        return outputArray.map((output: any, outputIdx: number) => {
+                            const displayLabel = `${tool}${outputArray.length > 1 ? ` (${outputIdx + 1})` : ''}`
+
+                            return (
+                                <Tooltip key={`tool-${toolIdx}-output-${outputIdx}`} title={displayLabel} arrow>
+                                    <IconButton
+                                        size='small'
                                         onClick={() => {
                                             setSourceDialogProps({
                                                 input: toolInput,
                                                 data: output,
-                                                title: `${tool} ${outputArray.length > 1 ? ` ${outputIdx + 1}` : ''}`
+                                                title: displayLabel
                                             })
                                             setSourceDialogOpen(true)
                                         }}
-                                    />
-                                )
-                            })
-                        })}
-                    </Box>
+                                        sx={{
+                                            width: 36,
+                                            height: 36,
+                                            background: (theme) =>
+                                                theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.08)',
+                                            backdropFilter: 'blur(8px)',
+                                            WebkitBackdropFilter: 'blur(8px)',
+                                            border: (theme) =>
+                                                theme.palette.mode === 'light'
+                                                    ? '1px solid rgba(15, 23, 42, 0.12)'
+                                                    : '1px solid rgba(255, 255, 255, 0.12)',
+                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            color: (theme) =>
+                                                theme.palette.mode === 'light' ? theme.palette.primary.main : theme.palette.primary.light,
+                                            '&:hover': {
+                                                background: (theme) =>
+                                                    theme.palette.mode === 'light'
+                                                        ? 'rgba(255, 255, 255, 0.95)'
+                                                        : 'rgba(255, 255, 255, 0.12)',
+                                                transform: 'scale(1.1) translateY(-2px)',
+                                                boxShadow: (theme) =>
+                                                    theme.palette.mode === 'light'
+                                                        ? '0 4px 12px rgba(0, 0, 0, 0.12)'
+                                                        : '0 4px 12px rgba(0, 0, 0, 0.4)'
+                                            }
+                                        }}
+                                    >
+                                        <IconTool size={18} />
+                                    </IconButton>
+                                </Tooltip>
+                            )
+                        })
+                    })}
                 </Box>
             )}
         </Box>

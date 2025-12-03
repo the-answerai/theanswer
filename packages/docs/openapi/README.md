@@ -10,6 +10,7 @@ The following YAML files define the API specifications:
 -   `attachments.yaml` - OpenAPI specification for the Attachments API
 -   `chat-message.yaml` - OpenAPI specification for the Chat Message API
 -   `chatflows.yaml` - OpenAPI specification for the Chatflows API
+-   `data-engine.yaml` - OpenAPI specification for the Data Engine API
 -   `document-store.yaml` - OpenAPI specification for the Document Store API
 -   `feedback.yaml` - OpenAPI specification for the Feedback API
 -   `leads.yaml` - OpenAPI specification for the Leads API

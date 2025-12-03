@@ -1,9 +1,11 @@
 import clsx from 'clsx'
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
+import HeroCTA from '@site/src/components/HeroCTA'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import { Code2, Globe, Zap, BookOpen, Github, MessageSquare, Rocket, Settings } from 'lucide-react'
+import styles from './developers.module.css'
 
-import styles from './index.module.css'
+const LayoutComponent: any = Layout
 
 function DevelopersHero() {
     return (
@@ -12,267 +14,111 @@ function DevelopersHero() {
                 <ThreeJsScene className={styles.threeJsCanvas} />
             </div>
             <div className={styles.heroContent}>
-                <h1 className={styles.heroTitle}>Help Us Build the Future of AI—Together</h1>
+                <h1 className={styles.heroTitle}>Build on Open-Source You Trust</h1>
                 <p className={styles.heroSubtitle}>
-                    A Call to Builders for the AnswerAgentAI Alpha Sprint. Not your data, not your soul—just your code and your conviction.
+                    AnswerAgent is built on LangChain and Flowise—proven infrastructure, vibrant community.
                 </p>
-                <div className={styles.heroCTAs}>
-                    <a href='https://github.com/orgs/the-answerai/repositories' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Start Building Now
-                    </a>
-                    <div className={styles.secondaryLinks}>
-                        <a href='#mission' className={styles.secondaryLink}>
-                            🎯 The Mission
-                        </a>
-                        <a href='#rewards' className={styles.secondaryLink}>
-                            💰 Earn Credits
-                        </a>
-                    </div>
-                </div>
+                <HeroCTA
+                    context={{
+                        page: 'developers',
+                        section: 'hero'
+                    }}
+                />
             </div>
         </header>
     )
 }
 
-const LayoutComponent: any = Layout
-
-function OpeningHook() {
+function WhyBuildSection() {
     return (
-        <section className={clsx(styles.missionSection, styles.comingSoonSection)}>
+        <section className={styles.section}>
             <div className='container'>
-                <div className='row'>
-                    <div className='col col--12'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)} style={{ textAlign: 'center' }}>
-                            <div className={styles.comingSoonIcon}>👨‍💻</div>
-                            <div className={styles.commandmentText}>
-                                <h2 style={{ color: '#00ffff', marginBottom: '1.5rem' }}>Hey Builders. We Need You.</h2>
-                                <p style={{ fontSize: '1.2rem', lineHeight: '1.8', marginBottom: '1.5rem' }}>
-                                    We&apos;re sprinting to create something that shouldn&apos;t exist according to Big Tech: a fully local
-                                    AI platform that respects your privacy and amplifies your creativity.
-                                </p>
-                                <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-                                    <strong style={{ color: '#00ffff' }}>No surveillance. No lock-in.</strong> Just pure, ethical computing
-                                    power in your hands.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    )
-}
-
-function MissionBrief() {
-    return (
-        <section className={styles.featuresSection} id='mission'>
-            <div className='container'>
-                <h2 className='text--center'>The Mission Brief</h2>
-                <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    Three critical pieces for launch—developers, creators, rebels building the tools we actually want to use
-                </p>
-                <div className='row'>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>1</div>
-                            <h3>Chrome Extension</h3>
-                            <p>
-                                Your AI sidekick in the browser. Instant assistance on any webpage, intelligent interactions, and seamless
-                                workflow integration.
-                            </p>
-                            <div className={styles.appFeatures}>
-                                <span>🌐 Browser Integration</span>
-                                <span>🤖 AI Assistance</span>
-                                <span>⚡ Real-time Processing</span>
-                            </div>
-                            <a href='https://github.com/the-answerai/aai-browser-sidekick' className={styles.featureCardCTA}>
-                                View Issues →
-                            </a>
-                        </div>
-                    </div>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>2</div>
-                            <h3>Web Application</h3>
-                            <p>
-                                The command center for your agents. Visual workflow builder, agent management, and the hub for all AI
-                                interactions.
-                            </p>
-                            <div className={styles.appFeatures}>
-                                <span>🎨 Visual Builder</span>
-                                <span>📊 Agent Dashboard</span>
-                                <span>🔗 API Integration</span>
-                            </div>
-                            <a href='https://github.com/the-answerai/theanswer' className={styles.featureCardCTA}>
-                                Contribute →
-                            </a>
-                        </div>
-                    </div>
-                    <div className='col col--4'>
-                        <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>3</div>
-                            <h3>Desktop Apps</h3>
-                            <p>
-                                Coming soon, but foundation work starts now. Native applications for true local AI processing and maximum
-                                privacy.
-                            </p>
-                            <div className={styles.appFeatures}>
-                                <span>🖥️ Native Performance</span>
-                                <span>🔒 Local Processing</span>
-                                <span>🏗️ Foundation Work</span>
-                            </div>
-                            <a href='https://github.com/the-answerai' className={styles.featureCardCTA}>
-                                Coming Soon
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    )
-}
-
-function PracticalPath() {
-    return (
-        <section className={clsx(styles.missionSection, styles.comingSoonSection)}>
-            <div className='container'>
-                <h2 className='text--center'>The Practical Path</h2>
-                <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    Getting started is dead simple—from clone to contribution in minutes
-                </p>
-                <div className='row'>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🚀</div>
-                            <div className={styles.commandmentText}>
-                                <strong>1. Clone the Repo</strong>
-                                <br />
-                                Detailed local setup instructions ready. Get your development environment running in minutes with our
-                                comprehensive setup guide.
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <a
-                                    href='https://github.com/orgs/the-answerai/repositories'
-                                    className={clsx(styles.ctaButton, styles.secondaryLink)}
-                                    style={{ textTransform: 'none' }}
-                                >
-                                    Browse Repositories →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🎯</div>
-                            <div className={styles.commandmentText}>
-                                <strong>2. Pick an Issue</strong>
-                                <br />
-                                Search for the &apos;beginner&apos; tag to find your first contribution. We&apos;ve curated issues perfect
-                                for getting familiar with the codebase.
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <a
-                                    href='https://github.com/the-answerai/theanswer/issues'
-                                    className={clsx(styles.ctaButton, styles.secondaryLink)}
-                                    style={{ textTransform: 'none' }}
-                                >
-                                    Browse Issues →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>🛠️</div>
-                            <div className={styles.commandmentText}>
-                                <strong>3. Build Something</strong>
-                                <br />
-                                Fix a bug, add a feature, improve the docs. Every contribution moves us closer to launch. Own your version.
-                                Fork it. Make it yours.
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <a
-                                    href='/docs/developers'
-                                    className={clsx(styles.ctaButton, styles.secondaryLink)}
-                                    style={{ textTransform: 'none' }}
-                                >
-                                    Dev Guide →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.commandment, styles.comingSoonCard)}>
-                            <div className={styles.comingSoonIcon}>📹</div>
-                            <div className={styles.commandmentText}>
-                                <strong>4. Share Your Story</strong>
-                                <br />
-                                Record a 1-3 minute video explaining what you built and why it matters. Show the world what happens when
-                                developers build for developers.
-                            </div>
-                            <div style={{ marginTop: '1rem' }}>
-                                <a
-                                    href='/docs/developers/video-guide'
-                                    className={clsx(styles.ctaButton, styles.secondaryLink)}
-                                    style={{ textTransform: 'none' }}
-                                >
-                                    Video Guide →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    )
-}
-
-function RewardStructure() {
-    return (
-        <section className={styles.featuresSection} id='rewards'>
-            <div className='container'>
-                <h2 className='text--center'>This Isn&apos;t Charity Work</h2>
-                <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    Every contribution earns credits—we&apos;re tracking everything transparently
-                </p>
+                <h2 className={styles.sectionTitle}>Why Build on AnswerAgent?</h2>
                 <div className='row'>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>💎</div>
-                            <h3>Earn Credits For</h3>
-                            <p>
-                                Your work has value, and we&apos;ll make sure you&apos;re compensated. From commits to code reviews, every
-                                meaningful contribution counts.
-                            </p>
-                            <div className={styles.appFeatures}>
-                                <span>📝 Commits that land</span>
-                                <span>🔍 Thoughtful code reviews</span>
-                                <span>📚 Documentation that helps</span>
-                                <span>🐛 Great bug reports</span>
-                            </div>
-                            <a href='/docs/developers/earn-credits' className={styles.featureCardCTA}>
-                                Learn More →
-                            </a>
+                            <Code2 size={48} className={styles.featureIcon} />
+                            <h3>Open-Source Foundation</h3>
+                            <p>Built on LangChain & Flowise. No vendor lock-in. Fork it if you want.</p>
                         </div>
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>⚡</div>
-                            <h3>Review Process</h3>
-                            <p>
-                                No gatekeeping. Just quality code and aligned values. Our automated system helps you succeed with
-                                AI-suggested next steps.
-                            </p>
-                            <div className={styles.appFeatures}>
-                                <span>🤖 Automated testing</span>
-                                <span>💡 AI-suggested improvements</span>
-                                <span>📹 Video explanations</span>
-                                <span>⚡ Fast feedback loops</span>
+                            <Globe size={48} className={styles.featureIcon} />
+                            <h3>Deploy Anywhere</h3>
+                            <p>Your infrastructure, your rules. Cloud, on-prem, or hybrid.</p>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={styles.featureCard}>
+                            <Settings size={48} className={styles.featureIcon} />
+                            <h3>Extensible</h3>
+                            <p>Build custom nodes, integrations, and tools. Contribute back to the community.</p>
+                        </div>
+                    </div>
+                    <div className='col col--6'>
+                        <div className={styles.featureCard}>
+                            <Zap size={48} className={styles.featureIcon} />
+                            <h3>API-First</h3>
+                            <p>RESTful APIs for everything. Embed agents anywhere.</p>
+                        </div>
+                    </div>
+                    <div className='col col--6 col--offset-3'>
+                        <div className={styles.featureCard}>
+                            <MessageSquare size={48} className={styles.featureIcon} />
+                            <h3>Active Community</h3>
+                            <p>Join 10,000+ developers building on AnswerAgent.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function QuickStartSection() {
+    return (
+        <section className={styles.quickStartSection}>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col col--8 col--offset-2'>
+                        <h2 className={styles.sectionTitle}>Get Started in 5 Minutes</h2>
+                        <div className={styles.stepsList}>
+                            <div className={styles.step}>
+                                <div className={styles.stepNumber}>1</div>
+                                <div className={styles.stepContent}>
+                                    <h3>Sign up for free account</h3>
+                                    <p>Create your account and get instant access to Studio.</p>
+                                </div>
                             </div>
-                            <a href='/docs/developers/contributing' className={styles.featureCardCTA}>
-                                PR Guidelines →
+                            <div className={styles.step}>
+                                <div className={styles.stepNumber}>2</div>
+                                <div className={styles.stepContent}>
+                                    <h3>Clone starter template</h3>
+                                    <p>Start with a pre-built agent template or build from scratch.</p>
+                                </div>
+                            </div>
+                            <div className={styles.step}>
+                                <div className={styles.stepNumber}>3</div>
+                                <div className={styles.stepContent}>
+                                    <h3>Customize your agent</h3>
+                                    <p>Use the visual builder or code editor to customize your agent.</p>
+                                </div>
+                            </div>
+                            <div className={styles.step}>
+                                <div className={styles.stepNumber}>4</div>
+                                <div className={styles.stepContent}>
+                                    <h3>Deploy</h3>
+                                    <p>Deploy to web widget, Slack bot, API, or your own infrastructure.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.quickStartCTAs}>
+                            <a href='/assessment' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                Get AI Assessment
+                            </a>
+                            <a href='/docs/developers' className={clsx(styles.ctaButton, styles.ctaSecondary)}>
+                                View Docs
                             </a>
                         </div>
                     </div>
@@ -282,125 +128,105 @@ function RewardStructure() {
     )
 }
 
-function ClosingRally() {
+function ResourcesSection() {
+    const resources = [
+        {
+            icon: BookOpen,
+            title: 'Documentation',
+            description: 'Complete guides, API reference, tutorials',
+            link: '/docs/developers',
+            linkText: 'View Docs'
+        },
+        {
+            icon: Rocket,
+            title: 'Quick Start Guide',
+            description: 'Build your first agent in 10 minutes',
+            link: '/docs/developers',
+            linkText: 'Get Started'
+        },
+        {
+            icon: Code2,
+            title: 'API Reference',
+            description: 'RESTful APIs for all platform features',
+            link: '/docs/api',
+            linkText: 'View API Docs'
+        },
+        {
+            icon: Settings,
+            title: 'Build Custom Nodes',
+            description: 'Extend AnswerAgent with your own components',
+            link: '/docs/developers',
+            linkText: 'Building Guide'
+        },
+        {
+            icon: Zap,
+            title: 'Join the Sprint',
+            description: 'Contribute to open-source development',
+            link: '/docs/developers',
+            linkText: 'Contribution Guide'
+        },
+        {
+            icon: MessageSquare,
+            title: 'Community Discord',
+            description: 'Get help, share ideas, collaborate',
+            link: 'https://discord.gg/X54ywt8pzj',
+            linkText: 'Join Discord',
+            external: true
+        },
+        {
+            icon: Github,
+            title: 'GitHub',
+            description: 'View source, report issues, contribute',
+            link: 'https://github.com/the-answerai',
+            linkText: 'View on GitHub',
+            external: true
+        }
+    ]
+
     return (
-        <section className={clsx(styles.missionSection, styles.ctaSection)}>
-            <div className='container text--center'>
-                <h2>We Have 17 Days to Prove Something Important</h2>
-                <p style={{ fontSize: '1.3rem', marginBottom: '2rem', opacity: 0.9 }}>
-                    That a small group of committed developers can build better tools than billion-dollar corporations
-                </p>
-                <div className='row' style={{ marginBottom: '3rem' }}>
-                    <div className='col col--12'>
-                        <div
-                            className={clsx(styles.commandment, styles.comingSoonCard)}
-                            style={{ textAlign: 'center', border: '2px solid #ff00ff' }}
-                        >
-                            <div className={styles.commandmentText}>
-                                <h3 style={{ color: '#ff00ff', marginBottom: '1rem' }}>Not because we have more resources.</h3>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1.5rem' }}>
-                                    But because we give a damn about the right things.
-                                </h3>
-                                <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-                                    <strong>Privacy. Creativity. Human autonomy.</strong>
-                                    <br />
-                                    This is our shot to build AI that serves people, not platforms.
-                                    <br />
-                                    To create tools that empower, not exploit.
-                                </p>
+        <section className={styles.resourcesSection}>
+            <div className='container'>
+                <h2 className={styles.sectionTitle}>Developer Resources</h2>
+                <div className='row'>
+                    {resources.map((resource, index) => {
+                        const Icon = resource.icon
+                        return (
+                            <div key={index} className='col col--4'>
+                                <div className={styles.resourceCard}>
+                                    <Icon size={32} className={styles.resourceIcon} />
+                                    <h3>{resource.title}</h3>
+                                    <p>{resource.description}</p>
+                                    <a
+                                        href={resource.link}
+                                        className={styles.resourceLink}
+                                        target={resource.external ? '_blank' : undefined}
+                                        rel={resource.external ? 'noopener noreferrer' : undefined}
+                                    >
+                                        {resource.linkText} →
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div className={styles.heroCTAs}>
-                    <a href='https://github.com/orgs/the-answerai/repositories' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Let&apos;s Show Them What We Can Build
-                    </a>
-                    <div className={styles.secondaryLinks}>
-                        <a
-                            href='https://github.com/the-answerai/issues?q=is%3Aissue+is%3Aopen+label%3Abeginner'
-                            className={styles.secondaryLink}
-                        >
-                            🎯 Find Beginner Issues
-                        </a>
-                        <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink}>
-                            💬 Join Discord
-                        </a>
-                    </div>
+                        )
+                    })}
                 </div>
             </div>
         </section>
     )
 }
 
-// YouTubeSection moved to Learn page
-
-function QuickReference() {
+function BottomCTASection() {
     return (
-        <section className={styles.featuresSection} id='video-guide'>
+        <section className={styles.bottomCTASection}>
             <div className='container'>
-                <h2 className='text--center'>Quick Reference Card for Contributors</h2>
-                <p className='text--center' style={{ marginBottom: '3rem', fontSize: '1.2rem', opacity: 0.9 }}>
-                    Everything you need to get started and earn credits
-                </p>
                 <div className='row'>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🚀</div>
-                            <h3>Start Here</h3>
-                            <div className={styles.appFeatures}>
-                                <span>📂 GitHub Repository</span>
-                                <span>📋 Setup Documentation</span>
-                                <span>🏷️ Beginner Issues Filter</span>
-                            </div>
-                            <a href='https://github.com/orgs/the-answerai/repositories' className={styles.featureCardCTA}>
-                                Browse Repositories →
-                            </a>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📹</div>
-                            <h3>Video Requirements</h3>
-                            <div className={styles.appFeatures}>
-                                <span>⏱️ 1-3 minutes long</span>
-                                <span>🛠️ What you built/fixed</span>
-                                <span>🎯 Problem it solves</span>
-                                <span>🌟 How it serves the mission</span>
-                            </div>
-                            <a href='/docs/developers/video-guide' className={styles.featureCardCTA}>
-                                Video Guide →
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📅</div>
-                            <h3>Help Build the Community</h3>
-                            <div className={styles.appFeatures}>
-                                <span>🎯 Focus: Chrome Extension & Web App</span>
-                                <span>🏗️ Foundation: Desktop Architecture</span>
-                            </div>
-                            <a href='#mission' className={styles.featureCardCTA}>
-                                View Mission →
-                            </a>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🤝</div>
-                            <h3>The Deal</h3>
-                            <div className={styles.appFeatures}>
-                                <span>👨‍💻 You build with us</span>
-                                <span>💰 We reward your work</span>
-                                <span>🚀 Together we own the future</span>
-                            </div>
-                            <a href='#rewards' className={styles.featureCardCTA}>
-                                Learn Rewards →
-                            </a>
-                        </div>
+                    <div className='col col--8 col--offset-2'>
+                        <h2 className={styles.bottomCTATitle}>Ready to build?</h2>
+                        <HeroCTA
+                            context={{
+                                page: 'developers',
+                                section: 'bottom-cta'
+                            }}
+                        />
                     </div>
                 </div>
             </div>
@@ -409,21 +235,18 @@ function QuickReference() {
 }
 
 export default function Developers(): JSX.Element {
-    const { siteConfig: _siteConfig } = useDocusaurusContext()
     return (
         <div data-theme='dark'>
             <LayoutComponent
-                title='Developers - Help Us Build the Future of AI'
-                description='Join the AnswerAgentAI Alpha Sprint. Build privacy-first AI tools that empower, not exploit. Earn credits for contributions. Let us show Big Tech what committed developers can build.'
+                title='Developers - AnswerAgent'
+                description='Build on open-source you trust. AnswerAgent is built on LangChain and Flowise.'
             >
                 <DevelopersHero />
                 <main>
-                    <OpeningHook />
-                    <MissionBrief />
-                    <PracticalPath />
-                    <RewardStructure />
-                    <ClosingRally />
-                    <QuickReference />
+                    <WhyBuildSection />
+                    <QuickStartSection />
+                    <ResourcesSection />
+                    <BottomCTASection />
                 </main>
             </LayoutComponent>
         </div>

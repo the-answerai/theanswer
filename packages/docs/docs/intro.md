@@ -105,8 +105,7 @@ Answer Agent AI is built on the power of Flowise:
 
 We're excited to see what you'll create! Join our community to share your experiences, get support, and collaborate with other innovators:
 
--   [Subscribe to Youtube](https://youtube.com/@digitalatscale)
--   [Follow us on X](https://x.com/digitalatscale_)
+-   [Subscribe to Youtube](https://www.youtube.com/@whatistheanswerai)
 -   [Read our blog](https://theanswer.ai/blog)
 
 ## Contributing

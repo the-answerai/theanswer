@@ -1,8 +1,9 @@
 import useSWR from 'swr'
 import billingApi from '@/api/billing'
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, ReactNode } from 'react'
 
 export interface UsageEvent {
+    userId: ReactNode
     id: string
     timestamp: string
     chatflowName?: string

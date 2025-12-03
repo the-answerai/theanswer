@@ -20,7 +20,7 @@ import {
 } from './types'
 import { LangfuseProvider } from '../langfuse/LangfuseProvider'
 import { StripeProvider } from '../stripe/StripeProvider'
-import { log } from '../config'
+import { log, BILLING_CONFIG } from '../config'
 import Stripe from 'stripe'
 import { MeterEventSummary } from '../stripe/types'
 
@@ -163,7 +163,7 @@ export class BillingService implements BillingProvider {
                     currency: invoice.currency,
                     dueDate: invoice.dueDate,
                     // Calculate total credits used based on the invoice amount
-                    totalCreditsUsed: Math.round(invoice.amount / (0.00004 * 100)) // Assuming $0.001 per credit
+                    totalCreditsUsed: Math.round(invoice.amount / (BILLING_CONFIG.CREDIT_TO_USD * 100))
                 }
             }
         } catch (error) {
@@ -234,7 +234,7 @@ export class BillingService implements BillingProvider {
             // Map summaries to include meter_name
             const usage = allSummaries.map((summary) => ({
                 ...summary,
-                meter_name: summary.meter === process.env.STRIPE_CREDITS_METER_ID ? 'credits' : 'unknown'
+                meter_name: summary.meter === BILLING_CONFIG.BILLING_CREDITS_METER_ID ? 'credits' : 'unknown'
             }))
 
             return {
@@ -311,10 +311,10 @@ export class BillingService implements BillingProvider {
                 durationMs: totalTime,
                 traceId,
                 processedCount: result.processedTraces.length,
-                failedCount: result.failedTraces.length,
-                skippedCount: result.skippedTraces.length,
-                meterEventsCount: result.meterEvents.length,
-                skippedTraces: result.skippedTraces
+                failedCount: result.failedTraces?.length,
+                skippedCount: result.skippedTraces?.length,
+                meterEventsCount: result.meterEvents?.length,
+                skippedTraces: result.skippedTraces?.length
             })
             return result
         } catch (error: any) {

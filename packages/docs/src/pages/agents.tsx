@@ -4,8 +4,55 @@ import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
 import UsingAnswerAgentAISubmenu from '@site/src/components/UsingAnswerAgentAISubmenu'
+import {
+    BookOpen,
+    Bot,
+    Brain,
+    Link2,
+    Zap,
+    RefreshCw,
+    Search,
+    Flame,
+    Bug,
+    Wrench,
+    MessageSquare,
+    Mail,
+    Github,
+    ClipboardList,
+    FileText,
+    Palette,
+    Youtube,
+    Package,
+    Database,
+    Cloud,
+    Gem,
+    Sparkles,
+    RotateCw,
+    TrendingUp,
+    ShieldCheck,
+    BarChart3,
+    Image,
+    Theater,
+    Globe,
+    Lightbulb,
+    Folder,
+    Phone,
+    Ticket,
+    Video,
+    Target,
+    Rocket,
+    Mic,
+    CheckCircle,
+    Tag,
+    Route,
+    Monitor,
+    PenTool
+} from 'lucide-react'
 
 import styles from './index.module.css'
+
+// Work around React type mismatch by using any-typed Layout component, as used elsewhere
+const LayoutComponent: any = Layout
 
 function AgentsHero() {
     return (
@@ -20,15 +67,17 @@ function AgentsHero() {
                     supercharge your productivity.
                 </p>
                 <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Build Agents Now
+                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                        Schedule a Demo
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/agents' className={styles.secondaryLink}>
-                            📚 View Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            View Documentation
                         </a>
                         <a href='#what-is-agent' className={styles.secondaryLink}>
-                            🤖 What is an Agent?
+                            <Bot size={18} className={styles.linkIcon} />
+                            What is an Agent?
                         </a>
                     </div>
                 </div>
@@ -48,7 +97,9 @@ function WhatIsAnAgent() {
                 <div className='row'>
                     <div className='col col--3'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>🧠</div>
+                            <div className={styles.stepNumber}>
+                                <Brain size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Intelligent Reasoning</h3>
                             <p>
                                 Agents use advanced AI models to understand context, analyze information, and make intelligent decisions
@@ -58,7 +109,9 @@ function WhatIsAnAgent() {
                     </div>
                     <div className='col col--3'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>🔗</div>
+                            <div className={styles.stepNumber}>
+                                <Link2 size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Tool Integration</h3>
                             <p>
                                 Connect to APIs, databases, and services. Agents can interact with your existing tools and platforms to
@@ -68,7 +121,9 @@ function WhatIsAnAgent() {
                     </div>
                     <div className='col col--3'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>⚡</div>
+                            <div className={styles.stepNumber}>
+                                <Zap size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Autonomous Execution</h3>
                             <p>
                                 Once configured, agents work independently to complete complex workflows, making decisions and taking
@@ -78,7 +133,9 @@ function WhatIsAnAgent() {
                     </div>
                     <div className='col col--3'>
                         <div className={clsx(styles.featureCard, styles.stepCard)}>
-                            <div className={styles.stepNumber}>🔄</div>
+                            <div className={styles.stepNumber}>
+                                <RefreshCw size={32} strokeWidth={1.5} />
+                            </div>
                             <h3>Continuous Learning</h3>
                             <p>
                                 Agents improve over time by learning from interactions, feedback, and new data to become more effective at
@@ -97,19 +154,19 @@ function AgentToolIntegrations() {
         // AI Models - Top Priority
         {
             name: 'OpenAI GPT',
-            icon: '🤖',
+            icon: <Bot size={40} strokeWidth={1.5} />,
             description: 'Advanced language models for reasoning, analysis, and content generation',
             category: 'AI Models'
         },
         {
             name: 'Anthropic Claude',
-            icon: '🧠',
+            icon: <Theater size={40} strokeWidth={1.5} />,
             description: 'Sophisticated AI assistant for complex reasoning and analysis tasks',
             category: 'AI Models'
         },
         {
             name: 'Google Gemini',
-            icon: '💎',
+            icon: <Gem size={40} strokeWidth={1.5} />,
             description: 'Multimodal AI for text, vision, and advanced reasoning capabilities',
             category: 'AI Models'
         },
@@ -117,19 +174,19 @@ function AgentToolIntegrations() {
         // Data & Research
         {
             name: 'Exa Search',
-            icon: '🔍',
+            icon: <Search size={40} strokeWidth={1.5} />,
             description: 'AI-powered semantic search for finding relevant web content',
             category: 'Research'
         },
         {
             name: 'Firecrawl',
-            icon: '🔥',
+            icon: <Flame size={40} strokeWidth={1.5} />,
             description: 'Web scraping and data extraction for clean, structured content',
             category: 'Data'
         },
         {
             name: 'Brave Search',
-            icon: '🦁',
+            icon: <ShieldCheck size={40} strokeWidth={1.5} />,
             description: 'Privacy-focused search API for real-time web information',
             category: 'Research'
         },
@@ -137,19 +194,19 @@ function AgentToolIntegrations() {
         // Business Platforms
         {
             name: 'Salesforce',
-            icon: '☁️',
+            icon: <Cloud size={40} strokeWidth={1.5} />,
             description: 'CRM integration for customer data and sales automation',
             category: 'Business'
         },
         {
             name: 'Slack',
-            icon: '💬',
+            icon: <MessageSquare size={40} strokeWidth={1.5} />,
             description: 'Team communication and workflow automation',
             category: 'Communication'
         },
         {
             name: 'Gmail',
-            icon: '📧',
+            icon: <Mail size={40} strokeWidth={1.5} />,
             description: 'Email automation and intelligent message processing',
             category: 'Communication'
         },
@@ -157,19 +214,19 @@ function AgentToolIntegrations() {
         // Development Tools
         {
             name: 'GitHub',
-            icon: '🐙',
+            icon: <Github size={40} strokeWidth={1.5} />,
             description: 'Code repository management and development workflow automation',
             category: 'Development'
         },
         {
             name: 'Jira',
-            icon: '📋',
+            icon: <ClipboardList size={40} strokeWidth={1.5} />,
             description: 'Project management and issue tracking integration',
             category: 'Project Management'
         },
         {
             name: 'Notion',
-            icon: '📝',
+            icon: <FileText size={40} strokeWidth={1.5} />,
             description: 'Knowledge management and document automation',
             category: 'Productivity'
         },
@@ -177,13 +234,13 @@ function AgentToolIntegrations() {
         // Design & Media
         {
             name: 'Figma',
-            icon: '🎨',
+            icon: <Palette size={40} strokeWidth={1.5} />,
             description: 'Design file processing and creative workflow automation',
             category: 'Design'
         },
         {
             name: 'YouTube',
-            icon: '📺',
+            icon: <Youtube size={40} strokeWidth={1.5} />,
             description: 'Video content analysis and media workflow integration',
             category: 'Media'
         },
@@ -191,13 +248,13 @@ function AgentToolIntegrations() {
         // Infrastructure
         {
             name: 'Amazon S3',
-            icon: '📦',
+            icon: <Package size={40} strokeWidth={1.5} />,
             description: 'Cloud storage and file management automation',
             category: 'Infrastructure'
         },
         {
             name: 'PostgreSQL',
-            icon: '🗄️',
+            icon: <Database size={40} strokeWidth={1.5} />,
             description: 'Database operations and data management workflows',
             category: 'Database'
         }
@@ -215,7 +272,7 @@ function AgentToolIntegrations() {
                     {integrations.map((integration, index) => (
                         <div key={index} className='col col--4' style={{ marginBottom: '2rem' }}>
                             <div className={styles.featureCard} style={{ height: '100%' }}>
-                                <div className={styles.appIcon} style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+                                <div className={styles.appIcon} style={{ marginBottom: '1rem' }}>
                                     {integration.icon}
                                 </div>
                                 <h3 style={{ marginBottom: '0.5rem' }}>{integration.name}</h3>
@@ -262,17 +319,27 @@ function FeaturedApps() {
                 <div className='row'>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📊</div>
+                            <div className={styles.appIcon}>
+                                <BarChart3 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>CSV Transformer</h3>
                             <p>
                                 Effortlessly clean, reformat, and analyze your CSV data using intelligent AI algorithms. Perfect for data
                                 preparation, reporting, and ensuring data quality.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>✨ Smart Data Cleaning</span>
-                                <span>🔄 Format Conversion</span>
-                                <span>📈 Analysis Tools</span>
-                                <span>🛡️ Secure Processing</span>
+                                <span>
+                                    <Sparkles size={16} /> Smart Data Cleaning
+                                </span>
+                                <span>
+                                    <RotateCw size={16} /> Format Conversion
+                                </span>
+                                <span>
+                                    <TrendingUp size={16} /> Analysis Tools
+                                </span>
+                                <span>
+                                    <ShieldCheck size={16} /> Secure Processing
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Launch App →
@@ -281,17 +348,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🎨</div>
+                            <div className={styles.appIcon}>
+                                <Palette size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Image Creator</h3>
                             <p>
                                 Generate stunning, unique images from text descriptions or transform existing images with AI-powered
                                 enhancements. Perfect for marketing and creative projects.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🖼️ Text-to-Image</span>
-                                <span>✨ Image Enhancement</span>
-                                <span>🎭 Style Transfer</span>
-                                <span>📱 High Quality</span>
+                                <span>
+                                    <Image size={16} /> Text-to-Image
+                                </span>
+                                <span>
+                                    <Sparkles size={16} /> Image Enhancement
+                                </span>
+                                <span>
+                                    <Theater size={16} /> Style Transfer
+                                </span>
+                                <span>
+                                    <Monitor size={16} /> High Quality
+                                </span>
                             </div>
                             <a href='https://studio.theanswer.ai' className={styles.featureCardCTA}>
                                 Launch App →
@@ -300,17 +377,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🔍</div>
+                            <div className={styles.appIcon}>
+                                <Search size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Deep Research</h3>
                             <p>
                                 Harness the power of AI to analyze both external web data and internal company information. Generate
                                 comprehensive research reports and insights instantly.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🌐 External Data Mining</span>
-                                <span>📂 Internal Data Analysis</span>
-                                <span>📋 Research Reports</span>
-                                <span>🧠 Smart Insights</span>
+                                <span>
+                                    <Globe size={16} /> External Data Mining
+                                </span>
+                                <span>
+                                    <Folder size={16} /> Internal Data Analysis
+                                </span>
+                                <span>
+                                    <ClipboardList size={16} /> Research Reports
+                                </span>
+                                <span>
+                                    <Brain size={16} /> Smart Insights
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -321,17 +408,27 @@ function FeaturedApps() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>💻</div>
+                            <div className={styles.appIcon}>
+                                <Monitor size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Code IDE</h3>
                             <p>
                                 AI-powered integrated development environment with intelligent code completion, debugging assistance, and
                                 automated code generation for faster development.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🤖 AI Code Completion</span>
-                                <span>🐛 Smart Debugging</span>
-                                <span>⚡ Code Generation</span>
-                                <span>🔧 Multi-Language</span>
+                                <span>
+                                    <Bot size={16} /> AI Code Completion
+                                </span>
+                                <span>
+                                    <Bug size={16} /> Smart Debugging
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Code Generation
+                                </span>
+                                <span>
+                                    <Wrench size={16} /> Multi-Language
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -340,17 +437,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📈</div>
+                            <div className={styles.appIcon}>
+                                <TrendingUp size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>SEO & Website Analyzer</h3>
                             <p>
                                 Comprehensive SEO analysis and website optimization recommendations powered by AI. Identify opportunities
                                 and track performance improvements.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🔍 SEO Audits</span>
-                                <span>📊 Performance Metrics</span>
-                                <span>💡 Optimization Tips</span>
-                                <span>📱 Mobile Analysis</span>
+                                <span>
+                                    <Search size={16} /> SEO Audits
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Performance Metrics
+                                </span>
+                                <span>
+                                    <Lightbulb size={16} /> Optimization Tips
+                                </span>
+                                <span>
+                                    <Monitor size={16} /> Mobile Analysis
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -359,17 +466,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📝</div>
+                            <div className={styles.appIcon}>
+                                <PenTool size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>CMS Publisher</h3>
                             <p>
                                 Seamlessly create and publish content across multiple platforms with native Sanity and Contentful
                                 integrations. AI-powered content optimization included.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📚 Sanity Integration</span>
-                                <span>🎯 Contentful Support</span>
-                                <span>✨ AI Optimization</span>
-                                <span>🚀 Multi-Platform</span>
+                                <span>
+                                    <FileText size={16} /> Sanity Integration
+                                </span>
+                                <span>
+                                    <Target size={16} /> Contentful Support
+                                </span>
+                                <span>
+                                    <Sparkles size={16} /> AI Optimization
+                                </span>
+                                <span>
+                                    <Rocket size={16} /> Multi-Platform
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -380,17 +497,27 @@ function FeaturedApps() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📞</div>
+                            <div className={styles.appIcon}>
+                                <Phone size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Call Analysis</h3>
                             <p>
                                 Automated insights from your voice communications. Extract key points, sentiment, and action items from
                                 meetings and calls with advanced AI processing.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🎙️ Voice Recognition</span>
-                                <span>📝 Meeting Summaries</span>
-                                <span>📊 Sentiment Analysis</span>
-                                <span>✅ Action Items</span>
+                                <span>
+                                    <Mic size={16} /> Voice Recognition
+                                </span>
+                                <span>
+                                    <FileText size={16} /> Meeting Summaries
+                                </span>
+                                <span>
+                                    <BarChart3 size={16} /> Sentiment Analysis
+                                </span>
+                                <span>
+                                    <CheckCircle size={16} /> Action Items
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -399,17 +526,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🎫</div>
+                            <div className={styles.appIcon}>
+                                <Ticket size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Ticket Analysis</h3>
                             <p>
                                 Streamline customer support with AI-driven ticket insights. Categorize, prioritize, and route support
                                 requests intelligently with automated workflows.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🏷️ Auto-Categorization</span>
-                                <span>⚡ Priority Scoring</span>
-                                <span>🔄 Smart Routing</span>
-                                <span>📈 Performance Analytics</span>
+                                <span>
+                                    <Tag size={16} /> Auto-Categorization
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Priority Scoring
+                                </span>
+                                <span>
+                                    <Route size={16} /> Smart Routing
+                                </span>
+                                <span>
+                                    <TrendingUp size={16} /> Performance Analytics
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -418,17 +555,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--4'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🎬</div>
+                            <div className={styles.appIcon}>
+                                <Video size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Video Creation</h3>
                             <p>
                                 Generate compelling videos from text or simple inputs. Create engaging content for social media,
                                 presentations, and marketing with AI-powered video generation.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🎥 Text-to-Video</span>
-                                <span>✨ AI Enhancement</span>
-                                <span>📱 Multiple Formats</span>
-                                <span>🎨 Custom Branding</span>
+                                <span>
+                                    <Video size={16} /> Text-to-Video
+                                </span>
+                                <span>
+                                    <Sparkles size={16} /> AI Enhancement
+                                </span>
+                                <span>
+                                    <Monitor size={16} /> Multiple Formats
+                                </span>
+                                <span>
+                                    <Palette size={16} /> Custom Branding
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -439,17 +586,27 @@ function FeaturedApps() {
                 <div className='row' style={{ marginTop: '2rem' }}>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>🤖</div>
+                            <div className={styles.appIcon}>
+                                <Bot size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Agent Builder</h3>
                             <p>
                                 Visually design and deploy custom AI agents for any task. No coding required - just drag, drop, and
                                 configure your intelligent workforce with intuitive visual tools.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>🎨 Visual Builder</span>
-                                <span>🔧 No-Code Design</span>
-                                <span>⚡ Instant Deployment</span>
-                                <span>🔄 Workflow Automation</span>
+                                <span>
+                                    <Palette size={16} /> Visual Builder
+                                </span>
+                                <span>
+                                    <Wrench size={16} /> No-Code Design
+                                </span>
+                                <span>
+                                    <Zap size={16} /> Instant Deployment
+                                </span>
+                                <span>
+                                    <RefreshCw size={16} /> Workflow Automation
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -458,17 +615,27 @@ function FeaturedApps() {
                     </div>
                     <div className='col col--6'>
                         <div className={styles.featureCard}>
-                            <div className={styles.appIcon}>📊</div>
+                            <div className={styles.appIcon}>
+                                <BarChart3 size={48} strokeWidth={1.5} />
+                            </div>
                             <h3>Company Dashboards</h3>
                             <p>
                                 Unified AI-powered insights across your business operations. Real-time analytics, predictive insights, and
                                 automated reporting to drive data-driven decisions.
                             </p>
                             <div className={styles.appFeatures}>
-                                <span>📈 Real-time Analytics</span>
-                                <span>🔮 Predictive Insights</span>
-                                <span>📋 Automated Reports</span>
-                                <span>🎯 Custom Metrics</span>
+                                <span>
+                                    <TrendingUp size={16} /> Real-time Analytics
+                                </span>
+                                <span>
+                                    <Sparkles size={16} /> Predictive Insights
+                                </span>
+                                <span>
+                                    <ClipboardList size={16} /> Automated Reports
+                                </span>
+                                <span>
+                                    <Target size={16} /> Custom Metrics
+                                </span>
                             </div>
                             <div className={styles.featureCardCTA} style={{ opacity: 0.7, cursor: 'default' }}>
                                 Coming Soon
@@ -538,10 +705,12 @@ function CTASection() {
                     </a>
                     <div className={styles.secondaryLinks}>
                         <a href='/docs/agents' className={styles.secondaryLink}>
-                            📖 Read Documentation
+                            <BookOpen size={18} className={styles.linkIcon} />
+                            Read Documentation
                         </a>
                         <a href='https://discord.gg/X54ywt8pzj' className={styles.secondaryLink}>
-                            💬 Join Community
+                            <MessageSquare size={18} className={styles.linkIcon} />
+                            Join Community
                         </a>
                     </div>
                 </div>
@@ -551,11 +720,11 @@ function CTASection() {
 }
 
 export default function Agents(): JSX.Element {
-    const { siteConfig } = useDocusaurusContext()
+    const { siteConfig: _siteConfig } = useDocusaurusContext()
 
     return (
         <div data-theme='dark'>
-            <Layout
+            <LayoutComponent
                 title='AI Agents - Intelligent Autonomous Assistants'
                 description='Build intelligent AI agents that understand your needs, connect to your tools, and execute complex workflows autonomously.'
             >
@@ -578,7 +747,7 @@ export default function Agents(): JSX.Element {
                     <HowItWorks />
                     <CTASection />
                 </main>
-            </Layout>
+            </LayoutComponent>
         </div>
     )
 }

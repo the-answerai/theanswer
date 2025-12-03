@@ -13,10 +13,7 @@ import { useTheme } from '@mui/material/styles'
 import MarketplaceCanvasNode from './MarketplaceCanvasNode'
 import MarketplaceCanvasHeader from './MarketplaceCanvasHeader'
 import StickyNote from '../canvas/StickyNote'
-
-// credential checking
-import { useCredentialChecker } from '@/hooks/useCredentialChecker'
-import UnifiedCredentialsModal from '@/ui-component/dialog/UnifiedCredentialsModal'
+import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
 
 const nodeTypes = { customNode: MarketplaceCanvasNode, stickyNote: StickyNote }
 const edgeTypes = { buttonedge: '' }
@@ -37,9 +34,6 @@ const MarketplaceCanvas = () => {
 
     const reactFlowWrapper = useRef(null)
 
-    // Credential checking hook
-    const { showCredentialModal, missingCredentials, checkCredentials, handleAssign, handleSkip, handleCancel } = useCredentialChecker()
-
     // ==============================|| useEffect ||============================== //
 
     useEffect(() => {
@@ -48,14 +42,12 @@ const MarketplaceCanvas = () => {
             setNodes(initialFlow.nodes || [])
             setEdges(initialFlow.edges || [])
         }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [flowData])
 
     const onChatflowCopy = (stateData) => {
         // stateData is now the complete state with all template information
         const flowDataParsed = stateData.flowData ? JSON.parse(stateData.flowData) : {}
-        
+
         const isAgentCanvas = (flowDataParsed?.nodes || []).some(
             (node) => node.data.category === 'Multi Agents' || node.data.category === 'Sequential Agents'
         )
@@ -127,15 +119,8 @@ const MarketplaceCanvas = () => {
                 </Box>
             </Box>
 
-            {/* Unified Credentials Modal */}
-            <UnifiedCredentialsModal
-                show={showCredentialModal}
-                missingCredentials={missingCredentials}
-                onAssign={handleAssign}
-                onSkip={handleSkip}
-                onCancel={handleCancel}
-                flowData={flowData ? JSON.parse(flowData) : null}
-            />
+            {/* Confirm Dialog */}
+            <ConfirmDialog />
         </>
     )
 }

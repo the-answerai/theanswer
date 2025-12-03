@@ -248,6 +248,63 @@ export abstract class BaseCommand extends Command {
             }
         }
 
+        // 🔒 SECURITY: Apply test_ prefix to AAI PostgreSQL variables in test mode
+        // This ensures AAI nodes (VectorStore, RecordManager, AgentMemory) also use test databases
+        // and prevents them from accidentally writing to prod/staging/local databases during tests
+        if (process.env.NODE_ENV === 'test') {
+            const ensureTestPrefix = (value: string | undefined, defaultName: string): string => {
+                const effectiveValue = value?.trim() || defaultName
+                if (effectiveValue.startsWith('test_') || effectiveValue.endsWith('_test')) {
+                    return effectiveValue
+                }
+                return `test_${effectiveValue}`
+            }
+
+            // Apply test_ prefix to RecordManager variables
+            if (process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER,
+                    'user'
+                )
+            }
+
+            // Apply test_ prefix to AgentMemory variables
+            if (process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER,
+                    'user'
+                )
+            }
+
+            // Apply test_ prefix to VectorStore variables
+            if (process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE) {
+                process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_DATABASE,
+                    'flowise'
+                )
+            }
+            if (process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER) {
+                process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER = ensureTestPrefix(
+                    process.env.AAI_DEFAULT_POSTGRES_VECTORSTORE_USER,
+                    'user'
+                )
+            }
+
+            console.log('🔒 TEST MODE: Applied test_ prefix to AAI PostgreSQL variables')
+        }
+
         // Set AAI PostgreSQL table configuration defaults if not already set
         // These provide sensible fallbacks for table names and configuration
         if (!process.env.AAI_DEFAULT_POSTGRES_RECORDMANAGER_TABLE_NAME) {

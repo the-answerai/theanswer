@@ -17,6 +17,17 @@ echo -e "${BLUE}🔒 Setting up BWS Secure in $(pwd)/scripts/bws-secure ${NC}"
 # Create scripts directory if it doesn't exist
 mkdir -p scripts
 
+# Cross-platform temp base and cleanup trap (also used for temp node scripts)
+TMP_BASE="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"
+cleanup() {
+  [ -n "$BWS_TMP_SCRIPT" ] && rm -f "$BWS_TMP_SCRIPT" 2>/dev/null || true
+  [ -n "$TMP_SCRIPT" ] && rm -f "$TMP_SCRIPT" 2>/dev/null || true
+  [ -n "$TMP_FILE" ] && rm -f "$TMP_FILE" 2>/dev/null || true
+}
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+
 # Helper function to check and initialize git submodules if needed
 check_git_submodules() {
   # Check if .gitmodules exists
@@ -77,7 +88,7 @@ if [ "$NODE_VERSION" -lt "20" ]; then
     echo "Updating BWS Secure package.json to use glob v10.3.10 compatible with Node.js v$NODE_VERSION..."
     
     # Create temporary script to update BWS package.json
-    BWS_TMP_SCRIPT=$(mktemp)
+    BWS_TMP_SCRIPT=$(mktemp "$TMP_BASE/bws-secure.XXXXXXXXXX")
     cat > "$BWS_TMP_SCRIPT" << EOF
     const fs = require('fs');
     try {
@@ -299,7 +310,7 @@ fi
 if [ -f "package.json" ]; then
   echo "Updating package.json at: $(pwd)/package.json"
   
-  TMP_SCRIPT=$(mktemp)
+  TMP_SCRIPT=$(mktemp "$TMP_BASE/bws-secure.XXXXXXXXXX")
   cat > "$TMP_SCRIPT" << EOF
 const fs = require('fs');
 try {
@@ -364,7 +375,7 @@ try {
     packageJson.devDependencies['glob'] = '^10.3.10';
   }
   
-  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.12.1';
+  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.12.2';
 
   // Detect existing indentation or use prettier config
   const originalContent = fs.readFileSync(packageJsonPath, 'utf8');
@@ -691,7 +702,7 @@ for README_FILE in "${README_FILES[@]}"; do
         echo "Detected $START_COUNT start markers and $END_COUNT end markers. Removing duplicate sections..."
         
         # Create a temporary script to handle complex README processing
-        TMP_SCRIPT=$(mktemp)
+        TMP_SCRIPT=$(mktemp "$TMP_BASE/bws-secure.XXXXXXXXXX")
         cat > "$TMP_SCRIPT" << 'EOF'
 #!/usr/bin/env node
 const fs = require('fs');
@@ -784,7 +795,7 @@ EOF
       # Standard update logic for single section
       if [ "$update_standard" = true ]; then
         # Create a temporary file
-        TMP_FILE=$(mktemp)
+        TMP_FILE=$(mktemp "$TMP_BASE/bws-secure.XXXXXXXXXX")
         
         # Extract everything before the start marker
         sed -n '1,/<!-- BWS-SECURE-DOCS-START -->/p' "$README_FILE" | sed '$d' > "$TMP_FILE"

@@ -12,8 +12,6 @@ import { AppsDrawer } from './AppsDrawer'
 import { AnswersProvider } from './AnswersContext'
 
 export const IntegrationsSettings = ({ appSettings, activeApp }: { appSettings: AppSettings; activeApp?: string }) => {
-    // const flags = useFlags(['settings']);
-
     // if (!flags?.settings?.enabled) return redirect('/');
     return (
         <AnswersProvider appSettings={appSettings}>

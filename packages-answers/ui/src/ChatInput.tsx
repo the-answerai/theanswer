@@ -3,11 +3,10 @@ import React, { useState, useEffect, useRef, ChangeEvent } from 'react'
 
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
-import AttachFileIcon from '@mui/icons-material/PermMedia'
 import MicIcon from '@mui/icons-material/Mic'
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
-import { IconCircleDot } from '@tabler/icons-react'
+import { IconCircleDot, IconPhotoPlus, IconPaperclip } from '@tabler/icons-react'
 
 import { useAnswers } from './AnswersContext'
 
@@ -31,6 +30,8 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
     const [inputValue, setInputValue] = useState('')
     const [isDragging, setIsDragging] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+    const imgUploadRef = useRef<HTMLInputElement>(null)
+    const fileUploadRef = useRef<HTMLInputElement>(null)
     const [isRecording, setIsRecording] = useState(false)
     const [recordingStatus, setRecordingStatus] = useState('')
     const [recordedAudio, setRecordedAudio] = useState<File | null>(null)
@@ -38,7 +39,8 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
     const [isLoadingRecording, setIsLoadingRecording] = useState(false)
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const recordingIntervalRef = useRef<number | undefined>(undefined)
-    const { messages, sendMessage, isLoading, sidekick, gptModel, chatbotConfig, handleAbort } = useAnswers()
+    const { messages, sendMessage, isLoading, sidekick, gptModel, chatbotConfig, handleAbort, fullFileUpload, fullFileUploadAllowedTypes } =
+        useAnswers()
     const constraints = sidekick?.constraints
     const [isMessageStopping, setIsMessageStopping] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -160,7 +162,10 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
         let error = ''
         const isImageType = fileType.startsWith('image/')
         const isAudioType = fileType.startsWith('audio/')
-        if (isAudioType && constraints?.isSpeechToTextEnabled) {
+
+        if (fullFileUpload) {
+            return true
+        } else if (isAudioType && constraints?.isSpeechToTextEnabled) {
             if (sizeInMB > 25) {
                 error = `Audio file too large (max 25MB): ${file.name}`
             } else {
@@ -190,6 +195,20 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
             } else if (found) {
                 isAllowed = true
             }
+        } else if (constraints?.isRAGFileUploadAllowed) {
+            let found = false
+            constraints?.uploadSizeAndTypes?.forEach((allowed) => {
+                if (allowed.fileTypes.includes(fileType) && sizeInMB <= allowed.maxUploadSize) {
+                    found = true
+                } else if (allowed.fileTypes.includes(fileType) && sizeInMB > allowed.maxUploadSize) {
+                    error = `File too large (max ${allowed.maxUploadSize}MB): ${file.name}`
+                }
+            })
+            if (!found && !error) {
+                error = `File type not supported: ${file.name}`
+            } else if (found) {
+                isAllowed = true
+            }
         } else {
             error = `File type not supported: ${file.name}`
         }
@@ -199,13 +218,43 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
         return isAllowed
     }
 
+    const getImageUploadAllowedTypes = () => {
+        const imageTypes =
+            constraints?.uploadSizeAndTypes
+                ?.filter((item) => item.fileTypes.some((ft) => ft.startsWith('image/')))
+                .flatMap((item) => item.fileTypes) || []
+        return imageTypes.length > 0 ? imageTypes.join(',') : 'image/*'
+    }
+
+    const getFileUploadAllowedTypes = () => {
+        if (fullFileUpload) {
+            return fullFileUploadAllowedTypes === '' ? '*' : fullFileUploadAllowedTypes
+        }
+        const docTypes =
+            constraints?.uploadSizeAndTypes
+                ?.filter((item) => !item.fileTypes.some((ft) => ft.startsWith('image/') || ft.startsWith('audio/')))
+                .flatMap((item) => item.fileTypes) || []
+        return docTypes.length > 0 ? docTypes.join(',') : '*'
+    }
+
     const getAcceptedFileTypes = () => {
+        if (fullFileUpload) {
+            return fullFileUploadAllowedTypes === '' ? '*' : fullFileUploadAllowedTypes
+        }
+
         const acceptedTypes: string[] = []
         if (constraints?.isImageUploadAllowed) {
             acceptedTypes.push('image/*')
         }
         if (constraints?.isSpeechToTextEnabled) {
             acceptedTypes.push('audio/*')
+        }
+        if (constraints?.isRAGFileUploadAllowed) {
+            const docTypes =
+                constraints.uploadSizeAndTypes
+                    ?.filter((item) => !item.fileTypes.some((ft) => ft.startsWith('image/') || ft.startsWith('audio/')))
+                    .flatMap((item) => item.fileTypes) || []
+            acceptedTypes.push(...docTypes)
         }
         return acceptedTypes.join(',')
     }
@@ -214,6 +263,14 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
         const files = Array.from(event.target.files || [])
         await processFiles(files)
         event.target.value = ''
+    }
+
+    const handleImageUploadClick = () => {
+        imgUploadRef.current?.click()
+    }
+
+    const handleFileUploadClick = () => {
+        fileUploadRef.current?.click()
     }
 
     const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
@@ -301,9 +358,16 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
                 if (!evt?.target?.result) return
                 const { result } = evt.target
 
+                // Determine file type based on upload mode
+                let fileType: FileUpload['type'] = 'file'
+                const isImage = file.type.startsWith('image/')
+                if (!isImage && !file.type.startsWith('audio/')) {
+                    fileType = fullFileUpload ? 'file:full' : 'file:rag'
+                }
+
                 const base: Omit<FileUpload, 'preview'> = {
                     data: result as string,
-                    type: 'file',
+                    type: fileType,
                     name,
                     mime: file.type
                 }
@@ -670,51 +734,102 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
                     }}
                 />
             ) : (
-                <TextField
-                    id='user-chat-input'
-                    inputRef={inputRef}
-                    variant='filled'
-                    fullWidth
-                    placeholder={chatbotConfig?.textInput?.placeholder ?? 'Send a question or task'}
-                    value={inputValue}
-                    multiline
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyPress}
-                    InputProps={{
-                        sx: {
-                            gap: 1,
-                            display: 'flex',
-                            paddingBottom: 2,
-                            textarea: {
-                                maxHeight: '30vh',
-                                overflowY: 'auto!important'
-                            }
-                        },
-                        startAdornment: (constraints?.isImageUploadAllowed || constraints?.isSpeechToTextEnabled) && (
-                            <Tooltip title='Attach file'>
-                                <IconButton component='label' sx={{ minWidth: 0 }}>
-                                    <AttachFileIcon />
-                                    <input type='file' accept={getAcceptedFileTypes()} hidden multiple onChange={handleFileUpload} />
-                                </IconButton>
-                            </Tooltip>
-                        ),
-                        endAdornment: (
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                {constraints?.isSpeechToTextEnabled && (
-                                    <Tooltip title={isRecording ? 'Stop Recording' : 'Record Audio'}>
-                                        <IconButton onClick={handleAudioRecordStart}>
-                                            <MicIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                )}
+                <>
+                    <TextField
+                        id='user-chat-input'
+                        inputRef={inputRef}
+                        variant='filled'
+                        fullWidth
+                        placeholder={chatbotConfig?.textInput?.placeholder ?? 'Send a question or task'}
+                        value={inputValue}
+                        multiline
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyPress}
+                        InputProps={{
+                            sx: {
+                                gap: 1,
+                                display: 'flex',
+                                paddingBottom: 2,
+                                textarea: {
+                                    maxHeight: '30vh',
+                                    overflowY: 'auto!important'
+                                }
+                            },
+                            startAdornment: (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    {/* Scenario 1: Only image uploads */}
+                                    {constraints?.isImageUploadAllowed && !(constraints?.isRAGFileUploadAllowed || fullFileUpload) && (
+                                        <Tooltip title='Upload image'>
+                                            <IconButton onClick={handleImageUploadClick} sx={{ minWidth: 0 }}>
+                                                <IconPhotoPlus size={20} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
 
-                                <Button variant='contained' color='primary' onClick={handleSubmit}>
-                                    Send
-                                </Button>
-                            </Box>
-                        )
-                    }}
-                />
+                                    {/* Scenario 2: Only file uploads */}
+                                    {!constraints?.isImageUploadAllowed && (constraints?.isRAGFileUploadAllowed || fullFileUpload) && (
+                                        <Tooltip title='Upload file'>
+                                            <IconButton onClick={handleFileUploadClick} sx={{ minWidth: 0 }}>
+                                                <IconPaperclip size={20} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+
+                                    {/* Scenario 3: BOTH enabled */}
+                                    {constraints?.isImageUploadAllowed && (constraints?.isRAGFileUploadAllowed || fullFileUpload) && (
+                                        <>
+                                            <Tooltip title='Upload image'>
+                                                <IconButton onClick={handleImageUploadClick} sx={{ minWidth: 0, p: 1 }}>
+                                                    <IconPhotoPlus size={20} />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title='Upload file'>
+                                                <IconButton onClick={handleFileUploadClick} sx={{ minWidth: 0, p: 1 }}>
+                                                    <IconPaperclip size={20} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
+                                    )}
+                                </Box>
+                            ),
+                            endAdornment: (
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    {constraints?.isSpeechToTextEnabled && (
+                                        <Tooltip title={isRecording ? 'Stop Recording' : 'Record Audio'}>
+                                            <IconButton onClick={handleAudioRecordStart}>
+                                                <MicIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+
+                                    <Button variant='contained' color='primary' onClick={handleSubmit}>
+                                        Send
+                                    </Button>
+                                </Box>
+                            )
+                        }}
+                    />
+                    {constraints?.isImageUploadAllowed && (
+                        <input
+                            style={{ display: 'none' }}
+                            multiple
+                            ref={imgUploadRef}
+                            type='file'
+                            onChange={handleFileUpload}
+                            accept={getImageUploadAllowedTypes()}
+                        />
+                    )}
+                    {constraints?.isRAGFileUploadAllowed || fullFileUpload ? (
+                        <input
+                            style={{ display: 'none' }}
+                            multiple
+                            ref={fileUploadRef}
+                            type='file'
+                            onChange={handleFileUpload}
+                            accept={getFileUploadAllowedTypes()}
+                        />
+                    ) : null}
+                </>
             )}
         </Box>
     )

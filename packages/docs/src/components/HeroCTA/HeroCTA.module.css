@@ -1,0 +1,58 @@
+.heroCTA {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.ctaButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ctaPrimary {
+    background: var(--ifm-color-primary);
+    color: white;
+}
+
+.ctaPrimary:hover {
+    background: var(--ifm-color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: white;
+    text-decoration: none;
+}
+
+.ctaPrimary.primary {
+    background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
+}
+
+.askAlphaButton {
+    margin: 0;
+}
+
+.assessmentWidget {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .heroCTA {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .ctaButton {
+        width: 100%;
+    }
+}

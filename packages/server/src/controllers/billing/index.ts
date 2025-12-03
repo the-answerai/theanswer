@@ -521,9 +521,9 @@ const cancelSubscription = async (req: Request, res: Response, next: NextFunctio
             throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Valid subscription ID is required')
         }
 
-        // At this point TypeScript knows subscriptionId is a string
-        // Verify subscription belongs to the user
-        const subscription = await billingService.getSubscriptionWithUsage(req.user.stripeCustomerId!)
+        // Verify subscription belongs to the user/organization
+        const customerId = req.user.stripeCustomerId!
+        const subscription = await billingService.getSubscriptionWithUsage(customerId)
         if (!subscription || subscription.id !== subscriptionId) {
             throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Subscription not found or does not belong to the user')
         }
@@ -543,7 +543,15 @@ const cancelSubscription = async (req: Request, res: Response, next: NextFunctio
 const getUpcomingInvoice = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
-        const invoice = await billingService.getUpcomingInvoice(req.body)
+        // Customer ID is already overridden by middleware if organizational billing is enabled
+        const customerId = req.user?.stripeCustomerId
+        if (!customerId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: getUpcomingInvoice - Customer ID not found')
+        }
+        const invoice = await billingService.getUpcomingInvoice({
+            ...req.body,
+            customerId
+        })
         return res.json(invoice)
     } catch (error) {
         next(error)
@@ -553,8 +561,13 @@ const getUpcomingInvoice = async (req: Request, res: Response, next: NextFunctio
 const createBillingPortalSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const billingService = new BillingService()
+        // Customer ID is already overridden by middleware if organizational billing is enabled
+        const customerId = req.user?.stripeCustomerId
+        if (!customerId) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: createBillingPortalSession - Customer ID not found')
+        }
         const session = await billingService.createBillingPortalSession({
-            customerId: req.body.customerId,
+            customerId,
             returnUrl: req.body.returnUrl
         })
         return res.json(session)
@@ -571,9 +584,10 @@ const getSubscriptionWithUsage = async (req: Request, res: Response, next: NextF
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'User not authenticated')
         }
 
+        // Customer ID is already overridden by middleware if organizational billing is enabled
         const customerId = req.user.stripeCustomerId
         if (!customerId) {
-            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user')
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'No Stripe customer ID associated with user/organization')
         }
 
         // Get active subscription
@@ -635,7 +649,7 @@ export const getCustomerStatus = async (req: Request, res: Response, next: NextF
         const customerId = req.user?.stripeCustomerId
 
         if (!customerId) {
-            return res.status(400).json({ error: 'Customer ID not found' })
+            return res.status(400).json({ error: 'Customer ID not found for user/organization' })
         }
 
         const [customer, subscription, usage] = await Promise.all([

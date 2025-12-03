@@ -2,6 +2,7 @@
 import type React from 'react'
 import { useState } from 'react'
 import NextLink from 'next/link'
+import Image from 'next/image'
 import { styled } from '@mui/material/styles'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -10,9 +11,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import MuiDrawer from '@mui/material/Drawer'
 import ListItemIcon from '@mui/material/ListItemIcon'
-import RateReviewIcon from '@mui/icons-material/RateReview'
 import ViewSidebarOutlinedIcon from '@mui/icons-material/ViewSidebarOutlined'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import Collapse from '@mui/material/Collapse'
@@ -20,7 +19,6 @@ import type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { usePathname } from 'next/navigation'
 import { Menu, MenuItem, Tooltip } from '@mui/material'
-import { useFlags } from 'flagsmith/react'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'
@@ -32,12 +30,24 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
+import Brightness7Icon from '@mui/icons-material/Brightness7'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
+import ImageIcon from '@mui/icons-material/Image'
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
+import AnalyticsIcon from '@mui/icons-material/Analytics'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import ArticleIcon from '@mui/icons-material/Article'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import AssessmentIcon from '@mui/icons-material/Assessment'
+import PhoneIcon from '@mui/icons-material/Phone'
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
+import { useThemeMode } from './theme'
 
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
+import { usePermissions } from './PermissionProvider'
 
 const drawerWidth = 240
 
@@ -81,6 +91,7 @@ interface MenuConfig {
     link?: string
     icon?: React.ReactNode
     subMenu?: MenuConfig[]
+    external?: boolean // Mark if link is external (opens in new tab)
 }
 
 interface AppDrawerProps {
@@ -95,17 +106,21 @@ interface AppDrawerProps {
             defaultChatflowId?: string
         }
     }
-    flagsmithState: unknown
 }
 
-export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
+export const AppDrawer = ({ session }: AppDrawerProps) => {
     const user = session?.user
     const [drawerOpen, setDrawerOpen] = useState(true) // Changed to true for open by default
     const [submenuOpen, setSubmenuOpen] = useState('')
     const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
+    const { mode, toggleMode } = useThemeMode()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-    const flags = useFlags(['chatflow:use', 'chatflow:manage', 'org:manage', 'enterprise_admin'])
+    const { hasFeature, hasRole } = usePermissions()
+    const canUseChatflows = hasFeature('chatflow:use')
+    const canManageChatflows = hasFeature('chatflow:manage')
+    const canManageOrg = hasFeature('org:manage')
+    const isEnterpriseAdminEnabled = hasFeature('enterprise_admin')
 
     // Helper function to determine if this is a public organization
     // TODO: This should be refined to compare against actual PUBLIC_ORG_ID from backend
@@ -124,12 +139,12 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
         const userRoles = user?.roles || []
 
         // Check if user is admin (has org:manage permission or Admin role)
-        if (flags['org:manage']?.enabled || userRoles.includes('Admin')) {
+        if (canManageOrg || userRoles.includes('Admin') || hasRole('Admin')) {
             return 'admin'
         }
 
         // Check if user is builder (has chatflow:manage permission)
-        if (flags['chatflow:manage']?.enabled) {
+        if (canManageChatflows) {
             return 'builder'
         }
 
@@ -140,26 +155,89 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
     const userRole = getUserRole()
     const isPrivateOrg = !isPublicOrg()
 
+    // Get Answer Engine domain from environment
+    const answerEngineDomain = process.env.NEXT_PUBLIC_ANSWER_ENGINE_DOMAIN || ''
+
     // Menu configuration
     let menuConfig: MenuConfig[] = []
 
+    // Answer Apps - expandable menu with chat, image, video, bulk analysis
+    menuConfig.push(
+        {
+            id: 'chat',
+            text: 'Chat',
+            link: '/chat',
+            icon: <ChatBubbleOutlineIcon />
+        },
+        {
+            id: 'image-generation',
+            text: 'Image Generation',
+            link: '/sidekick-studio/media-creator',
+            icon: <ImageIcon />
+        },
+        {
+            id: 'video-generation',
+            text: 'Video Generation',
+            link: '/sidekick-studio/video-creator',
+            icon: <VideoLibraryIcon />
+        }
+    )
+
+    // Answer Engine section - shown if domain is configured
+    if (answerEngineDomain) {
+        menuConfig.push({
+            id: 'answer-engine',
+            text: 'Data Engine',
+            icon: <AssessmentIcon />,
+            subMenu: [
+                {
+                    id: 'content',
+                    text: 'Content',
+                    link: `${answerEngineDomain}/calls`,
+                    icon: <ArticleIcon />,
+                    external: true
+                },
+                {
+                    id: 'dashboards',
+                    text: 'Dashboards',
+                    link: `${answerEngineDomain}/dashboard`,
+                    icon: <DashboardIcon />,
+                    external: true
+                },
+                {
+                    id: 'reports',
+                    text: 'Reports',
+                    link: `${answerEngineDomain}/reports`,
+                    icon: <AssessmentOutlinedIcon />,
+                    external: true
+                },
+                {
+                    id: 'calls',
+                    text: 'Calls',
+                    link: `${answerEngineDomain}/calls`,
+                    icon: <PhoneIcon />,
+                    external: true
+                },
+                {
+                    id: 'bulk-analysis',
+                    text: 'Bulk Analysis',
+                    link: '/sidekick-studio/csv-transformer',
+                    icon: <AnalyticsIcon />
+                }
+            ]
+        })
+    }
+
     if (isPrivateOrg) {
         // New logic for private organizations
-        // Sidekick Store moved under Sidekick Studio
 
-        // Builders and Admins see Sidekick Studio
+        // Builders and Admins see Answer Studio
         if (userRole === 'builder' || userRole === 'admin') {
             menuConfig.push({
                 id: 'studio',
-                text: 'Sidekick Studio',
+                text: 'Agent Studio',
                 icon: <BuildOutlinedIcon color='primary' />,
                 subMenu: [
-                    {
-                        id: 'marketplaces',
-                        text: 'Sidekick Store',
-                        link: '/sidekick-studio/marketplaces',
-                        icon: <StorefrontOutlinedIcon color='primary' />
-                    },
                     {
                         id: 'chatflows',
                         text: 'Chatflows',
@@ -171,6 +249,12 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                         text: 'Agentflows',
                         link: '/sidekick-studio/agentflows',
                         icon: <GroupsOutlinedIcon color='primary' />
+                    },
+                    {
+                        id: 'marketplaces',
+                        text: 'Agent Templates',
+                        link: '/sidekick-studio/marketplaces',
+                        icon: <SmartToyIcon />
                     },
                     {
                         id: 'assistants',
@@ -219,7 +303,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
         }
 
         // Enterprise Admin - top-level (feature-flagged)
-        if (flags['enterprise_admin']?.enabled && userRole === 'admin') {
+        if (isEnterpriseAdminEnabled && userRole === 'admin') {
             menuConfig.push({
                 id: 'enterprise_admin',
                 text: 'Enterprise Admin',
@@ -251,16 +335,15 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
             return items.map((item) => {
                 if (!item.subMenu) return item
                 const filteredSubMenu = item.subMenu.filter((subItem) => {
-                    return flags['chatflow:use'].enabled || flags['chatflow:manage'].enabled
+                    return canUseChatflows || canManageChatflows
                 })
                 return { ...item, subMenu: filteredSubMenu }
             })
         }
 
         menuConfig = filterMenuItems([
-            // Sidekick Store moved under Sidekick Studio
             // Enterprise Admin - top-level (feature-flagged)
-            ...(flags['enterprise_admin']?.enabled && userRole === 'admin'
+            ...(isEnterpriseAdminEnabled && userRole === 'admin'
                 ? [
                       {
                           id: 'enterprise_admin',
@@ -271,11 +354,11 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                   ]
                 : []),
             // Studio section (collapsible) with Assistants and Document Stores moved in
-            ...(flags['chatflow:use'].enabled
+            ...(canUseChatflows
                 ? [
                       {
                           id: 'studio',
-                          text: 'Sidekick Studio',
+                          text: 'Answer Studio',
                           icon: <BuildOutlinedIcon color='primary' />,
                           subMenu: [
                               {
@@ -335,7 +418,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                               ...(userRole === 'admin'
                                   ? [
                                         // Show nested Admin only when enterprise admin flag is disabled
-                                        ...(flags['enterprise_admin']?.enabled
+                                        ...(isEnterpriseAdminEnabled
                                             ? []
                                             : [
                                                   {
@@ -358,7 +441,7 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                   ]
                 : []),
             // Top-level Profile and Billing for public orgs
-            ...(flags['chatflow:use'].enabled
+            ...(canUseChatflows
                 ? [
                       {
                           id: 'profile',
@@ -416,74 +499,43 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                     <Box
                         sx={{
                             display: 'flex',
-                            flexDirection: drawerOpen ? 'row' : 'column',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                             p: 1
                         }}
                     >
+                        {/* AnswerAI Logo */}
+                        {drawerOpen && (
+                            <Box
+                                component={NextLink}
+                                href='/'
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flex: 1,
+                                    ml: 1
+                                }}
+                            >
+                                <Image
+                                    src='/static/images/logos/answerai-logo-600-wide-white.png'
+                                    alt='AnswerAI Logo'
+                                    width={150}
+                                    height={40}
+                                    style={{ objectFit: 'contain' }}
+                                />
+                            </Box>
+                        )}
+
+                        {/* Drawer Toggle */}
                         <IconButton onClick={toggleDrawer}>
                             <ViewSidebarOutlinedIcon
                                 sx={{
                                     transform: drawerOpen ? 'scaleX(-1)' : 'none',
-                                    color: 'primary.main'
+                                    color: '#ffffff'
                                 }}
                             />
                         </IconButton>
-                        {/* Apps button visibility */}
-                        {(isPrivateOrg || flags['chatflow:manage'].enabled) &&
-                            (drawerOpen ? (
-                                <Tooltip title='Manage and configure your applications' placement='right'>
-                                    <Button
-                                        href='/sidekick-studio/apps'
-                                        variant='outlined'
-                                        component={NextLink}
-                                        startIcon={<AppsOutlinedIcon />}
-                                        sx={{
-                                            minWidth: 0,
-                                            textTransform: 'capitalize',
-                                            justifyContent: 'flex-start',
-                                            ml: 1
-                                        }}
-                                    >
-                                        Apps
-                                    </Button>
-                                </Tooltip>
-                            ) : (
-                                <Tooltip title='Manage and configure your applications' placement='right'>
-                                    <IconButton component={NextLink} href='/sidekick-studio/apps'>
-                                        <AppsOutlinedIcon sx={{ color: 'primary.main' }} />
-                                    </IconButton>
-                                </Tooltip>
-                            ))}
-                        {/* Everyone sees Chat button */}
-                        {drawerOpen ? (
-                            <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
-                                <Button
-                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
-                                    variant='outlined'
-                                    component={NextLink}
-                                    onClick={handleNewChat}
-                                    startIcon={<RateReviewIcon />}
-                                    sx={{
-                                        minWidth: 0,
-                                        textTransform: 'capitalize',
-                                        justifyContent: 'flex-start',
-                                        ml: 1
-                                    }}
-                                >
-                                    Chat
-                                </Button>
-                            </Tooltip>
-                        ) : (
-                            <Tooltip title='Start a new conversation with your sidekicks' placement='right'>
-                                <IconButton
-                                    component={NextLink}
-                                    href={user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/'}
-                                    onClick={handleNewChat}
-                                >
-                                    <RateReviewIcon sx={{ color: 'primary.main' }} />
-                                </IconButton>
-                            </Tooltip>
-                        )}
                     </Box>
                 </Box>
                 {/* Chat History */}
@@ -513,11 +565,27 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                         const getMainMenuTooltip = (itemId: string) => {
                             switch (itemId) {
                                 case 'marketplaces':
-                                    return 'Browse and install sidekicks from the marketplace'
+                                    return 'Browse and install AI agents from the marketplace'
+                                case 'answer-apps':
+                                    return 'Access your Answer Apps suite'
+                                case 'chat':
+                                    return 'Start a conversation with AI'
+                                case 'image-generation':
+                                    return 'Create images with AI'
+                                case 'video-generation':
+                                    return 'Generate videos with AI'
+                                case 'bulk-analysis':
+                                    return 'Analyze data in bulk'
+                                case 'answer-engine':
+                                    return 'Navigate to Answer Engine platform'
                                 case 'studio':
-                                    return 'Build and customize your own sidekicks'
+                                    return 'Build and customize your own AI solutions'
                                 case 'enterprise_admin':
                                     return 'Organization admin and enterprise settings'
+                                case 'profile':
+                                    return 'View and manage your personal profile information'
+                                case 'billing':
+                                    return 'View and manage your subscription and payments'
                                 case 'account':
                                     return 'Manage your account settings and preferences'
                                 default:
@@ -567,6 +635,22 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                             // Define tooltips for submenu items
                                             const getSubmenuTooltip = (subItemId: string) => {
                                                 switch (subItemId) {
+                                                    case 'chat':
+                                                        return 'Start a conversation with AI'
+                                                    case 'image-generation':
+                                                        return 'Generate images with AI'
+                                                    case 'video-generation':
+                                                        return 'Generate videos with AI'
+                                                    case 'bulk-analysis':
+                                                        return 'Analyze data in bulk'
+                                                    case 'content':
+                                                        return 'Manage and organize content'
+                                                    case 'dashboards':
+                                                        return 'View analytics dashboards'
+                                                    case 'reports':
+                                                        return 'Generate and view reports'
+                                                    case 'calls':
+                                                        return 'View and manage calls'
                                                     case 'chatflows':
                                                         return 'Create conversation flows and logic'
                                                     case 'agentflows':
@@ -577,12 +661,10 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                                         return 'Organize and manage your knowledge base'
                                                     case 'executions':
                                                         return 'Monitor and review execution history'
-                                                    case 'marketplaces':
-                                                        return 'Browse and install sidekicks from the marketplace'
                                                     case 'tools':
                                                         return 'Configure tools and integrations'
                                                     case 'variables':
-                                                        return 'Set up variables for reuse across sidekicks'
+                                                        return 'Set up variables for reuse across your projects'
                                                     case 'apikey':
                                                         return 'Manage authentication keys for external services'
                                                     case 'admin':
@@ -602,10 +684,14 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                                 <ListItem key={subItem.text} disablePadding sx={{ pl: 2 }}>
                                                     <Tooltip title={getSubmenuTooltip(subItem.id || '')} placement='right'>
                                                         <ListItemButton
-                                                            component={subItem.link ? NextLink : 'button'}
+                                                            component={subItem.link ? (subItem.external ? 'a' : NextLink) : 'button'}
                                                             href={subItem.link || '#'}
                                                             selected={pathname === subItem.link}
                                                             sx={{ width: '100%' }}
+                                                            {...(subItem.external && {
+                                                                target: '_blank',
+                                                                rel: 'noopener noreferrer'
+                                                            })}
                                                         >
                                                             <ListItemIcon sx={{ minWidth: 40 }}>{subItem.icon}</ListItemIcon>
                                                             <Typography>{subItem.text}</Typography>
@@ -735,6 +821,20 @@ export const AppDrawer = ({ session, flagsmithState }: AppDrawerProps) => {
                                         {user?.org_name}
                                     </Typography>
                                 </MenuItem>
+
+                                {/* Theme Toggle */}
+                                <MenuItem
+                                    onClick={() => {
+                                        toggleMode()
+                                        handleClose()
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        {mode === 'dark' ? <Brightness7Icon fontSize='small' /> : <Brightness4Icon fontSize='small' />}
+                                    </ListItemIcon>
+                                    <Typography>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
+                                </MenuItem>
+
                                 {/* Upgrade plan menu item visibility */}
                                 {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
                                     <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>

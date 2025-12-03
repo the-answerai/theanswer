@@ -1,29 +1,12 @@
 'use client'
-import React, { SetStateAction, createContext, useCallback, useContext, useRef, useState, useEffect } from 'react'
+import React, { SetStateAction, createContext, useCallback, useContext, useRef, useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
-import { cloneDeep } from 'lodash'
 // @ts-ignore
 import { deepmerge } from '@utils/deepmerge'
 import { clearEmptyValues } from './clearEmptyValues'
 import predictionApi from '@/api/prediction'
 import chatmessagefeedbackApi from '@/api/chatmessagefeedback'
-
-// import {
-//     AnswersFilters,
-//     AppSettings,
-//     Chat,
-//     Journey,
-//     Message,
-//     Prompt,
-//     Sidekick,
-//     User,
-//     MessageFeedback,
-//     SidekickListItem,
-//     ChatbotConfig,
-//     FlowData,
-//     FeedbackPayload
-// } from 'types'
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source'
 
 import { AnswersFilters, AppSettings, Chat, Journey, Message, Prompt, Sidekick, User, SidekickListItem, FeedbackPayload } from 'types'
@@ -112,6 +95,8 @@ interface AnswersContextType {
     showFeedbackContentDialog: boolean
     setShowFeedbackContentDialog: (show: boolean) => void
     submitFeedbackContent: (text: string) => Promise<void>
+    fullFileUpload: boolean
+    fullFileUploadAllowedTypes: string
 }
 // @ts-ignore
 const AnswersContext = createContext<AnswersContextType>({
@@ -205,33 +190,56 @@ export function AnswersProvider({
     const flowData = React.useMemo(() => sidekick?.flowData, [sidekick])
     const [messages, setMessages] = useState<Array<Message>>(chat?.messages ?? [])
     const [filters, setFilters] = useState<AnswersFilters>(deepmerge({}, appSettings?.filters, journey?.filters, chat?.filters))
-    const { data: selectedSidekickData } = useSidekickDetails(sidekick?.id ?? null)
+    const { data: selectedSidekickData, mutate: mutateSidekickDetails } = useSidekickDetails(sidekick?.id ?? null)
     const chatbotConfig = React.useMemo(() => selectedSidekickData?.chatbotConfig, [selectedSidekickData])
+    // Refs for stable callbacks without message dependency
+    const messagesRef = useRef(messages)
+    const chatIdRef = useRef(chatId)
+    const journeyIdRef = useRef(journeyId)
+    const sidekickRef = useRef(sidekick)
+
+    // Full file upload support
+    const [fullFileUpload, setFullFileUpload] = useState(false)
+    const [fullFileUploadAllowedTypes, setFullFileUploadAllowedTypes] = useState('*')
+
+    // Keep refs in sync
+    useEffect(() => {
+        messagesRef.current = messages
+        chatIdRef.current = chatId
+        journeyIdRef.current = journeyId
+        sidekickRef.current = sidekick
+    }, [messages, chatId, journeyId, sidekick])
+
     useEffect(() => {
         if (sidekicks) {
             // Helper function to transform Sidekick to basic SidekickListItem structure
-            const transformSidekick = (sidekick: any): SidekickListItem =>
+            const transformSidekick = (sourceSidekick: any, currentSidekick?: SidekickListItem): SidekickListItem =>
                 ({
-                    id: sidekick.id,
-                    chatbotConfig: sidekick.chatflow?.chatbotConfig,
-                    flowData: sidekick.chatflow?.flowData || sidekick.flowData,
+                    id: sourceSidekick.id,
+                    chatbotConfig: sourceSidekick.chatflow?.chatbotConfig,
+                    flowData: sourceSidekick.chatflow?.flowData || sourceSidekick.flowData,
                     // Add minimal required properties
                     isFavorite: false,
                     sharedWith: '',
                     tagString: '',
-                    chatflowId: sidekick.id,
-                    answersConfig: sidekick.chatflow?.answersConfig,
-                    constraints: {
-                        isSpeechToTextEnabled: false,
-                        isImageUploadAllowed: false,
-                        uploadSizeAndTypes: []
-                    },
-                    chatflow: sidekick.chatflow,
-                    placeholder: sidekick.placeholder || '',
-                    tags: sidekick.tags || [],
-                    aiModel: sidekick.aiModel || '',
-                    label: sidekick.label || '',
-                    chatflowDomain: sidekick.chatflowDomain || ''
+                    chatflowId: sourceSidekick.id,
+                    answersConfig: sourceSidekick.chatflow?.answersConfig,
+                    // PRESERVE existing constraints if they exist (to avoid race condition with fetch)
+                    constraints:
+                        currentSidekick?.id === sourceSidekick.id && currentSidekick?.constraints
+                            ? currentSidekick.constraints
+                            : {
+                                  isSpeechToTextEnabled: false,
+                                  isImageUploadAllowed: false,
+                                  isRAGFileUploadAllowed: false,
+                                  uploadSizeAndTypes: []
+                              },
+                    chatflow: sourceSidekick.chatflow,
+                    placeholder: sourceSidekick.placeholder || '',
+                    tags: sourceSidekick.tags || [],
+                    aiModel: sourceSidekick.aiModel || '',
+                    label: sourceSidekick.label || '',
+                    chatflowDomain: sourceSidekick.chatflowDomain || ''
                 } as SidekickListItem)
 
             // First, try to find sidekick from existing chat context
@@ -240,10 +248,10 @@ export function AnswersProvider({
             )
 
             if (existingSidekick) {
-                setSidekick(transformSidekick(existingSidekick))
+                setSidekick((current) => transformSidekick(existingSidekick, current))
             } else if (!chat && sidekicks.length > 0) {
                 // If no chat exists, set the first available sidekick to enable starter prompts
-                setSidekick(transformSidekick(sidekicks[0]))
+                setSidekick((current) => transformSidekick(sidekicks[0], current))
             }
         }
     }, [sidekicks, chat])
@@ -267,12 +275,6 @@ export function AnswersProvider({
         [filters]
     )
 
-    const regenerateAnswer = (retry?: boolean) => {
-        const [message] = messages?.filter((m) => m.role === 'user').slice(-1) ?? []
-        // setMessages(messages.slice(0, -1));
-        sendMessage({ content: message.content, retry, sidekick, gptModel })
-    }
-
     const clearMessages = () => {
         setMessages([])
         setChatId(undefined)
@@ -294,18 +296,9 @@ export function AnswersProvider({
             let id = ''
             if (data && data.id) id = data.id
 
-            setMessages((prevMessages) => {
-                const allMessages = [...cloneDeep(prevMessages)]
-                return allMessages.map((message) => {
-                    if (message.id === messageId) {
-                        return {
-                            ...message,
-                            feedback: { rating }
-                        }
-                    }
-                    return message
-                })
-            })
+            setMessages((prevMessages) =>
+                prevMessages.map((message) => (message.id === messageId ? { ...message, feedback: { rating } } : message))
+            )
 
             setFeedbackId(id)
             setShowFeedbackContentDialog(true)
@@ -356,92 +349,147 @@ export function AnswersProvider({
 
     const updateLastMessage = (text: string) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1]?.role === 'user') return allMessages
-            allMessages[allMessages.length - 1].content += text
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, index) => (index === prevMessages.length - 1 ? { ...msg, content: msg.content + text } : msg))
         })
     }
 
     const updateLastMessageSourceDocuments = (sourceDocuments: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].sourceDocuments = sourceDocuments
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, sourceDocuments } : msg))
         })
     }
 
     const updateLastMessageUsedTools = (usedTools: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].usedTools = usedTools
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => {
+                if (idx !== prevMessages.length - 1) return msg
+                // Smart replacement: Remove calledTools that have been replaced by usedTools
+                const remainingCalledTools = msg.calledTools?.filter(
+                    (calledTool: any) => !usedTools.some((usedTool: any) => usedTool.tool === calledTool.tool)
+                )
+                return {
+                    ...msg,
+                    usedTools,
+                    calledTools: remainingCalledTools?.length ? remainingCalledTools : undefined
+                }
+            })
         })
     }
 
     const updateLastMessageFileAnnotations = (fileAnnotations: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].fileAnnotations = fileAnnotations
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, fileAnnotations } : msg))
         })
     }
 
     const updateLastMessageAgentReasoning = (agentReasoning: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].agentReasoning = agentReasoning
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, agentReasoning } : msg))
         })
     }
 
     const updateLastMessageAction = (action: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].action = action
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, action } : msg))
         })
     }
 
     const updateLastMessageNextAgent = (nextAgent: any) => {
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            const lastAgentReasoning = allMessages[allMessages.length - 1].agentReasoning
-            if (lastAgentReasoning && lastAgentReasoning.length > 0) {
-                lastAgentReasoning.push({ nextAgent })
-            }
-            allMessages[allMessages.length - 1].agentReasoning = lastAgentReasoning
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => {
+                if (idx !== prevMessages.length - 1) return msg
+                const agentReasoning = msg.agentReasoning?.length ? [...msg.agentReasoning, { nextAgent }] : msg.agentReasoning
+                return { ...msg, agentReasoning }
+            })
         })
     }
 
     const updateLastMessageArtifacts = (artifacts: any) => {
+        // Transform FILE-STORAGE:: references to API URLs
+        if (Array.isArray(artifacts)) {
+            artifacts.forEach((artifact: any) => {
+                if ((artifact.type === 'png' || artifact.type === 'jpeg') && artifact.data?.startsWith?.('FILE-STORAGE::')) {
+                    const baseURL = sessionStorage.getItem('baseURL') || ''
+                    const fileName = artifact.data.replace('FILE-STORAGE::', '')
+                    artifact.data = `${baseURL}/api/v1/get-upload-file?chatflowId=${sidekick?.id}&chatId=${chatId}&fileName=${fileName}`
+                }
+            })
+        }
+
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            allMessages[allMessages.length - 1].artifacts = artifacts
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, artifacts } : msg))
+        })
+    }
+
+    const updateLastMessageAgentFlowExecutedData = (data: any) => {
+        setMessages((prevMessages) => {
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, agentFlowExecutedData: data } : msg))
+        })
+    }
+
+    const updateLastMessageCalledTools = (tools: any) => {
+        setMessages((prevMessages) => {
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            // Parse if string (backend sends JSON.stringify sometimes)
+            let parsedTools = tools
+            if (typeof tools === 'string') {
+                try {
+                    parsedTools = JSON.parse(tools)
+                } catch (e) {
+                    console.error('Failed to parse calledTools:', e)
+                    parsedTools = []
+                }
+            }
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, calledTools: parsedTools } : msg))
+        })
+    }
+
+    const cleanupCalledTools = () => {
+        setMessages((prevMessages) => {
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => {
+                if (idx !== prevMessages.length - 1) return msg
+                // Remove any remaining calledTools when the stream ends
+                if (msg.calledTools?.length && !msg.usedTools?.length) {
+                    return { ...msg, calledTools: undefined }
+                }
+                return msg
+            })
+        })
+    }
+
+    const updateLastMessageAgentFlowEvent = (event: any) => {
+        setMessages((prevMessages) => {
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, agentFlowEvent: event } : msg))
+        })
+    }
+
+    const updateLastMessageNextAgentFlow = (nextAgentFlow: any) => {
+        setMessages((prevMessages) => {
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => (idx === prevMessages.length - 1 ? { ...msg, nextAgentFlow } : msg))
         })
     }
 
     const abortMessage = () => {
         setIsMessageStopping(false)
         setMessages((prevMessages) => {
-            let allMessages = [...cloneDeep(prevMessages)]
-            if (allMessages[allMessages.length - 1].role === 'user') return allMessages
-            const lastAgentReasoning = allMessages[allMessages.length - 1].agentReasoning
-            if (lastAgentReasoning && lastAgentReasoning.length > 0) {
-                allMessages[allMessages.length - 1].agentReasoning = lastAgentReasoning.filter(
-                    (reasoning: { nextAgent?: any }) => !reasoning.nextAgent
-                )
-            }
-            return allMessages
+            if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+            return prevMessages.map((msg, idx) => {
+                if (idx !== prevMessages.length - 1) return msg
+                const agentReasoning = msg.agentReasoning?.filter((reasoning: { nextAgent?: any }) => !reasoning.nextAgent)
+                return { ...msg, agentReasoning }
+            })
         })
     }
 
@@ -485,12 +533,8 @@ export function AnswersProvider({
             try {
                 const params = {
                     question: content,
-                    chatId,
-                    journeyId,
-                    // history: messages?.map(({ content, role }) => ({
-                    //     message: content,
-                    //     type: role === 'assistant' ? 'apiMessage' : 'userMessage'
-                    // })),
+                    chatId: chatIdRef.current,
+                    journeyId: journeyIdRef.current,
                     uploads: files,
                     audio,
                     socketIOClientId: isChatFlowAvailableToStream ? socketIOClientId : undefined,
@@ -508,30 +552,56 @@ export function AnswersProvider({
                 } else {
                     const response = await predictionApi.sendMessageAndGetPrediction(sidekick?.id!, params)
                     const data = response.data
-                    setMessages((prevMessages) => {
-                        let allMessages = [...cloneDeep(prevMessages)]
-                        if (allMessages[allMessages.length - 1].type === 'apiMessage') {
-                            allMessages[allMessages.length - 1].id = data?.chatMessageId
-                        }
-                        return allMessages
-                    })
+                    setMessages((prevMessages) =>
+                        prevMessages.map((msg, idx) =>
+                            idx === prevMessages.length - 1 && (msg as any).type === 'apiMessage'
+                                ? { ...msg, id: data?.chatMessageId }
+                                : msg
+                        )
+                    )
                     setChatId(data.chatId)
 
                     if (content === '' && data.question) {
                         // the response contains the question even if it was in an audio format
                         // so if input is empty but the response contains the question, update the user message to show the question
-                        setMessages((prevMessages) => {
-                            let allMessages = [...cloneDeep(prevMessages)]
-                            if (allMessages[allMessages.length - 2].type === 'apiMessage') return allMessages
-                            allMessages[allMessages.length - 2].content = data.question
-                            return allMessages
-                        })
+                        setMessages((prevMessages) =>
+                            prevMessages.map((msg, idx) =>
+                                idx === prevMessages.length - 2 && (msg as any).type !== 'apiMessage'
+                                    ? { ...msg, content: data.question }
+                                    : msg
+                            )
+                        )
                     }
 
                     let text = ''
                     if (data.text) text = data.text
                     else if (data.json) text = '```json\n' + JSON.stringify(data.json, null, 2)
                     else text = JSON.stringify(data, null, 2)
+
+                    // Parse followUpPrompts safely - handle double-stringification from backend
+                    let followUpPrompts = undefined
+
+                    if (data?.followUpPrompts) {
+                        try {
+                            followUpPrompts = data.followUpPrompts
+                            // First parse if it's a string
+                            if (typeof followUpPrompts === 'string') {
+                                followUpPrompts = JSON.parse(followUpPrompts)
+                            }
+                            // Second parse if still a string (backend double-stringifies)
+                            if (typeof followUpPrompts === 'string') {
+                                followUpPrompts = JSON.parse(followUpPrompts)
+                            }
+                            // Ensure it's an array
+                            if (!Array.isArray(followUpPrompts)) {
+                                followUpPrompts = undefined
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse followUpPrompts:', e)
+
+                            followUpPrompts = undefined
+                        }
+                    }
 
                     setMessages((prevMessages) => [
                         ...prevMessages,
@@ -540,6 +610,7 @@ export function AnswersProvider({
                             content: text,
                             id: data?.chatMessageId,
                             sourceDocuments: data?.sourceDocuments,
+                            followUpPrompts,
                             usedTools: data?.usedTools,
                             fileAnnotations: data?.fileAnnotations,
                             agentReasoning: data?.agentReasoning,
@@ -561,7 +632,14 @@ export function AnswersProvider({
                 setMessages((prevMessages) => [...prevMessages, { role: 'assistant', content: errorMessage } as Message])
             }
         },
-        [addMessage, chatId, journeyId, messages, isChatFlowAvailableToStream, setInputValue, setMessages, setChatId, setJourneyId]
+        [addMessage, isChatFlowAvailableToStream, socketIOClientId]
+    )
+    const regenerateAnswer = useCallback(
+        (retry?: boolean) => {
+            const [message] = messagesRef.current?.filter((m) => m.role === 'user').slice(-1) ?? []
+            sendMessage({ content: message?.content || '', retry, sidekick, gptModel })
+        },
+        [sendMessage, sidekick, gptModel]
     )
 
     // Add fetchResponseFromEventStream function
@@ -595,15 +673,12 @@ export function AnswersProvider({
                 async onopen(response) {
                     if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
                         setIsChatFlowAvailableToStream(true)
-                        // console.log('Connection established successfully')
-                        // Connection established successfully
                     } else {
                         throw new Error('Failed to establish connection')
                     }
                 },
                 async onmessage(ev) {
                     const payload = JSON.parse(ev.data)
-                    // console.log('payload', payload)
                     switch (payload.event) {
                         case 'start':
                             // Already created an empty message when starting the stream
@@ -632,32 +707,62 @@ export function AnswersProvider({
                         case 'artifacts':
                             updateLastMessageArtifacts(payload.data)
                             break
+                        case 'agentFlowExecutedData':
+                            updateLastMessageAgentFlowExecutedData(payload.data)
+                            break
+                        case 'calledTools':
+                            updateLastMessageCalledTools(payload.data)
+                            break
+                        case 'agentFlowEvent':
+                            updateLastMessageAgentFlowEvent(payload.data)
+                            break
+                        case 'nextAgentFlow':
+                            updateLastMessageNextAgentFlow(payload.data)
+                            break
                         case 'metadata':
                             if (payload.data.chatId) {
                                 setChatId(payload.data.chatId)
                             }
-                            if (payload.data.chatMessageId) {
-                                setMessages((prevMessages) => {
-                                    const allMessages = [...cloneDeep(prevMessages)]
-                                    const lastMessage = allMessages[allMessages.length - 1]
-                                    if (lastMessage?.role === 'user') return allMessages
-                                    lastMessage.id = payload.data.chatMessageId
-                                    lastMessage.chatId = payload.data.chatId
-                                    lastMessage.chatflowid = chatflowid
-                                    return allMessages
+                            setMessages((prevMessages) => {
+                                if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+
+                                // PArse followupPrompts safely
+                                let followUpPrompts = undefined
+                                if (payload.data.followUpPrompts) {
+                                    try {
+                                        followUpPrompts =
+                                            typeof payload.data.followUpPrompts === 'string'
+                                                ? JSON.parse(payload.data.followUpPrompts)
+                                                : payload.data.followUpPrompts
+                                    } catch (e) {
+                                        console.error('Failed to parse followUpPrompts:', e)
+                                    }
+                                }
+                                return prevMessages.map((msg, idx) => {
+                                    if (idx !== prevMessages.length - 1) return msg
+                                    return {
+                                        ...msg,
+                                        ...(payload.data.chatMessageId &&
+                                            ({
+                                                id: payload.data.chatMessageId,
+                                                chatId: payload.data.chatId,
+                                                chatflowid: chatflowid
+                                            } as any)),
+                                        ...(followUpPrompts && { followUpPrompts: followUpPrompts })
+                                    }
                                 })
-                            }
+                            })
                             break
                         case 'error':
                             setError(payload.data)
                             // Update the current assistant message to show the error
                             setMessages((prevMessages) => {
-                                const allMessages = [...cloneDeep(prevMessages)]
-                                const lastMessage = allMessages[allMessages.length - 1]
-                                if (lastMessage?.role === 'user') return allMessages
-                                lastMessage.content = `Error: ${payload.data}`
-                                lastMessage.isLoading = false
-                                return allMessages
+                                if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+                                return prevMessages.map((msg, idx) =>
+                                    idx === prevMessages.length - 1
+                                        ? ({ ...msg, content: `Error: ${payload.data}`, isLoading: false } as any)
+                                        : msg
+                                )
                             })
                             break
                         case 'abort':
@@ -665,14 +770,14 @@ export function AnswersProvider({
                             break
                         case 'end':
                             setMessages((prevMessages) => {
-                                const allMessages = [...cloneDeep(prevMessages)]
-                                const lastMessage = allMessages[allMessages.length - 1]
-                                if (lastMessage?.role === 'user') return allMessages
-                                lastMessage.isLoading = false
-                                lastMessage.role = 'assistant'
-                                lastMessage.type = 'apiMessage'
-                                return allMessages
+                                if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
+                                return prevMessages.map((msg, idx) =>
+                                    idx === prevMessages.length - 1
+                                        ? ({ ...msg, isLoading: false, role: 'assistant', type: 'apiMessage' } as any)
+                                        : msg
+                                )
                             })
+                            cleanupCalledTools()
                             setIsLoading(false)
                             break
                     }
@@ -698,30 +803,108 @@ export function AnswersProvider({
     // Replace Socket.IO effect with event source availability check
     useEffect(() => {
         // Check if streaming is available for this chatflow
-        if (sidekick?.id) {
-            const checkStreamingAvailability = async () => {
-                try {
-                    // You might need to implement this method in your API to check if streaming is available
-                    const streamable = await predictionApi.checkIfChatflowIsValidForStreaming(sidekick.id)
+        if (!sidekick?.id) return
+
+        const abortController = new AbortController()
+
+        const checkStreamingAvailability = async () => {
+            try {
+                // You might need to implement this method in your API to check if streaming is available
+                const streamable = await predictionApi.checkIfChatflowIsValidForStreaming(sidekick.id)
+                if (!abortController.signal.aborted) {
                     setIsChatFlowAvailableToStream(streamable?.isStreaming || false)
-                } catch (error) {
+                }
+            } catch (error) {
+                if (!abortController.signal.aborted) {
                     console.error('Error checking streaming availability:', error)
                     setIsChatFlowAvailableToStream(false)
                 }
             }
-
-            checkStreamingAvailability()
         }
+
+        const fetchUploadConstraints = async () => {
+            try {
+                const baseURL = sessionStorage.getItem('baseURL') || ''
+                const token = sessionStorage.getItem('access_token')
+                const response = await fetch(`${baseURL}/api/v1/chatflows-uploads/${sidekick.id}`, {
+                    headers: {
+                        'x-request-from': 'internal',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    },
+                    signal: abortController.signal
+                })
+
+                if (response.ok && !abortController.signal.aborted) {
+                    const data = await response.json()
+                    const mimeTypes: Record<string, string> = {
+                        '.pdf': 'application/pdf',
+                        '.txt': 'text/plain',
+                        '.csv': 'text/csv',
+                        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        '.doc': 'application/msword'
+                    }
+
+                    const newConstraints = {
+                        isSpeechToTextEnabled: data?.isSpeechToTextEnabled ?? false,
+                        isImageUploadAllowed: data?.isImageUploadAllowed ?? false,
+                        isRAGFileUploadAllowed: data?.isRAGFileUploadAllowed ?? false,
+                        uploadSizeAndTypes: [
+                            ...(data?.imgUploadSizeAndTypes || []),
+                            ...(data?.fileUploadSizeAndTypes || []).map((item: any) => ({
+                                fileTypes: item.fileTypes.map((ext: string) => mimeTypes[ext] || ext),
+                                maxUploadSize: item.maxUploadSize
+                            }))
+                        ]
+                    }
+
+                    // Also update local state for immediate reactivity
+                    setSidekick((prev) =>
+                        prev
+                            ? {
+                                  ...prev,
+                                  constraints: newConstraints
+                              }
+                            : prev
+                    )
+                } else if (!response.ok && !abortController.signal.aborted) {
+                    console.error('❌ Failed to fetch upload constraints, status:', response.status)
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError' && !abortController.signal.aborted) {
+                    console.error('❌ Failed to fetch upload constraints:', error)
+                }
+            }
+        }
+
+        checkStreamingAvailability()
+        fetchUploadConstraints()
 
         return () => {
-            // Clean up if needed
+            abortController.abort()
         }
-    }, [sidekick?.id])
+    }, [sidekick?.id, mutateSidekickDetails])
 
     React.useEffect(() => {
         setJourney(initialJourney)
         setFilters(deepmerge({}, initialJourney?.filters, chat?.filters))
     }, [chat, initialJourney, appSettings])
+
+    // Parse chatbotConfig for fullFileUpload settings
+    React.useEffect(() => {
+        if (chatbotConfig) {
+            try {
+                const config = typeof chatbotConfig === 'string' ? JSON.parse(chatbotConfig) : chatbotConfig
+                if (config.fullFileUpload) {
+                    setFullFileUpload(config.fullFileUpload.status ?? false)
+                    if (config.fullFileUpload?.allowedUploadFileTypes) {
+                        setFullFileUploadAllowedTypes(config.fullFileUpload.allowedUploadFileTypes)
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing chatbotConfig for fullFileUpload:', error)
+            }
+        }
+    }, [chatbotConfig])
 
     const [previews, setPreviews] = useState<any[]>([])
     const [isDragActive, setIsDragActive] = useState(false)
@@ -829,62 +1012,103 @@ export function AnswersProvider({
         setPreviews(previews.filter((item) => item !== itemToDelete))
     }
 
-    const contextValue = {
-        user,
-        appSettings,
-        chat,
-        journey,
-        messages,
-        setJourney,
-        setMessages,
-        prompts,
-        filters,
-        setFilters,
-        isLoading,
-        setIsLoading,
-        useStreaming,
-        setUseStreaming,
-        error,
-        setError,
-        showFilters,
-        setShowFilters,
-        inputValue,
-        setInputValue,
-        chatId,
-        setChatId,
-        journeyId,
-        setJourneyId,
-        messageIdx,
-        sidekick: { ...sidekick, ...selectedSidekickData },
-        setSidekick,
-        chatbotConfig,
-        flowData,
-        gptModel,
-        setGptModel,
-        sendMessage,
-        clearMessages,
-        regenerateAnswer,
-        updateFilter,
-        addMessage,
-        deleteChat,
-        deletePrompt,
-        deleteJourney,
-        updateChat,
-        updatePrompt,
-        upsertJourney,
-        updateMessage,
-        startNewChat,
-        sendMessageFeedback,
-        socketIOClientId,
-        setSocketIOClientId,
-        isChatFlowAvailableToStream,
-        handleAbort,
-        feedbackId,
-        setFeedbackId,
-        showFeedbackContentDialog,
-        setShowFeedbackContentDialog,
-        submitFeedbackContent
-    }
+    const contextValue = useMemo(
+        () => ({
+            user,
+            appSettings,
+            chat,
+            journey,
+            messages,
+            setJourney,
+            setMessages,
+            prompts,
+            filters,
+            setFilters,
+            isLoading,
+            setIsLoading,
+            useStreaming,
+            setUseStreaming,
+            error,
+            setError,
+            showFilters,
+            setShowFilters,
+            inputValue,
+            setInputValue,
+            chatId,
+            setChatId,
+            journeyId,
+            setJourneyId,
+            messageIdx,
+            sidekick: {
+                ...sidekick,
+                ...selectedSidekickData,
+                // IMPORTANT: Preserve fetched constraints - don't let selectedSidekickData overwrite them
+                constraints: sidekick?.constraints || selectedSidekickData?.constraints
+            },
+            setSidekick,
+            chatbotConfig,
+            flowData,
+            gptModel,
+            setGptModel,
+            sendMessage,
+            clearMessages,
+            regenerateAnswer,
+            updateFilter,
+            addMessage,
+            deleteChat,
+            deletePrompt,
+            deleteJourney,
+            updateChat,
+            updatePrompt,
+            upsertJourney,
+            updateMessage,
+            startNewChat,
+            sendMessageFeedback,
+            socketIOClientId,
+            setSocketIOClientId,
+            isChatFlowAvailableToStream,
+            handleAbort,
+            feedbackId,
+            setFeedbackId,
+            showFeedbackContentDialog,
+            setShowFeedbackContentDialog,
+            submitFeedbackContent,
+            fullFileUpload,
+            fullFileUploadAllowedTypes
+        }),
+        [
+            user,
+            appSettings,
+            chat,
+            journey,
+            messages,
+            prompts,
+            filters,
+            isLoading,
+            useStreaming,
+            error,
+            showFilters,
+            inputValue,
+            chatId,
+            journeyId,
+            sidekick,
+            selectedSidekickData,
+            chatbotConfig,
+            flowData,
+            gptModel,
+            sendMessage,
+            clearMessages,
+            regenerateAnswer,
+            updateFilter,
+            addMessage,
+            socketIOClientId,
+            isChatFlowAvailableToStream,
+            feedbackId,
+            showFeedbackContentDialog,
+            fullFileUpload,
+            fullFileUploadAllowedTypes
+        ]
+    )
     // @ts-ignore
     return <AnswersContext.Provider value={contextValue}>{children}</AnswersContext.Provider>
 }

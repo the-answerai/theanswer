@@ -140,3 +140,17 @@ body[data-theme='dark'] .navbar__toggle,
         border-bottom: 1px solid rgba(0, 255, 255, 0.2);
     }
 }
+
+/* ThreeJS Canvas - Allow smooth scrolling */
+canvas {
+    /* Prevent canvas from blocking scroll events */
+    touch-action: auto !important;
+}
+
+/* Specifically target background canvases in hero sections */
+.heroBackground canvas,
+[class*='heroBackground'] canvas,
+[class*='threeJs'] canvas {
+    pointer-events: none !important;
+    touch-action: auto !important;
+}

@@ -72,15 +72,26 @@ const apps: App[] = [
         href: '/sidekick-studio/media-creator'
     },
     {
-        id: 'csv-transformer',
-        name: 'CSV Transformer',
+        id: 'bulk-analysis',
+        name: 'Bulk Analysis',
         icon: '📊',
         description:
-            'Effortlessly clean, reformat, and analyze your CSV data using intelligent AI algorithms. Perfect for data preparation, reporting, and ensuring data quality.',
+            'Add a CSV of questions and prompts, run bulk AI jobs at scale, and get a new CSV with all your results. Perfect for processing large datasets, mass content generation, and automating repetitive AI tasks.',
         category: 'Data Processing',
-        features: ['Smart Data Cleaning', 'Format Conversion', 'Analysis Tools', 'Secure Processing'],
+        features: ['Bulk AI Processing', 'CSV Import/Export', 'Scalable Jobs', 'Custom Prompts'],
         available: true,
         href: '/sidekick-studio/csv-transformer'
+    },
+    {
+        id: 'video-creation',
+        name: 'Video Creation',
+        icon: '🎬',
+        description:
+            'Generate compelling videos from text or simple inputs. Create engaging content for social media, presentations, and marketing with AI-powered video generation.',
+        category: 'Creative',
+        features: ['Text-to-Video', 'AI Enhancement', 'Multiple Formats', 'Custom Branding'],
+        available: true,
+        href: '/sidekick-studio/video-creator'
     },
     // Coming Soon Apps
     {
@@ -191,16 +202,6 @@ const apps: App[] = [
             'Streamline customer support with AI-driven ticket insights. Categorize, prioritize, and route support requests intelligently with automated workflows.',
         category: 'Support',
         features: ['Auto-Categorization', 'Priority Scoring', 'Smart Routing', 'Performance Analytics'],
-        available: false
-    },
-    {
-        id: 'video-creation',
-        name: 'Video Creation',
-        icon: '🎬',
-        description:
-            'Generate compelling videos from text or simple inputs. Create engaging content for social media, presentations, and marketing with AI-powered video generation.',
-        category: 'Creative',
-        features: ['Text-to-Video', 'AI Enhancement', 'Multiple Formats', 'Custom Branding'],
         available: false
     },
     {

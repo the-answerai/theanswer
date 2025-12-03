@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import axios from 'axios'
 
-import { resetDatabase, seedScenario } from '../../helpers/test-db'
+import { resetDatabase, seedScenario } from '../../helpers'
 
 const TEST_SERVER_URL = process.env.API_URL || 'http://localhost:4000'
 const RESET_PATH = '/api/v1/__test__/reset'

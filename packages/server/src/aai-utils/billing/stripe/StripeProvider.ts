@@ -16,17 +16,27 @@ import {
     CreditsData,
     UsageSummary
 } from '../core/types'
-import { log, BILLING_CONFIG } from '../config'
-import { langfuse } from '../config'
+import { log, BILLING_CONFIG, DEFAULT_CUSTOMER_ID } from '../config'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
+// Import v3 Langfuse for trace metadata updates (v4 doesn't have this method yet)
+import { Langfuse } from 'langfuse'
 import { StripeEvent } from '../../../database/entities/StripeEvent'
 import { Subscription as SubscriptionEntity } from '../../../database/entities/Subscription'
 // import { UserCredits } from '../../../database/entities/UserCredits'
 
 export class StripeProvider {
     stripeClient: Stripe
+    langfuseV3: Langfuse // v3 client for trace metadata updates
+
     constructor() {
         this.stripeClient = new Stripe(process.env.BILLING_STRIPE_SECRET_KEY! ?? '')
+        // Initialize v3 Langfuse client for trace metadata updates
+        // (v4 API doesn't have trace metadata update method yet)
+        this.langfuseV3 = new Langfuse({
+            publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
+            secretKey: process.env.LANGFUSE_SECRET_KEY || '',
+            baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
+        })
     }
 
     async getInvoices(params: Stripe.InvoiceListParams): Promise<Stripe.Response<Stripe.ApiList<Stripe.Invoice>>> {
@@ -249,8 +259,6 @@ export class StripeProvider {
 
     async getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice> {
         try {
-            log.info('Getting upcoming invoice', { params })
-
             const invoiceParams: Stripe.InvoiceRetrieveUpcomingParams = {
                 customer: params.customerId
             }
@@ -270,7 +278,6 @@ export class StripeProvider {
             }
 
             const invoice = await this.stripeClient.invoices.retrieveUpcoming(invoiceParams)
-            log.info('Retrieved upcoming invoice', { invoice })
             const customerId = invoice.customer as string
             if (!customerId) {
                 throw new Error('Customer ID is required but was not provided')
@@ -287,6 +294,44 @@ export class StripeProvider {
         } catch (error: any) {
             log.error('Failed to get upcoming invoice', { error: error.message, params })
             throw error
+        }
+    }
+
+    /**
+     * Adjust timestamp for Stripe's 35-day limitation on meter events
+     * Stripe doesn't accept meter events older than 35 days
+     *
+     * @param originalTimestamp - Original timestamp in seconds
+     * @returns Adjusted timestamp info with original date preserved
+     */
+    private adjustTimestampForStripe(originalTimestamp: number): {
+        adjustedTimestamp: number
+        wasAdjusted: boolean
+        originalDate?: string
+    } {
+        const now = Date.now() / 1000 // Current time in seconds
+        const thirtyFiveDaysAgo = now - 35 * 24 * 60 * 60
+        const thirtyFourDaysAgo = now - 34 * 24 * 60 * 60 // Use 34 days as the "historical catch-up" date
+
+        // Stripe allows timestamps up to and including 35 days ago
+        // We only need to adjust if it's MORE than 35 days old
+        if (originalTimestamp < thirtyFiveDaysAgo) {
+            log.info('Adjusting old timestamp for Stripe', {
+                originalDate: new Date(originalTimestamp * 1000).toISOString(),
+                adjustedDate: new Date(thirtyFourDaysAgo * 1000).toISOString(),
+                ageInDays: Math.floor((now - originalTimestamp) / (24 * 60 * 60))
+            })
+
+            return {
+                adjustedTimestamp: Math.floor(thirtyFourDaysAgo),
+                wasAdjusted: true,
+                originalDate: new Date(originalTimestamp * 1000).toISOString()
+            }
+        }
+
+        return {
+            adjustedTimestamp: originalTimestamp,
+            wasAdjusted: false
         }
     }
 
@@ -307,6 +352,9 @@ export class StripeProvider {
             const meterEvents: Stripe.Billing.MeterEvent[] = []
             const failedEvents: Array<{ traceId: string; error: string }> = []
             const processedTraces: string[] = []
+            let selfHealedCount = 0
+            let duplicateEventCount = 0
+            let adjustedTimestampCount = 0
 
             // console.log('Syncing usage to Stripe', {
             //     count: creditsData.length,
@@ -321,7 +369,10 @@ export class StripeProvider {
 
                 const batchResults = await Promise.allSettled(
                     batch.map(async (data) => {
-                        const timestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+                        const originalTimestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
+
+                        // Adjust timestamp for Stripe's 35-day limitation
+                        const { adjustedTimestamp, wasAdjusted, originalDate } = this.adjustTimestampForStripe(originalTimestamp)
 
                         // Ensure all unknown credit types are counted as AI tokens
                         const aiTokens = data.credits.ai_tokens + (data.credits.unknown || 0)
@@ -334,12 +385,35 @@ export class StripeProvider {
 
                         let retryCount = 0
 
+                        // Track if this event's timestamp was adjusted
+                        if (wasAdjusted) {
+                            adjustedTimestampCount++
+                        }
+
                         while (retryCount < BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
                             try {
+                                // Validate customer ID before API call
+                                if (!data.stripeCustomerId?.trim()) {
+                                    log.warn('Invalid customer ID, using default customer', {
+                                        traceId: data.traceId,
+                                        invalidCustomerId: data.stripeCustomerId,
+                                        defaultCustomerId: DEFAULT_CUSTOMER_ID
+                                    })
+
+                                    if (!DEFAULT_CUSTOMER_ID?.trim()) {
+                                        throw new Error(
+                                            'No valid customer ID available (both trace and default are empty). ' +
+                                                'Please set BILLING_DEFAULT_STRIPE_CUSTOMER_ID environment variable.'
+                                        )
+                                    }
+
+                                    data.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                }
+
                                 const stripeMeterEvent = {
                                     event_name: 'credits',
                                     identifier: `${data.traceId}_credits`,
-                                    timestamp,
+                                    timestamp: adjustedTimestamp, // Use adjusted timestamp
                                     payload: {
                                         value: totalCredits.toString(),
                                         stripe_customer_id: data.stripeCustomerId,
@@ -358,19 +432,83 @@ export class StripeProvider {
                                         ).toFixed(6)
                                     }
                                 }
-                                const result = await this.stripeClient.billing.meterEvents.create(stripeMeterEvent).catch((error) => {
-                                    log.error('Failed to create meter event', { error: error.message, stripeMeterEvent })
-                                    throw error
-                                })
+                                let result
+                                let isDuplicate = false
 
-                                // Update trace metadata with billing info
-                                await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                try {
+                                    result = await this.stripeClient.billing.meterEvents.create(stripeMeterEvent)
+                                } catch (error: any) {
+                                    // Check if this is a duplicate identifier error
+                                    if (error.message?.includes('An event already exists with identifier')) {
+                                        log.warn('Meter event already exists, marking trace as processed', {
+                                            traceId: data.traceId,
+                                            identifier: stripeMeterEvent.identifier,
+                                            message: 'Duplicate meter event - trace was likely processed before but metadata update failed'
+                                        })
+                                        isDuplicate = true
+                                        duplicateEventCount++
+                                        // Create a mock result for metadata update (cast to match MeterEvent type)
+                                        result = {
+                                            object: 'billing.meter_event',
+                                            identifier: stripeMeterEvent.identifier,
+                                            created: stripeMeterEvent.timestamp,
+                                            livemode: process.env.NODE_ENV === 'production',
+                                            timestamp: stripeMeterEvent.timestamp,
+                                            event_name: stripeMeterEvent.event_name,
+                                            payload: stripeMeterEvent.payload
+                                        } as Stripe.Billing.MeterEvent
+                                    } else if (error.code === 'resource_missing' && error.param?.includes('stripe_customer_id')) {
+                                        // Handle "Customer not found" errors
+                                        log.warn('Customer not found in Stripe, retrying with default customer', {
+                                            traceId: data.traceId,
+                                            invalidCustomerId: data.stripeCustomerId,
+                                            defaultCustomerId: DEFAULT_CUSTOMER_ID,
+                                            errorMessage: error.message
+                                        })
 
-                                meterEvents.push(result)
+                                        // Only retry if we haven't already tried the default customer
+                                        if (data.stripeCustomerId !== DEFAULT_CUSTOMER_ID && DEFAULT_CUSTOMER_ID?.trim()) {
+                                            data.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                            // Create a special error to signal retry with default customer
+                                            const retryError = new Error('RETRY_WITH_DEFAULT_CUSTOMER')
+                                            ;(retryError as any).shouldRetryWithDefault = true
+                                            throw retryError
+                                        } else {
+                                            // Already using default customer or no default available - cannot sync this trace
+                                            log.error('Cannot sync trace: default customer also invalid or unavailable', {
+                                                traceId: data.traceId,
+                                                defaultCustomerId: DEFAULT_CUSTOMER_ID
+                                            })
+                                            throw error
+                                        }
+                                    } else {
+                                        // For other errors, log and throw as before
+                                        log.error('Failed to create meter event', { error: error.message, stripeMeterEvent })
+                                        throw error
+                                    }
+                                }
+
+                                // Update trace metadata with billing info (even for duplicates to prevent reprocessing)
+                                const wasSelfHealed = await this.updateTraceMetadata(data, result, batchStartTime, BATCH_SIZE, i, meterId)
+                                if (wasSelfHealed) {
+                                    selfHealedCount++
+                                }
+
+                                // Only add to meterEvents if not a duplicate
+                                if (!isDuplicate) {
+                                    meterEvents.push(result)
+                                }
                                 processedTraces.push(data.traceId)
                                 break
                             } catch (error) {
                                 retryCount++
+
+                                // Check if this is a retry with default customer (don't count as real retry)
+                                if ((error as any).shouldRetryWithDefault) {
+                                    retryCount-- // Undo the increment
+                                    continue // Retry immediately without delay
+                                }
+
                                 if (retryCount === BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
                                     failedEvents.push({
                                         traceId: data.traceId,
@@ -384,10 +522,54 @@ export class StripeProvider {
                     })
                 )
 
+                // CRITICAL: Flush Langfuse metadata updates after each batch
+                // This ensures traces are marked as 'processed' even if the process dies
+                // Prevents reprocessing the same batch over and over
+                log.debug('Flushing Langfuse metadata updates for batch', {
+                    batchIndex: Math.floor(i / BATCH_SIZE) + 1,
+                    tracesInBatch: batch.length
+                })
+                await this.langfuseV3.flushAsync()
+
                 if (i + BATCH_SIZE < creditsData.length) {
                     await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
                 }
             }
+
+            // Log self-healing summary
+            if (selfHealedCount > 0) {
+                log.info('Self-healing: Processed untagged traces', {
+                    count: selfHealedCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((selfHealedCount / processedTraces.length) * 100).toFixed(2) + '%'
+                })
+            }
+
+            // Log duplicate events summary
+            if (duplicateEventCount > 0) {
+                log.info('Duplicate events handled gracefully', {
+                    count: duplicateEventCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((duplicateEventCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    note: 'These traces were already in Stripe but not marked as processed in Langfuse'
+                })
+            }
+
+            // Log adjusted timestamps summary
+            if (adjustedTimestampCount > 0) {
+                log.info('Historical data: Adjusted timestamps for Stripe 35-day limitation', {
+                    count: adjustedTimestampCount,
+                    totalProcessed: processedTraces.length,
+                    percentage: ((adjustedTimestampCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    note: 'Traces older than 35 days were batched to 34 days ago with original dates preserved in metadata'
+                })
+            }
+
+            // Final flush to ensure all metadata updates are persisted
+            log.info('Final flush of Langfuse metadata updates', {
+                totalProcessed: processedTraces.length
+            })
+            await this.langfuseV3.flushAsync()
 
             return {
                 meterEvents,
@@ -396,6 +578,12 @@ export class StripeProvider {
             }
         } catch (error) {
             log.error('Error syncing usage to Stripe', { error })
+            // Flush any pending metadata updates even on error
+            try {
+                await this.langfuseV3.flushAsync()
+            } catch (flushError) {
+                log.error('Failed to flush Langfuse metadata on error', { flushError })
+            }
             throw error
         }
     }
@@ -446,10 +634,13 @@ export class StripeProvider {
         batchSize: number,
         batchIndex: number,
         meterId: string
-    ): Promise<void> {
+    ): Promise<boolean> {
         const totalCredits = data.credits.ai_tokens + data.credits.compute + data.credits.storage
 
-        await langfuse.trace({
+        // Mark trace as processed in Langfuse metadata
+        // This prevents it from being fetched again (filtered by API-level metadata.billing_status != 'processed')
+        // Using v3 client for this operation as v4 doesn't have trace metadata update method yet
+        await this.langfuseV3.trace({
             id: data.traceId,
             timestamp: data.fullTrace?.timestamp,
             metadata: {
@@ -492,6 +683,14 @@ export class StripeProvider {
                 }
             }
         })
+
+        log.debug('Trace metadata updated successfully', {
+            traceId: data.traceId,
+            billingStatus: 'processed',
+            meterEventId: result.identifier
+        })
+
+        return false
     }
 
     private calculateResourceBreakdown(credits: number, cost: number, totalCredits: number) {

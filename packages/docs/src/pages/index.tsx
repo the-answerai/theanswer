@@ -3,6 +3,9 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import HeroCTA from '@site/src/components/HeroCTA'
+import { GradientText } from '@site/src/components/Modern'
+import { Database, Code2, BarChart3, ArrowRight } from 'lucide-react'
 
 import styles from './index.module.css'
 
@@ -13,32 +16,18 @@ function HomepageHeader() {
                 <ThreeJsScene className={styles.threeJsCanvas} />
             </div>
             <div className={styles.heroContent}>
-                <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAgentAI Logo' className={styles.heroLogo} />
                 <h1 className={styles.heroTitle}>
-                    AI for ALL, <em>not for the few.</em>{' '}
+                    Stop Managing AI Tools. <GradientText>Start Using AI.</GradientText>
                 </h1>
-                <p className={styles.heroSubtitle}>Building a decentralized, open, and creative future you can trust.</p>
-                <div className={styles.heroCTAs}>
-                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Start Building
-                    </a>
-                    <div className={styles.secondaryLinks}>
-                        <a
-                            href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
-                            target='_blank'
-                            rel='noreferrer'
-                            className={styles.secondaryLink}
-                        >
-                            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className={styles.chromeIcon}>
-                                <path d='M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm6.865 2.29a5.454 5.454 0 0 1 6.865 2.29l5.346-9.26A11.944 11.944 0 0 0 12 0v6.545a5.454 5.454 0 0 1 5.454 5.455c0 3.012-2.443 5.455-5.454 5.455s-5.454-2.443-5.454-5.455c0-1.513.616-2.88 1.612-3.865z' />
-                            </svg>
-                            Download Chrome Extension
-                        </a>
-                        <a href='/developers/' className={styles.secondaryLink}>
-                            👩‍💻 Call for Developers
-                        </a>
-                    </div>
-                </div>
+                <p className={styles.heroSubtitle}>
+                    AnswerAgent connects your data, builds your agents, and delivers instant insights—all in one platform.
+                </p>
+                <HeroCTA
+                    context={{
+                        page: 'homepage',
+                        section: 'hero'
+                    }}
+                />
             </div>
         </header>
     )
@@ -46,7 +35,7 @@ function HomepageHeader() {
 
 const LayoutComponent: any = Layout
 
-function MissionSection() {
+function _MissionSection() {
     return (
         <section className={styles.missionSection}>
             <div className='container'>
@@ -159,70 +148,52 @@ function MissionSection() {
     )
 }
 
-function FeaturesSection() {
+function ThreePillarsSection() {
     return (
-        <section className={styles.featuresSection}>
+        <section className={styles.threePillarsSection}>
             <div className='container'>
-                <h2 className='text--center'>The complete AI Agent solution</h2>
+                <h2 className={styles.sectionTitle}>Three Steps to AI-Powered Productivity</h2>
                 <div className='row'>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🚀</div>
-                            <div>
-                                <h3>Agent Apps</h3>
-                                <p>
-                                    Extend the power of AnswerAgent with a growing ecosystem of applications. Integrate AI seamlessly into
-                                    your workflows and daily tasks.
-                                </p>
-                                <a href='/apps' className={styles.featureCardCTA}>
-                                    Explore Apps →
-                                </a>
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <Database size={64} strokeWidth={1.5} />
                             </div>
+                            <h3 className={styles.pillarTitle}>Connect Your Data</h3>
+                            <p className={styles.pillarDescription}>
+                                Unified data lake with intelligent tagging and AI summarization. 20+ integrations, secure and compliant.
+                            </p>
+                            <a href='/answer-engine' className={styles.pillarLink}>
+                                Learn More <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>💬</div>
-                            <div>
-                                <h3>Chat</h3>
-                                <p>
-                                    Engage with your AI agents naturally through a powerful chat interface. Get instant answers, automate
-                                    tasks, and streamline communication.
-                                </p>
-                                <a href='/chat' className={styles.featureCardCTA}>
-                                    Learn About Chat →
-                                </a>
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <Code2 size={64} strokeWidth={1.5} />
                             </div>
+                            <h3 className={styles.pillarTitle}>Build Your Agents</h3>
+                            <p className={styles.pillarDescription}>
+                                Visual builder, code editor, templates. Create images and videos with AI. Deploy anywhere you want.
+                            </p>
+                            <a href='/agent-studio' className={styles.pillarLink}>
+                                Explore Studio <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🌐</div>
-                            <div>
-                                <h3>Browser Sidekick</h3>
-                                <p>
-                                    Bring AnswerAgent directly into your browser. Access AI capabilities, automate web tasks, and enhance
-                                    your online experience with ease.
-                                </p>
-                                <a href='/browser-sidekick' className={styles.featureCardCTA}>
-                                    Learn About Sidekick →
-                                </a>
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <BarChart3 size={64} strokeWidth={1.5} />
                             </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>🎯</div>
-                            <div>
-                                <h3>Sidekick Studio</h3>
-                                <p>
-                                    Design, deploy, and manage your AI agent workforce with an intuitive visual interface. Build powerful,
-                                    customizable AI agents without coding skills.
-                                </p>
-                                <a href='/sidekick-studio' className={styles.featureCardCTA}>
-                                    Try Studio →
-                                </a>
-                            </div>
+                            <h3 className={styles.pillarTitle}>Get Instant Insights</h3>
+                            <p className={styles.pillarDescription}>
+                                Real-time dashboards, on-demand reports, and Chrome extension. Insights when you need them.
+                            </p>
+                            <a href='/on-demand-apps' className={styles.pillarLink}>
+                                See Insights <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -231,185 +202,56 @@ function FeaturesSection() {
     )
 }
 
-function PricingSection() {
+function UseCasesPreviewSection() {
     return (
-        <section className={styles.pricingSection}>
+        <section className={styles.useCasesSection}>
             <div className='container'>
-                <div className='text--center' style={{ marginBottom: '3rem' }}>
-                    <h2 className='text--center'>Simple, Transparent Pricing</h2>
-                    <p className='text--center' style={{ fontSize: '1.2rem', opacity: 0.9, marginBottom: '0' }}>
-                        Start free, pay only for what you use, with full control over your costs
-                    </p>
-                </div>
+                <h2 className={styles.sectionTitle}>What can you build?</h2>
                 <div className='row'>
                     <div className='col col--4'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🆓</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Free to Try</h3>
-                                <div className={styles.pricingHighlight}>$0</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Get started immediately with our free tier. Explore all features, test workflows, and see the power of
-                                    AI agents before you commit to anything.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Full feature access</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Limited usage credits</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Community support</div>
-                                </div>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Start Free
-                                    </a>
-                                </div>
-                            </div>
+                        <div className={styles.useCaseCard}>
+                            <h3>Daily Briefing</h3>
+                            <p>Get a comprehensive briefing from all your tools every morning—Salesforce, Jira, Slack, and more.</p>
                         </div>
                     </div>
                     <div className='col col--4'>
-                        <div className={clsx(styles.pricingCard, styles.commandment, styles.pricingCardHighlighted)}>
-                            <div className={styles.pricingIcon}>💳</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Usage-Based</h3>
-                                <div className={styles.pricingHighlight}>$20 to start</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Pay only for what you use with transparent, real-time cost tracking. No subscriptions, no hidden fees,
-                                    just honest usage-based pricing.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Real-time cost calculators</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Transparent metrics dashboard</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Small nominal fees on API usage</div>
-                                </div>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Get Started for Free
-                                    </a>
-                                </div>
-                            </div>
+                        <div className={styles.useCaseCard}>
+                            <h3>Automated Ticket Triage</h3>
+                            <p>Automatically categorize, prioritize, and route support tickets based on content and context.</p>
                         </div>
                     </div>
                     <div className='col col--4'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🏢</div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Business Account</h3>
-                                <div className={styles.pricingHighlight}>$500 + Usage</div>
-                                <p style={{ marginBottom: '1.5rem', flex: '1' }}>
-                                    Get a fully segregated cloud environment for your business. Share agents, chatflows, and collaborate
-                                    with your team in a dedicated workspace with enhanced security and controls.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Dedicated cloud environment</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Team collaboration & sharing</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Enhanced security controls</div>
-                                </div>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a
-                                        href='https://calendly.com/lastrev/answeragent-demo'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                    >
-                                        Request Demo
-                                    </a>
-                                </div>
-                            </div>
+                        <div className={styles.useCaseCard}>
+                            <h3>Real-Time OKR Dashboards</h3>
+                            <p>Track OKRs across all your platforms with real-time updates and automated progress tracking.</p>
                         </div>
                     </div>
                 </div>
-                <div className='row' style={{ marginTop: '2rem' }}>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🏢</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Enterprise</h3>
-                                <div className={styles.pricingHighlight}>Fully Local</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Complete enterprise solution with full self-hosted licensing and services. Deploy AnswerAgentAI entirely
-                                    within your infrastructure for maximum security and control.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Full self-hosted deployment</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Enterprise licensing & support</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Custom integrations & training</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <a
-                                        href='https://calendly.com/lastrev/answeragent-demo'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                    >
-                                        Talk to Us
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🤝</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>AI Services</h3>
-                                <div className={styles.pricingHighlight}>Professional Partners</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Connect with Last Rev for custom AI implementations, training, and ongoing support for your specific
-                                    business needs.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Certified implementation partner</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Custom AI workflow development</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Training & ongoing support</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <a
-                                        href='https://lastrev.com'
-                                        target='_blank'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                        rel='noreferrer'
-                                    >
-                                        Contact Last Rev
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div className={styles.useCasesCTA}>
+                    <a href='/docs/use-cases' className={clsx(styles.ctaButton, styles.ctaSecondary)}>
+                        Browse All Use Cases
+                    </a>
                 </div>
-                <div className='row' style={{ marginTop: '3rem' }}>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCallout, styles.commandment)}>
-                            <div style={{ textAlign: 'center' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>💡 Full Cost Transparency</h3>
-                                <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                                    We provide completely transparent metrics and cost calculators inside the app. See exactly what
-                                    you&apos;re spending, when, and why. We take only a small nominal fee on commercial AI tools and
-                                    licensed AnswerAgentAI versions to keep the platform running.
-                                </p>
-                                <div style={{ marginTop: '2rem' }}>
-                                    <a href='https://studio.theanswer.ai' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Start Free Today
-                                    </a>
-                                </div>
+            </div>
+        </section>
+    )
+}
+
+function PricingTeaserSection() {
+    return (
+        <section className={styles.pricingTeaserSection}>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col col--8 col--offset-2'>
+                        <div className={styles.pricingTeaserCard}>
+                            <h2 className={styles.pricingTeaserTitle}>Simple Pricing</h2>
+                            <div className={styles.pricingTeaserAmount}>
+                                $500<span className={styles.pricingTeaserPeriod}>/month</span>
                             </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>🔑</div>
-                            <div>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Bring Your Own API Token</h3>
-                                <div className={styles.pricingHighlight}>Maximum Savings</div>
-                                <p style={{ marginBottom: '1.5rem' }}>
-                                    Use your own API keys from OpenAI, Anthropic, Google, and others to drastically reduce costs. You
-                                    maintain direct control and billing relationships.
-                                </p>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Direct API key integration</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Massive cost savings</div>
-                                    <div style={{ marginBottom: '0.5rem' }}>✓ Zero markup on your usage</div>
-                                </div>
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <a href='/getting-started' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                                        Learn How
-                                    </a>
-                                </div>
-                            </div>
+                            <p className={styles.pricingTeaserDescription}>Unlimited users, or self-host on your infrastructure</p>
+                            <a href='/pricing' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                View Pricing
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -418,7 +260,27 @@ function PricingSection() {
     )
 }
 
-function MacAppTeaser() {
+function BottomCTASection() {
+    return (
+        <section className={styles.bottomCTASection}>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col col--8 col--offset-2'>
+                        <h2 className={styles.bottomCTATitle}>Ready to get started?</h2>
+                        <HeroCTA
+                            context={{
+                                page: 'homepage',
+                                section: 'bottom-cta'
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function _MacAppTeaser() {
     return (
         <section className={styles.macAppTeaserSection}>
             <div className='container text--center'>
@@ -452,10 +314,10 @@ export default function Home(): JSX.Element {
                 />
                 <HomepageHeader />
                 <main>
-                    <FeaturesSection />
-                    <MacAppTeaser />
-                    {/* <MissionSection /> */}
-                    <PricingSection />
+                    <ThreePillarsSection />
+                    <UseCasesPreviewSection />
+                    <PricingTeaserSection />
+                    <BottomCTASection />
                 </main>
             </LayoutComponent>
         </div>

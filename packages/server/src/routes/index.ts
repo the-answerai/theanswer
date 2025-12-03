@@ -54,8 +54,10 @@ import nvidiaNimRouter from './nvidia-nim'
 import gmailRouter from './gmail'
 import csvParserRouter from './csv-parser'
 import browserExtensionRouter from './browser-extension'
+import dataEngineRouter from './data-engine'
 import dalleImageUploadRouter from './dalle-image-upload'
 import dalleImageRouter from './dalle-image'
+import videoGeneratorRouter from './video-generator'
 import executionsRouter from './executions'
 import validationRouter from './validation'
 import agentflowv2GeneratorRouter from './agentflowv2-generator'
@@ -111,6 +113,7 @@ router.use('/stats', statsRouter)
 router.use('/tools', toolsRouter)
 router.use('/upload-dalle-image', dalleImageUploadRouter)
 router.use('/dalle-image', dalleImageRouter)
+router.use('/video-generator', videoGeneratorRouter)
 router.use('/variables', variablesRouter)
 router.use('/vector', vectorRouter)
 router.use('/verify', verifyRouter)
@@ -122,6 +125,7 @@ router.use('/nvidia-nim', nvidiaNimRouter)
 router.use('/gmail', gmailRouter)
 router.use('/csv-parser', csvParserRouter)
 router.use('/browser-extension', browserExtensionRouter)
+router.use('/data-engine', dataEngineRouter)
 router.use('/executions', executionsRouter)
 router.use('/validation', validationRouter)
 router.use('/agentflowv2-generator', agentflowv2GeneratorRouter)
