@@ -39,7 +39,7 @@ const INTEGRATIONS = [
         domain: 'github.com',
         category: 'Development',
         difficulty: 'Easy',
-        description: 'Access repositories, pull requests, and code reviews.'
+        description: 'Automate code reviews, issue triage, and documentation generation with AI-powered GitHub workflows.'
     },
     {
         name: 'Google Workspace',
