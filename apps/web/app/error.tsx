@@ -30,6 +30,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
     const glass = glassmorphismTokens[mode]
     const colors = colorTokens[mode]
+    const reportingEnabled = !!process.env.NEXT_PUBLIC_ERROR_REPORTING_ENABLED
 
     const handleReportIssue = async () => {
         setReportState('loading')
@@ -160,31 +161,33 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
                         Try again
                     </Button>
 
-                    <Button
-                        onClick={handleReportIssue}
-                        variant='outlined'
-                        disabled={reportState === 'loading' || reportState === 'success'}
-                        startIcon={reportState === 'loading' ? <CircularProgress size={18} color='inherit' /> : <ReportProblemIcon />}
-                        sx={{
-                            ...glass.glassSubtle,
-                            color: colors.text.secondary,
-                            fontWeight: 500,
-                            textTransform: 'none',
-                            px: 3,
-                            py: 1.25,
-                            borderRadius: 2,
-                            '&:hover': {
-                                ...glass.glassHover,
-                                borderColor: colors.divider
-                            },
-                            '&:disabled': {
-                                opacity: 0.5,
-                                color: colors.text.disabled
-                            }
-                        }}
-                    >
-                        {reportState === 'loading' ? 'Reporting...' : reportState === 'success' ? 'Reported' : 'Report Issue'}
-                    </Button>
+                    {reportingEnabled && (
+                        <Button
+                            onClick={handleReportIssue}
+                            variant='outlined'
+                            disabled={reportState === 'loading' || reportState === 'success'}
+                            startIcon={reportState === 'loading' ? <CircularProgress size={18} color='inherit' /> : <ReportProblemIcon />}
+                            sx={{
+                                ...glass.glassSubtle,
+                                color: colors.text.secondary,
+                                fontWeight: 500,
+                                textTransform: 'none',
+                                px: 3,
+                                py: 1.25,
+                                borderRadius: 2,
+                                '&:hover': {
+                                    ...glass.glassHover,
+                                    borderColor: colors.divider
+                                },
+                                '&:disabled': {
+                                    opacity: 0.5,
+                                    color: colors.text.disabled
+                                }
+                            }}
+                        >
+                            {reportState === 'loading' ? 'Reporting...' : reportState === 'success' ? 'Reported' : 'Report Issue'}
+                        </Button>
+                    )}
                 </Box>
 
                 {reportState === 'success' && (

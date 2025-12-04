@@ -99,7 +99,9 @@ let nextConfig = withBundleAnalyzer({
             process.env.AUTH0_BASE_URL ?? (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined),
         AUTH0_SECRET: process.env.AUTH0_SECRET,
         CHATFLOW_DOMAIN_OVERRIDE: process.env.CHATFLOW_DOMAIN_OVERRIDE,
-        LANGFUSE_HOST: process.env.LANGFUSE_HOST
+        LANGFUSE_HOST: process.env.LANGFUSE_HOST,
+        // Error reporting availability (derived from LINEAR_API_KEY)
+        NEXT_PUBLIC_ERROR_REPORTING_ENABLED: process.env.LINEAR_API_KEY ? 'true' : ''
     },
     webpack: (config, { isServer }) => {
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
