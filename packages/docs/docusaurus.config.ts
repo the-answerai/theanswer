@@ -616,11 +616,6 @@ const config: Config = {
                     position: 'left'
                 },
                 {
-                    to: '/integrations',
-                    label: 'Integrations',
-                    position: 'left'
-                },
-                {
                     type: 'dropdown',
                     label: 'Resources',
                     position: 'left',
