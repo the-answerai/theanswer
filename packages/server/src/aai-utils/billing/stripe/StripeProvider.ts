@@ -16,7 +16,7 @@ import {
     CreditsData,
     UsageSummary
 } from '../core/types'
-import { log, BILLING_CONFIG } from '../config'
+import { log, BILLING_CONFIG, DEFAULT_CUSTOMER_ID } from '../config'
 import { getRunningExpressApp } from '../../../utils/getRunningExpressApp'
 // Import v3 Langfuse for trace metadata updates (v4 doesn't have this method yet)
 import { Langfuse } from 'langfuse'
@@ -259,8 +259,6 @@ export class StripeProvider {
 
     async getUpcomingInvoice(params: GetUpcomingInvoiceParams): Promise<Invoice> {
         try {
-            log.info('Getting upcoming invoice', { params })
-
             const invoiceParams: Stripe.InvoiceRetrieveUpcomingParams = {
                 customer: params.customerId
             }
@@ -280,7 +278,6 @@ export class StripeProvider {
             }
 
             const invoice = await this.stripeClient.invoices.retrieveUpcoming(invoiceParams)
-            log.info('Retrieved upcoming invoice', { invoice })
             const customerId = invoice.customer as string
             if (!customerId) {
                 throw new Error('Customer ID is required but was not provided')
@@ -395,6 +392,24 @@ export class StripeProvider {
 
                         while (retryCount < BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
                             try {
+                                // Validate customer ID before API call
+                                if (!data.stripeCustomerId?.trim()) {
+                                    log.warn('Invalid customer ID, using default customer', {
+                                        traceId: data.traceId,
+                                        invalidCustomerId: data.stripeCustomerId,
+                                        defaultCustomerId: DEFAULT_CUSTOMER_ID
+                                    })
+
+                                    if (!DEFAULT_CUSTOMER_ID?.trim()) {
+                                        throw new Error(
+                                            'No valid customer ID available (both trace and default are empty). ' +
+                                                'Please set BILLING_DEFAULT_STRIPE_CUSTOMER_ID environment variable.'
+                                        )
+                                    }
+
+                                    data.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                }
+
                                 const stripeMeterEvent = {
                                     event_name: 'credits',
                                     identifier: `${data.traceId}_credits`,
@@ -442,6 +457,30 @@ export class StripeProvider {
                                             event_name: stripeMeterEvent.event_name,
                                             payload: stripeMeterEvent.payload
                                         } as Stripe.Billing.MeterEvent
+                                    } else if (error.code === 'resource_missing' && error.param?.includes('stripe_customer_id')) {
+                                        // Handle "Customer not found" errors
+                                        log.warn('Customer not found in Stripe, retrying with default customer', {
+                                            traceId: data.traceId,
+                                            invalidCustomerId: data.stripeCustomerId,
+                                            defaultCustomerId: DEFAULT_CUSTOMER_ID,
+                                            errorMessage: error.message
+                                        })
+
+                                        // Only retry if we haven't already tried the default customer
+                                        if (data.stripeCustomerId !== DEFAULT_CUSTOMER_ID && DEFAULT_CUSTOMER_ID?.trim()) {
+                                            data.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                            // Create a special error to signal retry with default customer
+                                            const retryError = new Error('RETRY_WITH_DEFAULT_CUSTOMER')
+                                            ;(retryError as any).shouldRetryWithDefault = true
+                                            throw retryError
+                                        } else {
+                                            // Already using default customer or no default available - cannot sync this trace
+                                            log.error('Cannot sync trace: default customer also invalid or unavailable', {
+                                                traceId: data.traceId,
+                                                defaultCustomerId: DEFAULT_CUSTOMER_ID
+                                            })
+                                            throw error
+                                        }
                                     } else {
                                         // For other errors, log and throw as before
                                         log.error('Failed to create meter event', { error: error.message, stripeMeterEvent })
@@ -463,6 +502,13 @@ export class StripeProvider {
                                 break
                             } catch (error) {
                                 retryCount++
+
+                                // Check if this is a retry with default customer (don't count as real retry)
+                                if ((error as any).shouldRetryWithDefault) {
+                                    retryCount-- // Undo the increment
+                                    continue // Retry immediately without delay
+                                }
+
                                 if (retryCount === BILLING_CONFIG.VALIDATION.MAX_RETRIES) {
                                     failedEvents.push({
                                         traceId: data.traceId,

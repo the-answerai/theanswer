@@ -788,10 +788,37 @@ export const MessageCard = ({
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 1,
-                            bgcolor: isUserMessage ? 'primary.main' : 'transparent',
-                            borderRadius: isUserMessage ? 2 : 0,
-                            px: isUserMessage ? 2 : 0,
-                            py: isUserMessage ? 1 : 0,
+                            ...(isUserMessage
+                                ? {
+                                      bgcolor: 'primary.main',
+                                      borderRadius: 2,
+                                      px: 2,
+                                      py: 1
+                                  }
+                                : {
+                                      // Assistant message with glass background
+                                      background: (theme) =>
+                                          theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.03)',
+                                      backdropFilter: 'blur(10px)',
+                                      WebkitBackdropFilter: 'blur(10px)',
+                                      border: (theme) =>
+                                          theme.palette.mode === 'light'
+                                              ? '1px solid rgba(15, 23, 42, 0.08)'
+                                              : '1px solid rgba(255, 255, 255, 0.08)',
+                                      borderRadius: 2,
+                                      px: 2,
+                                      py: 1.5,
+                                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                      '&:hover': {
+                                          background: (theme) =>
+                                              theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
+                                          transform: 'translateY(-1px)',
+                                          boxShadow: (theme) =>
+                                              theme.palette.mode === 'light'
+                                                  ? '0 4px 12px rgba(0, 0, 0, 0.08)'
+                                                  : '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                      }
+                                  }),
                             width: '100%',
                             maxWidth: '100%',
                             minWidth: 0,
@@ -807,7 +834,7 @@ export const MessageCard = ({
                                 fontSize: '0.875rem',
                                 lineHeight: 1.75,
                                 width: '100%',
-                                color: isUserMessage ? 'white' : '#E0E0E0',
+                                color: isUserMessage ? 'white' : 'text.primary',
                                 '& > *': {
                                     maxWidth: '100%'
                                 },
@@ -1537,59 +1564,71 @@ export const MessageCard = ({
                     </Tooltip>
                 </Box>
             )}
-            {/* Tools used section - Enhanced bubble UI */}
+            {/* Tools used section - Icon bubbles */}
             {usedTools && usedTools.length > 0 && (
-                <Box sx={{ mt: 2, mb: 1 }}>
-                    Tools Used
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 1,
-                            alignItems: 'center'
-                        }}
-                    >
-                        {usedTools.map(({ tool, toolInput, toolOutput }: any, toolIdx: number) => {
-                            if (!tool || !toolOutput) return null
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        alignItems: 'center',
+                        mt: 2
+                    }}
+                >
+                    {usedTools.map(({ tool, toolInput, toolOutput }: any, toolIdx: number) => {
+                        if (!tool || !toolOutput) return null
 
-                            // Handle toolOutput as array - create bubbles for each result
-                            const outputArray = Array.isArray(toolOutput) ? toolOutput : [toolOutput]
+                        // Handle toolOutput as array - create bubbles for each result
+                        const outputArray = Array.isArray(toolOutput) ? toolOutput : [toolOutput]
 
-                            return outputArray.map((output: any, outputIdx: number) => {
-                                return (
-                                    <Chip
-                                        key={`tool-${toolIdx}-output-${outputIdx}`}
-                                        icon={<IconTool size={14} />}
-                                        label={`${tool}${outputArray.length > 1 ? ` (${outputIdx + 1})` : ''}`}
-                                        variant='outlined'
-                                        clickable
-                                        sx={{
-                                            height: '28px',
-                                            fontSize: '0.75rem',
-                                            color: '#e0e0e0',
-                                            borderColor: 'rgba(224, 224, 224, 0.3)',
-                                            backgroundColor: 'rgba(224, 224, 224, 0.05)',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(224, 224, 224, 0.1)',
-                                                borderColor: 'rgba(224, 224, 224, 0.5)'
-                                            },
-                                            '& .MuiChip-icon': {
-                                                color: '#e0e0e0'
-                                            }
-                                        }}
+                        return outputArray.map((output: any, outputIdx: number) => {
+                            const displayLabel = `${tool}${outputArray.length > 1 ? ` (${outputIdx + 1})` : ''}`
+
+                            return (
+                                <Tooltip key={`tool-${toolIdx}-output-${outputIdx}`} title={displayLabel} arrow>
+                                    <IconButton
+                                        size='small'
                                         onClick={() => {
                                             setSourceDialogProps({
                                                 input: toolInput,
                                                 data: output,
-                                                title: `${tool} ${outputArray.length > 1 ? ` ${outputIdx + 1}` : ''}`
+                                                title: displayLabel
                                             })
                                             setSourceDialogOpen(true)
                                         }}
-                                    />
-                                )
-                            })
-                        })}
-                    </Box>
+                                        sx={{
+                                            width: 36,
+                                            height: 36,
+                                            background: (theme) =>
+                                                theme.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.08)',
+                                            backdropFilter: 'blur(8px)',
+                                            WebkitBackdropFilter: 'blur(8px)',
+                                            border: (theme) =>
+                                                theme.palette.mode === 'light'
+                                                    ? '1px solid rgba(15, 23, 42, 0.12)'
+                                                    : '1px solid rgba(255, 255, 255, 0.12)',
+                                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            color: (theme) =>
+                                                theme.palette.mode === 'light' ? theme.palette.primary.main : theme.palette.primary.light,
+                                            '&:hover': {
+                                                background: (theme) =>
+                                                    theme.palette.mode === 'light'
+                                                        ? 'rgba(255, 255, 255, 0.95)'
+                                                        : 'rgba(255, 255, 255, 0.12)',
+                                                transform: 'scale(1.1) translateY(-2px)',
+                                                boxShadow: (theme) =>
+                                                    theme.palette.mode === 'light'
+                                                        ? '0 4px 12px rgba(0, 0, 0, 0.12)'
+                                                        : '0 4px 12px rgba(0, 0, 0, 0.4)'
+                                            }
+                                        }}
+                                    >
+                                        <IconTool size={18} />
+                                    </IconButton>
+                                </Tooltip>
+                            )
+                        })
+                    })}
                 </Box>
             )}
         </Box>

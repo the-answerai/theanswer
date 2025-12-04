@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import { useSelector } from 'react-redux'
 
 // material-ui
-import { styled } from '@mui/material/styles'
+import { styled, keyframes } from '@mui/material/styles'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
 import { IconVectorBezier2, IconLanguage, IconScissors } from '@tabler/icons-react'
 
@@ -12,16 +12,35 @@ import DocumentStoreStatus from '@/views/docstore/DocumentStoreStatus'
 
 import { kFormatter } from '@/utils/genericHelper'
 
+// Animated glow effect for dark mode
+const glowPulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 0 20px 0 rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    box-shadow: 0 4px 20px 0 rgba(59, 130, 246, 0.25), 0 0 30px 0 rgba(59, 130, 246, 0.2);
+  }
+`
+
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-    background: theme.palette.card.main,
-    color: theme.darkTextPrimary,
+    background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
+    border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(59, 130, 246, 0.3)'}`,
+    color: theme.palette.text.primary,
     overflow: 'auto',
     position: 'relative',
-    boxShadow: '0 2px 14px 0 rgb(32 40 45 / 8%)',
+    boxShadow: theme.palette.mode === 'light' ? '0 2px 14px 0 rgba(0, 0, 0, 0.08)' : '0 4px 16px 0 rgba(59, 130, 246, 0.15)',
     cursor: 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    animation: theme.palette.mode === 'dark' ? `${glowPulse} 3s ease-in-out infinite` : 'none',
     '&:hover': {
-        background: theme.palette.card.hover,
-        boxShadow: '0 2px 14px 0 rgb(32 40 45 / 20%)'
+        background:
+            theme.palette.mode === 'light'
+                ? '#fafafa'
+                : 'linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+        border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.15)' : 'rgba(59, 130, 246, 0.5)'}`,
+        boxShadow: theme.palette.mode === 'light' ? '0 4px 20px 0 rgba(0, 0, 0, 0.12)' : '0 8px 32px 0 rgba(59, 130, 246, 0.3)',
+        transform: 'translateY(-2px)',
+        animation: 'none'
     },
     height: '100%',
     minHeight: '160px',
@@ -38,7 +57,14 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
     const customization = useSelector((state) => state.customization)
 
     return (
-        <CardWrapper content={false} onClick={onClick} sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}>
+        <CardWrapper
+            content={false}
+            onClick={onClick}
+            sx={{
+                borderRadius: 2,
+                background: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a !important'
+            }}
+        >
             <Box sx={{ height: '100%', p: 2.25 }}>
                 <Grid container justifyContent='space-between' direction='column' sx={{ height: '100%' }} gap={2}>
                     <Box display='flex' flexDirection='column' sx={{ flex: 1, width: '100%' }}>

@@ -1,0 +1,1590 @@
+openapi: 3.0.0
+info:
+    title: Data Engine API
+    description: |
+        API for managing structured data resources including domains, URLs, calls, tags, documents, tickets, and chats.
+
+        This API provides comprehensive CRUD operations for managing data across multiple domains with support for filtering, pagination, and advanced search capabilities.
+    version: 1.0.0
+    contact:
+        name: AnswerAgentAI Support
+        url: https://theanswer.ai
+        email: support@theanswer.ai
+servers:
+    - url: https://prod.studio.theanswer.ai/api/v1/data-engine
+      description: Production server
+    - url: https://staging.studio.theanswer.ai/api/v1/data-engine
+      description: Staging server
+    - url: http://localhost:3000/api/v1/data-engine
+      description: Local development server (default port)
+    - url: http://localhost:4000/api/v1/data-engine
+      description: Local development server (alternative port)
+tags:
+    - name: domains
+      description: Operations for managing domain records
+    - name: urls
+      description: Operations for managing URL records
+    - name: calls
+      description: Operations for managing call logs
+    - name: tags
+      description: Operations for managing tags and taxonomies
+    - name: documents
+      description: Operations for managing documents and vector embeddings
+    - name: tickets
+      description: Operations for managing support tickets
+    - name: chats
+      description: Operations for managing chat conversation logs
+paths:
+    # ==================== DOMAINS ====================
+    /domains:
+        post:
+            summary: Create a new domain
+            description: Create a new domain record with metadata and custom data
+            operationId: createDomain
+            tags:
+                - domains
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DomainInput'
+            responses:
+                '201':
+                    description: Domain created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Domain'
+                '400':
+                    description: Invalid input provided
+                '401':
+                    description: Unauthorized - Invalid API key
+                '500':
+                    description: Internal server error
+        get:
+            summary: List all domains
+            description: Retrieve domains with filtering and pagination
+            operationId: listDomains
+            tags:
+                - domains
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+                - $ref: '#/components/parameters/SearchTermParam'
+                - name: includeTags
+                  in: query
+                  description: Include domains with tags (JSON string)
+                  schema:
+                      type: string
+                      example: '{"tags": ["tag-slug"], "logic": "OR"}'
+                - name: excludeTags
+                  in: query
+                  description: Exclude domains with tags (JSON string)
+                  schema:
+                      type: string
+                      example: '{"tags": ["tag-slug"], "logic": "OR"}'
+                - name: isValid
+                  in: query
+                  description: Filter by validity status
+                  schema:
+                      type: boolean
+                - name: hasAnalysis
+                  in: query
+                  description: Filter by analysis status
+                  schema:
+                      type: string
+                      enum: [all, has, not]
+                - name: customFilters
+                  in: query
+                  description: Custom field filters (JSON string)
+                  schema:
+                      type: string
+                      example: '{"field_key": "value"}'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DomainListResponse'
+                '401':
+                    description: Unauthorized
+                '500':
+                    description: Internal server error
+    /domains/{id}:
+        get:
+            summary: Get domain by ID
+            description: Retrieve a single domain by ID
+            operationId: getDomainById
+            tags:
+                - domains
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Domain'
+                '404':
+                    description: Domain not found
+                '401':
+                    description: Unauthorized
+        put:
+            summary: Update domain
+            description: Update an existing domain
+            operationId: updateDomain
+            tags:
+                - domains
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DomainUpdate'
+            responses:
+                '200':
+                    description: Domain updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Domain'
+                '400':
+                    description: Invalid input
+                '404':
+                    description: Domain not found
+                '401':
+                    description: Unauthorized
+        delete:
+            summary: Delete domain
+            description: Delete a domain by ID
+            operationId: deleteDomain
+            tags:
+                - domains
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Domain deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+                '404':
+                    description: Domain not found
+                '401':
+                    description: Unauthorized
+    # ==================== URLS ====================
+    /urls:
+        post:
+            summary: Create a new URL
+            description: Create a new URL record
+            operationId: createUrl
+            tags:
+                - urls
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UrlInput'
+            responses:
+                '201':
+                    description: URL created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Url'
+                '400':
+                    description: Invalid input
+                '401':
+                    description: Unauthorized
+        get:
+            summary: List all URLs
+            description: Retrieve URLs with filtering and pagination
+            operationId: listUrls
+            tags:
+                - urls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+                - $ref: '#/components/parameters/SearchTermParam'
+                - name: includeTags
+                  in: query
+                  schema:
+                      type: string
+                - name: excludeTags
+                  in: query
+                  schema:
+                      type: string
+                - name: hasAnalysis
+                  in: query
+                  schema:
+                      type: string
+                      enum: [all, has, not]
+                - name: statusFilter
+                  in: query
+                  description: Array of HTTP status codes (JSON string)
+                  schema:
+                      type: string
+                      example: '[200, 404]'
+                - name: customFilters
+                  in: query
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UrlListResponse'
+                '401':
+                    description: Unauthorized
+        parameters:
+            - $ref: '#/components/parameters/PageParam'
+            - $ref: '#/components/parameters/PageSizeParam'
+    /urls/{id}:
+        get:
+            summary: Get URL by ID
+            operationId: getUrlById
+            tags:
+                - urls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Url'
+                '404':
+                    description: URL not found
+        put:
+            summary: Update URL
+            operationId: updateUrl
+            tags:
+                - urls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UrlUpdate'
+            responses:
+                '200':
+                    description: URL updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Url'
+        delete:
+            summary: Delete URL
+            operationId: deleteUrl
+            tags:
+                - urls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: URL deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+    # ==================== CALLS ====================
+    /calls:
+        post:
+            summary: Create a new call
+            description: Create a new call log record with transcript and metadata
+            operationId: createCall
+            tags:
+                - calls
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CallInput'
+            responses:
+                '201':
+                    description: Call created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Call'
+        get:
+            summary: List all calls
+            description: Retrieve calls with filtering and pagination
+            operationId: listCalls
+            tags:
+                - calls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+                - $ref: '#/components/parameters/SearchTermParam'
+                - name: employeeName
+                  in: query
+                  schema:
+                      type: string
+                - name: callerName
+                  in: query
+                  schema:
+                      type: string
+                - name: callType
+                  in: query
+                  schema:
+                      type: string
+                - name: sentimentMin
+                  in: query
+                  schema:
+                      type: number
+                      format: float
+                - name: sentimentMax
+                  in: query
+                  schema:
+                      type: number
+                      format: float
+                - name: dateFrom
+                  in: query
+                  schema:
+                      type: string
+                      format: date-time
+                - name: dateTo
+                  in: query
+                  schema:
+                      type: string
+                      format: date-time
+                - name: hasTranscript
+                  in: query
+                  schema:
+                      type: boolean
+                - name: hasCoaching
+                  in: query
+                  schema:
+                      type: boolean
+                - name: includeTags
+                  in: query
+                  schema:
+                      type: string
+                - name: excludeTags
+                  in: query
+                  schema:
+                      type: string
+                - name: customFilters
+                  in: query
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CallListResponse'
+    /calls/{id}:
+        get:
+            summary: Get call by ID
+            operationId: getCallById
+            tags:
+                - calls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Call'
+        put:
+            summary: Update call
+            operationId: updateCall
+            tags:
+                - calls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CallUpdate'
+            responses:
+                '200':
+                    description: Call updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Call'
+        delete:
+            summary: Delete call
+            operationId: deleteCall
+            tags:
+                - calls
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Call deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+    # ==================== TAGS ====================
+    /tags:
+        post:
+            summary: Create a new tag
+            operationId: createTag
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TagInput'
+            responses:
+                '201':
+                    description: Tag created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Tag'
+        get:
+            summary: List all tags
+            operationId: listTags
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TagListResponse'
+    /tags/hierarchy:
+        get:
+            summary: Get tag hierarchy
+            description: Retrieve tags in hierarchical structure (parent tags with subcategories)
+            operationId: getTagHierarchy
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                additionalProperties:
+                                    $ref: '#/components/schemas/TagHierarchyItem'
+    /tags/{id}:
+        get:
+            summary: Get tag by ID
+            operationId: getTagById
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                  description: Tag ID
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Tag'
+        put:
+            summary: Update tag
+            operationId: updateTag
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TagUpdate'
+            responses:
+                '200':
+                    description: Tag updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Tag'
+        delete:
+            summary: Delete tag
+            operationId: deleteTag
+            tags:
+                - tags
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                '200':
+                    description: Tag deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+    # ==================== DOCUMENTS ====================
+    /documents:
+        post:
+            summary: Create a new document
+            description: Create a new document with optional embedding
+            operationId: createDocument
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DocumentInput'
+            responses:
+                '201':
+                    description: Document created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Document'
+        get:
+            summary: List all documents
+            operationId: listDocuments
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DocumentListResponse'
+    /documents/search:
+        post:
+            summary: Search documents
+            description: Search documents using vector similarity
+            operationId: searchDocuments
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DocumentSearchInput'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DocumentSearchResponse'
+    /documents/{id}:
+        get:
+            summary: Get document by ID
+            operationId: getDocumentById
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Document'
+        put:
+            summary: Update document
+            operationId: updateDocument
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DocumentUpdate'
+            responses:
+                '200':
+                    description: Document updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Document'
+        delete:
+            summary: Delete document
+            operationId: deleteDocument
+            tags:
+                - documents
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Document deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+    # ==================== TICKETS ====================
+    /tickets:
+        post:
+            summary: Create a new ticket
+            operationId: createTicket
+            tags:
+                - tickets
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TicketInput'
+            responses:
+                '201':
+                    description: Ticket created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Ticket'
+        get:
+            summary: List all tickets
+            operationId: listTickets
+            tags:
+                - tickets
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+                - name: status
+                  in: query
+                  schema:
+                      type: string
+                - name: assignedTo
+                  in: query
+                  schema:
+                      type: string
+                - name: tags
+                  in: query
+                  description: Array of tag strings (JSON string)
+                  schema:
+                      type: string
+                      example: '["urgent", "customer"]'
+                - name: startDate
+                  in: query
+                  schema:
+                      type: string
+                      format: date-time
+                - name: endDate
+                  in: query
+                  schema:
+                      type: string
+                      format: date-time
+                - name: ticketType
+                  in: query
+                  schema:
+                      type: string
+                - name: escalated
+                  in: query
+                  schema:
+                      type: boolean
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TicketListResponse'
+    /tickets/{id}:
+        get:
+            summary: Get ticket by ID
+            operationId: getTicketById
+            tags:
+                - tickets
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Ticket'
+        put:
+            summary: Update ticket
+            operationId: updateTicket
+            tags:
+                - tickets
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TicketUpdate'
+            responses:
+                '200':
+                    description: Ticket updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Ticket'
+        delete:
+            summary: Delete ticket
+            operationId: deleteTicket
+            tags:
+                - tickets
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Ticket deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+    # ==================== CHATS ====================
+    /chats:
+        post:
+            summary: Create a new chat
+            description: Create a new chat log record
+            operationId: createChat
+            tags:
+                - chats
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatInput'
+            responses:
+                '201':
+                    description: Chat created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Chat'
+        get:
+            summary: List all chats
+            operationId: listChats
+            tags:
+                - chats
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/PageParam'
+                - $ref: '#/components/parameters/PageSizeParam'
+                - name: chatbotName
+                  in: query
+                  schema:
+                      type: string
+                - name: aiModel
+                  in: query
+                  schema:
+                      type: string
+                - name: tags
+                  in: query
+                  description: Array of tag strings (JSON string)
+                  schema:
+                      type: string
+                - name: sentimentMin
+                  in: query
+                  schema:
+                      type: number
+                      format: float
+                - name: sentimentMax
+                  in: query
+                  schema:
+                      type: number
+                      format: float
+                - name: resolutionStatus
+                  in: query
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatListResponse'
+    /chats/{id}:
+        get:
+            summary: Get chat by ID
+            operationId: getChatById
+            tags:
+                - chats
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Successful operation
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Chat'
+        put:
+            summary: Update chat
+            operationId: updateChat
+            tags:
+                - chats
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatUpdate'
+            responses:
+                '200':
+                    description: Chat updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Chat'
+        delete:
+            summary: Delete chat
+            operationId: deleteChat
+            tags:
+                - chats
+            security:
+                - bearerAuth: []
+            parameters:
+                - $ref: '#/components/parameters/IdParam'
+            responses:
+                '200':
+                    description: Chat deleted successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteResponse'
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: API Key
+            description: |
+                API key authentication. Include your API key in the Authorization header:
+                `Authorization: Bearer YOUR_API_KEY`
+    parameters:
+        PageParam:
+            name: page
+            in: query
+            description: Page number (0-indexed)
+            schema:
+                type: integer
+                default: 0
+                minimum: 0
+        PageSizeParam:
+            name: pageSize
+            in: query
+            description: Items per page
+            schema:
+                type: integer
+                default: 10
+                minimum: 1
+                maximum: 100
+        SearchTermParam:
+            name: searchTerm
+            in: query
+            description: Search term for filtering results
+            schema:
+                type: string
+        IdParam:
+            name: id
+            in: path
+            required: true
+            description: Resource ID (UUID)
+            schema:
+                type: string
+                format: uuid
+    schemas:
+        # Common Schemas
+        Metadata:
+            type: object
+            description: Metadata object for tracking source system and user information
+            properties:
+                source_system:
+                    type: string
+                    example: theanswer
+                source_organization_id:
+                    type: string
+                    format: uuid
+                source_user_id:
+                    type: string
+                    format: uuid
+                created_by:
+                    type: string
+                    format: email
+                last_updated_by:
+                    type: string
+                    format: email
+                last_updated_from:
+                    type: string
+                    example: theanswer
+        DeleteResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    example: true
+                message:
+                    type: string
+                    example: Resource deleted successfully
+        PaginationInfo:
+            type: object
+            properties:
+                total:
+                    type: integer
+                    example: 100
+                page:
+                    type: integer
+                    example: 0
+                pageSize:
+                    type: integer
+                    example: 10
+        # Domain Schemas
+        DomainInput:
+            type: object
+            required:
+                - domain_name
+            properties:
+                domain_name:
+                    type: string
+                    example: example.com
+                is_valid:
+                    type: boolean
+                    example: true
+                meta_title:
+                    type: string
+                    example: Example Domain
+                meta_description:
+                    type: string
+                    example: Example domain description
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        source: manual
+                        notes: Added manually
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        Domain:
+            allOf:
+                - $ref: '#/components/schemas/DomainInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+                      last_analyzed_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                      ai_analysis:
+                          type: object
+                          additionalProperties: true
+        DomainUpdate:
+            type: object
+            properties:
+                meta_title:
+                    type: string
+                is_valid:
+                    type: boolean
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        DomainListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      domains:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Domain'
+        # URL Schemas
+        UrlInput:
+            type: object
+            required:
+                - url
+            properties:
+                domain_id:
+                    type: string
+                    format: uuid
+                domain_name:
+                    type: string
+                    example: example.com
+                url:
+                    type: string
+                    format: uri
+                    example: https://example.com/page
+                http_status:
+                    type: integer
+                    example: 200
+                status_text:
+                    type: string
+                    example: OK
+                content_type:
+                    type: string
+                    example: text/html
+                page_title:
+                    type: string
+                    example: Example Page
+                meta_description:
+                    type: string
+                canonical_url:
+                    type: string
+                    format: uri
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        Url:
+            allOf:
+                - $ref: '#/components/schemas/UrlInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        UrlUpdate:
+            type: object
+            properties:
+                page_title:
+                    type: string
+                http_status:
+                    type: integer
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        UrlListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      urls:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Url'
+        # Call Schemas
+        CallInput:
+            type: object
+            required:
+                - transcript
+            properties:
+                transcript:
+                    type: string
+                    example: Full call transcript text...
+                transcript_json:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        speakers: [Agent, Caller]
+                        segments:
+                            - speaker: Agent
+                              text: Hello, how can I help?
+                              timestamp: 0.0
+                recording_url:
+                    type: string
+                    format: uri
+                    example: https://example.com/recording.mp3
+                duration:
+                    type: integer
+                    example: 300
+                call_datetime:
+                    type: string
+                    format: date-time
+                    example: '2025-01-20T10:00:00Z'
+                sentiment_score:
+                    type: number
+                    format: float
+                    example: 7.5
+                summary:
+                    type: string
+                    example: Call summary text
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        employee_name: John Doe
+                        caller_name: Jane Smith
+                        call_type: inbound
+                ai_analysis:
+                    type: object
+                    additionalProperties: true
+                ai_coaching:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        suggestions: [Be more empathetic]
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        Call:
+            allOf:
+                - $ref: '#/components/schemas/CallInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        CallUpdate:
+            type: object
+            properties:
+                sentiment_score:
+                    type: number
+                    format: float
+                summary:
+                    type: string
+                custom_data:
+                    type: object
+                    additionalProperties: true
+                metadata:
+                    $ref: '#/components/schemas/Metadata'
+        CallListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      calls:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Call'
+        # Tag Schemas
+        TagInput:
+            type: object
+            required:
+                - slug
+                - label
+            properties:
+                slug:
+                    type: string
+                    example: product-inquiry
+                label:
+                    type: string
+                    example: Product Inquiry
+                description:
+                    type: string
+                    example: Questions about products
+                color:
+                    type: string
+                    example: '#FF5733'
+                shade:
+                    type: string
+                    example: '#FF8C66'
+                parent_id:
+                    type: integer
+                    nullable: true
+        Tag:
+            allOf:
+                - $ref: '#/components/schemas/TagInput'
+                - type: object
+                  properties:
+                      id:
+                          type: integer
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        TagUpdate:
+            type: object
+            properties:
+                label:
+                    type: string
+                description:
+                    type: string
+                color:
+                    type: string
+                shade:
+                    type: string
+        TagListResponse:
+            type: object
+            properties:
+                tags:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Tag'
+        TagHierarchyItem:
+            type: object
+            properties:
+                label:
+                    type: string
+                description:
+                    type: string
+                color:
+                    type: string
+                slug:
+                    type: string
+                id:
+                    type: integer
+                subcategories:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/TagHierarchyItem'
+        # Document Schemas
+        DocumentInput:
+            type: object
+            required:
+                - content
+            properties:
+                content:
+                    type: string
+                    example: Document content text...
+                embedding:
+                    type: array
+                    items:
+                        type: number
+                    example: [0.1, 0.2, 0.3]
+                metadata:
+                    type: object
+                    additionalProperties: true
+                    example:
+                        title: Document Title
+                        source: upload
+        Document:
+            allOf:
+                - $ref: '#/components/schemas/DocumentInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        DocumentUpdate:
+            type: object
+            properties:
+                content:
+                    type: string
+                metadata:
+                    type: object
+                    additionalProperties: true
+        DocumentSearchInput:
+            type: object
+            required:
+                - query_embedding
+            properties:
+                query_embedding:
+                    type: array
+                    items:
+                        type: number
+                    description: Vector embedding for similarity search
+                    example: [0.1, 0.2, 0.3]
+                match_threshold:
+                    type: number
+                    format: float
+                    default: 0.7
+                    description: Minimum similarity threshold
+                match_count:
+                    type: integer
+                    default: 10
+                    description: Maximum number of results
+        DocumentSearchResponse:
+            type: object
+            properties:
+                documents:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Document'
+                count:
+                    type: integer
+                    example: 10
+        DocumentListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      documents:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Document'
+        # Ticket Schemas
+        TicketInput:
+            type: object
+            required:
+                - title
+                - description
+                - created_by
+            properties:
+                title:
+                    type: string
+                    example: Ticket Title
+                description:
+                    type: string
+                    example: Ticket description
+                status:
+                    type: string
+                    enum: [open, in_progress, resolved, closed]
+                    example: open
+                priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                    example: high
+                assigned_to:
+                    type: string
+                    format: email
+                    example: user@example.com
+                ticket_type:
+                    type: string
+                    example: email
+                escalated:
+                    type: boolean
+                    example: false
+                tags_array:
+                    type: array
+                    items:
+                        type: string
+                    example: [urgent, customer]
+                created_by:
+                    type: string
+                    format: email
+                    example: user@example.com
+                    description: Email of the user who created the ticket (required)
+        Ticket:
+            allOf:
+                - $ref: '#/components/schemas/TicketInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        TicketUpdate:
+            type: object
+            properties:
+                status:
+                    type: string
+                    enum: [open, in_progress, resolved, closed]
+                priority:
+                    type: string
+                    enum: [low, medium, high, urgent]
+                assigned_to:
+                    type: string
+                    format: email
+                tags_array:
+                    type: array
+                    items:
+                        type: string
+        TicketListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      tickets:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Ticket'
+        # Chat Schemas
+        ChatInput:
+            type: object
+            required:
+                - chatbot_name
+                - user_message
+                - bot_response
+            properties:
+                chatbot_name:
+                    type: string
+                    example: Support Bot
+                ai_model:
+                    type: string
+                    example: gpt-4
+                conversation_id:
+                    type: string
+                    example: conv-123
+                user_message:
+                    type: string
+                    example: Hello
+                bot_response:
+                    type: string
+                    example: Hi! How can I help?
+                sentiment_score:
+                    type: number
+                    format: float
+                    example: 7.5
+                resolution_status:
+                    type: string
+                    example: resolved
+                tags_array:
+                    type: array
+                    items:
+                        type: string
+                    example: [support, greeting]
+        Chat:
+            allOf:
+                - $ref: '#/components/schemas/ChatInput'
+                - type: object
+                  properties:
+                      id:
+                          type: string
+                          format: uuid
+                      created_at:
+                          type: string
+                          format: date-time
+                      updated_at:
+                          type: string
+                          format: date-time
+        ChatUpdate:
+            type: object
+            properties:
+                sentiment_score:
+                    type: number
+                    format: float
+                resolution_status:
+                    type: string
+                tags_array:
+                    type: array
+                    items:
+                        type: string
+        ChatListResponse:
+            allOf:
+                - $ref: '#/components/schemas/PaginationInfo'
+                - type: object
+                  properties:
+                      chats:
+                          type: array
+                          items:
+                              $ref: '#/components/schemas/Chat'
+        Error:
+            type: object
+            properties:
+                error:
+                    type: string
+                    example: Error type
+                message:
+                    type: string
+                    example: Detailed error message
+                details:
+                    type: string
+                    description: Additional error details (in development mode)

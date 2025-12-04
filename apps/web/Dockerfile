@@ -127,7 +127,7 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/prisma ./pa
 COPY --from=installer --chown=nextjs:nodejs /app/packages-answers/db/generated ./packages-answers/db/generated
 
 # Install Prisma CLI globally for runtime migrations
-RUN npm install -g prisma
+RUN npm install -g prisma@6
 
 # Copy minimal package.json for workspace resolution
 COPY --from=installer --chown=nextjs:nodejs /app/package.json ./package.json

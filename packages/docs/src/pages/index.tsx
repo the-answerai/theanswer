@@ -3,45 +3,41 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
 import JsonLd from '@site/src/components/JsonLd'
 import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
-import { Code2, Rocket, MessageSquare, Globe, Target, Building2, Lightbulb, Key, Check, BarChart3 } from 'lucide-react'
+import HeroCTA from '@site/src/components/HeroCTA'
+import { GradientText } from '@site/src/components/Modern'
+import { Database, Code2, BarChart3, ArrowRight } from 'lucide-react'
 
 import styles from './index.module.css'
 
 function HomepageHeader() {
     return (
-        <header className={clsx('hero hero--primary', styles.heroSection)}>
-            <div className={styles.heroBackground}>
-                <ThreeJsScene className={styles.threeJsCanvas} />
+        <header
+            className='hero'
+            style={{
+                position: 'relative',
+                minHeight: '70vh',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%)'
+            }}
+        >
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.3 }}>
+                <ThreeJsScene />
             </div>
-            <div className={styles.heroContent}>
-                <img src='img/answerai-logo-600-wide-white.png' alt='AnswerAgentAI Logo' className={styles.heroLogo} />
-                <h1 className={styles.heroTitle}>The AI Agent Orchestration Studio</h1>
-                <p className={styles.heroSubtitle}>
-                    AI is fragmented, risky, and slow to deploy. AnswerAgent is one platform to design, evaluate, and run agents securely
-                    across your business.
+            <div className='container' style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <h1 style={{ fontSize: '4rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>Build AI Agents That Work.</h1>
+                <h2 style={{ fontSize: '2.7rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+                    <GradientText>Get Insights That Matter.</GradientText>
+                </h2>
+                <p className='hero__subtitle' style={{ fontSize: '1.5rem', maxWidth: '800px', margin: '0 auto 3rem', opacity: 0.9 }}>
+                    AnswerAgent connects your data, builds your agents, and delivers instant insights—all in one platform.
                 </p>
-                <div className={styles.heroCTAs}>
-                    <a href='https://calendly.com/lastrev/answeragent-demo' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
-                        Schedule a Demo
-                    </a>
-                    <div className={styles.secondaryLinks}>
-                        <a
-                            href='https://chromewebstore.google.com/detail/answeragent-sidekick/cpepciclppmfljkeiodifodfkpicfaim'
-                            target='_blank'
-                            rel='noreferrer'
-                            className={styles.secondaryLink}
-                        >
-                            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className={styles.chromeIcon}>
-                                <path d='M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm6.865 2.29a5.454 5.454 0 0 1 6.865 2.29l5.346-9.26A11.944 11.944 0 0 0 12 0v6.545a5.454 5.454 0 0 1 5.454 5.455c0 3.012-2.443 5.455-5.454 5.455s-5.454-2.443-5.454-5.455c0-1.513.616-2.88 1.612-3.865z' />
-                            </svg>
-                            Download Chrome Extension
-                        </a>
-                        <a href='/developers/' className={styles.secondaryLink}>
-                            <Code2 size={18} className={styles.linkIcon} />
-                            Call for Developers
-                        </a>
-                    </div>
-                </div>
+                <HeroCTA
+                    context={{
+                        page: 'homepage',
+                        section: 'hero'
+                    }}
+                />
             </div>
         </header>
     )
@@ -162,140 +158,52 @@ function _MissionSection() {
     )
 }
 
-function FeaturesSection() {
+function ThreePillarsSection() {
     return (
-        <section className={styles.featuresSection}>
+        <section className={styles.threePillarsSection}>
             <div className='container'>
-                <h2 className='text--center'>The complete AI Agent solution</h2>
+                <h2 className={styles.sectionTitle}>Three Steps to AI-Powered Productivity</h2>
                 <div className='row'>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Rocket size={48} strokeWidth={1.5} />
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <Database size={64} strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <h3>Agents</h3>
-                                <p>
-                                    Extend the power of AnswerAgent with a growing ecosystem of applications. Integrate AI seamlessly into
-                                    your workflows and daily tasks.
-                                </p>
-                                <a href='/apps' className={styles.featureCardCTA}>
-                                    Explore Agents →
-                                </a>
-                            </div>
+                            <h3 className={styles.pillarTitle}>Connect Your Data</h3>
+                            <p className={styles.pillarDescription}>
+                                Unified data lake with intelligent tagging and AI summarization. 20+ integrations, secure and compliant.
+                            </p>
+                            <a href='/data-engine' className={styles.pillarLink}>
+                                Learn More <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <MessageSquare size={48} strokeWidth={1.5} />
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <Code2 size={64} strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <h3>Chat</h3>
-                                <p>
-                                    Engage with your AI agents naturally through a powerful chat interface. Get instant answers, automate
-                                    tasks, and streamline communication.
-                                </p>
-                                <a href='/chat' className={styles.featureCardCTA}>
-                                    Learn About Chat →
-                                </a>
-                            </div>
+                            <h3 className={styles.pillarTitle}>Build Your Agents</h3>
+                            <p className={styles.pillarDescription}>
+                                Visual builder, code editor, templates. Create images and videos with AI. Deploy anywhere you want.
+                            </p>
+                            <a href='/agent-studio' className={styles.pillarLink}>
+                                Explore Studio <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Globe size={48} strokeWidth={1.5} />
+                    <div className='col col--4'>
+                        <div className={styles.pillarCard}>
+                            <div className={styles.pillarIcon}>
+                                <BarChart3 size={64} strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <h3>Browser Sidekick</h3>
-                                <p>
-                                    Bring AnswerAgent directly into your browser. Access AI capabilities, automate web tasks, and enhance
-                                    your online experience with ease.
-                                </p>
-                                <a href='/browser-sidekick' className={styles.featureCardCTA}>
-                                    Learn About Sidekick →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Target size={48} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h3>Sidekick Studio</h3>
-                                <p>
-                                    Design, deploy, and manage your AI agent workforce with an intuitive visual interface. Build powerful,
-                                    customizable AI agents without coding skills.
-                                </p>
-                                <a href='/sidekick-studio' className={styles.featureCardCTA}>
-                                    Try Studio →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Lightbulb size={48} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h3>Deep Research</h3>
-                                <p>
-                                    Run multi-step, source-grounded research with citations and traceable reasoning. Turn complex topics
-                                    into actionable insights.
-                                </p>
-                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
-                                    Schedule a Demo →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Check size={48} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h3>Easy Evals</h3>
-                                <p>
-                                    Measure quality with lightweight evaluations. Track accuracy, safety, and style across prompts and
-                                    models—without the complexity.
-                                </p>
-                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
-                                    Schedule a Demo →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <Key size={48} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h3>JLinc Immutable Tracking</h3>
-                                <p>Cryptographically signed lineage and consent. Tamper‑evident data trails for compliance and trust.</p>
-                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
-                                    Schedule a Demo →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.featureCard, styles.commandment)}>
-                            <div className={styles.comingSoonIcon}>
-                                <BarChart3 size={48} strokeWidth={1.5} />
-                            </div>
-                            <div>
-                                <h3>On‑Demand Dashboards & Reports</h3>
-                                <p>Real‑time dashboards across all your data. Track agents, prompts, and costs in one place.</p>
-                                <a href='https://calendly.com/lastrev/answeragent-demo' className={styles.featureCardCTA}>
-                                    Schedule a Demo →
-                                </a>
-                            </div>
+                            <h3 className={styles.pillarTitle}>Get Instant Insights</h3>
+                            <p className={styles.pillarDescription}>
+                                Real-time dashboards, on-demand reports, and Chrome extension. Insights when you need them.
+                            </p>
+                            <a href='/intelligence-hub' className={styles.pillarLink}>
+                                See Insights <ArrowRight size={18} />
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -304,60 +212,77 @@ function FeaturesSection() {
     )
 }
 
-function PricingSection() {
+function UseCasesPreviewSection() {
     return (
-        <section className={styles.pricingSection}>
+        <section className={styles.useCasesSection}>
             <div className='container'>
-                <div className='text--center' style={{ marginBottom: '3rem' }}>
-                    <h2 className='text--center'>Choose Your Deployment</h2>
-                    <p className='text--center' style={{ fontSize: '1.2rem', opacity: 0.9, marginBottom: '0' }}>
-                        Flexible options for teams—from secure managed cloud to fully self-hosted
-                    </p>
-                </div>
+                <h2 className={styles.sectionTitle}>What can you build?</h2>
                 <div className='row'>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>
-                                <Globe size={48} strokeWidth={1.5} />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>Business Cloud</h3>
-                                <p style={{ marginBottom: '1.5rem', flex: 1 }}>
-                                    Secure, organization-ready managed cloud with single-tenant isolation, SSO, and governance. Fastest path
-                                    to value with zero maintenance.
-                                </p>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a
-                                        href='https://calendly.com/lastrev/answeragent-demo'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                    >
-                                        Schedule a Demo
-                                    </a>
-                                </div>
-                            </div>
+                    <div className='col col--4'>
+                        <div className={styles.useCaseCard}>
+                            <h3>Daily Briefing</h3>
+                            <p>Get a comprehensive briefing from all your tools every morning—Salesforce, Jira, Slack, and more.</p>
                         </div>
                     </div>
-                    <div className='col col--6'>
-                        <div className={clsx(styles.pricingCard, styles.commandment)}>
-                            <div className={styles.pricingIcon}>
-                                <Building2 size={48} strokeWidth={1.5} />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>On‑Prem Enterprise</h3>
-                                <p style={{ marginBottom: '1.5rem', flex: 1 }}>
-                                    Fully self-hosted deployment with enterprise licensing, advanced security controls, and custom
-                                    integrations—run entirely within your infrastructure.
-                                </p>
-                                <div style={{ marginTop: 'auto' }}>
-                                    <a
-                                        href='https://calendly.com/lastrev/answeragent-demo'
-                                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
-                                    >
-                                        Schedule a Demo
-                                    </a>
-                                </div>
-                            </div>
+                    <div className='col col--4'>
+                        <div className={styles.useCaseCard}>
+                            <h3>Automated Ticket Triage</h3>
+                            <p>Automatically categorize, prioritize, and route support tickets based on content and context.</p>
                         </div>
+                    </div>
+                    <div className='col col--4'>
+                        <div className={styles.useCaseCard}>
+                            <h3>Real-Time OKR Dashboards</h3>
+                            <p>Track OKRs across all your platforms with real-time updates and automated progress tracking.</p>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.useCasesCTA}>
+                    <a href='/docs/use-cases' className={clsx(styles.ctaButton, styles.ctaSecondary)}>
+                        Browse All Use Cases
+                    </a>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function PricingTeaserSection() {
+    return (
+        <section className={styles.pricingTeaserSection}>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col col--8 col--offset-2'>
+                        <div className={styles.pricingTeaserCard}>
+                            <h2 className={styles.pricingTeaserTitle}>Simple Pricing</h2>
+                            <div className={styles.pricingTeaserAmount}>
+                                $500<span className={styles.pricingTeaserPeriod}>/month</span>
+                            </div>
+                            <p className={styles.pricingTeaserDescription}>Unlimited users, or self-host on your infrastructure</p>
+                            <a href='/pricing' className={clsx(styles.ctaButton, styles.ctaPrimary)}>
+                                View Pricing
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function BottomCTASection() {
+    return (
+        <section className={styles.bottomCTASection}>
+            <div className='container'>
+                <div className='row'>
+                    <div className='col col--8 col--offset-2'>
+                        <h2 className={styles.bottomCTATitle}>Ready to get started?</h2>
+                        <HeroCTA
+                            context={{
+                                page: 'homepage',
+                                section: 'bottom-cta'
+                            }}
+                        />
                     </div>
                 </div>
             </div>
@@ -399,26 +324,10 @@ export default function Home(): JSX.Element {
                 />
                 <HomepageHeader />
                 <main>
-                    <section className={styles.missionSection}>
-                        <div className='container'>
-                            <div className='row'>
-                                <div className='col col--8 col--offset-2'>
-                                    <h2 className='text--center'>What is an AI Orchestration Studio?</h2>
-                                    <p style={{ fontSize: '1.1rem', opacity: 0.95 }}>
-                                        It’s where teams design, evaluate, and run AI agents—end to end. Build <strong>Agents</strong> that
-                                        automate real work, collaborate in <strong>Chat</strong>, browse with <strong>Sidekick</strong>, and
-                                        manage at scale in <strong>Sidekick Studio</strong>. Go deeper with <strong>Deep Research</strong>,
-                                        prove quality with <strong>Easy Evals</strong>, track lineage with
-                                        <strong> JLinc Immutable Tracking</strong>, and see everything clearly with
-                                        <strong> On‑Demand Dashboards & Reports</strong>.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <FeaturesSection />
-                    {/* <MissionSection /> */}
-                    <PricingSection />
+                    <ThreePillarsSection />
+                    <UseCasesPreviewSection />
+                    <PricingTeaserSection />
+                    <BottomCTASection />
                 </main>
             </LayoutComponent>
         </div>

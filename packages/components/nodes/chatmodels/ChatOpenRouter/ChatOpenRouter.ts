@@ -28,8 +28,7 @@ class ChatOpenRouter_ChatModels implements INode {
             label: 'Connect Credential',
             name: 'credential',
             type: 'credential',
-            credentialNames: ['openRouterApi'],
-            optional: true
+            credentialNames: ['openRouterApi']
         }
         this.inputs = [
             {
@@ -131,13 +130,26 @@ class ChatOpenRouter_ChatModels implements INode {
         const baseOptions = nodeData.inputs?.baseOptions
         const cache = nodeData.inputs?.cache as BaseCache
 
+        if (nodeData.inputs?.credentialId) {
+            nodeData.credential = nodeData.inputs?.credentialId
+        }
+
+        if (!nodeData.credential) {
+            throw new Error('OpenRouter credential is required. Please connect a credential to this node.')
+        }
+
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const openRouterApiKey = getCredentialParam('openRouterApiKey', credentialData, nodeData)
+
+        if (!openRouterApiKey) {
+            throw new Error('OpenRouter API Key is required. Please ensure your credential contains a valid API key.')
+        }
 
         const obj: ChatOpenAIFields = {
             temperature: parseFloat(temperature),
             modelName,
             openAIApiKey: openRouterApiKey,
+            apiKey: openRouterApiKey,
             streaming: streaming ?? true
         }
 

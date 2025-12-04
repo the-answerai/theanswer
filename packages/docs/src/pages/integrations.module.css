@@ -1,0 +1,260 @@
+/* Integrations Page Styles */
+
+.heroSection {
+    position: relative;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.heroBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+}
+
+.threeJsCanvas {
+    width: 100%;
+    height: 100%;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 800px;
+    padding: 2rem;
+}
+
+.heroTitle {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.heroSubtitle {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+/* Catalog Section */
+.catalogSection {
+    padding: 4rem 0 6rem;
+}
+
+.filtersContainer {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.searchBox {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--ifm-card-background-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ifm-font-color-base);
+    font-size: 1rem;
+}
+
+.searchInput:focus {
+    outline: none;
+}
+
+.filterGroup {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filterSelect {
+    background: var(--ifm-card-background-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--ifm-font-color-base);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.resultsCount {
+    opacity: 0.7;
+    margin-bottom: 2rem;
+}
+
+/* Integration Grid */
+.integrationGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.integrationCard {
+    background: var(--ifm-card-background-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.integrationCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 255, 255, 0.2);
+    border-color: var(--ifm-color-primary);
+}
+
+.integrationLogo {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.integrationLogo img {
+    object-fit: contain;
+    max-width: 100%;
+}
+
+.integrationCard h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.integrationMeta {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.category {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.difficulty {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.difficulty.easy {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    color: #00ff00;
+}
+
+.difficulty.medium {
+    background: rgba(255, 255, 0, 0.1);
+    border: 1px solid rgba(255, 255, 0, 0.3);
+    color: #ffff00;
+}
+
+.difficulty.advanced {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    color: #ff0000;
+}
+
+.integrationDescription {
+    opacity: 0.9;
+    flex: 1;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.integrationActions {
+    display: flex;
+    justify-content: center;
+}
+
+.actionLink {
+    color: var(--ifm-color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.actionLink:hover {
+    transform: translateX(4px);
+    text-decoration: underline;
+}
+
+/* No Results */
+.noResults {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.noResults p {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin-bottom: 2rem;
+}
+
+/* Request Section */
+.requestSection {
+    padding: 5rem 0;
+    background: var(--ifm-background-surface-color);
+}
+
+@media (max-width: 996px) {
+    .heroTitle {
+        font-size: 2.5rem;
+    }
+
+    .heroSubtitle {
+        font-size: 1.2rem;
+    }
+
+    .filtersContainer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchBox {
+        min-width: 0;
+    }
+
+    .filterGroup {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterSelect {
+        width: 100%;
+    }
+
+    .integrationGrid {
+        grid-template-columns: 1fr;
+    }
+}

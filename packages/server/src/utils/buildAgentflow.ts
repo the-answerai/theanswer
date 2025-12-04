@@ -47,6 +47,7 @@ import {
 } from '.'
 
 import { Variable } from '../database/entities/Variable'
+import { User } from '../database/entities/User'
 import { replaceInputsWithConfig, constructGraphs, getAPIOverrideConfig } from '../utils'
 import logger from './logger'
 import { getErrorMessage } from '../errors/utils'
@@ -56,6 +57,7 @@ import { CachePool } from '../CachePool'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Telemetry } from './telemetry'
 import { LangfuseSpanClient, LangfuseTraceClient } from 'langfuse'
+import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
 
 interface IWaitingNode {
     nodeId: string
@@ -1894,6 +1896,14 @@ export const executeAgentFlow = async ({
     if (lastNodeOutput?.fileAnnotations) apiMessage.fileAnnotations = JSON.stringify(lastNodeOutput.fileAnnotations)
     if (lastNodeOutput?.artifacts) apiMessage.artifacts = JSON.stringify(lastNodeOutput.artifacts)
     if (chatflow.followUpPrompts) {
+        // Get billed user's Stripe customer ID (follows same pattern as buildChatflow.ts)
+        // billedUserId = authenticated user OR chatflow owner (for billing purposes only)
+        const billedUserId = user?.id || chatflow.userId
+        const billedUser = await appDataSource.getRepository(User).findOne({
+            where: { id: billedUserId }
+        })
+        const billingStripeCustomerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : billedUser?.stripeCustomerId
+
         const followUpPromptsConfig = JSON.parse(chatflow.followUpPrompts)
         const followUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
             chatId,
@@ -1902,7 +1912,12 @@ export const executeAgentFlow = async ({
             databaseEntities,
             parentLangfuseTrace,
             sessionId,
-            userId: incomingInput.user?.id
+            messageId: apiMessageId,
+            userId: user?.id || chatflow.userId,
+            organizationId: user?.organizationId || chatflow.organizationId,
+            trackingMetadata: incomingInput.trackingMetadata,
+            user: user, // Keep original user (might be undefined)
+            billingStripeCustomerId // For metadata only - who gets billed
         })
         if (followUpPrompts?.questions) {
             apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)

@@ -1,0 +1,227 @@
+/* Button variants */
+.iconButton,
+.chipButton,
+.fullButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 20px;
+    background: #16213e;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.iconButton:hover,
+.chipButton:hover,
+.fullButton:hover {
+    background: #243050;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 33, 62, 0.3);
+}
+
+.iconButton:active,
+.chipButton:active,
+.fullButton:active {
+    transform: translateY(0);
+}
+
+/* Icon button */
+.iconButton {
+    padding: 8px;
+    border-radius: 50%;
+}
+
+/* Chip button */
+.chipButton {
+    padding: 6px 12px;
+}
+
+/* Full button */
+.fullButton {
+    padding: 10px 20px;
+}
+
+/* Sizes */
+.small {
+    font-size: 12px;
+}
+
+.small.iconButton {
+    padding: 6px;
+}
+
+.small.chipButton {
+    padding: 4px 10px;
+}
+
+.small.fullButton {
+    padding: 8px 16px;
+}
+
+.medium {
+    font-size: 14px;
+}
+
+.large {
+    font-size: 16px;
+}
+
+.large.iconButton {
+    padding: 12px;
+}
+
+.large.chipButton {
+    padding: 8px 16px;
+}
+
+.large.fullButton {
+    padding: 12px 24px;
+}
+
+/* Slide-out panel */
+.slideOutOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.slideOutOverlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slideOutPanel {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: min(600px, 90vw);
+    height: 100vh;
+    background: #f5f7fa;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.slideOutPanel.open {
+    right: 0;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #16213e;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panelTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.panelTitle svg {
+    width: 32px;
+    height: 32px;
+}
+
+.newChatButton {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.newChatButton:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.newChatButton svg {
+    width: 18px;
+    height: 18px;
+}
+
+.closeButton {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.closeButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Embed container */
+.embedContainer {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.embedContainer aai-fullchatbot {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Context badge */
+.contextBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+}

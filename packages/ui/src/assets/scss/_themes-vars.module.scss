@@ -1,18 +1,18 @@
 // paper & background
 $paper: #ffffff;
 
-// primary
+// primary - Unified blue gradient colors
 $primaryLight: #e3f2fd;
-$primaryMain: #30726c;
-$primaryDark: #4db6ac;
-$primary200: #80cbc4;
-$primary800: #00695c;
+$primaryMain: #3b82f6; // Blue from unified theme
+$primaryDark: #1e3a8a; // Darker blue
+$primary200: #93c5fd;
+$primary800: #1e3a8a;
 
-// secondary
-$secondaryLight: #ede7f6;
-$secondaryMain: #673ab7;
-$secondaryDark: #5e35b1;
-$secondary200: #b39ddb;
+// secondary - Also use blue for consistency
+$secondaryLight: #e3f2fd;
+$secondaryMain: #3b82f6; // Blue from unified theme
+$secondaryDark: #1e3a8a;
+$secondary200: #93c5fd;
 $secondary800: #4527a0;
 
 // success Colors

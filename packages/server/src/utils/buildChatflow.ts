@@ -67,7 +67,7 @@ import { getErrorMessage } from '../errors/utils'
 import { FLOWISE_METRIC_COUNTERS, FLOWISE_COUNTER_STATUS, IMetricsProvider } from '../Interface.Metrics'
 import { OMIT_QUEUE_JOB_DATA } from './constants'
 import PlansService from '../services/plans'
-import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
+import { BILLING_CONFIG, DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID, DISABLE_BILLING_CHECKS } from '../aai-utils/billing/config'
 import { Chat } from '../database/entities/Chat'
 import chatflowsService from '../services/chatflows'
 import { User } from '../database/entities/User'
@@ -705,6 +705,14 @@ export const executeFlow = async ({
             if (guardrailsMetadata) apiMessage.guardrailsMetadata = JSON.stringify(guardrailsMetadata)
 
             if (agentflow.followUpPrompts) {
+                // Get billed user's Stripe customer ID (follows same pattern as validateAndSaveChat)
+                // billedUserId = authenticated user OR chatflow owner (for billing purposes only)
+                const billedUserId = user?.id || agentflow.userId
+                const billedUser = await appDataSource.getRepository(User).findOne({
+                    where: { id: billedUserId }
+                })
+                const billingStripeCustomerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : billedUser?.stripeCustomerId
+
                 const followUpPromptsConfig = JSON.parse(agentflow.followUpPrompts)
                 const generatedFollowUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
                     chatId,
@@ -713,7 +721,12 @@ export const executeFlow = async ({
                     databaseEntities,
                     parentLangfuseTrace: undefined,
                     sessionId,
-                    userId: user?.id ?? agentflow.userId
+                    messageId: apiMessageId,
+                    userId: user?.id ?? agentflow.userId,
+                    organizationId: user?.organizationId ?? agentflow.organizationId,
+                    trackingMetadata: incomingInput.trackingMetadata,
+                    user: user, // Keep original user (might be undefined)
+                    billingStripeCustomerId // For metadata only - who gets billed
                 })
                 if (generatedFollowUpPrompts?.questions) {
                     apiMessage.followUpPrompts = JSON.stringify(generatedFollowUpPrompts.questions)
@@ -810,6 +823,13 @@ export const executeFlow = async ({
         /*** If user uploaded files from chat, prepend the content of the files ***/
         const finalQuestion = uploadedFilesContent ? `${uploadedFilesContent}\n\n${incomingInput.question}` : incomingInput.question
 
+        /*** Get billed user's Stripe customer ID (same pattern as validateAndSaveChat) ***/
+        const billedUserId = user?.id || chatflow.userId
+        const billedUser = await appDataSource.getRepository(User).findOne({
+            where: { id: billedUserId }
+        })
+        const billingStripeCustomerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : billedUser?.stripeCustomerId
+
         /*** Prepare run params ***/
         const runParams = {
             chatId,
@@ -824,6 +844,7 @@ export const executeFlow = async ({
             user,
             sessionId,
             trackingMetadata: incomingInput.trackingMetadata,
+            billingStripeCustomerId, // For metadata only - who gets billed
             ...(isStreamValid && { sseStreamer, shouldStreamResponse: isStreamValid })
         }
 
@@ -973,6 +994,14 @@ export const executeFlow = async ({
         if (result?.fileAnnotations) apiMessage.fileAnnotations = JSON.stringify(result.fileAnnotations)
         if (result?.artifacts) apiMessage.artifacts = JSON.stringify(result.artifacts)
         if (chatflow.followUpPrompts) {
+            // Get billed user's Stripe customer ID (follows same pattern as validateAndSaveChat)
+            // billedUserId = authenticated user OR chatflow owner (for billing purposes only)
+            const billedUserId = user?.id || chatflow.userId
+            const billedUser = await appDataSource.getRepository(User).findOne({
+                where: { id: billedUserId }
+            })
+            const billingStripeCustomerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : billedUser?.stripeCustomerId
+
             const followUpPromptsConfig = JSON.parse(chatflow.followUpPrompts)
             const followUpPrompts: any = await generateFollowUpPrompts(followUpPromptsConfig, apiMessage.content, {
                 chatId,
@@ -981,7 +1010,12 @@ export const executeFlow = async ({
                 databaseEntities,
                 parentLangfuseTrace: undefined,
                 sessionId,
-                userId: user?.id
+                messageId: apiMessageId,
+                userId: user?.id,
+                organizationId: user?.organizationId ?? chatflow.organizationId,
+                trackingMetadata: incomingInput.trackingMetadata,
+                user: user, // Keep original user (might be undefined)
+                billingStripeCustomerId // For metadata only - who gets billed
             })
             if (followUpPrompts?.questions) {
                 apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)
@@ -1193,6 +1227,12 @@ const validateAndSaveChat = async (
         const billedUserId = req.user?.id || chatflow.userId
         if (!billedUserId || !chatflow.organizationId) {
             logger.warn(`Chatflow ${chatflowid} does not have a user or organization associated with it`)
+            return
+        }
+
+        // Skip billing checks if disabled (useful for local development)
+        if (DISABLE_BILLING_CHECKS) {
+            logger.debug(`[BuildChatflow] Billing checks disabled via DISABLE_BILLING_CHECKS flag`)
             return
         }
 

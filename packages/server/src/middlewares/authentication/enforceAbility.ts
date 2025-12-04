@@ -92,6 +92,15 @@ async function verifyResourceAccess(resourceName: string, resourceId: string, fi
         // No need for additional checks here
     }
 
+    // Check if this is a proxy resource (no local entity)
+    const isProxyResource = await isProxyResourceType(resourceName)
+    if (isProxyResource) {
+        // Proxy resources (like DataEngine*) are handled by external services
+        // Skip detailed access check but auth and org filtering still applies
+        console.log(`[enforceAbility] Skipping entity check for proxy resource: ${resourceName}`)
+        return
+    }
+
     await checkResourceAccess(resourceName, resourceId, filter, isAdmin)
 }
 
@@ -182,6 +191,31 @@ async function adminHasAccess(repository: any, resourceId: string, organizationI
             select: ['id'] // Only need to check existence
         })) !== null
     )
+}
+
+/**
+ * Check if a resource type is a proxy resource (no local entity).
+ * Proxy resources are handled by external services and don't have TypeORM entities.
+ */
+async function isProxyResourceType(resourceName: string): Promise<boolean> {
+    // Check for known proxy resource patterns
+    const proxyPrefixes = ['DataEngine']
+
+    for (const prefix of proxyPrefixes) {
+        if (resourceName.startsWith(prefix)) {
+            return true
+        }
+    }
+
+    // Check if entity file exists
+    try {
+        const modulePath = path.resolve(__dirname, '..', '..', 'database', 'entities', `${resourceName}.js`)
+        const fs = await import('fs/promises')
+        await fs.access(modulePath)
+        return false // Entity exists, not a proxy
+    } catch {
+        return true // Entity doesn't exist, it's a proxy
+    }
 }
 
 /**
