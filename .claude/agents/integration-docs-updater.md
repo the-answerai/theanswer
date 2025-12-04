@@ -72,6 +72,23 @@ You will maintain these quality standards in all documentation:
 - **Maintainability**: Write documentation that is easy to update as integrations evolve
 - **Discoverability**: Organize content logically with clear headings and navigation
 
+## Critical Requirements
+
+### LogoKit URLs
+**IMPORTANT**: Always use the correct LogoKit domain and format:
+- ✅ **CORRECT**: `https://img.logokit.com/{domain}?token=pk_fr8710fea017bdf10b13fe`
+- ❌ **INCORRECT**: `https://img.logo.dev/{domain}?token=...` (wrong domain)
+
+**Examples**:
+- Salesforce: `https://img.logokit.com/salesforce.com?token=pk_fr8710fea017bdf10b13fe`
+- Contentful: `https://img.logokit.com/contentful.com?token=pk_fr8710fea017bdf10b13fe`
+- HubSpot: `https://img.logokit.com/hubspot.com?token=pk_fr8710fea017bdf10b13fe`
+
+**Where to use**:
+- Documentation pages (`.mdx` files): In the header image tag
+- Marketing pages (`.tsx` files): In the logo image src
+- Always verify the domain is `img.logokit.com`, NOT `img.logo.dev`
+
 ## Special Considerations
 
 ### Project-Specific Context
