@@ -117,19 +117,36 @@ Follow the checklist in INTEGRATION_DOCS_STRATEGY.md (lines 961-1010):
    - Title: "{Integration Name} Agent Integration"
    - Main AskAlpha button (medium chip, centered)
 
-3. **Content Sections** (in order):
+3. **Version Tracking Callout** (REQUIRED - Add immediately after header):
+   ```markdown
+   :::info Auto-Generated Documentation
+   This page is automatically synchronized with integration components.
+
+   **Last Updated:** {today's date in YYYY-MM-DD format}
+   **Component Version Tracking:**
+   {for each component from integration-mapping.json}
+   - {Component Name}: v{version} (updated {today's date})
+   {endfor}
+
+   [View integration in code →](https://github.com/the-answerai/theanswer/tree/main/packages/components/nodes/tools/MCP/{IntegrationName})
+   :::
+   ```
+
+4. **Content Sections** (in order):
    - Overview
    - Quick Start (with AskAlpha button)
    - Obtaining Credentials (step-by-step from integration-mapping.json)
-   - Available Components (with AskAlpha button and auto-generated callout)
+   - Available Components (with AskAlpha button and component details including versions)
    - Use Cases (with AskAlpha button, 3-5 scenarios)
    - Advanced Configuration (with AskAlpha button)
    - FAQ (with AskAlpha button, 20+ Q&A)
    - Resources (official links)
 
-4. **Quality Checks**:
-   - All version numbers match integration-mapping.json
+5. **Quality Checks**:
+   - Version tracking callout present with current date
+   - All component versions match integration-mapping.json
    - All 6 AskAlpha buttons have unique contexts
+   - Component documentation links work
    - Links are valid
    - MDX compiles without errors
 
@@ -177,14 +194,46 @@ Follow the checklist in INTEGRATION_DOCS_STRATEGY.md (lines 1012-1075):
    - Aggregate rating
    - Provider info
 
-### Phase 4: Update Integration Listing
+### Phase 4: Update Component Documentation
+**REQUIRED**: For each component in the integration, update or create node reference documentation:
+
+1. **File Location**: `packages/docs/docs/sidekick-studio/chatflows/{category}/{component-name}.md`
+   - mcpServers → `chatflows/tools-mcp/`
+   - documentLoaders → `chatflows/document-loaders/`
+   - tools → `chatflows/tools/`
+   - etc.
+
+2. **Required Header** (add at top if missing, update if present):
+   ```markdown
+   # {Component Name}
+
+   **Version:** {version from integration-mapping.json}
+   **Last Updated:** {today's date YYYY-MM-DD}
+   **Category:** {category}
+   **Integration:** [{Integration Name}](/docs/integrations/{integration-name})
+
+   {rest of component documentation}
+   ```
+
+3. **If file doesn't exist**, create it with:
+   - Component description
+   - Configuration parameters
+   - Example usage
+   - Link back to parent integration
+
+4. **If file exists**, update:
+   - Version number if changed
+   - Last Updated date to today
+   - Integration link if missing
+
+### Phase 5: Update Integration Listing
 Follow checklist (lines 1077-1092):
 
 1. Add card to `INTEGRATIONS` array in `packages/docs/src/pages/integrations.tsx`
 2. Include: name, domain, category, difficulty, description
 3. Verify alphabetical placement
 
-### Phase 5: Validation & Testing
+### Phase 6: Validation & Testing
 Follow checklist (lines 1094-1132):
 
 1. Test documentation page:
@@ -205,7 +254,21 @@ Follow checklist (lines 1094-1132):
    - Logo loads
    - Links work
 
-### Phase 6: Commit & Create Pull Request (MANDATORY)
+### Phase 7: Self-Validation with integration-validator
+**REQUIRED**: Before committing, validate your own work:
+
+```bash
+Use Task tool to launch integration-validator agent:
+Task({
+  subagent_type: "integration-validator",
+  description: "Validate {Integration Name} documentation",
+  prompt: "Validate the documentation I just created for {Integration Name}. Check for completeness, accuracy, version tracking, and standards compliance."
+})
+```
+
+Review the validation report and fix any issues before proceeding to commit.
+
+### Phase 8: Commit & Create Pull Request (MANDATORY)
 
 **CRITICAL: Use the `/push` slash command to handle git operations.**
 

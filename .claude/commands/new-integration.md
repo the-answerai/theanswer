@@ -20,13 +20,15 @@ Automates the complete integration documentation workflow from Linear ticket to 
 1. ✅ Creates Linear ticket using `/ticket-create`
 2. ✅ Creates feature branch using `/ticket-start`
 3. ✅ Launches `integration-docs-updater` agent to create:
-   - Documentation page (`packages/docs/docs/integrations/{name}.mdx`)
+   - Documentation page with version tracking (`packages/docs/docs/integrations/{name}.mdx`)
    - Marketing page (`packages/docs/src/pages/integrations/{name}.tsx`)
+   - Component documentation updates (with version and last updated)
    - Integration listing card update
-4. ✅ Reviews generated content and provides feedback
-5. ✅ Agent incorporates feedback
-6. ✅ Commits and creates PR using `/push`
-7. ✅ Reports completion with PR link
+4. ✅ Agent self-validates using `integration-validator` agent
+5. ✅ Reviews generated content and provides feedback
+6. ✅ Agent incorporates feedback
+7. ✅ Commits and creates PR using `/push`
+8. ✅ Reports completion with PR link
 
 ## Your Task
 
@@ -151,9 +153,11 @@ Task({
 
 **Requirements:**
 1. Create documentation page at: packages/docs/docs/integrations/{integration-name}.mdx
+   - **REQUIRED**: Version tracking callout with today's date and all component versions
    - Include LogoKit logo, title, 6 AskAlpha buttons
    - **CRITICAL**: LogoKit URL MUST be https://img.logokit.com/{domain}?token=pk_fr8710fea017bdf10b13fe
    - **DO NOT use img.logo.dev** - only img.logokit.com is correct
+   - List all components with versions from integration-mapping.json
    - Follow Contentful reference implementation
 
 2. Create marketing page at: packages/docs/src/pages/integrations/{integration-name}.tsx
@@ -162,8 +166,15 @@ Task({
    - **DO NOT use img.logo.dev** - only img.logokit.com is correct
    - Follow Contentful reference implementation
 
-3. Update integration listing at: packages/docs/src/pages/integrations.tsx
+3. Update component documentation: packages/docs/docs/sidekick-studio/chatflows/{category}/{component}.md
+   - **REQUIRED**: Add version number and last updated date to each component doc
+   - Add link back to parent integration page
+   - Update existing docs or create new ones as needed
+
+4. Update integration listing at: packages/docs/src/pages/integrations.tsx
    - Add card to INTEGRATIONS array
+
+5. Self-validate using integration-validator agent before reporting complete
 
 **Reference implementations:**
 - Documentation: packages/docs/docs/integrations/contentful.mdx

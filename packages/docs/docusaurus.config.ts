@@ -91,7 +91,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -124,7 +124,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -157,7 +157,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -190,7 +190,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -223,7 +223,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -256,7 +256,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -289,7 +289,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -322,7 +322,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -355,7 +355,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -388,7 +388,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -421,7 +421,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -454,7 +454,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -487,7 +487,7 @@ const config: Config = {
                             groupPathsBy: 'tag'
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 // Extract API name from the ID
                                 const apiName = pageData.id.split('/').pop()?.replace('-api', '') || ''
                                 const title = apiName.charAt(0).toUpperCase() + apiName.slice(1)
@@ -522,7 +522,7 @@ const config: Config = {
                             sidebarCollapsed: false
                         },
                         markdownGenerators: {
-                            createInfoPageMD: (_pageData) => {
+                            createInfoPageMD: (pageData) => {
                                 let markdown = `# Data Engine API\n\n`
                                 markdown += `This section contains the API endpoints for managing structured data resources including domains, URLs, calls, tags, documents, tickets, and chats.\n\n`
 

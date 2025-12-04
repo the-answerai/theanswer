@@ -4,6 +4,11 @@ description: Load and process documents from GitHub repositories
 
 # GitHub Document Loader
 
+**Version:** 3
+**Last Updated:** 2025-12-04
+**Category:** Document Loaders
+**Integration:** [GitHub](/docs/integrations/github)
+
 ## Overview
 
 The GitHub Document Loader is a powerful feature in AnswerAgentAI that allows you to load and process data directly from GitHub repositories. This tool is perfect for users who want to analyze, search, or work with content stored in GitHub, whether it's documentation, code, or other text-based files.
