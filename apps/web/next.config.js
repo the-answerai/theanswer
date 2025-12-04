@@ -1,4 +1,9 @@
 const { PrismaPlugin } = require('experimental-prisma-webpack-plugin')
+const path = require('path')
+
+// Load root .env file for monorepo compatibility
+// This ensures env vars like LINEAR_API_KEY are available when running from apps/web/
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
 
 const webpack = require('webpack')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
