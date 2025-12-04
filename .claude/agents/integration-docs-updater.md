@@ -54,12 +54,305 @@ For each integration:
 4. Remove outdated or incorrect content
 5. Verify all code examples are accurate and tested
 
-### Phase 4: Validation
-1. Cross-reference documentation with actual implementation
-2. Verify all links and references are valid
-3. Ensure examples match current API signatures
-4. Confirm environment variables and configuration match actual requirements
-5. Test setup instructions for accuracy
+1. **Use the `/ticket-create` slash command** to create a Linear ticket:
+   - Title: "Create {Integration Name} integration documentation and marketing page"
+   - Description should include:
+     ```
+     ## Overview
+     Create comprehensive integration documentation and marketing page for {Integration Name} following INTEGRATION_DOCS_STRATEGY.md.
+
+     ## Deliverables
+     - [ ] Documentation page (`/docs/integrations/{name}.mdx`) with 6 AskAlpha buttons
+     - [ ] Marketing page (`/integrations/{name}`) with conversion-focused copy
+     - [ ] Integration card added to `/integrations` listing page
+
+     ## Reference Implementation
+     - Strategy: `INTEGRATION_DOCS_STRATEGY.md` (lines 957-1206 checklist)
+     - Gold standard: Contentful integration
+     - Data source: `scripts/integration-mapping.json`
+
+     ## Acceptance Criteria
+     - [ ] Documentation page follows template with all 6 sections
+     - [ ] Marketing page includes ThreeJS animation and dual CTAs
+     - [ ] All component versions match integration-mapping.json
+     - [ ] Integration card appears on /integrations page
+     - [ ] All links work and pages are mobile responsive
+     ```
+   - Labels: ["documentation", "marketing", "integration"]
+   - Team: "AnswerAgentAI"
+
+2. **Once ticket is created, use the `/ticket-start` slash command** with the ticket ID:
+   - This will automatically create the feature branch
+   - Branch naming: `agent-XXX-create-{integration-name}-integration-documentation`
+   - Updates Linear ticket status to "In Progress"
+
+3. **Verify branch created successfully** before proceeding with documentation creation
+
+**Why this matters:**
+- Ensures proper tracking in Linear
+- Creates properly named feature branches
+- Links work to tickets for visibility
+- Follows project git workflow standards
+
+### Phase 1: Preparation & Data Gathering
+
+After branch is created and checked out:
+
+1. Read INTEGRATION_DOCS_STRATEGY.md thoroughly (especially lines 164-395 for templates and lines 957-1206 for checklist)
+2. Read `scripts/integration-mapping.json` to get integration metadata
+3. Identify the integration name and domain for LogoKit
+4. Review the **Contentful reference implementation**:
+   - `/Users/bradtaylor/Github/theanswer/packages/docs/docs/integrations/contentful.mdx` (documentation)
+   - `/Users/bradtaylor/Github/theanswer/packages/docs/src/pages/integrations/contentful.tsx` (marketing)
+
+### Phase 2: Create Documentation Page (`.mdx`)
+Follow the checklist in INTEGRATION_DOCS_STRATEGY.md (lines 961-1010):
+
+1. **File Setup**:
+   - Create `packages/docs/docs/integrations/{name}.mdx`
+   - Add imports: `import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'`
+   - Add frontmatter (title, description, sidebar_position)
+
+2. **Header**:
+   - Add centered logo (LogoKit, 80px)
+   - Title: "{Integration Name} Agent Integration"
+   - Main AskAlpha button (medium chip, centered)
+
+3. **Version Tracking Callout** (REQUIRED - Add immediately after header):
+   ```markdown
+   :::info Auto-Generated Documentation
+   This page is automatically synchronized with integration components.
+
+   **Last Updated:** {today's date in YYYY-MM-DD format}
+   **Component Version Tracking:**
+   {for each component from integration-mapping.json}
+   - {Component Name}: v{version} (updated {today's date})
+   {endfor}
+
+   [View integration in code →](https://github.com/the-answerai/theanswer/tree/main/packages/components/nodes/tools/MCP/{IntegrationName})
+   :::
+   ```
+
+4. **Content Sections** (in order):
+   - Overview
+   - Quick Start (with AskAlpha button)
+   - Obtaining Credentials (step-by-step from integration-mapping.json)
+   - Available Components (with AskAlpha button and component details including versions)
+   - Use Cases (with AskAlpha button, 3-5 scenarios)
+   - Advanced Configuration (with AskAlpha button)
+   - FAQ (with AskAlpha button, 20+ Q&A)
+   - Resources (official links)
+
+5. **MDX Safety & HTML Escaping**:
+   **CRITICAL**: MDX interprets `<` followed by alphanumeric characters as JSX tags. You MUST escape these:
+   - ✅ **CORRECT**: `&lt;150ms`, `&lt;5 minutes`, `&lt;100 requests`
+   - ❌ **WRONG**: `<150ms`, `<5 minutes`, `<100 requests` (will cause build errors)
+   - **Rule**: Any time you write a less-than symbol followed by a number or letter, use `&lt;` instead of `<`
+   - **Examples**:
+     - Performance claims: `&lt;150ms latency`
+     - Limits: `&lt;100 API calls per minute`
+     - Versions: `&lt;v2.0.0`
+     - Comparisons: `&lt;50% reduction in errors`
+
+6. **Quality Checks**:
+   - Version tracking callout present with current date
+   - All component versions match integration-mapping.json
+   - All 6 AskAlpha buttons have unique contexts
+   - Component documentation links work
+   - Links are valid
+   - **MDX compiles without errors** (test with build command)
+   - All `<` symbols before numbers/letters are escaped as `&lt;`
+
+### Phase 3: Create Marketing Page (`.tsx`)
+Follow the checklist in INTEGRATION_DOCS_STRATEGY.md (lines 1012-1075):
+
+1. **File Setup**:
+   - Create `packages/docs/src/pages/integrations/{name}.tsx`
+   - Import: Layout, JsonLd, ThreeJsScene, icons from lucide-react
+   - Use Contentful as template
+
+2. **Hero Section**:
+   - ThreeJS background (SphereScene)
+   - Logo (80px, centered)
+   - Compelling headline with ALL key messages:
+     - "AI that actually works"
+     - "Easy setup" / "Set up in minutes"
+     - "Save X hours per week"
+     - "Be better at your job"
+   - Value prop badges (checkmarks with benefits)
+   - Two CTAs: "Book a Demo" (Calendly) + "Setup Guide" (docs)
+
+3. **Value Props Section**:
+   - 3 cards with icons:
+     - Lightning Fast Setup (under 5 minutes)
+     - Save 10+ Hours Weekly (quantified)
+     - Be Better at Your Job (aspirational)
+
+4. **Use Cases Section**:
+   - 6 examples with icons
+   - Each includes time saved badge (e.g., "15 hours saved/week")
+
+5. **How It Works**:
+   - 3 numbered steps (80px circles)
+   - CTA at bottom
+
+6. **Final CTA**:
+   - Gradient background
+   - Both CTAs repeated
+   - Trust indicators
+
+7. **JSON-LD Schema**:
+   - Type: SoftwareApplication
+   - Feature list
+   - Aggregate rating
+   - Provider info
+
+### Phase 4: Update Component Documentation
+**REQUIRED**: For each component in the integration, update or create node reference documentation:
+
+1. **File Location**: `packages/docs/docs/sidekick-studio/chatflows/{category}/{component-name}.md`
+   - mcpServers → `chatflows/tools-mcp/`
+   - documentLoaders → `chatflows/document-loaders/`
+   - tools → `chatflows/tools/`
+   - etc.
+
+2. **Required Header** (add at top if missing, update if present):
+   ```markdown
+   # {Component Name}
+
+   **Version:** {version from integration-mapping.json}
+   **Last Updated:** {today's date YYYY-MM-DD}
+   **Category:** {category}
+   **Integration:** [{Integration Name}](/docs/integrations/{integration-name})
+
+   {rest of component documentation}
+   ```
+
+3. **If file doesn't exist**, create it with:
+   - Component description
+   - Configuration parameters
+   - Example usage
+   - Link back to parent integration
+
+4. **If file exists**, update:
+   - Version number if changed
+   - Last Updated date to today
+   - Integration link if missing
+
+### Phase 5: Update Integration Listing
+Follow checklist (lines 1077-1092):
+
+1. Add card to `INTEGRATIONS` array in `packages/docs/src/pages/integrations.tsx`
+2. Include: name, domain, category, difficulty, description
+3. Verify alphabetical placement
+
+### Phase 6: Build Validation (CRITICAL - DO NOT SKIP)
+**MANDATORY**: Test the documentation build BEFORE committing:
+
+1. **Run docs build command**:
+   ```bash
+   cd /Users/bradtaylor/Github/theanswer/packages/docs && pnpm build
+   ```
+
+2. **Check for MDX compilation errors**:
+   - Look for "MDX compilation failed" errors
+   - Common issue: `<` followed by numbers (e.g., `<150ms`) must be `&lt;150ms`
+   - Fix ALL MDX errors before proceeding
+
+3. **Verify build succeeds**:
+   - Wait for "Success" message or sitemap generation
+   - If build fails, read error message carefully
+   - Fix errors and re-run build until it succeeds
+
+4. **Only proceed to Phase 7 if build completes successfully**
+
+### Phase 7: Validation & Testing
+Follow checklist (lines 1094-1132):
+
+1. Test documentation page:
+   - Loads without errors
+   - Logo displays
+   - All 6 AskAlpha buttons work
+   - Links function correctly
+   - Mobile responsive
+
+2. Test marketing page:
+   - ThreeJS renders smoothly
+   - Both CTAs work
+   - JSON-LD validates
+   - Performance (Lighthouse)
+
+3. Test integration card:
+   - Appears on /integrations
+   - Logo loads
+   - Links work
+
+### Phase 8: Self-Validation with integration-validator
+**REQUIRED**: Before committing, validate your own work:
+
+```bash
+Use Task tool to launch integration-validator agent:
+Task({
+  subagent_type: "integration-validator",
+  description: "Validate {Integration Name} documentation",
+  prompt: "Validate the documentation I just created for {Integration Name}. Check for completeness, accuracy, version tracking, and standards compliance."
+})
+```
+
+Review the validation report and fix any issues before proceeding to commit.
+
+### Phase 9: Commit & Create Pull Request (MANDATORY)
+
+**CRITICAL: Use the `/push` slash command to handle git operations.**
+
+After all files are created and validated:
+
+1. **Use the `/push` slash command** with a descriptive message:
+   ```
+   /push "Add {Integration Name} integration documentation and marketing page"
+   ```
+
+2. **The `/push` command will automatically:**
+   - Stage all changed files
+   - Create a commit with proper formatting
+   - Push to remote branch
+   - Create a Pull Request targeting `staging` (NOT main)
+   - Update the Linear ticket status to "In Review"
+
+3. **What `/push` validates:**
+   - Ensures you're not on staging/main/production branches
+   - Verifies Linear ticket ID in branch name
+   - Checks for conventional commit format
+   - Validates against common issues (secrets, debug code)
+   - Enforces multi-tenancy and auth patterns
+   - Confirms PR targets staging branch
+
+4. **After successful push, report to user:**
+   - PR number and URL
+   - Linear ticket updated to "In Review"
+   - Summary of changes committed
+
+**Example workflow:**
+```
+User: "Create docs for Salesforce integration"
+Agent:
+1. /ticket-create "Create Salesforce integration documentation..."
+2. /ticket-start AGENT-561
+3. [Creates documentation page]
+4. [Creates marketing page]
+5. [Updates integration listing]
+6. [Validates everything]
+7. /push "Add Salesforce integration documentation and marketing page"
+8. Reports: "✅ PR #123 created and ready for review"
+```
+
+**DO NOT:**
+- ❌ Use manual git commands (git add, git commit, git push)
+- ❌ Create PRs manually with `gh pr create`
+- ❌ Skip the `/push` command
+- ❌ Batch multiple integrations into one PR
+
+**Each integration = One ticket + One branch + One PR**
 
 ## Quality Standards
 

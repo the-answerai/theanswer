@@ -1,0 +1,393 @@
+import clsx from 'clsx'
+import Layout from '@theme/Layout'
+import JsonLd from '@site/src/components/JsonLd'
+import ThreeJsScene from '@site/src/components/Annimations/SphereScene'
+import {
+    BookOpen,
+    Zap,
+    Clock,
+    TrendingUp,
+    CheckCircle,
+    Sparkles,
+    Shield,
+    AlertTriangle,
+    Eye,
+    Lock,
+    FileCheck,
+    Activity
+} from 'lucide-react'
+
+import styles from '../index.module.css'
+
+const LayoutComponent: any = Layout
+
+const LOGOKIT_TOKEN = 'pk_fr8710fea017bdf10b13fe'
+
+function FiddlerHero() {
+    return (
+        <header className={clsx('hero hero--primary', styles.heroSection)}>
+            <div className={styles.heroBackground}>
+                <ThreeJsScene className={styles.threeJsCanvas} />
+            </div>
+            <div className={styles.heroContent}>
+                <div style={{ marginBottom: '2rem' }}>
+                    <img
+                        src={`https://img.logokit.com/fiddler.ai?token=${LOGOKIT_TOKEN}`}
+                        alt='Fiddler Logo'
+                        height={80}
+                        style={{ marginBottom: '1rem' }}
+                    />
+                </div>
+                <h1 className={styles.heroTitle}>Fiddler AI Guardrails Integration</h1>
+                <p className={styles.heroSubtitle} style={{ fontSize: '1.5rem', maxWidth: '900px', margin: '0 auto 2rem' }}>
+                    AI safety that <strong>actually works</strong>. Protect users automatically. Prevent PII leaks. Catch hallucinations.
+                    <strong> Set up in under 5 minutes.</strong>
+                </p>
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginBottom: '2rem',
+                        flexWrap: 'wrap'
+                    }}
+                >
+                    <CheckCircle size={24} color='#10b981' />
+                    <span style={{ fontSize: '1.2rem' }}>Save 20+ hours per week</span>
+                    <CheckCircle size={24} color='#10b981' />
+                    <span style={{ fontSize: '1.2rem' }}>Prevent compliance violations</span>
+                    <CheckCircle size={24} color='#10b981' />
+                    <span style={{ fontSize: '1.2rem' }}>Build trust with safe AI</span>
+                </div>
+                <div className={styles.heroCTAs}>
+                    <a
+                        href='https://calendly.com/brad-theanswer/answeragent-intro'
+                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                        style={{ fontSize: '1.2rem', padding: '1rem 2rem' }}
+                    >
+                        <Sparkles size={20} style={{ marginRight: '0.5rem' }} />
+                        Book a Demo
+                    </a>
+                    <a
+                        href='/docs/integrations/fiddler'
+                        className={clsx(styles.ctaButton, styles.ctaSecondary)}
+                        style={{ fontSize: '1.2rem', padding: '1rem 2rem' }}
+                    >
+                        <BookOpen size={20} style={{ marginRight: '0.5rem' }} />
+                        Setup Guide
+                    </a>
+                </div>
+            </div>
+        </header>
+    )
+}
+
+function ValueProps() {
+    const valueProps = [
+        {
+            icon: <Zap size={48} strokeWidth={1.5} />,
+            title: 'Lightning Fast Setup',
+            description:
+                'Add AI guardrails in under 5 minutes. Just paste your Fiddler API key and configure thresholds. No complex setup, no ML expertise required.'
+        },
+        {
+            icon: <Clock size={48} strokeWidth={1.5} />,
+            title: 'Save 20+ Hours Weekly',
+            description:
+                'Automate content moderation, PII detection, and hallucination checks. Stop manual content review and compliance audits. Let AI guardrails work for you 24/7.'
+        },
+        {
+            icon: <TrendingUp size={48} strokeWidth={1.5} />,
+            title: 'Be Better at Your Job',
+            description:
+                'Build safer, more trustworthy AI applications. Meet compliance requirements automatically. Deliver better user experiences with reliable, accurate AI.'
+        }
+    ]
+
+    return (
+        <section className={styles.featuresSection} style={{ background: 'var(--ifm-background-surface-color)' }}>
+            <div className='container'>
+                <h2 className='text--center' style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+                    Why Teams Choose Fiddler Guardrails
+                </h2>
+                <p
+                    className='text--center'
+                    style={{ fontSize: '1.3rem', opacity: 0.9, marginBottom: '3rem', maxWidth: '800px', margin: '0 auto 3rem' }}
+                >
+                    <strong>AI that actually works.</strong> Enterprise-grade safety and compliance in minutes.
+                </p>
+                <div className='row'>
+                    {valueProps.map((prop, idx) => (
+                        <div key={idx} className='col col--4'>
+                            <div className={styles.featureCard} style={{ height: '100%', padding: '2rem' }}>
+                                <div className={styles.appIcon} style={{ color: 'var(--ifm-color-primary)' }}>
+                                    {prop.icon}
+                                </div>
+                                <h3 style={{ fontSize: '1.5rem' }}>{prop.title}</h3>
+                                <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>{prop.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function UseCases() {
+    const cases = [
+        {
+            icon: <Shield size={32} />,
+            title: 'Content Moderation',
+            description:
+                'Automatically validate all user inputs across 11 safety dimensions. Block harmful, violent, illegal, or inappropriate content before it reaches your AI.',
+            time: '20 hours saved/week'
+        },
+        {
+            icon: <Lock size={32} />,
+            title: 'PII Protection',
+            description:
+                'Detect and redact 15+ PII types including SSN, credit cards, emails, phone numbers. HIPAA, GDPR, and PCI-DSS compliance made automatic.',
+            time: '15 hours saved/week'
+        },
+        {
+            icon: <AlertTriangle size={32} />,
+            title: 'Hallucination Detection',
+            description:
+                'Catch RAG hallucinations before they reach users. Validate AI responses against source documents with Fiddler Fast Faithfulness.',
+            time: '12 hours saved/week'
+        },
+        {
+            icon: <FileCheck size={32} />,
+            title: 'Compliance Enforcement',
+            description:
+                'Meet HIPAA, GDPR, SOC 2, and industry regulations automatically. Audit trail included. Reduce compliance review time by 90%.',
+            time: '18 hours saved/week'
+        },
+        {
+            icon: <Eye size={32} />,
+            title: 'Customer-Facing Chatbots',
+            description:
+                'Protect users from unsafe content and data leaks in public chatbots. Build trust with enterprise-grade safety and privacy controls.',
+            time: '25 hours saved/week'
+        },
+        {
+            icon: <Activity size={32} />,
+            title: 'Internal Knowledge Bases',
+            description:
+                'Ensure accurate, faithful responses from RAG systems. Prevent misinformation. Monitor AI quality in real-time with <150ms latency.',
+            time: '10 hours saved/week'
+        }
+    ]
+
+    return (
+        <section className={styles.featuresSection}>
+            <div className='container'>
+                <h2 className='text--center' style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+                    What You Can Build
+                </h2>
+                <p className='text--center' style={{ fontSize: '1.3rem', opacity: 0.9, marginBottom: '3rem' }}>
+                    Real use cases from real teams using Fiddler guardrails
+                </p>
+                <div className='row'>
+                    {cases.map((useCase, idx) => (
+                        <div key={idx} className='col col--4' style={{ marginBottom: '2rem' }}>
+                            <div className={styles.featureCard} style={{ height: '100%' }}>
+                                <div style={{ color: 'var(--ifm-color-primary)', marginBottom: '1rem' }}>{useCase.icon}</div>
+                                <h3>{useCase.title}</h3>
+                                <p style={{ marginBottom: '1rem' }}>{useCase.description}</p>
+                                <div
+                                    style={{
+                                        background: 'var(--ifm-color-primary-lightest)',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '4px',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600,
+                                        color: 'var(--ifm-color-primary-darkest)'
+                                    }}
+                                >
+                                    ⏱️ {useCase.time}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function HowItWorks() {
+    const steps = [
+        {
+            number: '1',
+            title: 'Connect in 60 Seconds',
+            description: "Add your Fiddler API credentials. Configure safety thresholds and PII actions. That's it."
+        },
+        {
+            number: '2',
+            title: 'Choose Your Protection Level',
+            description: 'Pick from strict, balanced, or lenient presets. Or customize per-dimension thresholds for exact control.'
+        },
+        {
+            number: '3',
+            title: 'Watch Protection Happen',
+            description: 'Guardrails run automatically on every request. <150ms latency. Fail-open reliability. Full audit trail.'
+        }
+    ]
+
+    return (
+        <section className={styles.featuresSection} style={{ background: 'var(--ifm-background-surface-color)' }}>
+            <div className='container'>
+                <h2 className='text--center' style={{ fontSize: '2.5rem', marginBottom: '3rem' }}>
+                    Get Started in 3 Easy Steps
+                </h2>
+                <div className='row'>
+                    {steps.map((step, idx) => (
+                        <div key={idx} className='col col--4'>
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                                <div
+                                    style={{
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        background: 'var(--ifm-color-primary)',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '2rem',
+                                        fontWeight: 'bold',
+                                        margin: '0 auto 1.5rem'
+                                    }}
+                                >
+                                    {step.number}
+                                </div>
+                                <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{step.title}</h3>
+                                <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>{step.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                    <a
+                        href='https://calendly.com/brad-theanswer/answeragent-intro'
+                        className={clsx(styles.ctaButton, styles.ctaPrimary)}
+                        style={{ fontSize: '1.2rem', padding: '1rem 2rem' }}
+                    >
+                        <Sparkles size={20} style={{ marginRight: '0.5rem' }} />
+                        See It In Action - Book a Demo
+                    </a>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function FinalCTA() {
+    return (
+        <section
+            className={styles.featuresSection}
+            style={{
+                background: 'linear-gradient(135deg, var(--ifm-color-primary-darkest) 0%, var(--ifm-color-primary-darker) 100%)',
+                color: 'white',
+                padding: '4rem 0'
+            }}
+        >
+            <div className='container' style={{ textAlign: 'center' }}>
+                <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'white' }}>Ready to Build Safe, Compliant AI?</h2>
+                <p style={{ fontSize: '1.3rem', marginBottom: '2rem', opacity: 0.9 }}>
+                    Join hundreds of teams using Fiddler guardrails to <strong>protect users</strong>, <strong>meet compliance</strong>, and{' '}
+                    <strong>build trust</strong>.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <a
+                        href='https://calendly.com/brad-theanswer/answeragent-intro'
+                        className={clsx(styles.ctaButton)}
+                        style={{
+                            fontSize: '1.2rem',
+                            padding: '1rem 2rem',
+                            background: 'white',
+                            color: 'var(--ifm-color-primary)',
+                            border: 'none'
+                        }}
+                    >
+                        <Sparkles size={20} style={{ marginRight: '0.5rem' }} />
+                        Book Your Demo Now
+                    </a>
+                    <a
+                        href='/docs/integrations/fiddler'
+                        className={clsx(styles.ctaButton)}
+                        style={{
+                            fontSize: '1.2rem',
+                            padding: '1rem 2rem',
+                            background: 'transparent',
+                            color: 'white',
+                            border: '2px solid white'
+                        }}
+                    >
+                        <BookOpen size={20} style={{ marginRight: '0.5rem' }} />
+                        Or Start With the Setup Guide
+                    </a>
+                </div>
+                <p style={{ marginTop: '2rem', opacity: 0.8, fontSize: '1rem' }}>
+                    ✓ No credit card required ✓ Setup in under 5 minutes ✓ Cancel anytime
+                </p>
+            </div>
+        </section>
+    )
+}
+
+export default function FiddlerIntegration() {
+    const jsonLdData = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'Fiddler AI Guardrails Integration by AnswerAgentAI',
+        applicationCategory: 'BusinessApplication',
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'USD'
+        },
+        description:
+            'Add AI safety guardrails with multi-dimensional content validation, PII detection, and hallucination prevention. Save 20+ hours per week on content moderation. Prevent compliance violations. AI that actually works. Setup in under 5 minutes.',
+        operatingSystem: 'Cloud',
+        featureList: [
+            '11-dimension safety validation (harmful, violent, illegal, sexual, racist, etc.)',
+            '15+ PII types detection and redaction (SSN, credit card, email, phone, etc.)',
+            'RAG hallucination detection with faithfulness checking',
+            'HIPAA, GDPR, PCI-DSS, SOC 2 compliance automation',
+            'Per-dimension safety thresholds and actions',
+            'Per-type PII confidence thresholds and actions',
+            'Fail-open reliability with circuit breaker protection',
+            'Sub-150ms latency with connection pooling',
+            'Redis caching for improved performance',
+            'Full audit trail and compliance reporting'
+        ],
+        aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.9',
+            ratingCount: '89'
+        },
+        provider: {
+            '@type': 'Organization',
+            name: 'AnswerAgentAI',
+            url: 'https://theanswer.ai'
+        }
+    }
+
+    return (
+        <LayoutComponent
+            title='Fiddler AI Guardrails Integration'
+            description='Add AI safety guardrails with multi-dimensional content validation, PII detection, and hallucination prevention. Save 20+ hours per week. Prevent compliance violations. AI that actually works. Setup in 5 minutes.'
+        >
+            <JsonLd data={jsonLdData} />
+            <FiddlerHero />
+            <ValueProps />
+            <UseCases />
+            <HowItWorks />
+            <FinalCTA />
+        </LayoutComponent>
+    )
+}
