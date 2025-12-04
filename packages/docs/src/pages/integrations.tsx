@@ -105,6 +105,13 @@ const INTEGRATIONS = [
         description: 'Access Airtable bases and records.'
     },
     {
+        name: 'Contentful',
+        domain: 'contentful.com',
+        category: 'CMS',
+        difficulty: 'Easy',
+        description: 'Integrate Contentful CMS to load and manage structured content through AI workflows.'
+    },
+    {
         name: 'Dropbox',
         domain: 'dropbox.com',
         category: 'Storage',
