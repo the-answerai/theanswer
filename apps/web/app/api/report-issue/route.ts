@@ -137,6 +137,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
         }
 
+        if (body.userAgent && (typeof body.userAgent !== 'string' || body.userAgent.length > 1000)) {
+            return NextResponse.json({ error: 'Invalid user agent' }, { status: 400 })
+        }
+
         // 5. Sanitize error content for title
         const sanitizedMessage = sanitizeErrorContent(body.errorMessage).substring(0, 100)
 
@@ -156,8 +160,8 @@ export async function POST(request: NextRequest) {
             '## Context',
             '',
             `**Reported by:** ${user.email}`,
-            user.organizationName ? `**Organization:** ${user.organizationName}` : null,
-            user.organizationId ? `**Organization ID:** \`${user.organizationId}\`` : null,
+            user.org_name ? `**Organization:** ${user.org_name}` : null,
+            user.org_id ? `**Organization ID:** \`${user.org_id}\`` : null,
             `**Timestamp:** ${body.timestamp}`,
             body.url ? `**URL:** ${body.url}` : null,
             body.userAgent ? `**User Agent:** ${body.userAgent}` : null,
