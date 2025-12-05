@@ -455,10 +455,13 @@ class Qdrant_VectorStores implements INode {
             retrieverConfig.filter = typeof queryFilter === 'object' ? queryFilter : parseJsonBody(queryFilter)
         }
         if (isFileUploadEnabled && options.chatId) {
-            retrieverConfig.filter = retrieverConfig.filter || {}
+            // @ts-ignore
+            retrieverConfig.filter = retrieverConfig.filter ?? {}
 
+            // @ts-ignore
             retrieverConfig.filter.should = Array.isArray(retrieverConfig.filter.should) ? retrieverConfig.filter.should : []
 
+            // @ts-ignore
             retrieverConfig.filter.should.push(
                 {
                     key: `metadata.${FLOWISE_CHATID}`,

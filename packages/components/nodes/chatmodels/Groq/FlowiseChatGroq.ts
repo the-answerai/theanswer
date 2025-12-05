@@ -14,7 +14,7 @@ export class FlowiseChatGroq extends BaseChatModel<BaseChatModelCallOptions> imp
 
     constructor(fields: ChatGroqInput) {
         super(fields)
-        this.model = fields.model
+        this.model = fields.model!
         if (fields.apiKey) this.apiKey = fields.apiKey
         this.temperature = fields.temperature ?? 0.7
         this.maxTokens = fields.maxTokens

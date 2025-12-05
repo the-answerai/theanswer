@@ -1,28 +1,6 @@
-/**
- * AnswerPromptTemplate Node
- *
- * This node is a fork of the ChatPromptTemplate, designed to enable advanced prompt customization for chat-based workflows.
- *
- * Purpose:
- * - Provides a schema for answer prompts with support for system, human, and example messages.
- * - Allows advanced customization, including few-shot examples and dynamic prompt values.
- * - Serves as the foundation for future personalization (e.g., user variables, dynamic context).
- *
- * Usage:
- * - Use this node in chat flows where you need more control over prompt structure and content.
- * - Supports code-based message history for few-shot learning and advanced scenarios.
- *
- * Extension Guidance:
- * - To add new features (e.g., user variables, context injection), extend the inputs array and update the init logic.
- * - Keep all comments and documentation in English.
- * - Follow the pattern of composability and clear separation of message types.
- *
- * For more details, see the team documentation on prompt engineering and chat flow design.
- */
 import { ICommonObject, IDatabaseEntity, INode, INodeData, INodeParams } from '../../../src/Interface'
-import { getBaseClasses, transformBracesWithColon } from '../../../src/utils'
+import { getBaseClasses, transformBracesWithColon, getVars, executeJavaScriptCode, createCodeExecutionSandbox } from '../../../src/utils'
 import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate } from '@langchain/core/prompts'
-import { getVM } from '../../sequentialagents/commonUtils'
 import { DataSource } from 'typeorm'
 const defaultFunc = `const { AIMessage, HumanMessage, ToolMessage } = require('@langchain/core/messages');
 
@@ -33,7 +11,7 @@ return [
         tool_calls: [
         {
             id: "12345",
-            name: "calulator",
+            name: "calculator",
             args: {
                 number1: 333382,
                 number2: 1932,
@@ -61,16 +39,15 @@ class AnswerPromptTemplate_Prompts implements INode {
     baseClasses: string[]
     inputs: INodeParams[]
     tags: string[]
-
     constructor() {
         this.label = 'Answer Prompt Template'
         this.name = 'answerPromptTemplate'
-        this.version = 1.0
+        this.version = 2.0
         this.type = 'ChatPromptTemplate'
         this.icon = 'prompt.svg'
         this.category = 'Prompts'
         this.tags = ['AAI']
-        this.description = 'Schema to represent an answer prompt for advanced customization'
+        this.description = 'Schema to represent an answer prompt'
         this.baseClasses = [this.type, ...getBaseClasses(ChatPromptTemplate)]
         this.inputs = [
             {
@@ -143,13 +120,28 @@ class AnswerPromptTemplate_Prompts implements INode {
         ) {
             const appDataSource = options.appDataSource as DataSource
             const databaseEntities = options.databaseEntities as IDatabaseEntity
-            const vm = await getVM(appDataSource, databaseEntities, nodeData, {})
+            const variables = await getVars(appDataSource, databaseEntities, nodeData, options)
+            const flow = {
+                chatflowId: options.chatflowid,
+                sessionId: options.sessionId,
+                chatId: options.chatId
+            }
+
+            const sandbox = createCodeExecutionSandbox('', variables, flow)
+
             try {
-                const response = await vm.run(`module.exports = async function() {${messageHistoryCode}}()`, __dirname)
-                if (!Array.isArray(response)) throw new Error('Returned message history must be an array')
+                const response = await executeJavaScriptCode(messageHistoryCode, sandbox, {
+                    libraries: ['axios', '@langchain/core']
+                })
+
+                const parsedResponse = JSON.parse(response)
+
+                if (!Array.isArray(parsedResponse)) {
+                    throw new Error('Returned message history must be an array')
+                }
                 prompt = ChatPromptTemplate.fromMessages([
                     SystemMessagePromptTemplate.fromTemplate(systemMessagePrompt),
-                    ...response,
+                    ...parsedResponse,
                     HumanMessagePromptTemplate.fromTemplate(humanMessagePrompt)
                 ])
             } catch (e) {
@@ -160,11 +152,9 @@ class AnswerPromptTemplate_Prompts implements INode {
         let promptValues: ICommonObject = {}
         if (promptValuesStr) {
             try {
-                const sanitizedPromptValuesStr = promptValuesStr.replace(/\n/g, '\\n') // Replace newlines with escaped newlines we might want a helper function for this
-                promptValues =
-                    typeof sanitizedPromptValuesStr === 'object' ? sanitizedPromptValuesStr : JSON.parse(sanitizedPromptValuesStr)
+                promptValues = typeof promptValuesStr === 'object' ? promptValuesStr : JSON.parse(promptValuesStr)
             } catch (exception) {
-                throw new Error("Invalid JSON in the AnswerPromptTemplate's promptValues: " + exception)
+                throw new Error("Invalid JSON in the ChatPromptTemplate's promptValues: " + exception)
             }
         }
         // @ts-ignore

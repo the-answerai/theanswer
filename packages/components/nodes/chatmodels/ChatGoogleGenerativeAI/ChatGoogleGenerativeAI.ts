@@ -302,16 +302,16 @@ class GoogleGenerativeAI_ChatModels implements INode {
 
         const model = new ChatGoogleGenerativeAI(nodeData.id, obj)
         model.setMultiModalOption(multiModalOption)
-        if (contextCache) model.setContextCache(contextCache)
+        // if (contextCache) model.setContextCache(contextCache)
 
         // Set user context for image uploads
-        if (options?.user) {
-            model.setUserContext({
-                organizationId: options.user.organizationId,
-                userId: options.user.id,
-                userEmail: options.user.email || `${options.user.id}@local`
-            })
-        }
+        // if (options?.user) {
+        //     model.setUserContext({
+        //         organizationId: options.user.organizationId,
+        //         userId: options.user.id,
+        //         userEmail: options.user.email || `${options.user.id}@local`
+        //     })
+        // }
 
         return model
     }

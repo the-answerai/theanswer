@@ -70,7 +70,7 @@ export enum UserPlan {
 /**
  * Databases
  */
-export interface IUser {
+export interface IUser extends LoggedInUser {
     id: string
     name: string
     email: string

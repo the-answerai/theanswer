@@ -63,16 +63,16 @@ class AAIChatMemory_Memory implements INode {
     }
 
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
-        return await initializeRedis(nodeData)
+        return await initializeRedis(nodeData, options)
     }
 }
 
-const initializeRedis = async (nodeData: INodeData): Promise<BufferMemory> => {
+const initializeRedis = async (nodeData: INodeData, options: ICommonObject): Promise<BufferMemory> => {
     const sessionTTL = nodeData.inputs?.sessionTTL as number
     const memoryKey = nodeData.inputs?.memoryKey as string
     const sessionId = nodeData.inputs?.sessionId as string
     const windowSize = nodeData.inputs?.windowSize as number
-
+    const orgId = options.orgId as string
     // Get Redis URL from environment variable
     const redisUrl = process.env.AAI_DEFAULT_REDIS_URL
 
@@ -85,7 +85,8 @@ const initializeRedis = async (nodeData: INodeData): Promise<BufferMemory> => {
         sessionId,
         windowSize,
         sessionTTL,
-        redisOptions: redisUrl
+        redisOptions: redisUrl,
+        orgId
     })
 
     return memory
@@ -96,10 +97,12 @@ interface BufferMemoryExtendedInput {
     windowSize?: number
     sessionTTL?: number
     redisOptions: RedisOptions | string
+    orgId: string
 }
 
 class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
     sessionId = ''
+    orgId = ''
     windowSize?: number
     sessionTTL?: number
     redisOptions: RedisOptions | string
@@ -110,6 +113,7 @@ class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
         this.windowSize = fields.windowSize
         this.sessionTTL = fields.sessionTTL
         this.redisOptions = fields.redisOptions
+        this.orgId = fields.orgId
     }
 
     private async withRedisClient<T>(fn: (client: Redis) => Promise<T>): Promise<T> {
@@ -135,7 +139,7 @@ class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
             const orderedMessages = rawStoredMessages.reverse().map((message) => JSON.parse(message))
             const baseMessages = orderedMessages.map(mapStoredMessageToChatMessage)
             if (prependMessages?.length) {
-                baseMessages.unshift(...(await mapChatMessageToBaseMessage(prependMessages)))
+                baseMessages.unshift(...(await mapChatMessageToBaseMessage(prependMessages, this.orgId)))
             }
             return returnBaseMessages ? baseMessages : convertBaseMessagetoIMessage(baseMessages)
         })

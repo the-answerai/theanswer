@@ -239,7 +239,8 @@ const verifyApiKey = async (paramApiKey: string): Promise<string> => {
         if (!apiKey) {
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
         }
-        return 'OK'
+        // return 'OK'
+        return apiKey
     } catch (error) {
         if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.UNAUTHORIZED) {
             throw error

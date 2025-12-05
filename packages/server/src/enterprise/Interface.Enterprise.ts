@@ -19,6 +19,10 @@ export class IUser {
     activeWorkspaceId: string
     loginMode?: string
     activeOrganizationId?: string
+ 
+    // AAI 
+    stripeCustomerId: string
+    organizationId: string
 }
 
 export interface IWorkspaceUser {
@@ -77,6 +81,12 @@ export type LoggedInUser = {
     ssoRefreshToken?: string
     ssoToken?: string
     ssoProvider?: string
+
+    // AAI
+    auth0Id: string
+    stripeCustomerId: string
+    organizationId: string
+    roles: string[]
 }
 
 export enum ErrorMessage {

@@ -273,7 +273,7 @@ export function tryJsonStringify(obj: unknown, fallback: string) {
 
 export function elapsed(run: Run): string {
     if (!run.end_time) return ''
-    const elapsed = run.end_time - run.start_time
+    const elapsed = (run.end_time as number) - (run.start_time as number)
     if (elapsed < 1000) {
         return `${elapsed}ms`
     }
@@ -668,7 +668,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         }
                     }
 
-                    let langFuseOptions = {
+                    let langFuseOptions: any = {
                         secretKey: langFuseSecretKey,
                         publicKey: langFusePublicKey,
                         baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com',
@@ -1529,14 +1529,15 @@ export class AnalyticHandler {
                     returnIds['langFuse'].trace = parentIds['langFuse'].trace
                 }
             } else {
-            const trace: LangfuseTraceClient | undefined = this.handlers['langFuse'].trace[parentIds['langFuse'].trace]
-            if (trace) {
-                const generation = trace.generation({
-                    name,
-                    input: input
-                })
-                this.handlers['langFuse'].generation = { [generation.id]: generation }
-                returnIds['langFuse'].generation = generation.id
+                const trace: LangfuseTraceClient | undefined = this.handlers['langFuse'].trace[parentIds['langFuse'].trace]
+                if (trace) {
+                    const generation = trace.generation({
+                        name,
+                        input: input
+                    })
+                    this.handlers['langFuse'].generation = { [generation.id]: generation }
+                    returnIds['langFuse'].generation = generation.id
+                }
             }
         }
 
@@ -1628,7 +1629,6 @@ export class AnalyticHandler {
 
         return returnIds
     }
-}
 
     async onLLMEnd(returnIds: ICommonObject, output: string) {
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langSmith')) {
@@ -1647,10 +1647,10 @@ export class AnalyticHandler {
             if (!this.langfuseCallbacksActive && !this.useNodeLevelLangfuseSpans) {
                 const generationId = returnIds['langFuse'].generation
                 const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[generationId]
-            if (generation) {
-                generation.end({
-                    output: output
-                })
+                if (generation) {
+                    generation.end({
+                        output: output
+                    })
                     delete this.handlers['langFuse'].generation[generationId]
                     // console.log(`Langfuse generation ended: ${generation.id}`)
                 }
@@ -1726,10 +1726,10 @@ export class AnalyticHandler {
             if (!this.langfuseCallbacksActive && !this.useNodeLevelLangfuseSpans) {
                 const generationId = returnIds['langFuse'].generation
                 const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[generationId]
-            if (generation) {
-                generation.end({
-                    output: error
-                })
+                if (generation) {
+                    generation.end({
+                        output: error
+                    })
                     delete this.handlers['langFuse'].generation[generationId]
                     // console.log(`Langfuse generation errored: ${generation.id}`)
                 }
