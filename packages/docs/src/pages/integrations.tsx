@@ -74,7 +74,7 @@ const INTEGRATIONS = [
         domain: 'linear.app',
         category: 'Project Management',
         difficulty: 'Easy',
-        description: 'Sync issues and project tracking from Linear.'
+        description: 'Automate issue triage, sprint planning, and project management with AI-powered Linear workflows.'
     },
     {
         name: 'Notion',
