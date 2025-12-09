@@ -1,0 +1,795 @@
+---
+title: Salesforce Agent Integration
+description: Connect AI agents to Salesforce for intelligent CRM automation, lead qualification, and customer insights.
+sidebar_position: 15
+---
+
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
+<div style={{ textAlign: 'center', margin: '2rem 0' }}>
+    <img src={`https://img.logokit.com/salesforce.com?token=pk_fr8710fea017bdf10b13fe`} alt='Salesforce Logo' style={{ height: '80px' }} />
+</div>
+
+# Salesforce Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Overview',
+            integration: 'Salesforce',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+Empower your AI agents with Salesforce integration to automate CRM workflows, qualify leads, manage opportunities, and extract customer insights. With both OAuth and API authentication options, you can securely connect to your Salesforce org and leverage AI to streamline sales, service, and marketing operations.
+
+## Overview
+
+The Salesforce Agent Integration enables AI-powered automation across your entire Salesforce ecosystem. Whether you're working with Sales Cloud, Service Cloud, or custom objects, our integration provides comprehensive access to your CRM data through secure authentication methods and intelligent query capabilities.
+
+**Key Capabilities:**
+
+-   **OAuth 2.0 Authentication** - Secure, user-authorized access to Salesforce
+-   **API Key Authentication** - Simple authentication for service accounts
+-   **SOQL Querying** - Execute sophisticated queries against any Salesforce object
+-   **Record Management** - Create, read, update, and delete records via AI agents
+-   **Sandbox Support** - Test and develop safely in sandbox environments
+-   **Multi-Org Support** - Connect to multiple Salesforce organizations
+
+---
+
+## Quick Start
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Quick Start',
+            integration: 'Salesforce',
+            question: 'How do I get started with Salesforce integration?',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+### Prerequisites
+
+Before connecting Salesforce to your AI agents, ensure you have:
+
+1. **Salesforce Account** - Active Salesforce org (Production or Sandbox)
+2. **Admin Access** - Permissions to create Connected Apps (for OAuth) or API tokens
+3. **API Access** - API access enabled in your Salesforce org
+4. **Connected App** - (For OAuth) A Salesforce Connected App with appropriate scopes
+
+### Obtaining Credentials
+
+#### Method 1: OAuth 2.0 (Recommended)
+
+OAuth provides secure, user-authorized access with automatic token refresh:
+
+1. **Create a Connected App in Salesforce**
+
+    - Navigate to **Setup** → **Apps** → **App Manager**
+    - Click **New Connected App**
+    - Fill in basic information:
+        - Connected App Name: `TheAnswer AI Integration`
+        - API Name: `TheAnswer_AI_Integration`
+        - Contact Email: Your email address
+
+2. **Enable OAuth Settings**
+
+    - Check **Enable OAuth Settings**
+    - Set **Callback URL**: `https://your-answerai-domain.com/oauth/callback`
+    - Select OAuth Scopes:
+        - `Full access (full)`
+        - `Perform requests at any time (refresh_token, offline_access)`
+        - `Access and manage your data (api)`
+
+3. **Save and Get Credentials**
+
+    - Click **Save** and then **Continue**
+    - Copy your **Consumer Key** (Client ID)
+    - Click **Click to reveal** and copy your **Consumer Secret** (Client Secret)
+
+4. **Configure in AnswerAgent AI**
+    - Go to **Credentials** in Sidekick Studio
+    - Select **Salesforce OAuth**
+    - Enter:
+        - **Client ID**: Your Consumer Key
+        - **Client Secret**: Your Consumer Secret
+        - **Instance URL**: Your Salesforce instance (e.g., `https://your-domain.my.salesforce.com`)
+        - **Is Sandbox**: Toggle if connecting to a sandbox org
+
+#### Method 2: API Authentication
+
+For service account or simpler authentication:
+
+1. **Generate Security Token**
+
+    - Log in to Salesforce
+    - Go to **Settings** → **My Personal Information** → **Reset My Security Token**
+    - Click **Reset Security Token**
+    - Check your email for the security token
+
+2. **Get Your Credentials**
+
+    - **Username**: Your Salesforce username (email)
+    - **Password**: Your Salesforce password
+    - **Security Token**: Token received via email
+    - **Instance URL**: Your Salesforce instance URL
+
+3. **Configure in AnswerAgent AI**
+    - Go to **Credentials** in Sidekick Studio
+    - Select **Salesforce API**
+    - Enter:
+        - **Username**: Your Salesforce username
+        - **Password**: Your Salesforce password
+        - **Security Token**: Your security token
+        - **Instance URL**: Your org's instance URL
+        - **Is Sandbox**: Toggle if using sandbox
+
+---
+
+## Available Components
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Available Components',
+            integration: 'Salesforce',
+            question: 'What Salesforce components are available?',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+:::info Auto-Generated Component List
+This section is automatically generated from component metadata. The following components are available as part of the Salesforce integration.
+
+Last updated: December 3, 2025
+:::
+
+The Salesforce integration provides the following MCP (Model Context Protocol) servers that enable AI agents to interact with your Salesforce org:
+
+### MCP Servers
+
+#### Salesforce OAuth MCP (v1)
+
+**Description:** MCP server that integrates the Salesforce API using OAuth authentication
+
+**Features:**
+
+-   Secure OAuth 2.0 authentication flow
+-   Automatic token refresh
+-   User-authorized access with granular permissions
+-   Support for both production and sandbox orgs
+
+**Credential Required:** Salesforce OAuth (v1)
+
+**Use Cases:**
+
+-   User-specific automations
+-   Delegated access scenarios
+-   Multi-user applications
+-   Applications requiring fine-grained permissions
+
+**Learn More:** [MCP Servers Documentation](/docs/sidekick-studio/chatflows/tools-mcp)
+
+---
+
+#### Salesforce MCP (v1)
+
+**Description:** MCP server that integrates the Salesforce API
+
+**Features:**
+
+-   Username/password authentication with security token
+-   Direct API access for service accounts
+-   SOQL query execution
+-   Full CRUD operations on Salesforce objects
+
+**Credential Required:** Salesforce API (v1)
+
+**Use Cases:**
+
+-   Batch operations and data synchronization
+-   Backend automation without user interaction
+-   Service-to-service integrations
+-   Scheduled jobs and cron tasks
+
+**Learn More:** [MCP Servers Documentation](/docs/sidekick-studio/chatflows/tools-mcp)
+
+---
+
+## Use Cases
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Use Cases',
+            integration: 'Salesforce',
+            question: 'What are common Salesforce automation use cases?',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+### 1. AI-Powered Lead Qualification 💎
+
+**Time Saved: 12 hours/week**
+
+Automatically qualify inbound leads by analyzing lead data, company information, and engagement history. AI agents can:
+
+-   Score leads based on custom criteria
+-   Research company backgrounds using web search
+-   Update lead status and assign to appropriate sales reps
+-   Generate personalized outreach recommendations
+
+**Example Workflow:**
+
+```
+New Lead Created → AI Agent Analyzes Lead Data → Enriches with External Data →
+Scores Lead → Updates Salesforce → Notifies Sales Rep
+```
+
+---
+
+### 2. Automated Opportunity Management 🎯
+
+**Time Saved: 10 hours/week**
+
+Let AI agents monitor and manage your sales pipeline by:
+
+-   Updating opportunity stages based on activity
+-   Identifying at-risk opportunities
+-   Suggesting next best actions for sales reps
+-   Generating sales forecasts and reports
+
+**Example Workflow:**
+
+```
+Opportunity Stage Change → AI Reviews Activity History → Calculates Win Probability →
+Updates Salesforce Fields → Creates Task for Sales Rep
+```
+
+---
+
+### 3. Intelligent Case Routing and Resolution 🎧
+
+**Time Saved: 15 hours/week**
+
+Enhance customer support with AI-powered case management:
+
+-   Automatically route cases to the right team or agent
+-   Suggest knowledge base articles for case resolution
+-   Draft response templates based on case details
+-   Escalate complex issues with context
+
+**Example Workflow:**
+
+```
+New Case Created → AI Analyzes Case Description → Searches Knowledge Base →
+Routes to Expert → Suggests Resolution Steps → Updates Case
+```
+
+---
+
+### 4. Sales Forecasting and Insights 📊
+
+**Time Saved: 8 hours/week**
+
+Generate intelligent sales forecasts and insights:
+
+-   Analyze historical opportunity data
+-   Predict quarterly revenue with AI models
+-   Identify trends and patterns in sales data
+-   Create executive dashboards and reports
+
+**Example Workflow:**
+
+```
+Weekly Schedule Trigger → AI Queries Opportunity Data → Analyzes Trends →
+Generates Forecast → Updates Salesforce Dashboard → Emails Report to Leadership
+```
+
+---
+
+### 5. Account Enrichment and Deduplication 🔍
+
+**Time Saved: 6 hours/week**
+
+Keep your Salesforce data clean and enriched:
+
+-   Identify and merge duplicate records
+-   Enrich accounts with external data sources
+-   Standardize data formats and fields
+-   Validate and update contact information
+
+**Example Workflow:**
+
+```
+New Account Created → AI Searches for Duplicates → Enriches with Company Data →
+Updates Salesforce Fields → Flags for Manual Review if Needed
+```
+
+---
+
+### 6. Automated Report Generation 📈
+
+**Time Saved: 5 hours/week**
+
+Create and distribute custom reports automatically:
+
+-   Generate reports based on SOQL queries
+-   Summarize key metrics and trends
+-   Format reports with natural language insights
+-   Distribute via email or Slack
+
+**Example Workflow:**
+
+```
+Schedule Trigger → AI Queries Salesforce Data → Generates Report →
+Analyzes Insights → Formats Report → Distributes to Stakeholders
+```
+
+---
+
+## Advanced Configuration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Advanced Configuration',
+            integration: 'Salesforce',
+            question: 'How do I configure advanced Salesforce features?',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+### SOQL Query Optimization
+
+When working with large Salesforce orgs, optimize your SOQL queries:
+
+**Best Practices:**
+
+-   **Use Selective Filters:** Always filter by indexed fields (Id, Name, CreatedDate, etc.)
+-   **Limit Results:** Use `LIMIT` clause to retrieve only necessary records
+-   **Avoid SELECT \*:** Specify only the fields you need
+-   **Use Relationship Queries:** Leverage parent-to-child and child-to-parent relationships
+
+**Example Optimized Query:**
+
+```sql
+SELECT Id, Name, Email, Account.Name, Account.Industry
+FROM Contact
+WHERE Account.Industry = 'Technology'
+AND LastModifiedDate >= LAST_N_DAYS:30
+LIMIT 100
+```
+
+---
+
+### Sandbox vs Production
+
+**Sandbox Testing:**
+
+-   Always test new automations in a sandbox first
+-   Use the "Is Sandbox" toggle in credential configuration
+-   Sandbox instance URLs typically include `.sandbox` or have a different domain
+
+**Production Deployment:**
+
+-   Thoroughly test all workflows in sandbox
+-   Use change sets or metadata API for large deployments
+-   Monitor API limits closely in production
+-   Set up error notifications
+
+---
+
+### API Limits and Monitoring
+
+Salesforce enforces API call limits based on your license type:
+
+**Daily API Limits:**
+
+-   Enterprise Edition: 1,000 calls per user per 24 hours
+-   Unlimited Edition: 5,000 calls per user per 24 hours
+-   Performance Edition: 10,000 calls per user per 24 hours
+
+**Monitoring Tips:**
+
+-   Check API usage: **Setup** → **System Overview** → **API Usage**
+-   Implement retry logic for rate limit errors
+-   Use bulk API for large data operations
+-   Cache frequently accessed data when possible
+
+---
+
+### Custom Objects and Fields
+
+The Salesforce integration works with all standard and custom objects:
+
+**Accessing Custom Objects:**
+
+-   Reference custom objects with `__c` suffix: `Custom_Object__c`
+-   Custom fields also use `__c`: `Custom_Field__c`
+-   Respect field-level security and object permissions
+
+**Example SOQL with Custom Objects:**
+
+```sql
+SELECT Id, Name, Custom_Field__c, Related_Object__r.Name
+FROM Custom_Object__c
+WHERE Status__c = 'Active'
+```
+
+---
+
+### Security and Permissions
+
+**OAuth Scope Configuration:**
+
+-   Request minimal required scopes
+-   Use `refresh_token` for long-lived access
+-   Implement proper token storage and encryption
+
+**API User Permissions:**
+
+-   Create dedicated API users for service accounts
+-   Assign profiles with appropriate object and field permissions
+-   Enable "API Enabled" permission
+-   Use permission sets for granular access control
+
+**Field-Level Security:**
+
+-   Ensure API user has read/write access to required fields
+-   Test with different user profiles
+-   Handle permission errors gracefully
+
+---
+
+### Multi-Org Support
+
+Connect to multiple Salesforce organizations:
+
+1. **Create Multiple Credentials**
+
+    - One credential per Salesforce org
+    - Name credentials clearly (e.g., "Salesforce Prod", "Salesforce Sandbox")
+
+2. **Configure Chatflows**
+
+    - Select the appropriate credential for each chatflow
+    - Use environment variables for dynamic org selection
+
+3. **Cross-Org Scenarios**
+    - Sync data between production and sandbox
+    - Aggregate data from multiple orgs
+    - Test and deploy across org boundaries
+
+---
+
+## Frequently Asked Questions
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'FAQ',
+            integration: 'Salesforce',
+            question: 'What are common Salesforce integration questions?',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='chip'
+        size='medium'
+    />
+</div>
+
+### Setup & Configuration
+
+**Q: Which authentication method should I use - OAuth or API Key?**
+
+A: **OAuth is recommended** for most use cases because it:
+
+-   Provides better security with automatic token refresh
+-   Supports user-specific permissions and auditing
+-   Allows granular scope control
+-   Works better with MFA-enabled orgs
+
+Use **API authentication** for:
+
+-   Service accounts and backend automations
+-   Simpler setups without user interaction
+-   Legacy systems or specific integration requirements
+
+---
+
+**Q: How do I find my Salesforce Instance URL?**
+
+A: Your instance URL is the domain you use to access Salesforce:
+
+-   Look at your browser's address bar when logged in
+-   Format: `https://[yourinstance].my.salesforce.com`
+-   For sandboxes: `https://[yourinstance]--[sandboxname].sandbox.my.salesforce.com`
+-   Classic orgs may have format: `https://[region].salesforce.com`
+
+---
+
+**Q: What is a Security Token and where do I find it?**
+
+A: A security token is an automatically generated key from Salesforce. It's required when accessing Salesforce API from IP addresses outside your trusted networks.
+
+To get your security token:
+
+1. Log in to Salesforce
+2. Go to **Settings** → **My Personal Information** → **Reset My Security Token**
+3. Click **Reset Security Token**
+4. Check your email for the new token
+5. Combine it with your password: `password + security_token`
+
+---
+
+**Q: Can I connect to both Production and Sandbox in the same installation?**
+
+A: Yes! Create separate credentials for each org:
+
+-   One credential for Production
+-   One credential for Sandbox
+-   Toggle the "Is Sandbox" setting appropriately
+-   Select the correct credential in each chatflow
+
+---
+
+**Q: How do I set up a Salesforce Connected App for OAuth?**
+
+A: Follow these steps:
+
+1. In Salesforce, go to **Setup** → **Apps** → **App Manager**
+2. Click **New Connected App**
+3. Fill in required fields (Name, API Name, Contact Email)
+4. Enable **OAuth Settings**
+5. Set your callback URL
+6. Select OAuth scopes (at minimum: `api`, `refresh_token`)
+7. Save and retrieve your Consumer Key and Secret
+
+Detailed instructions: [Salesforce Connected App Documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_create.htm)
+
+---
+
+### Usage & Best Practices
+
+**Q: What SOQL queries can I run?**
+
+A: You can run any valid SOQL query that your authenticated user has permission to execute:
+
+-   SELECT queries on standard and custom objects
+-   WHERE clauses with filters
+-   ORDER BY and LIMIT clauses
+-   Relationship queries (parent-to-child and child-to-parent)
+-   Aggregate functions (COUNT, SUM, AVG, etc.)
+
+**Not supported:**
+
+-   DML operations through SOQL (use APIs for INSERT, UPDATE, DELETE)
+-   Queries requiring dynamic SOQL (bind variables)
+
+**Example:**
+
+```sql
+SELECT Id, Name, Email, Account.Name
+FROM Contact
+WHERE Account.Type = 'Customer'
+ORDER BY LastModifiedDate DESC
+LIMIT 50
+```
+
+---
+
+**Q: How many API calls does an AI agent make to Salesforce?**
+
+A: It depends on the workflow complexity:
+
+-   **Simple query**: 1-2 API calls
+-   **CRUD operation**: 1 API call per record
+-   **Complex workflow**: 5-10 API calls
+-   **Bulk operations**: 1 API call per 200 records (Bulk API)
+
+**Best Practices:**
+
+-   Monitor API usage in Salesforce Setup
+-   Implement query result caching
+-   Use bulk operations for large datasets
+-   Batch multiple operations when possible
+
+---
+
+**Q: Can I access custom objects and fields?**
+
+A: Yes! The integration works with all standard and custom Salesforce objects:
+
+-   Custom objects: Reference with `__c` suffix (e.g., `Custom_Order__c`)
+-   Custom fields: Also use `__c` suffix (e.g., `Customer_Tier__c`)
+-   Ensure your API user has appropriate permissions
+-   Respect field-level security and sharing rules
+
+---
+
+**Q: How do I handle errors and rate limits?**
+
+A: The integration automatically handles common errors:
+
+-   **Rate Limits**: Automatic retry with exponential backoff
+-   **Authentication Errors**: Token refresh (OAuth) or re-authentication
+-   **Query Errors**: Detailed error messages for debugging
+
+**Best Practices:**
+
+-   Set up monitoring and alerts
+-   Implement logging for troubleshooting
+-   Test error scenarios in sandbox
+-   Review Salesforce debug logs for API issues
+
+---
+
+**Q: Can I work with Salesforce attachments and files?**
+
+A: Yes, the integration supports:
+
+-   Uploading attachments to Salesforce records
+-   Downloading attachments from Salesforce
+-   Working with Salesforce Files (ContentVersion and ContentDocument)
+-   Managing Chatter files
+
+**Note:** File operations count toward your API limits and data storage limits.
+
+---
+
+**Q: Is real-time Salesforce event streaming supported?**
+
+A: The current integration uses REST API polling. For real-time events, consider:
+
+-   Platform Events (publish/subscribe pattern)
+-   Change Data Capture (CDC) for record changes
+-   Streaming API for push notifications
+-   Apex callouts to webhook endpoints
+
+These require additional configuration in Salesforce and custom development.
+
+---
+
+### Troubleshooting
+
+**Q: I'm getting "INVALID_LOGIN: Invalid username, password, security token" error. What's wrong?**
+
+A: This error occurs when credentials are incorrect. Check:
+
+1. **Username**: Is it correct? (typically your email)
+2. **Password**: Is it your current Salesforce password?
+3. **Security Token**: Did you append it to your password? Format: `password + token`
+4. **Token Validity**: Reset your security token if you've changed your password
+5. **Sandbox vs Production**: Using correct credential type?
+
+---
+
+**Q: OAuth authentication fails with "redirect_uri_mismatch" error. How do I fix this?**
+
+A: The callback URL in your chatflow doesn't match the Connected App configuration:
+
+1. Check your Connected App's callback URL in Salesforce
+2. Ensure it matches exactly (including `https://` and any port numbers)
+3. If using localhost for testing, ensure port matches
+4. Remove any trailing slashes
+5. Save changes in Salesforce and wait a few minutes for propagation
+
+---
+
+**Q: Why am I getting "INSUFFICIENT_ACCESS" errors?**
+
+A: This indicates permission issues. Verify:
+
+1. **User Permissions**: Your API user has necessary profile/permission sets
+2. **Object Permissions**: Read/write access to objects you're querying
+3. **Field-Level Security**: Access to all fields in your queries
+4. **Sharing Rules**: Organization-wide defaults and sharing rules allow access
+5. **IP Restrictions**: Your IP is in the trusted IP range or security token is used
+
+---
+
+**Q: Queries are slow or timing out. How can I optimize performance?**
+
+A: Improve query performance:
+
+1. **Add Selective Filters**: Filter by indexed fields (Id, Name, CreatedDate, etc.)
+2. **Limit Result Size**: Use `LIMIT` clause to retrieve fewer records
+3. **Reduce Field Count**: Only SELECT fields you need
+4. **Check Query Plan**: Use Query Plan tool in Developer Console
+5. **Create Custom Indexes**: For frequently filtered custom fields
+6. **Avoid Non-Selective Queries**: Don't query without WHERE clause on large objects
+
+---
+
+**Q: I've hit my API limit. What should I do?**
+
+A: To manage API limits:
+
+1. **Check Current Usage**: Setup → System Overview → API Usage
+2. **Implement Caching**: Cache frequently accessed data
+3. **Bulk Operations**: Use Bulk API for large datasets
+4. **Batch Requests**: Combine multiple operations
+5. **Composite API**: Use composite requests to reduce API call count
+6. **Upgrade License**: Consider higher-tier Salesforce license if needed
+7. **Schedule Off-Peak**: Run heavy operations during off-peak hours
+
+---
+
+**Q: Can I test my integration without affecting production data?**
+
+A: Yes! Best practices for testing:
+
+1. **Use a Sandbox**: Create a sandbox org for testing
+2. **Toggle "Is Sandbox"**: Use sandbox credentials
+3. **Test Thoroughly**: Validate all workflows before production deployment
+4. **Change Sets**: Deploy tested configurations to production
+5. **Partial Copy Sandbox**: Use for realistic testing with sample data
+
+---
+
+**Q: How do I debug issues with my Salesforce integration?**
+
+A: Debugging steps:
+
+1. **Check Credentials**: Verify all credential fields are correct
+2. **Test Connection**: Try a simple query (e.g., `SELECT Id FROM User LIMIT 1`)
+3. **Review Logs**: Check chatflow execution logs in AnswerAgent AI
+4. **Salesforce Debug Logs**: Enable debug logs in Salesforce Setup
+5. **API Limits**: Check if you've hit API limits
+6. **Permissions**: Verify user has necessary permissions
+7. **Network**: Ensure firewall/proxy allows Salesforce API access
+
+---
+
+## Resources
+
+-   [Official Salesforce Documentation](https://developer.salesforce.com/docs)
+-   [Salesforce REST API Reference](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/)
+-   [SOQL and SOSL Reference](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/)
+-   [Salesforce Connected Apps](https://help.salesforce.com/s/articleView?id=sf.connected_app_create.htm)
+-   [API Limits Documentation](https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/)
+-   [Salesforce Security Guide](https://developer.salesforce.com/docs/atlas.en-us.securityImplGuide.meta/securityImplGuide/)
+-   [Trailhead - Salesforce API Basics](https://trailhead.salesforce.com/en/content/learn/modules/api_basics)
+
+---
+
+## Need Help?
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0 3rem 0' }}>
+    <AskAlphaButton
+        context={{
+            page: 'Salesforce Integration',
+            section: 'Help',
+            integration: 'Salesforce',
+            question: 'I need help with Salesforce integration',
+            url: '/docs/integrations/salesforce'
+        }}
+        variant='button'
+        size='large'
+    />
+</div>
+
+Have questions about the Salesforce integration? Click the button above to get instant AI-powered assistance, or reach out to our support team.

@@ -156,50 +156,37 @@ const ConnectedToolsIndicator = ({ credentials = [], flowData = null, onClick })
                                     pointerEvents: 'none' // Let parent handle clicks
                                 }}
                             >
-                                <Box
+                                <Avatar
+                                    src={iconUrl}
+                                    alt={item.label}
                                     sx={{
                                         width: 28,
                                         height: 28,
-                                        borderRadius: '50%',
                                         border: `2px solid ${theme.palette.background.paper}`,
                                         bgcolor: 'rgba(255, 255, 255, 0.9)',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                                         transition: 'transform 0.2s ease',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        overflow: 'hidden',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 600,
+                                        color: theme.palette.text.primary,
+                                        '& img': {
+                                            padding: '4px',
+                                            objectFit: 'contain'
+                                        },
                                         '&:hover': {
                                             transform: 'scale(1.1)',
                                             zIndex: visibleItems.length + 1
                                         }
                                     }}
                                 >
-                                    <img
-                                        src={iconUrl}
-                                        alt={item.label}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            padding: '4px',
-                                            objectFit: 'contain'
-                                        }}
-                                        onError={(e) => {
-                                            // Fallback to initials on error
-                                            e.target.style.display = 'none'
-                                            const parent = e.target.parentElement
-                                            parent.style.fontSize = '0.65rem'
-                                            parent.style.fontWeight = '600'
-                                            parent.style.color = theme.palette.text.primary
-                                            parent.innerHTML = item.label
-                                                .split(' ')
-                                                .map((word) => word[0])
-                                                .join('')
-                                                .toUpperCase()
-                                                .slice(0, 2)
-                                        }}
-                                    />
-                                </Box>
+                                    {/* Fallback to initials - Avatar handles this automatically when image fails */}
+                                    {item.label
+                                        .split(' ')
+                                        .map((word) => word[0])
+                                        .join('')
+                                        .toUpperCase()
+                                        .slice(0, 2)}
+                                </Avatar>
 
                                 {/* Green checkmark indicator for connected items */}
                                 {item.isConnected && (

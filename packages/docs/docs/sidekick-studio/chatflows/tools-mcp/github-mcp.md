@@ -4,7 +4,12 @@ title: GitHub MCP
 description: Use GitHub MCP to manage repositories, issues, and pull requests
 ---
 
-# GitHub MCP for Answer Agent
+# GitHub MCP
+
+**Version:** 1
+**Last Updated:** 2025-12-04
+**Category:** MCP Servers
+**Integration:** [GitHub](/docs/integrations/github)
 
 ## Introduction
 

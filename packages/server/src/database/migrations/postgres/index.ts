@@ -63,6 +63,8 @@ import { AddEnabledIntegrationsToOrganization1752614576000 } from './17526145760
 import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
 import { AddUniqueConstraintDefaultChatflows1753000000001 } from './1753000000001-AddUniqueConstraintDefaultChatflows'
 import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
+import { AddOrganizationConfig1753200000001 } from './1753200000001-AddOrganizationConfig'
+import { AddGuardrailsMetadataToChatMessage1753200000002 } from './1753200000002-AddGuardrailsMetadataToChatMessage'
 import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './1731429600000-BackfillDocumentStoreFileChunkUserScoping'
 
 export const postgresMigrations = [
@@ -131,5 +133,7 @@ export const postgresMigrations = [
     AddVersioningToChatFlow1753000000000,
     AddUniqueConstraintDefaultChatflows1753000000001,
     AddTrackingMetadataToChatMessage1753200000000,
+    AddOrganizationConfig1753200000001,
+    AddGuardrailsMetadataToChatMessage1753200000002,
     BackfillDocumentStoreFileChunkUserScoping1731429600000
 ]

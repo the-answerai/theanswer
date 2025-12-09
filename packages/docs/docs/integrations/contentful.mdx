@@ -1,0 +1,956 @@
+---
+title: Contentful
+description: Integrate Contentful CMS with AnswerAgentAI to load, manage, and interact with your structured content through AI-powered workflows
+sidebar_position: 4
+---
+
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
+<div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    <img
+        src='https://img.logokit.com/contentful.com?token=pk_fr8710fea017bdf10b13fe'
+        alt='Contentful Logo'
+        height='80'
+        style={{ marginBottom: '1rem' }}
+    />
+</div>
+
+# Contentful Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0 2rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='medium'
+        context={{
+            page: 'integration-contentful',
+            section: 'overview',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about how the Contentful Agent Integration works?'
+        }}
+    />
+</div>
+
+## Overview
+
+Contentful is a modern headless content management system (CMS) that provides flexible content infrastructure for digital products. The AnswerAgentAI integration with Contentful enables you to seamlessly incorporate your CMS content into AI-powered workflows, allowing you to build intelligent applications that leverage your existing content infrastructure.
+
+With this integration, you can:
+
+-   **Load content** from your Contentful spaces into AI workflows using the Document Loader
+-   **Manage content** programmatically through the MCP (Model Context Protocol) server
+-   **Query and search** across your content using natural language
+-   **Create and update** entries, assets, and content types through AI agents
+-   **Publish and unpublish** content as part of automated workflows
+-   **Leverage rich content models** including references, assets, and localization
+
+Contentful's API-first architecture makes it ideal for AI integrations, providing structured, queryable content that can power everything from chatbots and virtual assistants to content generation and automated publishing workflows.
+
+## Quick Start
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-contentful',
+            section: 'quick-start',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about setting up Contentful credentials?'
+        }}
+    />
+</div>
+
+### Obtaining Credentials
+
+Contentful provides two different API credentials depending on your use case:
+
+#### Contentful Delivery API (Read-Only Access)
+
+Use this for **loading and querying content** in published or preview states.
+
+**Required Credentials:**
+
+1. **Delivery Token**: For accessing published content
+2. **Preview Token**: For accessing draft/unpublished content
+3. **Space ID**: Your Contentful space identifier
+
+**How to obtain:**
+
+1. **Access API Keys Settings:**
+
+    - Log in to your Contentful account at [https://app.contentful.com/](https://app.contentful.com/)
+    - Navigate to **Settings � API keys**
+
+2. **Create or Select API Key:**
+
+    - Click **Add API key** to create a new key, or select an existing key
+    - Give it a descriptive name (e.g., "AnswerAgentAI Integration")
+
+3. **Copy Credentials:**
+    - **Space ID**: Found at the top of the API key page or in your space URL: `https://app.contentful.com/spaces/{SPACE_ID}/...`
+    - **Content Delivery API - access token**: This is your Delivery Token
+    - **Content Preview API - access token**: This is your Preview Token
+
+:::info API vs Preview
+
+-   Use **Delivery Token** to access only published content (production use cases)
+-   Use **Preview Token** to access draft and unpublished content (testing, staging environments)
+    :::
+
+**Documentation Reference:** [Contentful Delivery API](https://www.contentful.com/developers/docs/references/content-delivery-api/)
+
+#### Contentful Management API (Full Access)
+
+Use this for **creating, updating, deleting, and managing** content, assets, and content types.
+
+**Required Credentials:**
+
+1. **Management Token**: Personal access token with write permissions
+2. **Space ID**: Your Contentful space identifier
+
+**How to obtain:**
+
+1. **Access Personal Access Tokens:**
+
+    - Log in to your Contentful account
+    - Go to **Settings � API Keys � Content management tokens**
+
+2. **Create Personal Access Token:**
+
+    - Click **Generate personal token**
+    - Give it a descriptive name (e.g., "AnswerAgentAI Management")
+    - **Important**: Copy the token immediately - it will only be shown once!
+
+3. **Get Space ID:**
+    - Found in your space URL: `https://app.contentful.com/spaces/{SPACE_ID}/...`
+    - Or in **Settings � General Settings**
+
+:::warning Security Notice
+The Management Token has **full access** to create, modify, and delete content. Consider:
+
+-   Creating a dedicated token for AnswerAgentAI
+-   Using environment-specific tokens
+-   Regularly rotating tokens for security
+-   Never committing tokens to version control
+    :::
+
+**Documentation Reference:** [Contentful Management API](https://www.contentful.com/developers/docs/references/content-management-api/)
+
+### Environment ID (Optional)
+
+Both APIs support multiple environments within a space:
+
+-   **Default**: `master` (used if not specified)
+-   **Custom**: Create environments in **Settings � Environments** for staging, development, etc.
+
+## Available Components
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-contentful',
+            section: 'available-components',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about Contentful components and features?'
+        }}
+    />
+</div>
+
+:::info Auto-Generated
+This section is automatically generated from component metadata in `scripts/integration-mapping.json`.
+Last updated: December 3, 2025
+:::
+
+This integration provides components across multiple categories:
+
+### Document Loaders
+
+Load structured content from your Contentful space into your AI workflows.
+
+#### Contentful Document Loader (v1.1)
+
+**Description:** Load data from a Contentful Space with advanced filtering, content type configuration, and citation support.
+
+**Key Features:**
+
+-   Choose between Delivery API (published) or Preview API (draft content)
+-   Configure which content types and fields to load
+-   Support for rich text parsing and embedded content
+-   Pagination support for large content sets
+-   Automatic citation generation with custom URL prefixes
+-   Include levels for nested references
+
+**Configuration Options:**
+
+-   **API Type**: Delivery or Preview
+-   **Content Type Config**: JSON configuration for content types and fields
+-   **Search Query**: Filter content by fields, content type, or custom queries
+-   **Environment ID**: Target specific environment (default: 'master')
+-   **Include Levels**: Depth of reference resolution (default: 1)
+-   **Limit**: Maximum entries per request
+-   **Include Field Names**: Include field names in output for better context
+
+**Use Cases:**
+
+-   Building knowledge bases from CMS content
+-   Creating chatbots with product/documentation content
+-   Generating embeddings from blog posts or articles
+-   Syncing content to vector stores for semantic search
+
+**Learn More:** [Contentful Document Loader Documentation](/docs/sidekick-studio/chatflows/document-loaders/contentful)
+
+### MCP Servers
+
+Interact with Contentful's Management API through natural language using the Model Context Protocol.
+
+#### Contentful MCP Server (v1)
+
+**Description:** MCP Server for the Contentful API enabling full content management capabilities through AI agents.
+
+**Available Tools:**
+
+**Entry Management:**
+
+-   `search_entries` - Search for entries using query parameters
+-   `create_entry` - Create new content entries
+-   `get_entry` - Retrieve specific entry details
+-   `update_entry` - Update existing entries
+-   `delete_entry` - Delete entries
+-   `publish_entry` - Publish entries to make them live
+-   `unpublish_entry` - Unpublish entries
+
+**Asset Management:**
+
+-   `list_assets` - List assets with pagination
+-   `upload_asset` - Upload new media files
+-   `get_asset` - Retrieve asset details
+-   `update_asset` - Update asset metadata
+-   `delete_asset` - Delete assets
+-   `publish_asset` - Publish assets
+-   `unpublish_asset` - Unpublish assets
+
+**Content Type Management:**
+
+-   `list_content_types` - List all content types
+-   `get_content_type` - Get content type schema
+-   `create_content_type` - Create new content types
+-   `update_content_type` - Modify content type definitions
+-   `delete_content_type` - Remove content types
+-   `publish_content_type` - Activate content type changes
+-   `get_editor_interface` - Get editor UI configuration
+-   `update_editor_interface` - Customize editor interface
+
+**Space & Environment Management:**
+
+-   `list_spaces` - List available spaces
+-   `get_space` - Get space details
+-   `list_environments` - List environments in space
+-   `create_environment` - Create new environments
+-   `delete_environment` - Remove environments
+
+**Use Cases:**
+
+-   Automated content creation from AI-generated text
+-   Batch content updates and translations
+-   Content workflow automation
+-   Asset management and organization
+-   Dynamic content model evolution
+
+**Learn More:** [Contentful MCP Documentation](/docs/sidekick-studio/chatflows/tools-mcp/contentful-mcp)
+
+## Use Cases
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-contentful',
+            section: 'use-cases',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about Contentful use cases and workflows?'
+        }}
+    />
+</div>
+
+### Common Scenarios
+
+#### 1. AI-Powered Customer Support
+
+Load your documentation, help articles, and FAQs from Contentful to power an intelligent customer support chatbot.
+
+**Workflow:**
+
+1. Use **Contentful Document Loader** to import help articles
+2. Split text and generate embeddings
+3. Store in a vector database
+4. Query with customer questions for relevant answers
+5. Use citations to link back to original Contentful entries
+
+**Benefits:**
+
+-   Always up-to-date with CMS content
+-   Automatic URL generation for "learn more" links
+-   Support for rich text and multimedia content
+
+#### 2. Content Creation Pipeline
+
+Automate content creation and publishing using AI-generated text with human oversight.
+
+**Workflow:**
+
+1. Use AI agent to generate article content
+2. Create draft entry via **Contentful MCP** `create_entry`
+3. Upload associated images using `upload_asset`
+4. Link assets to entry with `update_entry`
+5. Notify editors for review
+6. Publish approved content with `publish_entry`
+
+**Benefits:**
+
+-   Streamlined content workflow
+-   Maintains editorial control
+-   Leverages existing Contentful UI for review
+
+#### 3. Multi-Channel Content Syndication
+
+Query and adapt content from Contentful for different channels and formats.
+
+**Workflow:**
+
+1. Search for blog posts using `search_entries`
+2. Retrieve full content with `get_entry`
+3. Use AI to adapt content for Twitter, LinkedIn, etc.
+4. Track which entries have been syndicated using custom fields
+
+**Benefits:**
+
+-   Single source of truth in Contentful
+-   Automated multi-channel distribution
+-   Consistent brand voice across channels
+
+#### 4. Intelligent Content Recommendations
+
+Build a recommendation engine based on semantic similarity of your content.
+
+**Workflow:**
+
+1. Load all blog posts/products via Document Loader
+2. Generate embeddings for each entry
+3. When user views content, find similar entries by vector search
+4. Display "Related Content" powered by AI understanding
+
+**Benefits:**
+
+-   Goes beyond simple keyword matching
+-   Understands content relationships semantically
+-   Improves user engagement
+
+#### 5. Automated Content Localization
+
+Translate and localize content across multiple markets.
+
+**Workflow:**
+
+1. Detect entries with missing locale fields using `search_entries`
+2. Retrieve source content with `get_entry`
+3. Use AI to translate to target languages
+4. Update entry with localized fields via `update_entry`
+5. Maintain reference to source locale for audit
+
+**Benefits:**
+
+-   Scale content across markets faster
+-   Maintain consistency in translation
+-   Reduce manual localization effort
+
+## Example Workflows
+
+### Example 1: Loading Blog Posts for RAG
+
+**Goal:** Create a Q&A chatbot that answers questions about your blog content.
+
+**Chatflow Configuration:**
+
+```
+1. Contentful Document Loader
+   - Credential: Contentful Delivery API
+   - Config Utility:
+     {
+       "mainContentType": {
+         "contentType": "blogPost",
+         "fieldsToParse": ["title", "body", "author", "tags"]
+       },
+       "fieldsForCitation": {
+         "titleField": "fields.title",
+         "slugField": "fields.slug",
+         "urlPrefix": "https://myblog.com/posts/"
+       }
+     }
+   - Search Query: {"content_type": "blogPost", "order": "-sys.createdAt"}
+   - Limit: 100
+
+2. Recursive Character Text Splitter
+   - Chunk Size: 1000
+   - Chunk Overlap: 200
+
+3. OpenAI Embeddings
+   - Model: text-embedding-3-small
+
+4. Pinecone Vector Store
+   - Store documents with embeddings
+
+5. Conversational Retrieval QA Chain
+   - Retriever: Pinecone
+   - LLM: GPT-4
+   - Return Source Documents: true
+```
+
+**Result:** Users can ask questions about blog topics, and the chatbot responds with accurate answers including source links back to Contentful content.
+
+### Example 2: Automated Product Updates
+
+**Goal:** Update product descriptions using AI while maintaining data in Contentful.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent (OpenAI Functions)
+   - LLM: GPT-4
+   - Tools: Contentful MCP
+
+2. System Prompt:
+   "You are a product content manager. When asked to update a product:
+   1. Search for the product by name using search_entries
+   2. Get the current product details with get_entry
+   3. Generate an improved description based on features
+   4. Update the entry with the new description using update_entry
+   5. Ask if the user wants to publish the changes"
+
+3. Memory: Buffer Memory (to track conversation)
+```
+
+**Example Interaction:**
+
+```
+User: "Update the description for our Premium Headphones to be more engaging"
+
+Agent:
+1. Searches entries: {"content_type": "product", "fields.name": "Premium Headphones"}
+2. Gets current entry and analyzes existing description
+3. Generates improved copy highlighting features
+4. Updates entry in Contentful
+5. Responds: "I've updated the description for Premium Headphones. The new version
+   emphasizes the noise cancellation and 30-hour battery life. Would you like me
+   to publish it now?"
+
+User: "Yes, publish it"
+
+Agent:
+1. Publishes entry using publish_entry
+2. Responds: "Done! The updated Premium Headphones description is now live."
+```
+
+### Example 3: Content Audit and SEO Optimization
+
+**Goal:** Analyze content for SEO issues and fix them automatically.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent
+   - LLM: GPT-4-Turbo
+   - Tools: [Contentful MCP, Custom SEO Analysis Tool]
+
+2. Workflow:
+   - List all published blog posts using search_entries
+   - For each post:
+     * Check meta description length
+     * Analyze keyword density
+     * Verify heading structure
+     * Check for missing alt text on images
+   - Generate recommendations
+   - Apply fixes with user approval using update_entry
+```
+
+**Benefits:**
+
+-   Automated SEO audits
+-   Batch content improvements
+-   Maintains content in Contentful CMS
+
+## Advanced Configuration
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-contentful',
+            section: 'advanced-configuration',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about advanced Contentful configuration?'
+        }}
+    />
+</div>
+
+### Document Loader Configuration
+
+#### Content Type Configuration
+
+The `Config Utility` parameter accepts a JSON object that defines how content should be extracted:
+
+```json
+{
+    "mainContentType": {
+        "contentType": "blogPost",
+        "fieldsToParse": ["title", "body", "author", "publishDate"]
+    },
+    "embeddedContentTypes": [
+        {
+            "contentType": "author",
+            "fieldsToParse": ["name", "bio", "avatar"]
+        },
+        {
+            "contentType": "category",
+            "fieldsToParse": ["name", "description"]
+        }
+    ],
+    "richTextParsingRules": {
+        "embedded-asset-block": true,
+        "embedded-entry-block": true,
+        "embedded-entry-inline": true,
+        "hyperlink": true
+    },
+    "fieldsForCitation": {
+        "titleField": "fields.title",
+        "slugField": "fields.slug",
+        "urlPrefix": "https://mywebsite.com/blog/"
+    }
+}
+```
+
+**Configuration Options:**
+
+-   **mainContentType**: The primary content type to load
+
+    -   `contentType`: Content type ID
+    -   `fieldsToParse`: Array of field IDs to include
+
+-   **embeddedContentTypes**: Related content types (referenced entries)
+
+    -   Automatically resolved when referenced in main content
+    -   Specify which fields to include from each type
+
+-   **richTextParsingRules**: How to handle rich text fields
+
+    -   `embedded-asset-block`: Include embedded images/files
+    -   `embedded-entry-block`: Include embedded entry cards
+    -   `embedded-entry-inline`: Include inline entry references
+    -   `hyperlink`: Preserve hyperlinks
+
+-   **fieldsForCitation**: Generate source URLs
+    -   `titleField`: Path to title (for citation display)
+    -   `slugField`: Path to slug (for URL generation)
+    -   `urlPrefix`: Base URL to prepend to slug
+
+#### Search Query Configuration
+
+Filter which entries are loaded using Contentful's query syntax:
+
+```json
+{
+    "content_type": "blogPost",
+    "fields.category.sys.id": "technology",
+    "fields.published": true,
+    "order": "-sys.createdAt",
+    "limit": 50
+}
+```
+
+**Common Query Parameters:**
+
+-   `content_type`: Filter by content type ID
+-   `fields.{fieldName}`: Filter by field value
+-   `sys.id`: Filter by entry ID
+-   `order`: Sort order (prefix with `-` for descending)
+-   `limit`: Maximum entries (default: 100)
+-   `skip`: Pagination offset
+-   `locale`: Specify locale (e.g., "en-US")
+
+**Query Operators:**
+
+-   `fields.{field}[ne]`: Not equal
+-   `fields.{field}[in]`: In array
+-   `fields.{field}[nin]`: Not in array
+-   `fields.{field}[lt]`: Less than
+-   `fields.{field}[lte]`: Less than or equal
+-   `fields.{field}[gt]`: Greater than
+-   `fields.{field}[gte]`: Greater than or equal
+-   `fields.{field}[match]`: Full-text search
+
+**Examples:**
+
+```json
+// Get recent tech blog posts
+{
+  "content_type": "blogPost",
+  "fields.category": "technology",
+  "order": "-fields.publishDate",
+  "limit": 20
+}
+
+// Get products in price range
+{
+  "content_type": "product",
+  "fields.price[gte]": 100,
+  "fields.price[lte]": 500,
+  "fields.inStock": true
+}
+
+// Full-text search
+{
+  "content_type": "article",
+  "query": "artificial intelligence",
+  "order": "-sys.createdAt"
+}
+```
+
+### MCP Server Configuration
+
+#### Environment Variables
+
+For production deployments, configure credentials via environment variables:
+
+```bash
+CONTENTFUL_MANAGEMENT_ACCESS_TOKEN=your_management_token
+CONTENTFUL_SPACE_ID=your_space_id
+CONTENTFUL_ENVIRONMENT_ID=master  # or custom environment
+```
+
+#### Pagination Best Practices
+
+MCP tools limit results to prevent overwhelming responses:
+
+-   `search_entries`: Max 3 results per call
+-   `list_assets`: Max 3 results per call
+-   `list_content_types`: Max 10 results per call
+
+**Use pagination for larger datasets:**
+
+```javascript
+// Get next page of results
+{
+  "spaceId": "your_space_id",
+  "query": {
+    "content_type": "blogPost",
+    "limit": 3,
+    "skip": 3  // Skip first 3 for page 2
+  }
+}
+```
+
+#### Multi-Locale Support
+
+When working with localized content:
+
+```javascript
+// Create entry with multiple locales
+{
+  "contentTypeId": "blogPost",
+  "fields": {
+    "title": {
+      "en-US": "My English Title",
+      "es-ES": "Mi T�tulo en Espa�ol"
+    },
+    "body": {
+      "en-US": "English content...",
+      "es-ES": "Contenido en espa�ol..."
+    }
+  }
+}
+```
+
+## Frequently Asked Questions
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-contentful',
+            section: 'faq',
+            integration: 'Contentful',
+            question: 'Can I answer any questions about Contentful troubleshooting and best practices?'
+        }}
+    />
+</div>
+
+### Setup & Configuration
+
+**Q: What's the difference between Delivery API and Management API?**
+
+A:
+
+-   **Delivery API** is read-only and used to fetch published content (or preview draft content). Use this for loading data into AI workflows, vector stores, or displaying content.
+-   **Management API** has full read/write access for creating, updating, deleting, and publishing content. Use this for content automation, batch operations, and workflow integrations.
+
+**Q: Do I need both Delivery and Management API credentials?**
+
+A: It depends on your use case:
+
+-   **Only reading content**: Just Delivery API credentials (for Document Loader)
+-   **Managing content**: Just Management API credentials (for MCP Server)
+-   **Both reading and managing**: Both credential sets
+
+**Q: Can I use the same Space ID for multiple environments?**
+
+A: Yes! A Space ID identifies your Contentful space, which can contain multiple environments (master, staging, development, etc.). Specify the environment ID in your configuration to target different environments within the same space.
+
+**Q: What happens if I don't specify an Environment ID?**
+
+A: The integration defaults to `master`, which is Contentful's default environment. If you've created custom environments (e.g., "staging"), you must explicitly specify the environment ID.
+
+**Q: How do I handle Contentful rate limits?**
+
+A: Contentful has different rate limits based on your plan:
+
+-   Free tier: 78 requests per second
+-   Paid tiers: Higher limits
+
+For bulk operations:
+
+-   Use pagination with reasonable limits
+-   Implement delays between batch operations
+-   Cache frequently accessed content
+-   Consider using webhooks for real-time updates instead of polling
+
+### Usage & Best Practices
+
+**Q: How do I load only specific fields from a content type?**
+
+A: Use the `Config Utility` in the Document Loader:
+
+```json
+{
+    "mainContentType": {
+        "contentType": "yourContentType",
+        "fieldsToParse": ["field1", "field2", "field3"]
+    }
+}
+```
+
+Only specified fields will be included in the loaded documents.
+
+**Q: Can I load content from multiple content types?**
+
+A: Yes, in two ways:
+
+1. **Sequential loading**: Create multiple Document Loader nodes, one per content type
+2. **Referenced content**: Configure `embeddedContentTypes` to include related content types that are referenced by your main content type
+
+**Q: How do I handle rich text fields with embedded assets?**
+
+A: Configure `richTextParsingRules` in your Config Utility:
+
+```json
+{
+    "richTextParsingRules": {
+        "embedded-asset-block": true,
+        "embedded-entry-block": true
+    }
+}
+```
+
+This will resolve embedded assets and entries, including their content in the output.
+
+**Q: How can I generate clickable links back to my Contentful content?**
+
+A: Use `fieldsForCitation` in your Config Utility:
+
+```json
+{
+    "fieldsForCitation": {
+        "titleField": "fields.title",
+        "slugField": "fields.slug",
+        "urlPrefix": "https://mysite.com/articles/"
+    }
+}
+```
+
+This generates source URLs like `https://mysite.com/articles/my-article-slug` for each document.
+
+**Q: How do I filter content by publication date?**
+
+A: Use the Search Query parameter:
+
+```json
+{
+    "content_type": "blogPost",
+    "fields.publishDate[gte]": "2024-01-01",
+    "order": "-fields.publishDate"
+}
+```
+
+**Q: Can the MCP server create content types dynamically?**
+
+A: Yes! Use the `create_content_type` tool:
+
+```json
+{
+    "spaceId": "your_space_id",
+    "environmentId": "master",
+    "name": "New Content Type",
+    "fields": [
+        {
+            "id": "title",
+            "name": "Title",
+            "type": "Symbol",
+            "required": true
+        },
+        {
+            "id": "body",
+            "name": "Body",
+            "type": "Text",
+            "required": true
+        }
+    ],
+    "displayField": "title"
+}
+```
+
+**Q: How do I publish content after creating it?**
+
+A: Content creation and publishing are separate operations:
+
+1. Create entry: `create_entry` returns an entry ID
+2. Publish entry: `publish_entry` with that entry ID
+
+This two-step process allows for review before publishing.
+
+### Troubleshooting
+
+**Q: I'm getting "Unauthorized" errors**
+
+**Solutions:**
+
+1. Verify token is correct and hasn't expired
+2. Check that token has necessary permissions (delivery vs management)
+3. Confirm Space ID matches the token's access
+4. For Management API, ensure token is a Personal Access Token, not a delivery token
+
+**Q: Document Loader returns no content**
+
+**Possible causes:**
+
+1. **Wrong API type**: Ensure you're using Preview API for unpublished content
+2. **Search query too restrictive**: Check your search query filters
+3. **Content not published**: Verify content exists and is published (for Delivery API)
+4. **Wrong content type ID**: Confirm content type ID matches exactly (case-sensitive)
+5. **Environment mismatch**: Check that Environment ID is correct
+
+**Q: MCP server can't find my entries**
+
+**Solutions:**
+
+1. Use `list_content_types` first to verify content type IDs
+2. Use `search_entries` without filters to see what's available
+3. Check that entries exist in the specified environment
+4. Verify Space ID and Environment ID are correct
+
+**Q: Images/assets aren't loading**
+
+**Causes:**
+
+1. Assets aren't published - use `publish_asset` after upload
+2. Rich text parsing rules disabled - enable `embedded-asset-block`
+3. Include levels too low - increase to resolve asset references
+4. Asset URLs need authentication (should auto-resolve with credentials)
+
+**Q: Getting "Version mismatch" errors when updating**
+
+**Solution:** Contentful uses optimistic locking. When updating:
+
+1. Get the entry with `get_entry` to retrieve current version
+2. Use the `sys.version` from the response in your update call
+3. If someone else updated it, you'll need to fetch the latest version again
+
+**Q: Rate limit errors**
+
+**Solutions:**
+
+1. Reduce `limit` parameter in queries
+2. Add delays between batch operations
+3. Use pagination instead of large single queries
+4. Cache content when possible to reduce API calls
+5. Upgrade Contentful plan for higher limits
+
+**Q: Locale/translation issues**
+
+**Issues:**
+
+1. **Missing locale**: Specify locale in search query: `{"locale": "en-US"}`
+2. **Wrong locale returned**: Set default locale in Contentful space settings
+3. **Creating multi-locale content**: Provide fields object with locale keys:
+    ```json
+    {
+        "fields": {
+            "title": {
+                "en-US": "English",
+                "es-ES": "Espa�ol"
+            }
+        }
+    }
+    ```
+
+**Q: Performance issues with large content sets**
+
+**Optimizations:**
+
+1. Use pagination (limit + skip) instead of loading all at once
+2. Reduce `includeLevel` to minimum needed (default: 1)
+3. Limit `fieldsToParse` to only necessary fields
+4. Use specific search queries instead of loading all entries
+5. Consider incremental updates using `sys.updatedAt` filters
+6. Cache results when content doesn't change frequently
+
+## Resources
+
+### Official Documentation
+
+-   **[Contentful Documentation](https://www.contentful.com/developers/docs/)** - Complete Contentful developer documentation
+-   **[Content Delivery API Reference](https://www.contentful.com/developers/docs/references/content-delivery-api/)** - REST API for fetching content
+-   **[Content Management API Reference](https://www.contentful.com/developers/docs/references/content-management-api/)** - REST API for managing content
+-   **[GraphQL API](https://www.contentful.com/developers/docs/references/graphql/)** - Alternative GraphQL API
+-   **[Content Preview API](https://www.contentful.com/developers/docs/references/content-preview-api/)** - API for preview/draft content
+
+### Guides & Tutorials
+
+-   **[Getting Started with Contentful](https://www.contentful.com/developers/docs/tutorials/general/get-started/)** - Beginner-friendly introduction
+-   **[Content Modeling Guide](https://www.contentful.com/developers/docs/concepts/data-model/)** - Design effective content structures
+-   **[Localization Guide](https://www.contentful.com/developers/docs/concepts/locales/)** - Multi-language content management
+-   **[Webhooks](https://www.contentful.com/developers/docs/concepts/webhooks/)** - Real-time event notifications
+-   **[Rich Text](https://www.contentful.com/developers/docs/concepts/rich-text/)** - Working with rich text fields
+
+### AnswerAgentAI Documentation
+
+-   **[Contentful Document Loader](/docs/sidekick-studio/chatflows/document-loaders/contentful)** - Detailed loader configuration
+-   **[Contentful MCP Server](/docs/sidekick-studio/chatflows/tools-mcp/contentful-mcp)** - Complete MCP tool reference
+-   **[Document Loaders Overview](/docs/sidekick-studio/chatflows/document-loaders/)** - General document loader concepts
+-   **[MCP Servers Overview](/docs/sidekick-studio/chatflows/tools-mcp/)** - Introduction to MCP integrations
+
+### Community & Support
+
+-   **[Contentful Community](https://www.contentful.com/community/)** - Forums, events, and discussions
+-   **[Contentful GitHub](https://github.com/contentful)** - SDKs and open source tools
+-   **[Stack Overflow](https://stackoverflow.com/questions/tagged/contentful)** - Q&A for Contentful developers
+-   **[Contentful Changelog](https://www.contentful.com/developers/changelog/)** - API updates and new features
+
+### Tools & SDKs
+
+-   **[JavaScript SDK](https://github.com/contentful/contentful.js)** - Official client library
+-   **[Management SDK](https://github.com/contentful/contentful-management.js)** - Management API client
+-   **[CLI](https://github.com/contentful/contentful-cli)** - Command-line interface
+-   **[Contentful Apps](https://www.contentful.com/marketplace/)** - Marketplace for extensions and apps

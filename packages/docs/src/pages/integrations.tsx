@@ -39,7 +39,7 @@ const INTEGRATIONS = [
         domain: 'github.com',
         category: 'Development',
         difficulty: 'Easy',
-        description: 'Access repositories, pull requests, and code reviews.'
+        description: 'Automate code reviews, issue triage, and documentation generation with AI-powered GitHub workflows.'
     },
     {
         name: 'Google Workspace',
@@ -103,6 +103,13 @@ const INTEGRATIONS = [
         category: 'Database',
         difficulty: 'Easy',
         description: 'Access Airtable bases and records.'
+    },
+    {
+        name: 'Contentful',
+        domain: 'contentful.com',
+        category: 'CMS',
+        difficulty: 'Easy',
+        description: 'Integrate Contentful CMS to load and manage structured content through AI workflows.'
     },
     {
         name: 'Dropbox',

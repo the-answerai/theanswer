@@ -161,7 +161,10 @@ Development mode warnings when:
 
 ### 4. Template Standardization
 
-**Integration Page Template:**
+**Integration Documentation Template (MDX):**
+
+**File Format:** `.mdx` (required for React components)
+**File Location:** `packages/docs/docs/integrations/{name}.mdx`
 
 ```mdx
 ---
@@ -170,13 +173,31 @@ description: {Auto-generated from credential}
 sidebar_position: {Auto-numbered alphabetically}
 ---
 
-# {Integration Name}
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
 
-<!-- Auto-generated section -->
-:::info Auto-Generated
-This section is automatically generated from component metadata.
-Last updated: {timestamp}
-:::
+<div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+  <img
+    src="https://img.logokit.com/{domain}?token=pk_fr8710fea017bdf10b13fe"
+    alt="{Integration Name} Logo"
+    height="80"
+    style={{ marginBottom: '1rem' }}
+  />
+</div>
+
+# {Integration Name} Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0 2rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="medium"
+    context={{
+      page: 'integration-{name}',
+      section: 'overview',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about how the {Integration Name} Agent Integration works?'
+    }}
+  />
+</div>
 
 ## Overview
 
@@ -184,12 +205,43 @@ Last updated: {timestamp}
 
 ## Quick Start
 
+<div style={{ margin: '1rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="small"
+    context={{
+      page: 'integration-{name}',
+      section: 'quick-start',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about setting up {Integration Name} credentials?'
+    }}
+  />
+</div>
+
 ### Obtaining Credentials
 
 <!-- Auto-generated from credential inputs -->
 {credential_setup_instructions}
 
 ## Available Components
+
+<div style={{ margin: '1rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="small"
+    context={{
+      page: 'integration-{name}',
+      section: 'available-components',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about {Integration Name} components and features?'
+    }}
+  />
+</div>
+
+:::info Auto-Generated
+This section is automatically generated from component metadata in `scripts/integration-mapping.json`.
+Last updated: {timestamp}
+:::
 
 This integration supports the following component types:
 
@@ -240,6 +292,19 @@ This integration supports the following component types:
 <!-- Manual section -->
 ## Use Cases
 
+<div style={{ margin: '1rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="small"
+    context={{
+      page: 'integration-{name}',
+      section: 'use-cases',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about {Integration Name} use cases and workflows?'
+    }}
+  />
+</div>
+
 ### Common Scenarios
 
 {manual_use_case_examples}
@@ -248,7 +313,37 @@ This integration supports the following component types:
 
 {example_chatflow_configurations}
 
+## Advanced Configuration
+
+<div style={{ margin: '1rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="small"
+    context={{
+      page: 'integration-{name}',
+      section: 'advanced-configuration',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about advanced {Integration Name} configuration?'
+    }}
+  />
+</div>
+
+{advanced_configuration_details}
+
 ## Frequently Asked Questions
+
+<div style={{ margin: '1rem 0' }}>
+  <AskAlphaButton
+    variant="chip"
+    size="small"
+    context={{
+      page: 'integration-{name}',
+      section: 'faq',
+      integration: '{Integration Name}',
+      question: 'Can I answer any questions about {Integration Name} troubleshooting and best practices?'
+    }}
+  />
+</div>
 
 ### Setup & Configuration
 
@@ -269,6 +364,35 @@ This integration supports the following component types:
 - [API Reference]({api_docs_url})
 - [Community Examples]({community_url})
 ```
+
+### Marketing Page Template (TSX):**
+
+**File Location:** `packages/docs/src/pages/integrations/{name}.tsx`
+
+**Key Requirements:**
+1. **ThreeJS Animation Background** - Use `ThreeJsScene` from `@site/src/components/Annimations/SphereScene`
+2. **Integration Logo** - Centered at top, 80px height from LogoKit
+3. **Compelling Headline** - Focus on value: "AI that actually works", "Easy setup", "Save time", "Be better at your job"
+4. **Two Primary CTAs:**
+   - **"Book a Demo"** → Calendly link: `https://calendly.com/brad-theanswer/answeragent-intro`
+   - **"Setup Guide"** → Docs link: `/docs/integrations/{name}`
+5. **Value Props Section** - Emphasize:
+   - Lightning fast setup (under 5 minutes)
+   - Time savings (quantified in hours/week)
+   - Job performance improvement
+6. **Use Cases Section** - Real-world examples with time savings
+7. **How It Works** - 3 simple steps
+8. **Final CTA Section** - Repeat CTAs with trust indicators
+9. **JSON-LD Schema** - For SEO optimization
+
+**Reference Implementation:** See `packages/docs/src/pages/integrations/contentful.tsx`
+
+**Marketing Copy Guidelines:**
+- ✅ **"AI that actually works"** - Core message
+- ✅ **"Easy/Simple setup"** - Remove friction
+- ✅ **"Save X hours per week"** - Quantify value
+- ✅ **"Be better at your job"** - Aspirational benefit
+- ✅ **"Setup in under 5 minutes"** - Speed to value
 
 ## Implementation Plan
 
@@ -829,3 +953,253 @@ This strategy provides:
 - Documentation auto-updates on build (0 manual updates)
 - Users can discover integrations in <3 clicks
 - Data Engine page shows real-time integration count
+
+## Integration Documentation & Marketing Page Checklist
+
+Use this checklist when creating documentation and marketing pages for each integration. Reference: **Contentful** (first complete implementation).
+
+### Phase 1: Documentation Page (`/docs/integrations/{name}.mdx`)
+
+**File Setup:**
+- [ ] Create `.mdx` file (not `.md`) in `packages/docs/docs/integrations/`
+- [ ] Import AskAlpha component: `import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'`
+- [ ] Add frontmatter (title, description, sidebar_position)
+
+**Header Section:**
+- [ ] Add centered integration logo (80px, LogoKit)
+- [ ] Change title to "{Integration Name} Agent Integration"
+- [ ] Add main AskAlpha button (medium, "Can I answer any questions about how the {Integration Name} Agent Integration works?")
+
+**Content Sections:**
+- [ ] Overview section with integration description
+- [ ] Quick Start section with AskAlpha button
+- [ ] Obtaining Credentials section (step-by-step)
+- [ ] Available Components section with:
+  - [ ] AskAlpha button
+  - [ ] Auto-generated callout with timestamp
+  - [ ] Component listings by type (Document Loaders, MCP Servers, Tools, etc.)
+  - [ ] Version numbers from integration-mapping.json
+- [ ] Use Cases section with:
+  - [ ] AskAlpha button
+  - [ ] 3-5 common scenarios
+  - [ ] Example workflows with chatflow configurations
+- [ ] Advanced Configuration section with:
+  - [ ] AskAlpha button
+  - [ ] Configuration examples
+  - [ ] Best practices
+- [ ] FAQ section with:
+  - [ ] AskAlpha button
+  - [ ] Setup & Configuration Q&A
+  - [ ] Usage & Best Practices Q&A
+  - [ ] Troubleshooting Q&A
+- [ ] Resources section with official links
+
+**AskAlpha Buttons (6 total):**
+- [ ] Overview (medium chip, centered)
+- [ ] Quick Start (small chip)
+- [ ] Available Components (small chip)
+- [ ] Use Cases (small chip)
+- [ ] Advanced Configuration (small chip)
+- [ ] FAQ (small chip)
+
+**Quality Checks:**
+- [ ] All component versions match integration-mapping.json
+- [ ] All links are valid
+- [ ] Auto-generated sections have timestamp and source reference
+- [ ] MDX compiles without errors
+- [ ] Images load correctly (LogoKit)
+
+### Phase 2: Marketing Page (`/integrations/{name}`)
+
+**File Setup:**
+- [ ] Create TSX file in `packages/docs/src/pages/integrations/`
+- [ ] Import required components (Layout, JsonLd, ThreeJsScene, icons)
+- [ ] Set up proper TypeScript types
+
+**Hero Section:**
+- [ ] ThreeJS animated background (SphereScene)
+- [ ] Integration logo (80px, LogoKit)
+- [ ] Compelling headline with key messages:
+  - [ ] "AI that actually works"
+  - [ ] Easy setup messaging
+  - [ ] Time savings promise
+  - [ ] Job performance benefit
+- [ ] Value prop badges (Save time, Be better, Quick setup)
+- [ ] Two primary CTAs:
+  - [ ] "Book a Demo" → Calendly link
+  - [ ] "Setup Guide" → /docs/integrations/{name}
+
+**Value Props Section:**
+- [ ] 3 main value propositions:
+  - [ ] Lightning Fast Setup (under 5 minutes)
+  - [ ] Save 10+ Hours Weekly (quantified)
+  - [ ] Be Better at Your Job (aspirational)
+- [ ] Use feature cards with icons
+- [ ] Clear, benefit-focused copy
+
+**Use Cases Section:**
+- [ ] 6 real-world use cases
+- [ ] Each includes:
+  - [ ] Icon
+  - [ ] Title
+  - [ ] Description
+  - [ ] Time saved per week (badge)
+
+**How It Works Section:**
+- [ ] 3 numbered steps
+- [ ] Large circular numbers (80px)
+- [ ] Clear, simple language
+- [ ] CTA at bottom
+
+**Final CTA Section:**
+- [ ] Gradient background
+- [ ] Compelling headline
+- [ ] Two CTAs (Book Demo, Setup Guide)
+- [ ] Trust indicators (No credit card, 5 min setup, Cancel anytime)
+
+**SEO & Schema:**
+- [ ] JSON-LD structured data with:
+  - [ ] SoftwareApplication type
+  - [ ] Feature list
+  - [ ] Aggregate rating
+  - [ ] Provider information
+- [ ] Optimized page title
+- [ ] Meta description with key benefits
+
+**Marketing Copy Guidelines:**
+- [ ] Use "AI that actually works" messaging
+- [ ] Emphasize easy setup (under 5 minutes)
+- [ ] Quantify time savings (X hours per week)
+- [ ] Focus on job performance improvement
+- [ ] Remove friction (no credit card, cancel anytime)
+- [ ] Use social proof where applicable
+
+### Phase 3: Integration Listing Updates
+
+**Integrations Page (`/integrations`):**
+- [ ] Add integration card to `INTEGRATIONS` array in `packages/docs/src/pages/integrations.tsx`
+- [ ] Include:
+  - [ ] name
+  - [ ] domain (for LogoKit)
+  - [ ] category
+  - [ ] difficulty
+  - [ ] description
+- [ ] Verify card appears in grid
+- [ ] Test "Setup Guide" link
+
+**Navigation:**
+- [ ] Ensure "Integrations" is in top navbar (already done globally)
+- [ ] Verify link works from all pages
+
+### Phase 4: Testing & Validation
+
+**Documentation Page Tests:**
+- [ ] Page loads without errors
+- [ ] Logo displays correctly
+- [ ] All 6 AskAlpha buttons work and open sidechat
+- [ ] AskAlpha context is correct for each section
+- [ ] All internal links work
+- [ ] All external links work
+- [ ] Auto-generated callout appears
+- [ ] Component versions are accurate
+- [ ] Mobile responsive
+
+**Marketing Page Tests:**
+- [ ] Page loads without errors
+- [ ] ThreeJS animation renders smoothly
+- [ ] Logo displays correctly
+- [ ] Both CTAs work (Calendly + Docs)
+- [ ] All sections render properly
+- [ ] Trust indicators display
+- [ ] JSON-LD validates (test with Google Rich Results)
+- [ ] Mobile responsive
+- [ ] Performance (Lighthouse score >90)
+
+**Integration Card Tests:**
+- [ ] Card appears on /integrations page
+- [ ] Logo loads via LogoKit
+- [ ] Category badge displays
+- [ ] Difficulty badge displays
+- [ ] "Setup Guide" link works
+- [ ] Searchable by name
+- [ ] Filterable by category
+
+**Cross-Browser Tests:**
+- [ ] Chrome
+- [ ] Firefox
+- [ ] Safari
+- [ ] Edge
+- [ ] Mobile browsers
+
+### Phase 5: Git & Linear
+
+**Linear Ticket:**
+- [ ] Create ticket: "Create {Integration Name} integration documentation"
+- [ ] Include acceptance criteria
+- [ ] Link to INTEGRATION_DOCS_STRATEGY.md
+- [ ] Reference integration-mapping.json section
+
+**Git Branch:**
+- [ ] Create feature branch from staging
+- [ ] Follow naming: `agent-XXX-{description}`
+
+**Commit & PR:**
+- [ ] Commit documentation page
+- [ ] Commit marketing page
+- [ ] Commit integrations.tsx updates
+- [ ] Use `/push` command with descriptive message
+- [ ] PR targets `staging` (not main)
+- [ ] Request review
+
+### Reference Implementation
+
+**Contentful Integration** is the gold standard implementation. Use it as reference:
+- **Documentation:** `/docs/integrations/contentful.mdx` (823 lines)
+- **Marketing Page:** `/integrations/contentful` (contentful.tsx)
+- **Integration Card:** Added to `/integrations` page
+
+**Key Files to Reference:**
+1. `packages/docs/docs/integrations/contentful.mdx`
+2. `packages/docs/src/pages/integrations/contentful.tsx`
+3. `packages/docs/src/pages/integrations.tsx` (card entry)
+4. `scripts/integration-mapping.json` (data source)
+
+### Common Issues & Solutions
+
+**Issue: AskAlpha buttons don't work**
+- Solution: Ensure file is `.mdx` not `.md`
+- Solution: Verify AskAlphaButton import path
+
+**Issue: Logo doesn't load**
+- Solution: Check domain in LogoKit URL
+- Solution: Verify LOGOKIT_TOKEN is correct
+
+**Issue: ThreeJS animation laggy**
+- Solution: Use SphereScene (optimized)
+- Solution: Test on lower-end devices
+
+**Issue: Links broken**
+- Solution: Use relative paths for internal links
+- Solution: Test all links after deployment
+
+**Issue: JSON-LD validation errors**
+- Solution: Test with Google Rich Results tool
+- Solution: Verify all required schema.org properties
+
+### Time Estimates
+
+**Per Integration:**
+- Documentation page: 2-3 hours
+- Marketing page: 2-3 hours
+- Testing & validation: 1 hour
+- **Total: 5-7 hours per integration**
+
+**Efficiency Gains (with agent):**
+- Agent generates base docs: 30 minutes
+- Human review & refinement: 1-2 hours
+- **Total: 1.5-2.5 hours per integration**
+
+**102 remaining integrations:**
+- With agent: 153-255 hours (4-6 weeks)
+- Without agent: 510-714 hours (13-18 weeks)
+- **Time saved: 357-459 hours**
