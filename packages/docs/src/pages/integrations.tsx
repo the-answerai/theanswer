@@ -127,6 +127,14 @@ const INTEGRATIONS = [
     },
     { name: 'Figma', domain: 'figma.com', category: 'Design', difficulty: 'Medium', description: 'Access Figma designs and prototypes.' },
     {
+        name: 'Fiddler',
+        domain: 'fiddler.ai',
+        category: 'AI Safety & Compliance',
+        difficulty: 'Intermediate',
+        description:
+            'Add AI safety guardrails with multi-dimensional content validation, PII detection, and hallucination prevention for RAG systems.'
+    },
+    {
         name: 'Intercom',
         domain: 'intercom.com',
         category: 'Support',
