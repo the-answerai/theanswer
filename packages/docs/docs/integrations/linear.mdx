@@ -1,0 +1,975 @@
+---
+title: Linear
+description: Integrate Linear project management with AnswerAgentAI to automate issue triage, sprint planning, and project workflows through AI-powered agents
+sidebar_position: 10
+---
+
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
+<div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    <img
+        src='https://img.logokit.com/linear.app?token=pk_fr8710fea017bdf10b13fe'
+        alt='Linear Logo'
+        height='80'
+        style={{ marginBottom: '1rem' }}
+    />
+</div>
+
+# Linear Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0 2rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='medium'
+        context={{
+            page: 'integration-linear',
+            section: 'overview',
+            integration: 'Linear',
+            question: 'Can I answer any questions about how the Linear Agent Integration works?'
+        }}
+    />
+</div>
+
+## Overview
+
+Linear is a modern issue tracking and project management platform built for high-performance teams. The AnswerAgentAI integration with Linear enables you to automate project workflows, streamline issue management, and leverage AI to make your team more productive.
+
+With this integration, you can:
+
+-   **Automate issue triage** using AI to categorize, prioritize, and assign incoming issues
+-   **Streamline sprint planning** with intelligent workload analysis and task distribution
+-   **Generate project reports** automatically from Linear data
+-   **Manage issues** through natural language conversations with AI agents
+-   **Track team productivity** and identify workflow bottlenecks
+-   **Create and update** issues, projects, and roadmaps programmatically
+
+Linear's clean API and intuitive data model make it ideal for AI integrations, providing structured project data that can power everything from automated workflows to intelligent project assistants.
+
+## Quick Start
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-linear',
+            section: 'quick-start',
+            integration: 'Linear',
+            question: 'Can I answer any questions about setting up Linear credentials?'
+        }}
+    />
+</div>
+
+### Obtaining Credentials
+
+Linear uses API keys for authentication. Here's how to get your credentials:
+
+**Required Credentials:**
+
+1. **API Key**: Personal API key with appropriate permissions
+
+**How to obtain:**
+
+1. **Access API Settings:**
+
+    - Log in to your Linear workspace at [https://linear.app/](https://linear.app/)
+    - Click on your profile picture in the bottom left
+    - Navigate to **Settings → API**
+
+2. **Create API Key:**
+
+    - Click **Create new key**
+    - Give it a descriptive label (e.g., "AnswerAgentAI Integration")
+    - **Important**: Copy the API key immediately - it will only be shown once!
+
+3. **API Key Permissions:**
+    - The API key inherits your user permissions in Linear
+    - Ensure your account has appropriate access to:
+        - View and manage issues
+        - Access projects and teams
+        - Create and update content
+        - View users and team members
+
+:::warning Security Notice
+The Linear API key has **full access** to all resources you can access. Consider:
+
+-   Creating a dedicated integration account with limited permissions
+-   Rotating API keys regularly for security
+-   Never committing keys to version control
+-   Using environment variables for production deployments
+    :::
+
+**Documentation Reference:** [Linear API Documentation](https://developers.linear.app/docs)
+
+### Using the Linear MCP Server
+
+The Linear integration is available through the **Linear MCP (Model Context Protocol) Server**, which provides a remote connection to Linear's API:
+
+**Connection Type:** Remote SSE (Server-Sent Events)
+**Server URL:** `https://mcp.linear.app/sse`
+
+**Official Linear MCP Announcement:** [Linear Changelog - MCP Support](https://linear.app/changelog/2025-05-01-mcp)
+
+This official Linear MCP server is maintained by Linear and provides comprehensive access to Linear's API through a standardized protocol.
+
+## Available Components
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-linear',
+            section: 'available-components',
+            integration: 'Linear',
+            question: 'Can I answer any questions about Linear components and features?'
+        }}
+    />
+</div>
+
+:::info Auto-Generated Documentation
+This section is automatically synchronized with component metadata.
+
+**Last Updated:** 2025-12-08
+**Component Version Tracking:**
+
+-   Linear MCP: v1.0 (updated 2025-12-08)
+
+[View integration in code →](https://github.com/the-answerai/theanswer/tree/main/packages/components/nodes/tools/MCP/Linear)
+:::
+
+This integration provides access to Linear's project management capabilities through the MCP protocol:
+
+### MCP Servers
+
+Interact with Linear's API through natural language using the Model Context Protocol.
+
+#### Linear MCP Server (v1.0)
+
+**Description:** MCP Server for the Linear API - manage issues, projects, and teams through AI agents.
+
+**Connection Details:**
+
+-   **Type**: Remote SSE (Server-Sent Events)
+-   **URL**: `https://mcp.linear.app/sse`
+-   **Official**: Maintained by Linear
+
+**Available Tools:**
+
+**Issue Management:**
+
+-   `list_issues` - Search and list issues with flexible filtering
+-   `get_issue` - Retrieve detailed issue information including comments and history
+-   `create_issue` - Create new issues with full metadata
+-   `update_issue` - Update existing issues (title, description, status, assignee, priority, etc.)
+-   `list_issue_statuses` - Get available issue statuses for a team
+-   `list_issue_labels` - List labels available for issues
+-   `create_issue_label` - Create new issue labels with colors and descriptions
+
+**Comment Management:**
+
+-   `list_comments` - Retrieve comments for specific issues
+-   `create_comment` - Add comments to issues with markdown support
+
+**Project Management:**
+
+-   `list_projects` - List projects with filtering and pagination
+-   `get_project` - Get detailed project information
+-   `create_project` - Create new projects with leads and dates
+-   `update_project` - Update project details and settings
+-   `list_project_labels` - List labels available for projects
+
+**Cycle Management:**
+
+-   `list_cycles` - Retrieve cycles (sprints) for teams
+-   Supports filtering by current, previous, or next cycles
+
+**Team Management:**
+
+-   `list_teams` - List all teams in the workspace
+-   `get_team` - Get detailed team information
+-   `list_users` - List workspace members
+-   `get_user` - Get detailed user information
+
+**Documentation:**
+
+-   `list_documents` - List Linear documents and project documentation
+-   `get_document` - Retrieve specific document content
+-   `search_documentation` - Search Linear's official documentation
+
+**Use Cases:**
+
+-   Automated issue triage and categorization
+-   Sprint planning and capacity management
+-   Project status reporting
+-   Team workload balancing
+-   Documentation generation from Linear data
+-   Intelligent project assistants
+
+**Learn More:** [Linear MCP Documentation](/docs/sidekick-studio/chatflows/tools-mcp/linear-mcp)
+
+## Use Cases
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-linear',
+            section: 'use-cases',
+            integration: 'Linear',
+            question: 'Can I answer any questions about Linear use cases and workflows?'
+        }}
+    />
+</div>
+
+### Common Scenarios
+
+#### 1. Automated Issue Triage
+
+AI-powered triage automatically categorizes, prioritizes, and assigns incoming issues.
+
+**Workflow:**
+
+1. New issues trigger an AI agent via webhook or scheduled check
+2. Agent analyzes issue title and description using `get_issue`
+3. AI determines appropriate:
+    - Team assignment based on content
+    - Priority level based on urgency keywords
+    - Labels based on issue type
+    - Initial status (triage, backlog, etc.)
+4. Agent updates issue with `update_issue`
+5. Optional: Add comment explaining the triage decision
+
+**Benefits:**
+
+-   Saves **8 hours per week** on manual triage
+-   Consistent categorization across teams
+-   Faster response time to critical issues
+-   Reduced cognitive load on team leads
+
+**Time Saved:** 8 hours/week
+
+#### 2. Intelligent Sprint Planning
+
+AI assists with sprint planning by analyzing team capacity, issue complexity, and historical velocity.
+
+**Workflow:**
+
+1. Agent retrieves current cycle using `list_cycles`
+2. Analyzes team workload with `list_issues` (filtered by assignee and cycle)
+3. Reviews backlog issues for next sprint candidates
+4. Uses AI to:
+    - Estimate issue complexity
+    - Balance workload across team members
+    - Identify dependencies
+    - Suggest sprint composition
+5. Creates sprint plan and assigns issues
+
+**Benefits:**
+
+-   Saves **6 hours per week** on sprint planning meetings
+-   Better workload distribution
+-   Data-driven sprint commitments
+-   Reduced planning overhead
+
+**Time Saved:** 6 hours/week
+
+#### 3. Automated Project Status Reports
+
+Generate comprehensive project reports automatically for stakeholders.
+
+**Workflow:**
+
+1. Schedule AI agent to run weekly
+2. Agent fetches project data using `get_project`
+3. Retrieves related issues using `list_issues` (filtered by project)
+4. Analyzes:
+    - Completion percentage
+    - Blocked issues
+    - Velocity trends
+    - Risk factors
+5. Generates formatted report with insights
+6. Optionally posts to Slack or email
+
+**Benefits:**
+
+-   Saves **4 hours per week** on manual reporting
+-   Consistent report format
+-   Real-time data accuracy
+-   Automated distribution
+
+**Time Saved:** 4 hours/week
+
+#### 4. Team Workload Balancing
+
+Monitor and rebalance team workload automatically to prevent burnout.
+
+**Workflow:**
+
+1. Agent periodically checks team assignments using `list_issues`
+2. Analyzes each team member's workload:
+    - Number of active issues
+    - Priority distribution
+    - Issue complexity
+    - Recent velocity
+3. AI identifies overloaded or underutilized team members
+4. Suggests issue reassignments
+5. Optionally auto-rebalances with approval
+
+**Benefits:**
+
+-   Saves **5 hours per week** on capacity management
+-   Prevents team burnout
+-   Optimized resource utilization
+-   Proactive workload management
+
+**Time Saved:** 5 hours/week
+
+#### 5. Automated Documentation Generation
+
+Generate and maintain project documentation from Linear data.
+
+**Workflow:**
+
+1. Agent retrieves project and issues using `get_project` and `list_issues`
+2. AI analyzes:
+    - Feature implementations
+    - Architecture decisions in comments
+    - Completion status
+    - Dependencies and relationships
+3. Generates documentation:
+    - Feature specifications
+    - Release notes
+    - API documentation
+    - User guides
+4. Creates or updates Linear documents using `create_document`
+
+**Benefits:**
+
+-   Saves **7 hours per week** on documentation
+-   Always up-to-date documentation
+-   Consistent documentation format
+-   Reduced technical debt
+
+**Time Saved:** 7 hours/week
+
+## Example Workflows
+
+### Example 1: AI-Powered Triage Bot
+
+**Goal:** Automatically triage new issues based on content analysis.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent (OpenAI Functions)
+   - LLM: GPT-4
+   - Tools: Linear MCP
+   - Memory: Buffer Memory
+
+2. System Prompt:
+   "You are an issue triage specialist. When new issues are created:
+
+   1. Analyze the issue title and description
+   2. Determine appropriate team based on keywords:
+      - 'frontend', 'UI', 'design' → Frontend team
+      - 'API', 'backend', 'database' → Backend team
+      - 'bug', 'crash', 'error' → Engineering team
+   3. Set priority based on urgency:
+      - Critical/urgent keywords → Priority 1 (Urgent)
+      - Important but not urgent → Priority 2 (High)
+      - Default → Priority 3 (Normal)
+   4. Add appropriate labels
+   5. Add a comment explaining your triage decision"
+
+3. Trigger: Webhook or scheduled check for new issues
+```
+
+**Example Interaction:**
+
+```
+New Issue Created:
+Title: "Login page crashes on mobile Safari"
+Description: "Users report that the login button is unresponsive on iPhone Safari browser"
+
+Agent Analysis:
+1. Gets issue details with get_issue
+2. Determines:
+   - Team: Frontend (keywords: login page, mobile, Safari)
+   - Priority: 1 - Urgent (keyword: crashes)
+   - Labels: bug, frontend, mobile
+3. Updates issue with update_issue
+4. Adds comment: "Auto-triaged: Assigned to Frontend team due to mobile UI issue.
+   Marked as Urgent due to login functionality impact. Added labels: bug, frontend, mobile."
+```
+
+### Example 2: Sprint Capacity Analyzer
+
+**Goal:** Analyze team capacity and suggest optimal sprint composition.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent
+   - LLM: GPT-4-Turbo
+   - Tools: [Linear MCP, Custom Analytics Tool]
+
+2. Workflow:
+   - Retrieve current cycle using list_cycles
+   - Get all team members using list_users
+   - For each team member:
+     * Count active issues using list_issues
+     * Analyze issue priorities and estimates
+     * Calculate current capacity utilization
+   - Retrieve backlog issues for next sprint
+   - Use AI to suggest sprint composition based on:
+     * Team velocity
+     * Issue priorities
+     * Balanced workload
+     * Skill matching
+
+3. Output: Sprint planning recommendations
+```
+
+**Benefits:**
+
+-   Data-driven sprint planning
+-   Balanced team workload
+-   Predictable velocity
+
+### Example 3: Project Health Monitor
+
+**Goal:** Monitor project health and identify risks automatically.
+
+**Chatflow Configuration:**
+
+```
+1. Scheduled Agent (runs daily)
+   - LLM: GPT-4
+   - Tools: Linear MCP
+
+2. Workflow:
+   - List all active projects using list_projects
+   - For each project:
+     * Get project details with get_project
+     * Retrieve all project issues using list_issues
+     * Analyze:
+       - Overdue issues
+       - Blocked issues
+       - Issues without assignees
+       - Velocity trends
+       - Status distribution
+   - Generate health score
+   - Identify risks and blockers
+   - Create summary report
+   - Post to Slack channel
+
+3. Risk Detection:
+   - Too many high-priority items &rarr; Scope risk
+   - Multiple blocked issues &rarr; Dependency risk
+   - Low completion rate &rarr; Velocity risk
+   - Unassigned critical issues &rarr; Resource risk
+```
+
+**Output Example:**
+
+```
+Project Health Report - Marketing Website Redesign
+
+Overall Health: ⚠️ MODERATE RISK
+
+Metrics:
+- Completion: 42% (23/55 issues)
+- Velocity: Below average (3.2 vs 4.1 expected)
+- Blocked Issues: 4 (RISK!)
+- Overdue: 2 issues
+
+Risks Identified:
+1. HIGH: 4 issues blocked by external dependencies
+   → Recommendation: Escalate to unblock critical path
+
+2. MEDIUM: Velocity 22% below historical average
+   → Recommendation: Review team capacity or reduce scope
+
+3. LOW: 2 overdue issues from last sprint
+   → Recommendation: Prioritize completion before new work
+
+Action Items:
+- [ ] Meet with design team to unblock 4 issues
+- [ ] Review sprint scope in planning meeting
+- [ ] Address overdue issues: PROJ-123, PROJ-145
+```
+
+## Advanced Configuration
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-linear',
+            section: 'advanced-configuration',
+            integration: 'Linear',
+            question: 'Can I answer any questions about advanced Linear configuration?'
+        }}
+    />
+</div>
+
+### MCP Server Configuration
+
+#### Environment Variables
+
+For production deployments, configure credentials via environment variables:
+
+```bash
+LINEAR_API_KEY=lin_api_your_api_key_here
+```
+
+#### Remote SSE Connection
+
+The Linear MCP uses Server-Sent Events for real-time communication:
+
+**Configuration:**
+
+```json
+{
+    "mcpServers": {
+        "linear": {
+            "url": "https://mcp.linear.app/sse",
+            "transport": "sse",
+            "headers": {
+                "Authorization": "Bearer ${LINEAR_API_KEY}"
+            }
+        }
+    }
+}
+```
+
+#### Filtering and Pagination
+
+Most MCP tools support filtering and pagination:
+
+**Issue Filtering:**
+
+```javascript
+// Filter by assignee
+{
+  "assignee": "user@example.com"
+}
+
+// Filter by team
+{
+  "team": "Engineering"
+}
+
+// Filter by state
+{
+  "state": "In Progress"
+}
+
+// Filter by project
+{
+  "project": "Website Redesign"
+}
+
+// Complex filters
+{
+  "assignee": "me",
+  "state": "Todo",
+  "priority": 1,
+  "includeArchived": false
+}
+```
+
+**Pagination:**
+
+```javascript
+{
+  "limit": 50,           // Max results per request (default: 50, max: 250)
+  "after": "cursor_id",  // Cursor for next page
+  "before": "cursor_id"  // Cursor for previous page
+}
+```
+
+#### Date and Time Filtering
+
+Filter by creation and update dates:
+
+```javascript
+// Issues created in last day
+{
+  "createdAt": "-P1D"  // ISO 8601 duration
+}
+
+// Issues updated after specific date
+{
+  "updatedAt": "2025-01-01"  // ISO 8601 date
+}
+```
+
+#### Working with Labels
+
+**Create Custom Labels:**
+
+```javascript
+{
+  "name": "needs-review",
+  "color": "#FF5733",
+  "description": "Requires code review",
+  "teamId": "team_uuid",  // Optional: team-specific label
+  "isGroup": false        // Label groups organize child labels
+}
+```
+
+**Label Colors:**
+
+-   Use hex color codes (e.g., `#FF5733`)
+-   Linear provides predefined color palette in UI
+
+#### Multi-Team Workflows
+
+When working across multiple teams:
+
+```javascript
+// List all teams
+const teams = await linear.list_teams()
+
+// For each team, get team-specific data
+for (const team of teams) {
+    const issues = await linear.list_issues({
+        team: team.name
+    })
+
+    const cycles = await linear.list_cycles({
+        teamId: team.id,
+        type: 'current'
+    })
+}
+```
+
+### Best Practices
+
+#### Rate Limiting
+
+Linear API has rate limits:
+
+-   **Standard**: 2000 requests per hour per API key
+-   **Complex queries**: Count as multiple requests
+
+**Strategies:**
+
+-   Cache frequently accessed data
+-   Use filtering to reduce query size
+-   Batch operations when possible
+-   Implement exponential backoff for retries
+
+#### Error Handling
+
+Always implement robust error handling:
+
+```javascript
+try {
+    const issue = await linear.get_issue({ id: issueId })
+} catch (error) {
+    if (error.message.includes('not found')) {
+        // Issue doesn't exist
+    } else if (error.message.includes('unauthorized')) {
+        // Invalid API key or permissions
+    } else {
+        // Other errors
+    }
+}
+```
+
+#### Webhook Integration
+
+For real-time updates, use Linear webhooks:
+
+1. Configure webhook in Linear: **Settings → API → Webhooks**
+2. Subscribe to events:
+    - Issue created/updated/deleted
+    - Comment created
+    - Project updated
+    - Cycle changed
+3. Trigger AI agents based on webhook events
+
+## Frequently Asked Questions
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-linear',
+            section: 'faq',
+            integration: 'Linear',
+            question: 'Can I answer any questions about Linear troubleshooting and best practices?'
+        }}
+    />
+</div>
+
+### Setup & Configuration
+
+**Q: How do I get a Linear API key?**
+
+A: Go to your Linear workspace → Click your profile → Settings → API → Create new key. Copy it immediately as it's only shown once.
+
+**Q: What permissions does the API key have?**
+
+A: The API key inherits your user permissions in Linear. If you can view/edit something in the Linear UI, the API key can too.
+
+**Q: Can I create a service account for the integration?**
+
+A: Yes! Create a separate Linear account, invite it to your workspace with limited permissions, and use that account's API key for integrations.
+
+**Q: How do I connect to the Linear MCP server?**
+
+A: The Linear MCP server is accessible at `https://mcp.linear.app/sse` using Server-Sent Events (SSE) transport. Configure your API key in the authorization headers.
+
+**Q: Do I need to install anything to use the Linear MCP?**
+
+A: No! The Linear MCP is a remote server maintained by Linear. Just configure the connection with your API key.
+
+### Usage & Best Practices
+
+**Q: How do I filter issues by assignee?**
+
+A: Use the `list_issues` tool with the assignee parameter. You can use:
+
+-   Email address: `assignee: "user@example.com"`
+-   Name: `assignee: "John Doe"`
+-   "me" for currently authenticated user: `assignee: "me"`
+
+**Q: Can I bulk update multiple issues at once?**
+
+A: Yes, but you need to update them sequentially using `update_issue` for each issue. Consider implementing rate limiting for bulk operations.
+
+**Q: How do I get issues for a specific project?**
+
+A: Use `list_issues` with the project filter:
+
+```javascript
+{
+  "project": "Project Name"  // or project ID
+}
+```
+
+**Q: Can I create issues with custom fields?**
+
+A: Yes! Linear supports custom fields. Include them in the `create_issue` request according to your workspace's custom field configuration.
+
+**Q: How do I work with issue priorities?**
+
+A: Linear uses numeric priorities:
+
+-   `0` = No priority
+-   `1` = Urgent
+-   `2` = High
+-   `3` = Normal (default)
+-   `4` = Low
+
+**Q: Can I attach files to issues via the API?**
+
+A: Yes, use the asset upload functionality. First upload the file, then attach the asset to the issue in the description or comments using markdown image syntax.
+
+**Q: How do I create sub-issues?**
+
+A: Use the `parentId` parameter in `create_issue` to create a sub-issue under an existing parent issue.
+
+**Q: Can I search issues by content?**
+
+A: Yes! Use the `query` parameter in `list_issues` to search issue titles and descriptions:
+
+```javascript
+{
+  "query": "login bug"
+}
+```
+
+**Q: How do I get the current sprint/cycle?**
+
+A: Use `list_cycles` with the `type` parameter:
+
+```javascript
+{
+  "teamId": "team_uuid",
+  "type": "current"
+}
+```
+
+**Q: Can I move issues between teams?**
+
+A: Yes, use `update_issue` and change the `team` field. The issue will be moved to the specified team.
+
+### Troubleshooting
+
+**Q: I'm getting "Unauthorized" errors**
+
+**Solutions:**
+
+1. Verify API key is correct and not expired
+2. Check that you have permission to access the resource
+3. Ensure API key is properly configured in environment variables
+4. Test the API key directly with Linear's API explorer
+
+**Q: Linear MCP server connection fails**
+
+**Possible causes:**
+
+1. **Incorrect URL**: Verify you're using `https://mcp.linear.app/sse`
+2. **Missing Authorization**: Ensure API key is in authorization header
+3. **Network issues**: Check firewall settings allow SSE connections
+4. **Invalid API key**: Test key with Linear's API directly
+
+**Q: Issues not appearing in search results**
+
+**Solutions:**
+
+1. Check `includeArchived` parameter (default: true)
+2. Verify team filter if specified
+3. Ensure you have access to the team/project
+4. Try removing filters to see all accessible issues
+
+**Q: Rate limit errors**
+
+**Solutions:**
+
+1. Implement exponential backoff retry logic
+2. Reduce request frequency
+3. Cache results when appropriate
+4. Use filters to reduce query complexity
+5. Consider upgrading Linear plan for higher limits
+
+**Q: Can't create issues in specific states**
+
+**Causes:**
+
+1. State workflow might prevent direct creation in that state
+2. Team settings might restrict state transitions
+
+**Solutions:**
+
+1. Create issue in default state first
+2. Then use `update_issue` to move to desired state
+3. Check team workflow settings in Linear
+
+**Q: Comments not appearing**
+
+**Issues:**
+
+1. **Timing**: Comments may take a moment to appear
+2. **Permissions**: Verify you can comment on the issue
+3. **Format**: Ensure markdown is valid
+
+**Q: Issue links and relationships not working**
+
+**Solutions:**
+
+1. Use proper issue identifiers (e.g., `PROJ-123`)
+2. Ensure linked issues exist and are accessible
+3. Check relationship types are valid (blocks, related, duplicate)
+4. Verify permissions on both issues
+
+**Q: Performance issues with large result sets**
+
+**Optimizations:**
+
+1. Use pagination (`limit` and `after` parameters)
+2. Apply specific filters to reduce result set
+3. Request only needed fields
+4. Cache frequently accessed data
+5. Consider using GraphQL API for complex queries
+
+**Q: Webhook events not triggering**
+
+**Troubleshooting:**
+
+1. Verify webhook is configured in Linear settings
+2. Check webhook URL is accessible from Linear's servers
+3. Ensure HTTPS is used (required for webhooks)
+4. Test webhook endpoint independently
+5. Check Linear webhook delivery logs
+
+**Q: Custom fields not accessible**
+
+**Solutions:**
+
+1. Verify custom fields exist in workspace settings
+2. Check field IDs match your workspace configuration
+3. Ensure user has permission to view custom fields
+4. Use GraphQL API for complex custom field queries
+
+### Integration Patterns
+
+**Q: How do I integrate Linear with Slack?**
+
+A: Create an AI agent that:
+
+1. Listens to Linear webhooks for issue updates
+2. Posts formatted messages to Slack channels
+3. Allows issue creation from Slack messages
+4. Provides issue status updates on request
+
+**Q: Can I sync Linear with Jira?**
+
+A: Yes! Use AnswerAgentAI to create bi-directional sync:
+
+1. Monitor webhooks from both systems
+2. Map issue states and fields
+3. Sync updates in both directions
+4. Handle conflicts with AI decision-making
+
+**Q: How do I generate reports from Linear data?**
+
+A: Use scheduled AI agents to:
+
+1. Fetch project and issue data
+2. Calculate metrics (velocity, completion, etc.)
+3. Generate formatted reports
+4. Distribute via email or Slack
+
+**Q: Can I use Linear data for time tracking?**
+
+A: Yes! Analyze issue comments and state transitions to:
+
+1. Track time spent in each state
+2. Calculate cycle times
+3. Measure team velocity
+4. Generate time-based reports
+
+## Resources
+
+### Official Documentation
+
+-   **[Linear API Documentation](https://developers.linear.app/docs)** - Complete API reference
+-   **[Linear GraphQL API](https://developers.linear.app/docs/graphql/working-with-the-graphql-api)** - Advanced GraphQL queries
+-   **[Linear SDK](https://github.com/linear/linear)** - Official TypeScript SDK
+-   **[Linear MCP Announcement](https://linear.app/changelog/2025-05-01-mcp)** - Official MCP server announcement
+-   **[Linear Webhooks](https://developers.linear.app/docs/graphql/webhooks)** - Webhook integration guide
+
+### Guides & Tutorials
+
+-   **[Getting Started with Linear](https://linear.app/docs)** - Linear user guide
+-   **[Linear API Quickstart](https://developers.linear.app/docs/getting-started)** - API basics
+-   **[Authentication Guide](https://developers.linear.app/docs/authentication)** - API key management
+-   **[Rate Limiting](https://developers.linear.app/docs/rate-limiting)** - API rate limits
+
+### AnswerAgentAI Documentation
+
+-   **[Linear MCP Server](/docs/sidekick-studio/chatflows/tools-mcp/linear-mcp)** - Complete MCP tool reference
+-   **[MCP Servers Overview](/docs/sidekick-studio/chatflows/tools-mcp/)** - Introduction to MCP integrations
+
+### Community & Support
+
+-   **[Linear Community](https://linear.app/community)** - User community and discussions
+-   **[Linear GitHub](https://github.com/linear)** - Open source tools and SDKs
+-   **[Linear Changelog](https://linear.app/changelog)** - Product updates and new features
+-   **[Linear Twitter](https://twitter.com/linear)** - News and announcements
+
+### Tools & Resources
+
+-   **[Linear CLI](https://github.com/linearapp/linear/tree/master/packages/cli)** - Command-line interface
+-   **[Linear API Explorer](https://studio.apollographql.com/public/Linear-API/home)** - Interactive API testing
+-   **[MCP Protocol Specification](https://modelcontextprotocol.io/)** - Model Context Protocol details
+-   **[Linear Figma Plugin](https://www.figma.com/community/plugin/885838710912206732)** - Design integration

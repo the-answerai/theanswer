@@ -1,4 +1,9 @@
 const { PrismaPlugin } = require('experimental-prisma-webpack-plugin')
+const path = require('path')
+
+// Load root .env file for monorepo compatibility
+// This ensures env vars like LINEAR_API_KEY are available when running from apps/web/
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') })
 
 const webpack = require('webpack')
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -99,7 +104,9 @@ let nextConfig = withBundleAnalyzer({
             process.env.AUTH0_BASE_URL ?? (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined),
         AUTH0_SECRET: process.env.AUTH0_SECRET,
         CHATFLOW_DOMAIN_OVERRIDE: process.env.CHATFLOW_DOMAIN_OVERRIDE,
-        LANGFUSE_HOST: process.env.LANGFUSE_HOST
+        LANGFUSE_HOST: process.env.LANGFUSE_HOST,
+        // Error reporting availability (derived from LINEAR_API_KEY)
+        NEXT_PUBLIC_ERROR_REPORTING_ENABLED: process.env.LINEAR_API_KEY ? 'true' : ''
     },
     webpack: (config, { isServer }) => {
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']

@@ -32,6 +32,7 @@ import authenticationHandlerMiddleware from './middlewares/authentication'
 import passport from 'passport'
 import passportConfig from './config/passport'
 import session from 'express-session'
+
 import { createRedisStore } from './AppConfig'
 declare global {
     namespace Express {

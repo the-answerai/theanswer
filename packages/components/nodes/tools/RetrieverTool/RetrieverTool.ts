@@ -3,10 +3,8 @@ import { CallbackManager, CallbackManagerForToolRun, Callbacks, parseCallbackCon
 import { BaseDynamicToolInput, DynamicTool, StructuredTool, ToolInputParsingException } from '@langchain/core/tools'
 import { BaseRetriever } from '@langchain/core/retrievers'
 import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
-import { getBaseClasses, resolveFlowObjValue } from '../../../src/utils'
-import { SOURCE_DOCUMENTS_PREFIX } from '../../../src/agents'
+import { getBaseClasses } from '../../../src/utils'
 import { RunnableConfig } from '@langchain/core/runnables'
-import { VectorStoreRetriever } from '@langchain/core/vectorstores'
 
 const howToUse = `Add additional filters to vector store. You can also filter with flow config, including the current "state":
 - \`$flow.sessionId\`
@@ -132,7 +130,7 @@ class Retriever_Tools implements INode {
     constructor() {
         this.label = 'Retriever Tool'
         this.name = 'retrieverTool'
-        this.version = 3.0
+        this.version = 4.0
         this.type = 'RetrieverTool'
         this.icon = 'retrievertool.svg'
         this.category = 'Tools'
@@ -184,6 +182,28 @@ class Retriever_Tools implements INode {
                     label: 'What can you filter?',
                     value: howToUse
                 }
+            },
+            {
+                label: 'Enable Dynamic Filtering',
+                name: 'enableDynamicFiltering',
+                type: 'boolean',
+                description: 'Allow agents to pass metadata filters via function calling at runtime',
+                optional: true,
+                additionalParams: true,
+                default: false
+            },
+            {
+                label: 'Metadata Fields Description',
+                name: 'metadataFieldsDescription',
+                type: 'string',
+                rows: 4,
+                placeholder: 'category (string), price (number), inStock (boolean), tags (array)',
+                description: 'Describe available metadata fields for the agent. This helps the agent understand what filters it can use.',
+                optional: true,
+                additionalParams: true,
+                show: {
+                    enableDynamicFiltering: [true]
+                }
             }
         ]
     }
@@ -195,44 +215,45 @@ class Retriever_Tools implements INode {
         const returnSourceDocuments = nodeData.inputs?.returnSourceDocuments as boolean
         const includeMetadata = nodeData.inputs?.includeMetadata as boolean
         const retrieverToolMetadataFilter = nodeData.inputs?.retrieverToolMetadataFilter
-
-        const input = {
-            name,
-            description
-        }
+        const enableDynamicFiltering = nodeData.inputs?.enableDynamicFiltering as boolean
+        const metadataFieldsDescription = nodeData.inputs?.metadataFieldsDescription as string
 
         const flow = { chatflowId: options.chatflowid }
 
-        const func = async ({ input }: { input: string }, _?: CallbackManagerForToolRun, flowConfig?: IFlowConfig) => {
-            if (retrieverToolMetadataFilter) {
-                const flowObj = flowConfig
+        // Use helper functions to create the appropriate tool
+        const { createStaticRetrieverTool, createDynamicRetrieverTool } = require('./RetrieverToolHelpers')
 
-                const metadatafilter =
-                    typeof retrieverToolMetadataFilter === 'object' ? retrieverToolMetadataFilter : JSON.parse(retrieverToolMetadataFilter)
-                const newMetadataFilter = resolveFlowObjValue(metadatafilter, flowObj)
-
-                const vectorStore = (retriever as VectorStoreRetriever<any>).vectorStore
-                vectorStore.filter = newMetadataFilter
-            }
-            const docs = await retriever.invoke(input)
-            const stringifiedDocs = JSON.stringify(docs)
-
-            if (includeMetadata) {
-                return stringifiedDocs
-            } else {
-                const content = docs.map((doc) => doc.pageContent).join('\n\n')
-                return returnSourceDocuments ? content + SOURCE_DOCUMENTS_PREFIX + stringifiedDocs : content
-            }
+        if (enableDynamicFiltering) {
+            // Create tool with dynamic filtering capability
+            return createDynamicRetrieverTool(
+                {
+                    name,
+                    description,
+                    retriever,
+                    returnSourceDocuments,
+                    includeMetadata,
+                    retrieverToolMetadataFilter,
+                    metadataFieldsDescription,
+                    flow
+                },
+                DynamicStructuredTool // Pass class to avoid circular dependency
+            )
+        } else {
+            // Create tool with static filter only (v3.0 backward compatible)
+            return createStaticRetrieverTool(
+                {
+                    name,
+                    description,
+                    retriever,
+                    returnSourceDocuments,
+                    includeMetadata,
+                    retrieverToolMetadataFilter,
+                    flow
+                },
+                DynamicStructuredTool // Pass class to avoid circular dependency
+            )
         }
-
-        const schema = z.object({
-            input: z.string().describe('input to look up in retriever')
-        }) as any
-
-        const tool = new DynamicStructuredTool({ ...input, func, schema })
-        tool.setFlowObject(flow)
-        return tool
     }
 }
 
-module.exports = { nodeClass: Retriever_Tools }
+module.exports = { nodeClass: Retriever_Tools, DynamicStructuredTool }

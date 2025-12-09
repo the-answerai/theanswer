@@ -39,7 +39,7 @@ const INTEGRATIONS = [
         domain: 'github.com',
         category: 'Development',
         difficulty: 'Easy',
-        description: 'Access repositories, pull requests, and code reviews.'
+        description: 'Automate code reviews, issue triage, and documentation generation with AI-powered GitHub workflows.'
     },
     {
         name: 'Google Workspace',
@@ -74,7 +74,7 @@ const INTEGRATIONS = [
         domain: 'linear.app',
         category: 'Project Management',
         difficulty: 'Easy',
-        description: 'Sync issues and project tracking from Linear.'
+        description: 'Automate issue triage, sprint planning, and project management with AI-powered Linear workflows.'
     },
     {
         name: 'Notion',
@@ -105,6 +105,13 @@ const INTEGRATIONS = [
         description: 'Access Airtable bases and records.'
     },
     {
+        name: 'Contentful',
+        domain: 'contentful.com',
+        category: 'CMS',
+        difficulty: 'Easy',
+        description: 'Integrate Contentful CMS to load and manage structured content through AI workflows.'
+    },
+    {
         name: 'Dropbox',
         domain: 'dropbox.com',
         category: 'Storage',
@@ -119,6 +126,14 @@ const INTEGRATIONS = [
         description: 'Integrate with Zoom for meetings and recordings.'
     },
     { name: 'Figma', domain: 'figma.com', category: 'Design', difficulty: 'Medium', description: 'Access Figma designs and prototypes.' },
+    {
+        name: 'Fiddler',
+        domain: 'fiddler.ai',
+        category: 'AI Safety & Compliance',
+        difficulty: 'Intermediate',
+        description:
+            'Add AI safety guardrails with multi-dimensional content validation, PII detection, and hallucination prevention for RAG systems.'
+    },
     {
         name: 'Intercom',
         domain: 'intercom.com',

@@ -66,7 +66,15 @@ paths:
                     description: Internal server error
         get:
             summary: List all domains
-            description: Retrieve domains with filtering and pagination
+            description: |
+                Retrieve domains with filtering and pagination.
+
+                **Filter Examples:**
+                - Get all domains: `GET /domains`
+                - Domains with AI analysis: `GET /domains?hasAnalysis=true` or `GET /domains?hasAnalysis=analyzed`
+                - Domains without AI analysis: `GET /domains?hasAnalysis=false` or `GET /domains?hasAnalysis=not_analyzed`
+                - Valid domains with analysis: `GET /domains?hasAnalysis=true&isValid=true`
+                - Search in analyzed domains: `GET /domains?hasAnalysis=true&searchTerm=medical`
             operationId: listDomains
             tags:
                 - domains
@@ -95,10 +103,16 @@ paths:
                       type: boolean
                 - name: hasAnalysis
                   in: query
-                  description: Filter by analysis status
+                  description: |
+                      Filter by AI analysis status. Supports both boolean and legacy string formats:
+                      - Boolean: true (domains with analysis), false (domains without analysis), omit for all
+                      - Legacy: "analyzed", "not_analyzed", "all"
                   schema:
-                      type: string
-                      enum: [all, has, not]
+                      oneOf:
+                          - type: boolean
+                          - type: string
+                            enum: [analyzed, not_analyzed, all]
+                  example: true
                 - name: customFilters
                   in: query
                   description: Custom field filters (JSON string)

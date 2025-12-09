@@ -32,4 +32,7 @@ export class Organization implements IOrganization {
 
     @Column({ type: 'jsonb', nullable: true })
     enabledIntegrations?: string
+
+    @Column({ type: 'jsonb', nullable: true })
+    organizationConfig?: string
 }

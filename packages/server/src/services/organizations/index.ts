@@ -4,6 +4,8 @@ import { Organization } from '../../database/entities/Organization'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import { OrganizationConfig } from '../../types/guardrails'
+import { deepMergeConfigs } from '../guardrails/config'
 
 // Get organization by ID
 const getOrganizationById = async (id: string, user?: IUser): Promise<Organization> => {
@@ -160,9 +162,87 @@ const updateOrganizationCredentials = async (id: string, integrations: any[], us
     }
 }
 
+// Get organization config (organizationConfig JSONB column)
+const getOrganizationConfig = async (id: string, user?: IUser): Promise<OrganizationConfig> => {
+    try {
+        const appServer = getRunningExpressApp()
+        const organization = await appServer.AppDataSource.getRepository(Organization)
+            .createQueryBuilder('organization')
+            .where('organization.id = :id', { id })
+            .getOne()
+
+        if (!organization) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Organization not found`)
+        }
+
+        let config: OrganizationConfig = {}
+
+        if (
+            organization.organizationConfig &&
+            typeof organization.organizationConfig === 'string' &&
+            organization.organizationConfig.length > 0
+        ) {
+            try {
+                config = JSON.parse(organization.organizationConfig)
+            } catch (error) {
+                console.error('Failed to parse organizationConfig:', error)
+            }
+        }
+
+        return config
+    } catch (error) {
+        if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.NOT_FOUND) {
+            throw error
+        }
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: organizationService.getOrganizationConfig - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+// Update organization config (organizationConfig JSONB column)
+const updateOrganizationConfig = async (id: string, config: Partial<OrganizationConfig>, user?: IUser): Promise<OrganizationConfig> => {
+    try {
+        const appServer = getRunningExpressApp()
+
+        // First verify the organization exists and user has access
+        const organization = await getOrganizationById(id, user)
+
+        // Get existing config
+        const existingConfig = await getOrganizationConfig(id, user)
+
+        // Merge configs at organization level
+        const mergedConfig: OrganizationConfig = { ...existingConfig, ...config }
+
+        // If both have guardrails config, deep merge that section
+        if (existingConfig.guardrails && config.guardrails) {
+            mergedConfig.guardrails = deepMergeConfigs(existingConfig.guardrails, config.guardrails)
+        }
+
+        // Stringify and save
+        const configJson = JSON.stringify(mergedConfig)
+
+        const organizationRepo = appServer.AppDataSource.getRepository(Organization)
+        await organizationRepo.update({ id }, { organizationConfig: configJson })
+
+        return mergedConfig as OrganizationConfig
+    } catch (error) {
+        if (error instanceof InternalFlowiseError) {
+            throw error
+        }
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: organizationService.updateOrganizationConfig - ${getErrorMessage(error)}`
+        )
+    }
+}
+
 export default {
     getOrganizationById,
     updateOrganizationEnabledIntegrations,
     getOrganizationCredentials,
-    updateOrganizationCredentials
+    updateOrganizationCredentials,
+    getOrganizationConfig,
+    updateOrganizationConfig
 }
