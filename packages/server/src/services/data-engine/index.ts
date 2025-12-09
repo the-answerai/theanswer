@@ -23,6 +23,13 @@ class DataEngineService {
             timeout: 30000
         })
 
+        // ALWAYS log the base URL to verify where requests are going
+        console.log(`[DataEngineService] ============================================`)
+        console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
+        console.log(`[DataEngineService] DATA_SIDEKICK_URL: ${process.env.DATA_SIDEKICK_URL}`)
+        console.log(`[DataEngineService] DATA_ENGINE_API_URL: ${process.env.DATA_ENGINE_API_URL}`)
+        console.log(`[DataEngineService] ============================================`)
+
         // Only log initialization details in non-production environments
         if (process.env.NODE_ENV !== 'production') {
             console.log(`[DataEngineService] Initialized with baseURL: ${this.baseURL}`)
@@ -531,14 +538,23 @@ class DataEngineService {
             // Extract status and message from response
             const status = axiosError.response?.status || StatusCodes.INTERNAL_SERVER_ERROR
             const errorData = axiosError.response?.data as any
-            const rawMessage = errorData?.error || errorData?.details || axiosError.message
+
+            // Extract error message - try multiple fields and combine them
+            let rawMessage = ''
+            if (errorData?.details) {
+                rawMessage = errorData.details
+            } else if (errorData?.error) {
+                rawMessage = errorData.error
+            } else {
+                rawMessage = axiosError.message
+            }
 
             // Log full error details server-side for debugging
-            console.error(`[DataEngineService] %s %s failed:`, method, path, {
+            console.error(`[DataEngineService] ${method} ${path} failed:`, {
                 status,
-                message: rawMessage,
-                data: errorData,
-                stack: axiosError.stack
+                rawMessage,
+                errorData,
+                axiosMessage: axiosError.message
             })
 
             // Sanitize error message for client
@@ -567,6 +583,27 @@ class DataEngineService {
      * Sanitize error messages to prevent information leakage
      */
     private sanitizeErrorMessage(message: string, status: number): string {
+        // Preserve helpful user-facing error messages
+        const userFriendlyErrors = [
+            'duplicate key value violates unique constraint',
+            'already exists',
+            'not found',
+            'invalid input',
+            'required field',
+            'must be unique'
+        ]
+
+        // Check if this is a user-friendly error that should be preserved
+        const isUserFriendly = userFriendlyErrors.some((pattern) => message.toLowerCase().includes(pattern))
+
+        if (isUserFriendly) {
+            // Keep the helpful error message but limit length
+            if (message.length > 300) {
+                message = message.substring(0, 300) + '...'
+            }
+            return message.trim()
+        }
+
         // Production mode: return generic messages for internal errors
         if (process.env.NODE_ENV === 'production' && status >= 500) {
             return 'Internal server error occurred'
