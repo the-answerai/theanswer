@@ -167,14 +167,15 @@ export const authenticationHandlerMiddleware =
                 res.cookie('Authorization', req.headers.authorization, { maxAge: 900000, httpOnly: true, secure: true })
 
                 // Check for organization match if required
-                const userOrgId = req?.auth?.payload?.org_id
+                const authPayload = (req as any).auth?.payload
+                const userOrgId = authPayload?.org_id
                 const isValidOrg = userOrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userOrgId)
                 if (requireAuth && !isValidOrg) {
                     return res.status(401).send("Unauthorized: Organization doesn't match")
                 }
 
                 // Get user from auth payload
-                const authUser = req.auth.payload
+                const authUser = authPayload
                 const auth0Id = authUser.sub
                 const email = authUser.email as string
                 const name = authUser.name as string

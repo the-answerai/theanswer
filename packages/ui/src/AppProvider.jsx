@@ -12,6 +12,8 @@ import { Provider } from 'react-redux'
 import { SnackbarProvider } from 'notistack'
 import ConfirmContextProvider from '@/store/context/ConfirmContextProvider'
 import { ReactFlowContext } from '@/store/context/ReactFlowContext'
+import { ErrorProvider } from '@/store/context/ErrorContext'
+import { ConfigProvider } from '@/store/context/ConfigContext'
 
 // Create a new context
 export const Auth0Context = React.createContext({ isAuth0Ready: false })
@@ -23,13 +25,17 @@ const AppProvider = ({ children, apiHost, accessToken }) => {
     return (
         <Provider store={store}>
             <SnackbarProvider>
-                <ConfirmContextProvider>
-                    <UserProvider>
-                        <Auth0Setup apiHost={apiHost} accessToken={accessToken}>
-                            <ReactFlowContext>{children}</ReactFlowContext>
-                        </Auth0Setup>
-                    </UserProvider>
-                </ConfirmContextProvider>
+                <ConfigProvider>
+                    <ConfirmContextProvider>
+                        <ErrorProvider>
+                            <UserProvider>
+                                <Auth0Setup apiHost={apiHost} accessToken={accessToken}>
+                                    <ReactFlowContext>{children}</ReactFlowContext>
+                                </Auth0Setup>
+                            </UserProvider>
+                        </ErrorProvider>
+                    </ConfirmContextProvider>
+                </ConfigProvider>
             </SnackbarProvider>
         </Provider>
     )
