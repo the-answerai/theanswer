@@ -80,6 +80,16 @@ class AAITags_DocumentLoaders implements INode {
                 additionalParams: true
             },
             {
+                label: 'Content Fields',
+                name: 'contentFields',
+                type: 'string',
+                placeholder: 'label,description,parent.label',
+                description:
+                    'Comma-separated list of fields to include in chunked content. Supports dot notation for nested fields (e.g., parent.label). Leave empty for default behavior.',
+                optional: true,
+                additionalParams: true
+            },
+            {
                 label: 'Additional Metadata',
                 name: 'metadata',
                 type: 'json',
@@ -122,6 +132,7 @@ class AAITags_DocumentLoaders implements INode {
         const parentTagsOnly = nodeData.inputs?.parentTagsOnly === true || nodeData.inputs?.parentTagsOnly === 'true'
         const childTagsOnly = nodeData.inputs?.childTagsOnly === true || nodeData.inputs?.childTagsOnly === 'true'
         const includeParentInfo = !(nodeData.inputs?.includeParentInfo === false || nodeData.inputs?.includeParentInfo === 'false')
+        const contentFields = nodeData.inputs?.contentFields as string
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const output = nodeData.outputs?.output as string
@@ -129,6 +140,15 @@ class AAITags_DocumentLoaders implements INode {
         let omitMetadataKeys: string[] = []
         if (_omitMetadataKeys) {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
+        }
+
+        // Parse content fields if provided
+        let parsedContentFields: string[] | null = null
+        if (contentFields && contentFields.trim()) {
+            parsedContentFields = contentFields
+                .split(',')
+                .map((f) => f.trim())
+                .filter((f) => f.length > 0)
         }
 
         // Validate inputs
@@ -165,7 +185,8 @@ class AAITags_DocumentLoaders implements INode {
             searchTerm: searchTerm || null,
             parentTagsOnly: parentTagsOnly || false,
             childTagsOnly: childTagsOnly || false,
-            includeParentInfo: includeParentInfo !== false // Default true
+            includeParentInfo: includeParentInfo !== false, // Default true
+            contentFields: parsedContentFields
         }
 
         const loader = new AAITagsLoader(loaderOptions)
@@ -232,6 +253,7 @@ interface AAITagsLoaderParams {
     parentTagsOnly: boolean
     childTagsOnly: boolean
     includeParentInfo: boolean
+    contentFields: string[] | null
 }
 
 class AAITagsLoader extends BaseDocumentLoader {
@@ -242,6 +264,7 @@ class AAITagsLoader extends BaseDocumentLoader {
     private parentTagsOnly: boolean
     private childTagsOnly: boolean
     private includeParentInfo: boolean
+    private contentFields: string[] | null
 
     constructor(params: AAITagsLoaderParams) {
         super()
@@ -252,6 +275,7 @@ class AAITagsLoader extends BaseDocumentLoader {
         this.parentTagsOnly = params.parentTagsOnly
         this.childTagsOnly = params.childTagsOnly
         this.includeParentInfo = params.includeParentInfo
+        this.contentFields = params.contentFields
     }
 
     public async load(): Promise<IDocument[]> {
@@ -311,15 +335,82 @@ class AAITagsLoader extends BaseDocumentLoader {
         return tags.map((tag) => this.createDocumentFromTag(tag))
     }
 
+    /**
+     * Extract field value from data object using dot notation
+     * @param obj - Source data object
+     * @param path - Field path (e.g., "parent.label" or "slug")
+     * @returns Field value as string, or null if not found
+     */
+    private getFieldValue(obj: any, path: string): string | null {
+        const keys = path.split('.')
+        let value = obj
+
+        for (const key of keys) {
+            value = value?.[key]
+            if (value === undefined || value === null) return null
+        }
+
+        // Handle arrays (e.g., tags, topics)
+        if (Array.isArray(value)) {
+            return value
+                .map((v) => {
+                    if (typeof v === 'string') return v
+                    if (v?.slug) return v.slug // Handle tag objects
+                    if (v?.label) return v.label
+                    return JSON.stringify(v)
+                })
+                .join(', ')
+        }
+
+        // Handle objects (pretty print for readability)
+        if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2)
+        }
+
+        return String(value)
+    }
+
+    /**
+     * Build page content from selected fields
+     * @param data - Source data object
+     * @param contentFields - Array of field paths to include
+     * @returns Formatted content string
+     */
+    private buildPageContentFromFields(data: any, contentFields: string[]): string {
+        const contentParts: string[] = []
+
+        for (const field of contentFields) {
+            const trimmedField = field.trim()
+            if (!trimmedField) continue
+
+            const value = this.getFieldValue(data, trimmedField)
+
+            if (value !== null && value !== '') {
+                // Format as "Field: value" for clarity
+                const fieldLabel = trimmedField.split('.').pop() || trimmedField
+                contentParts.push(`${fieldLabel}: ${value}`)
+            }
+        }
+
+        return contentParts.join('\n\n')
+    }
+
     private createDocumentFromTag(tag: any): Document {
-        // Create page content from tag information
-        const pageContent = [
-            `Tag: ${tag.label} (${tag.slug})`,
-            tag.description ? `Description: ${tag.description}` : '',
-            tag.parent ? `Parent: ${tag.parent.label} (${tag.parent.slug})` : ''
-        ]
-            .filter(Boolean)
-            .join('\n')
+        let pageContent: string
+
+        // NEW: If contentFields specified, use field selector
+        if (this.contentFields && this.contentFields.length > 0) {
+            pageContent = this.buildPageContentFromFields(tag, this.contentFields)
+        } else {
+            // BACKWARD COMPATIBLE: Use existing template
+            pageContent = [
+                `Tag: ${tag.label} (${tag.slug})`,
+                tag.description ? `Description: ${tag.description}` : '',
+                tag.parent ? `Parent: ${tag.parent.label} (${tag.parent.slug})` : ''
+            ]
+                .filter(Boolean)
+                .join('\n')
+        }
 
         // Build comprehensive metadata
         const metadata: ICommonObject = {
