@@ -219,7 +219,7 @@ export const authenticationHandlerMiddleware =
                             user.stripeCustomerId = DEFAULT_CUSTOMER_ID
                         }
 
-                        req.user = { ...authUser, ...user, roles, permissions }
+                        req.user = { ...authUser, ...user, roles, permissions } as any
                     } else {
                         // User authenticated but from unauthorized organization - treat as anonymous user
                         console.warn(`Auth: User ${email} from org '${userOrgId}' treated as anonymous - not in allowed orgs`)
@@ -252,17 +252,18 @@ export const authenticationHandlerMiddleware =
                     // Determine auth method
                     const authMethod = apiKeyUser ? 'apikey' : 'jwt'
 
+                    const userData = req.user as any
                     return res.json({
                         user: {
-                            id: req.user.id,
-                            name: req.user.name,
-                            email: req.user.email,
-                            organizationId: req.user.organizationId,
-                            stripeCustomerId: req.user.stripeCustomerId,
-                            defaultChatflowId: req.user.defaultChatflowId,
-                            createdDate: req.user.createdDate,
-                            updatedDate: req.user.updatedDate,
-                            roles: req.user.roles || []
+                            id: userData.id,
+                            name: userData.name,
+                            email: userData.email,
+                            organizationId: userData.organizationId,
+                            stripeCustomerId: userData.stripeCustomerId,
+                            defaultChatflowId: userData.defaultChatflowId,
+                            createdDate: userData.createdDate,
+                            updatedDate: userData.updatedDate,
+                            roles: userData.roles || []
                         },
                         organization: organization
                             ? {
