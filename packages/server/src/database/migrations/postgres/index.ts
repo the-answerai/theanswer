@@ -52,8 +52,7 @@ import { AddPersonalWorkspace1734074497540 } from '../../../enterprise/database/
 import { RefactorEnterpriseDatabase1737076223692 } from '../../../enterprise/database/migrations/postgres/1737076223692-RefactorEnterpriseDatabase'
 import { ExecutionLinkWorkspaceId1746862866554 } from '../../../enterprise/database/migrations/postgres/1746862866554-ExecutionLinkWorkspaceId'
 
-
-// AAI 
+// AAI
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
 import { AddUser1716422641414 } from './1716422641414-AddUser'
 import { AddOrganizationId1717629010538 } from './1717629010538-AddOrganizationId'
@@ -90,6 +89,10 @@ import { AddUniqueConstraintDefaultChatflows1753000000001 } from './175300000000
 import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
 import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './1731429600000-BackfillDocumentStoreFileChunkUserScoping'
 
+// AAI Migration Sandwich - preserves AAI data through enterprise migrations
+import { BackupAAIData1737076223690 } from './1737076223690-BackupAAIData'
+import { RestoreAAIData1737076223693 } from './1737076223693-RestoreAAIData'
+import { CreateAAIWorkspaces1737076223694 } from './1737076223694-CreateAAIWorkspaces'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -170,7 +173,10 @@ export const postgresMigrations = [
     AddSSOColumns1730519457880,
     AddSeqNoToDatasetRow1733752119696,
     AddPersonalWorkspace1734074497540,
+    BackupAAIData1737076223690, // AAI Sandwich: Backup BEFORE enterprise migration
     RefactorEnterpriseDatabase1737076223692,
+    RestoreAAIData1737076223693, // AAI Sandwich: Restore AFTER enterprise migration
+    CreateAAIWorkspaces1737076223694, // AAI Sandwich: Create workspaces for existing users
     AddExecutionEntity1738090872625,
     FixOpenSourceAssistantTable1743758056188,
     AddErrorToEvaluationRun1744964560174,
