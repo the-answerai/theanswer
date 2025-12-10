@@ -840,10 +840,10 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
                                 )}
 
-                                {/* Export/Import menu items visibility */}
+                                {/* Export/Import menu items visibility
                                 {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
                                     <ExportImportMenuItems onClose={handleClose} />
-                                )}
+                                )} */}
 
                                 <MenuItem
                                     onClick={() => {
