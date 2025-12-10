@@ -137,11 +137,12 @@ class AAIDomains_DocumentLoaders implements INode {
                 additionalParams: true
             },
             {
-                label: 'Include AI Analysis in Content',
-                name: 'includeAiAnalysis',
-                type: 'boolean',
-                default: true,
-                description: 'Include full AI analysis markdown in page content',
+                label: 'Content Fields',
+                name: 'contentFields',
+                type: 'string',
+                placeholder: 'domain_name,meta_description,ai_analysis.industry',
+                description:
+                    'Comma-separated list of fields to include in chunked content. Supports dot notation for nested fields (e.g., ai_analysis.summary, custom_data.employee_name). Leave empty for default behavior.',
                 optional: true,
                 additionalParams: true
             },
@@ -190,7 +191,7 @@ class AAIDomains_DocumentLoaders implements INode {
         const excludeTags = nodeData.inputs?.excludeTags as string
         const isValid = (nodeData.inputs?.isValid as string) || 'all'
         const hasAnalysis = (nodeData.inputs?.hasAnalysis as string) || 'all'
-        const includeAiAnalysis = nodeData.inputs?.includeAiAnalysis !== false
+        const contentFields = nodeData.inputs?.contentFields as string
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const output = nodeData.outputs?.output as string
@@ -198,6 +199,15 @@ class AAIDomains_DocumentLoaders implements INode {
         let omitMetadataKeys: string[] = []
         if (_omitMetadataKeys) {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
+        }
+
+        // Parse content fields if provided
+        let parsedContentFields: string[] | null = null
+        if (contentFields && contentFields.trim()) {
+            parsedContentFields = contentFields
+                .split(',')
+                .map((f) => f.trim())
+                .filter((f) => f.length > 0)
         }
 
         // Validate inputs
@@ -248,7 +258,7 @@ class AAIDomains_DocumentLoaders implements INode {
             excludeTags: excludeTags ? excludeTags.split(',').map((t) => t.trim()) : [],
             isValid: isValidFilter,
             hasAnalysis,
-            includeAiAnalysis
+            contentFields: parsedContentFields
         }
 
         const loader = new AAIDomainsLoader(loaderOptions)
@@ -317,7 +327,7 @@ interface AAIDomainsLoaderParams {
     excludeTags: string[]
     isValid: string | null
     hasAnalysis: string
-    includeAiAnalysis: boolean
+    contentFields: string[] | null
 }
 
 class AAIDomainsLoader extends BaseDocumentLoader {
@@ -330,7 +340,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
     private excludeTags: string[]
     private isValid: string | null
     private hasAnalysis: string
-    private includeAiAnalysis: boolean
+    private contentFields: string[] | null
 
     constructor(params: AAIDomainsLoaderParams) {
         super()
@@ -343,7 +353,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         this.excludeTags = params.excludeTags
         this.isValid = params.isValid
         this.hasAnalysis = params.hasAnalysis
-        this.includeAiAnalysis = params.includeAiAnalysis
+        this.contentFields = params.contentFields
     }
 
     public async load(): Promise<IDocument[]> {
@@ -392,13 +402,51 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
             while (retryCount < maxRetries) {
                 try {
-                    // Build query with only essential fields (exclude heavy JSONB history fields)
-                    // NOTE: We explicitly exclude: ai_analysis_overrides, ai_analysis_history,
-                    // override_metadata, source_metadata which can be multi-MB per record
-                    let query = supabase
-                        .from('domains')
-                        .select(
-                            `
+                    // Build query - dynamic based on contentFields
+                    let selectFields: string
+
+                    if (this.contentFields && this.contentFields.length > 0) {
+                        // User specified fields - build dynamic select
+                        const baseFields = new Set(['id', 'domain_name', 'created_at', 'updated_at'])
+                        const requestedFields = new Set<string>()
+
+                        // Parse contentFields to determine which top-level fields we need
+                        for (const field of this.contentFields) {
+                            const topLevelField = field.split('.')[0]
+                            requestedFields.add(topLevelField)
+                        }
+
+                        // Always include base fields + requested fields
+                        const fieldsToFetch = [...baseFields, ...requestedFields]
+
+                        // Add tags if not already included
+                        if (!fieldsToFetch.includes('domain_tags')) {
+                            fieldsToFetch.push('domain_tags')
+                        }
+
+                        // Build select string with tags relation
+                        const fieldsList = fieldsToFetch.filter((f) => f !== 'domain_tags').join(',\n                            ')
+                        selectFields = `
+                            ${fieldsList},
+                            domain_tags(
+                                tag_id,
+                                tags(id, slug, label, color, parent_id)
+                            )
+                        `
+
+                        // Warn about heavy fields
+                        const heavyFields = ['ai_analysis_history', 'ai_analysis_overrides', 'override_metadata', 'source_metadata']
+                        const requestedHeavy = heavyFields.filter((f) => requestedFields.has(f))
+                        if (requestedHeavy.length > 0) {
+                            console.warn(
+                                `[AAIDomains] Warning: Fetching heavy JSONB fields: ${requestedHeavy.join(
+                                    ', '
+                                )}. This may impact performance.`
+                            )
+                        }
+                    } else {
+                        // Default behavior - only lightweight fields
+                        selectFields = `
                             id,
                             domain_name,
                             is_valid,
@@ -416,7 +464,11 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                                 tags(id, slug, label, color, parent_id)
                             )
                         `
-                        )
+                    }
+
+                    let query = supabase
+                        .from('domains')
+                        .select(selectFields)
                         .order('updated_at', { ascending: false })
                         .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
 
@@ -549,6 +601,66 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         })
     }
 
+    /**
+     * Extract field value from data object using dot notation
+     * @param obj - Source data object
+     * @param path - Field path (e.g., "ai_analysis.summary" or "domain_name")
+     * @returns Field value as string, or null if not found
+     */
+    private getFieldValue(obj: any, path: string): string | null {
+        const keys = path.split('.')
+        let value = obj
+
+        for (const key of keys) {
+            value = value?.[key]
+            if (value === undefined || value === null) return null
+        }
+
+        // Handle arrays (e.g., tags, topics)
+        if (Array.isArray(value)) {
+            return value
+                .map((v) => {
+                    if (typeof v === 'string') return v
+                    if (v?.slug) return v.slug // Handle tag objects
+                    if (v?.label) return v.label
+                    return JSON.stringify(v)
+                })
+                .join(', ')
+        }
+
+        // Handle objects (pretty print for readability)
+        if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2)
+        }
+
+        return String(value)
+    }
+
+    /**
+     * Build page content from selected fields
+     * @param data - Source data object
+     * @param contentFields - Array of field paths to include
+     * @returns Formatted content string
+     */
+    private buildPageContentFromFields(data: any, contentFields: string[]): string {
+        const contentParts: string[] = []
+
+        for (const field of contentFields) {
+            const trimmedField = field.trim()
+            if (!trimmedField) continue
+
+            const value = this.getFieldValue(data, trimmedField)
+
+            if (value !== null && value !== '') {
+                // Format as "Field: value" for clarity
+                const fieldLabel = trimmedField.split('.').pop() || trimmedField
+                contentParts.push(`${fieldLabel}: ${value}`)
+            }
+        }
+
+        return contentParts.join('\n\n')
+    }
+
     private formatAiAnalysisAsMarkdown(aiAnalysis: any): string {
         if (!aiAnalysis || Object.keys(aiAnalysis).length === 0) {
             return ''
@@ -641,20 +753,23 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         const customData = domain.custom_data || {}
         const aiAnalysis = domain.ai_analysis || {}
 
-        // Format AI analysis as markdown if requested
-        const aiAnalysisMarkdown = this.includeAiAnalysis ? this.formatAiAnalysisAsMarkdown(aiAnalysis) : ''
+        let pageContent: string
 
-        // Create page content from meta description or domain analysis
-        const pageContent = [
-            `# ${domain.domain_name}`,
-            '',
-            domain.meta_title ? `## ${domain.meta_title}` : '',
-            domain.meta_description ? `${domain.meta_description}` : '',
-            '',
-            aiAnalysisMarkdown
-        ]
-            .filter(Boolean)
-            .join('\n')
+        // If contentFields specified, use field selector
+        if (this.contentFields && this.contentFields.length > 0) {
+            pageContent = this.buildPageContentFromFields(domain, this.contentFields)
+        } else {
+            // Default behavior: basic info without AI analysis
+            // Users can now use contentFields to include exactly what they want
+            pageContent = [
+                `# ${domain.domain_name}`,
+                '',
+                domain.meta_title ? `## ${domain.meta_title}` : '',
+                domain.meta_description ? `${domain.meta_description}` : ''
+            ]
+                .filter(Boolean)
+                .join('\n')
+        }
 
         // Build comprehensive metadata
         const metadata: ICommonObject = {
