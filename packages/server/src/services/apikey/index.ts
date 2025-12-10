@@ -230,7 +230,7 @@ const importKeys = async (body: any) => {
     }
 }
 
-const verifyApiKey = async (paramApiKey: string): Promise<string> => {
+const verifyApiKey = async (paramApiKey: string): Promise<ApiKey> => {
     try {
         const appServer = getRunningExpressApp()
         const apiKey = await appServer.AppDataSource.getRepository(ApiKey).findOneBy({

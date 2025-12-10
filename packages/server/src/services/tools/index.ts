@@ -13,8 +13,8 @@ const createTool = async (requestBody: any, orgId: string): Promise<any> => {
         const appServer = getRunningExpressApp()
         const newTool = new Tool()
         Object.assign(newTool, requestBody)
-        newTool.userId = user.id
-        newTool.organizationId = user.organizationId
+        // Set organization from passed orgId parameter
+        newTool.organizationId = orgId
         const tool = await appServer.AppDataSource.getRepository(Tool).create(newTool)
         const dbResponse = await appServer.AppDataSource.getRepository(Tool).save(tool)
         await appServer.telemetry.sendTelemetry(

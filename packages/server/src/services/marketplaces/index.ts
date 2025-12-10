@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { StatusCodes } from 'http-status-codes'
 import path from 'path'
-import { DeleteResult } from 'typeorm'
+import { DeleteResult, IsNull } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { CustomTemplate } from '../../database/entities/CustomTemplate'
 import { WorkspaceService } from '../../enterprise/services/workspace.service'
@@ -388,12 +388,44 @@ const formatTemplateResponse = (templates: any[]): any[] => {
     })
 }
 
+// Get a single marketplace template by ID
+const getMarketplaceTemplate = async (templateId: string, user: IUser | undefined): Promise<any> => {
+    try {
+        const appServer = getRunningExpressApp()
+
+        // First check if it's a custom template in the database
+        const customTemplate = await appServer.AppDataSource.getRepository(CustomTemplate).findOne({
+            where: { id: templateId }
+        })
+
+        if (customTemplate) {
+            return formatTemplateResponse([customTemplate])[0]
+        }
+
+        // If not found in DB, search in file-based templates
+        const allTemplates = await getAllTemplates(user)
+        const template = allTemplates.find((t: any) => t.id === templateId || t.templateName === templateId)
+
+        if (!template) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Template ${templateId} not found`)
+        }
+
+        return template
+    } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: marketplacesService.getMarketplaceTemplate - ${getErrorMessage(error)}`
+        )
+    }
+}
+
 export default {
     getAllTemplates,
     getAllCustomTemplates,
     getOrganizationTemplates,
     saveCustomTemplate,
     deleteCustomTemplate,
-    // getMarketplaceTemplate,
+    getMarketplaceTemplate,
     formatTemplateResponse
 }

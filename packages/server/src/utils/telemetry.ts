@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from 'uuid'
-import { PostHog } from 'posthog-node'
-import { getAppVersion } from '../utils'
+// PostHog removed due to Shai-Hulud-2 security vulnerability
+// Telemetry functionality disabled
 
 export enum TelemetryEventType {
     'USER_CREATED' = 'user_created',
@@ -14,15 +13,8 @@ export class Telemetry {
     }
 
     async sendTelemetry(event: string, properties: Record<string, any> = {}, orgId = ''): Promise<void> {
-        properties.version = await getAppVersion()
-        if (this.postHog) {
-            const distinctId = orgId || uuidv4()
-            this.postHog.capture({
-                event,
-                distinctId,
-                properties
-            })
-        }
+        // Telemetry disabled - PostHog removed due to Shai-Hulud-2 security vulnerability
+        // No-op implementation to maintain API compatibility
     }
 
     async flush(): Promise<void> {

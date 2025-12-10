@@ -1,5 +1,6 @@
 import { ICommonObject } from 'flowise-components'
 import { StatusCodes } from 'http-status-codes'
+import { validate as uuidValidate } from 'uuid'
 import { cloneDeep, isEqual, uniqWith } from 'lodash'
 import OpenAI from 'openai'
 import { DeleteResult, In, QueryRunner } from 'typeorm'
@@ -32,11 +33,8 @@ const createAssistant = async (requestBody: any, orgId: string): Promise<Assista
             const newAssistant = new Assistant()
             Object.assign(newAssistant, requestBody)
 
-            // Set user and organization if provided
-            if (user) {
-                newAssistant.userId = user.id
-                newAssistant.organizationId = user.organizationId
-            }
+            // Set organization from passed orgId parameter
+            newAssistant.organizationId = orgId
 
             const assistant = appServer.AppDataSource.getRepository(Assistant).create(newAssistant)
             const dbResponse = await appServer.AppDataSource.getRepository(Assistant).save(assistant)
@@ -143,11 +141,8 @@ const createAssistant = async (requestBody: any, orgId: string): Promise<Assista
         const newAssistant = new Assistant()
         Object.assign(newAssistant, requestBody)
 
-        // Set user and organization if provided
-        if (user) {
-            newAssistant.userId = user.id
-            newAssistant.organizationId = user.organizationId
-        }
+        // Set organization from passed orgId parameter
+        newAssistant.organizationId = orgId
 
         const assistant = appServer.AppDataSource.getRepository(Assistant).create(newAssistant)
         const dbResponse = await appServer.AppDataSource.getRepository(Assistant).save(assistant)
@@ -415,7 +410,7 @@ const importAssistants = async (
 ): Promise<any> => {
     try {
         for (const data of newAssistants) {
-            if (data.id && !validate(data.id)) {
+            if (data.id && !uuidValidate(data.id)) {
                 throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: importAssistants - invalid id!`)
             }
         }

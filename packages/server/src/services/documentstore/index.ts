@@ -2103,7 +2103,7 @@ const upsertDocStore = async (
         splitterConfig,
         user: data.user,
         userId: data.user.id,
-        organizationId: data.user.organizationId
+        organizationId: data.user.organizationId || ''
     }
 
     if (isRefreshExisting || replaceExisting) {

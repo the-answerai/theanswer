@@ -346,7 +346,7 @@ const storeAssets = async (data: {
             organizationId,
             userId
         )
-        const originalFileName = storedOriginal.replace('FILE-STORAGE::', '')
+        const originalFileName = storedOriginal.path.replace('FILE-STORAGE::', '')
         originalImageUrl = `/api/v1/get-upload-file?chatflowId=${STORAGE_FOLDER}&chatId=${encodedChatId}&fileName=${originalFileName}`
     }
 
@@ -363,13 +363,13 @@ const storeAssets = async (data: {
             organizationId,
             userId
         )
-        const croppedFileName = storedCropped.replace('FILE-STORAGE::', '')
+        const croppedFileName = storedCropped.path.replace('FILE-STORAGE::', '')
         croppedImageUrl = `/api/v1/get-upload-file?chatflowId=${STORAGE_FOLDER}&chatId=${encodedChatId}&fileName=${croppedFileName}`
     }
 
     const videoFilename = `${baseName}.mp4`
     const videoStorage = await addSingleFileToStorage('video/mp4', videoBuffer, videoFilename, STORAGE_FOLDER, organizationId, userId)
-    const videoFileName = videoStorage.replace('FILE-STORAGE::', '')
+    const videoFileName = videoStorage.path.replace('FILE-STORAGE::', '')
     const videoUrl = `/api/v1/get-upload-file?chatflowId=${STORAGE_FOLDER}&chatId=${encodedChatId}&fileName=${videoFileName}`
 
     let thumbnailUrl: string | undefined
@@ -383,7 +383,7 @@ const storeAssets = async (data: {
             organizationId,
             userId
         )
-        const thumbFileName = storedThumbnail.replace('FILE-STORAGE::', '')
+        const thumbFileName = storedThumbnail.path.replace('FILE-STORAGE::', '')
         thumbnailUrl = `/api/v1/get-upload-file?chatflowId=${STORAGE_FOLDER}&chatId=${encodedChatId}&fileName=${thumbFileName}`
     }
 
@@ -417,7 +417,7 @@ const storeAssets = async (data: {
         organizationId,
         userId
     )
-    const metadataFileName = metadataStorage.replace('FILE-STORAGE::', '')
+    const metadataFileName = metadataStorage.path.replace('FILE-STORAGE::', '')
     const metadataUrl = `/api/v1/get-upload-file?chatflowId=${STORAGE_FOLDER}&chatId=${encodedChatId}&fileName=${metadataFileName}`
 
     return {

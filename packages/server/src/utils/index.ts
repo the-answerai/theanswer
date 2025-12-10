@@ -483,7 +483,7 @@ const checkIfDocLoaderShouldBeIgnored = (
 }
 
 type BuildFlowParams = {
-    user?: LoggedInUser
+    user?: IUser
     startingNodeIds: string[]
     reactFlowNodes: IReactFlowNode[]
     reactFlowEdges: IReactFlowEdge[]
@@ -2388,7 +2388,8 @@ export async function refreshStoredCredentialTokens(credentialId: string, appDat
                 expiration_time: newExpirationTime.toString()
             },
             userId: credential.userId,
-            organizationId: credential.organizationId
+            organizationId: credential.organizationId,
+            workspaceId: credential.workspaceId
         }
 
         const updateCredentialEntity = await transformToCredentialEntity(updateBody)

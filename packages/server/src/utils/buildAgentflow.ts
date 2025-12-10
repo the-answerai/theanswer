@@ -29,7 +29,8 @@ import {
     IComponentNodes,
     INodeOverrides,
     IVariableOverride,
-    INodeDirectedGraph
+    INodeDirectedGraph,
+    IUser
 } from '../Interface'
 import {
     RUNTIME_MESSAGES_LENGTH_VAR_PREFIX,
@@ -101,7 +102,7 @@ interface IAgentFlowRuntime {
 }
 
 interface IExecuteNodeParams {
-    user?: LoggedInUser
+    user?: IUser
     nodeId: string
     reactFlowNode: IReactFlowNode
     nodes: IReactFlowNode[]
@@ -166,7 +167,7 @@ const addExecution = async (
     agentFlowExecutedData: IAgentflowExecutedData[],
     sessionId: string,
     workspaceId: string,
-    user?: LoggedInUser
+    user?: IUser
 ) => {
     const newExecution = new Execution()
     const bodyExecution = {

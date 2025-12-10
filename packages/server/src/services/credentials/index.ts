@@ -248,7 +248,8 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
                 // expiresAt: new Date(Date.now() + 1 * 60 * 1000)
             },
             userId: credential.userId,
-            organizationId: credential.organizationId
+            organizationId: credential.organizationId,
+            workspaceId: credential.workspaceId
         }
         const updateCredentialEntity = await transformToCredentialEntity(updateBody)
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)
