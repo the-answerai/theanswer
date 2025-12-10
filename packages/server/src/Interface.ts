@@ -69,22 +69,41 @@ export enum UserPlan {
 
 /**
  * Databases
+ *
+ * IUser is a standalone interface (not extending LoggedInUser) because:
+ * 1. LoggedInUser is defined in enterprise code (cannot modify)
+ * 2. LoggedInUser requires workspace fields that database User entity doesn't have
+ * 3. IUser is used for database operations, LoggedInUser is for auth context
  */
-export interface IUser extends LoggedInUser {
+export interface IUser {
     id: string
     name: string
     email: string
-    organizationId: string
+    organizationId?: string
     stripeCustomerId?: string
     defaultChatflowId?: string
-    updatedDate: Date
-    createdDate: Date
+    updatedDate?: Date
+    createdDate?: Date
     permissions?: string[]
     roles?: string[]
     apiKey?: {
         id: string
         metadata?: IApiKeyMetadata
     }
+    // Optional workspace fields (populated by auth middleware when needed)
+    activeWorkspaceId?: string
+    activeOrganizationId?: string
+    activeWorkspace?: string
+    roleId?: string
+    isOrganizationAdmin?: boolean
+    // Optional AAI fields
+    auth0Id?: string
+    trialPlanId?: string
+    // Enterprise LoggedInUser compatibility fields
+    activeOrganizationSubscriptionId?: string
+    activeOrganizationCustomerId?: string
+    activeOrganizationProductId?: string
+    assignedWorkspaces?: any[]
 }
 export interface IOrganization {
     id: string
@@ -497,7 +516,7 @@ export interface IExecuteFlowParams extends IPredictionQueueAppServer {
     fileUploads?: IFileUpload[]
     uploadedFilesContent?: string
     isUpsert?: boolean
-    user?: LoggedInUser
+    user?: IUser
     isRecursive?: boolean
     parentExecutionId?: string
     iterationContext?: ICommonObject

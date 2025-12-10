@@ -20,9 +20,9 @@ export class IUser {
     loginMode?: string
     activeOrganizationId?: string
  
-    // AAI 
-    stripeCustomerId: string
-    organizationId: string
+    // AAI (optional - may not be set by enterprise passport)
+    stripeCustomerId?: string
+    organizationId?: string
 }
 
 export interface IWorkspaceUser {
@@ -82,11 +82,11 @@ export type LoggedInUser = {
     ssoToken?: string
     ssoProvider?: string
 
-    // AAI
-    auth0Id: string
-    stripeCustomerId: string
-    organizationId: string
-    roles: string[]
+    // AAI (optional - may not be set by enterprise passport)
+    auth0Id?: string
+    stripeCustomerId?: string
+    organizationId?: string
+    roles?: string[]
 }
 
 export enum ErrorMessage {
