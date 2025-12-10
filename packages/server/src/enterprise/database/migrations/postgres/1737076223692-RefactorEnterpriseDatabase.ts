@@ -82,10 +82,16 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         /*-------------------------------------
         --------------- role ------------------
         --------------------------------------*/
-        // rename roles table to temp_role
-        await queryRunner.query(`alter table "roles" rename to "temp_role";`)
+        // Check if roles table exists (may not exist in AAI schema)
+        const rolesTableExists = await queryRunner.query(`
+            SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'roles')
+        `)
+        if (rolesTableExists[0].exists) {
+            // rename roles table to temp_role
+            await queryRunner.query(`alter table "roles" rename to "temp_role";`)
+        }
 
-        // create organization_login_method table
+        // create role table
         await queryRunner.query(`
             create table "role" (
                 "id" uuid default uuid_generate_v4() primary key,
@@ -129,29 +135,66 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         /*-------------------------------------
         ------------- workspace ---------------
         --------------------------------------*/
-        // modify workspace table
-        await queryRunner.query(`
-            alter table "workspace"
-            drop constraint "fk_workspace_organizationId",
-            alter column "organizationId" set not null,
-            alter column "name" type varchar(100),
-            alter column "description" type text,
-            add column "createdBy" uuid null,
-            add column "updatedBy" uuid null,
-            add constraint "fk_createdBy" foreign key ("createdBy") references "user" ("id"),
-            add constraint "fk_updatedBy" foreign key ("updatedBy") references "user" ("id");
+        // Check if workspace table exists (may not exist in AAI schema)
+        const workspaceTableExists = await queryRunner.query(`
+            SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'workspace')
         `)
+        if (workspaceTableExists[0].exists) {
+            // Check if constraint exists before trying to drop it
+            const constraintExists = await queryRunner.query(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.table_constraints
+                    WHERE constraint_name = 'fk_workspace_organizationId' AND table_name = 'workspace'
+                )
+            `)
+            if (constraintExists[0].exists) {
+                await queryRunner.query(`alter table "workspace" drop constraint "fk_workspace_organizationId";`)
+            }
 
-        // remove first if needed will be add back, will cause insert to slow
-        await queryRunner.query(`
-            drop index "idx_workspace_organizationId";
-        `)
+            // modify workspace table - check if columns need to be added
+            const workspaceColumns = await queryRunner.query(`
+                SELECT column_name FROM information_schema.columns WHERE table_name = 'workspace'
+            `)
+            const columnNames = workspaceColumns.map((col: { column_name: string }) => col.column_name)
+
+            if (!columnNames.includes('createdBy')) {
+                await queryRunner.query(`alter table "workspace" add column "createdBy" uuid null;`)
+            }
+            if (!columnNames.includes('updatedBy')) {
+                await queryRunner.query(`alter table "workspace" add column "updatedBy" uuid null;`)
+            }
+
+            // Add foreign key constraints if they don't exist
+            await queryRunner.query(`
+                do $$ begin
+                    if not exists (select 1 from information_schema.table_constraints where constraint_name = 'fk_createdBy' and table_name = 'workspace') then
+                        alter table "workspace" add constraint "fk_createdBy" foreign key ("createdBy") references "user" ("id");
+                    end if;
+                end $$;
+            `)
+            await queryRunner.query(`
+                do $$ begin
+                    if not exists (select 1 from information_schema.table_constraints where constraint_name = 'fk_updatedBy' and table_name = 'workspace') then
+                        alter table "workspace" add constraint "fk_updatedBy" foreign key ("updatedBy") references "user" ("id");
+                    end if;
+                end $$;
+            `)
+
+            // remove index if it exists
+            await queryRunner.query(`drop index if exists "idx_workspace_organizationId";`)
+        }
 
         /*-------------------------------------
         ----------- workspace_user ------------
         --------------------------------------*/
-        // rename workspace_users table to temp_workspace_user
-        await queryRunner.query(`alter table "workspace_users" rename to "temp_workspace_user";`)
+        // Check if workspace_users table exists
+        const workspaceUsersExists = await queryRunner.query(`
+            SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'workspace_users')
+        `)
+        if (workspaceUsersExists[0].exists) {
+            // rename workspace_users table to temp_workspace_user
+            await queryRunner.query(`alter table "workspace_users" rename to "temp_workspace_user";`)
+        }
 
         // create workspace_user table
         await queryRunner.query(`
@@ -303,6 +346,20 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         const noExistingData = users.length > 0 === false
         if (noExistingData) return
 
+        // Check if this is AAI schema (has auth0Id but no credential column in temp_user)
+        const tempUserColumns = await queryRunner.query(`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'temp_user'
+        `)
+        const columnNames = tempUserColumns.map((col: { column_name: string }) => col.column_name)
+        const isAAISchema = columnNames.includes('auth0Id') && !columnNames.includes('credential')
+
+        if (isAAISchema) {
+            console.log('Detected AAI schema - using AAI-specific data migration')
+            await this.populateTableAAI(queryRunner, users)
+            return
+        }
+
         const organizations = await queryRunner.query('select * from "temp_organization";')
         const organizationId = organizations[0].id
         const adminUserId = organizations[0].adminUserId
@@ -314,7 +371,7 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         // insert user with temp_user data
         await queryRunner.query(`
             insert into "user" ("id", "name", "email", "credential", "tempToken", "tokenExpiry", "status", "createdBy", "updatedBy")
-            select tu."id", coalesce(tu."name", tu."email"), tu."email", tu."credential", tu."tempToken", tu."tokenExpiry", tu."status", 
+            select tu."id", coalesce(tu."name", tu."email"), tu."email", tu."credential", tu."tempToken", tu."tokenExpiry", tu."status",
             '${adminUserId}', '${adminUserId}'
             from "temp_user" as "tu";
         `)
@@ -436,19 +493,83 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         await this.deleteWorkspaceWithoutUser(queryRunner)
     }
 
+    /**
+     * AAI-specific data migration - handles the different AAI schema
+     * AAI user table has: id, auth0Id, email, name, createdDate, updatedDate
+     * AAI organization table has: id, auth0Id, name, createdDate, updatedDate
+     */
+    private async populateTableAAI(queryRunner: QueryRunner, users: any[]): Promise<void> {
+        // Use first user as admin
+        const firstUserId = users[0].id
+
+        // Get organizations from temp table
+        const organizations = await queryRunner.query('select * from "temp_organization";')
+
+        /*-------------------------------------
+        --------------- user -----------------
+        --------------------------------------*/
+        // Insert users with AAI schema (no credential, tempToken, tokenExpiry, status columns)
+        await queryRunner.query(`
+            insert into "user" ("id", "name", "email", "status", "createdBy", "updatedBy")
+            select tu."id", coalesce(tu."name", tu."email"), tu."email", '${UserStatus.ACTIVE}',
+            '${firstUserId}', '${firstUserId}'
+            from "temp_user" as "tu";
+        `)
+        console.log('AAI users migrated to new user table')
+
+        /*-------------------------------------
+        ----------- organization --------------
+        --------------------------------------*/
+        // Insert organizations with AAI schema
+        if (organizations.length > 0) {
+            await queryRunner.query(`
+                insert into "organization" ("id", "name", "createdBy", "updatedBy")
+                select "id", "name", '${firstUserId}', '${firstUserId}' from "temp_organization";
+            `)
+            console.log('AAI organizations migrated to new organization table')
+        }
+
+        /*-------------------------------------
+        ---------- organization_user ----------
+        --------------------------------------*/
+        const roles = await queryRunner.query('select * from "role";')
+        const ownerRoleId = roles.find((role: any) => role.name === GeneralRole.OWNER)?.id
+        const memberRoleId = roles.find((role: any) => role.name === GeneralRole.MEMBER)?.id
+
+        // For AAI, we need to link users to their organizations
+        // AAI users have organizationId column that links them to organizations
+        const tempUserColumns = await queryRunner.query(`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'temp_user'
+        `)
+        const hasOrgIdColumn = tempUserColumns.some((col: { column_name: string }) => col.column_name === 'organizationId')
+
+        if (hasOrgIdColumn && organizations.length > 0) {
+            for (let user of users) {
+                // First user is owner, others are members
+                const roleId = user.id === firstUserId ? ownerRoleId : memberRoleId
+                const orgId = user.organizationId || organizations[0].id
+
+                await queryRunner.query(`
+                    insert into "organization_user" ("organizationId", "userId", "roleId", "status", "createdBy", "updatedBy")
+                    values ('${orgId}','${user.id}','${roleId}','${OrganizationUserStatus.ACTIVE}','${firstUserId}','${firstUserId}')
+                    on conflict ("organizationId", "userId") do nothing;
+                `)
+            }
+            console.log('AAI organization_user relationships created')
+        }
+
+        // Skip workspace_user migration for AAI as the workspace system is handled differently
+        // The CreateAAIWorkspaces migration will set up workspaces for AAI users
+        console.log('Skipping workspace_user migration for AAI schema - will be handled by CreateAAIWorkspaces')
+    }
+
     private async deleteTempTable(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            drop table "temp_workspace_user";
-        `)
-        await queryRunner.query(`
-            drop table "temp_role";
-        `)
-        await queryRunner.query(`
-            drop table "temp_organization";
-        `)
-        await queryRunner.query(`
-            drop table "temp_user";
-        `)
+        // Use IF EXISTS for AAI compatibility - some tables may not exist
+        await queryRunner.query(`drop table if exists "temp_workspace_user";`)
+        await queryRunner.query(`drop table if exists "temp_role";`)
+        await queryRunner.query(`drop table if exists "temp_organization";`)
+        await queryRunner.query(`drop table if exists "temp_user";`)
     }
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -456,16 +577,42 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         await this.populateTable(queryRunner)
         await this.deleteTempTable(queryRunner)
 
-        // This query cannot be part of the modifyTable function because:
-        // 1. The "organizationId" in the "workspace" table might be referencing data in the "temp_organization" table, so it must be altered last.
-        // 2. Setting "createdBy" and "updatedBy" to NOT NULL needs to happen after ensuring there’s no existing data that would violate the constraint,
-        //    because altering these columns while there is data could prevent new records from being inserted into the "workspace" table.
-        await queryRunner.query(`
-            alter table "workspace"
-            alter column "createdBy" set not null,
-            alter column "updatedBy" set not null,
-            add constraint "fk_organizationId" foreign key ("organizationId") references "organization" ("id");
+        // Check if workspace table exists before final modifications
+        const workspaceTableExists = await queryRunner.query(`
+            SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'workspace')
         `)
+        if (workspaceTableExists[0].exists) {
+            // This query cannot be part of the modifyTable function because:
+            // 1. The "organizationId" in the "workspace" table might be referencing data in the "temp_organization" table, so it must be altered last.
+            // 2. Setting "createdBy" and "updatedBy" to NOT NULL needs to happen after ensuring there's no existing data that would violate the constraint,
+            //    because altering these columns while there is data could prevent new records from being inserted into the "workspace" table.
+
+            // Check if columns are already NOT NULL before trying to set them
+            const columnInfo = await queryRunner.query(`
+                SELECT column_name, is_nullable FROM information_schema.columns
+                WHERE table_name = 'workspace' AND column_name IN ('createdBy', 'updatedBy')
+            `)
+
+            for (const col of columnInfo) {
+                if (col.is_nullable === 'YES') {
+                    // First update any NULL values to a valid user ID
+                    const firstUser = await queryRunner.query(`SELECT id FROM "user" LIMIT 1`)
+                    if (firstUser.length > 0) {
+                        await queryRunner.query(`UPDATE "workspace" SET "${col.column_name}" = '${firstUser[0].id}' WHERE "${col.column_name}" IS NULL`)
+                    }
+                    await queryRunner.query(`ALTER TABLE "workspace" ALTER COLUMN "${col.column_name}" SET NOT NULL;`)
+                }
+            }
+
+            // Add fk_organizationId constraint if it doesn't exist
+            await queryRunner.query(`
+                do $$ begin
+                    if not exists (select 1 from information_schema.table_constraints where constraint_name = 'fk_organizationId' and table_name = 'workspace') then
+                        alter table "workspace" add constraint "fk_organizationId" foreign key ("organizationId") references "organization" ("id");
+                    end if;
+                end $$;
+            `)
+        }
     }
 
     public async down(): Promise<void> {}

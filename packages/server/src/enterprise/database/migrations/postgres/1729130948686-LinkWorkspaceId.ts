@@ -19,20 +19,30 @@ export class LinkWorkspaceId1729130948686 implements MigrationInterface {
             CREATE INDEX "idx_apikey_workspaceId" ON "apikey"("workspaceId");
         `)
 
-        // step 1 - convert from varchar to UUID type
-        await queryRunner.query(`
-            ALTER TABLE "user" ALTER COLUMN "activeWorkspaceId" SET DATA TYPE UUID USING "activeWorkspaceId"::UUID;
+        // Check if activeWorkspaceId column exists (may not exist in AAI schema)
+        const hasActiveWorkspaceId = await queryRunner.query(`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'user' AND column_name = 'activeWorkspaceId'
         `)
 
-        // step 2 - add foreign key constraint
-        await queryRunner.query(`
-            ALTER TABLE "user" ADD CONSTRAINT "fk_user_activeWorkspaceId" FOREIGN KEY ("activeWorkspaceId") REFERENCES "workspace"("id");
-        `)
+        if (hasActiveWorkspaceId.length > 0) {
+            // step 1 - convert from varchar to UUID type
+            await queryRunner.query(`
+                ALTER TABLE "user" ALTER COLUMN "activeWorkspaceId" SET DATA TYPE UUID USING "activeWorkspaceId"::UUID;
+            `)
 
-        // step 3 - create index for activeWorkspaceId
-        await queryRunner.query(`
-            CREATE INDEX "idx_user_activeWorkspaceId" ON "user"("activeWorkspaceId");
-        `)
+            // step 2 - add foreign key constraint
+            await queryRunner.query(`
+                ALTER TABLE "user" ADD CONSTRAINT "fk_user_activeWorkspaceId" FOREIGN KEY ("activeWorkspaceId") REFERENCES "workspace"("id");
+            `)
+
+            // step 3 - create index for activeWorkspaceId
+            await queryRunner.query(`
+                CREATE INDEX "idx_user_activeWorkspaceId" ON "user"("activeWorkspaceId");
+            `)
+        } else {
+            console.log('Column activeWorkspaceId does not exist in user table - skipping')
+        }
 
         // step 1 - convert from varchar to UUID type
         await queryRunner.query(`
@@ -231,20 +241,28 @@ export class LinkWorkspaceId1729130948686 implements MigrationInterface {
             ALTER TABLE "apikey" ALTER COLUMN "workspaceId" SET DATA TYPE varchar USING "workspaceId"::varchar;
         `)
 
-        // step 1 - drop index
-        await queryRunner.query(`
-            DROP INDEX "idx_user_activeWorkspaceId";
+        // Check if activeWorkspaceId column exists
+        const hasActiveWorkspaceId = await queryRunner.query(`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'user' AND column_name = 'activeWorkspaceId'
         `)
 
-        // step 2 - drop foreign key constraint
-        await queryRunner.query(`
-            ALTER TABLE "user" DROP CONSTRAINT "fk_user_activeWorkspaceId";
-        `)
+        if (hasActiveWorkspaceId.length > 0) {
+            // step 1 - drop index
+            await queryRunner.query(`
+                DROP INDEX IF EXISTS "idx_user_activeWorkspaceId";
+            `)
 
-        // Step 3 - convert from UUID to varchar type
-        await queryRunner.query(`
-            ALTER TABLE "user" ALTER COLUMN "activeWorkspaceId" SET DATA TYPE varchar USING "activeWorkspaceId"::varchar;
-        `)
+            // step 2 - drop foreign key constraint
+            await queryRunner.query(`
+                ALTER TABLE "user" DROP CONSTRAINT IF EXISTS "fk_user_activeWorkspaceId";
+            `)
+
+            // Step 3 - convert from UUID to varchar type
+            await queryRunner.query(`
+                ALTER TABLE "user" ALTER COLUMN "activeWorkspaceId" SET DATA TYPE varchar USING "activeWorkspaceId"::varchar;
+            `)
+        }
 
         // step 1 - drop index
         await queryRunner.query(`
