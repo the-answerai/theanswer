@@ -166,7 +166,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         {
             id: 'chat',
             text: 'Chat',
-            link: '/chat',
+            link: user?.defaultChatflowId ? `/chat/${user.defaultChatflowId}` : '/chat',
             icon: <ChatBubbleOutlineIcon />
         },
         {
