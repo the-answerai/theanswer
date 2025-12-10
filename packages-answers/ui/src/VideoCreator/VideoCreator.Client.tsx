@@ -556,7 +556,7 @@ const VideoCreator = () => {
         try {
             const response = await fetch(`${user.chatflowDomain}/api/v1/video-generator/recent`, {
                 headers: {
-                    'x-request-from': 'internal',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 }
             })
@@ -599,7 +599,7 @@ const VideoCreator = () => {
             try {
                 const response = await fetch(`${user.chatflowDomain}/api/v1/video-generator/status/${jobId}`, {
                     headers: {
-                        'x-request-from': 'internal',
+                        'x-request-from': 'aai',
                         Authorization: `Bearer ${accessToken}`
                     }
                 })
@@ -697,7 +697,7 @@ const VideoCreator = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-request-from': 'internal',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(body)
@@ -851,7 +851,7 @@ const VideoCreator = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-request-from': 'internal',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(enhancePayload)

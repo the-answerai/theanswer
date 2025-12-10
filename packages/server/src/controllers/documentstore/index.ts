@@ -343,7 +343,7 @@ const processLoader = async (req: Request, res: Response, next: NextFunction) =>
         const subscriptionId = req.user?.activeOrganizationSubscriptionId || ''
         const docLoaderId = req.params.loaderId
         const body = req.body
-        const isInternalRequest = req.headers['x-request-from'] === 'internal'
+        const isInternalRequest = req.headers['x-request-from'] === 'internal' || req.headers['x-request-from'] === 'aai'
         const apiResponse = await documentStoreService.processLoaderMiddleware(
             body,
             docLoaderId,

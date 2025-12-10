@@ -38,7 +38,7 @@ const fetchList = async ({ name, nodeData, previousNodes, currentNode }) => {
 
     let config = {
         headers: {
-            'x-request-from': 'internal',
+            'x-request-from': 'aai',
             'Content-type': 'application/json'
         },
         withCredentials: true

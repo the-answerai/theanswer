@@ -17,7 +17,7 @@ const AboutDialog = ({ show, onCancel }) => {
             const latestReleaseReq = axios.get('https://api.github.com/repos/FlowiseAI/Flowise/releases/latest')
             const currentVersionReq = axios.get(`${baseURL}/api/v1/version`, {
                 withCredentials: true,
-                headers: { 'Content-type': 'application/json', 'x-request-from': 'internal' }
+                headers: { 'Content-type': 'application/json', 'x-request-from': 'aai' }
             })
 
             Promise.all([latestReleaseReq, currentVersionReq])

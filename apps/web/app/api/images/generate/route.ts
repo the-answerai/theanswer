@@ -52,7 +52,7 @@ export async function POST(req: Request) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-request-from': 'internal',
+                'x-request-from': 'aai',
                 Authorization: `Bearer ${accessToken}`
             },
             body: JSON.stringify(requestBody)

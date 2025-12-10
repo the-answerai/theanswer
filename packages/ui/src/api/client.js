@@ -6,7 +6,7 @@ const apiClient = axios.create({
     baseURL: `${baseURL}/api/v1`,
     headers: {
         'Content-type': 'application/json',
-        'x-request-from': 'internal'
+        'x-request-from': 'aai'
     },
     withCredentials: true
 })

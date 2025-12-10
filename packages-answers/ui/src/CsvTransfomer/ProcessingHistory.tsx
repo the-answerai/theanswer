@@ -13,7 +13,7 @@ async function fetchCsvParseRuns() {
     const baseURL = sessionStorage.getItem('baseURL') || ''
     const response = await fetch(`${baseURL}/api/v1/csv-parser`, {
         headers: {
-            'x-request-from': 'internal',
+            'x-request-from': 'aai',
             Authorization: `Bearer ${token}`
         }
     })
@@ -28,7 +28,7 @@ async function getProcessedCsvSignedUrl(csvParseRunId: string) {
     const baseURL = sessionStorage.getItem('baseURL') || ''
     const response = await fetch(`${baseURL}/api/v1/csv-parser/${csvParseRunId}/signed-url`, {
         headers: {
-            'x-request-from': 'internal',
+            'x-request-from': 'aai',
             Authorization: `Bearer ${token}`
         }
     })

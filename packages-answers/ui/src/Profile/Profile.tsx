@@ -78,7 +78,7 @@ const CredentialCreationModal = ({
 
                 const response = await fetch(`${baseURL}/api/v1/components-credentials/${integration.credentialName}`, {
                     headers: {
-                        'x-request-from': 'internal',
+                        'x-request-from': 'aai',
                         Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
@@ -132,7 +132,7 @@ const CredentialCreationModal = ({
             const response = await fetch(`${baseURL}/api/v1/credentials`, {
                 method: 'POST',
                 headers: {
-                    'x-request-from': 'internal',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 },

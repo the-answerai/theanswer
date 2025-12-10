@@ -81,7 +81,7 @@ async function createCsvParseRun({
             csvParseRunId
         }),
         headers: {
-            'x-request-from': 'internal',
+            'x-request-from': 'aai',
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
@@ -98,7 +98,7 @@ async function fetchCsvParseRun({ csvParseRunId }: { csvParseRunId: string }) {
     const token = sessionStorage.getItem('access_token')
     const response = await fetch(`${baseURL}/api/v1/csv-parser/${csvParseRunId}`, {
         headers: {
-            'x-request-from': 'internal',
+            'x-request-from': 'aai',
             Authorization: `Bearer ${token}`
         }
     })

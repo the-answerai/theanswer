@@ -80,7 +80,7 @@ const generateDalleImage = async (req: Request, res: Response, next: NextFunctio
         let user = req.user || { id: userId, organizationId, email: userEmail }
 
         // For internal tool calls without user context, use default system context
-        if (!user?.id && req.headers['x-request-from'] === 'internal') {
+        if (!user?.id && (req.headers['x-request-from'] === 'internal' || req.headers['x-request-from'] === 'aai')) {
             user = {
                 id: 'tool-system',
                 organizationId: 'system-org',

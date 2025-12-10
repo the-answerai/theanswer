@@ -51,7 +51,7 @@ export async function GET(req: Request) {
         const response = await fetch(`${flowiseDomain}/api/v1/dalle-image/archive?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
-                'x-request-from': 'internal',
+                'x-request-from': 'aai',
                 Authorization: `Bearer ${accessToken}`
             }
         })

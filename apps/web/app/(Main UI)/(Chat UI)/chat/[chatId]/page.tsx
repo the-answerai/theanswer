@@ -25,7 +25,7 @@ async function getChat(chatId: string, user: User) {
         ? fetch(`${user.chatflowDomain}/api/v1/chats/${chatId}`, {
               headers: {
                   'Content-Type': 'application/json',
-                  'x-request-from': 'internal',
+                  'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
@@ -51,7 +51,7 @@ async function getChat(chatId: string, user: User) {
         ? fetch(`${user.chatflowDomain}/api/v1/chatflows/${chatId}`, {
               headers: {
                   'Content-Type': 'application/json',
-                  'x-request-from': 'internal',
+                  'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
@@ -82,7 +82,7 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
         const result = await fetch(`${user.chatflowDomain}/api/v1/chatmessage?chatId=${chat.chatflowChatId}`, {
             headers: {
                 'Content-Type': 'application/json',
-                'x-request-from': 'internal',
+                'x-request-from': 'aai',
                 Authorization: `Bearer ${accessToken}`
             }
         })

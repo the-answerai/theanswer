@@ -1066,7 +1066,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: token ? `Bearer ${token}` : username && password ? `Basic ${btoa(`${username}:${password}`)}` : undefined,
-                'x-request-from': 'internal'
+                'x-request-from': 'aai'
             },
             async onopen(response) {
                 if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
@@ -1722,7 +1722,7 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-request-from': 'internal'
+                    'x-request-from': 'aai'
                 },
                 credentials: 'include',
                 signal: abortController.signal,

@@ -41,6 +41,7 @@ import passportConfig from './config/passport'
 import session from 'express-session'
 import { createRedisStore } from './AppConfig'
 import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
+import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
 declare global {
     namespace Express {
         interface User extends LoggedInUser {}
@@ -261,13 +262,12 @@ export class App {
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()
-                    } else if (req.headers['x-request-from'] === 'internal' && true) {
-// TODO: Implement AAI authentication here, based on  a better parameter
-                        next()
+                    } else if (req.headers['x-request-from'] === 'aai') {
+                        // AAI requests: Auth0 RS256 JWT (primary) with enterprise HS256 fallback
+                        verifyAAIToken(this.AppDataSource)(req, res, next)
                     } else if (req.headers['x-request-from'] === 'internal') {
-
+                        // Enterprise internal requests: HS256 passport
                         verifyToken(req, res, next)
-
                     } else {
                         // Only check license validity for non-open-source platforms
                         if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {

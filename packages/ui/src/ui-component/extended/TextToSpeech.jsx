@@ -255,7 +255,7 @@ const TextToSpeech = ({ dialogProps }) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-request-from': 'internal'
+                    'x-request-from': 'aai'
                 },
                 credentials: 'include',
                 body: JSON.stringify(body)
