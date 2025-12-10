@@ -36,7 +36,9 @@ const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
             },
             take: limit
         })
-        return JSON.parse(JSON.stringify(chats))
+        const parsedChats = JSON.parse(JSON.stringify(chats))
+        // console.log('getAllChats',{ user, chats: parsedChats})
+        return parsedChats
     } catch (error) {
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error: chatsService.getAllChats - ${getErrorMessage(error)}`)
     }

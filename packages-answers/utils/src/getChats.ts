@@ -39,10 +39,12 @@ export async function getChats(user: User, options: PaginationOptions = {}) {
                 Authorization: `Bearer ${token}`
             }
         })
+        console.log('response', response)
 
         if (!response.ok) {
             console.error('Error fetching chatflow chats:', response.statusText)
-            return []
+            // console.log(response.json());
+            return await response.json()
         }
 
         return await response.json()

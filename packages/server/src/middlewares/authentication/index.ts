@@ -185,9 +185,9 @@ export const authenticationHandlerMiddleware =
                 }
 
                 try {
-                    if (isValidOrg) {
+                    if (isValidOrg && userOrgId) {
                         // Get or create organization using transaction-safe method
-                        const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name)
+                        const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name as string)
 
                         // Get or create user using transaction-safe method
                         let user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)

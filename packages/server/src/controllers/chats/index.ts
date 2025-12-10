@@ -14,13 +14,11 @@ const getAllChats = async (req: Request, res: Response, next: NextFunction) => {
         const requestedLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : DEFAULT_PAGE_SIZE
         const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE)
         const cursor = req.query.cursor as string | undefined
-console.log('getAllChats')
-console.log('req.user', req.user)
-console.log('limit', limit)
-console.log('cursor', cursor)
         const apiResponse = await chatsService.getAllChats(req.user, { limit, cursor })
+        console.log('apiResponse', apiResponse.length)
         return res.json(apiResponse)
     } catch (error) {
+        console.log('getAllChats error', error)
         next(error)
     }
 }
