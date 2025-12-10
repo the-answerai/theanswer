@@ -18,7 +18,7 @@ overrides:
   cross-spawn: 7.0.6
   ejs: ^3.1.10
   esbuild: '>=0.25.0'
-  express: '>=4.19.2'
+  express: '>=4.19.2 <5.0.0'
   form-data: 4.0.4
   glob-parent: 6.0.2
   http-proxy-middleware: '>=3.0.5'
@@ -850,14 +850,14 @@ importers:
         specifier: ^4.17.23
         version: 4.17.23
       express:
-        specifier: '>=4.19.2'
-        version: 5.1.0
+        specifier: '>=4.19.2 <5.0.0'
+        version: 4.22.1
       swagger-jsdoc:
         specifier: ^6.2.8
         version: 6.2.8(openapi-types@12.1.3)
       swagger-ui-express:
         specifier: ^5.0.1
-        version: 5.0.1(express@5.1.0)
+        version: 5.0.1(express@4.22.1)
     devDependencies:
       '@types/swagger-jsdoc':
         specifier: ^6.0.4
@@ -1124,8 +1124,8 @@ importers:
         specifier: ^1.0.12
         version: 1.9.3(encoding@0.1.13)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5))
       express:
-        specifier: '>=4.19.2'
-        version: 5.1.0
+        specifier: '>=4.19.2 <5.0.0'
+        version: 4.22.1
       faiss-node:
         specifier: ^0.5.1
         version: 0.5.1
@@ -1459,8 +1459,8 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
       express:
-        specifier: '>=4.19.2'
-        version: 5.1.0
+        specifier: '>=4.19.2 <5.0.0'
+        version: 4.22.1
       form-data:
         specifier: 4.0.4
         version: 4.0.4
@@ -1770,8 +1770,8 @@ importers:
         specifier: ^16.0.0
         version: 16.6.1
       express:
-        specifier: '>=4.19.2'
-        version: 5.1.0
+        specifier: '>=4.19.2 <5.0.0'
+        version: 4.22.1
       express-basic-auth:
         specifier: ^1.2.1
         version: 1.2.1
@@ -1783,7 +1783,7 @@ importers:
         version: 1.7.1
       express-rate-limit:
         specifier: ^6.9.0
-        version: 6.11.2(express@5.1.0)
+        version: 6.11.2(express@4.22.1)
       express-session:
         specifier: ^1.18.1
         version: 1.18.2
@@ -1894,7 +1894,7 @@ importers:
         version: 15.1.3
       rate-limit-redis:
         specifier: ^4.2.0
-        version: 4.2.2(express-rate-limit@6.11.2(express@5.1.0))
+        version: 4.2.2(express-rate-limit@6.11.2(express@4.22.1))
       reflect-metadata:
         specifier: ^0.1.13
         version: 0.1.14
@@ -10395,10 +10395,6 @@ packages:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
     engines: {node: '>= 0.6'}
 
-  accepts@2.0.0:
-    resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
-    engines: {node: '>= 0.6'}
-
   acorn-globals@6.0.0:
     resolution: {integrity: sha512-ZQl7LOWaF5ePqqcX4hLuv/bLXYQNfNWw2c0/yX/TsPRKamzHcTGQnlCjHT3TsmkOUVEPS3crCxiPfdzE/Trlhg==}
 
@@ -10714,6 +10710,9 @@ packages:
   array-each@1.0.1:
     resolution: {integrity: sha512-zHjL5SZa68hkKHBFBK6DJCTtr9sfTCPCaph/L7tMSLcTFgy+zX7E+6q5UArbtOtMBCtxdICpfTCspRse+ywyXA==}
     engines: {node: '>=0.10.0'}
+
+  array-flatten@1.1.1:
+    resolution: {integrity: sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==}
 
   array-hyper-unique@2.1.6:
     resolution: {integrity: sha512-BdlHRqjKSYs88WFaVNVEc6Kv8ln/FdzCKPbcDPuWs4/EXkQFhnjc8TyR7hnPxRjcjo5LKOhUMGUWpAqRgeJvpA==}
@@ -11935,10 +11934,6 @@ packages:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
     engines: {node: '>= 0.6'}
 
-  content-disposition@1.0.0:
-    resolution: {integrity: sha512-Au9nRL8VNUut/XSzbQA38+M78dzP4D+eqg3gfJHMIHHYa3bg067xj1KxMUWj+VULbiZMowKngFFbKczUrNJ1mg==}
-    engines: {node: '>= 0.6'}
-
   content-type@1.0.5:
     resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
     engines: {node: '>= 0.6'}
@@ -11989,10 +11984,6 @@ packages:
 
   cookie-signature@1.0.7:
     resolution: {integrity: sha512-NXdYc3dLr47pBkpUCHtKSwIOQXLVn8dZEuywboCOJY/osA0wFSLlSawr3KN8qXJEyX66FcONTH8EIlVuK0yyFA==}
-
-  cookie-signature@1.2.2:
-    resolution: {integrity: sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==}
-    engines: {node: '>=6.6.0'}
 
   cookie@1.0.2:
     resolution: {integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==}
@@ -13770,21 +13761,21 @@ packages:
     resolution: {integrity: sha512-a7uwwfNTh1U60ssiIkuLFWHt4hAC5yxlLGU2VP0X4YNlyEDZAqF4tK3GD3NSitVBrCQmQ0++0uOyFOgC2y4DDw==}
     engines: {node: '>= 14'}
     peerDependencies:
-      express: '>=4.19.2'
+      express: '>=4.19.2 <5.0.0'
 
   express-rate-limit@7.5.1:
     resolution: {integrity: sha512-7iN8iPMDzOMHPUYllBEsQdWVB6fPDMPqwjBaFrgr4Jgr/+okjvzAy+UHlYYL/Vs0OsOrMkwS6PJDkFlJwoxUnw==}
     engines: {node: '>= 16'}
     peerDependencies:
-      express: '>=4.19.2'
+      express: '>=4.19.2 <5.0.0'
 
   express-session@1.18.2:
     resolution: {integrity: sha512-SZjssGQC7TzTs9rpPDuUrR23GNZ9+2+IkA/+IJWmvQilTr5OSliEHGF+D9scbIpdC6yGtTI0/VhaHoVes2AN/A==}
     engines: {node: '>= 0.8.0'}
 
-  express@5.1.0:
-    resolution: {integrity: sha512-DT9ck5YIRU+8GYzzU5kT3eHGA5iL+1Zd0EutOmTE9Dtk+Tvuzd23VBU+ec7HPNSTxXYO55gPV/hq4pSBJDjFpA==}
-    engines: {node: '>= 18'}
+  express@4.22.1:
+    resolution: {integrity: sha512-F2X8g9P1X7uCPZMA3MVf9wcTqlyNp7IhH5qPCI0izhaOIYXaW9L535tGA3qmjRzpH+bZczqq7hVKxTR4NWnu+g==}
+    engines: {node: '>= 0.10.0'}
 
   exsolve@1.0.7:
     resolution: {integrity: sha512-VO5fQUzZtI6C+vx4w/4BWJpg3s/5l+6pRQEHzFRM8WFi4XffSP1Z+4qi7GbjWbvRQEbdIco5mIMq+zX4rPuLrw==}
@@ -13989,8 +13980,8 @@ packages:
     resolution: {integrity: sha512-qWeTREPoT7I0bifpPUXtxkZJ1XJzxWtfoWWkdVGqa+eCr3SHW/Ocp89o8vLvbUuQnadybJpjOKu4V+RwO6sGng==}
     engines: {node: '>=14.16'}
 
-  finalhandler@2.1.0:
-    resolution: {integrity: sha512-/t88Ty3d5JWQbWYgaOGCCYfXRwV1+be02WqYYlL6h0lEiUAMPM8o8qKGO01YIkOHzka2up08wvgYD0mDiI+q3Q==}
+  finalhandler@1.3.2:
+    resolution: {integrity: sha512-aA4RyPcd3badbdABGDuTXCMTtOneUCAYH/gxoYRTZlIJdF0YPWuGqiAsIrhNnnqdXGswYk6dGujem4w80UJFhg==}
     engines: {node: '>= 0.8'}
 
   find-cache-dir@3.3.2:
@@ -14220,6 +14211,10 @@ packages:
 
   framesync@5.3.0:
     resolution: {integrity: sha512-oc5m68HDO/tuK2blj7ZcdEBRx3p1PjrgHazL8GYEpvULhrtGIFbQArN6cQS2QhW8mitffaB+VYzMjDqBxxQeoA==}
+
+  fresh@0.5.2:
+    resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
+    engines: {node: '>= 0.6'}
 
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
@@ -15438,9 +15433,6 @@ packages:
 
   is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
-
-  is-promise@4.0.0:
-    resolution: {integrity: sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==}
 
   is-property@1.0.2:
     resolution: {integrity: sha512-Ks/IoX00TtClbGQr4TWXemAnktAQvYB7HzcCxDGqEZU6oCmb2INHuOoKxbtR+HFkmYWBKv/dOZtGRiAjDhj92g==}
@@ -17120,10 +17112,6 @@ packages:
     resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
     engines: {node: '>= 0.6'}
 
-  media-typer@1.1.0:
-    resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
-    engines: {node: '>= 0.8'}
-
   meilisearch@0.41.0:
     resolution: {integrity: sha512-5KcGLxEXD7E+uNO7R68rCbGSHgCqeM3Q3RFFLSsN7ZrIgr8HPDXVAIlP4LHggAZfk0FkSzo8VSXifHCwa2k80g==}
 
@@ -17170,9 +17158,8 @@ packages:
   memory-stream@1.0.0:
     resolution: {integrity: sha512-Wm13VcsPIMdG96dzILfij09PvuS3APtcKNh7M28FsCA/w6+1mjR7hhPmfFNoilX9xU7wTdhsH5lJAm6XNzdtww==}
 
-  merge-descriptors@2.0.0:
-    resolution: {integrity: sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==}
-    engines: {node: '>=18'}
+  merge-descriptors@1.0.3:
+    resolution: {integrity: sha512-gaNvAS7TZ897/rVaZ0nMtAyxNyi/pdbjbAwUpFQpN70GqnVfOiXpeUUMKRBmzXaSQ8DdTX4/0ms62r2K+hE6mQ==}
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -17826,10 +17813,6 @@ packages:
 
   negotiator@0.6.4:
     resolution: {integrity: sha512-myRT3DiWPHqho5PrJaIRyaMv2kgYf0mUVgBNOYMuCH5Ki1yEiQaf/ZJuQ62nvpc44wL5WDbTX7yGJi1Neevw8w==}
-    engines: {node: '>= 0.6'}
-
-  negotiator@1.0.0:
-    resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
 
   neo-async@2.6.2:
@@ -20906,10 +20889,6 @@ packages:
   roughjs@4.6.6:
     resolution: {integrity: sha512-ZUz/69+SYpFN/g/lUlo2FXcIjRkSu3nDarreVdGGndHEBJ6cXPdKguS8JGxwj5HA5xIbVKSmLgr5b3AWxtRfvQ==}
 
-  router@2.2.0:
-    resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
-    engines: {node: '>= 18'}
-
   rrweb-cssom@0.6.0:
     resolution: {integrity: sha512-APM0Gt1KoXBz0iIkkdB/kfvGOwC4UuJFeG/c+yV7wSc7q96cG/kJ0HiYCnzivD9SB53cLV1MlHFNfOuPaadYSw==}
 
@@ -21967,7 +21946,7 @@ packages:
     resolution: {integrity: sha512-SrNU3RiBGTLLmFU8GIJdOdanJTl4TOmT27tt3bWWHppqYmAZ6IDuEuBvMU6nZq0zLEe6b/1rACXCgLZqO6ZfrA==}
     engines: {node: '>= v0.10.32'}
     peerDependencies:
-      express: '>=4.19.2'
+      express: '>=4.19.2 <5.0.0'
 
   swagger2openapi@7.0.8:
     resolution: {integrity: sha512-upi/0ZGkYgEcLeGieoz8gT74oWHA0E7JivX7aN9mAf+Tc7BQoRBvnIGHoPDw+f9TXTW4s6kGYCZJtauP6OYp7g==}
@@ -22561,10 +22540,6 @@ packages:
 
   type-is@1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
-    engines: {node: '>= 0.6'}
-
-  type-is@2.0.1:
-    resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
     engines: {node: '>= 0.6'}
 
   type@2.7.3:
@@ -24147,7 +24122,7 @@ snapshots:
       '@modelcontextprotocol/sdk': 0.6.0
       axios: 1.12.1
       dotenv: 16.6.1
-      express: 5.1.0
+      express: 4.22.1
       zod: 3.25.76
     transitivePeerDependencies:
       - debug
@@ -27017,7 +26992,7 @@ snapshots:
       bottleneck: 2.19.5
       crypto-js: 4.2.0
       dotenv: 16.6.1
-      express: 5.1.0
+      express: 4.22.1
       node-fetch: 2.7.0(encoding@0.1.13)
       rollup: 4.45.0
       typescript: 5.5.4
@@ -27091,7 +27066,7 @@ snapshots:
       '@bull-board/api': 6.14.2(@bull-board/ui@6.14.2)
       '@bull-board/ui': 6.14.2
       ejs: 3.1.10
-      express: 5.1.0
+      express: 4.22.1
     transitivePeerDependencies:
       - supports-color
 
@@ -29948,7 +29923,7 @@ snapshots:
       cross-spawn: 7.0.6
       debug: 4.4.1(supports-color@8.1.1)
       default-browser: 3.1.0
-      express: 5.1.0
+      express: 4.22.1
       get-port: 6.1.2
       globby: 13.2.2
       history: 5.3.0
@@ -29998,7 +29973,7 @@ snapshots:
       cross-spawn: 7.0.6
       debug: 4.4.1(supports-color@8.1.1)
       default-browser: 3.1.0
-      express: 5.1.0
+      express: 4.22.1
       get-port: 6.1.2
       globby: 13.2.2
       history: 5.3.0
@@ -30822,8 +30797,8 @@ snapshots:
       cross-spawn: 7.0.6
       eventsource: 3.0.7
       eventsource-parser: 3.0.6
-      express: 5.1.0
-      express-rate-limit: 7.5.1(express@5.1.0)
+      express: 4.22.1
+      express-rate-limit: 7.5.1(express@4.22.1)
       pkce-challenge: 5.0.0
       raw-body: 3.0.1
       zod: 3.25.76
@@ -36165,11 +36140,6 @@ snapshots:
       mime-types: 2.1.35
       negotiator: 0.6.3
 
-  accepts@2.0.0:
-    dependencies:
-      mime-types: 3.0.1
-      negotiator: 1.0.0
-
   acorn-globals@6.0.0:
     dependencies:
       acorn: 7.4.1
@@ -36524,6 +36494,8 @@ snapshots:
       is-array-buffer: 3.0.5
 
   array-each@1.0.1: {}
+
+  array-flatten@1.1.1: {}
 
   array-hyper-unique@2.1.6:
     dependencies:
@@ -37999,10 +37971,6 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  content-disposition@1.0.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   content-type@1.0.5: {}
 
   contentful-management@11.57.1:
@@ -38070,8 +38038,6 @@ snapshots:
   cookie-signature@1.0.6: {}
 
   cookie-signature@1.0.7: {}
-
-  cookie-signature@1.2.2: {}
 
   cookie@1.0.2: {}
 
@@ -40577,13 +40543,13 @@ snapshots:
     dependencies:
       jose: 4.15.9
 
-  express-rate-limit@6.11.2(express@5.1.0):
+  express-rate-limit@6.11.2(express@4.22.1):
     dependencies:
-      express: 5.1.0
+      express: 4.22.1
 
-  express-rate-limit@7.5.1(express@5.1.0):
+  express-rate-limit@7.5.1(express@4.22.1):
     dependencies:
-      express: 5.1.0
+      express: 4.22.1
 
   express-session@1.18.2:
     dependencies:
@@ -40598,34 +40564,38 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  express@5.1.0:
+  express@4.22.1:
     dependencies:
-      accepts: 2.0.0
+      accepts: 1.3.8
+      array-flatten: 1.1.1
       body-parser: 2.0.2
-      content-disposition: 1.0.0
+      content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 1.0.2
-      cookie-signature: 1.2.2
-      debug: 4.4.1(supports-color@8.1.1)
+      cookie-signature: 1.0.7
+      debug: 2.6.9
+      depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.0
-      fresh: 2.0.0
+      finalhandler: 1.3.2
+      fresh: 0.5.2
       http-errors: 2.0.0
-      merge-descriptors: 2.0.0
-      mime-types: 3.0.1
+      merge-descriptors: 1.0.3
+      methods: 1.1.2
       on-finished: 2.4.1
-      once: 1.4.0
       parseurl: 1.3.3
+      path-to-regexp: 0.1.12
       proxy-addr: 2.0.7
       qs: 6.14.0
       range-parser: 1.2.1
-      router: 2.2.0
+      safe-buffer: 5.2.1
       send: 1.2.0
       serve-static: 2.2.0
+      setprototypeof: 1.2.0
       statuses: 2.0.2
-      type-is: 2.0.1
+      type-is: 1.6.18
+      utils-merge: 1.0.1
       vary: 1.1.2
     transitivePeerDependencies:
       - supports-color
@@ -40856,14 +40826,15 @@ snapshots:
 
   filter-obj@5.1.0: {}
 
-  finalhandler@2.1.0:
+  finalhandler@1.3.2:
     dependencies:
-      debug: 4.4.1(supports-color@8.1.1)
+      debug: 2.6.9
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
       parseurl: 1.3.3
       statuses: 2.0.2
+      unpipe: 1.0.0
     transitivePeerDependencies:
       - supports-color
 
@@ -40981,7 +40952,7 @@ snapshots:
       cross-env: 7.0.3
       device-detector-js: 3.0.3
       dotenv: 16.6.1
-      express: 5.1.0
+      express: 4.22.1
       form-data: 4.0.4
       lodash: 4.17.21
       multer: 1.4.5-lts.2
@@ -40997,7 +40968,7 @@ snapshots:
   flowise-nim-container-manager@1.0.11:
     dependencies:
       dockerode: 4.0.8
-      express: 5.1.0
+      express: 4.22.1
     transitivePeerDependencies:
       - bare-buffer
       - react-native-b4a
@@ -41157,6 +41128,8 @@ snapshots:
   framesync@5.3.0:
     dependencies:
       tslib: 2.8.1
+
+  fresh@0.5.2: {}
 
   fresh@2.0.0: {}
 
@@ -42738,8 +42711,6 @@ snapshots:
   is-plain-object@5.0.0: {}
 
   is-potential-custom-element-name@1.0.1: {}
-
-  is-promise@4.0.0: {}
 
   is-property@1.0.2: {}
 
@@ -45341,8 +45312,6 @@ snapshots:
 
   media-typer@0.3.0: {}
 
-  media-typer@1.1.0: {}
-
   meilisearch@0.41.0(encoding@0.1.13):
     dependencies:
       cross-fetch: 3.2.0(encoding@0.1.13)
@@ -45400,7 +45369,7 @@ snapshots:
     dependencies:
       readable-stream: 3.6.2
 
-  merge-descriptors@2.0.0: {}
+  merge-descriptors@1.0.3: {}
 
   merge-stream@2.0.0: {}
 
@@ -46376,8 +46345,6 @@ snapshots:
   negotiator@0.6.3: {}
 
   negotiator@0.6.4: {}
-
-  negotiator@1.0.0: {}
 
   neo-async@2.6.2: {}
 
@@ -49056,9 +49023,9 @@ snapshots:
 
   ranges-sort@6.0.14: {}
 
-  rate-limit-redis@4.2.2(express-rate-limit@6.11.2(express@5.1.0)):
+  rate-limit-redis@4.2.2(express-rate-limit@6.11.2(express@4.22.1)):
     dependencies:
-      express-rate-limit: 6.11.2(express@5.1.0)
+      express-rate-limit: 6.11.2(express@4.22.1)
 
   raw-body@3.0.1:
     dependencies:
@@ -50284,16 +50251,6 @@ snapshots:
       points-on-curve: 0.2.0
       points-on-path: 0.2.1
 
-  router@2.2.0:
-    dependencies:
-      debug: 4.4.1(supports-color@8.1.1)
-      depd: 2.0.0
-      is-promise: 4.0.0
-      parseurl: 1.3.3
-      path-to-regexp: 0.1.12
-    transitivePeerDependencies:
-      - supports-color
-
   rrweb-cssom@0.6.0: {}
 
   rrweb-cssom@0.7.1: {}
@@ -50488,7 +50445,7 @@ snapshots:
 
   send@1.2.0:
     dependencies:
-      debug: 4.4.1(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -51442,7 +51399,7 @@ snapshots:
       '@modelcontextprotocol/sdk': 1.18.0
       body-parser: 2.0.2
       cors: 2.8.5
-      express: 5.1.0
+      express: 4.22.1
       uuid: 11.1.0
       ws: 8.18.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       yargs: 17.7.2
@@ -51544,9 +51501,9 @@ snapshots:
     dependencies:
       '@scarf/scarf': 1.4.0
 
-  swagger-ui-express@5.0.1(express@5.1.0):
+  swagger-ui-express@5.0.1(express@4.22.1):
     dependencies:
-      express: 5.1.0
+      express: 4.22.1
       swagger-ui-dist: 5.29.0
 
   swagger2openapi@7.0.8(encoding@0.1.13):
@@ -52283,12 +52240,6 @@ snapshots:
     dependencies:
       media-typer: 0.3.0
       mime-types: 2.1.35
-
-  type-is@2.0.1:
-    dependencies:
-      content-type: 1.0.5
-      media-typer: 1.1.0
-      mime-types: 3.0.1
 
   type@2.7.3: {}
 
@@ -53290,7 +53241,7 @@ snapshots:
       colorette: 2.0.20
       compression: 1.8.1
       connect-history-api-fallback: 2.0.0
-      express: 5.1.0
+      express: 4.22.1
       graceful-fs: 4.2.11
       http-proxy-middleware: 3.0.5
       ipaddr.js: 2.2.0

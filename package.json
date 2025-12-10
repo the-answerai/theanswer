@@ -131,7 +131,7 @@
             "cross-spawn": "7.0.6",
             "ejs": "^3.1.10",
             "esbuild": ">=0.25.0",
-            "express": ">=4.19.2",
+            "express": ">=4.19.2 <5.0.0",
             "form-data": "4.0.4",
             "glob-parent": "6.0.2",
             "http-proxy-middleware": ">=3.0.5",
