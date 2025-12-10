@@ -86,6 +86,7 @@ import dalleImageRouter from './dalle-image'
 import videoGeneratorRouter from './video-generator'
 import adminRouter from './admin'
 import pricingRouter from './pricing'
+import { createAuth0Router } from '../aai/routes/auth0'
 
 
 const router = express.Router()
@@ -160,11 +161,11 @@ router.use('/logs', IdentityManager.checkFeatureByPlan('feat:logs'), logsRouter)
 router.use('/files', IdentityManager.checkFeatureByPlan('feat:files'), filesRouter)
 
 
-// AAI
+// // AAI
 router.use('/', googleAuthRouter)
 router.use('/salesforce-auth', salesforceAuthRouter)
 router.use('/atlassian-auth', atlassianAuthRouter)
-router.use('/auth', express.Router()) // Auth routes handled by middleware
+// router.use('/auth', express.Router()) // Auth routes handled by middleware
 router.use('/langfuse', langfuseRouter)
 router.use('/plan', planRouter)
 router.use('/upload-dalle-image', dalleImageUploadRouter)
@@ -179,6 +180,8 @@ router.use('/data-engine', dataEngineRouter)
 router.use('/admin', adminRouter)
 router.use('/settings', settingsRouter)
 router.use('/pricing', pricingRouter)
-router.use('/nvidia-nim', nvidiaNimRouter)
 
 export default router
+
+// Export Auth0 router factory for use in index.ts where AppDataSource is available
+export { createAuth0Router }

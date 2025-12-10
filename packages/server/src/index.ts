@@ -14,7 +14,7 @@ import { AbortControllerPool } from './AbortControllerPool'
 import { RateLimiterManager } from './utils/rateLimit'
 import { getAllowedIframeOrigins, getCorsOptions, sanitizeMiddleware } from './utils/XSS'
 import { Telemetry } from './utils/telemetry'
-import flowiseApiV1Router from './routes'
+import flowiseApiV1Router, { createAuth0Router } from './routes'
 import errorHandlerMiddleware from './middlewares/errors'
 import { initCronJobs } from './utils/cron'
 import { WHITELIST_URLS } from './utils/constants'
@@ -40,6 +40,7 @@ import passport from 'passport'
 import passportConfig from './config/passport'
 import session from 'express-session'
 import { createRedisStore } from './AppConfig'
+import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
 declare global {
     namespace Express {
         interface User extends LoggedInUser {}
@@ -214,7 +215,7 @@ export class App {
         this.app.use(passport.initialize())
         this.app.use(passport.session())
         // Parse cookies
-        this.app.use(cookieParser())
+        this.app.use(cookieParser() as any)
 
         // Allow embedding from specified domains.
         this.app.use((req, res, next) => {
@@ -328,6 +329,10 @@ export class App {
         // this is for SSO and must be after the JWT cookie middleware
         await this.identityManager.initializeSSO(this.app)
 
+        // AAI Post-Auth Middleware - runs AFTER passport auth to enhance req.user with AAI data
+        // This bridges enterprise passport auth with AAI business logic (Stripe, workspaces, chatflows)
+        this.app.use(aaiPostAuthMiddleware(this.AppDataSource))
+
         if (process.env.ENABLE_METRICS === 'true') {
             switch (process.env.METRICS_PROVIDER) {
                 // default to prometheus
@@ -351,6 +356,9 @@ export class App {
         }
 
         this.app.use('/api/v1', flowiseApiV1Router)
+
+        // Auth0 SSO routes - mounted separately since they need AppDataSource
+        this.app.use('/api/v1/auth0', createAuth0Router(this.AppDataSource))
 
         // ----------------------------------------
         // Configure number of proxies in Host Environment
@@ -403,7 +411,7 @@ export async function start(): Promise<void> {
     serverApp = new App()
 
     const host = process.env.HOST
-    const port = parseInt(process.env.PORT || '', 10) || 3000
+    const port = parseInt(process.env.PORT || '', 10) || 4000
     const server = http.createServer(serverApp.app)
 
     await serverApp.initDatabase()

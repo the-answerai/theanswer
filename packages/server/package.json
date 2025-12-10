@@ -21,7 +21,7 @@
     },
     "scripts": {
         "build": "tsc && rimraf dist/enterprise/emails && gulp",
-        "start": "run-script-os",
+        "start": "cross-env PORT=4000 run-script-os",
         "clean": "rimraf dist",
         "nuke": "rimraf dist node_modules .turbo",
         "start:windows": "cd bin && run start",
@@ -32,7 +32,7 @@
         "user:windows": "cd bin && run user",
         "user:default": "cd bin && ./run user",
         "dev": "nodemon",
-        "dev:aai": "concurrently 'tsc-watch --noClear -p ./tsconfig.json --onSuccess \"pnpm start\"' 'cd ../api-documentation && pnpm dev'",
+        "sdev:aai": "concurrently 'tsc-watch --noClear -p ./tsconfig.json --onSuccess \"pnpm start\"' 'cd ../api-documentation && pnpm dev'",
         "oclif-dev": "run-script-os",
         "oclif-dev:windows": "cd bin && dev start",
         "oclif-dev:default": "cd bin && ./dev start",
