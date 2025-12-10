@@ -10,17 +10,19 @@ const MAX_PAGE_SIZE = 100
 
 export async function GET(req: Request): Promise<NextResponse<Chat[]>> {
     const session = await getCachedSession()
-
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
+    console.log('searchParams', searchParams)
+    console.log('session', session)
     const requestedLimit = parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE))
     const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE)
     const cursor = searchParams.get('cursor') || undefined
 
     const mergedChats = await getChats(session.user, { limit, cursor })
+    console.log('mergedChats', mergedChats)
     return NextResponse.json(mergedChats)
 }
 

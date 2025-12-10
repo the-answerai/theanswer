@@ -160,8 +160,7 @@ router.use('/loginmethod', loginMethodRouter)
 router.use('/logs', IdentityManager.checkFeatureByPlan('feat:logs'), logsRouter)
 router.use('/files', IdentityManager.checkFeatureByPlan('feat:files'), filesRouter)
 
-
-// // AAI
+// AAI
 router.use('/', googleAuthRouter)
 router.use('/salesforce-auth', salesforceAuthRouter)
 router.use('/atlassian-auth', atlassianAuthRouter)

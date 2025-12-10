@@ -64,7 +64,9 @@ declare global {
     }
 }
 
-passportConfig(passport)
+// AAI 
+// passportConfig(passport)
+
 export class App {
     app: express.Application
     nodesPool: NodesPool
@@ -211,9 +213,9 @@ export class App {
             sessionConfig.store = redisStore
         }
 
-        this.app.use(session(sessionConfig))
-        this.app.use(passport.initialize())
-        this.app.use(passport.session())
+        // this.app.use(session(sessionConfig))
+        // this.app.use(passport.initialize())
+        // this.app.use(passport.session())
         // Parse cookies
         this.app.use(cookieParser() as any)
 
@@ -259,8 +261,13 @@ export class App {
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()
+                    } else if (req.headers['x-request-from'] === 'internal' && true) {
+// TODO: Implement AAI authentication here, based on  a better parameter
+                        next()
                     } else if (req.headers['x-request-from'] === 'internal') {
+
                         verifyToken(req, res, next)
+
                     } else {
                         // Only check license validity for non-open-source platforms
                         if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {

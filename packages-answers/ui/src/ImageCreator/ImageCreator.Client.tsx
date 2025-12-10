@@ -257,6 +257,7 @@ const ImageCreator = () => {
 
             const response = await fetch(`${flowiseDomain}/api/v1/dalle-image/archive?page=${page}&limit=20`, {
                 headers: {
+                    'x-request-from': 'internal',
                     Authorization: `Bearer ${accessToken}`
                 }
             })
@@ -540,6 +541,7 @@ const ImageCreator = () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'x-request-from': 'internal',
                             Authorization: `Bearer ${accessToken}`
                         },
                         body: JSON.stringify(requestBody)

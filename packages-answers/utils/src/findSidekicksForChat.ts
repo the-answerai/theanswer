@@ -55,6 +55,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'x-request-from': 'internal',
                 Authorization: `Bearer ${token}`
             }
         })

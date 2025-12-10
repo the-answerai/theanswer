@@ -3,16 +3,16 @@ import { createSlice } from '@reduxjs/toolkit'
 import AuthUtils from '@/utils/authUtils'
 
 const initialState = {
-    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
-    isAuthenticated: 'true' === localStorage.getItem('isAuthenticated'),
-    isGlobal: 'true' === localStorage.getItem('isGlobal'),
+    user: typeof localStorage !== 'undefined' && localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
+    isAuthenticated: typeof localStorage !== 'undefined' && 'true' === localStorage.getItem('isAuthenticated'),
+    isGlobal: typeof localStorage !== 'undefined' && 'true' === localStorage.getItem('isGlobal'),
     token: null,
     permissions:
-        localStorage.getItem('permissions') && localStorage.getItem('permissions') !== 'undefined'
+        typeof localStorage !== 'undefined' && localStorage.getItem('permissions') && localStorage.getItem('permissions') !== 'undefined'
             ? JSON.parse(localStorage.getItem('permissions'))
             : null,
     features:
-        localStorage.getItem('features') && localStorage.getItem('features') !== 'undefined'
+        typeof localStorage !== 'undefined' && localStorage.getItem('features') && localStorage.getItem('features') !== 'undefined'
             ? JSON.parse(localStorage.getItem('features'))
             : null
 }
