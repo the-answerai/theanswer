@@ -24,7 +24,7 @@ const createInternalPrediction = async (req: Request, res: Response, next: NextF
             const apiResponse = await utilBuildChatflow(req, true)
             const { chatId, question: prompt } = req.body
             if (chatId) {
-                await chatflowsService.upsertChat({
+                await chatflowService.upsertChat({
                     id: chatId,
                     user: req.user,
                     prompt,
@@ -59,7 +59,7 @@ const createAndStreamInternalPrediction = async (req: Request, res: Response, ne
         const apiResponse = await utilBuildChatflow(req, true)
         const { question: prompt } = req.body
         if (chatId) {
-            await chatflowsService.upsertChat({
+            await chatflowService.upsertChat({
                 id: chatId,
                 user: req.user,
                 prompt,

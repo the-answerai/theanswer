@@ -270,7 +270,7 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
                 `Error: chatflowsController.getSinglePublicChatbotConfig - id not provided!`
             )
         }
-        const apiResponse = await chatflowsService.getSinglePublicChatbotConfig(req.params.id, req.user)
+        const apiResponse = await chatflowsService.getSinglePublicChatbotConfig(req.params.id)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -279,7 +279,7 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
 
 const getDefaultChatflowTemplate = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const apiResponse = await chatflowsService.getDefaultChatflowTemplate(req.user!)
+        const apiResponse = await chatflowsService.getDefaultChatflowTemplate()
         return res.json(apiResponse)
     } catch (error) {
         next(error)

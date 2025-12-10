@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import openaiRealTimeService from '../../services/openai-realtime'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { IUser } from '../../Interface'
 import { StatusCodes } from 'http-status-codes'
 
 const getAgentTools = async (req: Request, res: Response, next: NextFunction) => {
@@ -11,7 +12,10 @@ const getAgentTools = async (req: Request, res: Response, next: NextFunction) =>
                 `Error: openaiRealTimeController.getAgentTools - id not provided!`
             )
         }
-        const apiResponse = await openaiRealTimeService.getAgentTools(req.params.id)
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Authentication required')
+        }
+        const apiResponse = await openaiRealTimeService.getAgentTools(req.user as IUser, req.params.id)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -50,7 +54,11 @@ const executeAgentTool = async (req: Request, res: Response, next: NextFunction)
                 `Error: openaiRealTimeController.executeAgentTool - body inputArgs not provided!`
             )
         }
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Authentication required')
+        }
         const apiResponse = await openaiRealTimeService.executeAgentTool(
+            req.user as IUser,
             req.params.id,
             req.body.chatId,
             req.body.toolName,

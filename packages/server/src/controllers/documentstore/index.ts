@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import documentStoreService from '../../services/documentstore'
 import { DocumentStore } from '../../database/entities/DocumentStore'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { DocumentStoreDTO } from '../../Interface'
+import { DocumentStoreDTO, IUser } from '../../Interface'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { FLOWISE_COUNTER_STATUS, FLOWISE_METRIC_COUNTERS } from '../../Interface.Metrics'
 import { getPageAndLimitParams } from '../../utils/pagination'
@@ -140,7 +140,7 @@ const getDocumentStoreById = async (req: Request, res: Response, next: NextFunct
         }
         const apiResponse = await documentStoreService.getDocumentStoreById(req.params.id, workspaceId)
         if (apiResponse && apiResponse.whereUsed) {
-            apiResponse.whereUsed = JSON.stringify(await documentStoreService.getUsedChatflowNames(apiResponse, workspaceId))
+            apiResponse.whereUsed = JSON.stringify(await documentStoreService.getUsedChatflowNames(apiResponse, workspaceId, req.user as IUser))
         }
         return res.json(DocumentStoreDTO.fromEntity(apiResponse))
     } catch (error) {
@@ -194,7 +194,8 @@ const syncAndRefreshChunks = async (req: Request, res: Response, next: NextFunct
         if (!req.user) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, 'User is required')
         }
-        const apiResponse = await documentStoreService.syncAndRefreshChunks(storeId, fileId, req.user.id!, req.user.organizationId!)
+        const workspaceId = req.user.activeWorkspaceId || ''
+        const apiResponse = await documentStoreService.syncAndRefreshChunks(storeId, fileId, req.user.id!, req.user.activeOrganizationId || '', workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

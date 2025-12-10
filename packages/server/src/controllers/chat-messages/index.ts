@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { ChatMessageRatingType, ChatType, IReactFlowObject } from '../../Interface'
+import { ChatMessageRatingType, ChatType, IReactFlowObject, IUser } from '../../Interface'
 import chatflowsService from '../../services/chatflows'
 import chatMessagesService from '../../services/chat-messages'
 import { aMonthAgo, clearSessionMemory } from '../../utils'
@@ -86,6 +86,7 @@ const getAllChatMessages = async (req: Request, res: Response, next: NextFunctio
             )
         }
         const apiResponse = await chatMessagesService.getAllChatMessages(
+            req.user as IUser,
             req.params.id,
             chatTypes,
             sortOrder,
@@ -123,6 +124,7 @@ const getAllInternalChatMessages = async (req: Request, res: Response, next: Nex
             feedbackTypeFilters = getFeedbackTypeFilters(feedbackTypeFilters)
         }
         const apiResponse = await chatMessagesService.getAllInternalChatMessages(
+            req.user as IUser,
             req.params.id,
             [ChatType.INTERNAL],
             sortOrder,
@@ -202,6 +204,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
             const hardDelete = req.query?.hardDelete as boolean | undefined
 
             const messages = await utilGetChatMessage({
+                user: req.user as IUser,
                 chatflowid,
                 chatTypes,
                 sessionId,
@@ -237,6 +240,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
                     const [chatId, memoryType, sessionId] = composite_key.split('_')
                     try {
                         await clearSessionMemory(
+                            req.user as IUser,
                             nodes,
                             appServer.nodesPool.componentNodes,
                             chatId,
@@ -264,6 +268,7 @@ const removeAllChatMessages = async (req: Request, res: Response, next: NextFunc
         } else {
             try {
                 await clearSessionMemory(
+                    req.user as IUser,
                     nodes,
                     appServer.nodesPool.componentNodes,
                     chatId,

@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { IUser } from '../../Interface'
 import marketplacesService from '../../services/marketplaces'
+import checkOwnership from '../../utils/checkOwnership'
 
 // Get all templates for marketplaces
 const getAllTemplates = async (req: Request, res: Response, next: NextFunction) => {
@@ -91,7 +93,10 @@ const saveCustomTemplate = async (req: Request, res: Response, next: NextFunctio
                 `Error: marketplacesController.saveCustomTemplate - workspace ${body.workspaceId} not found!`
             )
         }
-        const apiResponse = await marketplacesService.saveCustomTemplate(body)
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Authentication required')
+        }
+        const apiResponse = await marketplacesService.saveCustomTemplate(body, req.user as IUser)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
