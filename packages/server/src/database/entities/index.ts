@@ -18,8 +18,7 @@ import { ApiKey } from './ApiKey'
 import { CustomTemplate } from './CustomTemplate'
 import { Execution } from './Execution'
 import { LoginActivity, WorkspaceShared, WorkspaceUsers } from '../../enterprise/database/entities/EnterpriseEntities'
-import { User } from '../../enterprise/database/entities/user.entity'
-import { Organization } from '../../enterprise/database/entities/organization.entity'
+// Enterprise entities needed for workspace system (keep these)
 import { Role } from '../../enterprise/database/entities/role.entity'
 import { OrganizationUser } from '../../enterprise/database/entities/organization-user.entity'
 import { Workspace } from '../../enterprise/database/entities/workspace.entity'
@@ -27,10 +26,9 @@ import { WorkspaceUser } from '../../enterprise/database/entities/workspace-user
 import { LoginMethod } from '../../enterprise/database/entities/login-method.entity'
 import { LoginSession } from '../../enterprise/database/entities/login-session.entity'
 
-
-//AAI 
-// import { User } from './User'
-// import { Organization } from './Organization'
+// Use enterprise User/Organization with AAI fields added
+import { User } from '../../enterprise/database/entities/user.entity'
+import { Organization } from '../../enterprise/database/entities/organization.entity'
 import { PaidPlan } from './PaidPlan'
 import { TrialPlan } from './TrialPlan'
 import { Chat } from './Chat'

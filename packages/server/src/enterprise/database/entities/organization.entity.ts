@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { User } from './user.entity'
 
 export enum OrganizationName {
@@ -18,6 +18,24 @@ export class Organization {
 
     @Column({ type: 'varchar', length: 100, nullable: true })
     subscriptionId?: string
+
+    // AAI Auth0 field
+    @Index()
+    @Column({ nullable: true })
+    auth0Id?: string
+
+    // AAI billing fields
+    @Column({ type: 'uuid', nullable: true })
+    currentPaidPlanId?: string
+
+    @Column({ type: 'boolean', default: false })
+    billingPoolEnabled?: boolean
+
+    @Column({ nullable: true })
+    stripeCustomerId?: string
+
+    @Column({ type: 'jsonb', nullable: true })
+    enabledIntegrations?: string
 
     @CreateDateColumn()
     createdDate?: Date

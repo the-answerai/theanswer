@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { LoginMethod } from './login-method.entity'
 import { OrganizationUser } from './organization-user.entity'
 import { Organization } from './organization.entity'
@@ -53,6 +53,23 @@ export class User {
     @ManyToOne(() => User, (user) => user.id, {})
     @JoinColumn({ name: 'updatedBy' })
     updatedByUser?: User
+
+    // AAI Auth0 fields
+    @Column({ unique: true, nullable: true })
+    auth0Id?: string
+
+    @Column({ nullable: true })
+    stripeCustomerId?: string
+
+    @Index()
+    @Column({ type: 'uuid', nullable: true })
+    organizationId?: string
+
+    @Column({ type: 'uuid', nullable: true })
+    trialPlanId?: string
+
+    @Column({ type: 'uuid', nullable: true })
+    defaultChatflowId?: string
 
     @OneToMany(() => Organization, (organization) => organization.createdByUser)
     createdOrganizations?: Organization[]
