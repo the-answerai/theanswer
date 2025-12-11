@@ -1,0 +1,228 @@
+import { MigrationInterface, QueryRunner } from 'typeorm'
+
+/**
+ * This migration runs AFTER CreateAAIWorkspaces1737076223694
+ * It backfills the workspaceId column for existing resources that were created
+ * before Flowise 3.0.11's workspace system.
+ *
+ * Logic for tables WITH visibility column (chat_flow, credential, variable, tool):
+ * 1. Resources with visibility containing 'Organization' or 'Marketplace' → Default Workspace (shared)
+ * 2. Resources with ONLY 'Private' visibility AND userId → Personal Workspace (user's private)
+ * 3. Remaining resources → Default Workspace (fallback)
+ *
+ * Logic for tables WITHOUT visibility column (assistant, document_store, apikey):
+ * 1. Resources with userId → Personal Workspace
+ * 2. Remaining resources → Default Workspace (fallback)
+ */
+export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
+    name = 'AAIBackfillWorkspaceId1737076223695'
+
+    // Tables that have a visibility column
+    private tablesWithVisibility = ['chat_flow', 'credential', 'variable', 'tool', 'custom_template']
+
+    // Tables without visibility column
+    private tablesWithoutVisibility = ['assistant', 'document_store', 'apikey', 'execution', 'evaluation', 'evaluator', 'dataset']
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log('Starting workspace ID backfill for existing resources...')
+
+        // Backfill tables WITH visibility (use visibility-aware logic)
+        for (const table of this.tablesWithVisibility) {
+            await this.backfillTableWithVisibility(queryRunner, table)
+        }
+
+        // Backfill tables WITHOUT visibility (use simple userId logic)
+        for (const table of this.tablesWithoutVisibility) {
+            await this.backfillTableWithoutVisibility(queryRunner, table)
+        }
+
+        console.log('Workspace ID backfill completed')
+    }
+
+    /**
+     * Backfill tables that have a visibility column.
+     * Organization/Marketplace shared → Default Workspace
+     * Private only → Personal Workspace
+     * Fallback → Default Workspace
+     */
+    private async backfillTableWithVisibility(queryRunner: QueryRunner, tableName: string): Promise<void> {
+        console.log(`\nBackfilling ${tableName} (with visibility)...`)
+
+        // Count records missing workspaceId
+        const countResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
+        )
+        const totalMissing = parseInt(countResult[0].count)
+
+        if (totalMissing === 0) {
+            console.log(`${tableName}: No records missing workspaceId`)
+            return
+        }
+
+        console.log(`${tableName}: Found ${totalMissing} records missing workspaceId`)
+
+        // Step 1: Assign organization-shared resources to Default Workspace
+        // These have visibility containing 'Organization' or 'Marketplace'
+        const orgSharedUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = dw.id
+            FROM (
+                SELECT DISTINCT ON (w."organizationId") w.id, w."organizationId"
+                FROM workspace w
+                WHERE w.name = 'Default Workspace'
+            ) dw
+            WHERE t."organizationId" = dw."organizationId"
+              AND t."workspaceId" IS NULL
+              AND (t.visibility LIKE '%Organization%' OR t.visibility LIKE '%Marketplace%')
+        `)
+        console.log(`${tableName}: Assigned ${orgSharedUpdate[1] || 0} org-shared records to Default Workspaces`)
+
+        // Step 2: Assign private-only resources to Personal Workspace
+        // These have visibility NOT containing 'Organization' or 'Marketplace'
+        const privateUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = pw.id
+            FROM (
+                SELECT DISTINCT ON (wu."userId") w.id, wu."userId"
+                FROM workspace w
+                JOIN workspace_user wu ON w.id = wu."workspaceId"
+                WHERE w.name = 'Personal Workspace'
+            ) pw
+            WHERE t."userId" = pw."userId"
+              AND t."workspaceId" IS NULL
+              AND (t.visibility IS NULL OR (t.visibility NOT LIKE '%Organization%' AND t.visibility NOT LIKE '%Marketplace%'))
+        `)
+        console.log(`${tableName}: Assigned ${privateUpdate[1] || 0} private records to Personal Workspaces`)
+
+        // Step 3: Fallback - assign remaining to Default Workspace based on organizationId
+        const defaultWsUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = dw.id
+            FROM (
+                SELECT DISTINCT ON (w."organizationId") w.id, w."organizationId"
+                FROM workspace w
+                WHERE w.name = 'Default Workspace'
+            ) dw
+            WHERE t."organizationId" = dw."organizationId"
+              AND t."workspaceId" IS NULL
+        `)
+        console.log(`${tableName}: Assigned ${defaultWsUpdate[1] || 0} records to Default Workspaces (fallback)`)
+
+        // Step 4: For records with userId but no organizationId, try to get org from user
+        const userOrgUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = dw.id
+            FROM "user" u
+            JOIN (
+                SELECT DISTINCT ON (w."organizationId") w.id, w."organizationId"
+                FROM workspace w
+                WHERE w.name = 'Default Workspace'
+            ) dw ON u."organizationId" = dw."organizationId"
+            WHERE t."userId" = u.id
+              AND t."workspaceId" IS NULL
+        `)
+        console.log(`${tableName}: Assigned ${userOrgUpdate[1] || 0} records via user's organization`)
+
+        await this.logRemaining(queryRunner, tableName)
+    }
+
+    /**
+     * Backfill tables that don't have a visibility column.
+     * userId → Personal Workspace
+     * Fallback → Default Workspace
+     */
+    private async backfillTableWithoutVisibility(queryRunner: QueryRunner, tableName: string): Promise<void> {
+        console.log(`\nBackfilling ${tableName} (without visibility)...`)
+
+        // Count records missing workspaceId
+        const countResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
+        )
+        const totalMissing = parseInt(countResult[0].count)
+
+        if (totalMissing === 0) {
+            console.log(`${tableName}: No records missing workspaceId`)
+            return
+        }
+
+        console.log(`${tableName}: Found ${totalMissing} records missing workspaceId`)
+
+        // Step 1: Assign to Personal Workspace for records with userId
+        const personalWsUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = pw.id
+            FROM (
+                SELECT DISTINCT ON (wu."userId") w.id, wu."userId"
+                FROM workspace w
+                JOIN workspace_user wu ON w.id = wu."workspaceId"
+                WHERE w.name = 'Personal Workspace'
+            ) pw
+            WHERE t."userId" = pw."userId"
+              AND t."workspaceId" IS NULL
+        `)
+        console.log(`${tableName}: Assigned ${personalWsUpdate[1] || 0} records to Personal Workspaces`)
+
+        // Step 2: Assign remaining to Default Workspace based on organizationId
+        const defaultWsUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = dw.id
+            FROM (
+                SELECT DISTINCT ON (w."organizationId") w.id, w."organizationId"
+                FROM workspace w
+                WHERE w.name = 'Default Workspace'
+            ) dw
+            WHERE t."organizationId" = dw."organizationId"
+              AND t."workspaceId" IS NULL
+        `)
+        console.log(`${tableName}: Assigned ${defaultWsUpdate[1] || 0} records to Default Workspaces`)
+
+        // Step 3: For records with userId but no organizationId, try to get org from user
+        const userOrgUpdate = await queryRunner.query(`
+            UPDATE "${tableName}" t
+            SET "workspaceId" = dw.id
+            FROM "user" u
+            JOIN (
+                SELECT DISTINCT ON (w."organizationId") w.id, w."organizationId"
+                FROM workspace w
+                WHERE w.name = 'Default Workspace'
+            ) dw ON u."organizationId" = dw."organizationId"
+            WHERE t."userId" = u.id
+              AND t."workspaceId" IS NULL
+        `)
+        console.log(`${tableName}: Assigned ${userOrgUpdate[1] || 0} records via user's organization`)
+
+        await this.logRemaining(queryRunner, tableName)
+    }
+
+    /**
+     * Log any remaining records that couldn't be assigned a workspace
+     */
+    private async logRemaining(queryRunner: QueryRunner, tableName: string): Promise<void> {
+        const remainingResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
+        )
+        const remaining = parseInt(remainingResult[0].count)
+
+        if (remaining > 0) {
+            console.log(`${tableName}: WARNING - ${remaining} records still missing workspaceId`)
+
+            // Log details for debugging
+            const orphans = await queryRunner.query(`
+                SELECT id, "userId", "organizationId"
+                FROM "${tableName}"
+                WHERE "workspaceId" IS NULL
+                LIMIT 10
+            `)
+            console.log(`${tableName}: Sample orphaned records:`, orphans)
+        } else {
+            console.log(`${tableName}: All records now have workspaceId`)
+        }
+    }
+
+    public async down(): Promise<void> {
+        // Note: We don't null out workspaceId on down because:
+        // 1. New records created after this migration will have workspaceId set
+        // 2. Nulling would break the system
+        console.log('Down migration does not remove workspaceId values to preserve data integrity')
+    }
+}

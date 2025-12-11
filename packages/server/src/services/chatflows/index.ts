@@ -145,6 +145,7 @@ const deleteChatflow = async (chatflowId: string, orgId: string, workspaceId: st
 
 const getAllChatflows = async (type?: ChatflowType, workspaceId?: string, page: number = -1, limit: number = -1) => {
     try {
+        console.log('getAllChatflows', { type, workspaceId, page, limit })
         const appServer = getRunningExpressApp()
 
         const queryBuilder = appServer.AppDataSource.getRepository(ChatFlow)
@@ -167,7 +168,8 @@ const getAllChatflows = async (type?: ChatflowType, workspaceId?: string, page: 
         }
         if (workspaceId) queryBuilder.andWhere('chat_flow.workspaceId = :workspaceId', { workspaceId })
         const [data, total] = await queryBuilder.getManyAndCount()
-
+        console.log('getAllChatflows queryBuilder', queryBuilder.getQueryAndParameters())
+        console.log('getAllChatflows', { data, total })
         if (page > 0 && limit > 0) {
             return { data, total }
         } else {

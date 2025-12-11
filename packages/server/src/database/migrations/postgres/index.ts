@@ -93,6 +93,7 @@ import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './173142
 import { BackupAAIData1737076223690 } from './1737076223690-BackupAAIData'
 import { RestoreAAIData1737076223693 } from './1737076223693-RestoreAAIData'
 import { CreateAAIWorkspaces1737076223694 } from './1737076223694-CreateAAIWorkspaces'
+import { AAIBackfillWorkspaceId1737076223695 } from './1737076223695-AAIBackfillWorkspaceId'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -177,6 +178,7 @@ export const postgresMigrations = [
     RefactorEnterpriseDatabase1737076223692,
     RestoreAAIData1737076223693, // AAI Sandwich: Restore AFTER enterprise migration
     CreateAAIWorkspaces1737076223694, // AAI Sandwich: Create workspaces for existing users
+    AAIBackfillWorkspaceId1737076223695, // AAI Sandwich: Backfill workspaceId for existing resources
     AddExecutionEntity1738090872625,
     FixOpenSourceAssistantTable1743758056188,
     AddErrorToEvaluationRun1744964560174,

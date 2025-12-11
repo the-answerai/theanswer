@@ -15,6 +15,8 @@ import { auth } from 'express-oauth2-jwt-bearer'
 import { DataSource } from 'typeorm'
 import { findOrCreateUser } from './findOrCreateUser'
 import { findOrCreateOrganization } from './findOrCreateOrganization'
+import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
+import { populateWorkspaceData } from './populateWorkspaceData'
 
 // Auth0 RS256 JWT checker (same config as authenticationHandlerMiddleware)
 const jwtCheck = auth({
@@ -54,6 +56,12 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             org.id
                         )
 
+                        // Ensure user has workspaces (creates Default + Personal if needed)
+                        await findOrCreateWorkspacesForUser(AppDataSource, user, org.id)
+
+                        // Populate workspace data for Flowise 3.0.11 compatibility
+                        const workspaceData = await populateWorkspaceData(AppDataSource, user, org.id)
+
                         // Extract roles from Auth0 token
                         const roles = (authPayload['https://theanswer.ai/roles'] || []) as string[]
 
@@ -75,8 +83,22 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             org_id: userOrgId,
                             org_name: authPayload.org_name,
                             roles,
-                            permissions
+                            permissions,
+                            // Workspace fields (required by Flowise 3.0.11)
+                            activeWorkspaceId: workspaceData.activeWorkspaceId,
+                            activeOrganizationId: workspaceData.activeOrganizationId || org.id,
+                            activeWorkspace: workspaceData.activeWorkspace,
+                            roleId: workspaceData.roleId,
+                            isOrganizationAdmin: workspaceData.isOrganizationAdmin || roles?.includes('Admin'),
+                            assignedWorkspaces: workspaceData.assignedWorkspaces
                         }
+
+                        console.log('[verifyAAIToken] Auth0 succeeded, user set with workspace:', {
+                            userId: user.id,
+                            email: user.email,
+                            activeWorkspaceId: workspaceData.activeWorkspaceId,
+                            isOrganizationAdmin: workspaceData.isOrganizationAdmin
+                        })
 
                         return next()
                     }
