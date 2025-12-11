@@ -8,6 +8,8 @@ import auth0 from '@utils/auth/auth0'
 import type { Chatflow, Chat as ChatType, User } from 'types'
 
 async function getChat(chatId: string, user: User) {
+    console.log('[getChat] Starting for chatId:', chatId)
+
     // Get auth token for chatflow API
     let token
     try {
@@ -17,21 +19,37 @@ async function getChat(chatId: string, user: User) {
         if (!accessToken) throw new Error('No access token found')
         token = accessToken
     } catch (err) {
-        console.error('Auth error:', err)
+        console.error('[getChat] Auth error:', err)
     }
 
     // Check if id corresponds to a valid chat
+    const chatUrl = `${user.chatflowDomain}/api/v1/chats/${chatId}`
+    console.log('[getChat] Fetching chat from:', chatUrl)
+
     const chatflowChatPromise = token
-        ? fetch(`${user.chatflowDomain}/api/v1/chats/${chatId}`, {
+        ? fetch(chatUrl, {
               headers: {
                   'Content-Type': 'application/json',
                   'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
-              .then((res) => (res.ok ? res.json() : null))
+              .then(async (res) => {
+                  console.log('[getChat] Chat response status:', res.status)
+                  if (res.ok) {
+                      const data = await res.json()
+                      console.log('[getChat] Chat data:', {
+                          id: data?.id,
+                          chatflowId: data?.chatflowId,
+                          chatflowid: data?.chatflowid,
+                          sidekickId: data?.sidekickId
+                      })
+                      return data
+                  }
+                  return null
+              })
               .catch((err) => {
-                  console.error('Error fetching chatflow chat:', err)
+                  console.error('[getChat] Error fetching chatflow chat:', err)
                   return null
               })
         : Promise.resolve(null)
@@ -40,38 +58,71 @@ async function getChat(chatId: string, user: User) {
 
     // Return chatflow chat if local chat doesn't exist
     if (chatflowChat) {
-        return {
+        // IMPORTANT: Ensure chatflowId is included for getMessages to work
+        const result = {
             ...chatflowChat,
-            chatflowChatId: chatflowChat.id
+            chatflowChatId: chatflowChat.id,
+            // chatflowId might be 'chatflowid' (lowercase) in the response
+            chatflowId: chatflowChat.chatflowId || chatflowChat.chatflowid,
+            sidekickId: chatflowChat.sidekickId || chatflowChat.chatflowId || chatflowChat.chatflowid
         }
+        console.log('[getChat] Returning chat with chatflowId:', result.chatflowId)
+        return result
     }
 
     // If no Chat, check if it's a chatflow ID
+    const chatflowUrl = `${user.chatflowDomain}/api/v1/chatflows/${chatId}`
+    console.log('[getChat] No chat found, checking if it is a chatflow:', chatflowUrl)
+
     const chatflow: Chatflow = await (token
-        ? fetch(`${user.chatflowDomain}/api/v1/chatflows/${chatId}`, {
+        ? fetch(chatflowUrl, {
               headers: {
                   'Content-Type': 'application/json',
                   'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
-              .then((res) => (res.ok ? res.json() : null))
+              .then(async (res) => {
+                  console.log('[getChat] Chatflow response status:', res.status)
+                  return res.ok ? res.json() : null
+              })
               .catch((err) => {
-                  console.error('Error fetching chatflow chat:', err)
+                  console.error('[getChat] Error fetching chatflow:', err)
                   return null
               })
         : Promise.resolve(null))
 
     if (chatflow) {
+        console.log('[getChat] Found chatflow, returning with id:', chatflow.id)
         return {
             chatflowId: chatflow.id,
             sidekickId: chatflow.id
         }
     }
+
+    console.log('[getChat] Neither chat nor chatflow found for:', chatId)
 }
 
 async function getMessages(chat: Partial<ChatType>, user: User) {
-    if (!chat?.chatflowChatId) return []
+    // DEBUG: Log chat object to understand structure
+    console.log('[getMessages] Chat object:', {
+        chatflowChatId: chat?.chatflowChatId,
+        chatflowId: chat?.chatflowId,
+        sidekickId: chat?.sidekickId,
+        id: chat?.id
+    })
+
+    if (!chat?.chatflowChatId) {
+        console.log('[getMessages] No chatflowChatId, returning empty array')
+        return []
+    }
+
+    // The chatflowId is required in the URL path - get it from the chat object
+    const chatflowId = chat?.chatflowId || chat?.sidekickId
+    if (!chatflowId) {
+        console.error('[getMessages] No chatflowId found in chat object:', chat)
+        return []
+    }
 
     try {
         const { accessToken } = await auth0.getAccessToken({
@@ -79,27 +130,35 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
         })
         if (!accessToken) throw new Error('No access token found')
 
-        const result = await fetch(`${user.chatflowDomain}/api/v1/chatmessage?chatId=${chat.chatflowChatId}`, {
+        // IMPORTANT: Route is /api/v1/chatmessage/:chatflowId?chatId=xxx
+        // The :id param in the route is the chatflowId, chatId goes in query string
+        const url = `${user.chatflowDomain}/api/v1/chatmessage/${chatflowId}?chatId=${chat.chatflowChatId}`
+        console.log('[getMessages] Fetching messages from:', url)
+
+        const result = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
                 'x-request-from': 'aai',
                 Authorization: `Bearer ${accessToken}`
             }
         })
-        // console.log('Token', accessToken)
-        // console.log('Result', result)
+
+        console.log('[getMessages] Response status:', result.status, result.statusText)
+
         if (!result.ok) {
-            const error = new Error('Failed to fetch messages')
-            throw error
+            const errorText = await result.text()
+            console.error('[getMessages] Error response:', errorText)
+            throw new Error(`Failed to fetch messages: ${result.status} ${errorText}`)
         }
 
         let messages: any[] = []
         try {
             messages = await result.json()
+            console.log('[getMessages] Fetched messages count:', messages?.length || 0)
         } catch (err) {
-            console.error('Error parsing messages:', err)
+            console.error('[getMessages] Error parsing messages:', err)
         }
-        // console.log('Messages', messages)
+
         return messages?.map((m: any) => ({
             ...m,
             // agentReasoning: JSON.parse(m.agentReasoning ?? '[]'),

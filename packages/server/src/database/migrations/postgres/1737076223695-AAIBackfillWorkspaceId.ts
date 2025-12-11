@@ -13,6 +13,11 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
  * Logic for tables WITHOUT visibility column (assistant, document_store, apikey):
  * 1. Resources with userId → Personal Workspace
  * 2. Remaining resources → Default Workspace (fallback)
+ *
+ * Special handling for chat_message table:
+ * - ChatMessage doesn't have workspaceId (auth comes from parent chatflow per Flowise design)
+ * - Backfills userId and organizationId from parent chatflow
+ * - Required for getChatMessage userId filter to work on legacy messages
  */
 export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
     name = 'AAIBackfillWorkspaceId1737076223695'
@@ -35,6 +40,10 @@ export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
         for (const table of this.tablesWithoutVisibility) {
             await this.backfillTableWithoutVisibility(queryRunner, table)
         }
+
+        // Backfill chat_message userId and organizationId from parent chatflow
+        // (chat_message doesn't have workspaceId - auth comes from chatflow)
+        await this.backfillChatMessageUserScoping(queryRunner)
 
         console.log('Workspace ID backfill completed')
     }
@@ -216,6 +225,86 @@ export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
             console.log(`${tableName}: Sample orphaned records:`, orphans)
         } else {
             console.log(`${tableName}: All records now have workspaceId`)
+        }
+    }
+
+    /**
+     * Backfill chat_message userId and organizationId from parent chatflow.
+     * ChatMessage doesn't have workspaceId - authorization comes from the parent chatflow.
+     * This ensures old messages have proper user scoping for the getChatMessage userId filter.
+     */
+    private async backfillChatMessageUserScoping(queryRunner: QueryRunner): Promise<void> {
+        console.log('\nBackfilling chat_message userId and organizationId from parent chatflows...')
+
+        // Count messages missing userId
+        const missingUserIdResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`
+        )
+        const missingUserId = parseInt(missingUserIdResult[0].count)
+
+        // Count messages missing organizationId
+        const missingOrgIdResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`
+        )
+        const missingOrgId = parseInt(missingOrgIdResult[0].count)
+
+        console.log(`chat_message: ${missingUserId} records missing userId, ${missingOrgId} missing organizationId`)
+
+        if (missingUserId === 0 && missingOrgId === 0) {
+            console.log('chat_message: All records already have userId and organizationId')
+            return
+        }
+
+        // Backfill userId from parent chatflow
+        if (missingUserId > 0) {
+            const userIdUpdate = await queryRunner.query(`
+                UPDATE chat_message cm
+                SET "userId" = cf."userId"
+                FROM chat_flow cf
+                WHERE cm.chatflowid = cf.id
+                  AND cm."userId" IS NULL
+                  AND cf."userId" IS NOT NULL
+            `)
+            console.log(`chat_message: Backfilled userId for ${userIdUpdate[1] || 0} records from parent chatflow`)
+        }
+
+        // Backfill organizationId from parent chatflow
+        if (missingOrgId > 0) {
+            const orgIdUpdate = await queryRunner.query(`
+                UPDATE chat_message cm
+                SET "organizationId" = cf."organizationId"
+                FROM chat_flow cf
+                WHERE cm.chatflowid = cf.id
+                  AND cm."organizationId" IS NULL
+                  AND cf."organizationId" IS NOT NULL
+            `)
+            console.log(`chat_message: Backfilled organizationId for ${orgIdUpdate[1] || 0} records from parent chatflow`)
+        }
+
+        // Log remaining
+        const remainingUserIdResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`
+        )
+        const remainingUserId = parseInt(remainingUserIdResult[0].count)
+
+        const remainingOrgIdResult = await queryRunner.query(
+            `SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`
+        )
+        const remainingOrgId = parseInt(remainingOrgIdResult[0].count)
+
+        if (remainingUserId > 0 || remainingOrgId > 0) {
+            console.log(`chat_message: WARNING - ${remainingUserId} still missing userId, ${remainingOrgId} still missing organizationId`)
+
+            // Log sample orphans for debugging
+            const orphans = await queryRunner.query(`
+                SELECT cm.id, cm.chatflowid, cm."userId", cm."organizationId"
+                FROM chat_message cm
+                WHERE cm."userId" IS NULL OR cm."organizationId" IS NULL
+                LIMIT 10
+            `)
+            console.log('chat_message: Sample records still missing user scoping:', orphans)
+        } else {
+            console.log('chat_message: All records now have userId and organizationId')
         }
     }
 
