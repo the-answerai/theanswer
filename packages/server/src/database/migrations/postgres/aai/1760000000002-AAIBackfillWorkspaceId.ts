@@ -19,8 +19,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
  * - Backfills userId and organizationId from parent chatflow
  * - Required for getChatMessage userId filter to work on legacy messages
  */
-export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
-    name = 'AAIBackfillWorkspaceId1737076223695'
+export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
+    name = 'AAIBackfillWorkspaceId1760000000002'
 
     // Tables that have a visibility column
     private tablesWithVisibility = ['chat_flow', 'credential', 'variable', 'tool', 'custom_template']
@@ -56,6 +56,26 @@ export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
      */
     private async backfillTableWithVisibility(queryRunner: QueryRunner, tableName: string): Promise<void> {
         console.log(`\nBackfilling ${tableName} (with visibility)...`)
+
+        // Check if table exists
+        const tableExists = await queryRunner.query(`
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = '${tableName}'
+        `)
+        if (!tableExists.length) {
+            console.log(`${tableName}: Table does not exist - skipping`)
+            return
+        }
+
+        // Check if workspaceId column exists
+        const hasWorkspaceId = await queryRunner.query(`
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = '${tableName}' AND column_name = 'workspaceId'
+        `)
+        if (!hasWorkspaceId.length) {
+            console.log(`${tableName}: No workspaceId column - skipping`)
+            return
+        }
 
         // Count records missing workspaceId
         const countResult = await queryRunner.query(
@@ -142,6 +162,26 @@ export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
      */
     private async backfillTableWithoutVisibility(queryRunner: QueryRunner, tableName: string): Promise<void> {
         console.log(`\nBackfilling ${tableName} (without visibility)...`)
+
+        // Check if table exists
+        const tableExists = await queryRunner.query(`
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = '${tableName}'
+        `)
+        if (!tableExists.length) {
+            console.log(`${tableName}: Table does not exist - skipping`)
+            return
+        }
+
+        // Check if workspaceId column exists
+        const hasWorkspaceId = await queryRunner.query(`
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = '${tableName}' AND column_name = 'workspaceId'
+        `)
+        if (!hasWorkspaceId.length) {
+            console.log(`${tableName}: No workspaceId column - skipping`)
+            return
+        }
 
         // Count records missing workspaceId
         const countResult = await queryRunner.query(
@@ -235,6 +275,16 @@ export class AAIBackfillWorkspaceId1737076223695 implements MigrationInterface {
      */
     private async backfillChatMessageUserScoping(queryRunner: QueryRunner): Promise<void> {
         console.log('\nBackfilling chat_message userId and organizationId from parent chatflows...')
+
+        // Check if chat_message table exists
+        const tableExists = await queryRunner.query(`
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = 'chat_message'
+        `)
+        if (!tableExists.length) {
+            console.log('chat_message: Table does not exist - skipping')
+            return
+        }
 
         // Count messages missing userId
         const missingUserIdResult = await queryRunner.query(

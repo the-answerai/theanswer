@@ -42,6 +42,8 @@ import session from 'express-session'
 import { createRedisStore } from './AppConfig'
 import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
 import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
+import { populateWorkspaceData } from './middlewares/authentication/populateWorkspaceData'
+import { User } from './database/entities/User'
 declare global {
     namespace Express {
         interface User extends LoggedInUser {}
@@ -276,8 +278,8 @@ export class App {
                             }
                         }
 
-                        const { isValid, workspaceId: apiKeyWorkSpaceId } = await validateAPIKey(req)
-                        if (!isValid) {
+                        const { isValid, apiKey, workspaceId: apiKeyWorkSpaceId } = await validateAPIKey(req)
+                        if (!isValid || !apiKey) {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
@@ -286,6 +288,14 @@ export class App {
                             where: { id: apiKeyWorkSpaceId }
                         })
                         if (!workspace) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+
+                        // Find user associated with API key
+                        const user = await this.AppDataSource.getRepository(User).findOne({
+                            where: { id: apiKey.userId }
+                        })
+                        if (!user) {
                             return res.status(401).json({ error: 'Unauthorized Access' })
                         }
 
@@ -310,17 +320,31 @@ export class App {
                         const features = await this.identityManager.getFeaturesByPlan(subscriptionId)
                         const productId = await this.identityManager.getProductIdFromSubscription(subscriptionId)
 
+                        // Populate workspace data for full context (like AAI token flow)
+                        const workspaceData = await populateWorkspaceData(this.AppDataSource, user, activeOrganizationId)
+
+                        // Set complete req.user matching AAI token flow
                         // @ts-ignore
                         req.user = {
+                            // User identity (required for multi-tenancy)
+                            id: user.id,
+                            email: user.email,
+                            name: user.name,
+                            organizationId: activeOrganizationId,
+                            // Permissions and features
                             permissions: [...JSON.parse(ownerRole.permissions)],
                             features,
+                            // Organization context
                             activeOrganizationId: activeOrganizationId,
                             activeOrganizationSubscriptionId: subscriptionId,
                             activeOrganizationCustomerId: customerId,
                             activeOrganizationProductId: productId,
                             isOrganizationAdmin: true,
+                            // Workspace context (from populateWorkspaceData)
                             activeWorkspaceId: apiKeyWorkSpaceId!,
-                            activeWorkspace: workspace.name
+                            activeWorkspace: workspace.name,
+                            roleId: workspaceData.roleId || ownerRole.id,
+                            assignedWorkspaces: workspaceData.assignedWorkspaces || []
                         }
                         next()
                     }

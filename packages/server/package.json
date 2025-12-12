@@ -48,7 +48,11 @@
         "cypress:run": "cypress run",
         "e2e": "start-server-and-test dev http://localhost:3000 cypress:run",
         "cypress:ci": "START_SERVER_AND_TEST_INSECURE=1 start-server-and-test start https-get://localhost:3000 cypress:run",
-        "test": "jest --runInBand --detectOpenHandles --forceExit"
+        "test": "jest --runInBand --detectOpenHandles --forceExit",
+        "test:all": "jest --config jest.config.all.js --detectOpenHandles --forceExit",
+        "test:migration": "jest --config jest.config.all.js --testPathPattern=migration --detectOpenHandles --forceExit",
+        "test:quick": "jest --config jest.config.all.js --testPathPattern=endpoints --detectOpenHandles --forceExit",
+        "test:coverage": "jest --config jest.config.all.js --coverage --detectOpenHandles --forceExit"
     },
     "keywords": [],
     "homepage": "https://flowiseai.com",

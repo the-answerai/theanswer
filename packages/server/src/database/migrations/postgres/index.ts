@@ -52,48 +52,47 @@ import { AddPersonalWorkspace1734074497540 } from '../../../enterprise/database/
 import { RefactorEnterpriseDatabase1737076223692 } from '../../../enterprise/database/migrations/postgres/1737076223692-RefactorEnterpriseDatabase'
 import { ExecutionLinkWorkspaceId1746862866554 } from '../../../enterprise/database/migrations/postgres/1746862866554-ExecutionLinkWorkspaceId'
 
-// AAI
-import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
-import { AddUser1716422641414 } from './1716422641414-AddUser'
-import { AddOrganizationId1717629010538 } from './1717629010538-AddOrganizationId'
-import { AddOrganization1717632419096 } from './1717632419096-AddOrganization'
-import { UpdateDefaultVisibility1717684633931 } from './1717684633931-UpdateDefaultVisibility'
-import { AddUserId1717773329048 } from './1717773329048-AddUserId'
-import { UpdateChatflowToHaveParentId1717796909629 } from './1717796909629-UpdateChatflowToHaveParentId'
-import { UpdateVisibilityType1719248473069 } from './1719248473069-UpdateVisibilityType'
-import { CredentialsVisibility1721247848452 } from './1721247848452-CredentialsVisibility'
-import { AddDescriptionToChatFlow1722099922876 } from './1722101786123-AddDescriptionToChatflow'
-import { AddSoftDeleteChatflows1724275570313 } from './1724275570313-AddSoftDeleteChatflows'
-import { VariablesVisibility1725494523908 } from './1725494523908-VariablesVisibility'
-import { AddPlans1722954481004 } from './1722954481003-AddPlans'
-import { ApiKeysUserAndOrg1727817692110 } from './1727817692110-ApiKeysUserAndOrg'
-import { ToolVisibility1730491825527 } from './1730491825527-ToolVisibility'
-import { AddChat1732145631409 } from './1732145631409-AddChat'
-import { ApiKeyEnhancement1720230151481 } from './1720230151481-ApiKeyEnhancement'
-import { AddStripeCustomerId1734126321905 } from './1734126321905-AddStripeCustomerId'
-import { BillingSchemaEnhancement1740447708857 } from './1740447708857-BillingSchemaEnhancement'
-import { BilingOrganization1740859194641 } from './1740859194641-BilingOrganization'
-import { UpdateUserUniqueAuth0Id1741898609435 } from './1741898609435-UpdateUserUniqueAuth0Id'
-import { AppCsvRuns1744553414309 } from './1744553414309-AddAppCsvRuns'
-import { AddBrowserExtConfig1746508019300 } from './1746508019300-AddBrowserExtConfig'
-import { AddDefaultChatflowIdToUser1746508019301 } from './1746508019301-AddDefaultChatflowIdToUser'
-import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
-import { AddOrganizationToCustomTemplate1752612517000 } from './1752612517000-AddOrganizationToCustomTemplate'
-import { AddParentIdToCustomTemplate1752780174000 } from './1752780174000-AddParentIdToCustomTemplate'
-import { AddTemplateIdToChatFlow1752780175000 } from './1752780175000-AddTemplateIdToChatFlow'
-import { AddSettingsToCustomTemplate1752780175001 } from './1752780175001-AddSettingsToCustomTemplate'
-import { AddPgvectorExtension1752614575000 } from './1752614575000-AddPgvectorExtension'
-import { AddEnabledIntegrationsToOrganization1752614576000 } from './1752614576000-AddEnabledIntegrationsToOrganization'
-import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
-import { AddUniqueConstraintDefaultChatflows1753000000001 } from './1753000000001-AddUniqueConstraintDefaultChatflows'
-import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
-import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './1731429600000-BackfillDocumentStoreFileChunkUserScoping'
+// AAI - TheAnswer custom migrations
+import { AddAnswersConfig1714692854264 } from './aai/1714692854264-AddAnswersConfig'
+import { AddUser1716422641414 } from './aai/1716422641414-AddUser'
+import { AddOrganizationId1717629010538 } from './aai/1717629010538-AddOrganizationId'
+import { AddOrganization1717632419096 } from './aai/1717632419096-AddOrganization'
+import { UpdateDefaultVisibility1717684633931 } from './aai/1717684633931-UpdateDefaultVisibility'
+import { AddUserId1717773329048 } from './aai/1717773329048-AddUserId'
+import { UpdateChatflowToHaveParentId1717796909629 } from './aai/1717796909629-UpdateChatflowToHaveParentId'
+import { UpdateVisibilityType1719248473069 } from './aai/1719248473069-UpdateVisibilityType'
+import { CredentialsVisibility1721247848452 } from './aai/1721247848452-CredentialsVisibility'
+import { AddDescriptionToChatFlow1722099922876 } from './aai/1722101786123-AddDescriptionToChatflow'
+import { AddSoftDeleteChatflows1724275570313 } from './aai/1724275570313-AddSoftDeleteChatflows'
+import { VariablesVisibility1725494523908 } from './aai/1725494523908-VariablesVisibility'
+import { AddPlans1722954481004 } from './aai/1722954481003-AddPlans'
+import { ApiKeysUserAndOrg1727817692110 } from './aai/1727817692110-ApiKeysUserAndOrg'
+import { ToolVisibility1730491825527 } from './aai/1730491825527-ToolVisibility'
+import { AddChat1732145631409 } from './aai/1732145631409-AddChat'
+import { ApiKeyEnhancement1720230151481 } from './aai/1720230151481-ApiKeyEnhancement'
+import { AddStripeCustomerId1734126321905 } from './aai/1734126321905-AddStripeCustomerId'
+import { BillingSchemaEnhancement1740447708857 } from './aai/1740447708857-BillingSchemaEnhancement'
+import { BilingOrganization1740859194641 } from './aai/1740859194641-BilingOrganization'
+import { UpdateUserUniqueAuth0Id1741898609435 } from './aai/1741898609435-UpdateUserUniqueAuth0Id'
+import { AppCsvRuns1744553414309 } from './aai/1744553414309-AddAppCsvRuns'
+import { AddBrowserExtConfig1746508019300 } from './aai/1746508019300-AddBrowserExtConfig'
+import { AddDefaultChatflowIdToUser1746508019301 } from './aai/1746508019301-AddDefaultChatflowIdToUser'
+import { AddUserScopingToExecution1738091000000 } from './aai/1738091000000-AddUserScopingToExecution'
+import { AddOrganizationToCustomTemplate1752612517000 } from './aai/1752612517000-AddOrganizationToCustomTemplate'
+import { AddParentIdToCustomTemplate1752780174000 } from './aai/1752780174000-AddParentIdToCustomTemplate'
+import { AddTemplateIdToChatFlow1752780175000 } from './aai/1752780175000-AddTemplateIdToChatFlow'
+import { AddSettingsToCustomTemplate1752780175001 } from './aai/1752780175001-AddSettingsToCustomTemplate'
+import { AddPgvectorExtension1752614575000 } from './aai/1752614575000-AddPgvectorExtension'
+import { AddEnabledIntegrationsToOrganization1752614576000 } from './aai/1752614576000-AddEnabledIntegrationsToOrganization'
+import { AddVersioningToChatFlow1753000000000 } from './aai/1753000000000-AddVersioningToChatFlow'
+import { AddUniqueConstraintDefaultChatflows1753000000001 } from './aai/1753000000001-AddUniqueConstraintDefaultChatflows'
+import { AddTrackingMetadataToChatMessage1753200000000 } from './aai/1753200000000-AddTrackingMetadataToChatMessage'
+import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './aai/1731429600000-BackfillDocumentStoreFileChunkUserScoping'
 
 // AAI Migration Sandwich - preserves AAI data through enterprise migrations
-import { BackupAAIData1737076223690 } from './1737076223690-BackupAAIData'
-import { RestoreAAIData1737076223693 } from './1737076223693-RestoreAAIData'
-import { CreateAAIWorkspaces1737076223694 } from './1737076223694-CreateAAIWorkspaces'
-import { AAIBackfillWorkspaceId1737076223695 } from './1737076223695-AAIBackfillWorkspaceId'
+import { BackupAAIData1737076223690 } from './aai/1737076223690-BackupAAIData'
+import { AAIRestoreDataAndCreateWorkspaces1737076223693 } from './aai/1737076223693-AAIRestoreDataAndCreateWorkspaces'
+import { AAIBackfillWorkspaceId1760000000002 } from './aai/1760000000002-AAIBackfillWorkspaceId'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -174,11 +173,9 @@ export const postgresMigrations = [
     AddSSOColumns1730519457880,
     AddSeqNoToDatasetRow1733752119696,
     AddPersonalWorkspace1734074497540,
-    BackupAAIData1737076223690, // AAI Sandwich: Backup BEFORE enterprise migration
+    BackupAAIData1737076223690, // AAI: Backup BEFORE enterprise migration
     RefactorEnterpriseDatabase1737076223692,
-    RestoreAAIData1737076223693, // AAI Sandwich: Restore AFTER enterprise migration
-    CreateAAIWorkspaces1737076223694, // AAI Sandwich: Create workspaces for existing users
-    AAIBackfillWorkspaceId1737076223695, // AAI Sandwich: Backfill workspaceId for existing resources
+    AAIRestoreDataAndCreateWorkspaces1737076223693, // AAI: Restore data + create workspaces
     AddExecutionEntity1738090872625,
     FixOpenSourceAssistantTable1743758056188,
     AddErrorToEvaluationRun1744964560174,
@@ -187,5 +184,7 @@ export const postgresMigrations = [
     AddTextToSpeechToChatFlow1754986480347,
     ModifyChatflowType1755066758601,
     AddTextToSpeechToChatFlow1759419194331,
-    AddChatFlowNameIndex1759424903973
+    AddChatFlowNameIndex1759424903973,
+    // AAI: Backfill workspaceId - runs LAST after all feature migrations
+    AAIBackfillWorkspaceId1760000000002
 ]
