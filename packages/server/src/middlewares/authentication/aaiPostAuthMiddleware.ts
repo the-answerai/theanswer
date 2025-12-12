@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { DataSource } from 'typeorm'
+import { v4 as uuidv4 } from 'uuid'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
 import { Role } from '../../enterprise/database/entities/role.entity'
@@ -40,12 +41,24 @@ export const aaiPostAuthMiddleware = (AppDataSource: DataSource) => {
                 return next()
             }
 
-            // STEP 1: Find or CREATE organization
-            const organization = await findOrCreateAAIOrganization(AppDataSource, passportUser)
+            // STEP 1: Check if organization exists first (handles chicken-egg problem)
+            let organization = await findExistingAAIOrganization(AppDataSource, passportUser)
 
-            // STEP 2: Find or CREATE user (linked to organization)
-            // Uses SINGLE user table - no duplication
-            let user = await findOrCreateAAIUser(AppDataSource, passportUser, organization.id)
+            let user: User
+            if (organization) {
+                // STEP 2a: Org exists - create user with org
+                user = await findOrCreateAAIUser(AppDataSource, passportUser, organization.id)
+            } else {
+                // STEP 2b: Org doesn't exist - create user first, then org
+                user = await findOrCreateAAIUser(AppDataSource, passportUser)
+                organization = await findOrCreateAAIOrganization(AppDataSource, passportUser, user.id)
+                // Link user to organization
+                if (user.organizationId !== organization.id) {
+                    const { updateUserOrganization } = await import('./findOrCreateUser')
+                    await updateUserOrganization(AppDataSource, user.id, organization.id)
+                    user.organizationId = organization.id
+                }
+            }
 
             // STEP 3: Run AAI business logic
 
@@ -153,7 +166,7 @@ export const aaiPostAuthMiddleware = (AppDataSource: DataSource) => {
 async function findOrCreateAAIUser(
     AppDataSource: DataSource,
     passportUser: any,
-    organizationId: string
+    organizationId?: string // CHANGED: Now optional for chicken-egg problem
 ): Promise<User> {
     const userRepo = AppDataSource.getRepository(User)
     const auth0Id = passportUser.sub || passportUser.auth0Id
@@ -181,22 +194,62 @@ async function findOrCreateAAIUser(
 
     // If found, update org link if needed
     if (user) {
-        if (!user.organizationId) {
+        let changed = false
+        if (organizationId && !user.organizationId) {
             user.organizationId = organizationId
+            changed = true
+        }
+        if (changed) {
+            user.updatedBy = user.id
             await userRepo.save(user)
         }
         return user
     }
 
     // CREATE new user (passport user without existing AAI record)
-    const newUser = userRepo.create({
+    // Pre-generate UUID for self-reference audit fields
+    const userId = uuidv4()
+
+    // IMPORTANT: Use AppDataSource.manager.create(Entity, data) - TypeORM respects manually-set IDs this way
+    const newUser = AppDataSource.manager.create(User, {
+        id: userId,
         email,
         name,
-        organizationId,
-        status: 'active'
+        organizationId: organizationId || undefined,
+        status: 'active',
+        createdBy: userId,
+        updatedBy: userId
         // auth0Id will be null for non-Auth0 users
     })
-    return userRepo.save(newUser)
+    return AppDataSource.manager.save(User, newUser)
+}
+
+/**
+ * Find existing AAI organization (WITHOUT creating).
+ * Used to check if org exists before creating user (chicken-egg problem).
+ */
+async function findExistingAAIOrganization(
+    AppDataSource: DataSource,
+    passportUser: any
+): Promise<Organization | null> {
+    const orgRepo = AppDataSource.getRepository(Organization)
+    const auth0OrgId = passportUser.org_id
+
+    // Strategy 1: Auth0 org - check if exists
+    if (auth0OrgId) {
+        const org = await orgRepo.findOne({ where: { auth0Id: auth0OrgId } })
+        if (org) return org
+    }
+
+    // Strategy 2: Use passport's activeOrganizationId
+    if (passportUser.activeOrganizationId && isValidUUID(passportUser.activeOrganizationId)) {
+        const org = await orgRepo.findOne({ where: { id: passportUser.activeOrganizationId } })
+        if (org) return org
+    }
+
+    // Strategy 3: Check for existing default organization
+    const defaultOrg = await orgRepo.findOne({ where: { name: 'Default Organization' } })
+    return defaultOrg
 }
 
 /**
@@ -210,7 +263,8 @@ async function findOrCreateAAIUser(
  */
 async function findOrCreateAAIOrganization(
     AppDataSource: DataSource,
-    passportUser: any
+    passportUser: any,
+    createdByUserId: string // NEW: Required for creation
 ): Promise<Organization> {
     const orgRepo = AppDataSource.getRepository(Organization)
     const auth0OrgId = passportUser.org_id
@@ -219,7 +273,7 @@ async function findOrCreateAAIOrganization(
     // Strategy 1: Auth0 org - use existing findOrCreateOrganization
     if (auth0OrgId) {
         const { findOrCreateOrganization } = await import('./findOrCreateOrganization')
-        return findOrCreateOrganization(AppDataSource, auth0OrgId, orgName)
+        return findOrCreateOrganization(AppDataSource, auth0OrgId, orgName, createdByUserId)
     }
 
     // Strategy 2: Use passport's activeOrganizationId (from enterprise login)
@@ -232,11 +286,15 @@ async function findOrCreateAAIOrganization(
     // This handles new passport users without Auth0
     let defaultOrg = await orgRepo.findOne({ where: { name: 'Default Organization' } })
     if (!defaultOrg) {
-        defaultOrg = orgRepo.create({
-            name: 'Default Organization'
+        // IMPORTANT: Use AppDataSource.manager.create(Entity, data) - TypeORM respects manually-set values this way
+        defaultOrg = AppDataSource.manager.create(Organization, {
+            id: uuidv4(),
+            name: 'Default Organization',
+            createdBy: createdByUserId,
+            updatedBy: createdByUserId
             // auth0Id will be null for non-Auth0 orgs
         })
-        await orgRepo.save(defaultOrg)
+        await AppDataSource.manager.save(Organization, defaultOrg)
     }
     return defaultOrg
 }

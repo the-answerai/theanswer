@@ -13,8 +13,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
 import { DataSource } from 'typeorm'
-import { findOrCreateUser } from './findOrCreateUser'
+import { findOrCreateUser, updateUserOrganization } from './findOrCreateUser'
 import { findOrCreateOrganization } from './findOrCreateOrganization'
+import { Organization } from '../../database/entities/Organization'
 import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
 import { populateWorkspaceData } from './populateWorkspaceData'
 
@@ -44,17 +45,32 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             return res.status(401).json({ message: "Unauthorized: Organization doesn't match" })
                         }
 
-                        // Get or create organization
-                        const org = await findOrCreateOrganization(AppDataSource, userOrgId, authPayload.org_name)
+                        // Check if org exists first (handles chicken-egg problem)
+                        const orgRepo = AppDataSource.getRepository(Organization)
+                        let org = await orgRepo.findOneBy({ auth0Id: userOrgId })
 
-                        // Get or create user
-                        const user = await findOrCreateUser(
-                            AppDataSource,
-                            authPayload.sub,
-                            authPayload.email as string,
-                            authPayload.name as string,
-                            org.id
-                        )
+                        let user
+                        if (org) {
+                            // Org exists - create user with org
+                            user = await findOrCreateUser(
+                                AppDataSource,
+                                authPayload.sub,
+                                authPayload.email as string,
+                                authPayload.name as string,
+                                org.id
+                            )
+                        } else {
+                            // Org doesn't exist - create user first, then org
+                            user = await findOrCreateUser(
+                                AppDataSource,
+                                authPayload.sub,
+                                authPayload.email as string,
+                                authPayload.name as string
+                            )
+                            org = await findOrCreateOrganization(AppDataSource, userOrgId, authPayload.org_name, user.id)
+                            await updateUserOrganization(AppDataSource, user.id, org.id)
+                            user.organizationId = org.id
+                        }
 
                         // Ensure user has workspaces (creates Default + Personal if needed)
                         await findOrCreateWorkspacesForUser(AppDataSource, user, org.id)

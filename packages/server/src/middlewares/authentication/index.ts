@@ -6,7 +6,7 @@ import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
 import apikeyService from '../../services/apikey'
 import { findOrCreateOrganization } from './findOrCreateOrganization'
-import { findOrCreateUser } from './findOrCreateUser'
+import { findOrCreateUser, updateUserOrganization } from './findOrCreateUser'
 import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
 import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
 import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
@@ -186,11 +186,21 @@ export const authenticationHandlerMiddleware =
 
                 try {
                     if (isValidOrg && userOrgId) {
-                        // Get or create organization using transaction-safe method
-                        const organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name as string)
+                        // Check if org exists first (handles chicken-egg problem)
+                        const orgRepo = AppDataSource.getRepository(Organization)
+                        let organization = await orgRepo.findOneBy({ auth0Id: userOrgId })
 
-                        // Get or create user using transaction-safe method
-                        let user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
+                        let user
+                        if (organization) {
+                            // Org exists - create user with org
+                            user = await findOrCreateUser(AppDataSource, auth0Id, email, name, organization.id)
+                        } else {
+                            // Org doesn't exist - create user first, then org
+                            user = await findOrCreateUser(AppDataSource, auth0Id, email, name)
+                            organization = await findOrCreateOrganization(AppDataSource, userOrgId, authUser.org_name as string, user.id)
+                            await updateUserOrganization(AppDataSource, user.id, organization.id)
+                            user.organizationId = organization.id
+                        }
 
                         // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
                         user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
