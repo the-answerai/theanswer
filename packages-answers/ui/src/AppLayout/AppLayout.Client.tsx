@@ -10,6 +10,8 @@ import GlobalStyles from '../GlobalStyles'
 import { AppSettings } from 'types'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
 import { Auth0Setup } from '@/hooks/useAuth0Setup'
+// @ts-ignore
+import { ErrorProvider } from '@/store/context/ErrorContext'
 import dynamic from 'next/dynamic'
 import { PermissionProvider } from '../PermissionProvider'
 const HelpChatDrawer = dynamic(() => import('../HelpChatDrawer'), { ssr: false })
@@ -50,7 +52,8 @@ export default function AppLayout({
                     <UnifiedThemeProvider>
                         <CssBaseline enableColorScheme />
                         <GlobalStyles />
-                        <SubscriptionDialogProvider>
+                        <ErrorProvider>
+                            <SubscriptionDialogProvider>
                             <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', overflowY: 'auto' }}>
                                 {!noDrawer && <AppDrawer params={params} session={session} />}
                                 <div style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
@@ -65,7 +68,8 @@ export default function AppLayout({
                                     </HelpChatProvider>
                                 </React.Suspense>
                             </div>
-                        </SubscriptionDialogProvider>
+                            </SubscriptionDialogProvider>
+                        </ErrorProvider>
                     </UnifiedThemeProvider>
                 </PermissionProvider>
             </Auth0Setup>

@@ -102,6 +102,12 @@ let nextConfig = withBundleAnalyzer({
         LANGFUSE_HOST: process.env.LANGFUSE_HOST
     },
     webpack: (config, { isServer }) => {
+        // Redirect react-router-dom imports to our navigation shim
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'react-router-dom': require.resolve('../../packages/ui/src/utils/navigation.tsx')
+        }
+
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
         config.plugins = [
             ...config.plugins,
