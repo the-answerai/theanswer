@@ -4,10 +4,12 @@ import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom'
 // https://stackoverflow.com/questions/71572678/react-router-v-6-useprompt-typescript
 
 export function useBlocker(blocker, when = true) {
-    const { navigator } = useContext(NavigationContext)
+    const context = useContext(NavigationContext)
+    const navigator = context?.navigator
 
     useEffect(() => {
-        if (!when) return
+        // Skip if no navigator (Next.js environment with navigation shim)
+        if (!when || !navigator?.block) return
 
         const unblock = navigator.block((tx) => {
             const autoUnblockingTx = {
@@ -34,4 +36,19 @@ export function usePrompt(message, when = true) {
     )
 
     useBlocker(blocker, when)
+
+    // Fallback: browser beforeunload for tab close/refresh
+    // Works in both React Router and Next.js environments
+    useEffect(() => {
+        if (!when) return
+
+        const handleBeforeUnload = (e) => {
+            e.preventDefault()
+            e.returnValue = message
+            return message
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }, [when, message])
 }

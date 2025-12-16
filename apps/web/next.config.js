@@ -138,6 +138,18 @@ let nextConfig = withBundleAnalyzer({
                 }
             ]
         })
+
+        // Handle PNG/JPG images from packages/ui to return string URLs instead of StaticImageData objects
+        // This fixes the [object Object] URL issue in AddNodes panel without modifying Flowise code
+        config.module.rules.push({
+            test: /\.(png|jpg|jpeg|gif)$/,
+            include: [require('path').resolve(__dirname, '../../packages/ui/src/assets/images')],
+            type: 'asset/resource',
+            generator: {
+                filename: 'static/images/[name].[hash:8][ext]',
+                publicPath: '/_next/'
+            }
+        })
         if (isServer) {
             config.plugins = [...config.plugins, new PrismaPlugin()]
             // Avoid AWS SDK Node.js require issue

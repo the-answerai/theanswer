@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { useEffect, useRef, useState, useImperativeHandle } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // material-ui
 import { useTheme } from '@mui/material/styles'
@@ -36,6 +36,7 @@ import chatflowsApi from '@/api/chatflows'
 
 // Hooks
 import useApi from '@/hooks/useApi'
+import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
 
 // utils
 import { generateExportFlowData } from '@/utils/genericHelper'
@@ -81,18 +82,15 @@ const CanvasHeader = ({ chatflow, isAgentCanvas, isAgentflowV2, handleSaveFlow, 
     // Get needsSetup status and credentials from chatflow
     const { needsSetup, credentialsToShow } = useSidekickWithCredentials(chatflow?.id)
 
-    // Expose triggerSaveDialog function to parent component
-    useImperativeHandle(
-        ref,
-        () => ({
-            triggerSaveDialog: () => {
-                if (!chatflow.id) {
-                    setFlowDialogOpen(true)
-                }
-            }
-        }),
-        [chatflow]
-    )
+    // Handler for Configuration button
+    const onConfigurationButtonClick = () => {
+        setChatflowConfigurationDialogProps({
+            title: `${title} Configuration`,
+            chatflow: chatflow,
+            handleSaveFlow
+        })
+        setChatflowConfigurationDialogOpen(true)
+    }
 
     const onSettingsItemClick = (setting) => {
         setSettingsOpen(false)

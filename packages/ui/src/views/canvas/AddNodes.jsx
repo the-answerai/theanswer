@@ -43,6 +43,7 @@ import AAIPNG from '@/assets/images/aai.png'
 import LlamaindexPNG from '@/assets/images/llamaindex.png'
 import LangChainPNG from '@/assets/images/langchain.png'
 import utilNodesPNG from '@/assets/images/utilNodes.png'
+import toolSVG from '@/assets/images/tool.svg'
 
 // const
 import { baseURL, AGENTFLOW_ICONS } from '@/store/constant'
@@ -358,15 +359,18 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
     }
 
     const getImage = (tabValue) => {
+        let img
         if (tabValue === 0) {
-            return AAIPNG // Answer tab - will use AAI icon for now
+            img = AAIPNG // Answer tab - will use AAI icon for now
         } else if (tabValue === 1) {
-            return LangChainPNG // LangChain tab
+            img = LangChainPNG // LangChain tab
         } else if (tabValue === 2) {
-            return LlamaindexPNG // LlamaIndex tab
+            img = LlamaindexPNG // LlamaIndex tab
         } else {
-            return utilNodesPNG // Utilities and Tools tab
+            img = utilNodesPNG // Utilities and Tools tab
         }
+        // Handle both Next.js (object with src) and Vite (string) image imports
+        return typeof img === 'object' && img?.src ? img.src : img
     }
 
     const renderIcon = (node) => {
@@ -689,6 +693,11 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                                                 }}
                                                                                                 alt={node.name}
                                                                                                 src={`${baseURL}/api/v1/node-icon/${node.name}`}
+                                                                                                onError={(e) => {
+                                                                                                    e.target.onerror = null
+                                                                                                    e.target.style.padding = '5px'
+                                                                                                    e.target.src = typeof toolSVG === 'object' && toolSVG?.src ? toolSVG.src : toolSVG
+                                                                                                }}
                                                                                             />
                                                                                         </div>
                                                                                     </ListItemAvatar>
