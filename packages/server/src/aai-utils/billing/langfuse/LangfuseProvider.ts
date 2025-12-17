@@ -148,14 +148,11 @@ export class LangfuseProvider {
         try {
             const response = await this.fetchTraces({
                 fromTimestamp: new Date('2020-01-01').toISOString(),
-                toTimestamp: new Date().toISOString(),
                 limit: 1,
                 page: 1,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core', // Minimal fields for discovery
-                orderBy: 'timestamp' // CRITICAL: Order by timestamp ascending (default) to get OLDEST first
-                // Note: Langfuse API defaults to ascending order, so just 'timestamp' should work
-                // If this returns newest instead of oldest, we fall back to 2020-01-01 anyway
+                orderBy: 'timestamp.asc' // CRITICAL: Order by timestamp ascending (default) to get OLDEST first
             })
 
             if (response.data.length === 0) {
@@ -291,7 +288,8 @@ export class LangfuseProvider {
                     limit: 100,
                     page: 1,
                     filter: LangfuseProvider.UNPROCESSED_FILTER,
-                    fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
+                    fields: 'core,metrics,io', // Exclude observations & scores - reduces payload by 80-90%
+                    orderBy: 'timestamp.asc'
                 })
                 const totalPages = initialResponse.meta.totalPages
                 log.info('Total pages to process in this window', { totalPages })
@@ -395,7 +393,8 @@ export class LangfuseProvider {
                 limit: 100,
                 page,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
-                fields: 'core,metrics,io' // Exclude observations & scores - reduces payload by 80-90%
+                fields: 'core,metrics,io', // Exclude observations & scores - reduces payload by 80-90%
+                orderBy: 'timestamp.asc'
             })
             responses.push(response)
 
@@ -641,7 +640,8 @@ export class LangfuseProvider {
                 page,
                 userId,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
-                fields: 'core,metrics,io' // Exclude observations & scores - faster response
+                fields: 'core,metrics,io', // Exclude observations & scores - faster response
+                orderBy: 'timestamp.asc'
                 // Note: We can't directly filter by customerId in the API call
                 // We'll filter the results after fetching
             })
