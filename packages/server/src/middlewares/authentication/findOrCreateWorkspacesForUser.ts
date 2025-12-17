@@ -92,7 +92,9 @@ export const findOrCreateWorkspacesForUser = async (
 
         console.log(`[Auth] Created workspaces for new user ${user.id}`)
     } catch (error) {
-        // Log but don't fail authentication for workspace creation errors
+        // Log the actual error for debugging - don't fail authentication
+        // The fallback in populateWorkspaceData will handle this case
         console.error(`[Auth] Error creating workspaces for user ${user.id}:`, error)
+        console.error(`[Auth] Error details - organizationId: ${organizationId}, memberRoleId: ${memberRole?.id}, personalRoleId: ${personalRole?.id}`)
     }
 }

@@ -7,6 +7,7 @@
 import { DataSource, IsNull } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { WorkspaceUser } from '../../enterprise/database/entities/workspace-user.entity'
+import { Workspace } from '../../enterprise/database/entities/workspace.entity'
 import { Role, GeneralRole } from '../../enterprise/database/entities/role.entity'
 import { IAssignedWorkspace } from '../../enterprise/Interface.Enterprise'
 
@@ -37,10 +38,40 @@ export async function populateWorkspaceData(
         .getMany()
 
     if (!workspaceUsers.length) {
+        // FALLBACK: Find or create a workspace even without membership
+        // This ensures activeWorkspaceId is ALWAYS returned for Flowise 3.0.11 compatibility
+        const workspaceRepo = AppDataSource.getRepository(Workspace)
+
+        // Try to find any workspace in the organization
+        let fallbackWorkspace = await workspaceRepo.findOne({
+            where: { organizationId }
+        })
+
+        // If no workspace exists, create one
+        if (!fallbackWorkspace) {
+            fallbackWorkspace = workspaceRepo.create({
+                name: 'Default Workspace',
+                organizationId,
+                createdBy: user.id,
+                updatedBy: user.id
+            })
+            await workspaceRepo.save(fallbackWorkspace)
+            console.log(`[populateWorkspaceData] Created fallback workspace for org ${organizationId}`)
+        }
+
+        console.warn(`[populateWorkspaceData] User ${user.id} has no workspace memberships - using fallback ${fallbackWorkspace.id}`)
+
         return {
+            activeWorkspaceId: fallbackWorkspace.id,
             activeOrganizationId: organizationId,
+            activeWorkspace: fallbackWorkspace.name,
             isOrganizationAdmin: false,
-            assignedWorkspaces: []
+            assignedWorkspaces: [{
+                id: fallbackWorkspace.id,
+                name: fallbackWorkspace.name,
+                role: 'member',
+                organizationId
+            }]
         }
     }
 
