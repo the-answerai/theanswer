@@ -109,13 +109,7 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             assignedWorkspaces: workspaceData.assignedWorkspaces
                         }
 
-                        console.log('[verifyAAIToken] Auth0 succeeded, user set with workspace:', {
-                            userId: user.id,
-                            email: user.email,
-                            activeWorkspaceId: workspaceData.activeWorkspaceId,
-                            isOrganizationAdmin: workspaceData.isOrganizationAdmin
-                        })
-
+                        
                         return next()
                     }
                 } catch (error) {
@@ -128,8 +122,7 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
             // Import verifyToken lazily to avoid circular dependencies
             try {
                 const { verifyToken } = await import('../../enterprise/middleware/passport')
-                console.log('[verifyAAIToken] Auth0 failed, trying enterprise JWT...', auth0Err?.message || 'No token')
-
+                
                 verifyToken(req, res, (passportErr?: any) => {
                     if (passportErr || !(req as any).user) {
                         // STEP 3: Both failed - return 401
@@ -139,9 +132,6 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                         })
                         return res.status(401).json({ message: 'Invalid or missing token' })
                     }
-
-                    // Enterprise passport succeeded
-                    console.log('[verifyAAIToken] Enterprise passport succeeded')
                     next()
                 })
             } catch (importError) {

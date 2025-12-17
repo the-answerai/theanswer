@@ -62,7 +62,6 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
 
         if (response.ok) {
             const result = await response.json()
-            console.log('Chatflows', result)
             const uploadAllowedNodes = [
                 'llmChain',
                 'conversationChain',

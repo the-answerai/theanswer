@@ -62,13 +62,6 @@ export const utilGetChatMessage = async ({
     // Get user's assigned workspace IDs for workspace-based access
     const workspaceIds = user.assignedWorkspaces?.map((ws) => ws.id) || []
 
-    console.log('[getChatMessage] Authorization check:', {
-        userId: user.id,
-        organizationId: user.organizationId,
-        workspaceIds,
-        chatflowid
-    })
-
     // Check authorization: user must have access via workspace membership OR legacy userId
     // 1. Workspace access: chatflow.workspaceId is in user's assigned workspaces
     // 2. Legacy access: chatflow belongs to user's organization (for pre-workspace migration data)
@@ -80,17 +73,11 @@ export const utilGetChatMessage = async ({
         throw new Error('Chatflow not found')
     }
 
-    console.log('[getChatMessage] Chatflow found:', {
-        chatflowId: chatflow.id,
-        chatflowWorkspaceId: chatflow.workspaceId,
-        chatflowOrgId: chatflow.organizationId
-    })
 
     // Check access: workspace membership OR same organization (legacy)
     const hasWorkspaceAccess = workspaceIds.length > 0 && workspaceIds.includes(chatflow.workspaceId)
     const hasLegacyAccess = chatflow.organizationId === user.organizationId
 
-    console.log('[getChatMessage] Access check:', { hasWorkspaceAccess, hasLegacyAccess })
 
     if (!hasWorkspaceAccess && !hasLegacyAccess) {
         throw new Error('Unauthorized access')
@@ -144,12 +131,7 @@ export const utilGetChatMessage = async ({
         id: messageId ?? undefined
     }
 
-    console.log('[getChatMessage] Query where clause:', {
-        ...whereClause,
-        isAdmin,
-        shouldFilterByUserId,
-        hasWorkspaceAccess
-    })
+
 
     const messages = await appServer.AppDataSource.getRepository(ChatMessage).find({
         where: whereClause,
@@ -161,7 +143,6 @@ export const utilGetChatMessage = async ({
         }
     })
 
-    console.log('[getChatMessage] Found messages count:', messages.length)
 
     return messages
 }

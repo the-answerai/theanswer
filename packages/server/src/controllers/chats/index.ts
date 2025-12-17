@@ -15,7 +15,6 @@ const getAllChats = async (req: Request, res: Response, next: NextFunction) => {
         const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE)
         const cursor = req.query.cursor as string | undefined
         const apiResponse = await chatsService.getAllChats(req.user, { limit, cursor })
-        console.log('apiResponse', apiResponse.length)
         return res.json(apiResponse)
     } catch (error) {
         console.log('getAllChats error', error)
