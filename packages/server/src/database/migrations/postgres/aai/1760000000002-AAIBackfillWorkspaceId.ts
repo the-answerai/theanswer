@@ -90,6 +90,25 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
 
         console.log(`${tableName}: Found ${totalMissing} records missing workspaceId`)
 
+        // Check if visibility column is a native PostgreSQL array (text[]) or simple text
+        // custom_template uses text[], others use text (TypeORM simple-array)
+        const columnTypeResult = await queryRunner.query(`
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name = '${tableName}' AND column_name = 'visibility'
+        `)
+        const isArrayColumn = columnTypeResult[0]?.data_type === 'ARRAY'
+        console.log(`${tableName}: visibility column type is ${isArrayColumn ? 'ARRAY (text[])' : 'TEXT (simple-array)'}`)
+
+        // Build visibility conditions based on column type
+        // For native arrays (text[]): use ANY() operator
+        // For simple-array text: use LIKE operator on comma-separated string
+        const hasOrgOrMarketplace = isArrayColumn
+            ? `('Organization' = ANY(t.visibility) OR 'Marketplace' = ANY(t.visibility))`
+            : `(t.visibility LIKE '%Organization%' OR t.visibility LIKE '%Marketplace%')`
+        const notHasOrgOrMarketplace = isArrayColumn
+            ? `NOT ('Organization' = ANY(t.visibility) OR 'Marketplace' = ANY(t.visibility))`
+            : `(t.visibility NOT LIKE '%Organization%' AND t.visibility NOT LIKE '%Marketplace%')`
+
         // Step 1: Assign organization-shared resources to Default Workspace
         // These have visibility containing 'Organization' or 'Marketplace'
         const orgSharedUpdate = await queryRunner.query(`
@@ -102,7 +121,7 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
             ) dw
             WHERE t."organizationId" = dw."organizationId"
               AND t."workspaceId" IS NULL
-              AND (t.visibility LIKE '%Organization%' OR t.visibility LIKE '%Marketplace%')
+              AND ${hasOrgOrMarketplace}
         `)
         console.log(`${tableName}: Assigned ${orgSharedUpdate[1] || 0} org-shared records to Default Workspaces`)
 
@@ -119,7 +138,7 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
             ) pw
             WHERE t."userId" = pw."userId"
               AND t."workspaceId" IS NULL
-              AND (t.visibility IS NULL OR (t.visibility NOT LIKE '%Organization%' AND t.visibility NOT LIKE '%Marketplace%'))
+              AND (t.visibility IS NULL OR ${notHasOrgOrMarketplace})
         `)
         console.log(`${tableName}: Assigned ${privateUpdate[1] || 0} private records to Personal Workspaces`)
 

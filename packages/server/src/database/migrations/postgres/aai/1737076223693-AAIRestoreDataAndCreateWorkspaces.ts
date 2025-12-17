@@ -31,6 +31,18 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
     // =========================================================================
     // PART 1: Restore AAI Data (from RestoreAAIData migration)
     // =========================================================================
+
+    /**
+     * Helper to check if a column exists in a table
+     */
+    private async columnExists(queryRunner: QueryRunner, tableName: string, columnName: string): Promise<boolean> {
+        const result = await queryRunner.query(`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = '${tableName}' AND column_name = '${columnName}'
+        `)
+        return result.length > 0
+    }
+
     private async restoreAAIData(queryRunner: QueryRunner): Promise<void> {
         console.log('Restoring AAI data from backup...')
 
@@ -61,18 +73,28 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
             const backupCount = await queryRunner.query(`SELECT COUNT(*) as count FROM "aai_user_backup"`)
             console.log(`Restoring ${backupCount[0].count} users from backup`)
 
+            // Dynamically build SET clause based on which columns exist in backup
+            const setClause: string[] = ['"auth0Id" = b."auth0Id"']
+            if (await this.columnExists(queryRunner, 'aai_user_backup', 'stripeCustomerId')) {
+                setClause.push('"stripeCustomerId" = b."stripeCustomerId"')
+            }
+            if (await this.columnExists(queryRunner, 'aai_user_backup', 'organizationId')) {
+                setClause.push('"organizationId" = b."organizationId"::uuid')
+            }
+            if (await this.columnExists(queryRunner, 'aai_user_backup', 'trialPlanId')) {
+                setClause.push('"trialPlanId" = b."trialPlanId"::uuid')
+            }
+            if (await this.columnExists(queryRunner, 'aai_user_backup', 'defaultChatflowId')) {
+                setClause.push('"defaultChatflowId" = b."defaultChatflowId"::uuid')
+            }
+
             await queryRunner.query(`
                 UPDATE "user" u
-                SET
-                    "auth0Id" = b."auth0Id",
-                    "stripeCustomerId" = b."stripeCustomerId",
-                    "organizationId" = b."organizationId"::uuid,
-                    "trialPlanId" = b."trialPlanId"::uuid,
-                    "defaultChatflowId" = b."defaultChatflowId"::uuid
+                SET ${setClause.join(', ')}
                 FROM "aai_user_backup" b
                 WHERE u.id = b.id;
             `)
-            console.log('User data restored from backup')
+            console.log(`User data restored from backup (columns: ${setClause.length})`)
         } else {
             console.log('No user backup found - skipping user data restore')
         }
@@ -93,18 +115,28 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
             const orgBackupCount = await queryRunner.query(`SELECT COUNT(*) as count FROM "aai_organization_backup"`)
             console.log(`Restoring ${orgBackupCount[0].count} organizations from backup`)
 
+            // Dynamically build SET clause based on which columns exist in backup
+            const orgSetClause: string[] = ['"auth0Id" = b."auth0Id"']
+            if (await this.columnExists(queryRunner, 'aai_organization_backup', 'stripeCustomerId')) {
+                orgSetClause.push('"stripeCustomerId" = b."stripeCustomerId"')
+            }
+            if (await this.columnExists(queryRunner, 'aai_organization_backup', 'billingPoolEnabled')) {
+                orgSetClause.push('"billingPoolEnabled" = COALESCE(b."billingPoolEnabled", false)')
+            }
+            if (await this.columnExists(queryRunner, 'aai_organization_backup', 'currentPaidPlanId')) {
+                orgSetClause.push('"currentPaidPlanId" = b."currentPaidPlanId"::uuid')
+            }
+            if (await this.columnExists(queryRunner, 'aai_organization_backup', 'enabledIntegrations')) {
+                orgSetClause.push('"enabledIntegrations" = b."enabledIntegrations"')
+            }
+
             await queryRunner.query(`
                 UPDATE "organization" o
-                SET
-                    "auth0Id" = b."auth0Id",
-                    "stripeCustomerId" = b."stripeCustomerId",
-                    "billingPoolEnabled" = COALESCE(b."billingPoolEnabled", false),
-                    "currentPaidPlanId" = b."currentPaidPlanId"::uuid,
-                    "enabledIntegrations" = b."enabledIntegrations"
+                SET ${orgSetClause.join(', ')}
                 FROM "aai_organization_backup" b
                 WHERE o.id = b.id;
             `)
-            console.log('Organization data restored from backup')
+            console.log(`Organization data restored from backup (columns: ${orgSetClause.length})`)
         } else {
             console.log('No organization backup found - skipping organization data restore')
         }
