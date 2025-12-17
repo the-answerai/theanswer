@@ -1,6 +1,6 @@
 'use client'
 import { Session } from '@auth0/nextjs-auth0'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
 
@@ -38,6 +38,19 @@ export default function AppLayout({
     }
     noDrawer?: boolean
 }) {
+    // Protect against paste events with null clipboardData
+    // (caused by browser extensions like Grammarly, LastPass, 1Password)
+    useEffect(() => {
+        function handlePasteCapture(e: ClipboardEvent): void {
+            if (!e.clipboardData) {
+                e.stopImmediatePropagation()
+                return
+            }
+        }
+        window.addEventListener('paste', handlePasteCapture, true)
+        return () => window.removeEventListener('paste', handlePasteCapture, true)
+    }, [])
+
     // const authorizationParams = {
     //     organization: session?.user.organizationId,
     //     redirect_uri: typeof window !== 'undefined' ? window?.location?.origin : '',
