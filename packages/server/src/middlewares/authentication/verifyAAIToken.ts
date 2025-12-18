@@ -12,12 +12,13 @@
  */
 import { Request, Response, NextFunction } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
-import { DataSource } from 'typeorm'
+import { DataSource, IsNull } from 'typeorm'
 import { findOrCreateUser, updateUserOrganization } from './findOrCreateUser'
 import { findOrCreateOrganization } from './findOrCreateOrganization'
 import { Organization } from '../../database/entities/Organization'
 import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
 import { populateWorkspaceData } from './populateWorkspaceData'
+import { Role, GeneralRole } from '../../enterprise/database/entities/role.entity'
 
 // Auth0 RS256 JWT checker (same config as authenticationHandlerMiddleware)
 const jwtCheck = auth({
@@ -81,10 +82,39 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                         // Extract roles from Auth0 token
                         const roles = (authPayload['https://theanswer.ai/roles'] || []) as string[]
 
-                        // Set permissions based on roles
-                        const permissions: string[] = []
-                        if (roles?.includes('Admin')) {
-                            permissions.push('org:manage')
+                        // Load permissions from user's workspace role
+                        let permissions: string[] = []
+                        try {
+                            // If user has a roleId from workspace data, load permissions from that role
+                            if (workspaceData.roleId) {
+                                const role = await AppDataSource.getRepository(Role).findOne({
+                                    where: { id: workspaceData.roleId }
+                                })
+                                if (role?.permissions) {
+                                    permissions = JSON.parse(role.permissions)
+                                }
+                            }
+
+                            // Fallback: If no role permissions found, try to get owner role permissions for admins
+                            if (permissions.length === 0 && (roles?.includes('Admin') || workspaceData.isOrganizationAdmin)) {
+                                const ownerRole = await AppDataSource.getRepository(Role).findOne({
+                                    where: { name: GeneralRole.OWNER, organizationId: IsNull() }
+                                })
+                                if (ownerRole?.permissions) {
+                                    permissions = JSON.parse(ownerRole.permissions)
+                                }
+                            }
+
+                            // Add org:manage for Auth0 Admins
+                            if (roles?.includes('Admin') && !permissions.includes('org:manage')) {
+                                permissions.push('org:manage')
+                            }
+                        } catch (error) {
+                            console.error('[verifyAAIToken] Error loading permissions:', error)
+                            // Fallback to basic permission for admins
+                            if (roles?.includes('Admin')) {
+                                permissions = ['org:manage']
+                            }
                         }
 
                         // Set user on request (compatible with Flowise RBAC)
@@ -109,7 +139,6 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             assignedWorkspaces: workspaceData.assignedWorkspaces
                         }
 
-                        
                         return next()
                     }
                 } catch (error) {

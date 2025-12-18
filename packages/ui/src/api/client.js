@@ -12,8 +12,10 @@ const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use(async function (config) {
-    const baseURL = sessionStorage.getItem('baseURL') || baseURL // Fallback URL
-    config.baseURL = `${baseURL}/api/v1`
+    // Use a different variable name to avoid shadowing the imported baseURL
+    const storedBaseURL = sessionStorage.getItem('baseURL')
+    const effectiveBaseURL = storedBaseURL || baseURL
+    config.baseURL = `${effectiveBaseURL}/api/v1`
 
     const token = sessionStorage.getItem('access_token')
     if (token) {

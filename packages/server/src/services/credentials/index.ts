@@ -64,7 +64,7 @@ const getAllCredentials = async (paramCredentialName: any, workspaceId: string) 
                         ...getWorkspaceSearchOptions(workspaceId)
                     }
                     const credentials = await appServer.AppDataSource.getRepository(Credential).findBy(searchOptions)
-                    dbResponse.push(...credentials)
+                    dbResponse.push(...credentials.map(c => omit(c, ['encryptedData'])))
                 }
             } else {
                 const searchOptions = {
@@ -119,34 +119,7 @@ const getAllCredentials = async (paramCredentialName: any, workspaceId: string) 
                 }
             }
         }
-
-        let credentials: Credential[] = []
-
-        // The paramCredentialName parameter affects the retrieval logic:
-        // - If provided as an array, it fetches credentials for each name in the array
-        // - If provided as a single string, it fetches credentials matching that specific name
-        // - If not provided (null/undefined), it fetches all accessible credentials
-        // if (Array.isArray(paramCredentialName)) {
-        //     for (const name of paramCredentialName) {
-        //         credentials.push(...(await fetchCredentials(name)))
-        //     }
-        // } else if (paramCredentialName) {
-        //     credentials = await fetchCredentials(paramCredentialName)
-        // } else {
-        //     credentials = await fetchCredentials()
-        // }
-
-        // Remove sensitive data from user-specific credentials
-        const sanitizedCredentials = credentials.map((credential) => (credential.userId ? omit(credential, ['encryptedData']) : credential))
-
-        // Deduplicate credentials based on id
-        const uniqueCredentials = Array.from(new Map(sanitizedCredentials.map((item) => [item.id, item])).values())
-
-        // Add isOwner property to indicate if the current user owns the credential
-        return uniqueCredentials.map((credential) => ({
-            ...credential
-            // isOwner: credential.userId === user.id
-        }))
+        return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
