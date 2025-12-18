@@ -728,11 +728,22 @@ export class LangfuseProvider {
                 return undefined
             }
 
+            const fullTrace = await this.fetchTrace(trace.id)
+
+            // Check if already processed (fresh data from full trace fetch)
+            // This catches traces where Langfuse cache was stale during initial fetch
+            const fullMetadata = fullTrace?.metadata as any
+            if (fullMetadata?.billing_status === 'processed') {
+                log.debug('Skipping already processed trace (detected on full fetch)', {
+                    traceId: trace.id
+                })
+                return undefined
+            }
+
             const metadata = {
                 ...((trace.metadata || {}) as TraceMetadata),
                 aiCredentialsOwnership: 'user'
             } as TraceMetadata
-            const fullTrace = await this.fetchTrace(trace.id)
             // TODO: Update calculateCosts, getModelUsage, and buildCreditsData to work with v4 API response types
             const costs = await this.calculateCosts(fullTrace as any)
             metadata.aiCredentialsOwnership = costs.aiCredentialsOwnership
