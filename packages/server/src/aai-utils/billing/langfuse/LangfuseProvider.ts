@@ -95,6 +95,61 @@ export class LangfuseProvider {
         }
     }
 
+    // Concurrency configuration
+    private static readonly MAX_CONCURRENCY = 10
+
+    /**
+     * Run tasks with limited concurrency (pool pattern)
+     * Processes items in parallel while respecting rate limits
+     */
+    private async runWithConcurrency<T, R>(
+        items: T[],
+        processor: (item: T, index: number) => Promise<R>,
+        onProgress?: (completed: number, total: number, result: R | null) => void
+    ): Promise<(R | null)[]> {
+        const results: (R | null)[] = new Array(items.length).fill(null)
+        let nextIndex = 0
+        let completed = 0
+
+        const processNext = async (): Promise<void> => {
+            while (nextIndex < items.length) {
+                const currentIndex = nextIndex++
+                const item = items[currentIndex]
+
+                try {
+                    // Apply adaptive delay before processing
+                    const delay = this.getAdaptiveDelay()
+                    if (delay > 0 && currentIndex > 0) {
+                        await new Promise((resolve) => setTimeout(resolve, delay))
+                    }
+
+                    const result = await processor(item, currentIndex)
+                    results[currentIndex] = result
+                    completed++
+
+                    if (onProgress) {
+                        onProgress(completed, items.length, result)
+                    }
+                } catch (error: any) {
+                    completed++
+                    results[currentIndex] = null
+                    log.error('Error in concurrent task', {
+                        index: currentIndex,
+                        error: error.message
+                    })
+                }
+            }
+        }
+
+        // Start concurrent workers
+        const workers = Array(Math.min(LangfuseProvider.MAX_CONCURRENCY, items.length))
+            .fill(null)
+            .map(() => processNext())
+
+        await Promise.all(workers)
+        return results
+    }
+
     /**
      * Metadata filter to exclude already-processed traces
      * Backward compatible: Traces without billing_status field are included (treated as != 'processed')
@@ -584,62 +639,67 @@ export class LangfuseProvider {
     private async convertUsageToCredits(usageData: Trace[]): Promise<Array<{ creditsData: CreditsData; fullTrace: any }>> {
         const validTraces = await Promise.all(usageData.map((trace) => this.validateUsageData(trace)))
         const filteredData = usageData.filter((_, index) => validTraces[index])
-        const processedData: Array<{ creditsData: CreditsData; fullTrace: any }> = []
 
         // Use UTC timestamp for consistency
         const nowUtc = new Date()
         const nowUtcSeconds = Math.floor(nowUtc.getTime() / 1000)
 
-        log.info('Starting trace processing', {
+        log.info('Starting parallel trace processing', {
             totalTraces: filteredData.length,
+            concurrency: LangfuseProvider.MAX_CONCURRENCY,
             referenceTime: nowUtc.toISOString(),
             initialDelay: `${this.getAdaptiveDelay()}ms`
         })
 
-        // Process traces sequentially with adaptive delays
+        // Process traces in parallel with controlled concurrency
         const startTime = Date.now()
         let successCount = 0
         let failCount = 0
         let totalCredits = 0
+        let lastLogTime = Date.now()
 
-        for (let i = 0; i < filteredData.length; i++) {
-            const trace = filteredData[i]
-            const result = await this.processTrace(trace, nowUtcSeconds)
+        const results = await this.runWithConcurrency(
+            filteredData,
+            async (trace) => {
+                return this.processTrace(trace, nowUtcSeconds)
+            },
+            (completed, total, result) => {
+                if (result) {
+                    successCount++
+                    totalCredits += result.creditsData.credits.total || 0
+                } else {
+                    failCount++
+                }
 
-            if (result) {
-                processedData.push(result)
-                successCount++
-                totalCredits += result.creditsData.credits.total || 0
-
-                // Log every 5th trace for better visibility (reduced from 10)
-                if ((i + 1) % 5 === 0 || result.creditsData.credits.total > 100) {
-                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-                    log.info('Trace batch progress', {
-                        progress: `${i + 1}/${filteredData.length}`,
-                        credits: result.creditsData.credits.total,
+                // Log progress every 2 seconds or every 10 completions
+                const now = Date.now()
+                if (now - lastLogTime > 2000 || completed % 10 === 0) {
+                    lastLogTime = now
+                    const elapsed = ((now - startTime) / 1000).toFixed(1)
+                    log.info('Parallel processing progress', {
+                        completed: `${completed}/${total}`,
+                        success: successCount,
+                        failed: failCount,
                         runningTotal: totalCredits,
                         elapsed: `${elapsed}s`,
+                        rate: `${(completed / parseFloat(elapsed)).toFixed(1)}/s`,
                         currentDelay: `${this.getAdaptiveDelay()}ms`
                     })
                 }
-            } else {
-                failCount++
             }
+        )
 
-            // Apply adaptive delay between traces (except last one)
-            if (i < filteredData.length - 1) {
-                const delay = this.getAdaptiveDelay()
-                await new Promise((resolve) => setTimeout(resolve, delay))
-            }
-        }
+        // Collect successful results
+        const processedData = results.filter((r): r is { creditsData: CreditsData; fullTrace: any } => r !== null)
 
         const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
-        log.info('Trace processing complete', {
+        log.info('Parallel trace processing complete', {
             success: successCount,
             failed: failCount,
             totalCredits,
             elapsedSeconds: elapsedSec,
             avgSecondsPerTrace: filteredData.length > 0 ? (parseFloat(elapsedSec) / filteredData.length).toFixed(2) : '0',
+            effectiveRate: `${(filteredData.length / parseFloat(elapsedSec)).toFixed(1)}/s`,
             finalDelay: `${this.getAdaptiveDelay()}ms`
         })
 
