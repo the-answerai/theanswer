@@ -6,6 +6,11 @@ export const appConfig = {
     apiKeys: {
         storageType: process.env.APIKEY_STORAGE_TYPE ? process.env.APIKEY_STORAGE_TYPE.toLowerCase() : 'json'
     },
+    secretKey: {
+        // Storage type for encryption key: 'file' (default), 'db', or 'aws'
+        // Use 'db' for Docker deployments to persist key across container restarts
+        storageType: process.env.SECRETKEY_STORAGE_TYPE ? process.env.SECRETKEY_STORAGE_TYPE.toLowerCase() : 'file'
+    },
     showCommunityNodes: process.env.SHOW_COMMUNITY_NODES ? process.env.SHOW_COMMUNITY_NODES.toLowerCase() === 'true' : false
     // todo: add more config options here like database, log, storage, credential and allow modification from UI
 }

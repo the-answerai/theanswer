@@ -80,7 +80,7 @@ There are three different .env files you can set environment variables for Answe
 | S3_ENDPOINT_URL               | Custom S3 endpoint URL (commented out)                   | Server                      |
 | APIKEY_STORAGE_TYPE           | API key storage type (json or db) (commented out)        | Server                      |
 | SHOW_COMMUNITY_NODES          | Show community nodes when set to true (commented out)    | Server                      |
-| SECRETKEY_STORAGE_TYPE        | Secret key storage type (file, aws)                      | Root, Server                |
+| SECRETKEY_STORAGE_TYPE        | Secret key storage type (file, db, aws). Use `db` for Docker deployments to persist across container restarts. | Root, Server                |
 | SECRETKEY_AWS_REGION          | AWS region for Secrets Manager (when using aws storage)  | Root, Server                |
 | SECRETKEY_AWS_NAME            | AWS Secrets Manager secret name (when using aws storage) | Root, Server                |
 

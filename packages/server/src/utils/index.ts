@@ -76,6 +76,9 @@ export const REDACTED_CREDENTIAL_VALUE = '_FLOWISE_BLANK_07167752-1a71-43b1-bf8f
 
 let secretsManagerClient: SecretsManagerClient | null = null
 const USE_AWS_SECRETS_MANAGER = process.env.SECRETKEY_STORAGE_TYPE === 'aws'
+const USE_DB_SECRET_STORAGE = process.env.SECRETKEY_STORAGE_TYPE === 'db'
+const SYSTEM_ENCRYPTION_KEY_NAME = '__FLOWISE_ENCRYPTION_KEY__'
+
 if (USE_AWS_SECRETS_MANAGER) {
     const region = process.env.SECRETKEY_AWS_REGION || 'us-east-1' // Default region if not provided
     const accessKeyId = process.env.SECRETKEY_AWS_ACCESS_KEY
@@ -1467,13 +1470,102 @@ export const isFlowValidForStream = (reactFlowNodes: IReactFlowNode[], endingNod
 }
 
 /**
+ * Get encryption key from database
+ * @returns {Promise<string | null>}
+ */
+const getEncryptionKeyFromDb = async (): Promise<string | null> => {
+    try {
+        // Dynamic import to avoid circular dependency issues
+        const { getRunningExpressApp } = await import('./getRunningExpressApp')
+        const appServer = getRunningExpressApp()
+
+        if (!appServer?.AppDataSource?.isInitialized) {
+            logger.error('[server]: Database not initialized when attempting to retrieve encryption key')
+            return null
+        }
+
+        const variable = await appServer.AppDataSource.getRepository(Variable).findOne({
+            where: { name: SYSTEM_ENCRYPTION_KEY_NAME }
+        })
+
+        return variable?.value || null
+    } catch (error) {
+        logger.error(`[server]: Error retrieving encryption key from database: ${getErrorMessage(error)}`)
+        return null
+    }
+}
+
+/**
+ * Save encryption key to database (with race condition handling)
+ * @param {string} key - The encryption key to save
+ * @returns {Promise<string>} - The key that was saved or already existed
+ */
+const saveEncryptionKeyToDb = async (key: string): Promise<string> => {
+    try {
+        // Dynamic import to avoid circular dependency issues
+        const { getRunningExpressApp } = await import('./getRunningExpressApp')
+        const appServer = getRunningExpressApp()
+
+        if (!appServer?.AppDataSource?.isInitialized) {
+            throw new Error('Database not initialized when attempting to save encryption key')
+        }
+
+        const repository = appServer.AppDataSource.getRepository(Variable)
+
+        // Check if key already exists (another instance might have created it)
+        const existing = await repository.findOne({
+            where: { name: SYSTEM_ENCRYPTION_KEY_NAME }
+        })
+
+        if (existing) {
+            // Another instance already created the key - use that one instead
+            logger.info('[server]: Encryption key already exists in database (created by another instance)')
+            return existing.value
+        }
+
+        // Try to insert the new key
+        const newVariable = repository.create({
+            name: SYSTEM_ENCRYPTION_KEY_NAME,
+            value: key,
+            type: 'system'
+            // Note: No userId or organizationId - this is a system-level key
+        })
+
+        try {
+            await repository.insert(newVariable)
+            return key
+        } catch (insertError: any) {
+            // Handle race condition: another instance might have inserted between our check and insert
+            // Re-read and use the existing key
+            const existingAfterConflict = await repository.findOne({
+                where: { name: SYSTEM_ENCRYPTION_KEY_NAME }
+            })
+
+            if (existingAfterConflict) {
+                logger.info('[server]: Using encryption key created by concurrent instance')
+                return existingAfterConflict.value
+            }
+
+            // If still not found, something else went wrong
+            throw insertError
+        }
+    } catch (error) {
+        logger.error(`[server]: Error saving encryption key to database: ${getErrorMessage(error)}`)
+        throw error
+    }
+}
+
+/**
  * Returns the encryption key
  * @returns {Promise<string>}
  */
 export const getEncryptionKey = async (): Promise<string> => {
+    // Priority 1: Environment variable override (always takes precedence)
     if (process.env.FLOWISE_SECRETKEY_OVERWRITE !== undefined && process.env.FLOWISE_SECRETKEY_OVERWRITE !== '') {
         return process.env.FLOWISE_SECRETKEY_OVERWRITE
     }
+
+    // Priority 2: AWS Secrets Manager
     if (USE_AWS_SECRETS_MANAGER && secretsManagerClient) {
         const secretId = process.env.SECRETKEY_AWS_NAME || 'FlowiseEncryptionKey'
         try {
@@ -1497,6 +1589,38 @@ export const getEncryptionKey = async (): Promise<string> => {
             throw error
         }
     }
+
+    // Priority 3: Database storage (NEW - for Docker/cloud deployments)
+    if (USE_DB_SECRET_STORAGE) {
+        try {
+            let key = await getEncryptionKeyFromDb()
+            if (key) {
+                logger.debug('[server]: Retrieved encryption key from database')
+            } else {
+                // Key doesn't exist in DB (first run), generate and save
+                // Note: saveEncryptionKeyToDb handles race conditions and may return
+                // a different key if another instance created one concurrently
+                logger.info('[server]: Encryption key not found in database, generating new key...')
+                const newKey = generateEncryptKey()
+                key = await saveEncryptionKeyToDb(newKey)
+                if (key === newKey) {
+                    logger.info('[server]: Generated and stored encryption key in database')
+                }
+            }
+            // Set the key as env var so components package can use it
+            // (components package doesn't have database access)
+            process.env.FLOWISE_SECRETKEY_OVERWRITE = key
+            return key
+        } catch (error) {
+            logger.error(`[server]: Error with database encryption key storage: ${getErrorMessage(error)}`)
+            throw new InternalFlowiseError(
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                `Error: getEncryptionKey - Failed to retrieve or store key in database`
+            )
+        }
+    }
+
+    // Priority 4: File system (backward compatibility - default behavior)
     try {
         return await fs.promises.readFile(getEncryptionKeyPath(), 'utf8')
     } catch (error) {
@@ -1504,6 +1628,15 @@ export const getEncryptionKey = async (): Promise<string> => {
         const defaultLocation = process.env.SECRETKEY_PATH
             ? path.join(process.env.SECRETKEY_PATH, 'encryption.key')
             : path.join(getUserHome(), '.flowise', 'encryption.key')
+
+        // Add warning in Docker/production environments about ephemeral storage
+        if (process.env.NODE_ENV === 'production' || fs.existsSync('/.dockerenv')) {
+            logger.warn(
+                '[server]: WARNING: Generated new encryption key in ephemeral file storage. ' +
+                    'Set SECRETKEY_STORAGE_TYPE=db or FLOWISE_SECRETKEY_OVERWRITE to persist across deployments.'
+            )
+        }
+
         await fs.promises.writeFile(defaultLocation, encryptKey)
         return encryptKey
     }

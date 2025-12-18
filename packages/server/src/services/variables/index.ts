@@ -9,6 +9,11 @@ import { validate } from 'uuid'
 
 const createVariable = async (newVariable: Variable, user: IUser) => {
     try {
+        // SECURITY: Prevent users from creating system variables
+        if (newVariable.type === 'system' || newVariable.name?.startsWith('__')) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot create variables with reserved type or name prefix')
+        }
+
         const appServer = getRunningExpressApp()
         newVariable.userId = user.id
         newVariable.organizationId = user.organizationId
@@ -16,6 +21,7 @@ const createVariable = async (newVariable: Variable, user: IUser) => {
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).save(variable)
         return dbResponse
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: variablesServices.createVariable - ${getErrorMessage(error)}`
@@ -26,9 +32,17 @@ const createVariable = async (newVariable: Variable, user: IUser) => {
 const deleteVariable = async (variableId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
+
+        // SECURITY: Check if this is a system variable before deleting
+        const variable = await appServer.AppDataSource.getRepository(Variable).findOneBy({ id: variableId })
+        if (variable && (variable.type === 'system' || variable.name.startsWith('__'))) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot delete system variables')
+        }
+
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).delete({ id: variableId })
         return dbResponse
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: variablesServices.deleteVariable - ${getErrorMessage(error)}`
@@ -74,7 +88,11 @@ const getAllVariables = async (user: IUser, exportMode: boolean = false) => {
             ]
         }
 
-        const variables = await variableRepo.find({ where: conditions })
+        let variables = await variableRepo.find({ where: conditions })
+
+        // SECURITY: Filter out system variables (e.g., encryption key)
+        // System variables have type='system' or names starting with '__'
+        variables = variables.filter((v) => v.type !== 'system' && !v.name.startsWith('__'))
 
         // Deduplicate variables based on id
         const uniqueVariables = Array.from(new Map(variables.map((item) => [item.id, item])).values())
@@ -98,6 +116,12 @@ const getVariableById = async (variableId: string) => {
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).findOneBy({
             id: variableId
         })
+
+        // SECURITY: Don't expose system variables via API
+        if (dbResponse && (dbResponse.type === 'system' || dbResponse.name.startsWith('__'))) {
+            return null // Treat as not found
+        }
+
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -109,11 +133,17 @@ const getVariableById = async (variableId: string) => {
 
 const updateVariable = async (variable: Variable, updatedVariable: Variable) => {
     try {
+        // SECURITY: Prevent updating system variables
+        if (variable.type === 'system' || variable.name.startsWith('__')) {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot update system variables')
+        }
+
         const appServer = getRunningExpressApp()
         const tmpUpdatedVariable = await appServer.AppDataSource.getRepository(Variable).merge(variable, updatedVariable)
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).save(tmpUpdatedVariable)
         return dbResponse
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: variablesServices.updateVariable - ${getErrorMessage(error)}`
@@ -126,6 +156,10 @@ const importVariables = async (newVariables: Partial<Variable>[], queryRunner?: 
         for (const data of newVariables) {
             if (data.id && !validate(data.id)) {
                 throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: importVariables - invalid id!`)
+            }
+            // SECURITY: Prevent importing system variables
+            if (data.type === 'system' || data.name?.startsWith('__')) {
+                throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cannot import variables with reserved type or name prefix')
             }
         }
 

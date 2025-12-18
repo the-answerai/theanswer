@@ -245,7 +245,10 @@ services:
           # =========================================
           # Flowise Security & API Keys
           # =========================================
-          # Flowise Encryption Key Override
+          # Encryption key storage: 'db' persists across container restarts (recommended for Render)
+          # Alternative: Set FLOWISE_SECRETKEY_OVERWRITE to use a fixed key
+          - key: SECRETKEY_STORAGE_TYPE
+            value: 'db'
           # - key: FLOWISE_SECRETKEY_OVERWRITE
           #   sync: false
           - key: SECRETKEY_PATH
