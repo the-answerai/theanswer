@@ -26,10 +26,10 @@ export class LangfuseProvider {
     // Future timestamp buffer (5 minutes) for timestamp validation
     private static readonly FUTURE_TIMESTAMP_BUFFER_SECONDS = 300
 
-    // Adaptive rate limiter state
+    // Adaptive rate limiter state - starts with NO delay, only throttles on 429
     private adaptiveDelay = {
-        current: 100, // Start fast (100ms)
-        min: 100, // Minimum delay
+        current: 0, // Start with NO delay - maximum throughput
+        min: 0, // Allow zero delay when no rate limits hit
         max: 5000, // Maximum delay (5 seconds)
         backoffMultiplier: 2, // Double on 429
         recoveryRate: 0.8, // Reduce by 20% after success
@@ -57,7 +57,11 @@ export class LangfuseProvider {
      */
     private recordRateLimit(): void {
         this.adaptiveDelay.consecutiveSuccesses = 0
-        this.adaptiveDelay.current = Math.min(this.adaptiveDelay.max, this.adaptiveDelay.current * this.adaptiveDelay.backoffMultiplier)
+        // If current is 0, start with 200ms base delay; otherwise double it
+        const BASE_DELAY_ON_429 = 200
+        const newDelay =
+            this.adaptiveDelay.current === 0 ? BASE_DELAY_ON_429 : this.adaptiveDelay.current * this.adaptiveDelay.backoffMultiplier
+        this.adaptiveDelay.current = Math.min(this.adaptiveDelay.max, newDelay)
         this.adaptiveDelay.lastRateLimitTime = Date.now()
         log.info('Rate limit detected, increasing delay', {
             newDelayMs: this.adaptiveDelay.current,
