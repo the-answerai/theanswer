@@ -537,10 +537,12 @@ export class LangfuseProvider {
                     skippedCount += pageSkipped
                     failedTraces.push(...response.failedEvents)
 
-                    // Use adaptive delay between batches
+                    // Use adaptive delay between batches (no delay when not rate limited)
                     if (endPage < totalPages) {
                         const delay = this.getAdaptiveDelay()
-                        await new Promise((resolve) => setTimeout(resolve, delay))
+                        if (delay > 0) {
+                            await new Promise((resolve) => setTimeout(resolve, delay))
+                        }
                     }
                 }
 
@@ -618,11 +620,12 @@ export class LangfuseProvider {
             })
             responses.push(response)
 
-            // Use adaptive delay between pages (lower minimum for page fetches)
+            // Use adaptive delay between pages (no delay when not rate limited)
             if (page < endPage) {
-                // Use half the trace delay for page fetches (pages are lighter)
-                const delay = Math.max(50, Math.floor(this.getAdaptiveDelay() / 2))
-                await new Promise((resolve) => setTimeout(resolve, delay))
+                const delay = this.getAdaptiveDelay()
+                if (delay > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delay))
+                }
             }
         }
 
