@@ -26,6 +26,75 @@ export class LangfuseProvider {
     // Future timestamp buffer (5 minutes) for timestamp validation
     private static readonly FUTURE_TIMESTAMP_BUFFER_SECONDS = 300
 
+    // Adaptive rate limiter state
+    private adaptiveDelay = {
+        current: 100, // Start fast (100ms)
+        min: 100, // Minimum delay
+        max: 5000, // Maximum delay (5 seconds)
+        backoffMultiplier: 2, // Double on 429
+        recoveryRate: 0.8, // Reduce by 20% after success
+        lastRateLimitTime: 0, // Track when we last hit a rate limit
+        consecutiveSuccesses: 0 // Track successful calls for faster recovery
+    }
+
+    /**
+     * Record a successful API call - gradually reduce delay
+     */
+    private recordSuccess(): void {
+        this.adaptiveDelay.consecutiveSuccesses++
+        // After 5 consecutive successes, start reducing delay
+        if (this.adaptiveDelay.consecutiveSuccesses >= 5) {
+            this.adaptiveDelay.current = Math.max(
+                this.adaptiveDelay.min,
+                Math.floor(this.adaptiveDelay.current * this.adaptiveDelay.recoveryRate)
+            )
+            this.adaptiveDelay.consecutiveSuccesses = 0
+        }
+    }
+
+    /**
+     * Record a rate limit hit - increase delay exponentially
+     */
+    private recordRateLimit(): void {
+        this.adaptiveDelay.consecutiveSuccesses = 0
+        this.adaptiveDelay.current = Math.min(this.adaptiveDelay.max, this.adaptiveDelay.current * this.adaptiveDelay.backoffMultiplier)
+        this.adaptiveDelay.lastRateLimitTime = Date.now()
+        log.info('Rate limit detected, increasing delay', {
+            newDelayMs: this.adaptiveDelay.current,
+            maxDelayMs: this.adaptiveDelay.max
+        })
+    }
+
+    /**
+     * Get current adaptive delay (in ms)
+     */
+    private getAdaptiveDelay(): number {
+        return this.adaptiveDelay.current
+    }
+
+    /**
+     * Wait with heartbeat logging for long delays
+     */
+    private async waitWithHeartbeat(delayMs: number, context: string): Promise<void> {
+        const HEARTBEAT_INTERVAL = 3000 // Log every 3 seconds
+        let elapsed = 0
+
+        while (elapsed < delayMs) {
+            const waitTime = Math.min(HEARTBEAT_INTERVAL, delayMs - elapsed)
+            await new Promise((resolve) => setTimeout(resolve, waitTime))
+            elapsed += waitTime
+
+            // Log heartbeat for long waits
+            if (elapsed < delayMs && delayMs > HEARTBEAT_INTERVAL) {
+                log.debug('Rate limit cooldown...', {
+                    context,
+                    elapsed: `${elapsed}ms`,
+                    remaining: `${delayMs - elapsed}ms`
+                })
+            }
+        }
+    }
+
     /**
      * Metadata filter to exclude already-processed traces
      * Backward compatible: Traces without billing_status field are included (treated as != 'processed')
@@ -46,10 +115,10 @@ export class LangfuseProvider {
 
     /**
      * Make authenticated request to Langfuse API with retry for rate limits
+     * Uses adaptive rate limiting - adjusts delays based on 429 responses
      */
     private async fetchFromLangfuseAPI(endpoint: string, params: Record<string, any> = {}, retryCount = 0): Promise<any> {
         const MAX_RETRIES = BILLING_CONFIG.SYNC.MAX_RETRIES
-        const BASE_DELAY_MS = BILLING_CONFIG.SYNC.RETRY_DELAY_MS
 
         try {
             const url = `${this.langfuseBaseUrl}/api/public${endpoint}`
@@ -60,20 +129,25 @@ export class LangfuseProvider {
                     'Content-Type': 'application/json'
                 }
             })
+            // Track successful call for adaptive rate limiting
+            this.recordSuccess()
             return response.data
         } catch (error: any) {
             const status = error.response?.status
 
-            // Retry on 429 (rate limit) with exponential backoff
+            // Retry on 429 (rate limit) with adaptive backoff
             if (status === 429 && retryCount < MAX_RETRIES) {
-                const delay = BASE_DELAY_MS * Math.pow(2, retryCount) // Exponential: 1s, 2s, 4s
+                // Record rate limit for adaptive throttling
+                this.recordRateLimit()
+                const delay = this.getAdaptiveDelay() * Math.pow(2, retryCount)
                 log.warn('Rate limited by Langfuse, retrying...', {
                     endpoint,
                     retryCount: retryCount + 1,
                     maxRetries: MAX_RETRIES,
-                    delayMs: delay
+                    delayMs: delay,
+                    adaptiveDelay: this.adaptiveDelay.current
                 })
-                await new Promise((resolve) => setTimeout(resolve, delay))
+                await this.waitWithHeartbeat(delay, `retry ${retryCount + 1}`)
                 return this.fetchFromLangfuseAPI(endpoint, params, retryCount + 1)
             }
 
@@ -378,9 +452,8 @@ export class LangfuseProvider {
                 skippedCount += firstPageSkipped
                 failedTraces.push(...firstPageResponse.failedEvents)
 
-                // Process remaining pages in batches
+                // Process remaining pages in batches with adaptive rate limiting
                 const PAGE_BATCH_SIZE = BILLING_CONFIG.SYNC.PAGE_BATCH_SIZE
-                const RATE_LIMIT_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
 
                 for (let startPage = 2; startPage <= totalPages; startPage += PAGE_BATCH_SIZE) {
                     const endPage = Math.min(startPage + PAGE_BATCH_SIZE - 1, totalPages)
@@ -388,7 +461,8 @@ export class LangfuseProvider {
                     log.info('Processing page group', {
                         startPage,
                         endPage,
-                        progress: `${endPage}/${totalPages}`
+                        progress: `${endPage}/${totalPages}`,
+                        adaptiveDelay: `${this.getAdaptiveDelay()}ms`
                     })
 
                     const { billable: traces, skippedCount: pageSkipped } = await this.fetchPageGroup(
@@ -404,9 +478,10 @@ export class LangfuseProvider {
                     skippedCount += pageSkipped
                     failedTraces.push(...response.failedEvents)
 
-                    // Rate limit between batches
+                    // Use adaptive delay between batches
                     if (endPage < totalPages) {
-                        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS))
+                        const delay = this.getAdaptiveDelay()
+                        await new Promise((resolve) => setTimeout(resolve, delay))
                     }
                 }
 
@@ -447,6 +522,7 @@ export class LangfuseProvider {
     /**
      * Fetch and filter traces from multiple pages sequentially
      * Sequential fetching prevents ClickHouse database overload
+     * Uses adaptive rate limiting to optimize throughput
      */
     private async fetchPageGroup(
         startPage: number,
@@ -456,12 +532,21 @@ export class LangfuseProvider {
         traceId?: string
     ): Promise<{ billable: Trace[]; skippedCount: number }> {
         // Fetch pages sequentially to avoid ClickHouse overload
-        // IMPORTANT: Construct and await each request inside the loop
-        // to prevent all HTTP requests from firing in parallel
+        // Uses adaptive delays that adjust based on 429 responses
         const responses = []
-        const PAGE_FETCH_DELAY_MS = BILLING_CONFIG.SYNC.PAGE_FETCH_DELAY_MS
+        const totalPages = endPage - startPage + 1
 
         for (let page = startPage; page <= endPage; page++) {
+            const pageIndex = page - startPage + 1
+
+            // Log progress for longer fetches
+            if (totalPages > 2 && pageIndex % 2 === 0) {
+                log.debug('Fetching pages', {
+                    progress: `${pageIndex}/${totalPages}`,
+                    currentDelay: `${this.getAdaptiveDelay()}ms`
+                })
+            }
+
             // Execute fetch call and await immediately (truly sequential)
             const response = await this.fetchTraces({
                 fromTimestamp: fromTimestamp.toISOString(),
@@ -474,9 +559,11 @@ export class LangfuseProvider {
             })
             responses.push(response)
 
-            // Delay between pages to give ClickHouse breathing room
+            // Use adaptive delay between pages (lower minimum for page fetches)
             if (page < endPage) {
-                await new Promise((resolve) => setTimeout(resolve, PAGE_FETCH_DELAY_MS))
+                // Use half the trace delay for page fetches (pages are lighter)
+                const delay = Math.max(50, Math.floor(this.getAdaptiveDelay() / 2))
+                await new Promise((resolve) => setTimeout(resolve, delay))
             }
         }
 
@@ -505,11 +592,11 @@ export class LangfuseProvider {
 
         log.info('Starting trace processing', {
             totalTraces: filteredData.length,
-            referenceTime: nowUtc.toISOString()
+            referenceTime: nowUtc.toISOString(),
+            initialDelay: `${this.getAdaptiveDelay()}ms`
         })
 
-        // Process traces sequentially to avoid rate limits
-        const TRACE_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
+        // Process traces sequentially with adaptive delays
         const startTime = Date.now()
         let successCount = 0
         let failCount = 0
@@ -524,22 +611,25 @@ export class LangfuseProvider {
                 successCount++
                 totalCredits += result.creditsData.credits.total || 0
 
-                // Log every 10th trace or significant credits
-                if ((i + 1) % 10 === 0 || result.creditsData.credits.total > 100) {
-                    log.info('Trace processed', {
+                // Log every 5th trace for better visibility (reduced from 10)
+                if ((i + 1) % 5 === 0 || result.creditsData.credits.total > 100) {
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+                    log.info('Trace batch progress', {
                         progress: `${i + 1}/${filteredData.length}`,
-                        traceId: trace.id.substring(0, 8),
                         credits: result.creditsData.credits.total,
-                        runningTotal: totalCredits
+                        runningTotal: totalCredits,
+                        elapsed: `${elapsed}s`,
+                        currentDelay: `${this.getAdaptiveDelay()}ms`
                     })
                 }
             } else {
                 failCount++
             }
 
-            // Apply delay between traces (except last one)
+            // Apply adaptive delay between traces (except last one)
             if (i < filteredData.length - 1) {
-                await new Promise((resolve) => setTimeout(resolve, TRACE_DELAY_MS))
+                const delay = this.getAdaptiveDelay()
+                await new Promise((resolve) => setTimeout(resolve, delay))
             }
         }
 
@@ -549,7 +639,8 @@ export class LangfuseProvider {
             failed: failCount,
             totalCredits,
             elapsedSeconds: elapsedSec,
-            avgSecondsPerTrace: (parseFloat(elapsedSec) / filteredData.length).toFixed(2)
+            avgSecondsPerTrace: filteredData.length > 0 ? (parseFloat(elapsedSec) / filteredData.length).toFixed(2) : '0',
+            finalDelay: `${this.getAdaptiveDelay()}ms`
         })
 
         return processedData
