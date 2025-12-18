@@ -5,6 +5,7 @@ import basicAuth from 'express-basic-auth'
 import { DataSource } from 'typeorm'
 import { MODE } from './Interface'
 import { getEncryptionKey } from './utils'
+import { setDataSource as setDbReference } from './utils/dbReference'
 import logger, { expressRequestLogger } from './utils/logger'
 import { getDataSource } from './DataSource'
 import { NodesPool } from './NodesPool'
@@ -76,6 +77,9 @@ export class App {
         try {
             await this.AppDataSource.initialize()
             logger.info('📦 [server]: Data Source is initializing...')
+
+            // Set the database reference for utils that need it (like encryption key storage)
+            setDbReference(this.AppDataSource)
 
             // Run Migrations Scripts
             await this.AppDataSource.runMigrations({ transaction: 'each' })

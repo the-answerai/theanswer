@@ -55,6 +55,7 @@ import { ApiKey } from '../database/entities/ApiKey'
 import { DataSource } from 'typeorm'
 import { CachePool } from '../CachePool'
 import { Variable } from '../database/entities/Variable'
+import { getDataSource as getDbReference, isDataSourceReady } from './dbReference'
 import { DocumentStore } from '../database/entities/DocumentStore'
 import { DocumentStoreFileChunk } from '../database/entities/DocumentStoreFileChunk'
 import { InternalFlowiseError } from '../errors/internalFlowiseError'
@@ -1471,20 +1472,18 @@ export const isFlowValidForStream = (reactFlowNodes: IReactFlowNode[], endingNod
 
 /**
  * Get encryption key from database
+ * Uses the dbReference module to avoid circular dependencies
  * @returns {Promise<string | null>}
  */
 const getEncryptionKeyFromDb = async (): Promise<string | null> => {
     try {
-        // Dynamic import to avoid circular dependency issues
-        const { getRunningExpressApp } = await import('./getRunningExpressApp')
-        const appServer = getRunningExpressApp()
-
-        if (!appServer?.AppDataSource?.isInitialized) {
+        const dataSource = getDbReference()
+        if (!dataSource || !isDataSourceReady()) {
             logger.error('[server]: Database not initialized when attempting to retrieve encryption key')
             return null
         }
 
-        const variable = await appServer.AppDataSource.getRepository(Variable).findOne({
+        const variable = await dataSource.getRepository(Variable).findOne({
             where: { name: SYSTEM_ENCRYPTION_KEY_NAME }
         })
 
@@ -1497,20 +1496,18 @@ const getEncryptionKeyFromDb = async (): Promise<string | null> => {
 
 /**
  * Save encryption key to database (with race condition handling)
+ * Uses the dbReference module to avoid circular dependencies
  * @param {string} key - The encryption key to save
  * @returns {Promise<string>} - The key that was saved or already existed
  */
 const saveEncryptionKeyToDb = async (key: string): Promise<string> => {
     try {
-        // Dynamic import to avoid circular dependency issues
-        const { getRunningExpressApp } = await import('./getRunningExpressApp')
-        const appServer = getRunningExpressApp()
-
-        if (!appServer?.AppDataSource?.isInitialized) {
+        const dataSource = getDbReference()
+        if (!dataSource || !isDataSourceReady()) {
             throw new Error('Database not initialized when attempting to save encryption key')
         }
 
-        const repository = appServer.AppDataSource.getRepository(Variable)
+        const repository = dataSource.getRepository(Variable)
 
         // Check if key already exists (another instance might have created it)
         const existing = await repository.findOne({
@@ -1557,6 +1554,10 @@ const saveEncryptionKeyToDb = async (key: string): Promise<string> => {
 
 /**
  * Returns the encryption key
+ * Priority: 1) FLOWISE_SECRETKEY_OVERWRITE env var
+ *           2) AWS Secrets Manager (if SECRETKEY_STORAGE_TYPE=aws)
+ *           3) Database storage (if SECRETKEY_STORAGE_TYPE=db) - recommended for Docker
+ *           4) File system (default, backward compatible)
  * @returns {Promise<string>}
  */
 export const getEncryptionKey = async (): Promise<string> => {
@@ -1590,7 +1591,7 @@ export const getEncryptionKey = async (): Promise<string> => {
         }
     }
 
-    // Priority 3: Database storage (NEW - for Docker/cloud deployments)
+    // Priority 3: Database storage (for Docker/cloud deployments with ephemeral filesystems)
     if (USE_DB_SECRET_STORAGE) {
         try {
             let key = await getEncryptionKeyFromDb()
@@ -1598,8 +1599,7 @@ export const getEncryptionKey = async (): Promise<string> => {
                 logger.debug('[server]: Retrieved encryption key from database')
             } else {
                 // Key doesn't exist in DB (first run), generate and save
-                // Note: saveEncryptionKeyToDb handles race conditions and may return
-                // a different key if another instance created one concurrently
+                // Note: saveEncryptionKeyToDb handles race conditions
                 logger.info('[server]: Encryption key not found in database, generating new key...')
                 const newKey = generateEncryptKey()
                 key = await saveEncryptionKeyToDb(newKey)
@@ -1620,23 +1620,21 @@ export const getEncryptionKey = async (): Promise<string> => {
         }
     }
 
-    // Priority 4: File system (backward compatibility - default behavior)
+    // Priority 4: File system (default, backward compatible)
     try {
         return await fs.promises.readFile(getEncryptionKeyPath(), 'utf8')
     } catch (error) {
+        // File doesn't exist, create it
+        // Note: This will regenerate key on each Docker deployment if filesystem is ephemeral!
+        if (process.env.NODE_ENV === 'production') {
+            logger.warn(
+                '[server]: Encryption key file not found. For Docker deployments, consider using SECRETKEY_STORAGE_TYPE=db to persist keys in the database.'
+            )
+        }
         const encryptKey = generateEncryptKey()
         const defaultLocation = process.env.SECRETKEY_PATH
             ? path.join(process.env.SECRETKEY_PATH, 'encryption.key')
             : path.join(getUserHome(), '.flowise', 'encryption.key')
-
-        // Add warning in Docker/production environments about ephemeral storage
-        if (process.env.NODE_ENV === 'production' || fs.existsSync('/.dockerenv')) {
-            logger.warn(
-                '[server]: WARNING: Generated new encryption key in ephemeral file storage. ' +
-                    'Set SECRETKEY_STORAGE_TYPE=db or FLOWISE_SECRETKEY_OVERWRITE to persist across deployments.'
-            )
-        }
-
         await fs.promises.writeFile(defaultLocation, encryptKey)
         return encryptKey
     }
