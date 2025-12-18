@@ -45,9 +45,12 @@ export class LangfuseProvider {
     ]
 
     /**
-     * Make authenticated request to Langfuse API
+     * Make authenticated request to Langfuse API with retry for rate limits
      */
-    private async fetchFromLangfuseAPI(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+    private async fetchFromLangfuseAPI(endpoint: string, params: Record<string, any> = {}, retryCount = 0): Promise<any> {
+        const MAX_RETRIES = BILLING_CONFIG.SYNC.MAX_RETRIES
+        const BASE_DELAY_MS = BILLING_CONFIG.SYNC.RETRY_DELAY_MS
+
         try {
             const url = `${this.langfuseBaseUrl}/api/public${endpoint}`
             const response = await axios.get(url, {
@@ -59,10 +62,26 @@ export class LangfuseProvider {
             })
             return response.data
         } catch (error: any) {
+            const status = error.response?.status
+
+            // Retry on 429 (rate limit) with exponential backoff
+            if (status === 429 && retryCount < MAX_RETRIES) {
+                const delay = BASE_DELAY_MS * Math.pow(2, retryCount) // Exponential: 1s, 2s, 4s
+                log.warn('Rate limited by Langfuse, retrying...', {
+                    endpoint,
+                    retryCount: retryCount + 1,
+                    maxRetries: MAX_RETRIES,
+                    delayMs: delay
+                })
+                await new Promise((resolve) => setTimeout(resolve, delay))
+                return this.fetchFromLangfuseAPI(endpoint, params, retryCount + 1)
+            }
+
             log.error('Error fetching from Langfuse API', {
                 endpoint,
                 error: error.message,
-                status: error.response?.status
+                status,
+                retriesExhausted: status === 429
             })
             throw error
         }
@@ -106,18 +125,34 @@ export class LangfuseProvider {
     }
 
     /**
+     * Check if trace has required billing metadata
+     */
+    private hasBillingMetadata(trace: Trace): boolean {
+        const metadata = trace.metadata as any
+        // Must have customer identifier (customerId or userId) and be a chatflow trace
+        return !!(metadata?.customerId || metadata?.userId) && !!metadata?.chatflowid
+    }
+
+    /**
      * Filter traces for billable usage and return count of skipped
      * Also filters out already processed traces (billing_status = 'processed')
      */
     private filterBillableTraces(traces: Trace[]): { billable: Trace[]; skippedCount: number } {
         let skippedCount = 0
         let alreadyProcessedCount = 0
+        let unsupportedCount = 0
 
         const billable = traces.filter((trace) => {
             // Check if already processed (client-side filtering as backup to API filtering)
             const metadata = trace.metadata as any
             if (metadata?.billing_status === 'processed') {
                 alreadyProcessedCount++
+                return false
+            }
+
+            // Skip traces without required billing metadata (e.g., evaluator traces)
+            if (!this.hasBillingMetadata(trace)) {
+                unsupportedCount++
                 return false
             }
 
@@ -128,6 +163,10 @@ export class LangfuseProvider {
             }
             return true
         })
+
+        if (unsupportedCount > 0) {
+            log.info('Filtered unsupported traces (missing billing metadata)', { unsupportedCount })
+        }
 
         if (alreadyProcessedCount > 0) {
             log.info('Filtered out already processed traces', {
@@ -141,10 +180,10 @@ export class LangfuseProvider {
     }
 
     /**
-     * Find the oldest unprocessed trace to optimize time window processing
+     * Find the newest unprocessed trace to start processing from current time backwards
      * Returns null if no unprocessed traces exist
      */
-    private async findOldestUnprocessedTrace(): Promise<Date | null> {
+    private async findNewestUnprocessedTrace(): Promise<Date | null> {
         try {
             const response = await this.fetchTraces({
                 fromTimestamp: new Date('2020-01-01').toISOString(),
@@ -152,22 +191,22 @@ export class LangfuseProvider {
                 page: 1,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core', // Minimal fields for discovery
-                orderBy: 'timestamp.asc' // CRITICAL: Order by timestamp ascending (default) to get OLDEST first
+                orderBy: 'timestamp.desc' // Process from newest to oldest (current time backwards)
             })
 
             if (response.data.length === 0) {
                 return null // No unprocessed traces
             }
 
-            log.info('Found oldest unprocessed trace', {
+            log.info('Found newest unprocessed trace', {
                 traceId: response.data[0].id,
                 timestamp: response.data[0].timestamp
             })
 
             return new Date(response.data[0].timestamp)
         } catch (error) {
-            log.warn('Failed to find oldest trace, defaulting to 2020-01-01', { error })
-            return new Date('2020-01-01') // Safe fallback
+            log.warn('Failed to find newest trace, defaulting to now', { error })
+            return new Date() // Safe fallback to current time
         }
     }
 
@@ -238,9 +277,9 @@ export class LangfuseProvider {
                 }
             }
 
-            // Step 1: Find oldest unprocessed trace to optimize window range
-            const oldestTraceDate = await this.findOldestUnprocessedTrace()
-            if (!oldestTraceDate) {
+            // Step 1: Find newest unprocessed trace to process from current time backwards
+            const newestTraceDate = await this.findNewestUnprocessedTrace()
+            if (!newestTraceDate) {
                 log.info('No unprocessed traces found - all caught up!')
                 return {
                     processedTraces: [],
@@ -254,21 +293,26 @@ export class LangfuseProvider {
 
             const CHUNK_SIZE_DAYS = BILLING_CONFIG.SYNC.CHUNK_SIZE_DAYS
             const NOW = new Date()
-            let windowStart = new Date(oldestTraceDate)
+            // Start from NOW and work backwards to the newest unprocessed trace
+            // (which marks the boundary of unprocessed data)
+            const OLDEST_BOUNDARY = new Date('2020-01-01')
+            let windowEnd = new Date(NOW)
             let windowNumber = 0
-            const totalWindowsEstimate = Math.ceil((NOW.getTime() - windowStart.getTime()) / (CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000))
+            const totalWindowsEstimate = Math.ceil((NOW.getTime() - OLDEST_BOUNDARY.getTime()) / (CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000))
 
-            log.info('Starting time-windowed sync for unprocessed traces', {
-                oldestTrace: oldestTraceDate.toISOString(),
+            log.info('Starting time-windowed sync from current time backwards', {
+                newestTrace: newestTraceDate.toISOString(),
                 now: NOW.toISOString(),
                 chunkSizeDays: CHUNK_SIZE_DAYS,
                 estimatedWindows: totalWindowsEstimate
             })
 
-            // Step 2: Process each time window
-            while (windowStart < NOW) {
+            // Step 2: Process each time window (newest to oldest)
+            while (windowEnd > OLDEST_BOUNDARY) {
                 windowNumber++
-                const windowEnd = new Date(Math.min(windowStart.getTime() + CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000, NOW.getTime()))
+                const windowStart = new Date(
+                    Math.max(windowEnd.getTime() - CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000, OLDEST_BOUNDARY.getTime())
+                )
 
                 log.info('Processing time window', {
                     window: `${windowNumber}/${totalWindowsEstimate}`,
@@ -289,7 +333,7 @@ export class LangfuseProvider {
                     page: 1,
                     filter: LangfuseProvider.UNPROCESSED_FILTER,
                     fields: 'core,metrics,io', // Exclude observations & scores - reduces payload by 80-90%
-                    orderBy: 'timestamp.asc'
+                    orderBy: 'timestamp.desc' // Process newest first within each window
                 })
                 const totalPages = initialResponse.meta.totalPages
                 log.info('Total pages to process in this window', { totalPages })
@@ -340,8 +384,8 @@ export class LangfuseProvider {
                     windowProcessedCount: processedCount
                 })
 
-                // Move to next window (no gaps in coverage)
-                windowStart = windowEnd
+                // Move to previous window (no gaps in coverage, processing backwards)
+                windowEnd = windowStart
             }
 
             log.info('Time-windowed sync completed', {
@@ -394,7 +438,7 @@ export class LangfuseProvider {
                 page,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core,metrics,io', // Exclude observations & scores - reduces payload by 80-90%
-                orderBy: 'timestamp.asc'
+                orderBy: 'timestamp.desc' // Process newest first within each window
             })
             responses.push(response)
 
@@ -427,29 +471,54 @@ export class LangfuseProvider {
         const nowUtc = new Date()
         const nowUtcSeconds = Math.floor(nowUtc.getTime() / 1000)
 
-        log.info('Starting trace processing with reference time', {
-            nowUtc: nowUtc.toISOString(),
-            nowUtcSeconds,
-            totalTraces: filteredData.length
+        log.info('Starting trace processing', {
+            totalTraces: filteredData.length,
+            referenceTime: nowUtc.toISOString()
         })
 
-        // Process traces in batches
-        const BATCH_SIZE = 15
-        const RATE_LIMIT_DELAY = 1000 // 1 second delay between batches
+        // Process traces sequentially to avoid rate limits
+        const TRACE_DELAY_MS = BILLING_CONFIG.SYNC.RATE_LIMIT_DELAY_MS
+        const startTime = Date.now()
+        let successCount = 0
+        let failCount = 0
+        let totalCredits = 0
 
-        for (let i = 0; i < filteredData.length; i += BATCH_SIZE) {
-            const batch = filteredData.slice(i, i + BATCH_SIZE)
-            const batchResults = await Promise.all(batch.map((trace) => this.processTrace(trace, nowUtcSeconds)))
+        for (let i = 0; i < filteredData.length; i++) {
+            const trace = filteredData[i]
+            const result = await this.processTrace(trace, nowUtcSeconds)
 
-            // Filter out failed traces (undefined results)
-            const validResults = batchResults.filter((result): result is { creditsData: CreditsData; fullTrace: any } => !!result)
-            processedData.push(...validResults)
+            if (result) {
+                processedData.push(result)
+                successCount++
+                totalCredits += result.creditsData.credits.total || 0
 
-            // Apply rate limiting between batches
-            if (i + BATCH_SIZE < filteredData.length) {
-                await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY))
+                // Log every 10th trace or significant credits
+                if ((i + 1) % 10 === 0 || result.creditsData.credits.total > 100) {
+                    log.info('Trace processed', {
+                        progress: `${i + 1}/${filteredData.length}`,
+                        traceId: trace.id.substring(0, 8),
+                        credits: result.creditsData.credits.total,
+                        runningTotal: totalCredits
+                    })
+                }
+            } else {
+                failCount++
+            }
+
+            // Apply delay between traces (except last one)
+            if (i < filteredData.length - 1) {
+                await new Promise((resolve) => setTimeout(resolve, TRACE_DELAY_MS))
             }
         }
+
+        const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
+        log.info('Trace processing complete', {
+            success: successCount,
+            failed: failCount,
+            totalCredits,
+            elapsedSeconds: elapsedSec,
+            avgSecondsPerTrace: (parseFloat(elapsedSec) / filteredData.length).toFixed(2)
+        })
 
         return processedData
     }
@@ -641,7 +710,7 @@ export class LangfuseProvider {
                 userId,
                 filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core,metrics,io', // Exclude observations & scores - faster response
-                orderBy: 'timestamp.asc'
+                orderBy: 'timestamp.desc' // Show newest events first in UI
                 // Note: We can't directly filter by customerId in the API call
                 // We'll filter the results after fetching
             })
