@@ -260,31 +260,34 @@ export const authenticationHandlerMiddleware =
                         where: { id: req.user.organizationId }
                     })
 
+                    if (!organization) {
+                        return res.status(404).json({ error: 'Organization not found' })
+                    }
+
                     // Determine auth method
                     const authMethod = apiKeyUser ? 'apikey' : 'jwt'
 
+                    // Use dynamic import to avoid circular dependencies
+                    const { enrichUserWithAAIData } = await import('../../aai/auth/enrichUserData')
+
+                    // Enrich user data with AAI-specific fields
                     const userData = req.user as any
+                    const enrichedUser = await enrichUserWithAAIData(
+                        AppDataSource,
+                        userData,
+                        organization,
+                        userData.roles || []
+                    )
+
                     return res.json({
-                        user: {
-                            id: userData.id,
-                            name: userData.name,
-                            email: userData.email,
-                            organizationId: userData.organizationId,
-                            stripeCustomerId: userData.stripeCustomerId,
-                            defaultChatflowId: userData.defaultChatflowId,
-                            createdDate: userData.createdDate,
-                            updatedDate: userData.updatedDate,
-                            roles: userData.roles || []
+                        user: enrichedUser,
+                        organization: {
+                            id: organization.id,
+                            name: organization.name,
+                            stripeCustomerId: organization.stripeCustomerId,
+                            createdDate: organization.createdDate,
+                            updatedDate: organization.updatedDate
                         },
-                        organization: organization
-                            ? {
-                                  id: organization.id,
-                                  name: organization.name,
-                                  stripeCustomerId: organization.stripeCustomerId,
-                                  createdDate: organization.createdDate,
-                                  updatedDate: organization.updatedDate
-                              }
-                            : null,
                         session: {
                             authenticated: true,
                             authMethod

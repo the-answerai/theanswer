@@ -3,13 +3,10 @@ import { DataSource } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
-import { Role } from '../../enterprise/database/entities/role.entity'
 import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
 import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
 import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
-import { populateWorkspaceData } from './populateWorkspaceData'
-import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
-import { mapAuth0RolesToPermissions } from '../../aai/rbac/permissions'
+import { enrichUserWithAAIData } from '../../aai/auth/enrichUserData'
 
 /**
  * Post-auth middleware that runs AFTER passport authentication.
@@ -78,72 +75,24 @@ export const aaiPostAuthMiddleware = (AppDataSource: DataSource) => {
             // Find/create default chatflows
             const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, updatedUser)
 
-            // Populate workspace data
-            const workspaceData = await populateWorkspaceData(AppDataSource, updatedUser, organization.id)
-
-            // STEP 4: Apply billing customer override for organizational billing consolidation
-            let stripeCustomerId = updatedUser.stripeCustomerId
-            if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
-                stripeCustomerId = DEFAULT_CUSTOMER_ID
-            }
-
-            // STEP 4.5: Load organization subscription data (Flowise parity)
-            const subscriptionData = await loadOrganizationSubscriptionData(organization)
-
-            // STEP 5: Determine permissions (hybrid approach for Flowise parity)
-            // Priority 1: Use workspace role permissions (Flowise native)
-            // Priority 2: Fall back to Auth0 role mapping
-            // Priority 3: Admin override (add org:manage)
+            // STEP 4: Enrich user with AAI data using shared function
             const auth0Roles = passportUser.roles || []
-            let permissions: string[] = []
+            const enrichedData = await enrichUserWithAAIData(AppDataSource, updatedUser, organization, auth0Roles)
 
-            // Try to get permissions from workspace role first (Flowise native)
-            if (workspaceData.roleId) {
-                const role = await AppDataSource.getRepository(Role).findOne({
-                    where: { id: workspaceData.roleId }
-                })
-                if (role?.permissions) {
-                    try {
-                        permissions = JSON.parse(role.permissions)
-                    } catch (e) {
-                        console.warn('[AAI Post-Auth] Failed to parse role permissions:', e)
-                    }
-                }
-            }
-
-            // Fall back to Auth0 role mapping if no workspace role permissions
-            if (permissions.length === 0 && auth0Roles.length > 0) {
-                permissions = mapAuth0RolesToPermissions(auth0Roles)
-            }
-
-            // Admin override: ensure org:manage permission for organization admins
-            if (workspaceData.isOrganizationAdmin && !permissions.includes('org:manage')) {
-                permissions.push('org:manage')
-            }
-
-            // STEP 6: Enhance req.user with AAI data (full Flowise LoggedInUser parity)
+            // STEP 5: Enhance req.user with enriched data (full Flowise LoggedInUser parity)
             Object.assign(req.user, {
-                // User identity from DB
-                id: updatedUser.id,
-
-                // AAI fields
-                auth0Id: updatedUser.auth0Id,
-                stripeCustomerId: stripeCustomerId,
-                organizationId: updatedUser.organizationId,
-                defaultChatflowId: defaultChatflowId || updatedUser.defaultChatflowId,
-
-                // RBAC fields
-                roles: auth0Roles,
-                permissions,
-
-                // Subscription/billing fields (Flowise parity)
-                activeOrganizationSubscriptionId: subscriptionData.subscriptionId,
-                activeOrganizationCustomerId: subscriptionData.customerId,
-                activeOrganizationProductId: subscriptionData.productId,
-                features: subscriptionData.features,
-
-                // Workspace fields (if not already set by passport)
-                ...(!passportUser.activeWorkspaceId && workspaceData)
+                ...enrichedData,
+                // Override defaultChatflowId if we just created one
+                defaultChatflowId: defaultChatflowId || enrichedData.defaultChatflowId,
+                // Preserve workspace fields from passport if already set
+                ...(!passportUser.activeWorkspaceId && {
+                    activeWorkspaceId: enrichedData.activeWorkspaceId,
+                    activeOrganizationId: enrichedData.activeOrganizationId,
+                    activeWorkspace: enrichedData.activeWorkspace,
+                    roleId: enrichedData.roleId,
+                    isOrganizationAdmin: enrichedData.isOrganizationAdmin,
+                    assignedWorkspaces: enrichedData.assignedWorkspaces
+                })
             })
 
             next()
@@ -297,44 +246,6 @@ async function findOrCreateAAIOrganization(
         await AppDataSource.manager.save(Organization, defaultOrg)
     }
     return defaultOrg
-}
-
-/**
- * Load organization subscription data for Flowise parity.
- * Returns subscriptionId, customerId, productId, and features.
- */
-async function loadOrganizationSubscriptionData(organization: Organization): Promise<{
-    subscriptionId: string
-    customerId: string
-    productId: string
-    features: Record<string, string>
-}> {
-    try {
-        const { getRunningExpressApp } = await import('../../utils/getRunningExpressApp')
-        const appServer = getRunningExpressApp()
-        const identityManager = appServer?.identityManager
-
-        const subscriptionId = organization.subscriptionId || ''
-        const customerId = organization.customerId || organization.stripeCustomerId || ''
-
-        let productId = ''
-        let features: Record<string, string> = {}
-
-        if (subscriptionId && identityManager) {
-            try {
-                productId = await identityManager.getProductIdFromSubscription(subscriptionId)
-                features = await identityManager.getFeaturesByPlan(subscriptionId)
-            } catch (error) {
-                // Log but don't fail - Stripe may not be configured
-                console.warn('[AAI Post-Auth] Error fetching subscription data from Stripe:', error)
-            }
-        }
-
-        return { subscriptionId, customerId, productId, features }
-    } catch (error) {
-        console.warn('[AAI Post-Auth] Error loading subscription data:', error)
-        return { subscriptionId: '', customerId: '', productId: '', features: {} }
-    }
 }
 
 /**
