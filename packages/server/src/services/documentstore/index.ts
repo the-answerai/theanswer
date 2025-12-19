@@ -44,6 +44,7 @@ import { ChatFlow } from '../../database/entities/ChatFlow'
 import { DocumentStore } from '../../database/entities/DocumentStore'
 import { DocumentStoreFileChunk } from '../../database/entities/DocumentStoreFileChunk'
 import { UpsertHistory } from '../../database/entities/UpsertHistory'
+import { Workspace } from '../../enterprise/database/entities/workspace.entity'
 import { getWorkspaceSearchOptions } from '../../enterprise/utils/ControllerServiceUtils'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
@@ -117,7 +118,14 @@ const getAdminDocumentStores = async (user: IUser): Promise<DocumentStoreDTO[]> 
             .addSelect(['user.id', 'user.name', 'user.email'])
 
         if (organizationId) {
-            queryBuilder.where('documentStore.organizationId = :organizationId', { organizationId })
+            const workspaces = await appServer.AppDataSource.getRepository(Workspace).findBy({ organizationId })
+            const workspaceIds = workspaces.map((workspace) => workspace.id)
+
+            if (workspaceIds.length > 0) {
+                queryBuilder.where('documentStore.workspaceId IN (:...workspaceIds)', { workspaceIds })
+            } else {
+                queryBuilder.where('1 = 0')
+            }
         }
 
         const isAdmin = Boolean(roles?.includes('Admin') || permissions?.includes('org:manage'))

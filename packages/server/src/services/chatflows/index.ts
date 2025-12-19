@@ -890,9 +890,16 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
             targetOrgId = org?.id ?? organizationId
         }
 
-        // SECURITY: Always filter by organization first - users should never see chatflows from other orgs
+        // SECURITY: Filter by workspaces belonging to the organization
         if (targetOrgId) {
-            queryBuilder.where('chatFlow.organizationId = :organizationId', { organizationId: targetOrgId })
+            const workspaces = await appServer.AppDataSource.getRepository(Workspace).findBy({ organizationId: targetOrgId })
+            const workspaceIds = workspaces.map((workspace) => workspace.id)
+
+            if (workspaceIds.length > 0) {
+                queryBuilder.where('chatFlow.workspaceId IN (:...workspaceIds)', { workspaceIds })
+            } else {
+                queryBuilder.where('1 = 0')
+            }
         }
 
         // ADMIN ACCESS: Admins can see all chatflows in their organization, regular users only see their own
@@ -962,9 +969,7 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
             }
         })
 
-        if (!(await checkOwnership(dbResponse, user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
+
         if (type === 'MULTIAGENT') {
             return dbResponse.filter((chatflow) => chatflow.type === 'MULTIAGENT')
         } else if (type === 'AGENTFLOW') {
@@ -979,7 +984,7 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            `Error: chatflowsService.getAllChatflows - ${getErrorMessage(error)}`
+            `Error: chatflowsService.getAdminChatflows - ${getErrorMessage(error)}`
         )
     }
 }
