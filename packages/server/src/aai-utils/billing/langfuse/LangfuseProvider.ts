@@ -696,8 +696,8 @@ export class LangfuseProvider {
             }
         )
 
-        // Collect successful results
-        const processedData = results.filter((r): r is { creditsData: CreditsData; fullTrace: any } => r !== null)
+        // Collect successful results (filter out null AND undefined)
+        const processedData = results.filter((r): r is { creditsData: CreditsData; fullTrace: any } => r != null)
 
         const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
         log.info('Parallel trace processing complete', {
