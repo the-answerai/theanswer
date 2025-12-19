@@ -866,10 +866,14 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions } = user ?? {}
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
+
+        // Join on both chatFlow.userId and workspace.createdBy (fallback if userId is null)
         const queryBuilder = chatFlowRepository
             .createQueryBuilder('chatFlow')
             .leftJoin('User', 'user', 'user.id = chatFlow.userId')
-            .addSelect(['user.id', 'user.name', 'user.email'])
+            .leftJoin('workspace', 'workspace', 'workspace.id = chatFlow.workspaceId')
+            .leftJoin('User', 'workspaceUser', 'workspaceUser.id = workspace.createdBy')
+            .addSelect(['user.id', 'user.name', 'user.email', 'workspaceUser.id', 'workspaceUser.name', 'workspaceUser.email'])
 
         // Apply field selection if specified
         if (filter?.select && filter.select.length > 0) {
@@ -942,20 +946,25 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
                 templateStatus = new Date(templateChatflow.updatedDate) > new Date(chatflow.updatedDate) ? 'outdated' : 'up_to_date'
             }
 
+            // Use chatflow.userId if available, fallback to workspace.createdBy
+            const ownerId = rawData.user_id || rawData.workspaceUser_id
+            const ownerName = rawData.user_name || rawData.workspaceUser_name
+            const ownerEmail = rawData.user_email || rawData.workspaceUser_email
+
             return {
                 ...chatflow,
                 user: {
-                    id: rawData.user_id,
-                    name: rawData.user_name,
-                    email: rawData.user_email
+                    id: ownerId,
+                    name: ownerName,
+                    email: ownerEmail
                 },
                 badge: chatflow?.visibility?.includes(ChatflowVisibility.MARKETPLACE)
                     ? 'SHARED'
                     : chatflow?.visibility?.includes(ChatflowVisibility.ORGANIZATION)
                     ? 'ORGANIZATION'
                     : '',
-                isOwner: chatflow.userId === userId,
-                canEdit: chatflow.userId === userId || permissions?.includes('org:manage'),
+                isOwner: ownerId === userId,
+                canEdit: ownerId === userId || permissions?.includes('org:manage'),
                 parentTemplate:
                     isFromTemplate && defaultTemplate && templateChatflow
                         ? {
