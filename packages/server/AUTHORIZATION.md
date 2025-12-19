@@ -240,6 +240,105 @@ CREATE TABLE "apikey" (
 -   Log access attempts
 -   Regular security audits
 
+## AAI User Enrichment
+
+The AAI layer enriches authenticated users with additional context required for the Flowise UI.
+
+### Enrichment Architecture
+
+```
+packages/server/src/
+├── aai/
+│   └── auth/
+│       └── enrichUserData.ts     # Shared enrichment function
+├── middlewares/
+│   └── authentication/
+│       ├── index.ts              # /auth/me endpoint uses enrichment
+│       ├── aaiPostAuthMiddleware.ts  # API requests use enrichment
+│       └── populateWorkspaceData.ts  # Workspace context helper
+```
+
+### Enriched User Data
+
+The `enrichUserWithAAIData()` function adds:
+
+```typescript
+interface EnrichedUserData {
+    // Basic identity (from DB)
+    id: string
+    email: string
+    name: string
+    auth0Id?: string
+
+    // Organization context
+    organizationId: string
+    stripeCustomerId?: string
+    defaultChatflowId?: string
+
+    // RBAC (Flowise parity)
+    roles: string[]
+    permissions: string[]
+
+    // Subscription/billing
+    activeOrganizationSubscriptionId: string
+    activeOrganizationCustomerId: string
+    activeOrganizationProductId: string
+    features: Record<string, string>
+
+    // Workspace context
+    activeWorkspaceId: string
+    activeOrganizationId: string
+    activeWorkspace: string
+    roleId: string
+    isOrganizationAdmin: boolean
+    assignedWorkspaces: IAssignedWorkspace[]
+}
+```
+
+### Usage
+
+**In `/auth/me` endpoint** (for frontend auth state):
+```typescript
+const { enrichUserWithAAIData } = await import('../../aai/auth/enrichUserData')
+const enrichedUser = await enrichUserWithAAIData(AppDataSource, req.user, organization, roles)
+return res.json({ user: enrichedUser, organization, session })
+```
+
+**In middleware** (for API requests):
+```typescript
+import { enrichUserWithAAIData } from '../../aai/auth/enrichUserData'
+const enrichedData = await enrichUserWithAAIData(AppDataSource, user, organization, auth0Roles)
+Object.assign(req.user, enrichedData)
+```
+
+### Frontend Integration
+
+The `useAuth0Setup` hook in `packages/ui/src/hooks/useAuth0Setup.js`:
+
+1. Auth0 authenticates user and provides access token
+2. Hook stores token in `sessionStorage`
+3. Fetches enriched user from `/api/v1/auth/me`
+4. Dispatches `loginSuccess(user)` to Redux
+5. Flowise `authSlice` handles localStorage persistence
+
+```javascript
+// packages/ui/src/hooks/useAuth0Setup.js
+import { store } from '@/store'
+import { loginSuccess } from '@/store/reducers/authSlice'
+import authApi from '@/api/auth'
+
+// After Auth0 authentication
+const response = await authApi.getMe()
+store.dispatch(loginSuccess(response.data.user))
+```
+
+### Permission Priority
+
+Permissions are resolved in order:
+1. **Workspace role permissions** (Flowise native) - highest priority
+2. **Auth0 role mapping** - fallback if no workspace role
+3. **Admin override** - adds `org:manage` for organization admins
+
 ## Migration Guide
 
 1. **Database Updates**
