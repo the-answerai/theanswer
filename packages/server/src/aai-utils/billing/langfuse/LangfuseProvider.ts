@@ -388,7 +388,7 @@ export class LangfuseProvider {
         return await stripeProvider.syncUsageToStripe(
             creditsDataWithTraces.map((item) => ({
                 ...item.creditsData,
-                fullTrace: item.fullTrace
+                traceContext: item.traceContext
             }))
         )
     }
@@ -643,7 +643,9 @@ export class LangfuseProvider {
     private async validateUsageData(trace: Trace): Promise<boolean> {
         return !!(trace.id && typeof trace.totalCost === 'number' && typeof trace.latency === 'number')
     }
-    private async convertUsageToCredits(usageData: Trace[]): Promise<Array<{ creditsData: CreditsData; fullTrace: any }>> {
+    private async convertUsageToCredits(
+        usageData: Trace[]
+    ): Promise<Array<{ creditsData: CreditsData; traceContext: { timestamp: string; metadata: any } }>> {
         const validTraces = await Promise.all(usageData.map((trace) => this.validateUsageData(trace)))
         const filteredData = usageData.filter((_, index) => validTraces[index])
 
@@ -697,7 +699,9 @@ export class LangfuseProvider {
         )
 
         // Collect successful results (filter out null AND undefined)
-        const processedData = results.filter((r): r is { creditsData: CreditsData; fullTrace: any } => r != null)
+        const processedData = results.filter(
+            (r): r is { creditsData: CreditsData; traceContext: { timestamp: string; metadata: any } } => r != null
+        )
 
         const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
         log.info('Parallel trace processing complete', {
@@ -713,7 +717,10 @@ export class LangfuseProvider {
         return processedData
     }
 
-    private async processTrace(trace: Trace, nowUtcSeconds: number): Promise<{ creditsData: CreditsData; fullTrace: any } | undefined> {
+    private async processTrace(
+        trace: Trace,
+        nowUtcSeconds: number
+    ): Promise<{ creditsData: CreditsData; traceContext: { timestamp: string; metadata: any } } | undefined> {
         try {
             const traceDate = new Date(trace.timestamp)
             const traceTimestampSeconds = Math.floor(traceDate.getTime() / 1000)
@@ -751,7 +758,15 @@ export class LangfuseProvider {
             const modelUsage = await this.getModelUsage(fullTrace as any)
 
             const creditsData = this.buildCreditsData(fullTrace as any, metadata, costs, credits, modelUsage, traceTimestampSeconds)
-            return { creditsData, fullTrace: fullTrace }
+            // Only store minimal context needed for metadata updates (timestamp + metadata)
+            // This reduces memory from ~500KB to ~1KB per trace
+            return {
+                creditsData,
+                traceContext: {
+                    timestamp: fullTrace.timestamp,
+                    metadata: fullTrace.metadata
+                }
+            }
         } catch (error: any) {
             log.error('Error processing trace', { traceId: trace.id, error: error.message })
             return undefined

@@ -335,10 +335,12 @@ export class StripeProvider {
         }
     }
 
-    async syncUsageToStripe(creditsData: Array<CreditsData & { fullTrace: any }>): Promise<{
+    async syncUsageToStripe(creditsData: Array<CreditsData & { traceContext: { timestamp: string; metadata: any } }>): Promise<{
         meterEvents: Stripe.Billing.MeterEvent[]
         failedEvents: Array<{ traceId: string; error: string }>
         processedTraces: string[]
+        meterEventCount: number
+        processedCount: number
     }> {
         try {
             log.info('Syncing usage to Stripe', { count: creditsData.length })
@@ -349,9 +351,10 @@ export class StripeProvider {
 
             const BATCH_SIZE = BILLING_CONFIG.VALIDATION.MAX_BATCH_SIZE
             const DELAY_BETWEEN_BATCHES = BILLING_CONFIG.VALIDATION.BATCH_DELAY_MS
-            const meterEvents: Stripe.Billing.MeterEvent[] = []
+            // Use counters instead of arrays to prevent memory accumulation
+            let meterEventCount = 0
+            let processedCount = 0
             const failedEvents: Array<{ traceId: string; error: string }> = []
-            const processedTraces: string[] = []
             let selfHealedCount = 0
             let duplicateEventCount = 0
             let adjustedTimestampCount = 0
@@ -498,11 +501,11 @@ export class StripeProvider {
                                     selfHealedCount++
                                 }
 
-                                // Only add to meterEvents if not a duplicate
+                                // Only count if not a duplicate
                                 if (!isDuplicate) {
-                                    meterEvents.push(result)
+                                    meterEventCount++
                                 }
-                                processedTraces.push(data.traceId)
+                                processedCount++
                                 break
                             } catch (error) {
                                 retryCount++
@@ -544,8 +547,8 @@ export class StripeProvider {
             if (selfHealedCount > 0) {
                 log.info('Self-healing: Processed untagged traces', {
                     count: selfHealedCount,
-                    totalProcessed: processedTraces.length,
-                    percentage: ((selfHealedCount / processedTraces.length) * 100).toFixed(2) + '%'
+                    totalProcessed: processedCount,
+                    percentage: ((selfHealedCount / processedCount) * 100).toFixed(2) + '%'
                 })
             }
 
@@ -553,8 +556,8 @@ export class StripeProvider {
             if (duplicateEventCount > 0) {
                 log.info('Duplicate events handled gracefully', {
                     count: duplicateEventCount,
-                    totalProcessed: processedTraces.length,
-                    percentage: ((duplicateEventCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    totalProcessed: processedCount,
+                    percentage: ((duplicateEventCount / processedCount) * 100).toFixed(2) + '%',
                     note: 'These traces were already in Stripe but not marked as processed in Langfuse'
                 })
             }
@@ -563,22 +566,24 @@ export class StripeProvider {
             if (adjustedTimestampCount > 0) {
                 log.info('Historical data: Adjusted timestamps for Stripe 35-day limitation', {
                     count: adjustedTimestampCount,
-                    totalProcessed: processedTraces.length,
-                    percentage: ((adjustedTimestampCount / processedTraces.length) * 100).toFixed(2) + '%',
+                    totalProcessed: processedCount,
+                    percentage: ((adjustedTimestampCount / processedCount) * 100).toFixed(2) + '%',
                     note: 'Traces older than 35 days were batched to 34 days ago with original dates preserved in metadata'
                 })
             }
 
             // Final flush to ensure all metadata updates are persisted
             log.info('Final flush of Langfuse metadata updates', {
-                totalProcessed: processedTraces.length
+                totalProcessed: processedCount
             })
             await this.langfuseV3.flushAsync()
 
             return {
-                meterEvents,
+                meterEvents: [], // Empty array for API compatibility - use meterEventCount instead
                 failedEvents,
-                processedTraces
+                processedTraces: [], // Empty array for API compatibility - use processedCount instead
+                meterEventCount,
+                processedCount
             }
         } catch (error) {
             log.error('Error syncing usage to Stripe', { error })
@@ -592,7 +597,7 @@ export class StripeProvider {
         }
     }
 
-    private validateUsageEvent(data: CreditsData & { fullTrace: any }): string | null {
+    private validateUsageEvent(data: CreditsData & { traceContext: { timestamp: string; metadata: any } }): string | null {
         try {
             // Check required metadata fields
             for (const field of BILLING_CONFIG.METADATA_FIELDS.REQUIRED) {
@@ -632,7 +637,7 @@ export class StripeProvider {
     }
 
     private async updateTraceMetadata(
-        data: CreditsData & { fullTrace: any },
+        data: CreditsData & { traceContext: { timestamp: string; metadata: any } },
         result: Stripe.Billing.MeterEvent,
         batchStartTime: number,
         batchSize: number,
@@ -646,9 +651,9 @@ export class StripeProvider {
         // Using v3 client for this operation as v4 doesn't have trace metadata update method yet
         await this.langfuseV3.trace({
             id: data.traceId,
-            timestamp: data.fullTrace?.timestamp,
+            timestamp: data.traceContext?.timestamp ? new Date(data.traceContext.timestamp) : undefined,
             metadata: {
-                ...data.fullTrace?.metadata,
+                ...data.traceContext?.metadata,
                 billing_status: 'processed',
                 meter_event_id: result.identifier,
                 billing_details: {
@@ -690,7 +695,7 @@ export class StripeProvider {
 
         log.debug('Trace metadata updated successfully', {
             traceId: data.traceId,
-            billingStatus: 'processed',
+            billing_status: data.traceContext?.metadata?.billing_status,
             meterEventId: result.identifier
         })
 
@@ -710,7 +715,7 @@ export class StripeProvider {
 
     private processBatchResults(
         batchResults: PromiseSettledResult<any>[],
-        batch: Array<CreditsData & { fullTrace: any }>,
+        batch: Array<CreditsData & { traceContext: { timestamp: string; metadata: any } }>,
         meterEvents: Stripe.Billing.MeterEvent[],
         failedEvents: Array<{ traceId: string; error: string }>,
         processedTraces: string[]
