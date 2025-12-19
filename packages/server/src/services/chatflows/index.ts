@@ -130,6 +130,8 @@ const deleteChatflow = async (chatflowId: string, orgId: string, workspaceId: st
             // Delete all uploads corresponding to this chatflow
             const { totalSize } = await removeFolderFromStorage(orgId, chatflowId)
             await updateStorageUsage(orgId, workspaceId, totalSize, appServer.usageCacheManager)
+            // Clean up S3 versioned storage
+            await chatflowStorageService.deleteChatflowStorage(chatflowId)
         } catch (e) {
             logger.error(`[server]: Error deleting file storage for chatflow ${chatflowId}`)
         }
@@ -274,11 +276,35 @@ const saveChatflow = async (
 ): Promise<any> => {
     validateChatflowType(newChatFlow.type)
     const appServer = getRunningExpressApp()
-
     let dbResponse: ChatFlow
+
+    // If this is a template, remove the id before saving
+    if ((newChatFlow as any).isTemplate) {
+        const { id, isTemplate, ...chatflowWithoutId } = newChatFlow as any
+        newChatFlow = chatflowWithoutId
+    }
+
+    // Initialize versioning fields for new chatflows
+
+    if (!newChatFlow.id) {
+        newChatFlow.currentVersion = 1
+        newChatFlow.s3Location = `ChatFlows/${newChatFlow.id || 'temp'}/`
+    }
+
     if (containsBase64File(newChatFlow)) {
         // we need a 2-step process, as we need to save the chatflow first and then update the file paths
         // this is because we need the chatflow id to create the file paths
+
+        // Handle marketplace template IDs - capture as templateId before clearing parentChatflowId
+        if (
+            newChatFlow.parentChatflowId &&
+            typeof newChatFlow.parentChatflowId === 'string' &&
+            newChatFlow.parentChatflowId.startsWith('cf_')
+        ) {
+            // Store the template ID before clearing the parentChatflowId
+            newChatFlow.templateId = newChatFlow.parentChatflowId
+            newChatFlow.parentChatflowId = undefined
+        }
 
         // step 1 - save with empty flowData
         const incomingFlowData = newChatFlow.flowData
@@ -295,11 +321,38 @@ const saveChatflow = async (
             subscriptionId,
             usageCacheManager
         )
+
+        // Update S3 location with actual ID
+        step1Results.s3Location = `ChatFlows/${step1Results.id}/`
+
         await _checkAndUpdateDocumentStoreUsage(step1Results, newChatFlow.workspaceId)
         dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(step1Results)
+
+        // Set initial version and save to S3 storage
+        dbResponse.currentVersion = 1
+        dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
+        await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
+        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
     } else {
+        // Handle marketplace template IDs - capture as templateId before clearing parentChatflowId
+        if (
+            newChatFlow.parentChatflowId &&
+            typeof newChatFlow.parentChatflowId === 'string' &&
+            newChatFlow.parentChatflowId.startsWith('cf_')
+        ) {
+            // Store the template ID before clearing the parentChatflowId
+            newChatFlow.templateId = newChatFlow.parentChatflowId
+            newChatFlow.parentChatflowId = undefined
+        }
+
         const chatflow = appServer.AppDataSource.getRepository(ChatFlow).create(newChatFlow)
         dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(chatflow)
+
+        // Update S3 location with actual ID, set initial version and save to S3
+        dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
+        dbResponse.currentVersion = 1
+        await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
+        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
     }
 
     const productId = await appServer.identityManager.getProductIdFromSubscription(subscriptionId)
@@ -330,6 +383,7 @@ const updateChatflow = async (
     orgId: string,
     workspaceId: string,
     subscriptionId: string
+    // user: IUser
 ): Promise<any> => {
     const appServer = getRunningExpressApp()
     if (updateChatFlow.flowData && containsBase64File(updateChatFlow)) {
@@ -350,6 +404,22 @@ const updateChatflow = async (
     const newDbChatflow = appServer.AppDataSource.getRepository(ChatFlow).merge(chatflow, updateChatFlow)
     await _checkAndUpdateDocumentStoreUsage(newDbChatflow, chatflow.workspaceId)
     const dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(newDbChatflow)
+
+    // Save new version to S3 if flowData was updated
+    if (updateChatFlow.flowData) {
+        // Create version record with the actual user who made the change
+        const versionRecord = {
+            ...dbResponse,
+            // Override userId to track who actually made this change
+            versionMetadata: {
+                originalUserId: dbResponse.userId, // Preserve original owner
+                // editedByUserId: user.id, // Track who made this change
+                // editedByName: user.name || 'Unknown User',
+                // editedByEmail: user.email
+            }
+        }
+        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion || 1, versionRecord)
+    }
 
     return dbResponse
 }

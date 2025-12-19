@@ -41,6 +41,13 @@ import ArticleIcon from '@mui/icons-material/Article'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import PhoneIcon from '@mui/icons-material/Phone'
+import DatasetIcon from '@mui/icons-material/DataUsage'
+import RuleIcon from '@mui/icons-material/Rule'
+import PeopleIcon from '@mui/icons-material/People'
+import BadgeIcon from '@mui/icons-material/Badge'
+import WorkspacesIcon from '@mui/icons-material/Workspaces'
+import LockIcon from '@mui/icons-material/Lock'
+import HistoryIcon from '@mui/icons-material/History'
 import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import { useThemeMode } from './theme'
@@ -297,6 +304,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         text: 'Credentials',
                         link: '/sidekick-studio/credentials',
                         icon: <PasswordIcon color='primary' />
+                    },
+                    {
+                        id: 'datasets',
+                        text: 'Datasets',
+                        link: '/sidekick-studio/datasets',
+                        icon: <DatasetIcon color='primary' />
+                    },
+                    {
+                        id: 'evaluations',
+                        text: 'Evaluations',
+                        link: '/sidekick-studio/evaluations',
+                        icon: <AssessmentIcon color='primary' />
+                    },
+                    {
+                        id: 'evaluators',
+                        text: 'Evaluators',
+                        link: '/sidekick-studio/evaluators',
+                        icon: <RuleIcon color='primary' />
                     }
                 ]
             })
@@ -307,8 +332,45 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
             menuConfig.push({
                 id: 'enterprise_admin',
                 text: 'Enterprise Admin',
-                link: '/sidekick-studio/admin',
-                icon: <AssessmentOutlinedIcon color='primary' />
+                icon: <AssessmentOutlinedIcon color='primary' />,
+                subMenu: [
+                    {
+                        id: 'admin-dashboard',
+                        text: 'Dashboard',
+                        link: '/sidekick-studio/admin',
+                        icon: <DashboardIcon color='primary' />
+                    },
+                    {
+                        id: 'users',
+                        text: 'Users',
+                        link: '/sidekick-studio/admin/users',
+                        icon: <PeopleIcon color='primary' />
+                    },
+                    {
+                        id: 'roles',
+                        text: 'Roles',
+                        link: '/sidekick-studio/admin/roles',
+                        icon: <BadgeIcon color='primary' />
+                    },
+                    {
+                        id: 'workspaces',
+                        text: 'Workspaces',
+                        link: '/sidekick-studio/admin/workspaces',
+                        icon: <WorkspacesIcon color='primary' />
+                    },
+                    {
+                        id: 'sso-config',
+                        text: 'SSO Config',
+                        link: '/sidekick-studio/admin/sso-config',
+                        icon: <LockIcon color='primary' />
+                    },
+                    {
+                        id: 'login-activity',
+                        text: 'Login Activity',
+                        link: '/sidekick-studio/admin/login-activity',
+                        icon: <HistoryIcon color='primary' />
+                    }
+                ]
             })
         }
 
@@ -348,8 +410,45 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                       {
                           id: 'enterprise_admin',
                           text: 'Enterprise Admin',
-                          link: '/sidekick-studio/admin',
-                          icon: <AssessmentOutlinedIcon color='primary' />
+                          icon: <AssessmentOutlinedIcon color='primary' />,
+                          subMenu: [
+                              {
+                                  id: 'admin-dashboard',
+                                  text: 'Dashboard',
+                                  link: '/sidekick-studio/admin',
+                                  icon: <DashboardIcon color='primary' />
+                              },
+                              {
+                                  id: 'users',
+                                  text: 'Users',
+                                  link: '/sidekick-studio/admin/users',
+                                  icon: <PeopleIcon color='primary' />
+                              },
+                              {
+                                  id: 'roles',
+                                  text: 'Roles',
+                                  link: '/sidekick-studio/admin/roles',
+                                  icon: <BadgeIcon color='primary' />
+                              },
+                              {
+                                  id: 'workspaces',
+                                  text: 'Workspaces',
+                                  link: '/sidekick-studio/admin/workspaces',
+                                  icon: <WorkspacesIcon color='primary' />
+                              },
+                              {
+                                  id: 'sso-config',
+                                  text: 'SSO Config',
+                                  link: '/sidekick-studio/admin/sso-config',
+                                  icon: <LockIcon color='primary' />
+                              },
+                              {
+                                  id: 'login-activity',
+                                  text: 'Login Activity',
+                                  link: '/sidekick-studio/admin/login-activity',
+                                  icon: <HistoryIcon color='primary' />
+                              }
+                          ]
                       }
                   ]
                 : []),
@@ -414,6 +513,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                   text: 'Credentials',
                                   link: '/sidekick-studio/credentials',
                                   icon: <PasswordIcon color='primary' />
+                              },
+                              {
+                                  id: 'datasets',
+                                  text: 'Datasets',
+                                  link: '/sidekick-studio/datasets',
+                                  icon: <DatasetIcon color='primary' />
+                              },
+                              {
+                                  id: 'evaluations',
+                                  text: 'Evaluations',
+                                  link: '/sidekick-studio/evaluations',
+                                  icon: <AssessmentIcon color='primary' />
+                              },
+                              {
+                                  id: 'evaluators',
+                                  text: 'Evaluators',
+                                  link: '/sidekick-studio/evaluators',
+                                  icon: <RuleIcon color='primary' />
                               },
                               ...(userRole === 'admin'
                                   ? [
@@ -675,6 +792,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                         return 'Store and manage API credentials securely'
                                                     case 'profile':
                                                         return 'View and manage your personal profile information'
+                                                    case 'datasets':
+                                                        return 'Manage datasets for evaluations'
+                                                    case 'evaluations':
+                                                        return 'Run and review AI evaluations'
+                                                    case 'evaluators':
+                                                        return 'Configure evaluation criteria and metrics'
+                                                    case 'admin-dashboard':
+                                                        return 'Access admin dashboard'
+                                                    case 'users':
+                                                        return 'Manage organization users'
+                                                    case 'roles':
+                                                        return 'Configure roles and permissions'
+                                                    case 'workspaces':
+                                                        return 'Manage workspaces'
+                                                    case 'sso-config':
+                                                        return 'Configure single sign-on settings'
+                                                    case 'login-activity':
+                                                        return 'View user login history'
                                                     default:
                                                         return subItem.text || ''
                                                 }
