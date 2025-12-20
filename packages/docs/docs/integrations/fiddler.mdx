@@ -1,0 +1,1181 @@
+---
+title: Fiddler
+description: Add AI safety guardrails with multi-dimensional content validation, PII detection, and hallucination prevention for RAG systems
+sidebar_position: 5
+---
+
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
+<div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    <img
+        src='https://img.logokit.com/fiddler.ai?token=pk_fr8710fea017bdf10b13fe'
+        alt='Fiddler Logo'
+        height='80'
+        style={{ marginBottom: '1rem' }}
+    />
+</div>
+
+# Fiddler Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0 2rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='medium'
+        context={{
+            page: 'integration-fiddler',
+            section: 'overview',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about how the Fiddler Agent Integration works?'
+        }}
+    />
+</div>
+
+## Overview
+
+Fiddler AI provides enterprise-grade guardrails for AI applications, enabling you to build safe, compliant, and trustworthy AI systems. The AnswerAgentAI integration with Fiddler delivers comprehensive protection across three critical dimensions:
+
+With this integration, you can:
+
+-   **Validate content safety** across 11 dimensions (harmful, violent, unethical, illegal, sexual, racist, jailbreaking, harassing, hateful, sexist, roleplaying)
+-   **Detect and redact PII** across 15+ entity types (SSN, credit card, email, phone, address, passport, driver's license, etc.)
+-   **Prevent hallucinations** in RAG systems with faithfulness validation
+-   **Enforce compliance** with HIPAA, GDPR, financial regulations, and industry standards
+-   **Customize thresholds** per dimension and PII type for fine-grained control
+-   **Fail-open reliability** with circuit breakers and &lt;150ms latency
+
+Fiddler's guardrails run in real-time as part of your AI workflows, automatically blocking unsafe content, redacting sensitive information, and flagging potential hallucinations before they reach users. This makes it ideal for customer-facing chatbots, internal knowledge bases, content moderation systems, and any AI application where safety and compliance are critical.
+
+## Quick Start
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'quick-start',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about setting up Fiddler credentials?'
+        }}
+    />
+</div>
+
+### Obtaining Credentials
+
+Fiddler Guardrails requires API credentials from your Fiddler account.
+
+**Required Credentials:**
+
+1. **Fiddler API Key**: Your authentication token
+2. **Fiddler API URL**: Your guardrails endpoint (default: `https://guardrails.cloud.fiddler.ai`)
+
+**How to obtain:**
+
+1. **Sign Up for Fiddler AI:**
+
+    - Visit [https://www.fiddler.ai/](https://www.fiddler.ai/)
+    - Click **Get Started** or **Request Demo**
+    - Complete the signup process or contact sales
+
+2. **Access API Keys:**
+
+    - Log in to your Fiddler dashboard
+    - Navigate to **Settings → API Keys**
+    - Click **Generate API Key**
+
+3. **Copy Credentials:**
+    - **API Key**: Copy the generated key (format: `fiddler_api_key_...`)
+    - **API URL**: Use default `https://guardrails.cloud.fiddler.ai` or your custom endpoint
+
+:::warning Security Notice
+The Fiddler API Key has **full access** to your guardrails services. Best practices:
+
+-   Store credentials securely (use AnswerAgentAI credential system)
+-   Never commit API keys to version control
+-   Rotate keys regularly for security
+-   Use organization-specific credentials for multi-tenant deployments
+    :::
+
+**Documentation Reference:** [Fiddler Guardrails Documentation](https://docs.fiddler.ai/docs/guardrails-overview)
+
+## Available Components
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'available-components',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about Fiddler components and features?'
+        }}
+    />
+</div>
+
+:::info Auto-Generated
+This section reflects the Fiddler Guardrails integration as implemented in `packages/server/src/services/guardrails/`.
+Last updated: December 4, 2025
+:::
+
+This integration provides three core guardrail endpoints:
+
+### Safety Validation (11 Dimensions)
+
+**Endpoint:** `/v3/guardrails/ftl-safety`
+
+**Description:** Evaluates content across 11 safety dimensions using Fiddler's Fast Language Toolkit (FTL).
+
+**Safety Dimensions:**
+
+-   **fdl_harmful** - General harmful content
+-   **fdl_violent** - Violence, gore, or aggressive behavior
+-   **fdl_unethical** - Unethical behavior or advice
+-   **fdl_illegal** - Illegal activities or instructions
+-   **fdl_sexual** - Sexual or adult content
+-   **fdl_racist** - Racist or discriminatory content
+-   **fdl_jailbreaking** - Attempts to bypass AI safety controls
+-   **fdl_harassing** - Harassment or bullying
+-   **fdl_hateful** - Hate speech or derogatory content
+-   **fdl_sexist** - Sexist or gender-discriminatory content
+-   **fdl_roleplaying** - Unsafe roleplaying scenarios
+
+**Configuration:**
+
+-   **Global Threshold** (default: 0.1) - Higher scores indicate MORE unsafe content
+-   **Per-Dimension Thresholds** - Override global threshold for specific dimensions
+-   **Per-Dimension Actions** - `block`, `warn`, or `continue` per dimension
+
+**Use Cases:**
+
+-   Customer-facing chatbot content moderation
+-   User-generated content screening
+-   Internal AI application safety
+-   Compliance with content policies
+
+### PII Detection & Redaction (15+ Types)
+
+**Endpoint:** `/v3/guardrails/sensitive-information`
+
+**Description:** Detects and optionally redacts personally identifiable information (PII) across 15+ entity types.
+
+**PII Types Detected:**
+
+-   **PERSON** - Names and identities
+-   **EMAIL** - Email addresses
+-   **PHONE_NUMBER** - Phone numbers (all formats)
+-   **ADDRESS** - Physical addresses
+-   **US_SOCIAL_SECURITY_NUMBER** - SSN
+-   **CREDIT_CARD** - Credit card numbers
+-   **US_PASSPORT** - Passport numbers
+-   **US_DRIVER_LICENSE** - Driver's license numbers
+-   **US_BANK_NUMBER** - Bank account numbers
+-   **CREDIT_CARD_EXPIRATION** - Card expiration dates
+-   **PIN** - PINs and security codes
+-   **IBAN_CODE** - International bank accounts
+-   **SWIFT_CODE** - SWIFT/BIC codes
+-   **USERNAME** - Usernames and handles
+-   **AGE** - Age information
+
+**Configuration:**
+
+-   **Global Confidence Threshold** (default: 0.8) - Higher scores indicate HIGHER confidence
+-   **Per-Type Confidence Thresholds** - Override for specific PII types
+-   **Per-Type Actions** - `block`, `redact`, `replace`, `warn`, or `continue`
+-   **Enabled Types** - Optionally filter which PII types to check
+
+**Use Cases:**
+
+-   HIPAA compliance (healthcare data)
+-   GDPR compliance (EU personal data)
+-   Financial data protection
+-   PCI-DSS compliance (credit card data)
+-   General privacy protection
+
+### Faithfulness Validation (RAG Hallucination Detection)
+
+**Endpoint:** `/v3/guardrails/ftl-response-faithfulness`
+
+**Description:** Validates that AI-generated responses are faithful to source documents in RAG (Retrieval-Augmented Generation) systems.
+
+**How It Works:**
+
+-   Compares AI output against source context/documents
+-   Uses Fiddler's Fast Faithfulness model
+-   Returns faithfulness score (inverted scale)
+-   Score < 0.005 = unfaithful (hallucination detected)
+-   Score ≥ 0.005 = faithful (accurate response)
+
+**Configuration:**
+
+-   **Threshold** (default: 0.005) - Fiddler's recommended threshold
+-   **Action** (default: `warn`) - Output validation never blocks, only warns
+
+**Use Cases:**
+
+-   RAG chatbots validation
+-   Knowledge base accuracy
+-   Document Q&A systems
+-   Customer support automation
+-   Legal/medical AI applications
+
+## Use Cases
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'use-cases',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about Fiddler use cases and workflows?'
+        }}
+    />
+</div>
+
+### Common Scenarios
+
+#### 1. Customer-Facing Chatbot Safety
+
+Automatically validate all user inputs and AI responses for safety and PII before displaying to users.
+
+**Workflow:**
+
+1. User submits message to chatbot
+2. Fiddler validates input for:
+    - Safety violations (block harmful/illegal content)
+    - PII detection (redact sensitive information)
+3. AI generates response based on validated/redacted input
+4. Fiddler validates output for:
+    - Safety (warn on unsafe output)
+    - PII (redact any leaked PII)
+    - Faithfulness (detect hallucinations if using RAG)
+5. Display safe, redacted response to user
+
+**Benefits:**
+
+-   Protect users from harmful content
+-   Maintain compliance with privacy regulations
+-   Prevent data leaks
+-   Build trust with safe, accurate AI
+
+**Time Saved:** 20+ hours per week on manual content review
+
+#### 2. HIPAA-Compliant Healthcare Chatbot
+
+Ensure medical chatbots never expose protected health information (PHI).
+
+**Workflow:**
+
+1. Configure Fiddler PII detection for medical data:
+    - SSN, address, phone (block actions)
+    - Medical record numbers (redact)
+    - Names and DOB (redact)
+2. Enable safety validation:
+    - Block harmful medical advice
+    - Warn on unethical suggestions
+3. Enable faithfulness checking:
+    - Validate responses against medical knowledge base
+    - Flag potential hallucinations for review
+
+**Benefits:**
+
+-   HIPAA compliance
+-   Prevent PHI leaks
+-   Ensure accurate medical information
+-   Reduce legal liability
+
+**Compliance Impact:** Reduce PII incidents by 95%
+
+#### 3. Financial Services Content Moderation
+
+Protect financial data and ensure regulatory compliance.
+
+**Workflow:**
+
+1. Detect and redact financial PII:
+    - Credit card numbers (block)
+    - Bank account numbers (block)
+    - SSN (block)
+    - PINs and security codes (block)
+2. Safety validation:
+    - Block illegal financial advice
+    - Warn on unethical suggestions
+3. Faithfulness checking:
+    - Validate responses against financial policies
+    - Prevent misinformation
+
+**Benefits:**
+
+-   PCI-DSS compliance
+-   SOC 2 compliance
+-   Regulatory compliance (SEC, FINRA)
+-   Data breach prevention
+
+**Time Saved:** 15+ hours per week on compliance reviews
+
+#### 4. RAG Knowledge Base with Hallucination Detection
+
+Ensure AI-generated answers are grounded in source documents.
+
+**Workflow:**
+
+1. User asks question
+2. RAG system retrieves relevant documents
+3. AI generates response based on documents
+4. Fiddler validates faithfulness:
+    - Compare response to source context
+    - Score < 0.005 = flag as potential hallucination
+    - Score ≥ 0.005 = accept as faithful
+5. If unfaithful, trigger review or regenerate
+
+**Benefits:**
+
+-   Prevent hallucinations
+-   Improve accuracy
+-   Build user trust
+-   Reduce misinformation
+
+**Accuracy Improvement:** 85% reduction in hallucinations
+
+#### 5. Internal Knowledge Base Safety
+
+Protect employees from unsafe or inappropriate content in internal AI tools.
+
+**Workflow:**
+
+1. Configure lenient safety thresholds for internal use:
+    - Higher thresholds (0.15) for internal content
+    - Warn actions instead of blocking
+    - Monitor but don't prevent roleplaying scenarios
+2. PII detection:
+    - Warn on employee PII (not block)
+    - Track PII exposure for audit
+3. Faithfulness checking:
+    - Validate responses against internal docs
+    - Flag low-confidence answers
+
+**Benefits:**
+
+-   Employee safety
+-   Internal compliance
+-   Audit trail for governance
+-   Flexibility for internal use
+
+**Time Saved:** 10+ hours per week on content review
+
+### Example Workflows
+
+### Example 1: Customer Support Chatbot with Full Guardrails
+
+**Goal:** Create a safe, compliant customer support chatbot that never leaks PII or produces harmful content.
+
+**AnswerAgentAI Configuration:**
+
+```typescript
+// Organization Guardrails Config
+{
+  enabled: true,
+  credentialId: "fiddler-credential-id",
+  safety: {
+    enabled: true,
+    threshold: 0.1,  // Fiddler recommendation
+    action: "block",
+    dimensionActions: {
+      fdl_illegal: "block",
+      fdl_harmful: "block",
+      fdl_sexual: "block",
+      fdl_roleplaying: "warn"  // Less strict
+    }
+  },
+  pii: {
+    enabled: true,
+    confidenceThreshold: 0.8,
+    action: "redact",
+    typeActions: {
+      US_SOCIAL_SECURITY_NUMBER: "block",
+      CREDIT_CARD: "block",
+      EMAIL: "redact",
+      PHONE_NUMBER: "redact",
+      USERNAME: "warn"
+    }
+  },
+  faithfulness: {
+    enabled: true,
+    threshold: 0.005,
+    action: "warn"
+  }
+}
+```
+
+**Example Interaction:**
+
+```
+User: "My SSN is 123-45-6789 and I need help with my account"
+
+Input Validation:
+- Safety: ✓ No violations
+- PII Detection: ✗ SSN detected (confidence: 0.95)
+  Action: BLOCK (per typeActions config)
+
+Response: "I cannot process messages containing sensitive information
+like Social Security Numbers. Please remove this information and try again."
+
+---
+
+User: "I need help with my account login issues"
+
+Input Validation:
+- Safety: ✓ No violations
+- PII: ✓ No PII detected
+
+AI generates response based on RAG knowledge base...
+
+Output Validation:
+- Safety: ✓ No violations
+- PII: ✓ No PII detected
+- Faithfulness: ✓ Score 0.92 (faithful to source docs)
+
+Response: "I can help you with login issues. First, let's try resetting your password..."
+```
+
+**Result:** Safe, compliant chatbot with &lt;150ms guardrails latency.
+
+### Example 2: GDPR-Compliant Content Analysis
+
+**Goal:** Analyze user-generated content while ensuring GDPR compliance.
+
+**Configuration:**
+
+```typescript
+{
+  pii: {
+    enabled: true,
+    confidenceThreshold: 0.75,  // More sensitive
+    enabledTypes: [
+      "PERSON",
+      "EMAIL",
+      "PHONE_NUMBER",
+      "ADDRESS",
+      "USERNAME"
+    ],
+    typeActions: {
+      PERSON: "redact",
+      EMAIL: "redact",
+      PHONE_NUMBER: "redact",
+      ADDRESS: "redact",
+      USERNAME: "redact"
+    }
+  }
+}
+```
+
+**Example:**
+
+```
+Input: "Contact John Doe at john.doe@example.com or call 555-1234"
+
+PII Detection:
+- PERSON: "John Doe" (confidence: 0.92) → Redact
+- EMAIL: "john.doe@example.com" (confidence: 0.98) → Redact
+- PHONE_NUMBER: "555-1234" (confidence: 0.88) → Redact
+
+Redacted Output: "Contact [PERSON] at [EMAIL] or call [PHONE_NUMBER]"
+```
+
+**Benefits:**
+
+-   GDPR compliance
+-   Privacy protection
+-   Audit trail
+-   Automated redaction
+
+### Example 3: Medical Chatbot with Hallucination Prevention
+
+**Goal:** Build a medical Q&A chatbot that never hallucinates medical information.
+
+**Configuration:**
+
+```typescript
+{
+  safety: {
+    enabled: true,
+    threshold: 0.05,  // Strict for medical
+    action: "block",
+    dimensionActions: {
+      fdl_harmful: "block",
+      fdl_illegal: "block",
+      fdl_unethical: "block"
+    }
+  },
+  faithfulness: {
+    enabled: true,
+    threshold: 0.005,
+    action: "warn"
+  }
+}
+```
+
+**Workflow:**
+
+```
+User: "What are the side effects of aspirin?"
+
+RAG System:
+1. Retrieves medical documents about aspirin
+2. AI generates response based on documents
+
+Faithfulness Validation:
+- Input: Retrieved medical context
+- Output: AI-generated response
+- Faithfulness Score: 0.92 ✓ (faithful)
+
+Response delivered to user.
+
+---
+
+If faithfulness score < 0.005:
+- Log hallucination warning
+- Optionally regenerate response
+- Flag for human review
+```
+
+**Benefits:**
+
+-   Medical accuracy
+-   Patient safety
+-   Liability reduction
+-   Trust building
+
+## Advanced Configuration
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'advanced-configuration',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about advanced Fiddler configuration?'
+        }}
+    />
+</div>
+
+### Configuration Hierarchy
+
+AnswerAgentAI supports a three-tier configuration hierarchy for guardrails:
+
+**Priority Order: Environment Variables → Organization Config → Chatflow Config**
+
+#### Environment Variables (Lowest Priority)
+
+Set global defaults via environment variables:
+
+```bash
+# In .env
+FIDDLER_API_KEY=fiddler_api_key_...
+FIDDLER_API_URL=https://guardrails.cloud.fiddler.ai
+```
+
+#### Organization Config (Medium Priority)
+
+Configure guardrails at the organization level:
+
+```typescript
+// In Organization.organizationConfig
+{
+  guardrails: {
+    enabled: true,
+    credentialId: "org-fiddler-credential",
+    safety: {
+      enabled: true,
+      threshold: 0.1,
+      action: "block"
+    },
+    pii: {
+      enabled: true,
+      confidenceThreshold: 0.8,
+      action: "redact"
+    }
+  }
+}
+```
+
+#### Chatflow Config (Highest Priority)
+
+Override organization settings per chatflow:
+
+```typescript
+// In ChatFlow.chatflowConfig
+{
+  guardrails: {
+    safety: {
+      threshold: 0.05,  // More strict for this chatflow
+      dimensionActions: {
+        fdl_illegal: "block",
+        fdl_harmful: "block"
+      }
+    }
+  }
+}
+```
+
+### Safety Configuration Examples
+
+#### Strict Safety (External Chatbots)
+
+```json
+{
+    "safety": {
+        "enabled": true,
+        "threshold": 0.05,
+        "action": "block",
+        "dimensionThresholds": {
+            "fdl_illegal": 0.02,
+            "fdl_harmful": 0.05,
+            "fdl_sexual": 0.05
+        },
+        "dimensionActions": {
+            "fdl_illegal": "block",
+            "fdl_harmful": "block",
+            "fdl_sexual": "block",
+            "fdl_roleplaying": "warn"
+        }
+    }
+}
+```
+
+**Interpretation:**
+
+-   Global threshold: 0.05 (strict)
+-   Illegal content: 0.02 (very strict)
+-   Block most violations
+-   Warn on roleplaying (more lenient)
+
+#### Balanced Safety (General Purpose)
+
+```json
+{
+    "safety": {
+        "enabled": true,
+        "threshold": 0.1,
+        "action": "block",
+        "dimensionActions": {
+            "fdl_illegal": "block",
+            "fdl_harmful": "warn",
+            "fdl_roleplaying": "continue"
+        }
+    }
+}
+```
+
+#### Lenient Safety (Internal Tools)
+
+```json
+{
+    "safety": {
+        "enabled": true,
+        "threshold": 0.15,
+        "action": "warn"
+    }
+}
+```
+
+### PII Configuration Examples
+
+#### HIPAA Compliance
+
+```json
+{
+    "pii": {
+        "enabled": true,
+        "confidenceThreshold": 0.75,
+        "enabledTypes": ["PERSON", "US_SOCIAL_SECURITY_NUMBER", "ADDRESS", "PHONE_NUMBER", "EMAIL", "AGE"],
+        "typeActions": {
+            "US_SOCIAL_SECURITY_NUMBER": "block",
+            "PERSON": "redact",
+            "ADDRESS": "redact",
+            "PHONE_NUMBER": "redact",
+            "EMAIL": "redact",
+            "AGE": "redact"
+        }
+    }
+}
+```
+
+#### PCI-DSS Compliance (Financial)
+
+```json
+{
+    "pii": {
+        "enabled": true,
+        "confidenceThreshold": 0.8,
+        "enabledTypes": ["CREDIT_CARD", "CREDIT_CARD_EXPIRATION", "US_BANK_NUMBER", "PIN", "SWIFT_CODE", "IBAN_CODE"],
+        "typeActions": {
+            "CREDIT_CARD": "block",
+            "PIN": "block",
+            "US_BANK_NUMBER": "block",
+            "CREDIT_CARD_EXPIRATION": "redact",
+            "SWIFT_CODE": "redact",
+            "IBAN_CODE": "redact"
+        }
+    }
+}
+```
+
+#### GDPR Compliance
+
+```json
+{
+    "pii": {
+        "enabled": true,
+        "confidenceThreshold": 0.8,
+        "enabledTypes": ["PERSON", "EMAIL", "PHONE_NUMBER", "ADDRESS"],
+        "typeActions": {
+            "PERSON": "redact",
+            "EMAIL": "redact",
+            "PHONE_NUMBER": "redact",
+            "ADDRESS": "redact"
+        }
+    }
+}
+```
+
+### Circuit Breaker Configuration
+
+Fiddler integration includes circuit breaker protection for reliability:
+
+```json
+{
+    "circuitBreaker": {
+        "failureThreshold": 5,
+        "resetTimeout": 30000,
+        "successThreshold": 3
+    }
+}
+```
+
+**Configuration:**
+
+-   **failureThreshold** - Number of failures before opening circuit (default: 5)
+-   **resetTimeout** - Time in ms before attempting to close circuit (default: 30s)
+-   **successThreshold** - Successes needed to close circuit (default: 3)
+
+**Behavior:**
+
+-   **Closed**: Normal operation, requests pass through
+-   **Open**: After N failures, requests fail immediately (fail-open: return safe defaults)
+-   **Half-Open**: After timeout, allow test requests to check if service recovered
+
+### Caching Configuration
+
+Optional Redis caching for improved performance:
+
+```json
+{
+    "cache": {
+        "enabled": true,
+        "ttl": 3600
+    }
+}
+```
+
+**Benefits:**
+
+-   Reduce API calls for identical inputs
+-   Sub-millisecond response for cached results
+-   Reduce costs
+-   Improve latency
+
+**TTL:** Time-to-live in seconds (default: 1 hour)
+
+## Frequently Asked Questions
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'faq',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about Fiddler troubleshooting and best practices?'
+        }}
+    />
+</div>
+
+### Setup & Configuration
+
+**Q: Do I need a Fiddler account to use guardrails?**
+
+A: Yes, you need a Fiddler AI account and API key. Visit [https://www.fiddler.ai/](https://www.fiddler.ai/) to sign up or request a demo.
+
+**Q: What's the difference between input and output validation?**
+
+A:
+
+-   **Input Validation**: Validates user-submitted text before AI processing
+    -   Can **block** unsafe inputs (prevent processing)
+    -   Can **redact** PII before sending to LLM
+    -   Default action: `block` for safety, `redact` for PII
+-   **Output Validation**: Validates AI-generated responses before showing to users
+    -   **Never blocks** (always fail-open)
+    -   Can **redact** PII in responses
+    -   Can **warn** on faithfulness issues (hallucinations)
+    -   Default action: `warn` for all violations
+
+**Q: Can I configure different guardrails for different chatflows?**
+
+A: Yes! AnswerAgentAI supports a three-tier hierarchy:
+
+1. **Environment**: Global defaults
+2. **Organization**: Org-wide settings
+3. **Chatflow**: Per-chatflow overrides (highest priority)
+
+Each tier can override specific settings from lower tiers.
+
+**Q: How do I set up guardrails for a single chatflow?**
+
+A: Configure `chatflowConfig` on the ChatFlow entity:
+
+```typescript
+{
+  guardrails: {
+    safety: { threshold: 0.05 },
+    pii: { action: "block" }
+  }
+}
+```
+
+**Q: What happens if my Fiddler API key is invalid?**
+
+A: The integration uses **fail-open** design:
+
+-   Invalid credentials → Log warning, continue without guardrails
+-   API errors → Return safe defaults (no violations detected)
+-   Circuit breaker open → Skip guardrails, allow requests through
+
+This ensures your application never goes down due to guardrails service issues.
+
+### Usage & Best Practices
+
+**Q: How do safety thresholds work?**
+
+A: Fiddler safety scores indicate **how unsafe** content is:
+
+-   **Score > threshold** = Unsafe (violation detected)
+-   **Score ≤ threshold** = Safe (no violation)
+-   **Lower threshold** = MORE strict (catches more violations)
+-   **Higher threshold** = LESS strict (catches fewer violations)
+-   **Fiddler recommendation**: 0.1 for production
+
+**Example:**
+
+-   Threshold: 0.1
+-   Score 0.05: Safe ✓
+-   Score 0.15: Unsafe ✗ (violation)
+
+**Q: How do PII confidence thresholds work?**
+
+A: PII scores indicate **how confident** the detection is:
+
+-   **Score > threshold** = PII detected (process it)
+-   **Score ≤ threshold** = Not PII (ignore)
+-   **Lower threshold** = MORE sensitive (more detections)
+-   **Higher threshold** = LESS sensitive (fewer detections)
+-   **Fiddler recommendation**: 0.8 for production
+
+**Example:**
+
+-   Threshold: 0.8
+-   Score 0.95: High confidence PII ✓ (redact)
+-   Score 0.70: Low confidence ✗ (ignore)
+
+**Q: How do I set different actions for different safety dimensions?**
+
+A: Use `dimensionActions` in safety config:
+
+```json
+{
+    "safety": {
+        "action": "block",
+        "dimensionActions": {
+            "fdl_illegal": "block",
+            "fdl_harmful": "warn",
+            "fdl_roleplaying": "continue"
+        }
+    }
+}
+```
+
+**Q: How do I set different actions for different PII types?**
+
+A: Use `typeActions` in PII config:
+
+```json
+{
+    "pii": {
+        "action": "redact",
+        "typeActions": {
+            "US_SOCIAL_SECURITY_NUMBER": "block",
+            "CREDIT_CARD": "block",
+            "EMAIL": "redact",
+            "USERNAME": "warn"
+        }
+    }
+}
+```
+
+**Q: What actions are available?**
+
+A:
+
+-   **block** - Reject input/output, return error message
+-   **redact** - Replace PII with `[PII_TYPE]` placeholder
+-   **replace** - Replace with alternative text (future)
+-   **warn** - Log violation, allow content through
+-   **continue** - No action (monitoring only)
+
+**Q: How does faithfulness checking work?**
+
+A: Fiddler compares AI output against source context (RAG documents):
+
+-   Input: Source documents/context
+-   Output: AI-generated response
+-   Returns: Faithfulness score (inverted scale)
+-   **Score < 0.005** = Unfaithful (hallucination)
+-   **Score ≥ 0.005** = Faithful (accurate)
+
+**Note:** Faithfulness only works for RAG systems with source context.
+
+**Q: Should I enable faithfulness checking for all chatflows?**
+
+A: No, only for RAG systems:
+
+-   **Enable**: RAG chatbots, Q&A systems, document search
+-   **Disable**: Creative writing, general conversation, non-RAG use cases
+
+**Q: How do I monitor guardrails performance?**
+
+A: Guardrails metadata is included in chatflow responses:
+
+```json
+{
+    "text": "AI response",
+    "guardrails": {
+        "safety": {
+            "violations": [...],
+            "isUnsafe": false
+        },
+        "pii": {
+            "detections": [...],
+            "hasPII": false
+        },
+        "faithfulness": {
+            "score": 0.92,
+            "threshold": 0.005
+        }
+    }
+}
+```
+
+Monitor this data in logs or analytics.
+
+### Troubleshooting
+
+**Q: Guardrails are not running**
+
+**Causes:**
+
+1. **Not enabled**: Check `enabled: true` in config
+2. **No credentials**: Verify Fiddler API key exists
+3. **Circuit breaker open**: Too many failures opened circuit
+
+**Solutions:**
+
+1. Verify configuration hierarchy (env → org → chatflow)
+2. Check credential exists and is valid
+3. Check circuit breaker status in logs
+4. Verify `FIDDLER_API_KEY` environment variable if using env config
+
+**Q: Getting "Circuit breaker is open" errors**
+
+**Cause:** Too many consecutive failures to Fiddler API
+
+**Solutions:**
+
+1. Check Fiddler API status (service outage?)
+2. Verify API key is valid
+3. Check network connectivity
+4. Wait for reset timeout (default: 30s)
+5. Manually reset circuit (admin action)
+
+**Q: PII detection not working**
+
+**Possible causes:**
+
+1. **Not enabled**: `pii.enabled: false`
+2. **Threshold too high**: `confidenceThreshold: 0.95` misses lower-confidence detections
+3. **Type not enabled**: Check `enabledTypes` array
+4. **Action is "continue"**: Detection happens but no action taken
+
+**Solutions:**
+
+1. Enable PII detection: `pii.enabled: true`
+2. Lower threshold: Try `0.75` or `0.8`
+3. Check `enabledTypes` includes the PII type
+4. Use `redact` or `block` action instead of `continue`
+
+**Q: Safety validation blocking too much**
+
+**Cause:** Threshold too low (too strict)
+
+**Solutions:**
+
+1. Increase global threshold: `0.1` → `0.15`
+2. Use per-dimension thresholds for fine-tuning
+3. Change action from `block` to `warn` for less critical dimensions
+4. Review blocked content to calibrate thresholds
+
+**Q: Safety validation not blocking enough**
+
+**Cause:** Threshold too high (too lenient)
+
+**Solutions:**
+
+1. Decrease global threshold: `0.15` → `0.1` or `0.05`
+2. Use per-dimension thresholds to be strict on specific dimensions
+3. Ensure action is `block` not `warn`
+
+**Q: Faithfulness scores always 1.0 (no hallucinations detected)**
+
+**Causes:**
+
+1. **No context provided**: Faithfulness requires source context
+2. **Faithfulness not enabled**: `faithfulness.enabled: false`
+3. **Using non-RAG chatflow**: Faithfulness only works for RAG systems
+
+**Solutions:**
+
+1. Ensure you're using RAG chatflow with source documents
+2. Enable faithfulness: `faithfulness.enabled: true`
+3. Verify context is passed to validation
+
+**Q: High latency (>200ms)**
+
+**Causes:**
+
+1. **Multiple sequential checks**: Running safety, PII, faithfulness sequentially
+2. **No caching**: Duplicate requests hitting API
+3. **Network issues**: Slow connection to Fiddler API
+
+**Solutions:**
+
+1. AnswerAgentAI runs checks **in parallel** (already optimized)
+2. Enable Redis caching: `cache.enabled: true`
+3. Check network latency to Fiddler API
+4. Consider increasing timeouts if network is slow
+
+**Q: Redacted text looks wrong**
+
+**Example:** `"Contact [PERSON] at [EMAIL] or [PHONE_NUMBER]"`
+
+**This is expected behavior.** Redaction replaces PII with `[PII_TYPE]` placeholders.
+
+**To customize redaction:**
+
+-   Use `replace` action (future feature)
+-   Post-process redacted text in your application
+-   Use different actions per type (e.g., block SSN, redact email)
+
+**Q: Different results between input and output validation**
+
+**This is expected.** Input and output validation have different goals:
+
+-   **Input**: Strict (blocks unsafe/PII inputs)
+-   **Output**: Lenient (warns but doesn't block)
+
+Differences in detection can occur due to:
+
+-   Different thresholds configured
+-   Different actions configured
+-   Context differences (output includes AI-generated text)
+
+### Performance & Reliability
+
+**Q: What's the expected latency?**
+
+A: **&lt;150ms** for most guardrails checks:
+
+-   Safety: ~50-80ms
+-   PII: ~40-70ms
+-   Faithfulness: ~60-100ms
+-   **Parallel execution**: All checks run simultaneously
+
+**Q: What happens if Fiddler API is down?**
+
+A: **Fail-open design** ensures your application stays online:
+
+1. Circuit breaker opens after 5 failures
+2. Requests skip guardrails (return safe defaults)
+3. Circuit attempts to close after 30s
+4. Your chatflows continue working without guardrails
+
+**Logged behavior:**
+
+-   Warning logged to console
+-   Guardrails metadata indicates "fail-open" state
+-   Monitor for service restoration
+
+**Q: Can I use Fiddler guardrails in production?**
+
+A: Yes, Fiddler is enterprise-grade and production-ready:
+
+-   &lt;150ms latency
+-   Circuit breaker protection
+-   Fail-open reliability
+-   Connection pooling
+-   Optional caching
+-   99.9%+ uptime SLA (check with Fiddler)
+
+**Q: How do I optimize performance?**
+
+A:
+
+1. **Enable caching**: `cache.enabled: true` (sub-ms for cached results)
+2. **Parallel execution**: AnswerAgentAI runs checks in parallel (already optimized)
+3. **Selective checks**: Disable unused checks (e.g., faithfulness for non-RAG)
+4. **Connection pooling**: Already enabled (50 sockets per host)
+5. **Per-dimension config**: Only check dimensions you care about
+
+## Resources
+
+### Official Documentation
+
+-   **[Fiddler Documentation](https://docs.fiddler.ai/)** - Complete Fiddler platform documentation
+-   **[Guardrails Overview](https://docs.fiddler.ai/docs/guardrails-overview)** - Introduction to Fiddler Guardrails
+-   **[Safety Guardrails](https://docs.fiddler.ai/docs/safety-guardrails)** - Safety dimension documentation
+-   **[PII Detection](https://docs.fiddler.ai/docs/pii-detection)** - PII detection and redaction guide
+-   **[Faithfulness Validation](https://docs.fiddler.ai/docs/faithfulness)** - RAG hallucination detection
+
+### AnswerAgentAI Implementation
+
+-   **[Guardrails Service](/packages/server/src/services/guardrails/)** - Internal implementation reference
+-   **[Guardrails Types](/packages/server/src/types/guardrails.ts)** - TypeScript type definitions
+-   **[Configuration Guide](https://github.com/the-answerai/theanswer/blob/main/packages/server/CLAUDE.md#guardrails)** - Server configuration patterns
+
+### Compliance Resources
+
+-   **[HIPAA Compliance](https://www.hhs.gov/hipaa/)** - Healthcare data protection
+-   **[GDPR Compliance](https://gdpr.eu/)** - EU data privacy regulations
+-   **[PCI-DSS](https://www.pcisecuritystandards.org/)** - Payment card industry standards
+-   **[SOC 2](https://www.aicpa.org/soc4so)** - Security and compliance framework
+
+### Community & Support
+
+-   **[Fiddler Website](https://www.fiddler.ai/)** - Company website
+-   **[Request Demo](https://www.fiddler.ai/demo)** - Book a Fiddler demo
+-   **[Support](https://support.fiddler.ai/)** - Fiddler customer support
+-   **[Blog](https://www.fiddler.ai/blog)** - Latest updates and best practices

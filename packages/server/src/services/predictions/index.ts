@@ -12,6 +12,32 @@ const buildChatflow = async (req: Request) => {
         const chatflowId = req.params.id
         const user = req.user
 
+        // Validate overrideConfig.startState if present
+        if (overrideConfig?.startState) {
+            if (!Array.isArray(overrideConfig.startState)) {
+                throw new InternalFlowiseError(
+                    StatusCodes.BAD_REQUEST,
+                    'Error: predictionsServices.buildChatflow - overrideConfig.startState must be an array'
+                )
+            }
+
+            // Validate each item has key and value
+            overrideConfig.startState.forEach((item: any, index: number) => {
+                if (!item || typeof item !== 'object') {
+                    throw new InternalFlowiseError(
+                        StatusCodes.BAD_REQUEST,
+                        `Error: predictionsServices.buildChatflow - startState[${index}] must be an object`
+                    )
+                }
+                if (!item.key || item.value === undefined) {
+                    throw new InternalFlowiseError(
+                        StatusCodes.BAD_REQUEST,
+                        `Error: predictionsServices.buildChatflow - startState[${index}] must have "key" and "value" properties`
+                    )
+                }
+            })
+        }
+
         // Ensure overrideConfig.sessionId is a valid UUID v4
         if (overrideConfig?.sessionId) {
             const sessionId = overrideConfig.sessionId
@@ -45,6 +71,10 @@ const buildChatflow = async (req: Request) => {
 
         return dbResponse
     } catch (error) {
+        // Re-throw InternalFlowiseError to preserve status code
+        if (error instanceof InternalFlowiseError) {
+            throw error
+        }
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: predictionsServices.buildChatflow - ${getErrorMessage(error)}`

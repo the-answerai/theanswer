@@ -606,6 +606,7 @@ export function AnswersProvider({
                     setMessages((prevMessages) => [
                         ...prevMessages,
                         {
+                            ...(data as any),
                             role: 'assistant',
                             content: text,
                             id: data?.chatMessageId,

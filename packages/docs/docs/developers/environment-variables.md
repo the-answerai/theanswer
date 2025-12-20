@@ -59,7 +59,7 @@ There are three different .env files you can set environment variables for Answe
 | DATABASE_SSL_KEY_BASE64       | Base64 encoded SSL key for database (commented out)      | Server                      |
 | FLOWISE_USERNAME              | Flowise username (commented out)                         | Server                      |
 | FLOWISE_PASSWORD              | Flowise password (commented out)                         | Server                      |
-| FLOWISE_SECRETKEY_OVERWRITE   | Encryption key for Flowise (commented out)               | Server                      |
+| FLOWISE_SECRETKEY_OVERWRITE   | **⚠️ REQUIRED for container deployments** - Encryption key for credentials | Server                      |
 | FLOWISE_FILE_SIZE_LIMIT       | File size limit for Flowise (commented out)              | Server                      |
 | DISABLE_CHATFLOW_REUSE        | Disable chatflow reuse when set to true (commented out)  | Server                      |
 | DEBUG                         | Enable debug mode when set to true (commented out)       | Server                      |
@@ -152,6 +152,56 @@ AAI-branded nodes use environment variables with the `AAI_DEFAULT_` prefix to pr
 | `AAI_DEFAULT_GOOGLE_SEARCH_API`           | Google Custom Search API key   | Google search integrations |
 | `AAI_DEFAULT_GOOGLE_SEARCH_API_ENGINE_ID` | Google Custom Search Engine ID | Google search integrations |
 | `AAI_DEFAULT_GITHUB_TOKEN`                | GitHub personal access token   | GitHub integrations        |
+
+## ⚠️ CRITICAL: Encryption Key for Container Deployments
+
+:::danger Required for Docker/Container Deployments
+**All container-based deployments (Docker, Render, Kubernetes, ECS, etc.) MUST configure `FLOWISE_SECRETKEY_OVERWRITE` to prevent data loss.**
+:::
+
+### The Problem
+
+Flowise encrypts all stored credentials (API keys, secrets, database passwords) using an encryption key. By default:
+1. The system reads the key from `SECRETKEY_PATH/encryption.key`
+2. If the file doesn't exist, **a new random key is automatically generated**
+
+In ephemeral container environments, the filesystem resets on each deployment. Without explicit key configuration:
+- Each container rebuild generates a **new encryption key**
+- All previously encrypted credentials become **permanently unreadable**
+- **This results in unrecoverable data loss**
+
+### Solution: Set FLOWISE_SECRETKEY_OVERWRITE
+
+```bash
+# Generate a secure key (run ONCE, save securely)
+openssl rand -base64 32
+
+# Add to your environment
+FLOWISE_SECRETKEY_OVERWRITE=your-generated-key-here
+```
+
+**Important:**
+- Generate this key **once** and store it securely (e.g., secrets manager, encrypted vault)
+- **Never regenerate** unless you intend to rotate credentials (which requires re-entering all credentials)
+- Treat this key like a database master password
+
+### Alternative: AWS Secrets Manager
+
+For AWS deployments, use AWS Secrets Manager for automatic key management:
+
+```bash
+SECRETKEY_STORAGE_TYPE=aws
+SECRETKEY_AWS_REGION=us-east-1
+SECRETKEY_AWS_NAME=FlowiseEncryptionKey
+```
+
+Benefits:
+- Keys encrypted at rest and in transit
+- Automatic rotation capabilities
+- Full audit trail and access logging
+- IAM-based access control
+
+---
 
 ### Security Considerations
 

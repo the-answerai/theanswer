@@ -1,0 +1,1087 @@
+---
+title: GitHub
+description: Integrate GitHub with AnswerAgentAI to load repository data, manage issues and pull requests, and automate development workflows through AI-powered agents
+sidebar_position: 5
+---
+
+import { AskAlphaButton } from '@site/src/components/AskAlpha/AskAlphaButton'
+
+<div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    <img
+        src='https://img.logokit.com/github.com?token=pk_fr8710fea017bdf10b13fe'
+        alt='GitHub Logo'
+        height='80'
+        style={{ marginBottom: '1rem' }}
+    />
+</div>
+
+# GitHub Agent Integration
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0 2rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='medium'
+        context={{
+            page: 'integration-github',
+            section: 'overview',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about how the GitHub Agent Integration works?'
+        }}
+    />
+</div>
+
+:::info Auto-Generated Documentation
+This page is automatically synchronized with integration components.
+
+**Last Updated:** 2025-12-04
+**Component Version Tracking:**
+
+-   GitHub MCP: v1 (updated 2025-12-04)
+-   GitHub Document Loader: v3 (updated 2025-12-04)
+
+[View integration in code →](https://github.com/the-answerai/theanswer/tree/main/packages/components/nodes/tools/MCP/GitHub)
+:::
+
+## Overview
+
+GitHub is the world's leading software development platform, providing Git repository hosting, collaborative code review, project management, and DevOps automation. The AnswerAgentAI integration with GitHub enables you to build intelligent workflows that interact with your repositories, issues, pull requests, and development processes.
+
+With this integration, you can:
+
+-   **Load repository data** into AI workflows using the Document Loader
+-   **Manage repositories programmatically** through the MCP (Model Context Protocol) server
+-   **Automate code reviews** with AI-powered analysis and suggestions
+-   **Generate documentation** from codebases automatically
+-   **Triage and respond to issues** using natural language understanding
+-   **Create and update pull requests** as part of automated workflows
+-   **Search across repositories** using semantic understanding
+
+GitHub's comprehensive API and webhook system make it ideal for AI integrations, enabling everything from automated code analysis and documentation generation to intelligent issue management and developer productivity tools.
+
+## Quick Start
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-github',
+            section: 'quick-start',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about setting up GitHub credentials and Personal Access Tokens?'
+        }}
+    />
+</div>
+
+### Obtaining Credentials
+
+GitHub uses Personal Access Tokens (PATs) for API authentication. You'll need different token scopes depending on your use case.
+
+#### GitHub Personal Access Token
+
+**Required Credential:**
+
+1. **Personal Access Token (PAT)**: Fine-grained or classic token with appropriate permissions
+
+**How to obtain:**
+
+1. **Access Personal Access Tokens Settings:**
+
+    - Log in to your GitHub account at [https://github.com/](https://github.com/)
+    - Click your profile photo (top right) → **Settings**
+    - Scroll to **Developer settings** → **Personal access tokens**
+
+2. **Choose Token Type:**
+
+    GitHub offers two types of tokens:
+
+    **Fine-grained tokens (Recommended):**
+
+    - Click **Fine-grained tokens** → **Generate new token**
+    - More secure with repository-specific access
+    - Expiration required (maximum 1 year)
+    - Granular permission control
+
+    **Classic tokens:**
+
+    - Click **Tokens (classic)** → **Generate new token (classic)**
+    - Broader permissions
+    - Can be set to never expire (not recommended)
+    - Simpler setup but less secure
+
+3. **Configure Token:**
+
+    **Token Name:** Give it a descriptive name (e.g., "AnswerAgentAI Integration")
+
+    **Expiration:** Choose an expiration period (recommended: 90 days)
+
+    **Repository Access (Fine-grained only):**
+
+    - Select specific repositories, or
+    - Choose "All repositories" for organization-wide access
+
+4. **Set Permissions/Scopes:**
+
+    **For Fine-grained tokens:**
+
+    **Repository permissions:**
+
+    - **Contents**: Read and write (for loading files and creating commits)
+    - **Issues**: Read and write (for issue management)
+    - **Pull requests**: Read and write (for PR management)
+    - **Metadata**: Read-only (automatically included)
+    - **Commit statuses**: Read and write (for CI/CD integration)
+    - **Discussions**: Read and write (if using discussions)
+
+    **For Classic tokens, select these scopes:**
+
+    - `repo` - Full control of private repositories
+        - `repo:status` - Access commit status
+        - `repo_deployment` - Access deployment status
+        - `public_repo` - Access public repositories (if you only need public access)
+    - `read:org` - Read organization membership (if working with org repos)
+    - `read:user` - Read user profile data
+    - `read:discussion` - Read discussions (if needed)
+
+5. **Generate and Copy Token:**
+    - Click **Generate token**
+    - **IMPORTANT**: Copy the token immediately - you won't be able to see it again!
+    - Store it securely (password manager recommended)
+
+:::warning Security Best Practices
+
+-   **Never commit tokens to version control**
+-   **Use fine-grained tokens** with minimal required permissions
+-   **Set expiration dates** and rotate tokens regularly
+-   **Use repository-specific access** when possible
+-   **Revoke tokens** immediately if compromised
+-   **Use organization secrets** for team environments
+    :::
+
+**Documentation Reference:** [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+
+### GitHub App Authentication (Advanced)
+
+For organization-wide integrations and enhanced security, consider using GitHub Apps:
+
+**Benefits:**
+
+-   More granular permissions
+-   Higher rate limits
+-   No user account dependency
+-   Audit trail via app identity
+
+**Setup:**
+
+1. Create a GitHub App in organization settings
+2. Install app to specific repositories
+3. Generate private key for authentication
+4. Use app installation tokens in API calls
+
+**Documentation:** [Creating a GitHub App](https://docs.github.com/en/apps/creating-github-apps)
+
+## Available Components
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-github',
+            section: 'available-components',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about GitHub components and their capabilities?'
+        }}
+    />
+</div>
+
+:::info Auto-Generated
+This section is automatically generated from component metadata in `scripts/integration-mapping.json`.
+Last updated: December 4, 2025
+:::
+
+This integration provides components across multiple categories:
+
+### Document Loaders
+
+Load code, documentation, and repository data into your AI workflows.
+
+#### GitHub Document Loader (v3)
+
+**Description:** Load data from GitHub repositories including code files, documentation, issues, and pull requests.
+
+**Key Features:**
+
+-   Clone and load entire repositories or specific paths
+-   Support for public and private repositories
+-   Load specific file types or patterns
+-   Include commit history and metadata
+-   Filter by branch, tag, or specific commits
+-   Support for markdown documentation
+-   Load issues and pull request descriptions
+
+**Configuration Options:**
+
+-   **Repository URL**: Full GitHub repository URL (e.g., `https://github.com/owner/repo`)
+-   **Branch**: Target branch (default: repository default branch)
+-   **File Pattern**: Glob pattern for files to include (e.g., `**/*.md`, `src/**/*.ts`)
+-   **Recursive**: Load files recursively from subdirectories
+-   **Max Files**: Limit number of files to load
+-   **Include Metadata**: Include commit info, file paths, and timestamps
+
+**Use Cases:**
+
+-   Building documentation chatbots from README and wiki files
+-   Code search and navigation with semantic understanding
+-   Generating code embeddings for similarity search
+-   Analyzing repository structure and dependencies
+-   Creating knowledge bases from open-source projects
+
+**Learn More:** [GitHub Document Loader Documentation](/docs/sidekick-studio/chatflows/document-loaders/github)
+
+### MCP Servers
+
+Interact with GitHub's API through natural language using the Model Context Protocol.
+
+#### GitHub MCP Server (v1)
+
+**Description:** MCP Server for the GitHub API enabling comprehensive repository and project management through AI agents.
+
+**Available Tools:**
+
+**Repository Management:**
+
+-   `create_repository` - Create new repositories
+-   `get_repository` - Get repository details and metadata
+-   `list_repositories` - List repositories for user or organization
+-   `update_repository` - Update repository settings
+-   `delete_repository` - Delete repositories
+-   `fork_repository` - Create repository forks
+
+**File Operations:**
+
+-   `get_file_contents` - Read file contents from repository
+-   `create_or_update_file` - Create or update files
+-   `delete_file` - Remove files from repository
+-   `list_directory` - List directory contents
+
+**Branch & Commit Management:**
+
+-   `list_branches` - List repository branches
+-   `create_branch` - Create new branches
+-   `get_commit` - Get commit details
+-   `list_commits` - List commit history
+-   `compare_commits` - Compare two commits or branches
+
+**Issue Management:**
+
+-   `create_issue` - Create new issues
+-   `update_issue` - Update existing issues
+-   `list_issues` - Search and filter issues
+-   `add_issue_comment` - Comment on issues
+-   `close_issue` - Close issues
+-   `assign_issue` - Assign issues to users
+
+**Pull Request Management:**
+
+-   `create_pull_request` - Create new pull requests
+-   `update_pull_request` - Update PR details
+-   `list_pull_requests` - Filter and search PRs
+-   `merge_pull_request` - Merge approved PRs
+-   `review_pull_request` - Submit PR reviews
+-   `list_pull_request_files` - Get changed files in PR
+
+**Search & Discovery:**
+
+-   `search_repositories` - Search GitHub for repositories
+-   `search_code` - Search code across repositories
+-   `search_issues` - Advanced issue search
+-   `search_users` - Find GitHub users
+
+**Collaboration:**
+
+-   `add_collaborator` - Add repository collaborators
+-   `list_collaborators` - List collaborators
+-   `create_webhook` - Set up webhooks
+-   `get_user` - Get user profile information
+
+**Use Cases:**
+
+-   Automated issue triage and labeling
+-   Code review assistance and suggestions
+-   Documentation generation from codebases
+-   Repository maintenance automation
+-   Development workflow orchestration
+
+**Learn More:** [GitHub MCP Documentation](/docs/sidekick-studio/chatflows/tools-mcp/github-mcp)
+
+## Use Cases
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-github',
+            section: 'use-cases',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about GitHub use cases and development workflows?'
+        }}
+    />
+</div>
+
+### Common Scenarios
+
+#### 1. Intelligent Code Documentation
+
+Automatically generate and maintain documentation from your codebase.
+
+**Workflow:**
+
+1. Use **GitHub Document Loader** to import code files (e.g., `**/*.ts`, `**/*.py`)
+2. Parse code to extract functions, classes, and their purposes
+3. Generate comprehensive documentation using AI
+4. Create or update README.md and wiki pages via **GitHub MCP**
+5. Commit documentation back to repository
+
+**Benefits:**
+
+-   Always up-to-date documentation
+-   Consistent documentation style
+-   Reduced manual documentation overhead
+-   Better onboarding for new developers
+
+#### 2. Automated Code Review Assistant
+
+Provide AI-powered code review suggestions for pull requests.
+
+**Workflow:**
+
+1. Use webhook to trigger on new PR
+2. Load changed files using `list_pull_request_files`
+3. Analyze code for:
+    - Security vulnerabilities
+    - Performance issues
+    - Style inconsistencies
+    - Best practice violations
+4. Post review comments via `review_pull_request`
+5. Suggest improvements and alternatives
+
+**Benefits:**
+
+-   Faster code reviews
+-   Consistent coding standards
+-   Catch issues before human review
+-   Educational feedback for developers
+
+#### 3. Issue Triage and Auto-Labeling
+
+Automatically categorize and prioritize new issues.
+
+**Workflow:**
+
+1. Webhook triggers on new issue creation
+2. Retrieve issue via `get_issue`
+3. Analyze issue content with AI:
+    - Identify issue type (bug, feature, question)
+    - Determine severity and priority
+    - Detect affected components
+4. Apply labels using `update_issue`
+5. Assign to appropriate team member
+6. Add standardized response or ask for clarification
+
+**Benefits:**
+
+-   Faster issue triage
+-   Consistent categorization
+-   Better resource allocation
+-   Improved response times
+
+#### 4. Repository Knowledge Base
+
+Create a searchable knowledge base from repository contents.
+
+**Workflow:**
+
+1. Load repository documentation via Document Loader
+2. Include README, wiki, and markdown files
+3. Split and generate embeddings
+4. Store in vector database
+5. Provide semantic search interface
+6. Answer developer questions about the codebase
+
+**Benefits:**
+
+-   Faster developer onboarding
+-   Self-service documentation access
+-   Reduced repetitive questions
+-   Better knowledge retention
+
+#### 5. Automated Release Notes
+
+Generate comprehensive release notes from commits and PRs.
+
+**Workflow:**
+
+1. Fetch commits between releases using `compare_commits`
+2. Load associated PR descriptions with `list_pull_requests`
+3. Categorize changes (features, fixes, breaking changes)
+4. Generate formatted release notes
+5. Create GitHub release with notes
+6. Update CHANGELOG.md
+
+**Benefits:**
+
+-   Professional release documentation
+-   Time saved on manual writing
+-   Consistent formatting
+-   Complete change tracking
+
+#### 6. Dependency Update Management
+
+Monitor and manage dependency updates automatically.
+
+**Workflow:**
+
+1. Scan `package.json`, `requirements.txt`, etc. using `get_file_contents`
+2. Check for available updates
+3. Analyze breaking changes and compatibility
+4. Create branch with `create_branch`
+5. Update dependency files with `create_or_update_file`
+6. Run tests and create PR with results
+7. Assign to maintainer for review
+
+**Benefits:**
+
+-   Stay current with dependencies
+-   Security vulnerability mitigation
+-   Reduced manual update work
+-   Better change management
+
+## Example Workflows
+
+### Example 1: Documentation Chatbot
+
+**Goal:** Create a chatbot that answers questions about your codebase and documentation.
+
+**Chatflow Configuration:**
+
+```
+1. GitHub Document Loader
+   - Credential: GitHub API (Personal Access Token)
+   - Repository URL: https://github.com/yourorg/yourrepo
+   - Branch: main
+   - File Pattern: **/*.md,**/*.ts,**/*.js
+   - Include Metadata: true
+   - Recursive: true
+
+2. Recursive Character Text Splitter
+   - Chunk Size: 2000
+   - Chunk Overlap: 200
+
+3. OpenAI Embeddings
+   - Model: text-embedding-3-small
+
+4. Pinecone Vector Store
+   - Index Name: codebase-docs
+   - Namespace: main
+
+5. Conversational Retrieval QA Chain
+   - Retriever: Pinecone
+   - LLM: GPT-4
+   - Return Source Documents: true
+```
+
+**Result:** Developers can ask questions like "How do I authenticate users?" and get answers with links to specific files and line numbers.
+
+### Example 2: Automated Issue Responder
+
+**Goal:** Automatically respond to new issues with helpful information or questions.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent (OpenAI Functions)
+   - LLM: GPT-4
+   - Tools: GitHub MCP
+
+2. System Prompt:
+   "You are an issue triage assistant for a software project.
+   When a new issue is created:
+   1. Read the issue description carefully
+   2. Determine if it's a bug report, feature request, or question
+   3. Check if similar issues exist using search_issues
+   4. If it's a bug, ask for reproduction steps if not provided
+   5. If it's a feature request, ask for use case details
+   6. Apply appropriate labels using update_issue
+   7. Add a welcoming comment thanking the user"
+
+3. Trigger: GitHub webhook on issue creation
+4. Memory: Buffer Memory
+```
+
+**Example Interaction:**
+
+```
+Webhook: New issue created #123 "App crashes on startup"
+
+Agent:
+1. Gets issue details with get_issue
+2. Searches for similar issues: search_issues({"q": "crash startup"})
+3. Analyzes issue description
+4. Adds labels: ["bug", "needs-reproduction"]
+5. Adds comment:
+   "Thank you for reporting this! To help us fix this, could you provide:
+   - Your operating system and version
+   - Steps to reproduce the crash
+   - Any error messages you see
+
+   I found similar issues #87 and #102 - are you experiencing the same thing?"
+```
+
+### Example 3: Pull Request Code Review
+
+**Goal:** Automatically review pull requests for common issues and best practices.
+
+**Chatflow Configuration:**
+
+```
+1. Conversational Agent
+   - LLM: GPT-4-Turbo
+   - Tools: [GitHub MCP, Code Analysis Tool]
+
+2. Workflow:
+   - Triggered by PR webhook
+   - Get PR files using list_pull_request_files
+   - For each changed file:
+     * Load file contents with get_file_contents
+     * Analyze for:
+       - Security vulnerabilities (SQL injection, XSS, etc.)
+       - Performance issues (N+1 queries, inefficient loops)
+       - Code style violations
+       - Missing tests for new functions
+       - Outdated dependencies
+   - Generate review comments
+   - Submit review using review_pull_request
+
+3. Review Comment Example:
+   {
+     "path": "src/api/users.ts",
+     "position": 42,
+     "body": "⚠️ Security: This SQL query is vulnerable to injection.
+             Consider using parameterized queries instead:
+             `db.query('SELECT * FROM users WHERE id = ?', [userId])`"
+   }
+```
+
+**Benefits:**
+
+-   Immediate feedback on PRs
+-   Consistent review standards
+-   Catches security issues early
+-   Educates developers
+
+## Advanced Configuration
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-github',
+            section: 'advanced-configuration',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about advanced GitHub configuration and best practices?'
+        }}
+    />
+</div>
+
+### Document Loader Configuration
+
+#### Repository and Branch Selection
+
+```json
+{
+    "repositoryUrl": "https://github.com/owner/repository",
+    "branch": "main",
+    "accessToken": "ghp_xxxxxxxxxxxx"
+}
+```
+
+**Branch Options:**
+
+-   `main` or `master` - Default branches
+-   `develop` - Development branch
+-   `feature/xyz` - Specific feature branch
+-   Commit SHA - Specific commit (e.g., `abc1234`)
+-   Tag - Release tag (e.g., `v1.0.0`)
+
+#### File Pattern Filtering
+
+Use glob patterns to load specific files:
+
+```json
+{
+    "filePattern": "**/*.md", // All markdown files
+    "filePattern": "src/**/*.ts", // TypeScript in src/
+    "filePattern": "{README,CONTRIBUTING}.md", // Specific files
+    "filePattern": "**/*.{ts,js,json}", // Multiple extensions
+    "recursive": true
+}
+```
+
+**Common Patterns:**
+
+-   `**/*.md` - All documentation
+-   `src/**/*` - All source code
+-   `**/test/**` - All test files
+-   `!**/node_modules/**` - Exclude node_modules
+
+#### Metadata Configuration
+
+Include git metadata for better context:
+
+```json
+{
+    "includeMetadata": true,
+    "metadata": {
+        "includeCommitInfo": true,
+        "includeFileStats": true,
+        "includeBlameInfo": false
+    }
+}
+```
+
+**Metadata Fields:**
+
+-   **File Path**: Relative path in repository
+-   **Last Modified**: Last commit timestamp
+-   **Author**: Last commit author
+-   **Commit Message**: Last commit message
+-   **File Size**: Size in bytes
+-   **Language**: Detected programming language
+
+### MCP Server Configuration
+
+#### Environment Variables
+
+For production deployments, use environment variables:
+
+```bash
+GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxxxxxxxxxxx
+GITHUB_DEFAULT_OWNER=your-org
+GITHUB_DEFAULT_REPO=your-repo
+```
+
+#### Rate Limiting
+
+GitHub API has rate limits:
+
+**Authenticated requests:**
+
+-   5,000 requests per hour (per user)
+-   Primary rate limit
+
+**Search API:**
+
+-   30 requests per minute
+-   Separate limit for search endpoints
+
+**Best Practices:**
+
+-   Cache frequently accessed data
+-   Use conditional requests (ETags)
+-   Implement exponential backoff on 429 responses
+-   Monitor rate limit headers
+-   Consider GitHub Apps for higher limits (15,000/hour)
+
+**Check rate limit:**
+
+```javascript
+// Use MCP tool to check current rate limit
+{
+    "tool": "get_rate_limit",
+    "parameters": {}
+}
+```
+
+#### Webhook Configuration
+
+For real-time event handling:
+
+1. **Create webhook:**
+
+```javascript
+{
+    "tool": "create_webhook",
+    "parameters": {
+        "owner": "your-org",
+        "repo": "your-repo",
+        "config": {
+            "url": "https://your-server.com/webhook",
+            "content_type": "json",
+            "secret": "your-webhook-secret"
+        },
+        "events": ["push", "pull_request", "issues"]
+    }
+}
+```
+
+2. **Common webhook events:**
+
+-   `push` - Code pushed to repository
+-   `pull_request` - PR opened, updated, merged
+-   `issues` - Issue created, updated, closed
+-   `issue_comment` - Comments on issues/PRs
+-   `release` - Release published
+-   `workflow_run` - GitHub Actions workflow events
+
+3. **Webhook security:**
+
+-   Validate webhook signatures
+-   Use HTTPS endpoints only
+-   Rotate secrets regularly
+-   Limit events to what you need
+
+#### Organization-Level Access
+
+For organization-wide operations:
+
+```javascript
+{
+    "owner": "your-organization",
+    "type": "org",
+    "permissions": {
+        "repositories": "read",
+        "members": "read",
+        "projects": "write"
+    }
+}
+```
+
+**Organization features:**
+
+-   Manage multiple repositories
+-   Team-based access control
+-   Organization-wide webhooks
+-   Security alerts and policies
+
+### Working with Large Repositories
+
+For repositories with many files:
+
+**Strategy 1: Incremental Loading**
+
+```json
+{
+    "maxFiles": 100,
+    "startPath": "src/components",
+    "pagination": true
+}
+```
+
+**Strategy 2: Filtered Loading**
+
+```json
+{
+    "filePattern": "**/*.{md,mdx}",
+    "excludePatterns": ["**/node_modules/**", "**/dist/**", "**/.git/**"]
+}
+```
+
+**Strategy 3: Branch-Specific Loading**
+
+```json
+{
+    "branch": "main",
+    "paths": ["docs/", "README.md", "CONTRIBUTING.md"]
+}
+```
+
+## Frequently Asked Questions
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-github',
+            section: 'faq',
+            integration: 'GitHub',
+            question: 'Can I answer any questions about GitHub troubleshooting and common issues?'
+        }}
+    />
+</div>
+
+### Setup & Configuration
+
+**Q: What's the difference between fine-grained and classic Personal Access Tokens?**
+
+A:
+
+-   **Fine-grained tokens (Recommended):**
+
+    -   Repository-specific access
+    -   More granular permissions
+    -   Required expiration (max 1 year)
+    -   Better security audit trail
+    -   Available since August 2023
+
+-   **Classic tokens:**
+    -   Broader, organization-wide access
+    -   Coarser permission scopes
+    -   Can never expire (not recommended)
+    -   Simpler to set up
+    -   Legacy approach
+
+**Q: What token permissions do I need for read-only access?**
+
+A:
+**Fine-grained:** Only `Contents: Read` permission
+**Classic:** Only `public_repo` scope (for public repos) or `repo` (for private repos)
+
+**Q: What permissions do I need to create issues and PRs?**
+
+A:
+**Fine-grained:**
+
+-   `Contents: Read and write` (for file changes)
+-   `Issues: Read and write`
+-   `Pull requests: Read and write`
+
+**Classic:**
+
+-   `repo` (full repository access)
+-   `write:discussion` (if using discussions)
+
+**Q: Can I use the same token for multiple repositories?**
+
+A: Yes! Classic tokens work across all repositories you have access to. Fine-grained tokens can be configured for specific repositories or all repositories.
+
+**Q: How do I handle token expiration?**
+
+A:
+
+1. Set calendar reminders before expiration
+2. Generate new token with same permissions
+3. Update credentials in AnswerAgentAI
+4. Revoke old token after confirming new one works
+5. Consider using GitHub Apps for longer-lived authentication
+
+### Usage & Best Practices
+
+**Q: How do I load only documentation files from a repository?**
+
+A: Use file pattern filtering:
+
+```json
+{
+    "filePattern": "**/*.md",
+    "paths": ["docs/", "README.md", "CONTRIBUTING.md"]
+}
+```
+
+**Q: Can I load from private repositories?**
+
+A: Yes! Ensure your Personal Access Token has:
+
+-   **Fine-grained:** Repository access configured for specific private repos
+-   **Classic:** `repo` scope selected
+
+**Q: How do I avoid hitting rate limits?**
+
+A:
+
+1. **Cache aggressively** - Store loaded data locally
+2. **Use conditional requests** - Check ETags before fetching
+3. **Batch operations** - Group multiple file operations
+4. **Monitor usage** - Check rate limit headers
+5. **Upgrade to GitHub Apps** - Get 3x higher limits
+6. **Use GraphQL API** - More efficient than REST for complex queries
+
+**Q: Can I monitor multiple repositories simultaneously?**
+
+A: Yes! Create separate Document Loader nodes for each repository, or use the MCP server to list and iterate through repositories programmatically.
+
+**Q: How do I handle merge conflicts when updating files?**
+
+A: The MCP server's `create_or_update_file` requires a commit SHA. If the file changed since you read it, you'll get a conflict error. Always:
+
+1. Fetch latest file version
+2. Get current commit SHA
+3. Include SHA in update request
+4. Handle conflict by re-fetching and merging
+
+**Q: Can I trigger workflows on file changes?**
+
+A: Yes! When you commit files via the MCP server:
+
+1. Use `create_or_update_file` to commit changes
+2. GitHub Actions workflows trigger automatically if configured
+3. Monitor workflow status using `get_workflow_run`
+4. Wait for completion before proceeding
+
+**Q: How do I search for issues with specific criteria?**
+
+A: Use GitHub's search syntax:
+
+```javascript
+{
+    "tool": "search_issues",
+    "parameters": {
+        "q": "is:open is:issue label:bug repo:owner/repo created:>2024-01-01"
+    }
+}
+```
+
+**Search qualifiers:**
+
+-   `is:issue` or `is:pr`
+-   `is:open`, `is:closed`, `is:merged`
+-   `label:bug`, `label:"good first issue"`
+-   `author:username`
+-   `assignee:username`
+-   `created:>2024-01-01`
+-   `updated:<2024-12-31`
+
+### Troubleshooting
+
+**Q: Getting "401 Unauthorized" errors**
+
+**Solutions:**
+
+1. Verify token hasn't expired
+2. Check token has required permissions/scopes
+3. Confirm token is correctly stored in credential
+4. For private repos, verify token has repository access
+5. Check if organization requires SSO - authorize token for SSO
+
+**Q: Document Loader returns empty results**
+
+**Possible causes:**
+
+1. **Wrong branch** - Verify branch name is correct
+2. **File pattern doesn't match** - Test pattern against actual files
+3. **Repository is empty** - Check repository has files
+4. **Private repo without access** - Verify token permissions
+5. **Path doesn't exist** - Check specified paths exist in repo
+
+**Q: Rate limit exceeded errors**
+
+**Solutions:**
+
+1. Check current limit: `GET /rate_limit`
+2. Wait for reset (check `X-RateLimit-Reset` header)
+3. Implement caching to reduce requests
+4. Use conditional requests with ETags
+5. Consider GitHub App for higher limits
+6. For search, spread queries over time (30/min limit)
+
+**Q: Cannot create pull request**
+
+**Common issues:**
+
+1. **Branch doesn't exist** - Create branch first with `create_branch`
+2. **No changes** - Ensure commits differ from base branch
+3. **Branch protection** - Check repository branch protection rules
+4. **Permissions** - Verify token has `pull_request:write` permission
+5. **Base branch incorrect** - Verify base branch exists and is correct
+
+**Q: Webhook not receiving events**
+
+**Debug steps:**
+
+1. Check webhook URL is publicly accessible
+2. Verify webhook secret matches in code
+3. Check webhook delivery history in GitHub settings
+4. Ensure events are configured correctly
+5. Validate SSL certificate (GitHub requires valid HTTPS)
+6. Check webhook response status (must return 2xx)
+
+**Q: File content appears truncated or garbled**
+
+**Causes:**
+
+1. **Binary files** - GitHub API doesn't support binary content well
+2. **Large files** - Files >1MB need special handling
+3. **Encoding issues** - Specify encoding in request
+4. **Rate limit truncation** - Check if response was rate limited
+
+**Solutions:**
+
+-   Use Git LFS for large files
+-   Download raw file via download_url for large files
+-   Specify `accept: application/vnd.github.raw` header
+-   Filter out binary files in document loader
+
+**Q: Search returns unexpected results**
+
+**Tips:**
+
+1. Use quotes for exact phrases: `"error handling"`
+2. Specify repository: `repo:owner/name`
+3. Limit by date: `created:>2024-01-01`
+4. Combine qualifiers: `is:open is:issue label:bug`
+5. Use NOT operator: `-label:wontfix`
+6. Remember search is case-insensitive
+
+**Q: Cannot update organization repositories**
+
+**Requirements:**
+
+1. Token must have organization access
+2. User must have write permissions to repository
+3. Organization may require SSO authentication
+4. Some operations require admin access
+5. Organization may have IP allowlist
+
+**Q: Commit/push fails with authentication error**
+
+**Checklist:**
+
+1. Token has `Contents: Write` permission
+2. Branch is not protected (or you have bypass rights)
+3. Repository is not archived
+4. File size under 100MB (use Git LFS for larger)
+5. Commit message follows repository requirements
+6. No required status checks failing
+
+## Resources
+
+### Official Documentation
+
+-   **[GitHub REST API Documentation](https://docs.github.com/en/rest)** - Complete REST API reference
+-   **[GitHub GraphQL API](https://docs.github.com/en/graphql)** - GraphQL API for complex queries
+-   **[Personal Access Tokens Guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)** - Token creation and management
+-   **[GitHub Apps Documentation](https://docs.github.com/en/apps)** - Building GitHub Apps for enhanced integrations
+-   **[Webhooks Guide](https://docs.github.com/en/webhooks)** - Setting up and securing webhooks
+
+### Guides & Tutorials
+
+-   **[GitHub API Quickstart](https://docs.github.com/en/rest/quickstart)** - Getting started with GitHub API
+-   **[Search Syntax](https://docs.github.com/en/search-github/searching-on-github)** - Advanced search queries
+-   **[Rate Limiting](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)** - Understanding and handling rate limits
+-   **[OAuth Apps vs GitHub Apps](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps)** - Choosing authentication method
+-   **[Security Best Practices](https://docs.github.com/en/code-security/getting-started/securing-your-organization)** - Securing integrations
+
+### AnswerAgentAI Documentation
+
+-   **[GitHub Document Loader](/docs/sidekick-studio/chatflows/document-loaders/github)** - Detailed loader configuration
+-   **[GitHub MCP Server](/docs/sidekick-studio/chatflows/tools-mcp/github-mcp)** - Complete MCP tool reference
+-   **[Document Loaders Overview](/docs/sidekick-studio/chatflows/document-loaders/)** - General document loader concepts
+-   **[MCP Servers Overview](/docs/sidekick-studio/chatflows/tools-mcp/)** - Introduction to MCP integrations
+
+### Community & Support
+
+-   **[GitHub Community](https://github.community/)** - Forums and discussions
+-   **[GitHub Public Roadmap](https://github.com/github/roadmap)** - Upcoming features
+-   **[Stack Overflow](https://stackoverflow.com/questions/tagged/github)** - Q&A for GitHub developers
+-   **[GitHub Changelog](https://github.blog/changelog/)** - API updates and new features
+-   **[GitHub Status](https://www.githubstatus.com/)** - Service status and incidents
+
+### Tools & SDKs
+
+-   **[Octokit](https://github.com/octokit)** - Official GitHub API client libraries
+-   **[GitHub CLI](https://cli.github.com/)** - Command-line interface for GitHub
+-   **[REST API Browser](https://docs.github.com/en/rest)** - Interactive API explorer
+-   **[GitHub Apps Marketplace](https://github.com/marketplace)** - Pre-built integrations and tools

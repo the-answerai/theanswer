@@ -37,7 +37,8 @@ import {
     IVariable,
     INodeOverrides,
     IVariableOverride,
-    MODE
+    MODE,
+    GuardrailsMetadata
 } from '../Interface'
 import { InternalFlowiseError } from '../errors/internalFlowiseError'
 import { databaseEntities } from '.'
@@ -45,6 +46,7 @@ import { ChatFlow } from '../database/entities/ChatFlow'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Variable } from '../database/entities/Variable'
 import { getRunningExpressApp } from '../utils/getRunningExpressApp'
+import { FiddlerGuardrailsService } from '../services/guardrails/FiddlerGuardrailsService'
 import {
     isFlowValidForStream,
     buildFlow,
@@ -345,6 +347,59 @@ export const executeFlow = async ({
     const streaming = incomingInput.streaming ?? false
     const userMessageDateTime = new Date()
     const chatflowid = chatflow.id
+
+    /* Input validation with Fiddler Guardrails
+     * - Safety checks (11 dimensions)
+     * - PII detection and redaction
+     * - Actions: block, redact, warn, continue
+     */
+    let guardrailsMetadata: Partial<GuardrailsMetadata> | undefined
+    if (user?.organizationId) {
+        try {
+            const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+
+            if (guardrailsService) {
+                const validationResult = await guardrailsService.validateInput(question)
+
+                // Build metadata for client and database
+                if (validationResult) {
+                    guardrailsMetadata = {
+                        inputValidation: validationResult
+                    }
+
+                    // Enhanced structured logging
+                    logger.info({
+                        message: '[Guardrails] Input validation triggered',
+                        chatflowId: chatflowid,
+                        chatId,
+                        userId: user?.id,
+                        organizationId: user?.organizationId,
+                        blocked: validationResult.blocked,
+                        redacted: validationResult.redacted,
+                        safetyViolations: validationResult.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
+                        piiDetections: validationResult.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
+                    })
+                }
+
+                // Handle blocking
+                if (validationResult.blocked) {
+                    throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, validationResult.message || 'Content blocked by guardrails')
+                }
+
+                // Handle redaction
+                if (validationResult.redacted && validationResult.redactedText) {
+                    question = validationResult.redactedText
+                }
+            }
+        } catch (error) {
+            // Fail-open by default: log error but continue processing
+            if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.BAD_REQUEST) {
+                // Re-throw blocking errors
+                throw error
+            }
+            logger.error('[Guardrails] Validation error (fail-open)', { error, chatflowId: chatflowid, chatId })
+        }
+    }
 
     /* Process file uploads from the chat
      * - Images
@@ -652,9 +707,69 @@ export const executeFlow = async ({
                 leadEmail: incomingInput.leadEmail,
                 userId: user?.id ?? agentflow.userId,
                 organizationId: user?.organizationId ?? agentflow.organizationId,
+                guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined,
                 trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
             }
             await utilAddChatMessage(userMessage, appDataSource)
+
+            /* Output validation with Fiddler Guardrails (Agent Flow)
+             * - Safety checks
+             * - PII detection
+             * - Faithfulness checks (RAG hallucination detection)
+             * - Always fails open (never blocks output)
+             */
+            if (user?.organizationId && guardrailsMetadata) {
+                try {
+                    const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+
+                    if (guardrailsService) {
+                        // Extract context from sourceDocuments for faithfulness checking
+                        const context = sourceDocuments?.length ? extractTextFromSourceDocuments(sourceDocuments) : undefined
+
+                        // Validate output (faithfulness check only runs if context exists)
+                        const outputValidation = await guardrailsService.validateOutput(finalResult, context)
+
+                        // Merge with existing guardrailsMetadata
+                        guardrailsMetadata = {
+                            ...guardrailsMetadata,
+                            outputValidation: {
+                                blocked: false, // Output validation never blocks
+                                redacted: outputValidation.redacted,
+                                faithfulnessScore: outputValidation.violations.faithfulness?.score,
+                                violations: {
+                                    safety: outputValidation.violations.safety,
+                                    pii: outputValidation.violations.pii
+                                }
+                            }
+                        }
+
+                        // Enhanced structured logging
+                        logger.info({
+                            message: '[Guardrails] Output validation triggered (agent flow)',
+                            chatflowId: chatflowid,
+                            chatId,
+                            userId: user?.id,
+                            organizationId: user?.organizationId,
+                            replaced: outputValidation.replaced,
+                            redacted: outputValidation.redacted,
+                            faithfulnessScore: outputValidation.violations.faithfulness?.score,
+                            faithfulnessThreshold: outputValidation.violations.faithfulness?.threshold,
+                            faithful: outputValidation.violations.faithfulness
+                                ? outputValidation.violations.faithfulness.score >= outputValidation.violations.faithfulness.threshold
+                                : undefined,
+                            safetyViolations: outputValidation.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
+                            piiDetections: outputValidation.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
+                        })
+
+                        // Note: We do NOT replace output text in Phase 5
+                        // Streaming clients have already received the original text
+                        // Output validation is for monitoring and display only
+                    }
+                } catch (error) {
+                    // Fail-open: Log error but continue with original output
+                    logger.error('[Guardrails] Output validation error (fail-open) - agent flow', { error, chatflowId: chatflowid, chatId })
+                }
+            }
 
             const apiMessage: Omit<IChatMessage, 'createdDate'> = {
                 id: apiMessageId,
@@ -674,6 +789,7 @@ export const executeFlow = async ({
             if (usedTools?.length) apiMessage.usedTools = JSON.stringify(usedTools)
             if (agentReasoning?.length) apiMessage.agentReasoning = JSON.stringify(agentReasoning)
             if (finalAction && Object.keys(finalAction).length) apiMessage.action = JSON.stringify(finalAction)
+            if (guardrailsMetadata) apiMessage.guardrailsMetadata = JSON.stringify(guardrailsMetadata)
 
             if (agentflow.followUpPrompts) {
                 // Get billed user's Stripe customer ID (follows same pattern as validateAndSaveChat)
@@ -758,6 +874,7 @@ export const executeFlow = async ({
             if (agentReasoning?.length) result.agentReasoning = agentReasoning
             if (finalAction && Object.keys(finalAction).length) result.action = finalAction
             if (Object.keys(setVariableNodesOutput).length) result.flowVariables = setVariableNodesOutput
+            if (guardrailsMetadata) result.guardrailsMetadata = guardrailsMetadata
             result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
 
             PlansService.incrementUsedExecutionCount(agentflow.userId, agentflow.organizationId)
@@ -853,6 +970,7 @@ export const executeFlow = async ({
             leadEmail: incomingInput.leadEmail,
             userId: user?.id,
             organizationId: user?.organizationId,
+            guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined,
             trackingMetadata: incomingInput.trackingMetadata ? JSON.stringify(incomingInput.trackingMetadata) : undefined
         }
         await utilAddChatMessage(userMessage, appDataSource)
@@ -902,6 +1020,65 @@ export const executeFlow = async ({
         } else if (result.json) resultText = '```json\n' + JSON.stringify(result.json, null, 2)
         else resultText = JSON.stringify(result, null, 2)
 
+        /* Output validation with Fiddler Guardrails
+         * - Safety checks
+         * - PII detection
+         * - Faithfulness checks (RAG hallucination detection)
+         * - Always fails open (never blocks output)
+         */
+        if (user?.organizationId && guardrailsMetadata) {
+            try {
+                const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+
+                if (guardrailsService) {
+                    // Extract context from sourceDocuments for faithfulness checking
+                    const context = result.sourceDocuments ? extractTextFromSourceDocuments(result.sourceDocuments) : undefined
+
+                    // Validate output (faithfulness check only runs if context exists)
+                    const outputValidation = await guardrailsService.validateOutput(resultText, context)
+
+                    // Merge with existing guardrailsMetadata
+                    guardrailsMetadata = {
+                        ...guardrailsMetadata,
+                        outputValidation: {
+                            blocked: false, // Output validation never blocks
+                            redacted: outputValidation.redacted,
+                            faithfulnessScore: outputValidation.violations.faithfulness?.score,
+                            violations: {
+                                safety: outputValidation.violations.safety,
+                                pii: outputValidation.violations.pii
+                            }
+                        }
+                    }
+
+                    // Enhanced structured logging
+                    logger.info({
+                        message: '[Guardrails] Output validation triggered',
+                        chatflowId: chatflowid,
+                        chatId,
+                        userId: user?.id,
+                        organizationId: user?.organizationId,
+                        replaced: outputValidation.replaced,
+                        redacted: outputValidation.redacted,
+                        faithfulnessScore: outputValidation.violations.faithfulness?.score,
+                        faithfulnessThreshold: outputValidation.violations.faithfulness?.threshold,
+                        faithful: outputValidation.violations.faithfulness
+                            ? outputValidation.violations.faithfulness.score >= outputValidation.violations.faithfulness.threshold
+                            : undefined,
+                        safetyViolations: outputValidation.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
+                        piiDetections: outputValidation.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
+                    })
+
+                    // Note: We do NOT replace output text in Phase 5
+                    // Streaming clients have already received the original text
+                    // Output validation is for monitoring and display only
+                }
+            } catch (error) {
+                // Fail-open: Log error but continue with original output
+                logger.error('[Guardrails] Output validation error (fail-open)', { error, chatflowId: chatflowid, chatId })
+            }
+        }
+
         const apiMessage: Omit<IChatMessage, 'id' | 'createdDate'> = {
             role: 'apiMessage',
             content: resultText,
@@ -945,6 +1122,7 @@ export const executeFlow = async ({
                 apiMessage.followUpPrompts = JSON.stringify(followUpPrompts.questions)
             }
         }
+        if (guardrailsMetadata) apiMessage.guardrailsMetadata = JSON.stringify(guardrailsMetadata)
 
         const chatMessage = await utilAddChatMessage(apiMessage, appDataSource)
 
@@ -977,6 +1155,7 @@ export const executeFlow = async ({
         if (sessionId) result.sessionId = sessionId
         if (memoryType) result.memoryType = memoryType
         if (Object.keys(setVariableNodesOutput).length) result.flowVariables = setVariableNodesOutput
+        if (guardrailsMetadata) result.guardrailsMetadata = guardrailsMetadata
 
         if (shouldAutoPlayTTS(chatflow.textToSpeech) && result.text) {
             const options = {
@@ -1327,6 +1506,40 @@ const incrementFailedMetricCounter = (metricsProvider: IMetricsProvider, isInter
             isInternal ? FLOWISE_METRIC_COUNTERS.CHATFLOW_PREDICTION_INTERNAL : FLOWISE_METRIC_COUNTERS.CHATFLOW_PREDICTION_EXTERNAL,
             { status: FLOWISE_COUNTER_STATUS.FAILURE }
         )
+    }
+}
+
+/**
+ * Extract text from source documents for faithfulness checking
+ * Handles both JSON string and parsed array formats
+ *
+ * @param {any} sourceDocuments - Source documents from RAG retrieval
+ * @returns {string | undefined} - Concatenated text from all documents or undefined if none found
+ */
+const extractTextFromSourceDocuments = (sourceDocuments: any): string | undefined => {
+    try {
+        // Handle both JSON string and already-parsed array
+        const docs = typeof sourceDocuments === 'string' ? JSON.parse(sourceDocuments) : sourceDocuments
+
+        // Ensure it's an array with content
+        if (!Array.isArray(docs) || docs.length === 0) {
+            return undefined
+        }
+
+        // Extract pageContent from each document and filter out empty strings
+        const textChunks = docs.map((doc) => doc.pageContent || '').filter((text) => text.length > 0)
+
+        // Return undefined if no valid text found
+        if (textChunks.length === 0) {
+            return undefined
+        }
+
+        // Join all chunks with double newline separator
+        return textChunks.join('\n\n')
+    } catch (error) {
+        // Fail gracefully - log warning and return undefined
+        logger.warn('[Guardrails] Failed to extract text from sourceDocuments', { error })
+        return undefined
     }
 }
 

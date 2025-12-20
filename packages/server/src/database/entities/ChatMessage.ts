@@ -78,6 +78,9 @@ export class ChatMessage implements IChatMessage {
     @Column({ nullable: true, type: 'text' })
     followUpPrompts?: string
 
+    @Column({ nullable: true, type: 'text', name: 'guardrails_metadata' })
+    guardrailsMetadata?: string
+
     @Column({ nullable: true, type: 'text', name: 'tracking_metadata' })
     trackingMetadata?: string
 }

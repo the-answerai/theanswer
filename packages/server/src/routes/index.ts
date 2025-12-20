@@ -89,6 +89,7 @@ import pricingRouter from './pricing'
 import { createAuth0Router } from '../aai/routes/auth0'
 import { createAuthMeRouter } from '../aai/routes/auth-me'
 
+import organizationsRouter from './organizations'
 
 const router = express.Router()
 
@@ -180,6 +181,7 @@ router.use('/data-engine', dataEngineRouter)
 router.use('/admin', adminRouter)
 router.use('/settings', settingsRouter)
 router.use('/pricing', pricingRouter)
+router.use('/organizations', organizationsRouter)
 
 export default router
 

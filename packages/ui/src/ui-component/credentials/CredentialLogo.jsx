@@ -1,6 +1,6 @@
+import { useState } from 'react'
 import { Box, Avatar, Tooltip, Typography } from '@mui/material'
 import { IconCheck, IconAlertTriangle, IconCircle } from '@tabler/icons-react'
-import { useTheme } from '@mui/material/styles'
 import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 import { baseURL } from '@/store/constant'
@@ -11,9 +11,9 @@ import { getGlassStyle, statusColors } from './glassmorphismStyles'
  * Shows logo with status indicator (connected/required/optional)
  */
 const CredentialLogo = ({ credential, size = 'medium', showLabel = false, onClick }) => {
-    const theme = useTheme()
     const customization = useSelector((state) => state.customization)
     const isDarkMode = customization.isDarkMode
+    const [imageError, setImageError] = useState(false)
 
     const { credentialType, label, isAssigned, isRequired } = credential
 
@@ -62,7 +62,7 @@ const CredentialLogo = ({ credential, size = 'medium', showLabel = false, onClic
                     }}
                 >
                     <Avatar
-                        src={logoUrl}
+                        src={imageError ? undefined : logoUrl}
                         alt={label}
                         sx={{
                             width: config.avatar,
@@ -71,15 +71,9 @@ const CredentialLogo = ({ credential, size = 'medium', showLabel = false, onClic
                             p: 1
                         }}
                         imgProps={{
-                            onError: (e) => {
-                                // Fallback to initials if image fails to load
-                                e.target.style.display = 'none'
-                                e.target.parentElement.innerHTML = label
-                                    .split(' ')
-                                    .map((word) => word[0])
-                                    .join('')
-                                    .toUpperCase()
-                                    .slice(0, 2)
+                            onError: () => {
+                                // Use React state to trigger fallback instead of direct DOM manipulation
+                                setImageError(true)
                             }
                         }}
                     >

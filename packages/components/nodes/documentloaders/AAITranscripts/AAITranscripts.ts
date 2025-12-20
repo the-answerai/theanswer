@@ -147,6 +147,16 @@ class AAITranscripts_DocumentLoaders implements INode {
                 additionalParams: true
             },
             {
+                label: 'Content Fields',
+                name: 'contentFields',
+                type: 'string',
+                placeholder: 'transcript,summary,custom_data.call_type',
+                description:
+                    'Comma-separated list of fields to include in chunked content. Supports dot notation for nested fields (e.g., ai_analysis.summary, custom_data.employee_name). Leave empty for default behavior.',
+                optional: true,
+                additionalParams: true
+            },
+            {
                 label: 'Additional Metadata',
                 name: 'metadata',
                 type: 'json',
@@ -194,6 +204,7 @@ class AAITranscripts_DocumentLoaders implements INode {
         const hasAnalysis = (nodeData.inputs?.hasAnalysis as string) || 'all'
         const sentimentMin = nodeData.inputs?.sentimentMin ? Number(nodeData.inputs.sentimentMin) : undefined
         const sentimentMax = nodeData.inputs?.sentimentMax ? Number(nodeData.inputs.sentimentMax) : undefined
+        const contentFields = nodeData.inputs?.contentFields as string
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
         const output = nodeData.outputs?.output as string
@@ -201,6 +212,15 @@ class AAITranscripts_DocumentLoaders implements INode {
         let omitMetadataKeys: string[] = []
         if (_omitMetadataKeys) {
             omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
+        }
+
+        // Parse content fields if provided
+        let parsedContentFields: string[] | null = null
+        if (contentFields && contentFields.trim()) {
+            parsedContentFields = contentFields
+                .split(',')
+                .map((f) => f.trim())
+                .filter((f) => f.length > 0)
         }
 
         // Validate inputs
@@ -304,7 +324,8 @@ class AAITranscripts_DocumentLoaders implements INode {
             excludeTags: excludeTags ? excludeTags.split(',').map((t) => t.trim()) : [],
             hasAnalysis,
             sentimentMin: sentimentMin || null,
-            sentimentMax: sentimentMax || null
+            sentimentMax: sentimentMax || null,
+            contentFields: parsedContentFields
         }
 
         const loader = new AAITranscriptsLoader(loaderOptions)
@@ -376,6 +397,7 @@ interface AAITranscriptsLoaderParams {
     hasAnalysis: string
     sentimentMin: number | null
     sentimentMax: number | null
+    contentFields: string[] | null
 }
 
 class AAITranscriptsLoader extends BaseDocumentLoader {
@@ -391,6 +413,7 @@ class AAITranscriptsLoader extends BaseDocumentLoader {
     private hasAnalysis: string
     private sentimentMin: number | null
     private sentimentMax: number | null
+    private contentFields: string[] | null
 
     constructor(params: AAITranscriptsLoaderParams) {
         super()
@@ -406,6 +429,7 @@ class AAITranscriptsLoader extends BaseDocumentLoader {
         this.hasAnalysis = params.hasAnalysis
         this.sentimentMin = params.sentimentMin
         this.sentimentMax = params.sentimentMax
+        this.contentFields = params.contentFields
     }
 
     public async load(): Promise<IDocument[]> {
@@ -465,13 +489,80 @@ class AAITranscriptsLoader extends BaseDocumentLoader {
         return allCalls.map((call) => this.createDocumentFromCall(call))
     }
 
+    /**
+     * Extract field value from data object using dot notation
+     * @param obj - Source data object
+     * @param path - Field path (e.g., "ai_analysis.summary" or "transcript")
+     * @returns Field value as string, or null if not found
+     */
+    private getFieldValue(obj: any, path: string): string | null {
+        const keys = path.split('.')
+        let value = obj
+
+        for (const key of keys) {
+            value = value?.[key]
+            if (value === undefined || value === null) return null
+        }
+
+        // Handle arrays (e.g., tags, topics)
+        if (Array.isArray(value)) {
+            return value
+                .map((v) => {
+                    if (typeof v === 'string') return v
+                    if (v?.slug) return v.slug // Handle tag objects
+                    if (v?.label) return v.label
+                    return JSON.stringify(v)
+                })
+                .join(', ')
+        }
+
+        // Handle objects (pretty print for readability)
+        if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2)
+        }
+
+        return String(value)
+    }
+
+    /**
+     * Build page content from selected fields
+     * @param data - Source data object
+     * @param contentFields - Array of field paths to include
+     * @returns Formatted content string
+     */
+    private buildPageContentFromFields(data: any, contentFields: string[]): string {
+        const contentParts: string[] = []
+
+        for (const field of contentFields) {
+            const trimmedField = field.trim()
+            if (!trimmedField) continue
+
+            const value = this.getFieldValue(data, trimmedField)
+
+            if (value !== null && value !== '') {
+                // Format as "Field: value" for clarity
+                const fieldLabel = trimmedField.split('.').pop() || trimmedField
+                contentParts.push(`${fieldLabel}: ${value}`)
+            }
+        }
+
+        return contentParts.join('\n\n')
+    }
+
     private createDocumentFromCall(call: any): Document {
         // Extract custom data fields
         const customData = call.custom_data || {}
         const aiAnalysis = call.ai_analysis || {}
 
-        // Create page content from transcript or summary
-        const pageContent = call.transcript || call.summary || ''
+        let pageContent: string
+
+        // NEW: If contentFields specified, use field selector
+        if (this.contentFields && this.contentFields.length > 0) {
+            pageContent = this.buildPageContentFromFields(call, this.contentFields)
+        } else {
+            // BACKWARD COMPATIBLE: Use existing default
+            pageContent = call.transcript || call.summary || ''
+        }
 
         // Build comprehensive metadata
         const metadata: ICommonObject = {

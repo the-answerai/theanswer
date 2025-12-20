@@ -173,14 +173,36 @@ class Start_Agentflow implements INode {
         let flowStateArray = []
         if (_flowState) {
             try {
-                flowStateArray = typeof _flowState === 'string' ? JSON.parse(_flowState) : _flowState
+                let parsed = typeof _flowState === 'string' ? JSON.parse(_flowState) : _flowState
+
+                // Handle case where array was converted to object with numeric keys
+                // e.g., {"0": {key, value}, "1": {key, value}} -> [{key, value}, {key, value}]
+                if (!Array.isArray(parsed) && typeof parsed === 'object' && parsed !== null) {
+                    const keys = Object.keys(parsed)
+                    // Check if all keys are sequential numbers starting from 0
+                    const isArrayLike = keys.every((key, index) => key === String(index))
+                    if (isArrayLike) {
+                        parsed = keys.map((key) => parsed[key])
+                    }
+                }
+
+                // Ensure parsed value is an array
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Flow State must be an array of {key, value} objects')
+                }
+
+                flowStateArray = parsed
             } catch (error) {
-                throw new Error('Invalid Flow State')
+                throw new Error(`Invalid Flow State: ${error.message}`)
             }
         }
 
         let flowState: Record<string, any> = {}
         for (const state of flowStateArray) {
+            // Validate each state item has required properties
+            if (!state || typeof state !== 'object' || !state.key || state.value === undefined) {
+                throw new Error('Each flow state item must have "key" and "value" properties')
+            }
             flowState[state.key] = state.value
         }
 

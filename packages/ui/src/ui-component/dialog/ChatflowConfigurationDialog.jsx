@@ -20,6 +20,8 @@ import GeneralSettings from '@/ui-component/extended/GeneralSettings'
 import ChatLinksSettings from '@/ui-component/extended/ChatLinksSettings'
 import JlincSettings from '@/ui-component/extended/JlincSettings'
 import AllowedDomains from '@/ui-component/extended/AllowedDomains'
+import ChatflowGuardrails from '@/ui-component/extended/ChatflowGuardrails'
+// import AnalyseFlow from '@/ui-component/extended/AnalyseFlow'
 
 const CHATFLOW_CONFIGURATION_TABS = [
     {
@@ -29,6 +31,10 @@ const CHATFLOW_CONFIGURATION_TABS = [
     {
         label: 'Security',
         id: 'security'
+    },
+    {
+        label: 'Guardrails',
+        id: 'guardrails'
     },
     {
         label: 'Audit Log',
@@ -152,7 +158,7 @@ const ChatflowConfigurationDialog = ({ show, isAgentCanvas, dialogProps, onCance
                     variant='scrollable'
                     scrollButtons='auto'
                 >
-                    {filteredTabs.map((item, index) => (
+                    {filteredTabs.map((item) => (
                         <Tab
                             sx={{
                                 minHeight: '40px',
@@ -184,6 +190,7 @@ const ChatflowConfigurationDialog = ({ show, isAgentCanvas, dialogProps, onCance
                         {item.id === 'visibilitySettings' ? <VisibilitySettings dialogProps={dialogProps} /> : null}
                         {item.id === 'chatLinks' ? <ChatLinksSettings dialogProps={dialogProps} /> : null}
                         {item.id === 'generalSettings' ? <GeneralSettings dialogProps={dialogProps} /> : null}
+                        {item.id === 'guardrails' ? <ChatflowGuardrails dialogProps={dialogProps} /> : null}
                         {item.id === 'jlinc' ? <JlincSettings dialogProps={dialogProps} /> : null}
                     </TabPanel>
                 ))}

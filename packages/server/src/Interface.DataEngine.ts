@@ -49,7 +49,7 @@ export interface IGetDomainsQuery {
     pageSize?: number
     searchTerm?: string
     isValid?: boolean
-    hasAnalysis?: boolean
+    hasAnalysis?: boolean // true = has analysis, false = no analysis, omit = all domains
 }
 
 // ==================== URLS ====================

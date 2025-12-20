@@ -39,6 +39,7 @@ import { ExpressAdapter } from '@bull-board/express'
 import passport from 'passport'
 import passportConfig from './config/passport'
 import session from 'express-session'
+
 import { createRedisStore } from './AppConfig'
 import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
 import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'

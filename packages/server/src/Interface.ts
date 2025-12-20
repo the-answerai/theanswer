@@ -15,6 +15,7 @@ import { Telemetry } from './utils/telemetry'
 import { ChatflowVisibility } from './database/entities/ChatFlow'
 import { LoggedInUser } from './enterprise/Interface.Enterprise'
 import { UsageCacheManager } from './UsageCacheManager'
+import { InputValidationResult } from './types/guardrails'
 
 export type MessageType = 'apiMessage' | 'userMessage'
 
@@ -66,6 +67,47 @@ export enum UserPlan {
     PRO = 'PRO',
     FREE = 'FREE'
 }
+/**
+ * Guardrails Metadata
+ * Captures validation results from Fiddler Guardrails for audit and client display
+ */
+export interface GuardrailsMetadata {
+    inputValidation?: InputValidationResult & {
+        blocked: boolean
+        redacted: boolean
+        violations: {
+            safety?: Array<{
+                dimension: string
+                score: number
+                threshold: number
+                action: string
+            }>
+            pii?: Array<{
+                label: string
+                score: number
+                action: string
+            }>
+        }
+    }
+    outputValidation?: {
+        blocked: boolean
+        redacted: boolean
+        faithfulnessScore?: number
+        violations: {
+            safety?: Array<{
+                dimension: string
+                score: number
+                threshold: number
+                action: string
+            }>
+            pii?: Array<{
+                label: string
+                score: number
+                action: string
+            }>
+        }
+    }
+}
 
 /**
  * Databases
@@ -112,6 +154,7 @@ export interface IOrganization {
     updatedDate: Date
     createdDate: Date
     enabledIntegrations?: string
+    organizationConfig?: string
 }
 
 export interface IChatFlow {
@@ -164,6 +207,7 @@ export interface IChatMessage {
     leadEmail?: string
     action?: string | null
     followUpPrompts?: string
+    guardrailsMetadata?: string
     trackingMetadata?: string
 }
 

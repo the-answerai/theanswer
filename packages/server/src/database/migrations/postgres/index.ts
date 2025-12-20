@@ -161,6 +161,8 @@ export const postgresMigrations = [
     AddVersioningToChatFlow1753000000000,
     AddUniqueConstraintDefaultChatflows1753000000001,
     AddTrackingMetadataToChatMessage1753200000000,
+    AddOrganizationConfig1753200000001,
+    AddGuardrailsMetadataToChatMessage1753200000002,
     BackfillDocumentStoreFileChunkUserScoping1731429600000,
     AddAuthTables1720230151482,
     AddWorkspace1720230151484,

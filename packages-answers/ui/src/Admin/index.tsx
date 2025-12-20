@@ -62,6 +62,19 @@ const AdminDashboard = () => {
                             <Card variant='outlined'>
                                 <CardContent>
                                     <Typography variant='h5' component='div'>
+                                        Guardrails
+                                    </Typography>
+                                    <Typography variant='body2'>View and manage guardrails across the organization.</Typography>
+                                </CardContent>
+                                <CardActions>
+                                    <Button component={Link} to='/admin/guardrails' size='small' fullWidth variant='contained'>
+                                        Manage
+                                    </Button>
+                                </CardActions>
+                            </Card>
+                            <Card variant='outlined'>
+                                <CardContent>
+                                    <Typography variant='h5' component='div'>
                                         Org Credentials
                                     </Typography>
                                     <Typography variant='body2'>Control which integrations are available to your organization.</Typography>
