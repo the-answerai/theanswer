@@ -231,7 +231,8 @@ export async function enrichUserWithAAIData(
         activeOrganizationSubscriptionId: subscriptionData.subscriptionId,
         activeOrganizationCustomerId: subscriptionData.customerId,
         activeOrganizationProductId: subscriptionData.productId,
-        features: subscriptionData.features,
+        // Admin users get all features enabled, others get subscription features
+        features: auth0Roles?.includes('Admin') ? getAllFeaturesEnabled() : subscriptionData.features,
 
         // Workspace fields
         activeWorkspaceId: workspaceData.activeWorkspaceId,

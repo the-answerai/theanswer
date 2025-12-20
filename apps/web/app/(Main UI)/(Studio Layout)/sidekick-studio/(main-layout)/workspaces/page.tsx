@@ -8,11 +8,7 @@ const View = dynamic(() => import('@/views/workspace'), { ssr: false })
 
 const Page = () => {
     return (
-        <Container maxWidth='xl'>
-            <Box sx={{ py: 4, p: 2 }}>
                 <View />
-            </Box>
-        </Container>
     )
 }
 

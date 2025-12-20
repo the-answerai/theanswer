@@ -343,31 +343,31 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                     {
                         id: 'users',
                         text: 'Users',
-                        link: '/sidekick-studio/admin/users',
+                        link: '/sidekick-studio/users',
                         icon: <PeopleIcon color='primary' />
                     },
                     {
                         id: 'roles',
                         text: 'Roles',
-                        link: '/sidekick-studio/admin/roles',
+                        link: '/sidekick-studio/roles',
                         icon: <BadgeIcon color='primary' />
                     },
                     {
                         id: 'workspaces',
                         text: 'Workspaces',
-                        link: '/sidekick-studio/admin/workspaces',
+                        link: '/sidekick-studio/workspaces',
                         icon: <WorkspacesIcon color='primary' />
                     },
                     {
                         id: 'sso-config',
                         text: 'SSO Config',
-                        link: '/sidekick-studio/admin/sso-config',
+                        link: '/sidekick-studio/sso-config',
                         icon: <LockIcon color='primary' />
                     },
                     {
                         id: 'login-activity',
                         text: 'Login Activity',
-                        link: '/sidekick-studio/admin/login-activity',
+                        link: '/sidekick-studio/login-activity',
                         icon: <HistoryIcon color='primary' />
                     }
                 ]
@@ -604,7 +604,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
 
     return (
         <>
-            <Drawer open={drawerOpen} variant='permanent' className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'} sx={{}}>
+            <Drawer open={drawerOpen} variant='permanent' className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'} sx={{zIndex: 9999999}}>
                 <Box
                     sx={{
                         display: 'flex',

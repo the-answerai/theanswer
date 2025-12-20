@@ -7,13 +7,7 @@ import { Box, Container } from '@mui/material'
 const View = dynamic(() => import('@/views/roles'), { ssr: false })
 
 const Page = () => {
-    return (
-        <Container maxWidth='xl'>
-            <Box sx={{ py: 4, p: 2 }}>
-                <View />
-            </Box>
-        </Container>
-    )
+    return <View />
 }
 
 export default Page

@@ -13,6 +13,10 @@ export const useAuth = () => {
             return true
         }
         if (!permissionId) return false
+        // Wildcard permission grants access to everything
+        if (permissions && permissions.includes('*')) {
+            return true
+        }
         const permissionIds = permissionId.split(',')
         if (permissions && permissions.length) {
             return permissionIds.some((permissionId) => permissions.includes(permissionId))
