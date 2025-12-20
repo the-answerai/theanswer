@@ -99,7 +99,10 @@ const getCachedSession = cache(async (req?: any, res: any = new Response()): Pro
         const apiHost = session.user.chatflowDomain || process.env.FLOWISE_DOMAIN || process.env.API_HOST
         if (apiHost) {
             const response = await fetch(`${apiHost}/api/v1/auth/me`, {
-                headers: { Authorization: `Bearer ${session.accessToken}` },
+                headers: {
+                    Authorization: `Bearer ${session.accessToken}`,
+                    'x-request-from': 'aai'
+                },
                 cache: 'no-store' // Don't cache auth data
             })
             if (response.ok) {
