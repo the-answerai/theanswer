@@ -24,6 +24,9 @@ export class Organization {
     @Column({ nullable: true })
     auth0Id?: string
 
+    @Column({ type: 'jsonb', nullable: true })
+    organizationConfig?: string
+
     // AAI billing fields
     @Column({ type: 'uuid', nullable: true })
     currentPaidPlanId?: string

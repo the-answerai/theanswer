@@ -92,6 +92,8 @@ import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './aai/17
 import { BackupAAIData1737076223690 } from './aai/1737076223690-BackupAAIData'
 import { AAIRestoreDataAndCreateWorkspaces1737076223693 } from './aai/1737076223693-AAIRestoreDataAndCreateWorkspaces'
 import { AAIBackfillWorkspaceId1760000000002 } from './aai/1760000000002-AAIBackfillWorkspaceId'
+import { AddOrganizationConfig1753200000001 } from './aai/1753200000001-AddOrganizationConfig'
+import { AddGuardrailsMetadataToChatMessage1753200000002 } from './aai/1753200000002-AddGuardrailsMetadataToChatMessage'
 
 export const postgresMigrations = [
     Init1693891895163,

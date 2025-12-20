@@ -102,7 +102,7 @@ export class FiddlerGuardrailsService {
             }
 
             // 3. Load credentials with fallback chain
-            const credentials = await this.loadCredentials(user.organizationId, config)
+            const credentials = await this.loadCredentials(user.organizationId!, config)
             if (!credentials) {
                 console.warn(`Guardrails enabled but no credentials found for organization ${user.organizationId}`)
                 return null
