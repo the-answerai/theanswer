@@ -19,6 +19,16 @@ import { Organization } from '../../database/entities/Organization'
 import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
 import { populateWorkspaceData } from './populateWorkspaceData'
 import { Role, GeneralRole } from '../../enterprise/database/entities/role.entity'
+import { ENTERPRISE_FEATURE_FLAGS } from '../../utils/quotaUsage'
+
+// Convert feature flags array to features object with all enabled
+const getAllFeaturesEnabled = (): Record<string, string> => {
+    const features: Record<string, string> = {}
+    ENTERPRISE_FEATURE_FLAGS.forEach((flag) => {
+        features[flag] = 'true'
+    })
+    return features
+}
 
 // Auth0 RS256 JWT checker (same config as authenticationHandlerMiddleware)
 const jwtCheck = auth({
@@ -85,8 +95,11 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                         // Load permissions from user's workspace role
                         let permissions: string[] = []
                         try {
-                            // If user has a roleId from workspace data, load permissions from that role
-                            if (workspaceData.roleId) {
+                            // Auth0 Admin role gets full access (wildcard permission)
+                            if (roles?.includes('Admin')) {
+                                permissions = ['*']
+                            } else if (workspaceData.roleId) {
+                                // Non-admin users get permissions from their workspace role
                                 const role = await AppDataSource.getRepository(Role).findOne({
                                     where: { id: workspaceData.roleId }
                                 })
@@ -95,8 +108,8 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                                 }
                             }
 
-                            // Fallback: If no role permissions found, try to get owner role permissions for admins
-                            if (permissions.length === 0 && (roles?.includes('Admin') || workspaceData.isOrganizationAdmin)) {
+                            // Fallback for org admins without Admin role: get owner role permissions
+                            if (permissions.length === 0 && workspaceData.isOrganizationAdmin) {
                                 const ownerRole = await AppDataSource.getRepository(Role).findOne({
                                     where: { name: GeneralRole.OWNER, organizationId: IsNull() }
                                 })
@@ -105,17 +118,20 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                                 }
                             }
 
-                            // Add org:manage for Auth0 Admins
-                            if (roles?.includes('Admin') && !permissions.includes('org:manage')) {
+                            // Ensure org:manage for admins/org admins
+                            if ((roles?.includes('Admin') || workspaceData.isOrganizationAdmin) && !permissions.includes('org:manage')) {
                                 permissions.push('org:manage')
                             }
                         } catch (error) {
                             console.error('[verifyAAIToken] Error loading permissions:', error)
-                            // Fallback to basic permission for admins
+                            // Fallback to full access for admins
                             if (roles?.includes('Admin')) {
-                                permissions = ['org:manage']
+                                permissions = ['*', 'org:manage']
                             }
                         }
+
+                        // Admin users get all features enabled
+                        const features = roles?.includes('Admin') ? getAllFeaturesEnabled() : {}
 
                         // Set user on request (compatible with Flowise RBAC)
                         ;(req as any).user = {
@@ -130,6 +146,7 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                             org_name: authPayload.org_name,
                             roles,
                             permissions,
+                            features,
                             // Workspace fields (required by Flowise 3.0.11)
                             activeWorkspaceId: workspaceData.activeWorkspaceId,
                             activeOrganizationId: workspaceData.activeOrganizationId || org.id,

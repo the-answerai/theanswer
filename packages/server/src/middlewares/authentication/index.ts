@@ -66,6 +66,7 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
 export const authenticationHandlerMiddleware =
     ({ whitelistURLs, AppDataSource }: { whitelistURLs: string[]; AppDataSource: DataSource }) =>
     async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[AuthenticationHandlerMiddleware] checking', req.url, req.method)
         /**
          * Organization-Based Authentication Security Model:
          *

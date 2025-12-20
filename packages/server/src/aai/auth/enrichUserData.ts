@@ -16,6 +16,16 @@ import { Role } from '../../enterprise/database/entities/role.entity'
 import { populateWorkspaceData, WorkspaceData } from '../../middlewares/authentication/populateWorkspaceData'
 import { mapAuth0RolesToPermissions } from '../rbac/permissions'
 import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
+import { ENTERPRISE_FEATURE_FLAGS } from '../../utils/quotaUsage'
+
+// Convert feature flags array to features object with all enabled
+const getAllFeaturesEnabled = (): Record<string, string> => {
+    const features: Record<string, string> = {}
+    ENTERPRISE_FEATURE_FLAGS.forEach((flag) => {
+        features[flag] = 'true'
+    })
+    return features
+}
 
 /**
  * Enriched user data structure returned by enrichUserWithAAIData
@@ -116,7 +126,12 @@ export async function getPermissionsForUser(
 ): Promise<string[]> {
     let permissions: string[] = []
 
-    // Try to get permissions from workspace role first (Flowise native)
+    // Auth0 Admin role gets full access (wildcard permission) - check first
+    if (auth0Roles?.includes('Admin')) {
+        return ['*']
+    }
+
+    // Try to get permissions from workspace role (Flowise native)
     if (roleId) {
         try {
             const role = await AppDataSource.getRepository(Role).findOne({
@@ -223,7 +238,7 @@ export async function enrichUserWithAAIData(
         activeOrganizationId: workspaceData.activeOrganizationId || organization.id,
         activeWorkspace: workspaceData.activeWorkspace,
         roleId: workspaceData.roleId,
-        isOrganizationAdmin: workspaceData.isOrganizationAdmin,
+        isOrganizationAdmin: workspaceData.isOrganizationAdmin || auth0Roles?.includes('Admin'),
         assignedWorkspaces: workspaceData.assignedWorkspaces
     }
 }
