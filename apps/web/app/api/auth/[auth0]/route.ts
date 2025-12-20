@@ -1,8 +1,7 @@
 // app/api/auth/[auth0]/route.js
-import { HandlerError, handleAuth } from '@auth0/nextjs-auth0'
-import { NextApiRequest, NextApiResponse } from 'next'
 import { redirect } from 'next/navigation'
 import Auth0 from '@utils/auth/auth0'
+import { enrichSessionWithFlowise } from '@utils/auth/enrichSession'
 
 // Debug logging helper with safety
 const debugLog = (message: string, data?: any) => {
@@ -20,6 +19,32 @@ const debugLog = (message: string, data?: any) => {
 }
 
 export const GET = Auth0.handleAuth({
+    // AAI: Custom me handler - enriches user with Flowise data on every /api/auth/me request
+    me: async (req: Request) => {
+        console.log('[auth/me] Fetching enriched user')
+        try {
+            const session = await Auth0.getSession()
+            if (!session?.user) {
+                return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+                    status: 401,
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            }
+
+            // Enrich session with Flowise data
+            const enrichedSession = await enrichSessionWithFlowise(session)
+            console.log('[auth/me] Returning enriched user')
+
+            return new Response(JSON.stringify(enrichedSession.user), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            })
+        } catch (error: any) {
+            console.error('[auth/me] Error:', error.message)
+            // Fallback to default profile handler
+            return Auth0.handleProfile()(req)
+        }
+    },
     onError(req: Request, error: Error) {
         // Always log basic error
         console.error('❌ AUTH0 ERROR:', error.message)

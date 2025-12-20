@@ -34,7 +34,13 @@ export interface EnrichedUserData {
 
     // RBAC fields
     roles: string[]
+    role: string // Singular role for Flowise parity (roles[0])
     permissions: string[]
+
+    // User status fields (Flowise parity)
+    status: string
+    isSSO: boolean
+    lastLogin: string
 
     // Subscription/billing fields (Flowise parity)
     activeOrganizationSubscriptionId: string
@@ -198,7 +204,13 @@ export async function enrichUserWithAAIData(
 
         // RBAC fields
         roles: auth0Roles,
+        role: auth0Roles[0] || 'Member', // Singular role from first in array (Flowise parity)
         permissions,
+
+        // User status fields (Flowise parity)
+        status: (user as any).status || 'active',
+        isSSO: false, // Default for Auth0 users
+        lastLogin: user.updatedDate?.toISOString() || new Date().toISOString(),
 
         // Subscription/billing fields (Flowise parity)
         activeOrganizationSubscriptionId: subscriptionData.subscriptionId,

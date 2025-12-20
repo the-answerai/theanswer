@@ -241,8 +241,10 @@ const Users = () => {
     const dispatch = useDispatch()
     useNotifier()
     const { error, setError } = useError()
+    const state = useSelector((state) => state)
     const currentUser = useSelector((state) => state.auth.user)
-
+    console.log('State', { state, currentUser })
+    if(!currentUser) return 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 

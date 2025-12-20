@@ -25,6 +25,7 @@ export const WHITELIST_URLS = [
     '/api/v1/attachments',
     '/api/v1/metrics',
     '/api/v1/nvidia-nim',
+    '/api/v1/auth/me',
     '/api/v1/auth/resolve',
     '/api/v1/auth/login',
     '/api/v1/auth/refreshToken',
@@ -67,7 +68,7 @@ export const WHITELIST_URLS = [
     '/api/v1/gmail/labels',
     '/api/v1/gmail/messages',
     '/api/v1/gmail/message',
-    '/api/v1/marketplaces/templates',
+    // '/api/v1/marketplaces/templates  ',
     '/api/v1/billing/usage/sync',
     '/api/v1/langfuse/healthcheck',
 ]

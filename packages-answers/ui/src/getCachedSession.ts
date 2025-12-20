@@ -32,7 +32,8 @@ const getCachedSession = cache(async (req?: any, res: any = new Response()): Pro
         }
     }
 
-    if (session?.user) {
+    if (session?.user?.email) {
+        // Only upsert if we have a valid email (skip during incomplete session states)
         let dbOrg = await prisma.organization.findFirst({
             where: {
                 name: session.user.org_name
@@ -91,6 +92,28 @@ const getCachedSession = cache(async (req?: any, res: any = new Response()): Pro
         // Apply existing transformation if no override
         session.user.chatflowDomain = session.user.chatflowDomain?.replace('8080', '4000')
     }
+
+    // AAI: Fetch enriched user data from Flowise /auth/me (TypeORM data source)
+    // This provides workspace, permissions, and feature data for Flowise UI parity
+    try {
+        const apiHost = session.user.chatflowDomain || process.env.FLOWISE_DOMAIN || process.env.API_HOST
+        if (apiHost) {
+            const response = await fetch(`${apiHost}/api/v1/auth/me`, {
+                headers: { Authorization: `Bearer ${session.accessToken}` },
+                cache: 'no-store' // Don't cache auth data
+            })
+            if (response.ok) {
+                const { user: enrichedUser } = await response.json()
+                if (enrichedUser) {
+                    // Merge enriched data into session.user (Flowise data takes priority)
+                    session.user = { ...session.user, ...enrichedUser }
+                }
+            }
+        }
+    } catch (err: any) {
+        console.warn('[getCachedSession] Failed to fetch enriched user from Flowise:', err.message)
+    }
+
     //Check if user has a subscription make sure no error is thrown
     if (session?.user) {
         let subscription = null

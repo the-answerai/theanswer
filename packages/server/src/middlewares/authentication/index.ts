@@ -147,6 +147,7 @@ export const authenticationHandlerMiddleware =
             }
             return res.status(401).json({ error: 'Unauthorized: Invalid API key' })
         }
+        // /auth/me endpoint is now handled by dedicated route in aai/routes/auth-me.ts
 
         // Fall back to JWT authentication
         jwtMiddleware(req, res, async (jwtError?: any) => {
@@ -239,63 +240,6 @@ export const authenticationHandlerMiddleware =
                 } catch (error) {
                     console.error('Authentication error:', error)
                     return res.status(500).send('Internal Server Error during authentication')
-                }
-            }
-
-            // Handle /auth/me endpoint directly in middleware
-            if (req.url === '/api/v1/auth/me' && req.method === 'GET') {
-                if (!req.user) {
-                    return res.status(401).json({ error: 'Unauthorized' })
-                }
-                // For JWT users, org_id comes from auth payload. For API key users, we need to check the organization
-                const userAuth0OrgId = (req.user as any).org_id || (req.user as any).auth0OrgId
-                const isValidOrg = userAuth0OrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userAuth0OrgId)
-                if (!isValidOrg) {
-                    return res.status(401).json({ error: 'Unauthorized' })
-                }
-
-                try {
-                    // Get organization data
-                    const organization = await AppDataSource.getRepository(Organization).findOne({
-                        where: { id: req.user.organizationId }
-                    })
-
-                    if (!organization) {
-                        return res.status(404).json({ error: 'Organization not found' })
-                    }
-
-                    // Determine auth method
-                    const authMethod = apiKeyUser ? 'apikey' : 'jwt'
-
-                    // Use dynamic import to avoid circular dependencies
-                    const { enrichUserWithAAIData } = await import('../../aai/auth/enrichUserData')
-
-                    // Enrich user data with AAI-specific fields
-                    const userData = req.user as any
-                    const enrichedUser = await enrichUserWithAAIData(
-                        AppDataSource,
-                        userData,
-                        organization,
-                        userData.roles || []
-                    )
-
-                    return res.json({
-                        user: enrichedUser,
-                        organization: {
-                            id: organization.id,
-                            name: organization.name,
-                            stripeCustomerId: organization.stripeCustomerId,
-                            createdDate: organization.createdDate,
-                            updatedDate: organization.updatedDate
-                        },
-                        session: {
-                            authenticated: true,
-                            authMethod
-                        }
-                    })
-                } catch (error) {
-                    console.error('Error in /auth/me endpoint:', error)
-                    return res.status(500).json({ error: 'Internal Server Error' })
                 }
             }
 

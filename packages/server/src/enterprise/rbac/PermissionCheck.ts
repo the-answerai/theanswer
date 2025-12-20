@@ -15,6 +15,14 @@ export const checkPermission = (permission: string) => {
                 return next()
             }
         }
+        const permissions = user?.permissions
+        console.log('user', user)
+        console.log('permission', permission)
+        console.log('permissions', user?.permissions)
+        console.log('isOrganizationAdmin', user?.isOrganizationAdmin)
+        // console.log('permissions.includes(permission)', user?.permissions.includes(permission))
+        console.log('permissions && permissions.includes(permission)', permissions && permissions.includes(permission))
+        console.log('permissions && permissions.includes(permission)', permissions && permissions.includes(permission))
         // else throw 403 forbidden error
         return res.status(403).json({ message: ErrorMessage.FORBIDDEN })
     }

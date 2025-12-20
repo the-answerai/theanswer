@@ -87,6 +87,7 @@ import videoGeneratorRouter from './video-generator'
 import adminRouter from './admin'
 import pricingRouter from './pricing'
 import { createAuth0Router } from '../aai/routes/auth0'
+import { createAuthMeRouter } from '../aai/routes/auth-me'
 
 
 const router = express.Router()
@@ -182,5 +183,5 @@ router.use('/pricing', pricingRouter)
 
 export default router
 
-// Export Auth0 router factory for use in index.ts where AppDataSource is available
-export { createAuth0Router }
+// Export Auth0 and AuthMe router factories for use in index.ts where AppDataSource is available
+export { createAuth0Router, createAuthMeRouter }

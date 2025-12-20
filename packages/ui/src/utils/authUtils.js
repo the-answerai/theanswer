@@ -1,3 +1,12 @@
+/**
+ * Auth Utilities for Flowise UI
+ *
+ * This module handles user state persistence in localStorage.
+ * Extended with AAI-specific fields from packages/server/src/aai/auth/enrichUserData.ts
+ *
+ * Type definitions: packages-answers/ui/src/types/user.ts
+ */
+
 const getCurrentUser = () => {
     if (!localStorage.getItem('user') || localStorage.getItem('user') === 'undefined') return undefined
     return JSON.parse(localStorage.getItem('user'))
@@ -39,6 +48,7 @@ const extractUser = (payload) => {
         name: payload.name,
         status: payload.status,
         role: payload.role,
+        roles: payload.roles, // AAI: Array of roles from Auth0
         isSSO: payload.isSSO,
         activeOrganizationId: payload.activeOrganizationId,
         activeOrganizationSubscriptionId: payload.activeOrganizationSubscriptionId,
@@ -49,7 +59,13 @@ const extractUser = (payload) => {
         lastLogin: payload.lastLogin,
         isOrganizationAdmin: payload.isOrganizationAdmin,
         assignedWorkspaces: payload.assignedWorkspaces,
-        permissions: payload.permissions
+        permissions: payload.permissions,
+        // AAI-specific fields
+        defaultChatflowId: payload.defaultChatflowId,
+        roleId: payload.roleId,
+        auth0Id: payload.auth0Id,
+        stripeCustomerId: payload.stripeCustomerId,
+        organizationId: payload.organizationId
     }
     return user
 }
