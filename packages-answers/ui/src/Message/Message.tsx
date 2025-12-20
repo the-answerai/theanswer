@@ -740,7 +740,6 @@ export const MessageCard = ({
                                         sx={{
                                             position: 'relative',
                                             width: '100%',
-                                            height: '200px',
                                             borderRadius: 1,
                                             overflow: 'hidden'
                                         }}
@@ -748,8 +747,11 @@ export const MessageCard = ({
                                         <Image
                                             src={file.preview || file.data}
                                             alt={file.name || 'Uploaded image'}
-                                            layout='fill'
-                                            objectFit='contain'
+                                            width={0}
+                                            height={0}
+                                            sizes='100vw'
+                                            style={{ width: '100%', height: 'auto' }}
+                                            unoptimized={file.data?.startsWith('data:')}
                                         />
                                     </Box>
                                 ) : file.mime?.startsWith('audio/') ? (

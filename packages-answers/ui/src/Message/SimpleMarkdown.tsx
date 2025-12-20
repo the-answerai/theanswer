@@ -123,13 +123,14 @@ export const SimpleMarkdown: React.FC<SimpleMarkdownProps> = ({ content, openLin
                             >
                                 <Image
                                     src={image.properties.src}
-                                    width={width || 700}
-                                    height={height || 400}
-                                    layout='responsive'
-                                    objectFit='contain'
+                                    width={0}
+                                    height={0}
+                                    sizes='100vw'
+                                    style={{ width: '100%', height: 'auto' }}
                                     className='postImg'
                                     alt={alt}
                                     priority={isPriority}
+                                    unoptimized={image.properties.src?.startsWith('data:')}
                                 />
                                 {hasCaption ? (
                                     <div className='caption' aria-label={caption}>
