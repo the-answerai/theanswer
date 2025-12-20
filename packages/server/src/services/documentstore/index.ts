@@ -112,12 +112,9 @@ const getAdminDocumentStores = async (user: IUser): Promise<DocumentStoreDTO[]> 
         const appServer = getRunningExpressApp()
         const { id: userId, organizationId, permissions, roles } = user
         const documentStoreRepository = appServer.AppDataSource.getRepository(DocumentStore)
-
-        // Get user from workspace.createdBy (Flowise stores creator in workspace, not in document store)
         const queryBuilder = documentStoreRepository
             .createQueryBuilder('documentStore')
-            .leftJoin('workspace', 'workspace', 'workspace.id = documentStore.workspaceId')
-            .leftJoin('User', 'user', 'user.id = workspace.createdBy')
+            .leftJoin('User', 'user', 'user.id = documentStore.userId')
             .addSelect(['user.id', 'user.name', 'user.email'])
 
         if (organizationId) {
@@ -133,7 +130,7 @@ const getAdminDocumentStores = async (user: IUser): Promise<DocumentStoreDTO[]> 
 
         const isAdmin = Boolean(roles?.includes('Admin') || permissions?.includes('org:manage'))
         if (!isAdmin && userId) {
-            queryBuilder.andWhere('workspace.createdBy = :userId', { userId })
+            queryBuilder.andWhere('documentStore.userId = :userId', { userId })
         }
 
         const rawResults = await queryBuilder.orderBy('documentStore.updatedDate', 'DESC').getRawAndEntities()
@@ -141,19 +138,17 @@ const getAdminDocumentStores = async (user: IUser): Promise<DocumentStoreDTO[]> 
         return rawResults.entities.map((entity, index) => {
             const dto = DocumentStoreDTO.fromEntity(entity)
             const raw = rawResults.raw[index]
-            const ownerId = raw?.user_id
 
             return {
                 ...dto,
                 user: {
-                    id: ownerId,
+                    id: raw?.user_id ?? entity.userId,
                     name: raw?.user_name ?? null,
                     email: raw?.user_email ?? null
                 },
-                userId: ownerId,
+                userId: entity.userId,
                 organizationId: entity.organizationId,
-                workspaceId: entity.workspaceId,
-                isOwner: ownerId === userId
+                isOwner: entity.userId === userId
             }
         })
     } catch (error) {

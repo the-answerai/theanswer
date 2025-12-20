@@ -9,6 +9,8 @@ import { findOrCreateOrganization } from './findOrCreateOrganization'
 import { findOrCreateUser, updateUserOrganization } from './findOrCreateUser'
 import { ensureStripeCustomerForUser } from './ensureStripeCustomerForUser'
 import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatflowsForUser'
+import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
+import { populateWorkspaceData } from './populateWorkspaceData'
 import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
 
 const jwtCheck = auth({
@@ -207,8 +209,16 @@ export const authenticationHandlerMiddleware =
                         // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
                         user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
 
-                        // Find or create default chatflows for the user
-                        const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, user)
+                        // Ensure user has workspaces and get active workspace
+                        await findOrCreateWorkspacesForUser(AppDataSource, user, organization.id)
+                        const workspaceData = await populateWorkspaceData(AppDataSource, user, organization.id)
+
+                        // Find or create default chatflows for the user (with workspaceId)
+                        const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
+                            AppDataSource,
+                            user,
+                            workspaceData.activeWorkspaceId
+                        )
                         // Update user with the latest defaultChatflowId
                         if (defaultChatflowId && user.defaultChatflowId !== defaultChatflowId) {
                             try {

@@ -880,7 +880,7 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
             // Always include id for proper entity mapping
             const selectFields = ['chatFlow.id', ...filter.select.map((field: any) => `chatFlow.${field}`)]
             queryBuilder.select(selectFields)
-            queryBuilder.addSelect(['user.id', 'user.name', 'user.email'])
+            queryBuilder.addSelect(['user.id', 'user.name', 'user.email', 'workspaceUser.id', 'workspaceUser.name', 'workspaceUser.email'])
         }
 
         // Handle auth0_org_id filter for cross-org access
@@ -909,7 +909,8 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
         // ADMIN ACCESS: Admins can see all chatflows in their organization, regular users only see their own
         const isAdmin = user?.roles?.includes('Admin')
         if (!isAdmin) {
-            queryBuilder.andWhere('chatFlow.userId = :userId', { userId })
+            // Filter by chatFlow.userId OR workspace.createdBy (for resources without userId)
+            queryBuilder.andWhere('(chatFlow.userId = :userId OR workspace.createdBy = :userId)', { userId })
         }
 
         // Apply additional visibility filtering if specified
