@@ -72,12 +72,12 @@ export const aaiPostAuthMiddleware = (AppDataSource: DataSource) => {
             // Ensure user has workspaces
             await findOrCreateWorkspacesForUser(AppDataSource, updatedUser, organization.id)
 
-            // Find/create default chatflows
-            const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, updatedUser)
-
-            // STEP 4: Enrich user with AAI data using shared function
+            // STEP 4: Enrich user with AAI data using shared function (needed for activeWorkspaceId)
             const auth0Roles = passportUser.roles || []
             const enrichedData = await enrichUserWithAAIData(AppDataSource, updatedUser, organization, auth0Roles)
+
+            // Find/create default chatflows (needs activeWorkspaceId from enrichedData)
+            const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, updatedUser, enrichedData.activeWorkspaceId)
 
             // STEP 5: Enhance req.user with enriched data (full Flowise LoggedInUser parity)
             Object.assign(req.user, {
