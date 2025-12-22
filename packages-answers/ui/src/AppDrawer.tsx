@@ -15,7 +15,6 @@ import ViewSidebarOutlinedIcon from '@mui/icons-material/ViewSidebarOutlined'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import Collapse from '@mui/material/Collapse'
-import type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { usePathname } from 'next/navigation'
 import { Menu, MenuItem, Tooltip } from '@mui/material'
@@ -48,6 +47,7 @@ import BadgeIcon from '@mui/icons-material/Badge'
 import WorkspacesIcon from '@mui/icons-material/Workspaces'
 import LockIcon from '@mui/icons-material/Lock'
 import HistoryIcon from '@mui/icons-material/History'
+import Business from '@mui/icons-material/Business'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import { useThemeMode } from './theme'
 
@@ -101,6 +101,7 @@ interface MenuConfig {
 interface AppDrawerProps {
     session: {
         user: {
+            name?: string
             picture?: string
             email?: string
             org_name?: string
@@ -963,7 +964,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             fontWeight: 500
                                         }}
                                     >
-                                        {user?.org_name}
+                                        {user?.name || user?.email?.split('@')[0] || 'User'}
                                     </Typography>
                                     <Typography
                                         variant='caption'
@@ -1010,24 +1011,57 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     }
                                 }}
                             >
-                                {/* Email Header */}
-                                <MenuItem disabled sx={{ opacity: '1 !important' }}>
-                                    <ListItemIcon sx={{ minWidth: 36 }}>
-                                        <Avatar src={user?.picture} sx={{ width: 24, height: 24, fontSize: 12 }}>
-                                            {user?.email?.[0]?.toUpperCase()}
+                                {/* User Profile Header */}
+                                <Box sx={{ px: 2, py: 1.5 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        <Avatar src={user?.picture} sx={{ width: 40, height: 40, fontSize: 16 }}>
+                                            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
                                         </Avatar>
+                                        <Box sx={{ overflow: 'hidden' }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                {user?.name || 'User'}
+                                            </Typography>
+                                            <Typography
+                                                variant='caption'
+                                                color='text.secondary'
+                                                sx={{
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    display: 'block'
+                                                }}
+                                            >
+                                                {user?.email}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Box>
+
+                                {/* Organization - clickable to switch */}
+                                <MenuItem
+                                    onClick={() => {
+                                        handleClose()
+                                        window.location.href = '/api/auth/login'
+                                    }}
+                                    sx={{ py: 1, mx: 1, borderRadius: 1 }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 32 }}>
+                                        <Business fontSize='small' />
                                     </ListItemIcon>
-                                    <Typography
-                                        variant='body2'
-                                        sx={{
-                                            fontWeight: 500,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {user?.email}
-                                    </Typography>
+                                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                            {user?.org_name || 'Organization'}
+                                        </Typography>
+                                    </Box>
+                                    <SwapHorizIcon fontSize='small' sx={{ opacity: 0.5, ml: 1 }} />
                                 </MenuItem>
 
                                 {/* Workspaces Section - Inline List */}
@@ -1084,19 +1118,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     </MenuItem>
                                 )}
 
-                                {/* Switch Organization */}
-                                <MenuItem
-                                    onClick={() => {
-                                        handleClose()
-                                        window.location.href = '/api/auth/login'
-                                    }}
-                                >
-                                    <ListItemIcon sx={{ minWidth: 36 }}>
-                                        <SwapHorizIcon fontSize='small' />
-                                    </ListItemIcon>
-                                    <Typography variant='body2'>Switch Organization</Typography>
-                                </MenuItem>
-
                                 <Divider sx={{ my: 1 }} />
 
                                 {/* Sign Out */}
@@ -1118,10 +1139,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
             </Drawer>
         </>
     )
-}
-
-interface AppBarProps extends MuiAppBarProps {
-    open?: boolean
 }
 
 export default AppDrawer
