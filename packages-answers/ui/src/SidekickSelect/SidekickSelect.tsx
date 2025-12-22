@@ -298,18 +298,10 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
 
         const personal = combinedSidekicks.filter((s) => s.chatflow.isOwner)
 
-        if (enablePerformanceLogs) {
-            console.log('Organized sidekicks:', { personal: personal.length })
-        }
-
         return { personal }
     }
 
     const { personal } = organizeSidekicks()
-
-    if (enablePerformanceLogs) {
-        console.log(`[SidekickSelect] Before final render, noDialog: ${noDialog}, variant: ${variant}, render #${renderCountRef.current}`)
-    }
 
     // Handle dropdown variant - simple typeahead search
     if (variant === 'dropdown') {

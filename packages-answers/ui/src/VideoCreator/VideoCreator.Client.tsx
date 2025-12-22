@@ -650,16 +650,7 @@ const VideoCreator = () => {
             if (aspectRatio === '9:16') {
                 const [width, height] = size.split('x').map(Number)
                 actualSize = `${height}x${width}` // Swap for portrait
-                console.log(`[Video Creator] Adjusted size for 9:16: ${size} → ${actualSize}`)
             }
-
-            console.log('[Video Creator] Generation params:', {
-                model,
-                provider,
-                size: actualSize,
-                aspectRatio,
-                hasReferenceImage: !!referenceImage
-            })
 
             const body: Record<string, unknown> = {
                 prompt: generationPrompt,

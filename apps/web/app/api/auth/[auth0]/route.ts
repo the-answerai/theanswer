@@ -21,7 +21,6 @@ const debugLog = (message: string, data?: any) => {
 export const GET = Auth0.handleAuth({
     // AAI: Custom me handler - enriches user with Flowise data on every /api/auth/me request
     me: async (req: Request) => {
-        console.log('[auth/me] Fetching enriched user')
         try {
             const session = await Auth0.getSession()
             if (!session?.user) {
@@ -33,7 +32,6 @@ export const GET = Auth0.handleAuth({
 
             // Enrich session with Flowise data
             const enrichedSession = await enrichSessionWithFlowise(session)
-            console.log('[auth/me] Returning enriched user')
 
             return new Response(JSON.stringify(enrichedSession.user), {
                 status: 200,

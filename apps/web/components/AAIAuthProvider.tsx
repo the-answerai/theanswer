@@ -27,7 +27,6 @@ export function AAIAuthProvider({ user, children }: AAIAuthProviderProps) {
                     features: user.features || {}
                 })
             )
-            console.log('[AAIAuthProvider] Dispatched loginSuccess with user:', user.email)
         }
     }, [user])
 

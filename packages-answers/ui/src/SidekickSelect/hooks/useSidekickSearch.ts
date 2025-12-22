@@ -43,13 +43,8 @@ export const useSidekickSearch = ({
     useEffect(() => {
         if (sidekicks.length === 0) return
 
-        const startTime = enableLogs ? performance.now() : 0
-
         // Skip initialization if Fuse already exists with same sidekick count
         if (fuse && fuse.getIndex() && sidekicks.length === fuse._docs.length) {
-            if (enableLogs) {
-                console.log('[useSidekickSearch] Skipping Fuse.js initialization - index size unchanged')
-            }
             return
         }
 
@@ -65,24 +60,13 @@ export const useSidekickSearch = ({
         }
 
         setFuse(new Fuse(sidekicks, fuseOptions))
-
-        if (enableLogs) {
-            const endTime = performance.now()
-            console.log(
-                `[useSidekickSearch] Fuse.js initialization with ${sidekicks.length} sidekicks took ${(endTime - startTime).toFixed(2)}ms`
-            )
-        }
-    }, [sidekicks, enableLogs, fuse])
+    }, [sidekicks, fuse])
 
     // Create a stable reference to the debounced function
     const debouncedSetSearchTerm = useMemo(
         () =>
             debounce(
                 (value: string) => {
-                    if (enableLogs) {
-                        console.log(`[useSidekickSearch] Search term debounced: "${value}"`)
-                    }
-
                     setSearchTerm(value)
                     if (value) {
                         setPreviousActiveTab(activeTab)
@@ -92,7 +76,7 @@ export const useSidekickSearch = ({
                 debounceMs,
                 { trailing: true, leading: false }
             ),
-        [activeTab, debounceMs, enableLogs]
+        [activeTab, debounceMs]
     )
 
     // Handle search input change
@@ -119,21 +103,9 @@ export const useSidekickSearch = ({
     // Perform search when searchTerm changes
     const searchResults = useMemo(() => {
         if (!searchTerm || !fuse) return []
-
-        const searchStartTime = enableLogs ? performance.now() : 0
         const results = fuse.search(searchTerm)
-
-        if (enableLogs) {
-            const searchEndTime = performance.now()
-            console.log(
-                `[useSidekickSearch] Fuse search for "${searchTerm}" took ${(searchEndTime - searchStartTime).toFixed(2)}ms, found ${
-                    results.length
-                } results`
-            )
-        }
-
         return results.map((result) => result.item)
-    }, [searchTerm, fuse, enableLogs])
+    }, [searchTerm, fuse])
 
     return {
         searchInputValue,

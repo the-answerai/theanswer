@@ -562,14 +562,16 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
     return (
         <>
-            <Box>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
                 <AppBar
                     enableColorOnDark
-                    position='fixed'
+                    position='absolute'
                     color='inherit'
                     elevation={1}
                     sx={{
-                        bgcolor: theme.palette.background.default
+                        bgcolor: theme.palette.background.default,
+                        width: '100%',
+                        left: 0
                     }}
                 >
                     <Toolbar>
@@ -582,7 +584,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                         />
                     </Toolbar>
                 </AppBar>
-                <Box sx={{ pt: '70px', height: '100vh', width: '100%' }}>
+                <Box sx={{ pt: '70px', height: '100%', width: '100%' }}>
                     <div className='reactflow-parent-wrapper'>
                         <div className='reactflow-wrapper' ref={reactFlowWrapper}>
                             <ReactFlow

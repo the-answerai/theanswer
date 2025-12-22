@@ -21,7 +21,7 @@ const useSync = ({ onSync }: { onSync?: (a: string) => void }) => {
             await axios.post(`/api/sync/${serviceName}`, { filters })
             if (onSync) onSync(serviceName)
         } catch (error) {
-            console.log(error)
+            console.error('Sync error:', error)
         }
     }
     return { handleSync }

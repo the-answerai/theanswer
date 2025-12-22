@@ -85,9 +85,8 @@ export const useStreamedResponse = ({
                         jsonData = jsonData?.replace('JSON_END', '')
                         try {
                             extra = JSON.parse(jsonData)
-                            // if (extra.chat) setChat(extra.chat);
                         } catch (e) {
-                            console.log('ParseError', e)
+                            console.error('JSON parse error:', e)
                         }
                     }
                     onChunk({ role: 'assistant', ...extra, content: answer })

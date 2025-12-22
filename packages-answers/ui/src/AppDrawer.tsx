@@ -66,39 +66,27 @@ interface AssignedWorkspace {
 }
 
 const drawerWidth = 240
+const collapsedWidth = 56
 
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
-    width: drawerWidth,
-    maxWidth: open ? drawerWidth : theme.spacing(7),
+    width: open ? drawerWidth : collapsedWidth,
     flexShrink: 0,
     whiteSpace: 'nowrap',
-    overflowX: 'hidden',
-    transition: '.3s',
-    ' .MuiDrawer-paper': {
-        transition: '.3s',
-        overflowY: 'hidden',
-        overflowX: 'hidden',
-        padding: 0, // Remove padding here
-        width: drawerWidth
-    },
-    p: {
-        transition: '.2s'
-    },
-    ...(open && {
-        '& .MuiDrawer-paper': {
-            transition: '.3s',
-            maxWidth: drawerWidth
-        }
+    boxSizing: 'border-box',
+    transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen
     }),
-    ...(!open && {
-        '& .MuiDrawer-paper': {
-            transition: '.3s',
-            maxWidth: theme.spacing(7),
-            p: {
-                opacity: 0
-            }
-        }
-    })
+    '& .MuiDrawer-paper': {
+        width: open ? drawerWidth : collapsedWidth,
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen
+        }),
+        overflowX: 'hidden',
+        overflowY: open ? 'auto' : 'hidden',
+        boxSizing: 'border-box'
+    }
 }))
 
 interface MenuConfig {
@@ -667,8 +655,9 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                             display: 'flex',
                             flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 1
+                            justifyContent: drawerOpen ? 'space-between' : 'center',
+                            px: drawerOpen ? 1 : 0,
+                            py: 1
                         }}
                     >
                         {/* AnswerAI Logo */}
@@ -708,18 +697,9 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 <Box
                     sx={{
                         flex: 1,
-                        overflowY: 'auto',
+                        overflowY: drawerOpen ? 'auto' : 'hidden',
                         overflowX: 'hidden',
-                        '&::-webkit-scrollbar': {
-                            transition: 'opacity 0.5s ease',
-                            opacity: drawerOpen ? 1 : 0
-                        },
-                        '&::-webkit-scrollbar ': {
-                            transition: '.2s',
-                            ...(!drawerOpen && {
-                                width: '0px'
-                            })
-                        }
+                        display: drawerOpen ? 'block' : 'none'
                     }}
                 >
                     <ChatDrawer />
@@ -768,23 +748,37 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                 selected={!!item.link && pathname.startsWith(item.link)}
                                                 href={item.link}
                                                 component={item.link ? NextLink : 'button'}
-                                                sx={{ flex: 1, display: 'flex', width: '100%' }}
+                                                sx={{
+                                                    minHeight: 48,
+                                                    justifyContent: drawerOpen ? 'initial' : 'center',
+                                                    px: drawerOpen ? 2 : 2.5
+                                                }}
                                                 onClick={() => {
                                                     if (item.subMenu) {
                                                         setSubmenuOpen(item.text === submenuOpen ? '' : item.text ?? '')
                                                     }
                                                 }}
                                             >
-                                                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                                                <ListItemIcon
+                                                    sx={{
+                                                        minWidth: 0,
+                                                        mr: drawerOpen ? 2 : 'auto',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    {item.icon}
+                                                </ListItemIcon>
                                                 <Typography
                                                     sx={{
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                         textTransform: 'capitalize',
-                                                        display: '-webkit-box',
+                                                        display: drawerOpen ? '-webkit-box' : 'none',
                                                         WebkitBoxOrient: 'vertical',
                                                         WebkitLineClamp: '1',
-                                                        flex: '1'
+                                                        flex: '1',
+                                                        opacity: drawerOpen ? 1 : 0,
+                                                        transition: 'opacity 0.2s'
                                                     }}
                                                 >
                                                     {item.text}
@@ -795,7 +789,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 </ListItem>
 
                                 {/* Render submenu items if they exist */}
-                                {item.subMenu && (
+                                {item.subMenu && drawerOpen && (
                                     <Collapse key={`${item.text}-collapse`} in={submenuOpen === item.text} timeout='auto'>
                                         {item.subMenu.map((subItem) => {
                                             // Define tooltips for submenu items
@@ -901,10 +895,18 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                         '&:hover': { bgcolor: 'primary.dark' },
                                         borderRadius: 1,
                                         mb: 1,
-                                        width: '100%'
+                                        minHeight: 48,
+                                        justifyContent: drawerOpen ? 'initial' : 'center',
+                                        px: drawerOpen ? 2 : 2.5
                                     }}
                                 >
-                                    <ListItemIcon>
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: drawerOpen ? 2 : 'auto',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
                                         <StarIcon sx={{ color: '#fff' }} />
                                     </ListItemIcon>
                                     <Typography
@@ -912,11 +914,13 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             textTransform: 'capitalize',
-                                            display: '-webkit-box',
+                                            display: drawerOpen ? '-webkit-box' : 'none',
                                             WebkitBoxOrient: 'vertical',
                                             WebkitLineClamp: '1',
                                             flex: '1',
-                                            color: '#fff'
+                                            color: '#fff',
+                                            opacity: drawerOpen ? 1 : 0,
+                                            transition: 'opacity 0.2s'
                                         }}
                                     >
                                         Upgrade Plan
@@ -931,10 +935,11 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
+                                justifyContent: drawerOpen ? 'space-between' : 'center',
                                 width: '100%',
-                                gap: 1,
-                                pl: 0.5
+                                gap: drawerOpen ? 1 : 0,
+                                pl: drawerOpen ? 0.5 : 0,
+                                py: 1
                             }}
                         >
                             <Avatar
@@ -947,20 +952,11 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 }}
                                 onClick={handleClick}
                             />
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    overflow: 'hidden',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    maxWidth: 124
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography
-                                        variant='caption'
+                            {drawerOpen && (
+                                <>
+                                    <Box
                                         sx={{
-                                            width: '100%',
+                                            display: 'flex',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
