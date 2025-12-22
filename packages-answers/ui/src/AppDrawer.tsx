@@ -48,15 +48,24 @@ import WorkspacesIcon from '@mui/icons-material/Workspaces'
 import LockIcon from '@mui/icons-material/Lock'
 import HistoryIcon from '@mui/icons-material/History'
 import Business from '@mui/icons-material/Business'
+import AddIcon from '@mui/icons-material/Add'
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
+import SettingsIcon from '@mui/icons-material/Settings'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import LogoutIcon from '@mui/icons-material/Logout'
+import TuneIcon from '@mui/icons-material/Tune'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import { useThemeMode } from './theme'
 
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import CheckIcon from '@mui/icons-material/Check'
 import Divider from '@mui/material/Divider'
+import Button from '@mui/material/Button'
 import { usePermissions } from './PermissionProvider'
+
+// Note: SwapHorizIcon removed - no longer used in new menu design
 
 interface AssignedWorkspace {
     id: string
@@ -1011,10 +1020,157 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     }
                                 }}
                             >
-                                {/* User Profile Header */}
-                                <Box sx={{ px: 2, py: 1.5 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Avatar src={user?.picture} sx={{ width: 40, height: 40, fontSize: 16 }}>
+                                {/* Email Header with Add Account */}
+                                <MenuItem
+                                    sx={{ py: 1.5 }}
+                                    onClick={() => {
+                                        handleClose()
+                                        window.location.href = '/api/auth/login'
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <AccountCircleIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography
+                                        variant='body2'
+                                        sx={{
+                                            flex: 1,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {user?.email}
+                                    </Typography>
+                                    <AddIcon fontSize='small' sx={{ opacity: 0.5 }} />
+                                </MenuItem>
+
+                                {/* Organization with checkmark */}
+                                <MenuItem disabled sx={{ opacity: '1 !important', py: 1 }}>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Business fontSize='small' color='primary' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2' sx={{ flex: 1, fontWeight: 500 }}>
+                                        {user?.org_name || 'Organization'}
+                                    </Typography>
+                                    <CheckIcon fontSize='small' color='primary' />
+                                </MenuItem>
+
+                                {/* Workspaces List */}
+                                {user?.assignedWorkspaces && user.assignedWorkspaces.length > 0 &&
+                                    user.assignedWorkspaces.map((workspace) => (
+                                        <MenuItem
+                                            key={workspace.id}
+                                            onClick={() => handleSwitchWorkspace(workspace.id)}
+                                            disabled={switchingWorkspace}
+                                            sx={{ py: 1 }}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 36 }}>
+                                                <WorkspacesIcon
+                                                    fontSize='small'
+                                                    color={workspace.id === user?.activeWorkspaceId ? 'primary' : 'inherit'}
+                                                />
+                                            </ListItemIcon>
+                                            <Typography variant='body2' sx={{ flex: 1 }}>
+                                                {workspace.name}
+                                            </Typography>
+                                            {workspace.id === user?.activeWorkspaceId && (
+                                                <CheckIcon fontSize='small' color='primary' />
+                                            )}
+                                        </MenuItem>
+                                    ))}
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* Admin Actions - Add teammates */}
+                                {(userRole === 'admin' || userRole === 'builder') && (
+                                    <MenuItem
+                                        component={NextLink}
+                                        href='/sidekick-studio/users'
+                                        onClick={handleClose}
+                                    >
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <PersonAddAltIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Add teammates</Typography>
+                                    </MenuItem>
+                                )}
+
+                                {/* Workspace settings */}
+                                {(userRole === 'admin' || userRole === 'builder') && (
+                                    <MenuItem
+                                        component={NextLink}
+                                        href='/sidekick-studio/workspaces'
+                                        onClick={handleClose}
+                                    >
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <WorkspacesIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Workspace settings</Typography>
+                                    </MenuItem>
+                                )}
+
+                                {/* Personalization (Theme) */}
+                                <MenuItem
+                                    onClick={() => {
+                                        toggleMode()
+                                        handleClose()
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <TuneIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>
+                                        {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                                    </Typography>
+                                </MenuItem>
+
+                                {/* Settings */}
+                                <MenuItem component={NextLink} href='/settings/user' onClick={handleClose}>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <SettingsIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Settings</Typography>
+                                </MenuItem>
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* Help */}
+                                <MenuItem
+                                    component='a'
+                                    href='https://docs.theanswer.ai'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    onClick={handleClose}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <HelpOutlineIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2' sx={{ flex: 1 }}>
+                                        Help
+                                    </Typography>
+                                    <ChevronRightIcon fontSize='small' sx={{ opacity: 0.5 }} />
+                                </MenuItem>
+
+                                {/* Log out */}
+                                <MenuItem
+                                    onClick={() => {
+                                        handleClose()
+                                        window.location.href = '/api/auth/logout'
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <LogoutIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Log out</Typography>
+                                </MenuItem>
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* User Profile Card at bottom */}
+                                <Box sx={{ px: 2, py: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                                        <Avatar src={user?.picture} sx={{ width: 32, height: 32, fontSize: 14 }}>
                                             {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
                                         </Avatar>
                                         <Box sx={{ overflow: 'hidden' }}>
@@ -1039,99 +1195,44 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                     display: 'block'
                                                 }}
                                             >
-                                                {user?.email}
+                                                {user?.org_name || 'Organization'}
                                             </Typography>
                                         </Box>
                                     </Box>
+
+                                    {/* Invite team members button */}
+                                    {(userRole === 'admin' || userRole === 'builder') && (
+                                        <Button
+                                            variant='outlined'
+                                            size='small'
+                                            fullWidth
+                                            startIcon={<PersonAddAltIcon />}
+                                            component={NextLink}
+                                            href='/sidekick-studio/users'
+                                            onClick={handleClose}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Invite team members
+                                        </Button>
+                                    )}
+
+                                    {/* Upgrade plan for non-admins or all users without subscription */}
+                                    {!user?.subscription && (
+                                        <Button
+                                            variant='contained'
+                                            size='small'
+                                            fullWidth
+                                            startIcon={<StarIcon />}
+                                            onClick={() => {
+                                                handleSubscriptionOpen()
+                                                handleClose()
+                                            }}
+                                            sx={{ textTransform: 'none', mt: 1 }}
+                                        >
+                                            Upgrade Plan
+                                        </Button>
+                                    )}
                                 </Box>
-
-                                {/* Organization - clickable to switch */}
-                                <MenuItem
-                                    onClick={() => {
-                                        handleClose()
-                                        window.location.href = '/api/auth/login'
-                                    }}
-                                    sx={{ py: 1, mx: 1, borderRadius: 1 }}
-                                >
-                                    <ListItemIcon sx={{ minWidth: 32 }}>
-                                        <Business fontSize='small' />
-                                    </ListItemIcon>
-                                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
-                                            {user?.org_name || 'Organization'}
-                                        </Typography>
-                                    </Box>
-                                    <SwapHorizIcon fontSize='small' sx={{ opacity: 0.5, ml: 1 }} />
-                                </MenuItem>
-
-                                {/* Workspaces Section - Inline List */}
-                                {user?.assignedWorkspaces && user.assignedWorkspaces.length > 0 && (
-                                    <>
-                                        <Divider sx={{ my: 1 }} />
-                                        {user.assignedWorkspaces.map((workspace) => (
-                                            <MenuItem
-                                                key={workspace.id}
-                                                onClick={() => handleSwitchWorkspace(workspace.id)}
-                                                disabled={switchingWorkspace}
-                                                sx={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    py: 1,
-                                                    bgcolor: workspace.id === user?.activeWorkspaceId ? 'action.selected' : 'transparent'
-                                                }}
-                                            >
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                    <WorkspacesIcon
-                                                        fontSize='small'
-                                                        color={workspace.id === user?.activeWorkspaceId ? 'primary' : 'action'}
-                                                    />
-                                                    <Typography variant='body2'>{workspace.name}</Typography>
-                                                </Box>
-                                                {workspace.id === user?.activeWorkspaceId && <CheckIcon fontSize='small' color='primary' />}
-                                            </MenuItem>
-                                        ))}
-                                    </>
-                                )}
-
-                                <Divider sx={{ my: 1 }} />
-
-                                {/* Theme Toggle */}
-                                <MenuItem
-                                    onClick={() => {
-                                        toggleMode()
-                                        handleClose()
-                                    }}
-                                >
-                                    <ListItemIcon sx={{ minWidth: 36 }}>
-                                        {mode === 'dark' ? <Brightness7Icon fontSize='small' /> : <Brightness4Icon fontSize='small' />}
-                                    </ListItemIcon>
-                                    <Typography variant='body2'>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
-                                </MenuItem>
-
-                                {/* Upgrade plan menu item visibility */}
-                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
-                                    <MenuItem onClick={handleSubscriptionOpen}>
-                                        <ListItemIcon sx={{ minWidth: 36 }}>
-                                            <StarIcon fontSize='small' />
-                                        </ListItemIcon>
-                                        <Typography variant='body2'>Upgrade Plan</Typography>
-                                    </MenuItem>
-                                )}
-
-                                <Divider sx={{ my: 1 }} />
-
-                                {/* Sign Out */}
-                                <MenuItem
-                                    onClick={() => {
-                                        handleClose()
-                                        window.location.href = '/api/auth/logout'
-                                    }}
-                                >
-                                    <ListItemIcon sx={{ minWidth: 36 }}>
-                                        <AccountCircleIcon fontSize='small' />
-                                    </ListItemIcon>
-                                    <Typography variant='body2'>Log out</Typography>
-                                </MenuItem>
                             </Menu>
                         </Box>
                     </ListItem>
