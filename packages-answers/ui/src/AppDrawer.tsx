@@ -48,13 +48,22 @@ import BadgeIcon from '@mui/icons-material/Badge'
 import WorkspacesIcon from '@mui/icons-material/Workspaces'
 import LockIcon from '@mui/icons-material/Lock'
 import HistoryIcon from '@mui/icons-material/History'
-import { ExportImportMenuItems } from './components/ExportImportComponent'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import { useThemeMode } from './theme'
 
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
+import CheckIcon from '@mui/icons-material/Check'
+import Divider from '@mui/material/Divider'
 import { usePermissions } from './PermissionProvider'
+
+interface AssignedWorkspace {
+    id: string
+    name: string
+    role: string
+    organizationId: string
+}
 
 const drawerWidth = 240
 
@@ -111,6 +120,10 @@ interface AppDrawerProps {
             roles?: string[]
             subscription?: unknown
             defaultChatflowId?: string
+            // Workspace fields
+            activeWorkspaceId?: string
+            activeWorkspace?: string
+            assignedWorkspaces?: AssignedWorkspace[]
         }
     }
 }
@@ -123,6 +136,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
     const { mode, toggleMode } = useThemeMode()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+    const [switchingWorkspace, setSwitchingWorkspace] = useState(false)
     const { hasFeature, hasRole } = usePermissions()
     const canUseChatflows = hasFeature('chatflow:use')
     const canManageChatflows = hasFeature('chatflow:manage')
@@ -602,9 +616,44 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         handleClose()
     }
 
+    const handleSwitchWorkspace = async (workspaceId: string) => {
+        if (workspaceId === user?.activeWorkspaceId) {
+            handleClose()
+            return
+        }
+
+        setSwitchingWorkspace(true)
+        handleClose()
+
+        try {
+            const response = await fetch('/api/workspaces/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workspaceId })
+            })
+
+            if (response.ok) {
+                // Redirect to refresh session context - stays on current page or goes to chat
+                const redirectPath = pathname.startsWith('/sidekick-studio') ? pathname : '/chat'
+                window.location.href = redirectPath
+            } else {
+                console.error('Failed to switch workspace')
+                setSwitchingWorkspace(false)
+            }
+        } catch (error) {
+            console.error('Error switching workspace:', error)
+            setSwitchingWorkspace(false)
+        }
+    }
+
     return (
         <>
-            <Drawer open={drawerOpen} variant='permanent' className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'} sx={{zIndex: 9999999}}>
+            <Drawer
+                open={drawerOpen}
+                variant='permanent'
+                className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
+                sx={{ zIndex: 2000 }}
+            >
                 <Box
                     sx={{
                         display: 'flex',
@@ -914,10 +963,11 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            fontWeight: 500
                                         }}
                                     >
-                                        {user?.email}
+                                        {user?.org_name}
                                     </Typography>
                                     <Typography
                                         variant='caption'
@@ -925,10 +975,12 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            opacity: 0.7,
+                                            fontSize: '0.65rem'
                                         }}
                                     >
-                                        {user?.org_name}
+                                        {user?.activeWorkspace || 'Default Workspace'}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -941,21 +993,77 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                             >
                                 <MoreVertIcon />
                             </IconButton>
-                            <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
-                                <MenuItem disabled>
+                            <Menu
+                                id='simple-menu'
+                                anchorEl={anchorEl}
+                                keepMounted
+                                open={Boolean(anchorEl)}
+                                onClose={handleClose}
+                                slotProps={{
+                                    root: {
+                                        sx: {
+                                            zIndex: 3000
+                                        }
+                                    },
+                                    paper: {
+                                        sx: {
+                                            zIndex: 3000,
+                                            minWidth: 220,
+                                            maxHeight: 'calc(100vh - 100px)'
+                                        }
+                                    }
+                                }}
+                            >
+                                {/* Email Header */}
+                                <MenuItem disabled sx={{ opacity: '1 !important' }}>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Avatar src={user?.picture} sx={{ width: 24, height: 24, fontSize: 12 }}>
+                                            {user?.email?.[0]?.toUpperCase()}
+                                        </Avatar>
+                                    </ListItemIcon>
                                     <Typography
-                                        variant='caption'
+                                        variant='body2'
                                         sx={{
-                                            opacity: 0.9,
-                                            width: '100%',
+                                            fontWeight: 500,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}
                                     >
-                                        {user?.org_name}
+                                        {user?.email}
                                     </Typography>
                                 </MenuItem>
+
+                                {/* Workspaces Section - Inline List */}
+                                {user?.assignedWorkspaces && user.assignedWorkspaces.length > 0 && (
+                                    <>
+                                        <Divider sx={{ my: 1 }} />
+                                        {user.assignedWorkspaces.map((workspace) => (
+                                            <MenuItem
+                                                key={workspace.id}
+                                                onClick={() => handleSwitchWorkspace(workspace.id)}
+                                                disabled={switchingWorkspace}
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    py: 1,
+                                                    bgcolor: workspace.id === user?.activeWorkspaceId ? 'action.selected' : 'transparent'
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                    <WorkspacesIcon
+                                                        fontSize='small'
+                                                        color={workspace.id === user?.activeWorkspaceId ? 'primary' : 'action'}
+                                                    />
+                                                    <Typography variant='body2'>{workspace.name}</Typography>
+                                                </Box>
+                                                {workspace.id === user?.activeWorkspaceId && <CheckIcon fontSize='small' color='primary' />}
+                                            </MenuItem>
+                                        ))}
+                                    </>
+                                )}
+
+                                <Divider sx={{ my: 1 }} />
 
                                 {/* Theme Toggle */}
                                 <MenuItem
@@ -967,34 +1075,45 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     <ListItemIcon sx={{ minWidth: 36 }}>
                                         {mode === 'dark' ? <Brightness7Icon fontSize='small' /> : <Brightness4Icon fontSize='small' />}
                                     </ListItemIcon>
-                                    <Typography>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
+                                    <Typography variant='body2'>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
                                 </MenuItem>
 
                                 {/* Upgrade plan menu item visibility */}
                                 {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
-                                    <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
+                                    <MenuItem onClick={handleSubscriptionOpen}>
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <StarIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Upgrade Plan</Typography>
+                                    </MenuItem>
                                 )}
 
-                                {/* Export/Import menu items visibility
-                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
-                                    <ExportImportMenuItems onClose={handleClose} />
-                                )} */}
-
+                                {/* Switch Organization */}
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()
                                         window.location.href = '/api/auth/login'
                                     }}
                                 >
-                                    Switch Organization
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <SwapHorizIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Switch Organization</Typography>
                                 </MenuItem>
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* Sign Out */}
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()
                                         window.location.href = '/api/auth/logout'
                                     }}
                                 >
-                                    Sign Out
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <AccountCircleIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Log out</Typography>
                                 </MenuItem>
                             </Menu>
                         </Box>
