@@ -953,10 +953,10 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 onClick={handleClick}
                             />
                             {drawerOpen && (
-                                <>
-                                    <Box
+                                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                                    <Typography
+                                        variant='body2'
                                         sx={{
-                                            display: 'flex',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
@@ -979,7 +979,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                         {user?.activeWorkspace || 'Default Workspace'}
                                     </Typography>
                                 </Box>
-                            </Box>
+                            )}
                             <IconButton
                                 aria-label='more options'
                                 sx={{ minHeight: 48, width: 48, justifyContent: 'center' }}
