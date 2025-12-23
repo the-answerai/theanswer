@@ -1253,7 +1253,7 @@ importers:
                 specifier: ^8.16.3
                 version: 8.16.3
             playwright:
-                specifier: ^1.55.1
+                specifier: ^1.55.0
                 version: 1.57.0
             puppeteer:
                 specifier: ^21.11.0
