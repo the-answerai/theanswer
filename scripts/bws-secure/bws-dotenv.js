@@ -105,7 +105,7 @@ function decryptContent(encrypted, encryptionKey) {
 
 function loadBwsSecrets(encryptionKey) {
   // Always load from .env file first
-  const environmentConfig = dotenv.config();
+  const environmentConfig = dotenv.config({ quiet: true });
   const environmentToken = environmentConfig.parsed?.BWS_ACCESS_TOKEN;
 
   // Override any existing token with the one from .env

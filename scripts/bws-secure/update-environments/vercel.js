@@ -42,6 +42,9 @@ const vercelEnvCache = new Map();
 function getRandomTimeout() {
   const minSeconds = 1;
   const maxSeconds = 15;
+  // Security Note: Math.random() used for timeout jitter in build coordination, not cryptographic purposes
+  // This is acceptable for non-security-critical use case (preventing concurrent build conflicts)
+  // CWE-338 false positive - not used for security-sensitive operations
   const randomSeconds = Math.floor(Math.random() * (maxSeconds - minSeconds + 1) + minSeconds);
   const timeout = randomSeconds * 1000;
   log('debug', `Using random timeout of ${randomSeconds} seconds`);

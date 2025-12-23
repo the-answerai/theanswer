@@ -290,8 +290,8 @@ async function getProjectFromEnvironmentFile() {
     const content = await fsPromises.readFile(environmentPath, 'utf8');
     const lines = content.split('\n');
 
-    // Look for an uncommented BWS_PROJECT line
-    const projectLine = lines.find((line) => {
+    // Look for an uncommented BWS_PROJECT line (last one wins, matching shell behavior)
+    const projectLine = lines.findLast((line) => {
       const trimmed = line.trim();
       return trimmed.startsWith('BWS_PROJECT=') && !trimmed.startsWith('#');
     });

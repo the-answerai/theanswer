@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env file if it exists
-dotenv.config();
+dotenv.config({ quiet: true });
 
 async function testNetlifyUpload() {
   try {

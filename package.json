@@ -84,8 +84,8 @@
         "axios": "^1.12.1",
         "cursor-tools": "latest",
         "cypress": "^13.17.0",
-        "dotenv": "^17.2.2",
-        "dotenv-cli": "^10.0.0",
+        "dotenv": "^17.2.3",
+        "dotenv-cli": "^11.0.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^8.10.2",
         "eslint-config-react-app": "^7.0.1",
@@ -96,7 +96,7 @@
         "eslint-plugin-react-hooks": "^4.6.2",
         "eslint-plugin-solid": "0.12.0",
         "eslint-plugin-unused-imports": "^2.0.0",
-        "glob": "^11.0.3",
+        "glob": "^11.1.0",
         "husky": "^8.0.3",
         "jsdom": "^24.0.0",
         "tsx": "^4.7.0",
@@ -109,7 +109,7 @@
         "run-script-os": "^1.1.6",
         "turbo": "1.10.16",
         "typescript": "~5.5.4",
-        "yargs": "^17.7.2"
+        "yargs": "^18.0.0"
     },
     "dependencies": {
         "node-cron": "^3.0.3",

@@ -1578,7 +1578,13 @@ async function handleUploadCommand() {
       process.exit(0);
     }
 
-    const result = spawnSync(arguments_.join(' '), [], {
+    // Normalize command - strip wrapping quotes that may have been passed literally
+    // This handles cases like: pnpm secure-run "turbo dev" where quotes become part of argv
+    // Works cross-platform: Linux, macOS, Windows (cmd.exe, PowerShell), and CI/CD environments
+    let commandString = arguments_.join(' ');
+    commandString = commandString.replace(/^["'](.*)["']$/, '$1').trim();
+
+    const result = spawnSync(commandString, [], {
       stdio: 'inherit',
       env: process.env,
       shell: true

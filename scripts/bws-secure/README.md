@@ -34,6 +34,12 @@ Manager.
     - [Security Features](#security-features)
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
+  - [BWS CLI Management](#bws-cli-management)
+    - [Smart Caching](#smart-caching)
+    - [Force Reinstall](#force-reinstall)
+    - [Local Backup Fallback](#local-backup-fallback)
+    - [Updating BWS Version](#updating-bws-version)
+    - [Uninstall BWS](#uninstall-bws)
   - [Support](#support)
   - [Machine Account Tokens](#machine-account-tokens)
   - [Directory Structure](#directory-structure)
@@ -337,6 +343,78 @@ BWS Secure automatically scans:
    DEBUG=true VERBOSE=true pnpm build
    ```
 
+## BWS CLI Management
+
+The `bws` CLI binary is automatically installed during `pnpm install` via the postinstall script. The installer includes smart caching and a local backup fallback system.
+
+### Smart Caching
+
+The installer checks if bws is already installed at the correct version and skips installation if so:
+
+```
+bws v1.0.0 already installed, skipping.
+To force reinstall: sh ./scripts/bws-secure/bws-installer.sh -f
+```
+
+This reduces `pnpm install` time from ~5-10s to <1s on subsequent runs.
+
+### Force Reinstall
+
+To force a fresh installation of the bws CLI:
+
+```bash
+sh ./scripts/bws-secure/bws-installer.sh -f
+```
+
+### Local Backup Fallback
+
+The installer includes vendored bws binaries as a fallback when GitHub is unavailable (CDN outage, rate limiting, repo renamed, etc.):
+
+```
+bin/backup/
+└── v1.0.0/
+    ├── bws-aarch64-apple-darwin-1.0.0.zip      # macOS ARM
+    ├── bws-aarch64-pc-windows-msvc-1.0.0.zip   # Windows ARM
+    ├── bws-aarch64-unknown-linux-gnu-1.0.0.zip # Linux ARM
+    ├── bws-macos-universal-1.0.0.zip           # macOS Universal
+    ├── bws-x86_64-apple-darwin-1.0.0.zip       # macOS x64
+    ├── bws-x86_64-pc-windows-msvc-1.0.0.zip    # Windows x64
+    ├── bws-x86_64-unknown-linux-gnu-1.0.0.zip  # Linux x64
+    └── bws-sha256-checksums-1.0.0.txt
+```
+
+**Priority order:**
+1. Download from GitHub (primary)
+2. Use local backup if download fails (fallback)
+
+### Updating BWS Version
+
+To update to a new bws version:
+
+1. **Download new version binaries:**
+   ```bash
+   ./bin/backup/download-backups.sh 1.1.0
+   ```
+   The script automatically discovers and downloads all available binaries for the specified version.
+
+2. **Update default version in `bws-installer.sh`:**
+   ```bash
+   DEFAULT_BWS_VERSION="1.1.0"
+   ```
+
+3. **Optionally remove old version backups:**
+   ```bash
+   rm -rf bin/backup/v1.0.0
+   ```
+
+### Uninstall BWS
+
+To remove the bws binary:
+
+```bash
+sh ./scripts/bws-secure/bws-installer.sh -u
+```
+
 ## Support
 
 - 📚 [Full Documentation](https://github.com/last-rev-llc/bws-secure)
@@ -379,30 +457,36 @@ The project structure is as follows:
 /scripts/bws-secure
 ├── .gitignore
 ├── README.md
+├── bin/
+│   └── backup/
+│       ├── download-backups.sh    # Script to download bws binaries
+│       └── v1.0.0/                # Vendored binaries (fallback)
+│           ├── bws-*-1.0.0.zip
+│           └── bws-sha256-checksums-1.0.0.txt
 ├── bws-dotenv.js
-├── bws-installer.sh
-├── check-vars
+├── bws-installer.sh               # Installs bws CLI with smart caching
+├── bws-retry-utils.js
+├── check-vars/
 │   ├── .gitignore
 │   ├── README.md
 │   ├── check-vars-availability.sh
 │   └── requiredRuntimeVars.js
-├── config.json
 ├── env_validator.js
 ├── generate-env-debug.js
 ├── install.sh
 ├── list-projects.js
 ├── logger.js
+├── project-selector.js
 ├── secureRun.js
-├── test-netlify-upload.js
-├── test-vercel-upload.js
-├── update-environments
+├── update-environments/
 │   ├── .gitignore
 │   ├── README.md
+│   ├── map-env-files.js
 │   ├── netlify.js
 │   ├── updateEnvVars.js
 │   ├── utils.js
 │   └── vercel.js
-└── upload-to-bws
+└── upload-to-bws/
     ├── readme.md
     └── upload-secrets.js
 ```
@@ -621,7 +705,7 @@ As of the latest update, this package now uses ES Modules (ESM) instead of Commo
 1. All imports use the `import` syntax instead of `require()`
 2. The package has `"type": "module"` in its package.json
 3. When importing local files, you must include the `.js` extension
-4. Node.js version 14.16.0 or higher is required
+4. Node.js version 18.0.0 or higher is required
 
 Example usage:
 
