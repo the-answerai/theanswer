@@ -83,9 +83,24 @@ export async function populateWorkspaceData(
         organizationId: wu.workspace?.organizationId || organizationId
     }))
 
-    // Use first workspace as active (prefer Personal Workspace for AAI users)
-    const personalWs = workspaceUsers.find((wu) => wu.workspace?.name === 'Personal Workspace')
-    const activeWu = personalWs || workspaceUsers[0]
+    // Use workspace with most recent lastLogin (respects user's workspace switch)
+    // Falls back to "Personal Workspace" or first workspace if no lastLogin set
+    const sortedByLastLogin = [...workspaceUsers].sort((a, b) => {
+        const aTime = a.lastLogin ? new Date(a.lastLogin).getTime() : 0
+        const bTime = b.lastLogin ? new Date(b.lastLogin).getTime() : 0
+        return bTime - aTime // Most recent first
+    })
+
+    // If no lastLogin exists on any workspace, prefer Personal Workspace
+    const hasAnyLastLogin = sortedByLastLogin.some((wu) => wu.lastLogin)
+    let activeWu: WorkspaceUser
+
+    if (hasAnyLastLogin) {
+        activeWu = sortedByLastLogin[0]
+    } else {
+        const personalWs = workspaceUsers.find((wu) => wu.workspace?.name === 'Personal Workspace')
+        activeWu = personalWs || workspaceUsers[0]
+    }
 
     // Check if user is organization admin using role ID comparison (Flowise parity)
     // Enterprise Flowise uses: workspaceUser.roleId === ownerRole.id
