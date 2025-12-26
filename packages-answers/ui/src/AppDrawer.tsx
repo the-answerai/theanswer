@@ -390,7 +390,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         menuConfig.push({
             id: 'profile',
             text: 'Profile',
-            link: '/profile',
+            link: '/settings/user',
             icon: <AccountCircleIcon color='primary' />
         })
 
@@ -575,7 +575,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                       {
                           id: 'profile',
                           text: 'Profile',
-                          link: '/profile',
+                          link: '/settings/user',
                           icon: <AccountCircleIcon color='primary' />
                       },
                       ...(userRole === 'admin'

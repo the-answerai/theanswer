@@ -17,8 +17,6 @@ import {
     Paper,
     useTheme,
     Chip,
-    Drawer,
-    Typography,
     CircularProgress
 } from '@mui/material'
 
@@ -43,7 +41,7 @@ import useConfirm from '@/hooks/useConfirm'
 import useNotifier from '@/utils/useNotifier'
 
 // Icons
-import { IconTrash, IconEdit, IconX, IconPlus, IconUser, IconEyeOff, IconEye, IconUserStar } from '@tabler/icons-react'
+import { IconTrash, IconEdit, IconX, IconPlus, IconUser, IconUserStar } from '@tabler/icons-react'
 import users_emptySVG from '@/assets/images/users_empty.svg'
 
 // store
@@ -51,33 +49,6 @@ import { useError } from '@/store/context/ErrorContext'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 
 function ShowUserRow(props) {
-    const customization = useSelector((state) => state.customization)
-
-    const [open, setOpen] = useState(false)
-    const [userRoles, setUserRoles] = useState([])
-
-    const theme = useTheme()
-
-    const getWorkspacesByUserId = useApi(userApi.getWorkspacesByOrganizationIdUserId)
-
-    const handleViewUserRoles = (userId, organizationId) => {
-        setOpen(!open)
-        getWorkspacesByUserId.request(organizationId, userId)
-    }
-
-    useEffect(() => {
-        if (getWorkspacesByUserId.data) {
-            setUserRoles(getWorkspacesByUserId.data)
-        }
-    }, [getWorkspacesByUserId.data])
-
-    useEffect(() => {
-        if (!open) {
-            setOpen(false)
-            setUserRoles([])
-        }
-    }, [open])
-
     const currentUser = useSelector((state) => state.auth.user)
 
     return (
@@ -138,18 +109,7 @@ function ShowUserRow(props) {
                         </>
                     )}
                 </StyledTableCell>
-                <StyledTableCell sx={{ textAlign: 'center' }}>
-                    {props.row.roleCount}
-                    <PermissionIconButton
-                        permissionId={'users:manage'}
-                        aria-label='expand row'
-                        size='small'
-                        color='inherit'
-                        onClick={() => handleViewUserRoles(props.row.userId, props.row.organizationId)}
-                    >
-                        {props.row.roleCount > 0 && open ? <IconEyeOff /> : <IconEye />}
-                    </PermissionIconButton>
-                </StyledTableCell>
+                <StyledTableCell>{props.row.role?.name}</StyledTableCell>
                 <StyledTableCell>
                     {'ACTIVE' === props.row.status.toUpperCase() && <Chip color={'success'} label={props.row.status.toUpperCase()} />}
                     {'INVITED' === props.row.status.toUpperCase() && <Chip color={'warning'} label={props.row.status.toUpperCase()} />}
@@ -183,43 +143,6 @@ function ShowUserRow(props) {
                         ))}
                 </StyledTableCell>
             </StyledTableRow>
-            <Drawer anchor='right' open={open} onClose={() => setOpen(false)} sx={{ minWidth: 320 }}>
-                <Box sx={{ p: 4, height: 'auto', width: 650 }}>
-                    <Typography sx={{ textAlign: 'left', mb: 2 }} variant='h2'>
-                        Assigned Roles
-                    </Typography>
-                    <TableContainer
-                        style={{ display: 'flex', flexDirection: 'row' }}
-                        sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
-                        component={Paper}
-                    >
-                        <Table aria-label='assigned roles table'>
-                            <TableHead
-                                sx={{
-                                    backgroundColor: customization.isDarkMode ? theme.palette.common.black : theme.palette.grey[100],
-                                    height: 56
-                                }}
-                            >
-                                <TableRow>
-                                    <StyledTableCell sx={{ width: '50%' }}>Role</StyledTableCell>
-                                    <StyledTableCell sx={{ width: '50%' }}>Workspace</StyledTableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {userRoles.map((item, index) => (
-                                    <TableRow key={index}>
-                                        <StyledTableCell>{item.role.name}</StyledTableCell>
-                                        <StyledTableCell>
-                                            {item.workspace.name}
-                                            {/* {assignment.active && <Chip color={'secondary'} label={'Active'} />} */}
-                                        </StyledTableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Box>
-            </Drawer>
         </React.Fragment>
     )
 }
@@ -241,10 +164,8 @@ const Users = () => {
     const dispatch = useDispatch()
     useNotifier()
     const { error, setError } = useError()
-    const state = useSelector((state) => state)
     const currentUser = useSelector((state) => state.auth.user)
-    console.log('State', { state, currentUser })
-    if(!currentUser) return 
+    if (!currentUser) return null
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
@@ -258,7 +179,7 @@ const Users = () => {
 
     const { confirm } = useConfirm()
 
-    const getAllUsersByOrganizationIdApi = useApi(userApi.getAllUsersByOrganizationId)
+    const getAllUsersByWorkspaceIdApi = useApi(userApi.getAllUsersByWorkspaceId)
 
     const onSearchChange = (event) => {
         setSearch(event.target.value)
@@ -315,7 +236,7 @@ const Users = () => {
     const deleteUser = async (user) => {
         const confirmPayload = {
             title: `Delete`,
-            description: `Remove ${user.name ?? user.email} from organization?`,
+            description: `Remove ${user.name ?? user.email} from workspace?`,
             confirmButtonName: 'Delete',
             cancelButtonName: 'Cancel'
         }
@@ -324,10 +245,10 @@ const Users = () => {
         if (isConfirmed) {
             try {
                 setDeletingUserId(user.id)
-                const deleteResp = await userApi.deleteOrganizationUser(currentUser.activeOrganizationId, user.id)
+                const deleteResp = await userApi.deleteWorkspaceUser(currentUser.activeWorkspaceId, user.id)
                 if (deleteResp.data) {
                     enqueueSnackbar({
-                        message: 'User removed from organization successfully',
+                        message: 'User removed from workspace successfully',
                         options: {
                             key: new Date().getTime() + Math.random(),
                             variant: 'success',
@@ -365,27 +286,27 @@ const Users = () => {
     const onConfirm = () => {
         setShowInviteDialog(false)
         setShowEditDialog(false)
-        getAllUsersByOrganizationIdApi.request(currentUser.activeOrganizationId)
+        getAllUsersByWorkspaceIdApi.request(currentUser.activeWorkspaceId)
     }
 
     useEffect(() => {
-        getAllUsersByOrganizationIdApi.request(currentUser.activeOrganizationId)
+        getAllUsersByWorkspaceIdApi.request(currentUser.activeWorkspaceId)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-        setLoading(getAllUsersByOrganizationIdApi.loading)
-    }, [getAllUsersByOrganizationIdApi.loading])
+        setLoading(getAllUsersByWorkspaceIdApi.loading)
+    }, [getAllUsersByWorkspaceIdApi.loading])
 
     useEffect(() => {
-        if (getAllUsersByOrganizationIdApi.error) {
-            setError(getAllUsersByOrganizationIdApi.error)
+        if (getAllUsersByWorkspaceIdApi.error) {
+            setError(getAllUsersByWorkspaceIdApi.error)
         }
-    }, [getAllUsersByOrganizationIdApi.error, setError])
+    }, [getAllUsersByWorkspaceIdApi.error, setError])
 
     useEffect(() => {
-        if (getAllUsersByOrganizationIdApi.data) {
-            const users = getAllUsersByOrganizationIdApi.data || []
+        if (getAllUsersByWorkspaceIdApi.data) {
+            const users = getAllUsersByWorkspaceIdApi.data || []
             const orgAdmin = users.find((user) => user.isOrgOwner === true)
             if (orgAdmin) {
                 users.splice(users.indexOf(orgAdmin), 1)
@@ -393,7 +314,7 @@ const Users = () => {
             }
             setUsers(users)
         }
-    }, [getAllUsersByOrganizationIdApi.data])
+    }, [getAllUsersByWorkspaceIdApi.data])
 
     return (
         <>
@@ -446,7 +367,7 @@ const Users = () => {
                                                     <TableRow>
                                                         <StyledTableCell>&nbsp;</StyledTableCell>
                                                         <StyledTableCell>Email/Name</StyledTableCell>
-                                                        <StyledTableCell>Assigned Roles</StyledTableCell>
+                                                        <StyledTableCell>Role</StyledTableCell>
                                                         <StyledTableCell>Status</StyledTableCell>
                                                         <StyledTableCell>Last Login</StyledTableCell>
                                                         <StyledTableCell> </StyledTableCell>
