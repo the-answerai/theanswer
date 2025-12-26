@@ -306,6 +306,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                                     </ListItemIcon>
                                     <ListItemText
                                         primary={ws.name}
+                                        secondaryTypographyProps={{ component: 'div' }}
                                         secondary={
                                             <Stack direction='row' spacing={1} alignItems='center'>
                                                 <Chip label={ws.role} size='small' variant='outlined' />
