@@ -366,19 +366,19 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         text: 'Workspaces',
                         link: '/sidekick-studio/workspaces',
                         icon: <WorkspacesIcon color='primary' />
-                    },
-                    {
-                        id: 'sso-config',
-                        text: 'SSO Config',
-                        link: '/sidekick-studio/sso-config',
-                        icon: <LockIcon color='primary' />
-                    },
-                    {
-                        id: 'login-activity',
-                        text: 'Login Activity',
-                        link: '/sidekick-studio/login-activity',
-                        icon: <HistoryIcon color='primary' />
                     }
+                    // {
+                    //     id: 'sso-config',
+                    //     text: 'SSO Config',
+                    //     link: '/sidekick-studio/sso-config',
+                    //     icon: <LockIcon color='primary' />
+                    // },
+                    // {
+                    //     id: 'login-activity',
+                    //     text: 'Login Activity',
+                    //     link: '/sidekick-studio/login-activity',
+                    //     icon: <HistoryIcon color='primary' />
+                    // }
                 ]
             })
         }
