@@ -740,7 +740,6 @@ export class LangfuseProvider {
                 limit,
                 page,
                 userId,
-                filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core,metrics,io', // Exclude observations & scores - faster response
                 orderBy: 'timestamp.desc' // Show newest events first in UI
                 // Note: We can't directly filter by customerId in the API call
