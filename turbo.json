@@ -1,6 +1,5 @@
 {
     "$schema": "https://turbo.build/schema.json",
-    "globalPassThroughEnv": ["COREPACK_HOME"],
     "globalEnv": [
         "ANALYZE",
         "ATLASSIAN_CLIENT_ID",
@@ -58,7 +57,7 @@
         "SALESFORCE_INSTANCE_URL"
     ],
 
-    "tasks": {
+    "pipeline": {
         "//#dev-docker": {
             "cache": false
         },
