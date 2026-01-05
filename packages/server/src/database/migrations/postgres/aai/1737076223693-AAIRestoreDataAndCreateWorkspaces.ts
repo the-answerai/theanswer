@@ -106,7 +106,8 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
             ADD COLUMN IF NOT EXISTS "stripeCustomerId" varchar(100),
             ADD COLUMN IF NOT EXISTS "billingPoolEnabled" boolean DEFAULT false,
             ADD COLUMN IF NOT EXISTS "currentPaidPlanId" uuid,
-            ADD COLUMN IF NOT EXISTS "enabledIntegrations" jsonb;
+            ADD COLUMN IF NOT EXISTS "enabledIntegrations" jsonb,
+            ADD COLUMN IF NOT EXISTS "organizationConfig" jsonb;
         `)
         console.log('AAI columns added to organization table')
 
@@ -128,6 +129,9 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
             }
             if (await this.columnExists(queryRunner, 'aai_organization_backup', 'enabledIntegrations')) {
                 orgSetClause.push('"enabledIntegrations" = b."enabledIntegrations"')
+            }
+            if (await this.columnExists(queryRunner, 'aai_organization_backup', 'organizationConfig')) {
+                orgSetClause.push('"organizationConfig" = b."organizationConfig"')
             }
 
             await queryRunner.query(`

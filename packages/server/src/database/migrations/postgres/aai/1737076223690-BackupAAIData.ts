@@ -74,6 +74,9 @@ export class BackupAAIData1737076223690 implements MigrationInterface {
             if (await this.columnExists(queryRunner, 'organization', 'enabledIntegrations')) {
                 orgColumns.push('"enabledIntegrations"')
             }
+            if (await this.columnExists(queryRunner, 'organization', 'organizationConfig')) {
+                orgColumns.push('"organizationConfig"')
+            }
 
             // Backup AAI organization columns that exist
             await queryRunner.query(`
