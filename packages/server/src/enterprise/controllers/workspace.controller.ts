@@ -142,16 +142,18 @@ export class WorkspaceController {
                 ...loggedInUser
             }
 
-            // Update passport session
-            // @ts-ignore
-            req.session.passport.user = {
-                ...req.user,
-                ...loggedInUser
-            }
+            // Update passport session (only for session-based auth, not JWT)
+            if (req.session && 'passport' in req.session) {
+                // @ts-ignore
+                req.session.passport.user = {
+                    ...req.user,
+                    ...loggedInUser
+                }
 
-            req.session.save((err) => {
-                if (err) throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, GeneralErrorMessage.UNHANDLED_EDGE_CASE)
-            })
+                req.session.save((err) => {
+                    if (err) throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, GeneralErrorMessage.UNHANDLED_EDGE_CASE)
+                })
+            }
 
             await queryRunner.commitTransaction()
             return res.status(StatusCodes.OK).json(loggedInUser)
