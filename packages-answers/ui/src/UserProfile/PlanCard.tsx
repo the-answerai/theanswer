@@ -1,105 +1,92 @@
 'use client'
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import NextLink from 'next/link'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import { Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
-import { useUserPlans } from '../hooks/useUserPlan'
-import { usePlans } from '../hooks/usePlans'
+import LinearProgress from '@mui/material/LinearProgress'
+import { Card, CardContent, CircularProgress, Chip } from '@mui/material'
+import { useBillingData } from '../billing/hooks/useBillingData'
 
 export const PlanCard: React.FC = () => {
-    const { handleCancelPlan, activeUserPlan } = useUserPlans()
-    const { plans } = usePlans()
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const { billingData, isLoading, isError } = useBillingData()
 
-    const monthlyCost = useMemo(() => {
-        const amountInCents = (plans || []).find((plan) => plan.id === activeUserPlan?.planId)?.priceObj?.unit_amount
-        return amountInCents ? amountInCents / 100 : 0
-    }, [activeUserPlan?.planId, plans])
+    const { creditsUsed, creditsTotal, usagePercent } = useMemo(() => {
+        if (!billingData) return { creditsUsed: 0, creditsTotal: 0, usagePercent: 0 }
 
-    const handleConfirmation = useCallback(() => {
-        setDialogOpen(false)
-        setLoading(true)
-        handleCancelPlan(() => setLoading(false))
-    }, [handleCancelPlan])
+        const used =
+            (billingData.usageDashboard?.aiTokens?.used || 0) +
+            (billingData.usageDashboard?.compute?.used || 0) +
+            (billingData.usageDashboard?.storage?.used || 0)
+        const total = billingData.currentPlan?.creditsIncluded || 0
+        const percent = total > 0 ? Math.min(Math.round((used / total) * 100), 100) : 0
+
+        return { creditsUsed: used, creditsTotal: total, usagePercent: percent }
+    }, [billingData])
+
+    if (isLoading) {
+        return (
+            <Card variant='outlined' sx={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress color='primary' size={24} />
+            </Card>
+        )
+    }
+
+    if (isError) {
+        return (
+            <Card variant='outlined' sx={{ padding: '1rem' }}>
+                <Typography color='error'>Failed to load billing info</Typography>
+            </Card>
+        )
+    }
+
+    const planName = billingData?.currentPlan?.name || 'Free'
+    const planStatus = billingData?.currentPlan?.status || 'inactive'
+    const billingEnd = billingData?.billingPeriod?.end ? new Date(billingData.billingPeriod.end).toLocaleDateString() : null
 
     return (
-        <>
-            <Card
-                variant='outlined'
-                sx={{
-                    padding: '1rem',
-                    ...(loading && {
-                        display: 'flex',
-                        justifyContent: 'center'
-                    })
-                }}
-            >
-                {loading ? (
-                    <CircularProgress color='primary' />
-                ) : (
-                    <>
-                        <Box display='flex' justifyContent='space-between' alignItems='center' padding='16px'>
-                            <Typography variant='h6'>Plan info</Typography>
-                            <Box display='flex' gap={1}>
-                                {activeUserPlan?.planId !== 3 && (
-                                    <Button component={NextLink} href='/plans' variant='contained' color='primary'>
-                                        Upgrade
-                                    </Button>
-                                )}
-                                {activeUserPlan?.planId != 1 && activeUserPlan?.shouldRenew && (
-                                    <Button onClick={() => setDialogOpen(true)} variant='contained' color='secondary'>
-                                        Cancel
-                                    </Button>
-                                )}
-                            </Box>
-                        </Box>
-                        <CardContent>
-                            <Divider />
+        <Card variant='outlined' sx={{ padding: '1rem' }}>
+            <Box display='flex' justifyContent='space-between' alignItems='center' padding='16px'>
+                <Box display='flex' alignItems='center' gap={1}>
+                    <Typography variant='h6'>Plan</Typography>
+                    <Chip
+                        label={planName}
+                        size='small'
+                        color={planName === 'Pro' ? 'primary' : 'default'}
+                        variant={planStatus === 'active' ? 'filled' : 'outlined'}
+                    />
+                </Box>
+                <Button component={NextLink} href='/billing' variant='outlined' size='small'>
+                    View Details
+                </Button>
+            </Box>
+            <CardContent>
+                <Divider />
 
-                            <Typography variant='body1' style={{ marginTop: '16px' }}>
-                                <strong>Current Plan:</strong> {activeUserPlan?.plan.name}
-                            </Typography>
+                <Box sx={{ mt: 2 }}>
+                    <Box display='flex' justifyContent='space-between' alignItems='center' mb={0.5}>
+                        <Typography variant='body2' color='text.secondary'>
+                            Credits Used
+                        </Typography>
+                        <Typography variant='body2'>
+                            {creditsUsed.toLocaleString()} / {creditsTotal.toLocaleString()}
+                        </Typography>
+                    </Box>
+                    <LinearProgress
+                        variant='determinate'
+                        value={usagePercent}
+                        sx={{ height: 8, borderRadius: 4 }}
+                        color={usagePercent > 90 ? 'error' : usagePercent > 70 ? 'warning' : 'primary'}
+                    />
+                </Box>
 
-                            <Typography variant='body1'>
-                                <strong>Monthly Cost:</strong> ${monthlyCost}
-                            </Typography>
-
-                            <Typography variant='body1'>
-                                <strong>GPT-3 Requests (This Month):</strong> {activeUserPlan?.gpt3RequestCount}
-                            </Typography>
-
-                            <Typography variant='body1'>
-                                <strong>GPT-4 Requests (This Month):</strong> {activeUserPlan?.gpt4RequestCount}
-                            </Typography>
-
-                            <Typography variant='body1'>
-                                <strong>Tokens Remaining:</strong> {activeUserPlan?.tokensLeft?.toLocaleString()}
-                            </Typography>
-
-                            <Typography variant='body1'>
-                                <strong>{activeUserPlan?.shouldRenew ? 'Renewal Date:' : 'Active until:'}</strong>{' '}
-                                {activeUserPlan?.renewalDate?.toLocaleDateString()}
-                            </Typography>
-                        </CardContent>
-                    </>
+                {billingEnd && (
+                    <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
+                        Billing period ends: {billingEnd}
+                    </Typography>
                 )}
-            </Card>
-            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-                <DialogTitle>Cancel Subscription</DialogTitle>
-                <DialogContent>
-                    <Typography>Are you sure you want to cancel your subscription? This cannot be undone.</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={() => handleConfirmation()} color='primary'>
-                        Proceed
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
+            </CardContent>
+        </Card>
     )
 }

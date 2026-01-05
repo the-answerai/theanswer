@@ -29,8 +29,6 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import ImageIcon from '@mui/icons-material/Image'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
@@ -50,7 +48,6 @@ import HistoryIcon from '@mui/icons-material/History'
 import Business from '@mui/icons-material/Business'
 import AddIcon from '@mui/icons-material/Add'
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
-import SettingsIcon from '@mui/icons-material/Settings'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import LogoutIcon from '@mui/icons-material/Logout'
 import TuneIcon from '@mui/icons-material/Tune'
@@ -385,24 +382,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 ]
             })
         }
-
-        // Top-level Profile (everyone)
-        menuConfig.push({
-            id: 'profile',
-            text: 'Profile',
-            link: '/settings/user',
-            icon: <AccountCircleIcon color='primary' />
-        })
-
-        // Top-level Billing (admins only)
-        if (userRole === 'admin') {
-            menuConfig.push({
-                id: 'billing',
-                text: 'Billing',
-                link: '/billing',
-                icon: <AssessmentOutlinedIcon color='primary' />
-            })
-        }
     } else {
         // Original logic for public organizations - everyone sees everything
         const filterMenuItems = (items: MenuConfig[]) => {
@@ -567,27 +546,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                   : [])
                           ]
                       }
-                  ]
-                : []),
-            // Top-level Profile and Billing for public orgs
-            ...(canUseChatflows
-                ? [
-                      {
-                          id: 'profile',
-                          text: 'Profile',
-                          link: '/settings/user',
-                          icon: <AccountCircleIcon color='primary' />
-                      },
-                      ...(userRole === 'admin'
-                          ? [
-                                {
-                                    id: 'billing',
-                                    text: 'Billing',
-                                    link: '/billing',
-                                    icon: <AssessmentOutlinedIcon color='primary' />
-                                }
-                            ]
-                          : [])
                   ]
                 : [])
         ])
@@ -894,52 +852,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         )
                     })}
 
-                    {/* Upgrade plan button visibility */}
-                    {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && !user?.subscription && (
-                        <ListItem disablePadding>
-                            <Tooltip title='Unlock premium features with a subscription' placement='right'>
-                                <ListItemButton
-                                    onClick={handleSubscriptionOpen}
-                                    sx={{
-                                        bgcolor: 'primary.main',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                        borderRadius: 1,
-                                        mb: 1,
-                                        minHeight: 48,
-                                        justifyContent: drawerOpen ? 'initial' : 'center',
-                                        px: drawerOpen ? 2 : 2.5
-                                    }}
-                                >
-                                    <ListItemIcon
-                                        sx={{
-                                            minWidth: 0,
-                                            mr: drawerOpen ? 2 : 'auto',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        <StarIcon sx={{ color: '#fff' }} />
-                                    </ListItemIcon>
-                                    <Typography
-                                        sx={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            textTransform: 'capitalize',
-                                            display: drawerOpen ? '-webkit-box' : 'none',
-                                            WebkitBoxOrient: 'vertical',
-                                            WebkitLineClamp: '1',
-                                            flex: '1',
-                                            color: '#fff',
-                                            opacity: drawerOpen ? 1 : 0,
-                                            transition: 'opacity 0.2s'
-                                        }}
-                                    >
-                                        Upgrade Plan
-                                    </Typography>
-                                </ListItemButton>
-                            </Tooltip>
-                        </ListItem>
-                    )}
-
                     <ListItem disablePadding sx={{ display: 'block' }}>
                         <Box
                             sx={{
@@ -1057,7 +969,8 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 </MenuItem>
 
                                 {/* Workspaces List */}
-                                {user?.assignedWorkspaces && user.assignedWorkspaces.length > 0 &&
+                                {user?.assignedWorkspaces &&
+                                    user.assignedWorkspaces.length > 0 &&
                                     user.assignedWorkspaces.map((workspace) => (
                                         <MenuItem
                                             key={workspace.id}
@@ -1074,9 +987,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             <Typography variant='body2' sx={{ flex: 1 }}>
                                                 {workspace.name}
                                             </Typography>
-                                            {workspace.id === user?.activeWorkspaceId && (
-                                                <CheckIcon fontSize='small' color='primary' />
-                                            )}
+                                            {workspace.id === user?.activeWorkspaceId && <CheckIcon fontSize='small' color='primary' />}
                                         </MenuItem>
                                     ))}
 
@@ -1084,11 +995,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
 
                                 {/* Admin Actions - Add teammates */}
                                 {(userRole === 'admin' || userRole === 'builder') && (
-                                    <MenuItem
-                                        component={NextLink}
-                                        href='/sidekick-studio/users'
-                                        onClick={handleClose}
-                                    >
+                                    <MenuItem component={NextLink} href='/sidekick-studio/users' onClick={handleClose}>
                                         <ListItemIcon sx={{ minWidth: 36 }}>
                                             <PersonAddAltIcon fontSize='small' />
                                         </ListItemIcon>
@@ -1098,11 +1005,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
 
                                 {/* Workspace settings */}
                                 {(userRole === 'admin' || userRole === 'builder') && (
-                                    <MenuItem
-                                        component={NextLink}
-                                        href='/sidekick-studio/workspaces'
-                                        onClick={handleClose}
-                                    >
+                                    <MenuItem component={NextLink} href='/sidekick-studio/workspaces' onClick={handleClose}>
                                         <ListItemIcon sx={{ minWidth: 36 }}>
                                             <WorkspacesIcon fontSize='small' />
                                         </ListItemIcon>
@@ -1120,18 +1023,26 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     <ListItemIcon sx={{ minWidth: 36 }}>
                                         <TuneIcon fontSize='small' />
                                     </ListItemIcon>
-                                    <Typography variant='body2'>
-                                        {mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                                    </Typography>
+                                    <Typography variant='body2'>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
                                 </MenuItem>
 
-                                {/* Settings */}
+                                {/* Profile */}
                                 <MenuItem component={NextLink} href='/settings/user' onClick={handleClose}>
                                     <ListItemIcon sx={{ minWidth: 36 }}>
-                                        <SettingsIcon fontSize='small' />
+                                        <AccountCircleIcon fontSize='small' />
                                     </ListItemIcon>
-                                    <Typography variant='body2'>Settings</Typography>
+                                    <Typography variant='body2'>Profile</Typography>
                                 </MenuItem>
+
+                                {/* Billing (admins only) */}
+                                {userRole === 'admin' && (
+                                    <MenuItem component={NextLink} href='/billing' onClick={handleClose}>
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <AssessmentOutlinedIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Billing</Typography>
+                                    </MenuItem>
+                                )}
 
                                 <Divider sx={{ my: 1 }} />
 

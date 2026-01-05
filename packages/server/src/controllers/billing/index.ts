@@ -34,12 +34,34 @@ const getUsageSummary = async (req: Request, res: Response, next: NextFunction) 
             console.error('Error getting usage stats:', error.message)
             // next(error)
         }
-        // Determine plan type
-        const isPro =
-            subscription?.status === 'active' &&
-            subscription.items.data?.length &&
-            subscription.items.data[0]?.price.id !== BILLING_CONFIG.PRICE_IDS.FREE_MONTHLY
-        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+        // Determine plan type from Stripe subscription
+        const hasActiveSubscription = subscription?.status === 'active' && subscription.items.data?.length > 0
+        const subscriptionItem = subscription?.items.data?.[0]
+        const price = subscriptionItem?.price
+        const product = price?.product as Stripe.Product | undefined
+
+        // Get plan name from: product name > price nickname > metadata > fallback
+        let planName = 'Free'
+        if (hasActiveSubscription && product && typeof product !== 'string') {
+            planName = product.name || (price?.nickname ?? 'Paid Plan')
+        } else if (hasActiveSubscription && price?.nickname) {
+            planName = price.nickname
+        } else if (hasActiveSubscription) {
+            planName = 'Paid Plan'
+        }
+
+        // Get price details from Stripe
+        const priceAmount = price?.unit_amount || 0
+        const priceInterval = price?.recurring?.interval || 'month'
+        const priceCurrency = price?.currency || 'usd'
+
+        // Get credits limit from price metadata, product metadata, or use defaults
+        const metadataCredits =
+            parseInt(price?.metadata?.credits_included || '0') ||
+            parseInt((product?.metadata?.credits_included as string) || '0')
+
+        const isPro = hasActiveSubscription && price?.id !== BILLING_CONFIG.PRICE_IDS.FREE_MONTHLY
+        const planLimits = metadataCredits || (isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE)
 
         // Calculate total usage
         const totalUsage = (usage?.usageByMeter?.ai_tokens || 0) + (usage?.usageByMeter?.compute || 0) + (usage?.usageByMeter?.storage || 0)
@@ -107,9 +129,12 @@ const getUsageSummary = async (req: Request, res: Response, next: NextFunction) 
 
         const usageSummary: UsageSummary = {
             currentPlan: {
-                name: isPro ? 'Pro' : 'Free',
+                name: planName,
                 status: subscription?.status === 'active' ? 'active' : 'inactive',
-                creditsIncluded: planLimits
+                creditsIncluded: planLimits,
+                price: priceAmount,
+                interval: priceInterval,
+                currency: priceCurrency
             },
             usageDashboard: {
                 totalChats,
@@ -422,16 +447,38 @@ export const getCustomerStatus = async (req: Request, res: Response, next: NextF
             : new Date(now.setMonth(now.getMonth() + 1))
         const daysRemaining = Math.ceil((billingPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
-        // Determine plan type and limits
-        const isPro = subscription?.status === 'active' && subscription.items.data[0]?.price.id === BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY
-        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+        // Get plan info from subscription (uses expanded product data)
+        const hasActiveSubscription = subscription?.status === 'active' && subscription.items.data?.length > 0
+        const subscriptionItem = subscription?.items.data?.[0]
+        const price = subscriptionItem?.price
+        const product = price?.product as Stripe.Product | undefined
+
+        // Get plan name from Stripe product
+        let planName = 'Free'
+        if (hasActiveSubscription && product && typeof product !== 'string') {
+            planName = product.name || (price?.nickname ?? 'Paid Plan')
+        } else if (hasActiveSubscription) {
+            planName = 'Paid Plan'
+        }
+
+        // Get price details from Stripe
+        const priceAmount = price?.unit_amount || 0
+        const priceInterval = price?.recurring?.interval || 'month'
+        const priceCurrency = price?.currency || 'usd'
+
+        // Get credits from metadata or defaults
+        const metadataCredits =
+            parseInt(price?.metadata?.credits_included || '0') ||
+            parseInt((product && typeof product !== 'string' ? product.metadata?.credits_included : '') || '0')
+        const planLimits = metadataCredits || (hasActiveSubscription ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE)
 
         const customerStatus: CustomerStatus = {
             plan: {
-                type: isPro ? 'Pro' : 'Free',
+                type: planName,
                 status: subscription?.status === 'active' ? 'active' : 'inactive',
-                price: isPro ? 20 : 0, // $20 for Pro plan
-                billingPeriod: 'month',
+                price: priceAmount,
+                billingPeriod: priceInterval,
+                currency: priceCurrency,
                 features: ['Full API access', 'Community support', 'All features included', 'Usage analytics'],
                 limits: {
                     creditsPerMonth: planLimits,

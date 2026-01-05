@@ -239,9 +239,12 @@ export interface SyncUsageResponse {
 
 export interface UsageSummary {
     currentPlan: {
-        name: 'Free' | 'Pro'
+        name: string
         status: 'active' | 'inactive'
         creditsIncluded: number
+        price: number           // Price in cents from Stripe
+        interval: string        // 'month' | 'year' from Stripe
+        currency: string        // Currency code from Stripe
     }
     usageDashboard: {
         totalMessages: number
@@ -311,10 +314,11 @@ export interface UsageSummary {
 
 export interface CustomerStatus {
     plan: {
-        type: 'Free' | 'Pro'
+        type: string            // Dynamic plan name from Stripe product
         status: 'active' | 'inactive'
-        price: number
-        billingPeriod: 'month' | 'year'
+        price: number           // Price in cents from Stripe
+        billingPeriod: string   // Interval from Stripe (month, year, etc.)
+        currency: string        // Currency code from Stripe
         features: string[]
         limits: {
             creditsPerMonth: number
