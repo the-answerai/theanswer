@@ -17,7 +17,7 @@ class ChatAnthropic_ChatModels implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    tags: string[]
+
     constructor() {
         this.label = 'ChatAnthropic'
         this.name = 'chatAnthropic'
@@ -45,7 +45,7 @@ class ChatAnthropic_ChatModels implements INode {
                 name: 'modelName',
                 type: 'asyncOptions',
                 loadMethod: 'listModels',
-                default: 'claude-3-sonnet-20240229'
+                default: 'claude-3-haiku'
             },
             {
                 label: 'Temperature',
@@ -91,7 +91,7 @@ class ChatAnthropic_ChatModels implements INode {
                 label: 'Extended Thinking',
                 name: 'extendedThinking',
                 type: 'boolean',
-                description: 'Enable extended thinking for reasoning model such as Claude Sonnet 3.7',
+                description: 'Enable extended thinking for reasoning model such as Claude Sonnet 3.7 and Claude 4',
                 optional: true,
                 additionalParams: true
             },
@@ -115,7 +115,6 @@ class ChatAnthropic_ChatModels implements INode {
                 optional: true
             }
         ]
-        // Note: AAI tag removed - use AAIChatAnthropic for Answer tab
     }
 
     //@ts-ignore

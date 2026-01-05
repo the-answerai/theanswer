@@ -90,7 +90,7 @@ export class AAIDallePostTool extends Tool {
             const usrId = this.userId || 'tool-system'
 
             // Store the image using organization/user folder structure
-            const imageStorageUrl = await addSingleFileToStorage('image/png', buffer, imageFilename, 'dalle-images', orgId, usrId)
+            const { path: imageStorageUrl } = await addSingleFileToStorage('image/png', buffer, imageFilename, 'dalle-images', orgId, usrId)
 
             // Store the full OpenAI response as JSON if provided
             let jsonStorageUrl = null
@@ -114,7 +114,7 @@ export class AAIDallePostTool extends Tool {
 
             // Add JSON URL to response if JSON was stored
             if (jsonStorageUrl) {
-                const jsonFileName = jsonStorageUrl.replace('FILE-STORAGE::', '')
+                const jsonFileName = jsonStorageUrl?.path.replace('FILE-STORAGE::', '')
                 response.jsonUrl = `${domain}/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${orgId}%2F${usrId}&fileName=${jsonFileName}`
             }
 

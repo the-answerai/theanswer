@@ -22,7 +22,7 @@ const sanitizeTool = (Tool) => {
 const sanitizeChatflow = (ChatFlow) => {
     try {
         return ChatFlow.map((chatFlow) => {
-            const sanitizeFlowData = generateExportFlowData(chatFlow)
+            const sanitizeFlowData = generateExportFlowData(JSON.parse(chatFlow.flowData))
             return {
                 id: chatFlow.id,
                 name: chatFlow.name,
@@ -68,6 +68,37 @@ const sanitizeAssistant = (Assistant) => {
     }
 }
 
+const sanitizeCustomTemplate = (CustomTemplate) => {
+    try {
+        return CustomTemplate.map((customTemplate) => {
+            return { ...customTemplate, usecases: JSON.stringify(customTemplate.usecases), workspaceId: undefined }
+        })
+    } catch (error) {
+        throw new Error(`exportImport.sanitizeCustomTemplate ${getErrorMessage(error)}`)
+    }
+}
+
+const sanitizeDocumentStore = (DocumentStore) => {
+    try {
+        return DocumentStore.map((documentStore) => {
+            return { ...documentStore, workspaceId: undefined }
+        })
+    } catch (error) {
+        throw new Error(`exportImport.sanitizeDocumentStore ${getErrorMessage(error)}`)
+    }
+}
+
+const sanitizeExecution = (Execution) => {
+    try {
+        return Execution.map((execution) => {
+            if (execution.agentflow) execution.agentflow.workspaceId = undefined
+            return { ...execution, workspaceId: undefined }
+        })
+    } catch (error) {
+        throw new Error(`exportImport.sanitizeExecution ${getErrorMessage(error)}`)
+    }
+}
+
 export const stringify = (object) => {
     try {
         return JSON.stringify(object, null, 2)
@@ -85,14 +116,13 @@ export const exportData = (exportAllData) => {
             AssistantCustom: sanitizeAssistant(exportAllData.AssistantCustom),
             AssistantOpenAI: sanitizeAssistant(exportAllData.AssistantOpenAI),
             AssistantAzure: sanitizeAssistant(exportAllData.AssistantAzure),
-            Chat: exportAllData.Chat,
             ChatFlow: sanitizeChatflow(exportAllData.ChatFlow),
             ChatMessage: exportAllData.ChatMessage,
             ChatMessageFeedback: exportAllData.ChatMessageFeedback,
-            CustomTemplate: exportAllData.CustomTemplate,
-            DocumentStore: exportAllData.DocumentStore,
+            CustomTemplate: sanitizeCustomTemplate(exportAllData.CustomTemplate),
+            DocumentStore: sanitizeDocumentStore(exportAllData.DocumentStore),
             DocumentStoreFileChunk: exportAllData.DocumentStoreFileChunk,
-            Execution: exportAllData.Execution,
+            Execution: sanitizeExecution(exportAllData.Execution),
             Tool: sanitizeTool(exportAllData.Tool),
             Variable: sanitizeVariable(exportAllData.Variable)
         }

@@ -55,13 +55,13 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'x-request-from': 'aai',
                 Authorization: `Bearer ${token}`
             }
         })
 
         if (response.ok) {
             const result = await response.json()
-
             const uploadAllowedNodes = [
                 'llmChain',
                 'conversationChain',

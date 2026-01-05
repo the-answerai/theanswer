@@ -1,6 +1,14 @@
-// ==============================|| MINIMAL LAYOUT ||============================== //
+// import { Outlet } from 'react-router-dom'
 import PropTypes from 'prop-types'
-const MinimalLayout = ({ children }) => <>{children}</>
+
+// ==============================|| MINIMAL LAYOUT ||============================== //
+
+const MinimalLayout = ({ children }) => (
+    <>
+        {/* <Outlet /> */}
+        {children}
+    </>
+)
 
 MinimalLayout.propTypes = {
     children: PropTypes.node.isRequired

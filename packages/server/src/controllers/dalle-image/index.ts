@@ -80,7 +80,7 @@ const generateDalleImage = async (req: Request, res: Response, next: NextFunctio
         let user = req.user || { id: userId, organizationId, email: userEmail }
 
         // For internal tool calls without user context, use default system context
-        if (!user?.id && req.headers['x-request-from'] === 'internal') {
+        if (!user?.id && (req.headers['x-request-from'] === 'internal' || req.headers['x-request-from'] === 'aai')) {
             user = {
                 id: 'tool-system',
                 organizationId: 'system-org',
@@ -188,7 +188,7 @@ const uploadImageToStorage = async (data: {
     }
 
     // Convert FILE-STORAGE:: reference to a full URL
-    const imageFileName = imageStorageUrl.replace('FILE-STORAGE::', '')
+    const imageFileName = imageStorageUrl.path.replace('FILE-STORAGE::', '')
     const fullImageUrl = `/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${organizationId}%2F${userId}&fileName=${imageFileName}`
 
     const response: {
@@ -204,7 +204,7 @@ const uploadImageToStorage = async (data: {
 
     // Add JSON URL to response if JSON was stored
     if (jsonStorageUrl) {
-        const jsonFileName = jsonStorageUrl.replace('FILE-STORAGE::', '')
+        const jsonFileName = jsonStorageUrl.path.replace('FILE-STORAGE::', '')
         response.jsonUrl = `/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${organizationId}%2F${userId}&fileName=${jsonFileName}`
     }
 

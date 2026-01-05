@@ -633,7 +633,7 @@
                 "type": "AnswerAgent MCP Tool",
                 "baseClasses": ["Tool"],
                 "tags": ["AAI"],
-                "category": "MCP Servers",
+                "category": "Tools (MCP)",
                 "description": "MCP server that integrates with AnswerAgent API • Zero configuration required",
                 "inputParams": [
                     {

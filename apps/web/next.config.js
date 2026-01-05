@@ -109,6 +109,12 @@ let nextConfig = withBundleAnalyzer({
         NEXT_PUBLIC_ERROR_REPORTING_ENABLED: process.env.LINEAR_API_KEY ? 'true' : ''
     },
     webpack: (config, { isServer }) => {
+        // Redirect react-router-dom imports to our navigation shim
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'react-router-dom': require.resolve('../../packages/ui/src/utils/navigation.tsx')
+        }
+
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
         config.plugins = [
             ...config.plugins,
@@ -138,6 +144,18 @@ let nextConfig = withBundleAnalyzer({
                     }
                 }
             ]
+        })
+
+        // Handle PNG/JPG images from packages/ui to return string URLs instead of StaticImageData objects
+        // This fixes the [object Object] URL issue in AddNodes panel without modifying Flowise code
+        config.module.rules.push({
+            test: /\.(png|jpg|jpeg|gif)$/,
+            include: [require('path').resolve(__dirname, '../../packages/ui/src/assets/images')],
+            type: 'asset/resource',
+            generator: {
+                filename: 'static/images/[name].[hash:8][ext]',
+                publicPath: '/_next/'
+            }
         })
         if (isServer) {
             config.plugins = [...config.plugins, new PrismaPlugin()]

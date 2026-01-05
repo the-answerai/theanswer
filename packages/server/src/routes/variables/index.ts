@@ -1,18 +1,19 @@
 import express from 'express'
 import variablesController from '../../controllers/variables'
-import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { checkAnyPermission, checkPermission } from '../../enterprise/rbac/PermissionCheck'
 
 const router = express.Router()
+
 // CREATE
-router.post('/', enforceAbility('Variable'), variablesController.createVariable)
+router.post('/', checkPermission('variables:create'), variablesController.createVariable)
 
 // READ
-router.get('/', enforceAbility('Variable'), variablesController.getAllVariables)
+router.get('/', checkPermission('variables:view'), variablesController.getAllVariables)
 
 // UPDATE
-router.put(['/', '/:id'], enforceAbility('Variable'), variablesController.updateVariable)
+router.put(['/', '/:id'], checkAnyPermission('variables:create,variables:update'), variablesController.updateVariable)
 
 // DELETE
-router.delete(['/', '/:id'], enforceAbility('Variable'), variablesController.deleteVariable)
+router.delete(['/', '/:id'], checkPermission('variables:delete'), variablesController.deleteVariable)
 
 export default router

@@ -256,7 +256,7 @@ const AdminChatflows = () => {
                 ownersMap.set(chatflow.userId, chatflow.user.name)
             } else if (chatflow.user?.email) {
                 ownersMap.set(chatflow.userId, chatflow.user.email)
-            } else {
+            } else if (chatflow.userId) {
                 ownersMap.set(chatflow.userId, chatflow.userId)
             }
         })
@@ -266,7 +266,7 @@ const AdminChatflows = () => {
                 label: name,
                 value: id
             }))
-            .sort((a, b) => a.label.localeCompare(b.label))
+            .sort((a, b) => (a.label ?? '').localeCompare(b.label ?? ''))
     }
 
     const handleOpenMetrics = (chatflowId: string) => {

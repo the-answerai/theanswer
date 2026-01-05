@@ -1,18 +1,21 @@
 import axios from 'axios'
-import * as Constants from '@/store/constant'
+import { baseURL, ErrorMessage } from '@/store/constant'
+import AuthUtils from '@/utils/authUtils'
 
 const apiClient = axios.create({
-    baseURL: `${Constants.baseURL}/api/v1`,
-    withCredentials: true,
+    baseURL: `${baseURL}/api/v1`,
     headers: {
         'Content-type': 'application/json',
-        'x-request-from': 'internal'
-    }
+        'x-request-from': 'aai'
+    },
+    withCredentials: true
 })
 
 apiClient.interceptors.request.use(async function (config) {
-    const baseURL = sessionStorage.getItem('baseURL') || Constants.baseURL // Fallback URL
-    config.baseURL = `${baseURL}/api/v1`
+    // Use a different variable name to avoid shadowing the imported baseURL
+    const storedBaseURL = sessionStorage.getItem('baseURL')
+    const effectiveBaseURL = storedBaseURL || baseURL
+    config.baseURL = `${effectiveBaseURL}/api/v1`
 
     const token = sessionStorage.getItem('access_token')
     if (token) {
@@ -20,5 +23,38 @@ apiClient.interceptors.request.use(async function (config) {
     }
     return config
 })
+
+apiClient.interceptors.response.use(
+    function (response) {
+        return response
+    },
+    async (error) => {
+        if (error.response.status === 401) {
+            // check if refresh is needed
+            if (error.response.data.message === ErrorMessage.TOKEN_EXPIRED && error.response.data.retry === true) {
+                const originalRequest = error.config
+                // call api to get new token
+                const response = await axios.post(`${baseURL}/api/v1/auth/refreshToken`, {}, { withCredentials: true })
+                if (response.data.id) {
+                    // retry the original request
+                    return apiClient.request(originalRequest)
+                }
+            }
+            localStorage.removeItem('username')
+            localStorage.removeItem('password')
+            AuthUtils.removeCurrentUser()
+
+            // Redirect to login page
+            // Check if we're in a browser environment
+            if (typeof window !== 'undefined') {
+                // Use Auth0 login for AAI, fallback to /login for enterprise
+                const loginUrl = window.location.pathname.includes('/sidekick') ? '/api/auth/login' : '/login'
+                window.location.href = loginUrl
+            }
+        }
+
+        return Promise.reject(error)
+    }
+)
 
 export default apiClient

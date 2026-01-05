@@ -22,6 +22,7 @@ const MainCard = forwardRef(function MainCard(
             py: 0
         },
         darkTitle,
+        maxWidth = 'full',
         secondary,
         shadow,
         sx = {},
@@ -36,12 +37,11 @@ const MainCard = forwardRef(function MainCard(
             ref={ref}
             {...otherProps}
             sx={{
-                // Only set transparent if background is not provided in sx
-                ...(!sx.background && { background: 'transparent' }),
+                background: 'transparent',
                 ':hover': {
                     boxShadow: boxShadow ? shadow || '0 2px 14px 0 rgb(32 40 45 / 8%)' : 'inherit'
                 },
-                maxWidth: '1280px',
+                maxWidth: maxWidth === 'sm' ? '800px' : maxWidth === 'md' ? '960px' : '1280px',
                 mx: 'auto',
                 ...sx
             }}
@@ -67,6 +67,7 @@ const MainCard = forwardRef(function MainCard(
 MainCard.propTypes = {
     border: PropTypes.bool,
     boxShadow: PropTypes.bool,
+    maxWidth: PropTypes.oneOf(['full', 'sm', 'md']),
     children: PropTypes.node,
     content: PropTypes.bool,
     contentClass: PropTypes.string,

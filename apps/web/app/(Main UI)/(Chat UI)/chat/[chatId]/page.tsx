@@ -17,20 +17,30 @@ async function getChat(chatId: string, user: User) {
         if (!accessToken) throw new Error('No access token found')
         token = accessToken
     } catch (err) {
-        console.error('Auth error:', err)
+        console.error('[getChat] Auth error:', err)
     }
 
     // Check if id corresponds to a valid chat
+    const chatUrl = `${user.chatflowDomain}/api/v1/chats/${chatId}`
+
     const chatflowChatPromise = token
-        ? fetch(`${user.chatflowDomain}/api/v1/chats/${chatId}`, {
+        ? fetch(chatUrl, {
               headers: {
                   'Content-Type': 'application/json',
+                  'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
-              .then((res) => (res.ok ? res.json() : null))
+              .then(async (res) => {
+                  if (res.ok) {
+                      const data = await res.json()
+
+                      return data
+                  }
+                  return null
+              })
               .catch((err) => {
-                  console.error('Error fetching chatflow chat:', err)
+                  console.error('[getChat] Error fetching chatflow chat:', err)
                   return null
               })
         : Promise.resolve(null)
@@ -39,23 +49,34 @@ async function getChat(chatId: string, user: User) {
 
     // Return chatflow chat if local chat doesn't exist
     if (chatflowChat) {
-        return {
+        // IMPORTANT: Ensure chatflowId is included for getMessages to work
+        const result = {
             ...chatflowChat,
-            chatflowChatId: chatflowChat.id
+            chatflowChatId: chatflowChat.id,
+            // chatflowId might be 'chatflowid' (lowercase) in the response
+            chatflowId: chatflowChat.chatflowId || chatflowChat.chatflowid,
+            sidekickId: chatflowChat.sidekickId || chatflowChat.chatflowId || chatflowChat.chatflowid
         }
+
+        return result
     }
 
     // If no Chat, check if it's a chatflow ID
+    const chatflowUrl = `${user.chatflowDomain}/api/v1/chatflows/${chatId}`
+
     const chatflow: Chatflow = await (token
-        ? fetch(`${user.chatflowDomain}/api/v1/chatflows/${chatId}`, {
+        ? fetch(chatflowUrl, {
               headers: {
                   'Content-Type': 'application/json',
+                  'x-request-from': 'aai',
                   Authorization: `Bearer ${token}`
               }
           })
-              .then((res) => (res.ok ? res.json() : null))
+              .then(async (res) => {
+                  return res.ok ? res.json() : null
+              })
               .catch((err) => {
-                  console.error('Error fetching chatflow chat:', err)
+                  console.error('[getChat] Error fetching chatflow:', err)
                   return null
               })
         : Promise.resolve(null))
@@ -69,7 +90,16 @@ async function getChat(chatId: string, user: User) {
 }
 
 async function getMessages(chat: Partial<ChatType>, user: User) {
-    if (!chat?.chatflowChatId) return []
+    if (!chat?.chatflowChatId) {
+        return []
+    }
+
+    // The chatflowId is required in the URL path - get it from the chat object
+    const chatflowId = chat?.chatflowId || chat?.sidekickId
+    if (!chatflowId) {
+        console.error('[getMessages] No chatflowId found in chat object:', chat)
+        return []
+    }
 
     try {
         const { accessToken } = await auth0.getAccessToken({
@@ -77,26 +107,31 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
         })
         if (!accessToken) throw new Error('No access token found')
 
-        const result = await fetch(`${user.chatflowDomain}/api/v1/chatmessage?chatId=${chat.chatflowChatId}`, {
+        // IMPORTANT: Route is /api/v1/chatmessage/:chatflowId?chatId=xxx
+        // The :id param in the route is the chatflowId, chatId goes in query string
+        const url = `${user.chatflowDomain}/api/v1/chatmessage/${chatflowId}?chatId=${chat.chatflowChatId}`
+
+        const result = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
+                'x-request-from': 'aai',
                 Authorization: `Bearer ${accessToken}`
             }
         })
-        // console.log('Token', accessToken)
-        // console.log('Result', result)
+
         if (!result.ok) {
-            const error = new Error('Failed to fetch messages')
-            throw error
+            const errorText = await result.text()
+            console.error('[getMessages] Error response:', errorText)
+            throw new Error(`Failed to fetch messages: ${result.status} ${errorText}`)
         }
 
         let messages: any[] = []
         try {
             messages = await result.json()
         } catch (err) {
-            console.error('Error parsing messages:', err)
+            console.error('[getMessages] Error parsing messages:', err)
         }
-        // console.log('Messages', messages)
+
         return messages?.map((m: any) => ({
             ...m,
             // agentReasoning: JSON.parse(m.agentReasoning ?? '[]'),
@@ -140,8 +175,6 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
             ...chat,
             messages
         }
-
-        // console.log('Chat', chat)
 
         // Chat without credential issues - use regular Chat component
         // The Chat component will handle credential checking using useCredentialChecker hook

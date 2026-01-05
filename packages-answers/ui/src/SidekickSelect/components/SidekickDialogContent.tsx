@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react'
 import { UserProfile } from '@auth0/nextjs-auth0/client'
 import { Sidekick } from '../SidekickSelect.types'
-import { NavigateFunction } from '@/utils/navigation'
+import { NavigateFunction } from 'react-router-dom'
 import SidekickSearchPanel from '../SidekickSearchPanel'
 import SidekickCategoryList from '../SidekickCategoryList'
 import dynamic from 'next/dynamic'

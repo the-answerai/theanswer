@@ -1,15 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import apiKeyService from '../../services/apikey'
-import { ChatFlow } from '../../database/entities/ChatFlow'
-import { RateLimiterManager } from '../../utils/rateLimit'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { ChatflowType } from '../../Interface'
-import chatflowsService from '../../services/chatflows'
-import checkOwnership from '../../utils/checkOwnership'
-// import billingService from '../../services/billing'
+
 import logger from '../../utils/logger'
-// import { billingService } from '../../services/billing'
 import { CustomerStatus, UsageStats } from '../../aai-utils/billing/core/types'
 import { BILLING_CONFIG } from '../../aai-utils/billing/config'
 import { UsageSummary } from '../../aai-utils/billing/core/types'
@@ -19,243 +12,6 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Chat } from '../../database/entities/Chat'
 import { IsNull } from 'typeorm'
 import { BillingService } from '../../aai-utils/billing'
-
-const checkIfChatflowIsValidForStreaming = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.checkIfChatflowIsValidForStreaming - id not provided!`
-            )
-        }
-        const apiResponse = await chatflowsService.checkIfChatflowIsValidForStreaming(req.params.id)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const checkIfChatflowIsValidForUploads = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.checkIfChatflowIsValidForUploads - id not provided!`
-            )
-        }
-        const apiResponse = await chatflowsService.checkIfChatflowIsValidForUploads(req.params.id)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const deleteChatflow = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.deleteChatflow - id not provided!`)
-        }
-        const apiResponse = await chatflowsService.deleteChatflow(req.params.id, req.user)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const getAllChatflows = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const userId = req.user?.id
-        if (!userId) {
-            return res.status(401).send('Unauthorized')
-        }
-        const filter = req.query.filter ? JSON.parse(decodeURIComponent(req.query.filter as string)) : undefined
-        const apiResponse = await chatflowsService.getAllChatflows(req.user!, req.query?.type as ChatflowType, {
-            ...res.locals.filter,
-            ...filter
-        })
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-// Get specific chatflow via api key
-const getChatflowByApiKey = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.apikey) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getChatflowByApiKey - apikey not provided!`
-            )
-        }
-        const apikey = await apiKeyService.getApiKey(req.params.apikey)
-        if (!apikey) {
-            return res.status(401).send('Unauthorized')
-        }
-        const apiResponse = await chatflowsService.getChatflowByApiKey(apikey.id, req.query.keyonly)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const getChatflowById = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.getChatflowById - id not provided!`)
-        }
-        const apiResponse = await chatflowsService.getChatflowById(req.params.id, req.user)
-
-        // Check if the chatflow is public (Marketplace) for unauthenticated users
-        if (!req.user && (!apiResponse.visibility || !apiResponse.visibility.includes('Marketplace') || !apiResponse.isPublic)) {
-            throw new InternalFlowiseError(
-                StatusCodes.UNAUTHORIZED,
-                `Error: chatflowsRouter.getChatflowById - Unauthorized access to non-public chatflow!`
-            )
-        }
-
-        // For authenticated users, check ownership
-        if (req.user && !(await checkOwnership(apiResponse, req.user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
-
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const saveChatflow = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (!req.user) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: chatflowsRouter.saveChatflow - Unauthorized!`)
-        }
-        if (!req.body) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - body not provided!`)
-        }
-        const body = req.body
-        const newChatFlow = new ChatFlow()
-
-        Object.assign(newChatFlow, { ...body, userId: req.user?.id, organizationId: req.user?.organizationId })
-        const apiResponse = await chatflowsService.saveChatflow(newChatFlow)
-
-        // TODO: Abstract sending to AnswerAI through events endpoint and move to service
-        const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
-        try {
-            await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer ' + req.auth?.token!,
-                    cookie: req.headers.cookie!
-                },
-                body: JSON.stringify({
-                    chatflow: apiResponse,
-                    chatflowDomain: req.auth?.payload?.chatflowDomain
-                })
-            })
-        } catch (err) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - AnswerAI sync failed!`)
-        }
-
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const importChatflows = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const chatflows: Partial<ChatFlow>[] = req.body.Chatflows
-        const apiResponse = await chatflowsService.importChatflows(req.user!, chatflows)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const updateChatflow = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.updateChatflow - id not provided!`)
-        }
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, req.user!)
-        if (!chatflow) {
-            return res.status(404).send(`Chatflow ${req.params.id} not found`)
-        }
-
-        if (!(await checkOwnership(chatflow, req.user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
-        const body = req.body
-        const updateChatFlow = new ChatFlow()
-        Object.assign(updateChatFlow, body)
-
-        // Ensure chatbotConfig is passed as a string
-        if (body.chatbotConfig && typeof body.chatbotConfig === 'string') {
-            updateChatFlow.chatbotConfig = body.chatbotConfig
-        }
-
-        updateChatFlow.id = chatflow.id
-        const rateLimiterManager = RateLimiterManager.getInstance()
-        await rateLimiterManager.updateRateLimiter(updateChatFlow)
-
-        const apiResponse = await chatflowsService.updateChatflow(chatflow, updateChatFlow, req.user!)
-
-        // TODO: Abstract sending to AnswerAI through events endpoint and move to service
-        const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
-        try {
-            await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer ' + req.auth?.token!,
-                    cookie: req.headers.cookie!
-                },
-                body: JSON.stringify({
-                    chatflow: apiResponse,
-                    chatflowDomain: req.auth?.payload?.chatflowDomain
-                })
-            })
-        } catch (err) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - AnswerAI sync failed!`)
-        }
-
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const getSinglePublicChatflow = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getSinglePublicChatflow - id not provided!`
-            )
-        }
-        const apiResponse = await chatflowsService.getSinglePublicChatflow(req.params.id, req.user)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getSinglePublicChatbotConfig - id not provided!`
-            )
-        }
-        const apiResponse = await chatflowsService.getSinglePublicChatbotConfig(req.params.id, req.user)
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
 
 /**
  * Get usage statistics for the current user
@@ -278,12 +34,34 @@ const getUsageSummary = async (req: Request, res: Response, next: NextFunction) 
             console.error('Error getting usage stats:', error.message)
             // next(error)
         }
-        // Determine plan type
-        const isPro =
-            subscription?.status === 'active' &&
-            subscription.items.data?.length &&
-            subscription.items.data[0]?.price.id !== BILLING_CONFIG.PRICE_IDS.FREE_MONTHLY
-        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+        // Determine plan type from Stripe subscription
+        const hasActiveSubscription = subscription?.status === 'active' && subscription.items.data?.length > 0
+        const subscriptionItem = subscription?.items.data?.[0]
+        const price = subscriptionItem?.price
+        const product = price?.product as Stripe.Product | undefined
+
+        // Get plan name from: product name > price nickname > metadata > fallback
+        let planName = 'Free'
+        if (hasActiveSubscription && product && typeof product !== 'string') {
+            planName = product.name || (price?.nickname ?? 'Paid Plan')
+        } else if (hasActiveSubscription && price?.nickname) {
+            planName = price.nickname
+        } else if (hasActiveSubscription) {
+            planName = 'Paid Plan'
+        }
+
+        // Get price details from Stripe
+        const priceAmount = price?.unit_amount || 0
+        const priceInterval = price?.recurring?.interval || 'month'
+        const priceCurrency = price?.currency || 'usd'
+
+        // Get credits limit from price metadata, product metadata, or use defaults
+        const metadataCredits =
+            parseInt(price?.metadata?.credits_included || '0') ||
+            parseInt((product?.metadata?.credits_included as string) || '0')
+
+        const isPro = hasActiveSubscription && price?.id !== BILLING_CONFIG.PRICE_IDS.FREE_MONTHLY
+        const planLimits = metadataCredits || (isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE)
 
         // Calculate total usage
         const totalUsage = (usage?.usageByMeter?.ai_tokens || 0) + (usage?.usageByMeter?.compute || 0) + (usage?.usageByMeter?.storage || 0)
@@ -351,9 +129,12 @@ const getUsageSummary = async (req: Request, res: Response, next: NextFunction) 
 
         const usageSummary: UsageSummary = {
             currentPlan: {
-                name: isPro ? 'Pro' : 'Free',
+                name: planName,
                 status: subscription?.status === 'active' ? 'active' : 'inactive',
-                creditsIncluded: planLimits
+                creditsIncluded: planLimits,
+                price: priceAmount,
+                interval: priceInterval,
+                currency: priceCurrency
             },
             usageDashboard: {
                 totalChats,
@@ -666,16 +447,38 @@ export const getCustomerStatus = async (req: Request, res: Response, next: NextF
             : new Date(now.setMonth(now.getMonth() + 1))
         const daysRemaining = Math.ceil((billingPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
-        // Determine plan type and limits
-        const isPro = subscription?.status === 'active' && subscription.items.data[0]?.price.id === BILLING_CONFIG.PRICE_IDS.PAID_MONTHLY
-        const planLimits = isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE
+        // Get plan info from subscription (uses expanded product data)
+        const hasActiveSubscription = subscription?.status === 'active' && subscription.items.data?.length > 0
+        const subscriptionItem = subscription?.items.data?.[0]
+        const price = subscriptionItem?.price
+        const product = price?.product as Stripe.Product | undefined
+
+        // Get plan name from Stripe product
+        let planName = 'Free'
+        if (hasActiveSubscription && product && typeof product !== 'string') {
+            planName = product.name || (price?.nickname ?? 'Paid Plan')
+        } else if (hasActiveSubscription) {
+            planName = 'Paid Plan'
+        }
+
+        // Get price details from Stripe
+        const priceAmount = price?.unit_amount || 0
+        const priceInterval = price?.recurring?.interval || 'month'
+        const priceCurrency = price?.currency || 'usd'
+
+        // Get credits from metadata or defaults
+        const metadataCredits =
+            parseInt(price?.metadata?.credits_included || '0') ||
+            parseInt((product && typeof product !== 'string' ? product.metadata?.credits_included : '') || '0')
+        const planLimits = metadataCredits || (hasActiveSubscription ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE)
 
         const customerStatus: CustomerStatus = {
             plan: {
-                type: isPro ? 'Pro' : 'Free',
+                type: planName,
                 status: subscription?.status === 'active' ? 'active' : 'inactive',
-                price: isPro ? 20 : 0, // $20 for Pro plan
-                billingPeriod: 'month',
+                price: priceAmount,
+                billingPeriod: priceInterval,
+                currency: priceCurrency,
                 features: ['Full API access', 'Community support', 'All features included', 'Usage analytics'],
                 limits: {
                     creditsPerMonth: planLimits,
@@ -753,17 +556,6 @@ const getUsageEvents = async (req: Request, res: Response, next: NextFunction) =
 }
 
 export default {
-    checkIfChatflowIsValidForStreaming,
-    checkIfChatflowIsValidForUploads,
-    deleteChatflow,
-    getAllChatflows,
-    getChatflowByApiKey,
-    getChatflowById,
-    saveChatflow,
-    importChatflows,
-    updateChatflow,
-    getSinglePublicChatflow,
-    getSinglePublicChatbotConfig,
     getUsageSummary,
     usageSyncHandler,
     attachPaymentMethod,

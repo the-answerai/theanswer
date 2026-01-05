@@ -1,26 +1,19 @@
 import express from 'express'
 import credentialsController from '../../controllers/credentials'
-import enforceAbility from '../../middlewares/authentication/enforceAbility'
-
+import { checkPermission, checkAnyPermission } from '../../enterprise/rbac/PermissionCheck'
 const router = express.Router()
 
 // CREATE
-router.post('/', enforceAbility('Credential'), credentialsController.createCredential)
+router.post('/', checkPermission('credentials:create'), credentialsController.createCredential)
 
 // READ
-router.get('/', enforceAbility('Credential'), credentialsController.getAllCredentials)
-router.get(['/', '/:id'], enforceAbility('Credential'), credentialsController.getCredentialById)
+router.get('/', checkPermission('credentials:view'), credentialsController.getAllCredentials)
+router.get(['/', '/:id'], checkPermission('credentials:view'), credentialsController.getCredentialById)
 
 // UPDATE
-router.put(['/', '/:id'], enforceAbility('Credential'), credentialsController.updateCredential)
+router.put(['/', '/:id'], checkAnyPermission('credentials:create,credentials:update'), credentialsController.updateCredential)
 
 // DELETE
-router.delete(['/', '/:id'], enforceAbility('Credential'), credentialsController.deleteCredentials)
-
-// UPDATE REFRESH TOKEN
-router.post('/refresh-token', enforceAbility('Credential'), credentialsController.updateAndRefreshToken)
-
-// UPDATE REFRESH ATLASSIAN TOKEN
-router.post('/refresh-atlassian-token', enforceAbility('Credential'), credentialsController.updateAndRefreshAtlassianToken)
+router.delete(['/', '/:id'], checkPermission('credentials:delete'), credentialsController.deleteCredentials)
 
 export default router

@@ -3,7 +3,7 @@ import { CallbackManager, CallbackManagerForToolRun, Callbacks, parseCallbackCon
 import { BaseDynamicToolInput, DynamicTool, StructuredTool, ToolInputParsingException } from '@langchain/core/tools'
 import { BaseRetriever } from '@langchain/core/retrievers'
 import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
-import { getBaseClasses } from '../../../src/utils'
+import { getBaseClasses, parseWithTypeConversion } from '../../../src/utils'
 import { RunnableConfig } from '@langchain/core/runnables'
 
 const howToUse = `Add additional filters to vector store. You can also filter with flow config, including the current "state":
@@ -56,7 +56,7 @@ class DynamicStructuredTool<T extends z.ZodObject<any, any, any, any> = z.ZodObj
         }
         let parsed
         try {
-            parsed = await this.schema.parseAsync(arg)
+            parsed = await parseWithTypeConversion(this.schema, arg)
         } catch (e) {
             throw new ToolInputParsingException(`Received tool input did not match expected schema`, JSON.stringify(arg))
         }
@@ -181,7 +181,8 @@ class Retriever_Tools implements INode {
                 hint: {
                     label: 'What can you filter?',
                     value: howToUse
-                }
+                },
+                acceptVariable: true
             },
             {
                 label: 'Enable Dynamic Filtering',

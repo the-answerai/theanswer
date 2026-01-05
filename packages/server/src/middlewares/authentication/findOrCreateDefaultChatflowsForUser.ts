@@ -2,7 +2,11 @@ import { DataSource } from 'typeorm'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { User } from '../../database/entities/User'
 
-export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSource, user: User) => {
+export const findOrCreateDefaultChatflowsForUser = async (
+    AppDataSource: DataSource,
+    user: User,
+    activeWorkspaceId?: string
+) => {
     if (!user) return
 
     // Always check database for latest defaultChatflowId to avoid race conditions
@@ -75,7 +79,8 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
                 ...templateCopy,
                 parentChatflowId: firstId,
                 userId: user.id,
-                organizationId: user.organizationId
+                organizationId: user.organizationId,
+                workspaceId: activeWorkspaceId
             }
 
             // Insert the new chatflow

@@ -1,6 +1,6 @@
 {
     "name": "theanswer",
-    "version": "3.0.0",
+    "version": "3.0.11",
     "private": true,
     "homepage": "https://theanswer.ai",
     "workspaces": [
@@ -24,6 +24,10 @@
         "start-worker": "run-script-os",
         "start-worker:windows": "cd packages/server/bin && run worker",
         "start-worker:default": "cd packages/server/bin && ./run worker",
+        "user": "run-script-os",
+        "user:windows": "cd packages/server/bin && run user",
+        "user:default": "cd packages/server/bin && ./run user",
+        "test": "turbo run test",
         "clean": "pnpm --filter \"./packages/**\" clean",
         "nuke": "pnpm --filter \"./packages/**\" nuke && rimraf node_modules .turbo",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -42,7 +46,6 @@
         "db:run:script": "pnpm secure-run \"pnpm --filter db run:script\"",
         "db:studio": "pnpm secure-run \"pnpm db studio\"",
         "db:seed": "pnpm secure-run \"pnpm db db seed\"",
-        "test": "pnpm turbo run test:auth",
         "test:e2e:setup": "pnpm --filter web test:e2e:setup",
         "test:e2e:check": "pnpm --filter web test:e2e:check",
         "test:e2e": "pnpm --filter web test:e2e:dev",
@@ -128,30 +131,32 @@
             "cross-spawn": "7.0.6",
             "ejs": "^3.1.10",
             "esbuild": ">=0.25.0",
-            "express": ">=4.19.2",
-            "form-data": "^4.0.4",
+            "express": ">=4.19.2 <5.0.0",
+            "form-data": "4.0.4",
             "glob-parent": "6.0.2",
             "http-proxy-middleware": ">=3.0.5",
             "jsforce": "^3.10.0",
             "json5": "2.2.3",
             "micromatch": ">=4.0.8",
             "nth-check": "2.1.1",
-            "postcss": ">=8.4.31",
-            "prismjs": ">=1.30.0",
-            "qs": "6.7.3",
+            "path-to-regexp": "0.1.12",
+            "prismjs": "1.29.0",
+            "rollup": "4.45.0",
             "semver": "7.7.1",
-            "send": ">=0.19.0",
+            "send": ">=0.19.0 <1.0.0",
             "serve-static": ">=1.16.0",
             "set-value": "4.1.0",
             "sha.js": ">=2.4.12",
-            "tar-fs": "3.0.9",
             "tmp": "^0.2.4",
             "tough-cookie": ">=4.1.3",
             "tsup": ">=8.3.5",
+            "webpack-dev-server": ">=5.2.1",
+            "solid-js": "1.9.7",
+            "tar-fs": "3.1.0",
             "unset-value": "2.0.1",
             "webpack-dev-middleware": "7.4.2",
-            "webpack-dev-server": ">=5.2.1",
-            "ws": "8.17.1"
+            "ws": "8.18.3",
+            "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
         }
     },
     "engines": {
@@ -195,5 +200,5 @@
             ]
         ]
     },
-    "packageManager": "pnpm@9.15.9"
+    "packageManager": "pnpm@9.12.3"
 }

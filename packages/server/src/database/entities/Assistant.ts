@@ -34,4 +34,6 @@ export class Assistant implements IAssistant {
     @Index()
     @Column({ type: 'uuid', nullable: true })
     organizationId?: string
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

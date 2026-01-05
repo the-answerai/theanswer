@@ -45,7 +45,7 @@ class SalesforceOauth_MCP implements INode {
         this.version = 1.0
         this.type = 'Salesforce OAuth MCP Tool'
         this.icon = 'salesforce.png'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP server that integrates the Salesforce API using OAuth authentication'
         this.documentation = 'https://github.com/tsmztech/mcp-server-salesforce'

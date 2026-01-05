@@ -20,6 +20,7 @@ export async function findSidekickById(user: User, id: string) {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
+            'x-request-from': 'aai',
             Authorization: `Bearer ${token}`
         }
     })

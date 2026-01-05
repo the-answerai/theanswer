@@ -15,10 +15,10 @@ import {
     TableRow,
     Typography,
     Stack,
-    useTheme,
-    IconButton
+    useTheme
 } from '@mui/material'
-import { IconTrash } from '@tabler/icons-react'
+import { IconShare, IconTrash } from '@tabler/icons-react'
+import { PermissionIconButton } from '@/ui-component/button/RBACButtons'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderColor: theme.palette.grey[900] + 25,
@@ -50,7 +50,8 @@ export const MarketplaceTable = ({
     goToCanvas,
     goToTool,
     isLoading,
-    onDelete
+    onDelete,
+    onShare
 }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
@@ -87,15 +88,8 @@ export const MarketplaceTable = ({
                             <StyledTableCell sx={{ minWidth: '100px' }} key='4'>
                                 Use cases
                             </StyledTableCell>
-                            <StyledTableCell key='5'>Nodes</StyledTableCell>
-                            <StyledTableCell component='th' scope='row' key='6'>
-                                &nbsp;
-                            </StyledTableCell>
-                            {onDelete && (
-                                <StyledTableCell component='th' scope='row' key='7'>
-                                    Delete
-                                </StyledTableCell>
-                            )}
+                            <StyledTableCell key='5'>Badges</StyledTableCell>
+                            <StyledTableCell component='th' scope='row' key='6'></StyledTableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -123,11 +117,6 @@ export const MarketplaceTable = ({
                                     <StyledTableCell>
                                         <Skeleton variant='text' />
                                     </StyledTableCell>
-                                    {onDelete && (
-                                        <StyledTableCell>
-                                            <Skeleton variant='text' />
-                                        </StyledTableCell>
-                                    )}
                                 </StyledTableRow>
                                 <StyledTableRow>
                                     <StyledTableCell>
@@ -151,11 +140,6 @@ export const MarketplaceTable = ({
                                     <StyledTableCell>
                                         <Skeleton variant='text' />
                                     </StyledTableCell>
-                                    {onDelete && (
-                                        <StyledTableCell>
-                                            <Skeleton variant='text' />
-                                        </StyledTableCell>
-                                    )}
                                 </StyledTableRow>
                             </>
                         ) : (
@@ -225,27 +209,19 @@ export const MarketplaceTable = ({
                                                 </Stack>
                                             </StyledTableCell>
                                             <StyledTableCell key='5'>
-                                                <Stack flexDirection='row' sx={{ gap: 1, flexWrap: 'wrap' }}>
-                                                    {row.categories &&
-                                                        row.categories.map((tag, index) => (
-                                                            <Chip
-                                                                variant='outlined'
-                                                                key={index}
-                                                                size='small'
-                                                                label={tag}
-                                                                style={{ marginRight: 3, marginBottom: 3 }}
-                                                            />
-                                                        ))}
-                                                </Stack>
-                                            </StyledTableCell>
-                                            <StyledTableCell key='6'>
                                                 <Typography>
                                                     {row.badge &&
                                                         row.badge
                                                             .split(';')
                                                             .map((tag, index) => (
                                                                 <Chip
-                                                                    color={tag === 'POPULAR' ? 'primary' : 'error'}
+                                                                    color={
+                                                                        tag === 'POPULAR'
+                                                                            ? 'primary'
+                                                                            : tag === 'DEPRECATED'
+                                                                            ? 'warning'
+                                                                            : 'error'
+                                                                    }
                                                                     key={index}
                                                                     size='small'
                                                                     label={tag.toUpperCase()}
@@ -254,13 +230,35 @@ export const MarketplaceTable = ({
                                                             ))}
                                                 </Typography>
                                             </StyledTableCell>
-                                            {onDelete && (
-                                                <StyledTableCell key='7'>
-                                                    <IconButton title='Delete' color='error' onClick={() => onDelete(row)}>
-                                                        <IconTrash />
-                                                    </IconButton>
-                                                </StyledTableCell>
-                                            )}
+                                            <StyledTableCell key='6' colSpan={row.shared ? 2 : undefined}>
+                                                {row.shared ? (
+                                                    <Typography>Shared Template</Typography>
+                                                ) : (
+                                                    <>
+                                                        {onShare && (
+                                                            <PermissionIconButton
+                                                                display={'feat:workspaces'}
+                                                                permissionId={'templates:custom-share'}
+                                                                title='Share'
+                                                                color='primary'
+                                                                onClick={() => onShare(row)}
+                                                            >
+                                                                <IconShare />
+                                                            </PermissionIconButton>
+                                                        )}
+                                                        {onDelete && (
+                                                            <PermissionIconButton
+                                                                permissionId={'templates:custom-delete'}
+                                                                title='Delete'
+                                                                color='error'
+                                                                onClick={() => onDelete(row)}
+                                                            >
+                                                                <IconTrash />
+                                                            </PermissionIconButton>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </StyledTableCell>
                                         </StyledTableRow>
                                     ))}
                             </>
@@ -283,5 +281,6 @@ MarketplaceTable.propTypes = {
     goToTool: PropTypes.func,
     goToCanvas: PropTypes.func,
     isLoading: PropTypes.bool,
-    onDelete: PropTypes.func
+    onDelete: PropTypes.func,
+    onShare: PropTypes.func
 }

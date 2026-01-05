@@ -1,9 +1,9 @@
 import express from 'express'
 import cors from 'cors'
 import http from 'http'
-import basicAuth from 'express-basic-auth'
-import { DataSource } from 'typeorm'
-import { MODE } from './Interface'
+import cookieParser from 'cookie-parser'
+import { DataSource, IsNull } from 'typeorm'
+import { MODE, Platform } from './Interface'
 import { getEncryptionKey } from './utils'
 import logger, { expressRequestLogger } from './utils/logger'
 import { getDataSource } from './DataSource'
@@ -12,30 +12,45 @@ import { ChatFlow } from './database/entities/ChatFlow'
 import { CachePool } from './CachePool'
 import { AbortControllerPool } from './AbortControllerPool'
 import { RateLimiterManager } from './utils/rateLimit'
-import { getAPIKeys } from './utils/apiKey'
-import { sanitizeMiddleware, getCorsOptions, getAllowedIframeOrigins } from './utils/XSS'
+import { getAllowedIframeOrigins, getCorsOptions, sanitizeMiddleware } from './utils/XSS'
 import { Telemetry } from './utils/telemetry'
-import flowiseApiV1Router from './routes'
+import flowiseApiV1Router, { createAuth0Router, createAuthMeRouter } from './routes'
 import errorHandlerMiddleware from './middlewares/errors'
 import { initCronJobs } from './utils/cron'
+import { WHITELIST_URLS } from './utils/constants'
+import { initializeJwtCookieMiddleware, verifyToken } from './enterprise/middleware/passport'
+import { IdentityManager } from './IdentityManager'
 import { SSEStreamer } from './utils/SSEStreamer'
 import { validateAPIKey } from './utils/validateKey'
+import { LoggedInUser } from './enterprise/Interface.Enterprise'
 import { IMetricsProvider } from './Interface.Metrics'
 import { Prometheus } from './metrics/Prometheus'
 import { OpenTelemetry } from './metrics/OpenTelemetry'
 import { QueueManager } from './queue/QueueManager'
 import { RedisEventSubscriber } from './queue/RedisEventSubscriber'
-import { WHITELIST_URLS } from './utils/constants'
 import 'global-agent/bootstrap'
+import { UsageCacheManager } from './UsageCacheManager'
+import { Workspace } from './enterprise/database/entities/workspace.entity'
+import { Organization } from './enterprise/database/entities/organization.entity'
+import { GeneralRole, Role } from './enterprise/database/entities/role.entity'
+import { migrateApiKeysFromJsonToDb } from './utils/apiKey'
+import { ExpressAdapter } from '@bull-board/express'
 
-import authenticationHandlerMiddleware from './middlewares/authentication'
 import passport from 'passport'
 import passportConfig from './config/passport'
 import session from 'express-session'
 
 import { createRedisStore } from './AppConfig'
+import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
+import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
+import { populateWorkspaceData } from './middlewares/authentication/populateWorkspaceData'
+import { User } from './database/entities/User'
 declare global {
     namespace Express {
+        interface User extends LoggedInUser {}
+        interface Request {
+            user?: LoggedInUser
+        }
         namespace Multer {
             interface File {
                 bucket: string
@@ -53,7 +68,9 @@ declare global {
     }
 }
 
-passportConfig(passport)
+// AAI 
+// passportConfig(passport)
+
 export class App {
     app: express.Application
     nodesPool: NodesPool
@@ -63,9 +80,12 @@ export class App {
     rateLimiterManager: RateLimiterManager
     AppDataSource: DataSource = getDataSource()
     sseStreamer: SSEStreamer
+    identityManager: IdentityManager
     metricsProvider: IMetricsProvider
     queueManager: QueueManager
     redisSubscriber: RedisEventSubscriber
+    usageCacheManager: UsageCacheManager
+    sessionStore: any
 
     constructor() {
         this.app = express()
@@ -75,52 +95,75 @@ export class App {
         // Initialize database
         try {
             await this.AppDataSource.initialize()
-            logger.info('📦 [server]: Data Source is initializing...')
+            logger.info('📦 [server]: Data Source initialized successfully')
 
             // Run Migrations Scripts
             await this.AppDataSource.runMigrations({ transaction: 'each' })
+            logger.info('🔄 [server]: Database migrations completed successfully')
+
+            // Initialize Identity Manager
+            this.identityManager = await IdentityManager.getInstance()
+            logger.info('🔐 [server]: Identity Manager initialized successfully')
 
             // Initialize nodes pool
             this.nodesPool = new NodesPool()
             await this.nodesPool.initialize()
+            logger.info('🔧 [server]: Nodes pool initialized successfully')
 
             // Initialize abort controllers pool
             this.abortControllerPool = new AbortControllerPool()
-
-            // Initialize API keys
-            await getAPIKeys()
+            logger.info('⏹️ [server]: Abort controllers pool initialized successfully')
 
             // Initialize encryption key
             await getEncryptionKey()
+            logger.info('🔑 [server]: Encryption key initialized successfully')
 
             // Initialize Rate Limit
             this.rateLimiterManager = RateLimiterManager.getInstance()
             await this.rateLimiterManager.initializeRateLimiters(await getDataSource().getRepository(ChatFlow).find())
+            logger.info('🚦 [server]: Rate limiters initialized successfully')
 
             // Initialize cache pool
             this.cachePool = new CachePool()
+            logger.info('💾 [server]: Cache pool initialized successfully')
+
+            // Initialize usage cache manager
+            this.usageCacheManager = await UsageCacheManager.getInstance()
+            logger.info('📊 [server]: Usage cache manager initialized successfully')
 
             // Initialize telemetry
             this.telemetry = new Telemetry()
+            logger.info('📈 [server]: Telemetry initialized successfully')
 
             // Initialize SSE Streamer
             this.sseStreamer = new SSEStreamer()
+            logger.info('🌊 [server]: SSE Streamer initialized successfully')
 
             // Init Queues
             if (process.env.MODE === MODE.QUEUE) {
                 this.queueManager = QueueManager.getInstance()
+                const serverAdapter = new ExpressAdapter()
+                serverAdapter.setBasePath('/admin/queues')
                 this.queueManager.setupAllQueues({
                     componentNodes: this.nodesPool.componentNodes,
                     telemetry: this.telemetry,
                     cachePool: this.cachePool,
                     appDataSource: this.AppDataSource,
-                    abortControllerPool: this.abortControllerPool
+                    abortControllerPool: this.abortControllerPool,
+                    usageCacheManager: this.usageCacheManager,
+                    serverAdapter
                 })
+                logger.info('✅ [Queue]: All queues setup successfully')
+
                 this.redisSubscriber = new RedisEventSubscriber(this.sseStreamer)
                 await this.redisSubscriber.connect()
+                logger.info('🔗 [server]: Redis event subscriber connected successfully')
             }
 
-            logger.info('📦 [server]: Data Source has been initialized!')
+            // TODO: Remove this by end of 2025
+            await migrateApiKeysFromJsonToDb(this.AppDataSource, this.identityManager.getPlatformType())
+
+            logger.info('🎉 [server]: All initialization steps completed successfully!')
         } catch (error) {
             logger.error('❌ [server]: Error during Data Source initialization:', error)
         }
@@ -131,8 +174,21 @@ export class App {
         const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '50mb'
         this.app.use(express.json({ limit: flowise_file_size_limit }))
         this.app.use(express.urlencoded({ limit: flowise_file_size_limit, extended: true }))
-        if (process.env.NUMBER_OF_PROXIES && parseInt(process.env.NUMBER_OF_PROXIES) > 0)
-            this.app.set('trust proxy', parseInt(process.env.NUMBER_OF_PROXIES))
+
+        // Enhanced trust proxy settings for load balancer
+        let trustProxy: string | boolean | number | undefined = process.env.TRUST_PROXY
+        if (typeof trustProxy === 'undefined' || trustProxy.trim() === '' || trustProxy === 'true') {
+            // Default to trust all proxies
+            trustProxy = true
+        } else if (trustProxy === 'false') {
+            // Disable trust proxy
+            trustProxy = false
+        } else if (!isNaN(Number(trustProxy))) {
+            // Number: Trust specific number of proxies
+            trustProxy = Number(trustProxy)
+        }
+
+        this.app.set('trust proxy', trustProxy)
 
         // Allow access from specified domains
         this.app.use(cors(getCorsOptions()))
@@ -161,9 +217,11 @@ export class App {
             sessionConfig.store = redisStore
         }
 
-        this.app.use(session(sessionConfig))
-        this.app.use(passport.initialize())
-        this.app.use(passport.session())
+        // this.app.use(session(sessionConfig))
+        // this.app.use(passport.initialize())
+        // this.app.use(passport.session())
+        // Parse cookies
+        this.app.use(cookieParser() as any)
 
         // Allow embedding from specified domains.
         this.app.use((req, res, next) => {
@@ -186,79 +244,126 @@ export class App {
         // Add the sanitizeMiddleware to guard against XSS
         this.app.use(sanitizeMiddleware)
 
-        const whitelistURLs = WHITELIST_URLS
+        this.app.use((req, res, next) => {
+            res.header('Access-Control-Allow-Credentials', 'true') // Allow credentials (cookies, etc.)
+            if (next) next()
+        })
+
+        const denylistURLs = process.env.DENYLIST_URLS ? process.env.DENYLIST_URLS.split(',') : []
+        const whitelistURLs = WHITELIST_URLS.filter((url) => !denylistURLs.includes(url))
         const URL_CASE_INSENSITIVE_REGEX: RegExp = /\/api\/v1\//i
         const URL_CASE_SENSITIVE_REGEX: RegExp = /\/api\/v1\//
 
-        this.app.use(authenticationHandlerMiddleware({ whitelistURLs, AppDataSource: this.AppDataSource }))
+        await initializeJwtCookieMiddleware(this.app, this.identityManager)
 
-        if (process.env.FLOWISE_USERNAME && process.env.FLOWISE_PASSWORD) {
-            const username = process.env.FLOWISE_USERNAME
-            const password = process.env.FLOWISE_PASSWORD
-            const basicAuthMiddleware = basicAuth({
-                users: { [username]: password }
-            })
-            this.app.use((req, res, next) => {
-                if (/\/api\/v1\//i.test(req.url)) {
-                    whitelistURLs.some((url) => new RegExp(url, 'i').test(req.url)) ? next() : basicAuthMiddleware(req, res, next)
-                } else next()
-            })
-            this.app.use(async (req, res, next) => {
-                if (req.user) return next()
-                // Step 1: Check if the req path contains /api/v1 regardless of case
-                if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
-                    // Step 2: Check if the req path is case sensitive
-                    if (URL_CASE_SENSITIVE_REGEX.test(req.path)) {
-                        // Step 3: Check if the req path is in the whitelist
-                        const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
-                        if (isWhitelisted) {
-                            next()
-                        } else if (req.headers['x-request-from'] === 'internal') {
-                            basicAuthMiddleware(req, res, next)
-                        } else {
-                            const isKeyValidated = await validateAPIKey(req)
-                            if (!isKeyValidated) {
+        this.app.use(async (req, res, next) => {
+            // Step 1: Check if the req path contains /api/v1 regardless of case
+            if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
+                // Step 2: Check if the req path is casesensitive
+                if (URL_CASE_SENSITIVE_REGEX.test(req.path)) {
+                    // Step 3: Check if the req path is in the whitelist
+                    const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
+                    if (isWhitelisted) {
+                        next()
+                    } else if (req.headers['x-request-from'] === 'aai') {
+                        // AAI requests: Auth0 RS256 JWT (primary) with enterprise HS256 fallback
+                        verifyAAIToken(this.AppDataSource)(req, res, next)
+                    } else if (req.headers['x-request-from'] === 'internal') {
+                        // Enterprise internal requests: HS256 passport
+                        verifyToken(req, res, next)
+                    } else {
+                        // Only check license validity for non-open-source platforms
+                        if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {
+                            if (!this.identityManager.isLicenseValid()) {
                                 return res.status(401).json({ error: 'Unauthorized Access' })
                             }
-                            next()
                         }
-                    } else {
-                        return res.status(401).json({ error: 'Unauthorized Access' })
+
+                        const { isValid, apiKey, workspaceId: apiKeyWorkSpaceId } = await validateAPIKey(req)
+                        if (!isValid || !apiKey) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+
+                        // Find workspace
+                        const workspace = await this.AppDataSource.getRepository(Workspace).findOne({
+                            where: { id: apiKeyWorkSpaceId }
+                        })
+                        if (!workspace) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+
+                        // Find user associated with API key
+                        const user = await this.AppDataSource.getRepository(User).findOne({
+                            where: { id: apiKey.userId }
+                        })
+                        if (!user) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+
+                        // Find owner role
+                        const ownerRole = await this.AppDataSource.getRepository(Role).findOne({
+                            where: { name: GeneralRole.OWNER, organizationId: IsNull() }
+                        })
+                        if (!ownerRole) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+
+                        // Find organization
+                        const activeOrganizationId = workspace.organizationId as string
+                        const org = await this.AppDataSource.getRepository(Organization).findOne({
+                            where: { id: activeOrganizationId }
+                        })
+                        if (!org) {
+                            return res.status(401).json({ error: 'Unauthorized Access' })
+                        }
+                        const subscriptionId = org.subscriptionId as string
+                        const customerId = org.customerId as string
+                        const features = await this.identityManager.getFeaturesByPlan(subscriptionId)
+                        const productId = await this.identityManager.getProductIdFromSubscription(subscriptionId)
+
+                        // Populate workspace data for full context (like AAI token flow)
+                        const workspaceData = await populateWorkspaceData(this.AppDataSource, user, activeOrganizationId)
+
+                        // Set complete req.user matching AAI token flow
+                        // @ts-ignore
+                        req.user = {
+                            // User identity (required for multi-tenancy)
+                            id: user.id,
+                            email: user.email,
+                            name: user.name,
+                            organizationId: activeOrganizationId,
+                            // Permissions and features
+                            permissions: [...JSON.parse(ownerRole.permissions)],
+                            features,
+                            // Organization context
+                            activeOrganizationId: activeOrganizationId,
+                            activeOrganizationSubscriptionId: subscriptionId,
+                            activeOrganizationCustomerId: customerId,
+                            activeOrganizationProductId: productId,
+                            isOrganizationAdmin: true,
+                            // Workspace context (from populateWorkspaceData)
+                            activeWorkspaceId: apiKeyWorkSpaceId!,
+                            activeWorkspace: workspace.name,
+                            roleId: workspaceData.roleId || ownerRole.id,
+                            assignedWorkspaces: workspaceData.assignedWorkspaces || []
+                        }
+                        next()
                     }
                 } else {
-                    // If the req path does not contain /api/v1, then allow the request to pass through, example: /assets, /canvas
-                    next()
+                    return res.status(401).json({ error: 'Unauthorized Access' })
                 }
-            })
-        } else {
-            this.app.use(async (req, res, next) => {
-                if (req.user) return next()
-                // Step 1: Check if the req path contains /api/v1 regardless of case
-                if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
-                    // Step 2: Check if the req path is case sensitive
-                    if (URL_CASE_SENSITIVE_REGEX.test(req.path)) {
-                        // Step 3: Check if the req path is in the whitelist
-                        const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
-                        if (isWhitelisted) {
-                            next()
-                        } else if (req.headers['x-request-from'] === 'internal') {
-                            next()
-                        } else {
-                            const isKeyValidated = await validateAPIKey(req)
-                            if (!isKeyValidated) {
-                                return res.status(401).json({ error: 'Unauthorized Access' })
-                            }
-                            next()
-                        }
-                    } else {
-                        return res.status(401).json({ error: 'Unauthorized Access' })
-                    }
-                } else {
-                    // If the req path does not contain /api/v1, then allow the request to pass through, example: /assets, /canvas
-                    next()
-                }
-            })
-        }
+            } else {
+                // If the req path does not contain /api/v1, then allow the request to pass through, example: /assets, /canvas
+                next()
+            }
+        })
+
+        // this is for SSO and must be after the JWT cookie middleware
+        await this.identityManager.initializeSSO(this.app)
+
+        // AAI Post-Auth Middleware - runs AFTER passport auth to enhance req.user with AAI data
+        // This bridges enterprise passport auth with AAI business logic (Stripe, workspaces, chatflows)
+        this.app.use(aaiPostAuthMiddleware(this.AppDataSource))
 
         if (process.env.ENABLE_METRICS === 'true') {
             switch (process.env.METRICS_PROVIDER) {
@@ -284,6 +389,12 @@ export class App {
 
         this.app.use('/api/v1', flowiseApiV1Router)
 
+        // Auth0 SSO routes - mounted separately since they need AppDataSource
+        this.app.use('/api/v1/auth0', createAuth0Router(this.AppDataSource))
+
+        // AAI Auth Me route - provides enriched user data for session management
+        this.app.use('/api/v1/auth', createAuthMeRouter(this.AppDataSource))
+
         // ----------------------------------------
         // Configure number of proxies in Host Environment
         // ----------------------------------------
@@ -294,7 +405,7 @@ export class App {
             })
         })
 
-        if (process.env.MODE === MODE.QUEUE && process.env.ENABLE_BULLMQ_DASHBOARD === 'true') {
+        if (process.env.MODE === MODE.QUEUE && process.env.ENABLE_BULLMQ_DASHBOARD === 'true' && !this.identityManager.isCloud()) {
             this.app.use('/admin/queues', this.queueManager.getBullBoardRouter())
         }
 
@@ -335,7 +446,7 @@ export async function start(): Promise<void> {
     serverApp = new App()
 
     const host = process.env.HOST
-    const port = parseInt(process.env.PORT || '', 10) || 3000
+    const port = parseInt(process.env.PORT || '', 10) || 4000
     const server = http.createServer(serverApp.app)
 
     await serverApp.initDatabase()

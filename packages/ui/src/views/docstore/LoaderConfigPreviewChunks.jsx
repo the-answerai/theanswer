@@ -8,6 +8,7 @@ import ReactJson from 'flowise-react-json-view'
 
 // Hooks
 import useApi from '@/hooks/useApi'
+import { useAuth } from '@/hooks/useAuth'
 
 // Material-UI
 import { Skeleton, Toolbar, Box, Button, Card, CardContent, Grid, OutlinedInput, Stack, Typography, TextField } from '@mui/material'
@@ -32,9 +33,10 @@ import documentsApi from '@/api/documentstore'
 // Const
 import { baseURL, gridSpacing } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
+import { useError } from '@/store/context/ErrorContext'
 
 // Utils
-import { initNode } from '@/utils/genericHelper'
+import { initNode, showHideInputParams } from '@/utils/genericHelper'
 import useNotifier from '@/utils/useNotifier'
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
@@ -62,6 +64,8 @@ const LoaderConfigPreviewChunks = () => {
     const customization = useSelector((state) => state.customization)
     const navigate = useNavigate()
     const theme = useTheme()
+    const { error } = useError()
+    const { hasAssignedWorkspace } = useAuth()
 
     const getNodeDetailsApi = useApi(nodesApi.getSpecificNode)
     const getNodesByCategoryApi = useApi(nodesApi.getNodesByCategory)
@@ -73,7 +77,6 @@ const LoaderConfigPreviewChunks = () => {
     const [selectedCredential, setSelectedCredential] = useState(null)
     const [selectedCredentialData, setSelectedCredentialData] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
     const [loaderName, setLoaderName] = useState('')
 
     const [textSplitterNodes, setTextSplitterNodes] = useState([])
@@ -97,6 +100,24 @@ const LoaderConfigPreviewChunks = () => {
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
+    const handleDocumentLoaderDataChange = ({ inputParam, newValue }) => {
+        setSelectedDocumentLoader((prevData) => {
+            const updatedData = { ...prevData }
+            updatedData.inputs[inputParam.name] = newValue
+            updatedData.inputParams = showHideInputParams(updatedData)
+            return updatedData
+        })
+    }
+
+    const handleTextSplitterDataChange = ({ inputParam, newValue }) => {
+        setSelectedTextSplitter((prevData) => {
+            const updatedData = { ...prevData }
+            updatedData.inputs[inputParam.name] = newValue
+            updatedData.inputParams = showHideInputParams(updatedData)
+            return updatedData
+        })
+    }
+
     const onSplitterChange = (name) => {
         const textSplitter = (textSplitterNodes ?? []).find((splitter) => splitter.name === name)
         if (textSplitter) {
@@ -119,21 +140,27 @@ const LoaderConfigPreviewChunks = () => {
 
     const checkMandatoryFields = () => {
         let canSubmit = true
+        const missingFields = []
         const inputParams = (selectedDocumentLoader.inputParams ?? []).filter((inputParam) => !inputParam.hidden)
         for (const inputParam of inputParams) {
             if (!inputParam.optional && (!selectedDocumentLoader.inputs[inputParam.name] || !selectedDocumentLoader.credential)) {
-                if (inputParam.type === 'credential' && !selectedDocumentLoader.credential) {
+                if (
+                    inputParam.type === 'credential' &&
+                    !selectedDocumentLoader.credential &&
+                    !selectedDocumentLoader.inputs['FLOWISE_CREDENTIAL_ID']
+                ) {
                     canSubmit = false
-                    break
+                    missingFields.push(inputParam.label || inputParam.name)
                 } else if (inputParam.type !== 'credential' && !selectedDocumentLoader.inputs[inputParam.name]) {
                     canSubmit = false
-                    break
+                    missingFields.push(inputParam.label || inputParam.name)
                 }
             }
         }
         if (!canSubmit) {
+            const fieldsList = missingFields.join(', ')
             enqueueSnackbar({
-                message: 'Please fill in all mandatory fields.',
+                message: `Please fill in the following mandatory fields: ${fieldsList}`,
                 options: {
                     key: new Date().getTime() + Math.random(),
                     variant: 'warning',
@@ -159,7 +186,7 @@ const LoaderConfigPreviewChunks = () => {
                 const previewResp = await documentStoreApi.previewChunks(config)
                 if (previewResp.data) {
                     setTotalChunks(previewResp.data.totalChunks)
-                    setDocumentChunks(previewResp.data.chunks)
+                    setDocumentChunks(Array.isArray(previewResp.data.chunks) ? previewResp.data.chunks : [])
                     setCurrentPreviewCount(previewResp.data.previewChunkCount)
                 }
                 setLoading(false)
@@ -339,6 +366,11 @@ const LoaderConfigPreviewChunks = () => {
 
     useEffect(() => {
         if (getSpecificDocumentStoreApi.data) {
+            const workspaceId = getSpecificDocumentStoreApi.data.workspaceId
+            if (!hasAssignedWorkspace(workspaceId)) {
+                navigate('/unauthorized')
+                return
+            }
             if (getSpecificDocumentStoreApi.data?.loaders.length > 0) {
                 const loader = getSpecificDocumentStoreApi.data.loaders.find((loader) => loader.id === docLoaderNodeName)
                 if (loader) {
@@ -350,38 +382,6 @@ const LoaderConfigPreviewChunks = () => {
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [getSpecificDocumentStoreApi.data])
-
-    useEffect(() => {
-        if (getSpecificDocumentStoreApi.error) {
-            setError(getSpecificDocumentStoreApi.error)
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getSpecificDocumentStoreApi.error])
-
-    useEffect(() => {
-        if (getNodeDetailsApi.error) {
-            setError(getNodeDetailsApi.error)
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getNodeDetailsApi.error])
-
-    useEffect(() => {
-        if (getNodesByCategoryApi.error) {
-            setError(getNodesByCategoryApi.error)
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getNodesByCategoryApi.error])
-
-    const handleCredentialChange = (credentialId) => {
-        setSelectedCredential(credentialId)
-    }
-
-    const handleCredentialDataChange = (credentialData) => {
-        setSelectedCredentialData(credentialData)
-    }
 
     return (
         <>
@@ -474,17 +474,14 @@ const LoaderConfigPreviewChunks = () => {
                                         </Box>
                                         {selectedDocumentLoader &&
                                             Object.keys(selectedDocumentLoader).length > 0 &&
-                                            (selectedDocumentLoader.inputParams ?? [])
-                                                .filter((inputParam) => !inputParam.hidden)
+                                            showHideInputParams(selectedDocumentLoader)
+                                                .filter((inputParam) => !inputParam.hidden && inputParam.display !== false)
                                                 .map((inputParam, index) => (
                                                     <DocStoreInputHandler
                                                         key={index}
                                                         inputParam={inputParam}
                                                         data={selectedDocumentLoader}
-                                                        handleCredentialChange={handleCredentialChange}
-                                                        selectedCredential={selectedCredential}
-                                                        handleCredentialDataChange={handleCredentialDataChange}
-                                                        selectedCredentialData={selectedCredentialData}
+                                                        onNodeDataChange={handleDocumentLoaderDataChange}
                                                     />
                                                 ))}
                                         {textSplitterNodes && textSplitterNodes.length > 0 && (
@@ -537,10 +534,15 @@ const LoaderConfigPreviewChunks = () => {
                                             </>
                                         )}
                                         {Object.keys(selectedTextSplitter).length > 0 &&
-                                            (selectedTextSplitter.inputParams ?? [])
-                                                .filter((inputParam) => !inputParam.hidden)
+                                            showHideInputParams(selectedTextSplitter)
+                                                .filter((inputParam) => !inputParam.hidden && inputParam.display !== false)
                                                 .map((inputParam, index) => (
-                                                    <DocStoreInputHandler key={index} data={selectedTextSplitter} inputParam={inputParam} />
+                                                    <DocStoreInputHandler
+                                                        key={index}
+                                                        data={selectedTextSplitter}
+                                                        inputParam={inputParam}
+                                                        onNodeDataChange={handleTextSplitterDataChange}
+                                                    />
                                                 ))}
                                     </div>
                                 </Grid>

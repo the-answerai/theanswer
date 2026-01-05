@@ -13,7 +13,7 @@ Each MCP server node should:
 - Be implemented as a TypeScript class in its own directory under `packages/components/nodes/tools/MCP/{ServerName}/`.
 - Implement the `INode` interface.
 - Set the `tags` property to include `['AAI']`.
-- Set the `category` property to `"MCP Servers"`.
+- Set the `category` property to `"Tools (MCP)"`.
 - Provide a unique `label`, `name`, and `type`.
 - Include a `description` and (optionally) a `documentation` URL.
 - Define required credentials using the `credential` property (if needed).
@@ -34,7 +34,7 @@ class Example_MCP implements INode {
     version = 1.0
     type = 'Example MCP Tool'
     icon = 'example.svg'
-    category = 'MCP Servers'
+    category = 'Tools (MCP)'
     tags = ['AAI']
     description = 'MCP server that integrates the Example API'
     documentation = 'https://github.com/example/mcp-server'
@@ -78,12 +78,12 @@ module.exports = { nodeClass: Example_MCP }
 ## Required Properties
 
 - **tags**: Always include `['AAI']` to ensure the node appears in the "Answer" tab.
-- **category**: Must be `"MCP Servers"`.
+- **category**: Must be `"Tools (MCP)"`.
 - **inputs**: Must include an `mcpActions` parameter as shown above.
 
 ## UI Tab Integration
 
-Nodes with the `tags: ['AAI']` property and `category: 'MCP Servers'` will automatically appear in the "Answer" tab of the UI.
+Nodes with the `tags: ['AAI']` property and `category: 'Tools (MCP)'` will automatically appear in the "Answer" tab of the UI.
 
 ## Adding a New MCP Server Node
 

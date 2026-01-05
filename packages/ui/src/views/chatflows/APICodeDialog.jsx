@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
-import { useNavigate } from '@/utils/navigation'
-import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 
@@ -19,15 +19,17 @@ import {
     Switch,
     Card
 } from '@mui/material'
+import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
 import { CopyBlock, atomOneDark } from 'react-code-blocks'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useTheme } from '@mui/material/styles'
+import { useAuth } from '@/hooks/useAuth'
 
 // Project import
 import { Dropdown } from '@/ui-component/dropdown/Dropdown'
 import ShareChatbot from './ShareChatbot'
 import EmbedChat from './EmbedChat'
-import { TooltipWithParser } from '@/ui-component/tooltip/TooltipWithParser'
+import { Available } from '@/ui-component/rbac/available'
 
 // Const
 import { baseURL } from '@/store/constant'
@@ -38,7 +40,7 @@ import pythonSVG from '@/assets/images/python.svg'
 import javascriptSVG from '@/assets/images/javascript.svg'
 import cURLSVG from '@/assets/images/cURL.svg'
 import EmbedSVG from '@/assets/images/embed.svg'
-import ShareChatbotSVG from '@/assets/images/sharing.svg'
+import ShareChatbotSVG from '@/assets/images/sharing.png'
 import settingsSVG from '@/assets/images/settings.svg'
 import { IconBulb, IconBox, IconVariable, IconExclamationCircle } from '@tabler/icons-react'
 
@@ -95,7 +97,6 @@ const APICodeDialog = ({ show, dialogProps, onCancel }) => {
 
     const codes = ['Embed', 'Python', 'JavaScript', 'cURL', 'Share Chatbot']
     const [value, setValue] = useState(0)
-    const [keyOptions, setKeyOptions] = useState([])
     const [apiKeys, setAPIKeys] = useState([])
     const [chatflowApiKeyId, setChatflowApiKeyId] = useState('')
     const [selectedApiKey, setSelectedApiKey] = useState({})
@@ -111,6 +112,36 @@ const APICodeDialog = ({ show, dialogProps, onCancel }) => {
     const getIsChatflowStreamingApi = useApi(chatflowsApi.getIsChatflowStreaming)
     const getConfigApi = useApi(configApi.getConfig)
     const getAllVariablesApi = useApi(variablesApi.getAllVariables)
+    const isGlobal = useSelector((state) => state.auth.isGlobal)
+    const { hasPermission } = useAuth()
+
+    // Memoize keyOptions to prevent recreation on hover
+    const keyOptions = useMemo(() => {
+        if (!getAllAPIKeysApi.data) return []
+
+        const options = [
+            {
+                label: 'No Authorization',
+                name: ''
+            }
+        ]
+
+        for (const key of getAllAPIKeysApi.data) {
+            options.push({
+                label: key.keyName,
+                name: key.id
+            })
+        }
+
+        if (isGlobal || hasPermission('apikeys:create')) {
+            options.push({
+                label: '- Add New Key -',
+                name: 'addnewkey'
+            })
+        }
+
+        return options
+    }, [getAllAPIKeysApi.data, isGlobal, hasPermission])
 
     const onCheckBoxChanged = (newVal) => {
         setCheckbox(newVal)
@@ -126,7 +157,8 @@ const APICodeDialog = ({ show, dialogProps, onCancel }) => {
             return
         }
         setChatflowApiKeyId(keyValue)
-        setSelectedApiKey(apiKeys.find((key) => key.id === keyValue))
+        const selectedKey = apiKeys.find((key) => key.id === keyValue)
+        setSelectedApiKey(selectedKey || {})
         const updateBody = {
             apikeyid: keyValue
         }
@@ -174,26 +206,7 @@ const APICodeDialog = ({ show, dialogProps, onCancel }) => {
             result[node].nodeIds.sort()
         }
         setNodeConfig(result)
-
-        if (!overrideConfigStatus) {
-            setNodeOverrides(newNodeOverrides)
-        } else {
-            const updatedNodeOverrides = { ...nodeOverrides }
-
-            Object.keys(updatedNodeOverrides).forEach((node) => {
-                if (!seenNodes.has(node)) {
-                    delete updatedNodeOverrides[node]
-                }
-            })
-
-            seenNodes.forEach((node) => {
-                if (!updatedNodeOverrides[node]) {
-                    updatedNodeOverrides[node] = newNodeOverrides[node]
-                }
-            })
-
-            setNodeOverrides(updatedNodeOverrides)
-        }
+        setNodeOverrides(newNodeOverrides)
     }
 
     const groupByVariableLabel = (variables) => {
@@ -600,26 +613,63 @@ query({
     }
 
     const getMultiConfigCodeWithFormData = (codeLang) => {
-        if (codeLang === 'Python') {
-            return `# Specify multiple values for a config parameter by specifying the node id
+        if (dialogProps.isAgentflowV2) {
+            if (codeLang === 'Python') {
+                return `# Specify multiple values for a config parameter by specifying the node id
+body_data = {
+    "agentModelConfig": {
+        "agentAgentflow_0": {
+            "openAIApiKey": "sk-my-openai-1st-key"
+        },
+        "agentAgentflow_1": {
+            "openAIApiKey": "sk-my-openai-2nd-key"
+        }
+    }
+}`
+            } else if (codeLang === 'JavaScript') {
+                return `// Specify multiple values for a config parameter by specifying the node id
+formData.append("agentModelConfig[agentAgentflow_0][openAIApiKey]", "sk-my-openai-1st-key")
+formData.append("agentModelConfig[agentAgentflow_1][openAIApiKey]", "sk-my-openai-2nd-key")`
+            } else if (codeLang === 'cURL') {
+                return `-F "agentModelConfig[agentAgentflow_0][openAIApiKey]=sk-my-openai-1st-key" \\
+-F "agentModelConfig[agentAgentflow_1][openAIApiKey]=sk-my-openai-2nd-key" \\`
+            }
+        } else {
+            if (codeLang === 'Python') {
+                return `# Specify multiple values for a config parameter by specifying the node id
 body_data = {
     "openAIApiKey": {
         "chatOpenAI_0": "sk-my-openai-1st-key",
         "openAIEmbeddings_0": "sk-my-openai-2nd-key"
     }
 }`
-        } else if (codeLang === 'JavaScript') {
-            return `// Specify multiple values for a config parameter by specifying the node id
+            } else if (codeLang === 'JavaScript') {
+                return `// Specify multiple values for a config parameter by specifying the node id
 formData.append("openAIApiKey[chatOpenAI_0]", "sk-my-openai-1st-key")
 formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
-        } else if (codeLang === 'cURL') {
-            return `-F "openAIApiKey[chatOpenAI_0]=sk-my-openai-1st-key" \\
+            } else if (codeLang === 'cURL') {
+                return `-F "openAIApiKey[chatOpenAI_0]=sk-my-openai-1st-key" \\
 -F "openAIApiKey[openAIEmbeddings_0]=sk-my-openai-2nd-key" \\`
+            }
         }
     }
 
     const getMultiConfigCode = () => {
-        return `{
+        if (dialogProps.isAgentflowV2) {
+            return `{
+    "overrideConfig": {
+        "agentModelConfig": {
+            "agentAgentflow_0": {
+                "openAIApiKey": "sk-my-openai-1st-key"
+            },
+            "agentAgentflow_1": {
+                "openAIApiKey": "sk-my-openai-2nd-key"
+            }
+        }
+    }
+}`
+        } else {
+            return `{
     "overrideConfig": {
         "openAIApiKey": {
             "chatOpenAI_0": "sk-my-openai-1st-key",
@@ -627,27 +677,11 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
         }
     }
 }`
+        }
     }
 
     useEffect(() => {
         if (getAllAPIKeysApi.data) {
-            const options = [
-                {
-                    label: 'No Authorization',
-                    name: ''
-                }
-            ]
-            for (const key of getAllAPIKeysApi.data) {
-                options.push({
-                    label: key.keyName,
-                    name: key.id
-                })
-            }
-            options.push({
-                label: '- Add New Key -',
-                name: 'addnewkey'
-            })
-            setKeyOptions(options)
             setAPIKeys(getAllAPIKeysApi.data)
 
             if (dialogProps.chatflowApiKeyId) {
@@ -705,6 +739,17 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
                                 ></Tab>
                             ))}
                         </Tabs>
+                    </div>
+                    <div style={{ flex: 20 }}>
+                        <Available permission={'chatflows:update,agentflows:update'}>
+                            <Dropdown
+                                name='SelectKey'
+                                disableClearable={true}
+                                options={keyOptions}
+                                onSelect={(newValue) => onApiKeySelected(newValue)}
+                                value={dialogProps.chatflowApiKeyId ?? chatflowApiKeyId ?? 'Choose an API key'}
+                            />
+                        </Available>
                     </div>
                 </div>
                 <div style={{ marginTop: 10 }}></div>
@@ -785,7 +830,7 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
                                                     <a
                                                         rel='noreferrer'
                                                         target='_blank'
-                                                        href='https://docs.flowiseai.com/using-flowise/api#override-config'
+                                                        href='https://docs.flowiseai.com/using-flowise/prediction#configuration-override'
                                                     >
                                                         here
                                                     </a>{' '}
@@ -850,7 +895,9 @@ formData.append("openAIApiKey[openAIEmbeddings_0]", "sk-my-openai-2nd-key")`
                                                                     rows={nodeOverrides[nodeLabel]}
                                                                     columns={
                                                                         nodeOverrides[nodeLabel].length > 0
-                                                                            ? Object.keys(nodeOverrides[nodeLabel][0])
+                                                                            ? Object.keys(nodeOverrides[nodeLabel][0]).filter(
+                                                                                  (key) => key !== 'schema'
+                                                                              )
                                                                             : []
                                                                     }
                                                                 />

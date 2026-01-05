@@ -2,8 +2,11 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { Strategy as OAuth2Strategy } from 'passport-oauth2'
 import { Strategy as CustomStrategy } from 'passport-custom'
 import { fetchMCPMetadata } from '../utils/mcp-metadata'
+import { configureAuth0Strategy } from '../aai/auth/auth0Strategy'
 
 export default function (passport: any) {
+    // Configure Auth0 SSO strategy for browser login flow
+    configureAuth0Strategy()
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         passport.use(
             `google`,
@@ -27,7 +30,7 @@ export default function (passport: any) {
                         expiresAt
                     }
                     try {
-                        done(null, newCredential)
+                        done(null, newCredential as any)
                     } catch (err) {
                         console.error('Passport Error:', err)
                         done(err, undefined)

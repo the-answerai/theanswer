@@ -15,7 +15,6 @@ import ViewSidebarOutlinedIcon from '@mui/icons-material/ViewSidebarOutlined'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import Collapse from '@mui/material/Collapse'
-import type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { usePathname } from 'next/navigation'
 import { Menu, MenuItem, Tooltip } from '@mui/material'
@@ -30,8 +29,6 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import AppsOutlinedIcon from '@mui/icons-material/AppsOutlined'
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import ImageIcon from '@mui/icons-material/Image'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
@@ -41,48 +38,61 @@ import ArticleIcon from '@mui/icons-material/Article'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import PhoneIcon from '@mui/icons-material/Phone'
-import { ExportImportMenuItems } from './components/ExportImportComponent'
+import DatasetIcon from '@mui/icons-material/DataUsage'
+import RuleIcon from '@mui/icons-material/Rule'
+import PeopleIcon from '@mui/icons-material/People'
+import BadgeIcon from '@mui/icons-material/Badge'
+import WorkspacesIcon from '@mui/icons-material/Workspaces'
+import LockIcon from '@mui/icons-material/Lock'
+import HistoryIcon from '@mui/icons-material/History'
+import Business from '@mui/icons-material/Business'
+import AddIcon from '@mui/icons-material/Add'
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import LogoutIcon from '@mui/icons-material/Logout'
+import TuneIcon from '@mui/icons-material/Tune'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 import { useThemeMode } from './theme'
 
 import ChatDrawer from './ChatDrawer'
 import StarIcon from '@mui/icons-material/Star'
+import CheckIcon from '@mui/icons-material/Check'
+import Divider from '@mui/material/Divider'
+import Button from '@mui/material/Button'
 import { usePermissions } from './PermissionProvider'
 
+// Note: SwapHorizIcon removed - no longer used in new menu design
+
+interface AssignedWorkspace {
+    id: string
+    name: string
+    role: string
+    organizationId: string
+}
+
 const drawerWidth = 240
+const collapsedWidth = 56
 
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
-    width: drawerWidth,
-    maxWidth: open ? drawerWidth : theme.spacing(7),
+    width: open ? drawerWidth : collapsedWidth,
     flexShrink: 0,
     whiteSpace: 'nowrap',
-    overflowX: 'hidden',
-    transition: '.3s',
-    ' .MuiDrawer-paper': {
-        transition: '.3s',
-        overflowY: 'hidden',
-        overflowX: 'hidden',
-        padding: 0, // Remove padding here
-        width: drawerWidth
-    },
-    p: {
-        transition: '.2s'
-    },
-    ...(open && {
-        '& .MuiDrawer-paper': {
-            transition: '.3s',
-            maxWidth: drawerWidth
-        }
+    boxSizing: 'border-box',
+    transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen
     }),
-    ...(!open && {
-        '& .MuiDrawer-paper': {
-            transition: '.3s',
-            maxWidth: theme.spacing(7),
-            p: {
-                opacity: 0
-            }
-        }
-    })
+    '& .MuiDrawer-paper': {
+        width: open ? drawerWidth : collapsedWidth,
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen
+        }),
+        overflowX: 'hidden',
+        overflowY: open ? 'auto' : 'hidden',
+        boxSizing: 'border-box'
+    }
 }))
 
 interface MenuConfig {
@@ -97,6 +107,7 @@ interface MenuConfig {
 interface AppDrawerProps {
     session: {
         user: {
+            name?: string
             picture?: string
             email?: string
             org_name?: string
@@ -104,6 +115,10 @@ interface AppDrawerProps {
             roles?: string[]
             subscription?: unknown
             defaultChatflowId?: string
+            // Workspace fields
+            activeWorkspaceId?: string
+            activeWorkspace?: string
+            assignedWorkspaces?: AssignedWorkspace[]
         }
     }
 }
@@ -116,6 +131,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
     const { mode, toggleMode } = useThemeMode()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+    const [switchingWorkspace, setSwitchingWorkspace] = useState(false)
     const { hasFeature, hasRole } = usePermissions()
     const canUseChatflows = hasFeature('chatflow:use')
     const canManageChatflows = hasFeature('chatflow:manage')
@@ -297,6 +313,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         text: 'Credentials',
                         link: '/sidekick-studio/credentials',
                         icon: <PasswordIcon color='primary' />
+                    },
+                    {
+                        id: 'datasets',
+                        text: 'Datasets',
+                        link: '/sidekick-studio/datasets',
+                        icon: <DatasetIcon color='primary' />
+                    },
+                    {
+                        id: 'evaluations',
+                        text: 'Evaluations',
+                        link: '/sidekick-studio/evaluations',
+                        icon: <AssessmentIcon color='primary' />
+                    },
+                    {
+                        id: 'evaluators',
+                        text: 'Evaluators',
+                        link: '/sidekick-studio/evaluators',
+                        icon: <RuleIcon color='primary' />
                     }
                 ]
             })
@@ -307,26 +341,45 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
             menuConfig.push({
                 id: 'enterprise_admin',
                 text: 'Enterprise Admin',
-                link: '/sidekick-studio/admin',
-                icon: <AssessmentOutlinedIcon color='primary' />
-            })
-        }
-
-        // Top-level Profile (everyone)
-        menuConfig.push({
-            id: 'profile',
-            text: 'Profile',
-            link: '/profile',
-            icon: <AccountCircleIcon color='primary' />
-        })
-
-        // Top-level Billing (admins only)
-        if (userRole === 'admin') {
-            menuConfig.push({
-                id: 'billing',
-                text: 'Billing',
-                link: '/billing',
-                icon: <AssessmentOutlinedIcon color='primary' />
+                icon: <AssessmentOutlinedIcon color='primary' />,
+                subMenu: [
+                    {
+                        id: 'admin-dashboard',
+                        text: 'Dashboard',
+                        link: '/sidekick-studio/admin',
+                        icon: <DashboardIcon color='primary' />
+                    },
+                    {
+                        id: 'users',
+                        text: 'Users',
+                        link: '/sidekick-studio/users',
+                        icon: <PeopleIcon color='primary' />
+                    },
+                    {
+                        id: 'roles',
+                        text: 'Roles',
+                        link: '/sidekick-studio/roles',
+                        icon: <BadgeIcon color='primary' />
+                    },
+                    {
+                        id: 'workspaces',
+                        text: 'Workspaces',
+                        link: '/sidekick-studio/workspaces',
+                        icon: <WorkspacesIcon color='primary' />
+                    },
+                    {
+                        id: 'sso-config',
+                        text: 'SSO Config',
+                        link: '/sidekick-studio/sso-config',
+                        icon: <LockIcon color='primary' />
+                    },
+                    {
+                        id: 'login-activity',
+                        text: 'Login Activity',
+                        link: '/sidekick-studio/login-activity',
+                        icon: <HistoryIcon color='primary' />
+                    }
+                ]
             })
         }
     } else {
@@ -348,8 +401,45 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                       {
                           id: 'enterprise_admin',
                           text: 'Enterprise Admin',
-                          link: '/sidekick-studio/admin',
-                          icon: <AssessmentOutlinedIcon color='primary' />
+                          icon: <AssessmentOutlinedIcon color='primary' />,
+                          subMenu: [
+                              {
+                                  id: 'admin-dashboard',
+                                  text: 'Dashboard',
+                                  link: '/sidekick-studio/admin',
+                                  icon: <DashboardIcon color='primary' />
+                              },
+                              {
+                                  id: 'users',
+                                  text: 'Users',
+                                  link: '/sidekick-studio/admin/users',
+                                  icon: <PeopleIcon color='primary' />
+                              },
+                              {
+                                  id: 'roles',
+                                  text: 'Roles',
+                                  link: '/sidekick-studio/admin/roles',
+                                  icon: <BadgeIcon color='primary' />
+                              },
+                              {
+                                  id: 'workspaces',
+                                  text: 'Workspaces',
+                                  link: '/sidekick-studio/admin/workspaces',
+                                  icon: <WorkspacesIcon color='primary' />
+                              },
+                              {
+                                  id: 'sso-config',
+                                  text: 'SSO Config',
+                                  link: '/sidekick-studio/admin/sso-config',
+                                  icon: <LockIcon color='primary' />
+                              },
+                              {
+                                  id: 'login-activity',
+                                  text: 'Login Activity',
+                                  link: '/sidekick-studio/admin/login-activity',
+                                  icon: <HistoryIcon color='primary' />
+                              }
+                          ]
                       }
                   ]
                 : []),
@@ -415,6 +505,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                   link: '/sidekick-studio/credentials',
                                   icon: <PasswordIcon color='primary' />
                               },
+                              {
+                                  id: 'datasets',
+                                  text: 'Datasets',
+                                  link: '/sidekick-studio/datasets',
+                                  icon: <DatasetIcon color='primary' />
+                              },
+                              {
+                                  id: 'evaluations',
+                                  text: 'Evaluations',
+                                  link: '/sidekick-studio/evaluations',
+                                  icon: <AssessmentIcon color='primary' />
+                              },
+                              {
+                                  id: 'evaluators',
+                                  text: 'Evaluators',
+                                  link: '/sidekick-studio/evaluators',
+                                  icon: <RuleIcon color='primary' />
+                              },
                               ...(userRole === 'admin'
                                   ? [
                                         // Show nested Admin only when enterprise admin flag is disabled
@@ -438,27 +546,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                   : [])
                           ]
                       }
-                  ]
-                : []),
-            // Top-level Profile and Billing for public orgs
-            ...(canUseChatflows
-                ? [
-                      {
-                          id: 'profile',
-                          text: 'Profile',
-                          link: '/profile',
-                          icon: <AccountCircleIcon color='primary' />
-                      },
-                      ...(userRole === 'admin'
-                          ? [
-                                {
-                                    id: 'billing',
-                                    text: 'Billing',
-                                    link: '/billing',
-                                    icon: <AssessmentOutlinedIcon color='primary' />
-                                }
-                            ]
-                          : [])
                   ]
                 : [])
         ])
@@ -485,9 +572,44 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         handleClose()
     }
 
+    const handleSwitchWorkspace = async (workspaceId: string) => {
+        if (workspaceId === user?.activeWorkspaceId) {
+            handleClose()
+            return
+        }
+
+        setSwitchingWorkspace(true)
+        handleClose()
+
+        try {
+            const response = await fetch('/api/workspaces/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workspaceId })
+            })
+
+            if (response.ok) {
+                // Redirect to refresh session context - stays on current page or goes to chat
+                const redirectPath = pathname.startsWith('/sidekick-studio') ? pathname : '/chat'
+                window.location.href = redirectPath
+            } else {
+                console.error('Failed to switch workspace')
+                setSwitchingWorkspace(false)
+            }
+        } catch (error) {
+            console.error('Error switching workspace:', error)
+            setSwitchingWorkspace(false)
+        }
+    }
+
     return (
         <>
-            <Drawer open={drawerOpen} variant='permanent' className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'} sx={{}}>
+            <Drawer
+                open={drawerOpen}
+                variant='permanent'
+                className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
+                sx={{ zIndex: 2000 }}
+            >
                 <Box
                     sx={{
                         display: 'flex',
@@ -501,8 +623,9 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                             display: 'flex',
                             flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 1
+                            justifyContent: drawerOpen ? 'space-between' : 'center',
+                            px: drawerOpen ? 1 : 0,
+                            py: 1
                         }}
                     >
                         {/* AnswerAI Logo */}
@@ -542,18 +665,9 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 <Box
                     sx={{
                         flex: 1,
-                        overflowY: 'auto',
+                        overflowY: drawerOpen ? 'auto' : 'hidden',
                         overflowX: 'hidden',
-                        '&::-webkit-scrollbar': {
-                            transition: 'opacity 0.5s ease',
-                            opacity: drawerOpen ? 1 : 0
-                        },
-                        '&::-webkit-scrollbar ': {
-                            transition: '.2s',
-                            ...(!drawerOpen && {
-                                width: '0px'
-                            })
-                        }
+                        display: drawerOpen ? 'block' : 'none'
                     }}
                 >
                     <ChatDrawer />
@@ -602,23 +716,37 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                 selected={!!item.link && pathname.startsWith(item.link)}
                                                 href={item.link}
                                                 component={item.link ? NextLink : 'button'}
-                                                sx={{ flex: 1, display: 'flex', width: '100%' }}
+                                                sx={{
+                                                    minHeight: 48,
+                                                    justifyContent: drawerOpen ? 'initial' : 'center',
+                                                    px: drawerOpen ? 2 : 2.5
+                                                }}
                                                 onClick={() => {
                                                     if (item.subMenu) {
                                                         setSubmenuOpen(item.text === submenuOpen ? '' : item.text ?? '')
                                                     }
                                                 }}
                                             >
-                                                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                                                <ListItemIcon
+                                                    sx={{
+                                                        minWidth: 0,
+                                                        mr: drawerOpen ? 2 : 'auto',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    {item.icon}
+                                                </ListItemIcon>
                                                 <Typography
                                                     sx={{
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                         textTransform: 'capitalize',
-                                                        display: '-webkit-box',
+                                                        display: drawerOpen ? '-webkit-box' : 'none',
                                                         WebkitBoxOrient: 'vertical',
                                                         WebkitLineClamp: '1',
-                                                        flex: '1'
+                                                        flex: '1',
+                                                        opacity: drawerOpen ? 1 : 0,
+                                                        transition: 'opacity 0.2s'
                                                     }}
                                                 >
                                                     {item.text}
@@ -629,7 +757,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 </ListItem>
 
                                 {/* Render submenu items if they exist */}
-                                {item.subMenu && (
+                                {item.subMenu && drawerOpen && (
                                     <Collapse key={`${item.text}-collapse`} in={submenuOpen === item.text} timeout='auto'>
                                         {item.subMenu.map((subItem) => {
                                             // Define tooltips for submenu items
@@ -675,6 +803,24 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                                         return 'Store and manage API credentials securely'
                                                     case 'profile':
                                                         return 'View and manage your personal profile information'
+                                                    case 'datasets':
+                                                        return 'Manage datasets for evaluations'
+                                                    case 'evaluations':
+                                                        return 'Run and review AI evaluations'
+                                                    case 'evaluators':
+                                                        return 'Configure evaluation criteria and metrics'
+                                                    case 'admin-dashboard':
+                                                        return 'Access admin dashboard'
+                                                    case 'users':
+                                                        return 'Manage organization users'
+                                                    case 'roles':
+                                                        return 'Configure roles and permissions'
+                                                    case 'workspaces':
+                                                        return 'Manage workspaces'
+                                                    case 'sso-config':
+                                                        return 'Configure single sign-on settings'
+                                                    case 'login-activity':
+                                                        return 'View user login history'
                                                     default:
                                                         return subItem.text || ''
                                                 }
@@ -706,51 +852,16 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         )
                     })}
 
-                    {/* Upgrade plan button visibility */}
-                    {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && !user?.subscription && (
-                        <ListItem disablePadding>
-                            <Tooltip title='Unlock premium features with a subscription' placement='right'>
-                                <ListItemButton
-                                    onClick={handleSubscriptionOpen}
-                                    sx={{
-                                        bgcolor: 'primary.main',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                        borderRadius: 1,
-                                        mb: 1,
-                                        width: '100%'
-                                    }}
-                                >
-                                    <ListItemIcon>
-                                        <StarIcon sx={{ color: '#fff' }} />
-                                    </ListItemIcon>
-                                    <Typography
-                                        sx={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            textTransform: 'capitalize',
-                                            display: '-webkit-box',
-                                            WebkitBoxOrient: 'vertical',
-                                            WebkitLineClamp: '1',
-                                            flex: '1',
-                                            color: '#fff'
-                                        }}
-                                    >
-                                        Upgrade Plan
-                                    </Typography>
-                                </ListItemButton>
-                            </Tooltip>
-                        </ListItem>
-                    )}
-
                     <ListItem disablePadding sx={{ display: 'block' }}>
                         <Box
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
+                                justifyContent: drawerOpen ? 'space-between' : 'center',
                                 width: '100%',
-                                gap: 1,
-                                pl: 0.5
+                                gap: drawerOpen ? 1 : 0,
+                                pl: drawerOpen ? 0.5 : 0,
+                                py: 1
                             }}
                         >
                             <Avatar
@@ -763,26 +874,18 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 }}
                                 onClick={handleClick}
                             />
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    overflow: 'hidden',
-                                    alignItems: 'center',
-                                    width: '100%',
-                                    maxWidth: 124
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            {drawerOpen && (
+                                <Box sx={{ flex: 1, overflow: 'hidden' }}>
                                     <Typography
-                                        variant='caption'
+                                        variant='body2'
                                         sx={{
-                                            width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            fontWeight: 500
                                         }}
                                     >
-                                        {user?.email}
+                                        {user?.name || user?.email?.split('@')[0] || 'User'}
                                     </Typography>
                                     <Typography
                                         variant='caption'
@@ -790,13 +893,15 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                             width: '100%',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            opacity: 0.7,
+                                            fontSize: '0.65rem'
                                         }}
                                     >
-                                        {user?.org_name}
+                                        {user?.activeWorkspace || 'Default Workspace'}
                                     </Typography>
                                 </Box>
-                            </Box>
+                            )}
                             <IconButton
                                 aria-label='more options'
                                 sx={{ minHeight: 48, width: 48, justifyContent: 'center' }}
@@ -806,23 +911,109 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                             >
                                 <MoreVertIcon />
                             </IconButton>
-                            <Menu id='simple-menu' anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
-                                <MenuItem disabled>
+                            <Menu
+                                id='simple-menu'
+                                anchorEl={anchorEl}
+                                keepMounted
+                                open={Boolean(anchorEl)}
+                                onClose={handleClose}
+                                slotProps={{
+                                    root: {
+                                        sx: {
+                                            zIndex: 3000
+                                        }
+                                    },
+                                    paper: {
+                                        sx: {
+                                            zIndex: 3000,
+                                            minWidth: 220,
+                                            maxHeight: 'calc(100vh - 100px)'
+                                        }
+                                    }
+                                }}
+                            >
+                                {/* Email Header with Add Account */}
+                                <MenuItem
+                                    sx={{ py: 1.5 }}
+                                    onClick={() => {
+                                        handleClose()
+                                        window.location.href = '/api/auth/login'
+                                    }}
+                                >
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <AccountCircleIcon fontSize='small' />
+                                    </ListItemIcon>
                                     <Typography
-                                        variant='caption'
+                                        variant='body2'
                                         sx={{
-                                            opacity: 0.9,
-                                            width: '100%',
+                                            flex: 1,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}
                                     >
-                                        {user?.org_name}
+                                        {user?.email}
                                     </Typography>
+                                    <AddIcon fontSize='small' sx={{ opacity: 0.5 }} />
                                 </MenuItem>
 
-                                {/* Theme Toggle */}
+                                {/* Organization with checkmark */}
+                                <MenuItem disabled sx={{ opacity: '1 !important', py: 1 }}>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <Business fontSize='small' color='primary' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2' sx={{ flex: 1, fontWeight: 500 }}>
+                                        {user?.org_name || 'Organization'}
+                                    </Typography>
+                                    <CheckIcon fontSize='small' color='primary' />
+                                </MenuItem>
+
+                                {/* Workspaces List */}
+                                {user?.assignedWorkspaces &&
+                                    user.assignedWorkspaces.length > 0 &&
+                                    user.assignedWorkspaces.map((workspace) => (
+                                        <MenuItem
+                                            key={workspace.id}
+                                            onClick={() => handleSwitchWorkspace(workspace.id)}
+                                            disabled={switchingWorkspace}
+                                            sx={{ py: 1 }}
+                                        >
+                                            <ListItemIcon sx={{ minWidth: 36 }}>
+                                                <WorkspacesIcon
+                                                    fontSize='small'
+                                                    color={workspace.id === user?.activeWorkspaceId ? 'primary' : 'inherit'}
+                                                />
+                                            </ListItemIcon>
+                                            <Typography variant='body2' sx={{ flex: 1 }}>
+                                                {workspace.name}
+                                            </Typography>
+                                            {workspace.id === user?.activeWorkspaceId && <CheckIcon fontSize='small' color='primary' />}
+                                        </MenuItem>
+                                    ))}
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* Admin Actions - Add teammates */}
+                                {(userRole === 'admin' || userRole === 'builder') && (
+                                    <MenuItem component={NextLink} href='/sidekick-studio/users' onClick={handleClose}>
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <PersonAddAltIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Add teammates</Typography>
+                                    </MenuItem>
+                                )}
+
+                                {/* Workspace settings */}
+                                {(userRole === 'admin' || userRole === 'builder') && (
+                                    <MenuItem component={NextLink} href='/sidekick-studio/workspaces' onClick={handleClose}>
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <WorkspacesIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Workspace settings</Typography>
+                                    </MenuItem>
+                                )}
+
+                                {/* Personalization (Theme) */}
                                 <MenuItem
                                     onClick={() => {
                                         toggleMode()
@@ -830,37 +1021,129 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                     }}
                                 >
                                     <ListItemIcon sx={{ minWidth: 36 }}>
-                                        {mode === 'dark' ? <Brightness7Icon fontSize='small' /> : <Brightness4Icon fontSize='small' />}
+                                        <TuneIcon fontSize='small' />
                                     </ListItemIcon>
-                                    <Typography>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
+                                    <Typography variant='body2'>{mode === 'dark' ? 'Light Mode' : 'Dark Mode'}</Typography>
                                 </MenuItem>
 
-                                {/* Upgrade plan menu item visibility */}
-                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
-                                    <MenuItem onClick={handleSubscriptionOpen}>Upgrade Plan</MenuItem>
+                                {/* Profile */}
+                                <MenuItem component={NextLink} href='/settings/user' onClick={handleClose}>
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <AccountCircleIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Profile</Typography>
+                                </MenuItem>
+
+                                {/* Billing (admins only) */}
+                                {userRole === 'admin' && (
+                                    <MenuItem component={NextLink} href='/billing' onClick={handleClose}>
+                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                            <AssessmentOutlinedIcon fontSize='small' />
+                                        </ListItemIcon>
+                                        <Typography variant='body2'>Billing</Typography>
+                                    </MenuItem>
                                 )}
 
-                                {/* Export/Import menu items visibility */}
-                                {((isPrivateOrg && userRole === 'admin') || !isPrivateOrg) && (
-                                    <ExportImportMenuItems onClose={handleClose} />
-                                )}
+                                <Divider sx={{ my: 1 }} />
 
+                                {/* Help */}
                                 <MenuItem
-                                    onClick={() => {
-                                        handleClose()
-                                        window.location.href = '/api/auth/login'
-                                    }}
+                                    component='a'
+                                    href='https://docs.theanswer.ai'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    onClick={handleClose}
                                 >
-                                    Switch Organization
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <HelpOutlineIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2' sx={{ flex: 1 }}>
+                                        Help
+                                    </Typography>
+                                    <ChevronRightIcon fontSize='small' sx={{ opacity: 0.5 }} />
                                 </MenuItem>
+
+                                {/* Log out */}
                                 <MenuItem
                                     onClick={() => {
                                         handleClose()
                                         window.location.href = '/api/auth/logout'
                                     }}
                                 >
-                                    Sign Out
+                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                        <LogoutIcon fontSize='small' />
+                                    </ListItemIcon>
+                                    <Typography variant='body2'>Log out</Typography>
                                 </MenuItem>
+
+                                <Divider sx={{ my: 1 }} />
+
+                                {/* User Profile Card at bottom */}
+                                <Box sx={{ px: 2, py: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                                        <Avatar src={user?.picture} sx={{ width: 32, height: 32, fontSize: 14 }}>
+                                            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+                                        </Avatar>
+                                        <Box sx={{ overflow: 'hidden' }}>
+                                            <Typography
+                                                variant='body2'
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                {user?.name || 'User'}
+                                            </Typography>
+                                            <Typography
+                                                variant='caption'
+                                                color='text.secondary'
+                                                sx={{
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    display: 'block'
+                                                }}
+                                            >
+                                                {user?.org_name || 'Organization'}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+
+                                    {/* Invite team members button */}
+                                    {(userRole === 'admin' || userRole === 'builder') && (
+                                        <Button
+                                            variant='outlined'
+                                            size='small'
+                                            fullWidth
+                                            startIcon={<PersonAddAltIcon />}
+                                            component={NextLink}
+                                            href='/sidekick-studio/users'
+                                            onClick={handleClose}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Invite team members
+                                        </Button>
+                                    )}
+
+                                    {/* Upgrade plan for non-admins or all users without subscription */}
+                                    {!user?.subscription && (
+                                        <Button
+                                            variant='contained'
+                                            size='small'
+                                            fullWidth
+                                            startIcon={<StarIcon />}
+                                            onClick={() => {
+                                                handleSubscriptionOpen()
+                                                handleClose()
+                                            }}
+                                            sx={{ textTransform: 'none', mt: 1 }}
+                                        >
+                                            Upgrade Plan
+                                        </Button>
+                                    )}
+                                </Box>
                             </Menu>
                         </Box>
                     </ListItem>
@@ -868,10 +1151,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
             </Drawer>
         </>
     )
-}
-
-interface AppBarProps extends MuiAppBarProps {
-    open?: boolean
 }
 
 export default AppDrawer

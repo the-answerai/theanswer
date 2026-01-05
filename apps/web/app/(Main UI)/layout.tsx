@@ -14,10 +14,15 @@ const MainUiLayout = async (props: {
 }) => {
     const [session] = await Promise.all([getCachedSession()])
 
+    // Redirect to login if no valid session
+    if (!session?.user || !session?.accessToken) {
+        redirect('/api/auth/login')
+    }
+
     const headersList = headers()
     const host = headersList.get('host') || ''
     const currentDomain = host.split(':')[0] // Remove port if present
-    const userDomain = session ? session?.user?.answersDomain?.split('https://')[1] : null // Remove the protocol
+    const userDomain = session.user?.answersDomain?.split('https://')[1] || null // Remove the protocol
 
     if (userDomain && userDomain !== currentDomain && !currentDomain.includes('localhost')) {
         console.log('Redirecting to:', session.user.answersDomain, 'from', currentDomain)

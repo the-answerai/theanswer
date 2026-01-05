@@ -6,7 +6,7 @@
  * Key requirements:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: Linear_MCP }
  *
@@ -38,7 +38,7 @@ class Linear_MCP implements INode {
         this.version = 1.0
         this.type = 'Linear MCP Tool'
         this.icon = 'linear.svg'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP Server for the Linear API - manage issues, projects, and teams'
         this.documentation = 'https://linear.app/changelog/2025-05-01-mcp'

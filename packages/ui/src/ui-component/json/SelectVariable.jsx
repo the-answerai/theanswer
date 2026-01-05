@@ -7,7 +7,6 @@ import chatPNG from '@/assets/images/chathistory.png'
 import diskPNG from '@/assets/images/floppy-disc.png'
 import fileAttachmentPNG from '@/assets/images/fileAttachment.png'
 import { baseURL } from '@/store/constant'
-import Image from 'next/image'
 
 const sequentialStateMessagesSelection = [
     {
@@ -67,7 +66,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                     backgroundColor: 'white'
                                                 }}
                                             >
-                                                <Image
+                                                <img
                                                     style={{
                                                         width: '100%',
                                                         height: '100%',
@@ -102,7 +101,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                     backgroundColor: 'white'
                                                 }}
                                             >
-                                                <Image
+                                                <img
                                                     style={{
                                                         width: '100%',
                                                         height: '100%',
@@ -242,7 +241,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                             backgroundColor: 'white'
                                                         }}
                                                     >
-                                                        <Image
+                                                        <img
                                                             style={{
                                                                 width: '100%',
                                                                 height: '100%',

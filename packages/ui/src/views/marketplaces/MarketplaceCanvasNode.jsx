@@ -14,7 +14,6 @@ import AdditionalParamsDialog from '@/ui-component/dialog/AdditionalParamsDialog
 // const
 import { baseURL } from '@/store/constant'
 import LlamaindexPNG from '@/assets/images/llamaindex.png'
-import Image from 'next/image'
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
     background: theme.palette.card.main,
@@ -98,9 +97,9 @@ const MarketplaceCanvasNode = ({ data }) => {
                                         padding: 15
                                     }}
                                 >
-                                    <Image
+                                    <img
                                         style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'contain' }}
-                                        src={LlamaindexPNG}
+                                        src={typeof LlamaindexPNG === 'object' && LlamaindexPNG?.src ? LlamaindexPNG.src : LlamaindexPNG}
                                         alt='LlamaIndex'
                                     />
                                 </div>

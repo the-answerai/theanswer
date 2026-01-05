@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
 // material-ui

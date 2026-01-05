@@ -143,7 +143,7 @@ class ToolAgent_Agents implements INode {
 
         const executor = await prepareAgent(nodeData, options, { sessionId: this.sessionId, chatId: options.chatId, input })
 
-        const loggerHandler = new ConsoleCallbackHandler(options.logger)
+        const loggerHandler = new ConsoleCallbackHandler(options.logger, options?.orgId)
         const callbacks = await additionalCallbacks(nodeData, options)
 
         // Add custom streaming handler if detailed streaming is enabled
@@ -347,31 +347,6 @@ const prepareAgent = async (
         throw new Error(`This agent requires that the "bindTools()" method be implemented on the input model.`)
     }
 
-    // Filter tools from tools with duplicate names, make sure the logs clearly show what happened
-    // Check for duplicate tool names and filter them out
-    // TODO: WE ABSOLUTELY NEED TO FIX THIS
-    // TODO: Why tools are duplicated?
-    const initialToolCount = tools.length
-    const uniqueToolNames = new Set(tools.map((tool: Tool) => tool.name))
-
-    if (initialToolCount > uniqueToolNames.size) {
-        console.log(`[ToolAgent] Found duplicate tool names. Initial count: ${initialToolCount}, unique count: ${uniqueToolNames.size}`)
-        const duplicateTools = tools
-            .map((tool: Tool) => tool.name)
-            .filter((name: string, index: number, array: string[]) => array.indexOf(name) !== index)
-        console.log(`[ToolAgent] Duplicate tool names: ${JSON.stringify(duplicateTools)}`)
-    }
-
-    tools = tools.filter((tool: Tool, index: number, self: Tool[]) => {
-        const firstIndex = self.findIndex((t) => t.name === tool.name)
-        const isDuplicate = firstIndex !== index
-        if (isDuplicate) {
-            console.log(`[ToolAgent] Filtering out duplicate tool: ${tool.name}`)
-        }
-        return firstIndex === index
-    })
-
-    console.log(`[ToolAgent] Binding ${tools.length} tools to model: ${tools.map((t: Tool) => t.name).join(', ')}`)
     const modelWithTools = model.bindTools(tools)
 
     const runnableAgent = RunnableSequence.from([
@@ -395,7 +370,7 @@ const prepareAgent = async (
         sessionId: flowObj?.sessionId,
         chatId: flowObj?.chatId,
         input: flowObj?.input,
-        verbose: process.env.DEBUG === 'true',
+        verbose: process.env.DEBUG === 'true' ? true : false,
         maxIterations: maxIterations ? parseFloat(maxIterations) : undefined
     })
 

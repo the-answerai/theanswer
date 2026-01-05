@@ -4,12 +4,13 @@ import { utilBuildChatflow } from '../../utils/buildChatflow'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import chatflowsService from '../chatflows'
+import { IUser } from '../../Interface'
 
-const buildChatflow = async (fullRequest: Request) => {
+const buildChatflow = async (req: Request) => {
     try {
-        const { chatId, question: prompt, overrideConfig } = fullRequest.body
-        const chatflowId = fullRequest.params.id
-        const user = fullRequest.user
+        const { chatId, question: prompt, overrideConfig } = req.body
+        const chatflowId = req.params.id
+        const user = req.user
 
         // Validate overrideConfig.startState if present
         if (overrideConfig?.startState) {
@@ -53,25 +54,22 @@ const buildChatflow = async (fullRequest: Request) => {
                 ].join('-')
                 overrideConfig.sessionId = consistentUuid
                 overrideConfig.vars.sessionId = overrideConfig?.sessionId
-                fullRequest.body.overrideConfig = overrideConfig
+                req.body.overrideConfig = overrideConfig
             }
         }
-
-        // First build and get response from chatflow
-        const response = await utilBuildChatflow(fullRequest)
-
+        const dbResponse = await utilBuildChatflow(req)
         // After successful response, upsert the chat
-        if (response.chatId) {
+        if (dbResponse.chatId) {
             await chatflowsService.upsertChat({
                 id: chatId,
-                user,
+                user: user as IUser | undefined,
                 prompt,
                 chatflowId,
-                chatflowChatId: response.chatId
+                chatflowChatId: dbResponse.chatId
             })
         }
 
-        return response
+        return dbResponse
     } catch (error) {
         // Re-throw InternalFlowiseError to preserve status code
         if (error instanceof InternalFlowiseError) {

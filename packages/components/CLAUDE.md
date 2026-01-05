@@ -361,7 +361,7 @@ async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any>
 - **Validate inputs:** Sanitize user inputs to prevent injection
 - **Error messages:** Don't leak sensitive info in error messages
 
-## Integration with MCP Servers
+## Integration with Tools (MCP)
 
 For MCP (Model Context Protocol) server integrations:
 

@@ -24,51 +24,35 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
     // Improved cache structure with better typing and timestamp tracking
     const sidekicksByCategoryCache = useRef<Record<string, { data: Sidekick[]; timestamp: number }>>({})
 
-    // Add logger utility to avoid repeated string concatenation when logging is disabled
+    // Logger utility (no-op in production)
     const perfLog = useCallback(
-        (message: string, ...args: any[]) => {
-            if (enablePerformanceLogs) {
-                console.log(`[SidekickSelect] ${message}`, ...args)
-            }
-        },
-        [enablePerformanceLogs]
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_message: string, ..._args: any[]) => {},
+        []
     )
 
     // Fetcher with better caching and error handling
-    const fetcher = useCallback(
-        async (url: string) => {
-            const startTime = enablePerformanceLogs ? performance.now() : 0
-            try {
-                const res = await fetch(url)
-                if (res.status === 401) {
-                    window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
-                } else {
-                    const data = await res.json()
-                    if (enablePerformanceLogs) {
-                        const endTime = performance.now()
-                        console.log(
-                            `[SidekickSelect] API data fetched, sidekicks count: ${
-                                data?.sidekicks?.length || 0
-                            }, timestamp: ${new Date().toISOString()}`
-                        )
-                        console.log(`[SidekickSelect] API fetch took ${(endTime - startTime).toFixed(2)}ms`)
-                    }
+    const fetcher = useCallback(async (url: string) => {
+        try {
+            const res = await fetch(url)
+            if (res.status === 401) {
+                window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
+            } else {
+                const data = await res.json()
 
-                    // Clear the cache when new data is fetched
-                    sidekicksByCategoryCache.current = {}
+                // Clear the cache when new data is fetched
+                sidekicksByCategoryCache.current = {}
 
-                    return data
-                }
-            } catch (error) {
-                console.log('error', error)
-                if (error instanceof Response && error.status === 401) {
-                    window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
-                }
-                return { sidekicks: [], categories: { top: [], more: [] } }
+                return data
             }
-        },
-        [enablePerformanceLogs]
-    )
+        } catch (error) {
+            console.error('SidekickSelect fetch error:', error)
+            if (error instanceof Response && error.status === 401) {
+                window.location.href = '/api/auth/login?redirect_uri=' + encodeURIComponent(window.location.href)
+            }
+            return { sidekicks: [], categories: { top: [], more: [] } }
+        }
+    }, [])
 
     // Use the optimized fetcher
     const { data, isLoading } = useSWR('/api/sidekicks', fetcher)
@@ -80,8 +64,6 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
 
     // Optimize combinedSidekicks calculation with better dependency tracking
     const combinedSidekicks = useMemo(() => {
-        const startTime = enablePerformanceLogs ? performance.now() : 0
-
         if (!allSidekicks) {
             return []
         }
@@ -105,8 +87,6 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
     }, [allSidekicks, perfLog])
 
     const allCategories = useMemo(() => {
-        const startTime = enablePerformanceLogs ? performance.now() : 0
-
         const allCats = [
             ...chatflowCategories.top,
             ...chatflowCategories.more,
@@ -147,22 +127,11 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
             return countDiff !== 0 ? countDiff : a.localeCompare(b)
         })
 
-        const result = {
+        return {
             top: uniqueCats.slice(0, 4),
             more: uniqueCats.slice(4)
         }
-
-        if (enablePerformanceLogs) {
-            const endTime = performance.now()
-            perfLog(
-                `allCategories calculation completed in ${(endTime - startTime).toFixed(2)}ms, top: ${result.top.length}, more: ${
-                    result.more.length
-                }`
-            )
-        }
-
-        return result
-    }, [chatflowCategories, combinedSidekicks, perfLog])
+    }, [chatflowCategories, combinedSidekicks])
 
     // Selectively invalidate relevant cache entries when sidekicks change
     useEffect(() => {

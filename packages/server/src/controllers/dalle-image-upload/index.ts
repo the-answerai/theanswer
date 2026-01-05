@@ -92,7 +92,7 @@ const uploadDalleImage = async (req: Request, res: Response, next: NextFunction)
         }
 
         // Convert FILE-STORAGE:: reference to a full URL
-        const imageFileName = imageStorageUrl.replace('FILE-STORAGE::', '')
+        const imageFileName = imageStorageUrl.path.replace('FILE-STORAGE::', '')
         const fullImageUrl = `/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${organizationId}%2F${userId}&fileName=${imageFileName}`
 
         const response: {
@@ -108,7 +108,7 @@ const uploadDalleImage = async (req: Request, res: Response, next: NextFunction)
 
         // Add JSON URL to response if JSON was stored
         if (jsonStorageUrl) {
-            const jsonFileName = jsonStorageUrl.replace('FILE-STORAGE::', '')
+            const jsonFileName = jsonStorageUrl.path.replace('FILE-STORAGE::', '')
             response.jsonUrl = `/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${organizationId}%2F${userId}&fileName=${jsonFileName}`
         }
 

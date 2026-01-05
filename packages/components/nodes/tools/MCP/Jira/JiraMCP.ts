@@ -6,7 +6,7 @@
  * Key requirements:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: Jira_MCP }
  *
@@ -38,7 +38,7 @@ class Jira_MCP implements INode {
         this.version = 1.0
         this.type = 'Jira MCP Tool'
         this.icon = 'jira.svg'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP server that integrates the Jira API'
         this.documentation = 'https://github.com/modelcontextprotocol/servers/tree/main/src/jira'

@@ -13,6 +13,8 @@ import { DataSource } from 'typeorm'
 import { CachePool } from './CachePool'
 import { Telemetry } from './utils/telemetry'
 import { ChatflowVisibility } from './database/entities/ChatFlow'
+import { LoggedInUser } from './enterprise/Interface.Enterprise'
+import { UsageCacheManager } from './UsageCacheManager'
 import { InputValidationResult } from './types/guardrails'
 
 export type MessageType = 'apiMessage' | 'userMessage'
@@ -30,7 +32,8 @@ export enum MODE {
 
 export enum ChatType {
     INTERNAL = 'INTERNAL',
-    EXTERNAL = 'EXTERNAL'
+    EXTERNAL = 'EXTERNAL',
+    EVALUATION = 'EVALUATION'
 }
 
 export enum ChatMessageRatingType {
@@ -53,7 +56,17 @@ export enum AppCsvParseRowStatus {
     COMPLETE_WITH_ERRORS = 'COMPLETE_WITH_ERRORS',
     COMPLETE = 'COMPLETE'
 }
+export enum Platform {
+    OPEN_SOURCE = 'open source',
+    CLOUD = 'cloud',
+    ENTERPRISE = 'enterprise'
+}
 
+export enum UserPlan {
+    STARTER = 'STARTER',
+    PRO = 'PRO',
+    FREE = 'FREE'
+}
 /**
  * Guardrails Metadata
  * Captures validation results from Fiddler Guardrails for audit and client display
@@ -98,22 +111,41 @@ export interface GuardrailsMetadata {
 
 /**
  * Databases
+ *
+ * IUser is a standalone interface (not extending LoggedInUser) because:
+ * 1. LoggedInUser is defined in enterprise code (cannot modify)
+ * 2. LoggedInUser requires workspace fields that database User entity doesn't have
+ * 3. IUser is used for database operations, LoggedInUser is for auth context
  */
 export interface IUser {
     id: string
     name: string
     email: string
-    organizationId: string
+    organizationId?: string
     stripeCustomerId?: string
     defaultChatflowId?: string
-    updatedDate: Date
-    createdDate: Date
+    updatedDate?: Date
+    createdDate?: Date
     permissions?: string[]
     roles?: string[]
     apiKey?: {
         id: string
         metadata?: IApiKeyMetadata
     }
+    // Optional workspace fields (populated by auth middleware when needed)
+    activeWorkspaceId?: string
+    activeOrganizationId?: string
+    activeWorkspace?: string
+    roleId?: string
+    isOrganizationAdmin?: boolean
+    // Optional AAI fields
+    auth0Id?: string
+    trialPlanId?: string
+    // Enterprise LoggedInUser compatibility fields
+    activeOrganizationSubscriptionId?: string
+    activeOrganizationCustomerId?: string
+    activeOrganizationProductId?: string
+    assignedWorkspaces?: any[]
 }
 export interface IOrganization {
     id: string
@@ -131,16 +163,18 @@ export interface IChatFlow {
     flowData: string
     updatedDate: Date
     createdDate: Date
+    deletedDate: Date
     deployed?: boolean
     isPublic?: boolean
     apikeyid?: string
     analytic?: string
     speechToText?: string
+    textToSpeech?: string
     chatbotConfig?: string
     followUpPrompts?: string
     apiConfig?: string
     category?: string
-    visibility?: string[]
+    visibility?: ChatflowVisibility[]
     type?: ChatflowType
     userId: string
     organizationId: string
@@ -148,6 +182,7 @@ export interface IChatFlow {
     embeddedUrl?: string
     browserExtConfig?: string
     templateId?: string
+    workspaceId: string
 }
 
 export interface IChatMessage {
@@ -198,6 +233,7 @@ export interface ITool {
     func?: string
     updatedDate: Date
     createdDate: Date
+    workspaceId: string
 }
 
 export interface IAssistant {
@@ -207,6 +243,7 @@ export interface IAssistant {
     iconSrc?: string
     updatedDate: Date
     createdDate: Date
+    workspaceId: string
 }
 
 export interface ICredential {
@@ -216,6 +253,7 @@ export interface ICredential {
     encryptedData: string
     updatedDate: Date
     createdDate: Date
+    workspaceId: string
 }
 
 export interface IVariable {
@@ -225,6 +263,7 @@ export interface IVariable {
     type: string
     updatedDate: Date
     createdDate: Date
+    workspaceId: string
 }
 
 export interface ILead {
@@ -258,6 +297,7 @@ export interface IExecution {
     createdDate: Date
     updatedDate: Date
     stoppedDate: Date
+    workspaceId: string
 }
 
 export interface IComponentNodes {
@@ -406,7 +446,7 @@ export interface IOverrideConfig {
     label: string
     name: string
     type: string
-    schema?: ICommonObject[]
+    schema?: ICommonObject[] | Record<string, string>
 }
 
 export type ICredentialDataDecrypted = ICommonObject
@@ -419,6 +459,7 @@ export interface ICredentialReqBody {
     userId?: string
     organizationId?: string
     visibility?: ChatflowVisibility[]
+    workspaceId: string
 }
 
 // Decrypted credential object sent back to client
@@ -448,6 +489,7 @@ export interface IApiKey {
     lastUsedAt?: Date
     isActive: boolean
     metadata?: IApiKeyMetadata
+    workspaceId: string
 }
 
 export interface ITrialPlan {
@@ -477,10 +519,12 @@ export interface ICustomTemplate {
     shareWithOrg?: boolean
     deletedDate?: Date
     parentId?: string
+    workspaceId: string
 }
 
 export interface IFlowConfig {
     chatflowid: string
+    chatflowId: string
     chatId: string
     sessionId: string
     chatHistory: IMessage[]
@@ -496,14 +540,21 @@ export interface IPredictionQueueAppServer {
     sseStreamer: IServerSideEventStreamer
     telemetry: Telemetry
     cachePool: CachePool
+    usageCacheManager: UsageCacheManager
 }
 
 export interface IExecuteFlowParams extends IPredictionQueueAppServer {
     incomingInput: IncomingInput
     chatflow: IChatFlow
     chatId: string
+    orgId: string
+    workspaceId: string
+    subscriptionId: string
+    productId: string
     baseURL: string
     isInternal: boolean
+    isEvaluation?: boolean
+    evaluationRunId?: string
     signal?: AbortController
     files?: Express.Multer.File[]
     fileUploads?: IFileUpload[]
@@ -611,3 +662,6 @@ export interface IAppCsvParseRows {
 
 // DocumentStore related
 export * from './Interface.DocumentStore'
+
+// Evaluations related
+export * from './Interface.Evaluation'

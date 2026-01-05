@@ -633,7 +633,7 @@
                 "type": "PostgreSQL MCP Tool",
                 "baseClasses": ["Tool"],
                 "tags": ["AAI"],
-                "category": "MCP Servers",
+                "category": "Tools (MCP)",
                 "description": "MCP server that provides read-only access to PostgreSQL databases",
                 "inputParams": [
                     {

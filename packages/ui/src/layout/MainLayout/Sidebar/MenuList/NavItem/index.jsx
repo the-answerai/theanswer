@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { forwardRef, useEffect } from 'react'
-import { Link } from '@/utils/navigation'
+import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 // material-ui
@@ -101,7 +101,6 @@ const NavItem = ({ item, level, navType, onClick, onUploadFile }) => {
             disabled={item.disabled}
             sx={{
                 borderRadius: `${customization.borderRadius}px`,
-                mb: 0.5,
                 alignItems: 'flex-start',
                 backgroundColor: level > 1 ? 'transparent !important' : 'inherit',
                 py: level > 1 ? 1 : 1.25,

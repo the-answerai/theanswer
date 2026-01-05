@@ -1,19 +1,28 @@
 import { StatusCodes } from 'http-status-codes'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { Variable, VariableVisibility } from '../../database/entities/Variable'
+import { Variable } from '../../database/entities/Variable'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
-import { IUser } from '../../Interface'
-import { QueryRunner, FindOptionsWhere, IsNull, Like } from 'typeorm'
+import { getAppVersion } from '../../utils'
+import { QueryRunner } from 'typeorm'
 import { validate } from 'uuid'
+import { Platform } from '../../Interface'
 
-const createVariable = async (newVariable: Variable, user: IUser) => {
+const createVariable = async (newVariable: Variable, orgId: string) => {
+    const appServer = getRunningExpressApp()
+    if (appServer.identityManager.getPlatformType() === Platform.CLOUD && newVariable.type === 'runtime')
+        throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Cloud platform does not support runtime variables!')
     try {
-        const appServer = getRunningExpressApp()
-        newVariable.userId = user.id
-        newVariable.organizationId = user.organizationId
         const variable = await appServer.AppDataSource.getRepository(Variable).create(newVariable)
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).save(variable)
+        await appServer.telemetry.sendTelemetry(
+            'variable_created',
+            {
+                version: await getAppVersion(),
+                variableType: variable.type
+            },
+            orgId
+        )
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -23,10 +32,10 @@ const createVariable = async (newVariable: Variable, user: IUser) => {
     }
 }
 
-const deleteVariable = async (variableId: string): Promise<any> => {
+const deleteVariable = async (variableId: string, workspaceId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const dbResponse = await appServer.AppDataSource.getRepository(Variable).delete({ id: variableId })
+        const dbResponse = await appServer.AppDataSource.getRepository(Variable).delete({ id: variableId, workspaceId: workspaceId })
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -36,54 +45,30 @@ const deleteVariable = async (variableId: string): Promise<any> => {
     }
 }
 
-const getAllVariables = async (user: IUser, exportMode: boolean = false) => {
+const getAllVariables = async (workspaceId: string, page: number = -1, limit: number = -1) => {
     try {
         const appServer = getRunningExpressApp()
-        const variableRepo = appServer.AppDataSource.getRepository(Variable)
+        const queryBuilder = appServer.AppDataSource.getRepository(Variable)
+            .createQueryBuilder('variable')
+            .orderBy('variable.updatedDate', 'DESC')
 
-        // SECURITY: For export operations, only include variables owned by the user
-        if (exportMode) {
-            const variables = await variableRepo.find({
-                where: {
-                    organizationId: user.organizationId,
-                    userId: user.id
-                }
-            })
-            return variables.map((variable) => ({
-                ...variable,
-                isOwner: true // All variables in export mode are user-owned
-            }))
+        if (page > 0 && limit > 0) {
+            queryBuilder.skip((page - 1) * limit)
+            queryBuilder.take(limit)
+        }
+        if (workspaceId) queryBuilder.andWhere('variable.workspaceId = :workspaceId', { workspaceId })
+
+        if (appServer.identityManager.getPlatformType() === Platform.CLOUD) {
+            queryBuilder.andWhere('variable.type != :type', { type: 'runtime' })
         }
 
-        // Regular mode - include shared variables for viewing
-        const isAdmin = user?.roles?.includes('Admin')
+        const [data, total] = await queryBuilder.getManyAndCount()
 
-        let conditions: FindOptionsWhere<Variable> | FindOptionsWhere<Variable>[]
-
-        if (isAdmin) {
-            conditions = [{ organizationId: user.organizationId }, { userId: IsNull() }]
+        if (page > 0 && limit > 0) {
+            return { data, total }
         } else {
-            conditions = [
-                { userId: user.id },
-                { userId: IsNull() },
-                {
-                    organizationId: user.organizationId,
-                    // @ts-ignore
-                    visibility: Like(`%${VariableVisibility.ORGANIZATION}%`)
-                }
-            ]
+            return data
         }
-
-        const variables = await variableRepo.find({ where: conditions })
-
-        // Deduplicate variables based on id
-        const uniqueVariables = Array.from(new Map(variables.map((item) => [item.id, item])).values())
-
-        // Add isOwner property
-        return uniqueVariables.map((variable) => ({
-            ...variable,
-            isOwner: variable.userId === user.id
-        }))
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -92,12 +77,18 @@ const getAllVariables = async (user: IUser, exportMode: boolean = false) => {
     }
 }
 
-const getVariableById = async (variableId: string) => {
+const getVariableById = async (variableId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).findOneBy({
-            id: variableId
+            id: variableId,
+            workspaceId: workspaceId
         })
+
+        if (appServer.identityManager.getPlatformType() === Platform.CLOUD && dbResponse?.type === 'runtime') {
+            throw new InternalFlowiseError(StatusCodes.FORBIDDEN, 'Cloud platform does not support runtime variables!')
+        }
+
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -108,8 +99,10 @@ const getVariableById = async (variableId: string) => {
 }
 
 const updateVariable = async (variable: Variable, updatedVariable: Variable) => {
+    const appServer = getRunningExpressApp()
+    if (appServer.identityManager.getPlatformType() === Platform.CLOUD && updatedVariable.type === 'runtime')
+        throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Cloud platform does not support runtime variables!')
     try {
-        const appServer = getRunningExpressApp()
         const tmpUpdatedVariable = await appServer.AppDataSource.getRepository(Variable).merge(variable, updatedVariable)
         const dbResponse = await appServer.AppDataSource.getRepository(Variable).save(tmpUpdatedVariable)
         return dbResponse
@@ -152,7 +145,7 @@ const importVariables = async (newVariables: Partial<Variable>[], queryRunner?: 
         })
 
         // step 3 - remove ids that are only duplicate
-        const prepVariables: Partial<Variable>[] = newVariables.map((newVariable) => {
+        let prepVariables: Partial<Variable>[] = newVariables.map((newVariable) => {
             let id: string = ''
             if (newVariable.id) id = newVariable.id
             if (foundIds.includes(id)) {
@@ -161,6 +154,10 @@ const importVariables = async (newVariables: Partial<Variable>[], queryRunner?: 
             }
             return newVariable
         })
+
+        // Filter out variables with type "runtime"
+        if (appServer.identityManager.getPlatformType() === Platform.CLOUD)
+            prepVariables = prepVariables.filter((variable) => variable.type !== 'runtime')
 
         // step 4 - transactional insert array of entities
         const insertResponse = await repository.insert(prepVariables)

@@ -1,21 +1,28 @@
-import { omit } from 'lodash'
 import { StatusCodes } from 'http-status-codes'
-import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import { omit } from 'lodash'
+import { ICredentialReturnResponse } from '../../Interface'
 import { Credential } from '../../database/entities/Credential'
-import { transformToCredentialEntity, decryptCredentialData } from '../../utils'
-import { ICredentialReturnResponse, IUser } from '../../Interface'
+import { WorkspaceShared } from '../../enterprise/database/entities/EnterpriseEntities'
+import { WorkspaceService } from '../../enterprise/services/workspace.service'
+import { getWorkspaceSearchOptions } from '../../enterprise/utils/ControllerServiceUtils'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
-import { FindOptionsWhere, IsNull, Like } from 'typeorm'
+import { decryptCredentialData, transformToCredentialEntity } from '../../utils'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { GoogleOauth2Client } from '../../utils/refreshGoogleAccessToken'
 import { refreshStoredCredentialTokens } from '../../utils'
 
-const createCredential = async (requestBody: any, userId?: string, organizationId?: string) => {
+const createCredential = async (requestBody: any, userId: string, organizationId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const newCredential = await transformToCredentialEntity(requestBody)
         newCredential.userId = userId
         newCredential.organizationId = organizationId
+
+        if (requestBody.id) {
+            newCredential.id = requestBody.id
+        }
+
         const credential = await appServer.AppDataSource.getRepository(Credential).create(newCredential)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
         return dbResponse
@@ -28,10 +35,10 @@ const createCredential = async (requestBody: any, userId?: string, organizationI
 }
 
 // Delete all credentials from chatflowid
-const deleteCredentials = async (credentialId: string, userId?: string): Promise<any> => {
+const deleteCredentials = async (credentialId: string, workspaceId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const dbResponse = await appServer.AppDataSource.getRepository(Credential).delete({ id: credentialId, userId })
+        const dbResponse = await appServer.AppDataSource.getRepository(Credential).delete({ id: credentialId, workspaceId: workspaceId })
         if (!dbResponse) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found`)
         }
@@ -44,70 +51,75 @@ const deleteCredentials = async (credentialId: string, userId?: string): Promise
     }
 }
 
-const getAllCredentials = async (paramCredentialName: any, user: IUser) => {
+const getAllCredentials = async (paramCredentialName: any, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
-        const credentialRepo = appServer.AppDataSource.getRepository(Credential)
-
-        const isAdmin = user?.roles?.includes('Admin')
-
-        // This function fetches credentials based on different ownership levels:
-        // 1. User-specific credentials (linked to userId)
-        // 2. Global credentials (userId is null)
-        // 3. Organization-wide credentials (linked to organizationId)
-        // 4. All organization credentials if user is admin
-        const fetchCredentials = async (name?: string) => {
-            let baseConditions = []
-
-            // If name is provided, only fetch owned credentials
-            if (!name && isAdmin) {
-                // Admin can see all organization credentials
-                baseConditions = [{ organizationId: user.organizationId }, { userId: IsNull() }]
-            } else {
-                baseConditions = [
-                    { userId: user.id },
-                    { userId: IsNull() },
-                    {
-                        organizationId: user.organizationId,
-                        visibility: Like('%Organization%')
+        let dbResponse: any[] = []
+        if (paramCredentialName) {
+            if (Array.isArray(paramCredentialName)) {
+                for (let i = 0; i < paramCredentialName.length; i += 1) {
+                    const name = paramCredentialName[i] as string
+                    const searchOptions = {
+                        credentialName: name,
+                        ...getWorkspaceSearchOptions(workspaceId)
                     }
-                ]
+                    const credentials = await appServer.AppDataSource.getRepository(Credential).findBy(searchOptions)
+                    dbResponse.push(...credentials.map(c => omit(c, ['encryptedData'])))
+                }
+            } else {
+                const searchOptions = {
+                    credentialName: paramCredentialName,
+                    ...getWorkspaceSearchOptions(workspaceId)
+                }
+                const credentials = await appServer.AppDataSource.getRepository(Credential).findBy(searchOptions)
+                dbResponse = [...credentials]
             }
-
-            const conditions = name ? baseConditions.map((condition) => ({ ...condition, credentialName: name })) : baseConditions
-
-            return credentialRepo.find({
-                where: conditions as FindOptionsWhere<Credential> | FindOptionsWhere<Credential>[]
-            })
-        }
-
-        let credentials: Credential[] = []
-
-        // The paramCredentialName parameter affects the retrieval logic:
-        // - If provided as an array, it fetches credentials for each name in the array
-        // - If provided as a single string, it fetches credentials matching that specific name
-        // - If not provided (null/undefined), it fetches all accessible credentials
-        if (Array.isArray(paramCredentialName)) {
-            for (const name of paramCredentialName) {
-                credentials.push(...(await fetchCredentials(name)))
+            // get shared credentials
+            if (workspaceId) {
+                const workspaceService = new WorkspaceService()
+                const sharedItems = (await workspaceService.getSharedItemsForWorkspace(workspaceId, 'credential')) as Credential[]
+                if (sharedItems.length) {
+                    for (const sharedItem of sharedItems) {
+                        // Check if paramCredentialName is array
+                        if (Array.isArray(paramCredentialName)) {
+                            for (let i = 0; i < paramCredentialName.length; i += 1) {
+                                const name = paramCredentialName[i] as string
+                                if (sharedItem.credentialName === name) {
+                                    // @ts-ignore
+                                    sharedItem.shared = true
+                                    dbResponse.push(omit(sharedItem, ['encryptedData']))
+                                }
+                            }
+                        } else {
+                            if (sharedItem.credentialName === paramCredentialName) {
+                                // @ts-ignore
+                                sharedItem.shared = true
+                                dbResponse.push(omit(sharedItem, ['encryptedData']))
+                            }
+                        }
+                    }
+                }
             }
-        } else if (paramCredentialName) {
-            credentials = await fetchCredentials(paramCredentialName)
         } else {
-            credentials = await fetchCredentials()
+            const credentials = await appServer.AppDataSource.getRepository(Credential).findBy(getWorkspaceSearchOptions(workspaceId))
+            for (const credential of credentials) {
+                dbResponse.push(omit(credential, ['encryptedData']))
+            }
+
+            // get shared credentials
+            if (workspaceId) {
+                const workspaceService = new WorkspaceService()
+                const sharedItems = (await workspaceService.getSharedItemsForWorkspace(workspaceId, 'credential')) as Credential[]
+                if (sharedItems.length) {
+                    for (const sharedItem of sharedItems) {
+                        // @ts-ignore
+                        sharedItem.shared = true
+                        dbResponse.push(omit(sharedItem, ['encryptedData']))
+                    }
+                }
+            }
         }
-
-        // Remove sensitive data from user-specific credentials
-        const sanitizedCredentials = credentials.map((credential) => (credential.userId ? omit(credential, ['encryptedData']) : credential))
-
-        // Deduplicate credentials based on id
-        const uniqueCredentials = Array.from(new Map(sanitizedCredentials.map((item) => [item.id, item])).values())
-
-        // Add isOwner property to indicate if the current user owns the credential
-        return uniqueCredentials.map((credential) => ({
-            ...credential,
-            isOwner: credential.userId === user.id
-        }))
+        return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -116,13 +128,13 @@ const getAllCredentials = async (paramCredentialName: any, user: IUser) => {
     }
 }
 
-const getCredentialById = async (credentialId: string, userId?: string): Promise<any> => {
+const getCredentialById = async (credentialId: string, workspaceId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         // TODO: Check if necessary to filter by userId
         const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
-            id: credentialId
-            // userId
+            id: credentialId,
+            workspaceId: workspaceId
         })
         if (!credential) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found`)
@@ -137,7 +149,19 @@ const getCredentialById = async (credentialId: string, userId?: string): Promise
             ...credential,
             plainDataObj: decryptedCredentialData
         }
-        const dbResponse = omit(returnCredential, ['encryptedData'])
+        const dbResponse: any = omit(returnCredential, ['encryptedData'])
+        if (workspaceId) {
+            const shared = await appServer.AppDataSource.getRepository(WorkspaceShared).count({
+                where: {
+                    workspaceId: workspaceId,
+                    sharedItemId: credentialId,
+                    itemType: 'credential'
+                }
+            })
+            if (shared > 0) {
+                dbResponse.shared = true
+            }
+        }
         return dbResponse
     } catch (error) {
         throw new InternalFlowiseError(
@@ -147,19 +171,21 @@ const getCredentialById = async (credentialId: string, userId?: string): Promise
     }
 }
 
-const updateCredential = async (credentialId: string, requestBody: any, userId?: string, organizationId?: string): Promise<any> => {
+const updateCredential = async (credentialId: string, requestBody: any, workspaceId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
         const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
-            id: credentialId
+            id: credentialId,
+            workspaceId: workspaceId
         })
         if (!credential) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found`)
         }
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
         requestBody.plainDataObj = { ...decryptedCredentialData, ...requestBody.plainDataObj }
-        requestBody.organizationId = organizationId
+        // requestBody.organizationId = organizationId
         const updateCredential = await transformToCredentialEntity(requestBody)
+        updateCredential.workspaceId = workspaceId
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredential)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
         return dbResponse
@@ -195,7 +221,8 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
                 // expiresAt: new Date(Date.now() + 1 * 60 * 1000)
             },
             userId: credential.userId,
-            organizationId: credential.organizationId
+            organizationId: credential.organizationId,
+            workspaceId: credential.workspaceId
         }
         const updateCredentialEntity = await transformToCredentialEntity(updateBody)
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)

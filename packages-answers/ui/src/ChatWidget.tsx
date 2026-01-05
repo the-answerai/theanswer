@@ -19,8 +19,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ session, params }) => {
         const searchParams = new URLSearchParams(location.search)
         const apiKey = searchParams.get('apiKey')
 
-        //TODO: Show error if api key is not passed in
-        if (!apiKey) console.log('no api key')
+        // TODO: Show error if api key is not passed in
+        if (!apiKey) return
 
         const signInAsync = async () => {
             const signInResponse = await signIn(

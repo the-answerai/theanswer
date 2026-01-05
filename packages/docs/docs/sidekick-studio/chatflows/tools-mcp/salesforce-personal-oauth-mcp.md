@@ -74,7 +74,7 @@ For detailed setup instructions, see the [Salesforce Personal OAuth Setup Guide]
 1. **Add MCP Node**
 
     - In your chatflow or agentflow, add a new node
-    - Navigate to **Tools** > **MCP Servers**
+    - Navigate to **Tools** > **Tools (MCP)**
     - Select **Salesforce Personal OAuth MCP**
 
 2. **Configure Credential**
@@ -641,7 +641,7 @@ For specialized use cases:
 
 1. **Workflow Automation**
 
-    - Combine with other MCP servers
+    - Combine with other Tools (MCP)
     - Create multi-system workflows
     - Maintain user authentication across systems
 

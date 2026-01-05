@@ -243,7 +243,6 @@ interface AirtableLoaderParams {
     fields?: string[]
     limit?: number
     returnAll?: boolean
-    textField?: string
     filterByFormula?: string
 }
 
@@ -329,27 +328,15 @@ class AirtableLoader extends BaseDocumentLoader {
         }
     }
 
-    private createDocumentFromPage(page: AirtableLoaderPage, pageField?: string): Document {
+    private createDocumentFromPage(page: AirtableLoaderPage): IDocument {
         // Generate the URL
         const pageUrl = `https://api.airtable.com/v0/${this.baseId}/${this.tableId}/${page.id}`
 
-        // console.log('GOT HERE!!!', pageField)
-        // Determine the page content
-        let pageContent: string
-        if (pageField && Object.prototype.hasOwnProperty.call(page.fields, pageField)) {
-            pageContent = page.fields[pageField]
-        } else {
-            pageContent = JSON.stringify(page.fields, null, 2)
-        }
-
-        // console.log('Page Content', pageContent)
-
         // Return a langchain document
         return new Document({
-            pageContent: pageContent,
+            pageContent: JSON.stringify(page.fields, null, 2),
             metadata: {
-                url: pageUrl,
-                doctype: 'meeting'
+                url: pageUrl
             }
         })
     }
@@ -404,6 +391,7 @@ class AirtableLoader extends BaseDocumentLoader {
 
         let response: AirtableLoaderResponse
         let returnPages: AirtableLoaderPage[] = []
+
         do {
             response = await this.fetchAirtableData(`https://api.airtable.com/v0/${this.baseId}/${this.tableId}/listRecords`, data)
             returnPages.push(...response.records)

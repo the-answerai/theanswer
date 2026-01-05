@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch } from 'react-redux'
-import { useState, useEffect, useRef } from 'react'
 
 import {
     Box,
@@ -16,11 +16,11 @@ import {
     Stack,
     Typography
 } from '@mui/material'
-import { IconEraser, IconTrash, IconX, IconPlus } from '@tabler/icons-react'
+import { IconEraser, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 
-import { BackdropLoader } from '@/ui-component/loading/BackdropLoader'
 import { StyledButton } from '@/ui-component/button/StyledButton'
+import { BackdropLoader } from '@/ui-component/loading/BackdropLoader'
 
 import scraperApi from '@/api/scraper'
 
@@ -29,8 +29,8 @@ import useNotifier from '@/utils/useNotifier'
 import {
     HIDE_CANVAS_DIALOG,
     SHOW_CANVAS_DIALOG,
-    enqueueSnackbar as enqueueSnackbarAction,
-    closeSnackbar as closeSnackbarAction
+    closeSnackbar as closeSnackbarAction,
+    enqueueSnackbar as enqueueSnackbarAction
 } from '@/store/actions'
 
 const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
@@ -40,20 +40,10 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
     useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
-    const newUrlInputRef = useRef(null)
 
     const [loading, setLoading] = useState(false)
     const [selectedLinks, setSelectedLinks] = useState([])
     const [url, setUrl] = useState('')
-    const [newUrl, setNewUrl] = useState('')
-
-    // Function to handle adding a new URL to the top of the list
-    const handleAddUrl = () => {
-        if (newUrl.trim() !== '') {
-            setSelectedLinks([newUrl, ...selectedLinks])
-            setNewUrl('') // Clear the input after adding
-        }
-    }
 
     useEffect(() => {
         if (dialogProps.url) setUrl(dialogProps.url)
@@ -122,6 +112,10 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
         setSelectedLinks(links)
     }
 
+    const handleAddLink = () => {
+        setSelectedLinks([...selectedLinks, ''])
+    }
+
     const handleRemoveAllLinks = () => {
         setSelectedLinks([])
     }
@@ -170,6 +164,16 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Typography sx={{ fontWeight: 500 }}>Scraped Links</Typography>
+                    <Box sx={{ width: 'auto', flexGrow: 1 }}>
+                        <IconButton
+                            sx={{ height: 30, width: 30, marginLeft: '8px' }}
+                            size='small'
+                            color='primary'
+                            onClick={() => handleAddLink()}
+                        >
+                            <IconPlus />
+                        </IconButton>
+                    </Box>
                     {selectedLinks.length > 0 ? (
                         <Button
                             sx={{ height: 'max-content', width: 'max-content' }}
@@ -184,26 +188,6 @@ const ManageScrapedLinksDialog = ({ show, dialogProps, onCancel, onSave }) => {
                     ) : null}
                 </Box>
                 <>
-                    <OutlinedInput
-                        sx={{ mb: 2 }}
-                        fullWidth
-                        value={newUrl}
-                        onChange={(e) => setNewUrl(e.target.value)}
-                        placeholder='Enter new URL'
-                        inputRef={newUrlInputRef}
-                        onFocus={() => newUrlInputRef.current.select()}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && newUrl.trim() !== '') {
-                                handleAddUrl()
-                                e.preventDefault() // Prevent form submission if this input is part of a form
-                            }
-                        }}
-                        endAdornment={
-                            <IconButton onClick={handleAddUrl}>
-                                <IconPlus />
-                            </IconButton>
-                        }
-                    />
                     {loading && <BackdropLoader open={loading} />}
                     {selectedLinks.length > 0 ? (
                         <PerfectScrollbar

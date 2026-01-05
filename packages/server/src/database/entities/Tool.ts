@@ -52,4 +52,6 @@ export class Tool implements ITool {
         default: 'Private'
     })
     visibility?: ToolVisibility[]
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

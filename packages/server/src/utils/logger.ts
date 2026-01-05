@@ -4,6 +4,7 @@ import { hostname } from 'node:os'
 import config from './config' // should be replaced by node-config or similar
 import { createLogger, transports, format } from 'winston'
 import { NextFunction, Request, Response } from 'express'
+import DailyRotateFile from 'winston-daily-rotate-file'
 import { S3ClientConfig } from '@aws-sdk/client-s3'
 import { LoggingWinston } from '@google-cloud/logging-winston'
 
@@ -19,6 +20,8 @@ let gcsServerStream: any
 let gcsErrorStream: any
 let gcsServerReqStream: any
 
+let requestLogger: any
+
 if (process.env.STORAGE_TYPE === 's3') {
     const accessKeyId = process.env.S3_STORAGE_ACCESS_KEY_ID
     const secretAccessKey = process.env.S3_STORAGE_SECRET_ACCESS_KEY
@@ -27,53 +30,21 @@ if (process.env.STORAGE_TYPE === 's3') {
     const customURL = process.env.S3_ENDPOINT_URL
     const forcePathStyle = process.env.S3_FORCE_PATH_STYLE === 'true'
 
-    if (!s3Bucket) {
-        // Enhanced error message with troubleshooting information
-        const errorMsg = [
-            '❌ S3 STORAGE CONFIGURATION ERROR',
-            '',
-            'STORAGE_TYPE is set to "s3" but S3_STORAGE_BUCKET_NAME is not defined.',
-            '',
-            'REQUIRED VARIABLES FOR S3 STORAGE:',
-            '  S3_STORAGE_BUCKET_NAME - The name of your S3 bucket (REQUIRED)',
-            '  S3_STORAGE_REGION - AWS region (optional, defaults to us-east-1)',
-            '  S3_STORAGE_ACCESS_KEY_ID - AWS access key (optional, uses IAM role if not set)',
-            '  S3_STORAGE_SECRET_ACCESS_KEY - AWS secret key (optional, uses IAM role if not set)',
-            '',
-            'TO FIX THIS ISSUE:',
-            '1. If using Copilot/CloudFormation:',
-            '   - Check that S3_STORAGE_BUCKET_NAME is set from CloudFormation outputs',
-            '   - Verify the CloudFormation export name matches your manifest.yml',
-            '',
-            '2. If using .env file:',
-            '   - Add S3_STORAGE_BUCKET_NAME=your-actual-bucket-name',
-            '   - Ensure STORAGE_TYPE=s3 is set',
-            '',
-            '3. If not using S3 storage:',
-            '   - Change STORAGE_TYPE to "local" or remove it entirely',
-            '   - Remove any S3_* environment variables',
-            '',
-            'CURRENT CONFIGURATION:',
-            `  STORAGE_TYPE: ${process.env.STORAGE_TYPE}`,
-            `  S3_STORAGE_BUCKET_NAME: ${s3Bucket || 'NOT SET (CRITICAL)'}`,
-            `  S3_STORAGE_REGION: ${region || 'NOT SET (defaults to us-east-1)'}`,
-            `  S3_STORAGE_ACCESS_KEY_ID: ${process.env.S3_STORAGE_ACCESS_KEY_ID ? 'SET' : 'NOT SET (will use IAM role)'}`,
-            `  S3_STORAGE_SECRET_ACCESS_KEY: ${process.env.S3_STORAGE_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET (will use IAM role)'}`,
-            '',
-            'For detailed debugging, set DEBUG=true or VERBOSE=true to see S3 configuration logs.'
-        ].join('\n')
-
-        console.error(errorMsg) // Use console.error since logger might not be initialized yet
-        throw new Error('S3 storage bucket configuration is missing - see console output for details')
+    if (!region || region.trim() === '' || !s3Bucket || s3Bucket.trim() === '') {
+        throw new Error('S3 storage configuration is missing')
     }
 
     const s3Config: S3ClientConfig = {
         region: region,
-        endpoint: customURL,
         forcePathStyle: forcePathStyle
     }
 
-    if (accessKeyId && secretAccessKey) {
+    // Only include endpoint if customURL is not empty
+    if (customURL && customURL.trim() !== '') {
+        s3Config.endpoint = customURL
+    }
+
+    if (accessKeyId && accessKeyId.trim() !== '' && secretAccessKey && secretAccessKey.trim() !== '') {
         s3Config.credentials = {
             accessKeyId: accessKeyId,
             secretAccessKey: secretAccessKey
@@ -146,17 +117,16 @@ const logger = createLogger({
     defaultMeta: {
         package: 'server'
     },
+    exitOnError: false,
     transports: [
         new transports.Console(),
         ...(!process.env.STORAGE_TYPE || process.env.STORAGE_TYPE === 'local'
             ? [
-                  new transports.File({
-                      filename: path.join(logDir, config.logging.server.filename ?? 'server.log'),
+                  new DailyRotateFile({
+                      filename: path.join(logDir, config.logging.server.filename ?? 'server-%DATE%.log'),
+                      datePattern: 'YYYY-MM-DD-HH',
+                      maxSize: '20m',
                       level: config.logging.server.level ?? 'info'
-                  }),
-                  new transports.File({
-                      filename: path.join(logDir, config.logging.server.errorFilename ?? 'server-error.log'),
-                      level: 'error' // Log only errors to this file
                   })
               ]
             : []),
@@ -170,13 +140,7 @@ const logger = createLogger({
         ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsServerStream] : [])
     ],
     exceptionHandlers: [
-        ...(!process.env.STORAGE_TYPE || process.env.STORAGE_TYPE === 'local'
-            ? [
-                  new transports.File({
-                      filename: path.join(logDir, config.logging.server.errorFilename ?? 'server-error.log')
-                  })
-              ]
-            : []),
+        ...(process.env.DEBUG && process.env.DEBUG === 'true' ? [new transports.Console()] : []),
         ...(process.env.STORAGE_TYPE === 's3'
             ? [
                   new transports.Stream({
@@ -187,13 +151,7 @@ const logger = createLogger({
         ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsErrorStream] : [])
     ],
     rejectionHandlers: [
-        ...(!process.env.STORAGE_TYPE || process.env.STORAGE_TYPE === 'local'
-            ? [
-                  new transports.File({
-                      filename: path.join(logDir, config.logging.server.errorFilename ?? 'server-error.log')
-                  })
-              ]
-            : []),
+        ...(process.env.DEBUG && process.env.DEBUG === 'true' ? [new transports.Console()] : []),
         ...(process.env.STORAGE_TYPE === 's3'
             ? [
                   new transports.Stream({
@@ -201,45 +159,105 @@ const logger = createLogger({
                   })
               ]
             : []),
-        ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsErrorStream] : [])
+        ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsErrorStream] : []),
+        // Always provide a fallback rejection handler when no other handlers are configured
+        ...((!process.env.DEBUG || process.env.DEBUG !== 'true') && process.env.STORAGE_TYPE !== 's3' && process.env.STORAGE_TYPE !== 'gcs'
+            ? [new transports.Console()]
+            : [])
     ]
 })
+
+requestLogger = createLogger({
+    format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), format.json(), errors({ stack: true })),
+    defaultMeta: {
+        package: 'server'
+    },
+    transports: [
+        ...(process.env.DEBUG && process.env.DEBUG === 'true' ? [new transports.Console()] : []),
+        ...(!process.env.STORAGE_TYPE || process.env.STORAGE_TYPE === 'local'
+            ? [
+                  new transports.File({
+                      filename: path.join(logDir, config.logging.express.filename ?? 'server-requests.log.jsonl'),
+                      level: config.logging.express.level ?? 'debug'
+                  })
+              ]
+            : []),
+        ...(process.env.STORAGE_TYPE === 's3'
+            ? [
+                  new transports.Stream({
+                      stream: s3ServerReqStream
+                  })
+              ]
+            : []),
+        ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsServerReqStream] : [])
+    ]
+})
+
+function getSensitiveBodyFields(): string[] {
+    if (!process.env.LOG_SANITIZE_BODY_FIELDS) return []
+    return (process.env.LOG_SANITIZE_BODY_FIELDS as string)
+        .toLowerCase()
+        .split(',')
+        .map((f) => f.trim())
+}
+
+function getSensitiveHeaderFields(): string[] {
+    if (!process.env.LOG_SANITIZE_HEADER_FIELDS) return []
+    return (process.env.LOG_SANITIZE_HEADER_FIELDS as string)
+        .toLowerCase()
+        .split(',')
+        .map((f) => f.trim())
+}
+
+function sanitizeObject(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj
+
+    const sensitiveFields = getSensitiveBodyFields()
+    const sanitized = Array.isArray(obj) ? [...obj] : { ...obj }
+    Object.keys(sanitized).forEach((key) => {
+        const lowerKey = key.toLowerCase()
+        if (sensitiveFields.includes(lowerKey)) {
+            sanitized[key] = '********'
+        } else if (typeof sanitized[key] === 'string') {
+            if (sanitized[key].includes('@') && sanitized[key].includes('.')) {
+                sanitized[key] = sanitized[key].replace(/([^@\s]+)@([^@\s]+)/g, '**********')
+            }
+        }
+    })
+
+    return sanitized
+}
 
 export function expressRequestLogger(req: Request, res: Response, next: NextFunction): void {
     const unwantedLogURLs = ['/api/v1/node-icon/', '/api/v1/components-credentials-icon/', '/api/v1/ping']
     if (/\/api\/v1\//i.test(req.url) && !unwantedLogURLs.some((url) => new RegExp(url, 'i').test(req.url))) {
-        const fileLogger = createLogger({
-            format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), format.json(), errors({ stack: true })),
-            defaultMeta: {
-                package: 'server',
-                request: {
-                    method: req.method,
-                    url: req.url,
-                    body: req.body,
-                    query: req.query,
-                    params: req.params,
-                    headers: req.headers
+        const isDebugLevel = logger.level === 'debug' || process.env.DEBUG === 'true'
+
+        const requestMetadata: any = {
+            request: {
+                method: req.method,
+                url: req.url,
+                params: req.params
+            }
+        }
+
+        // Only include headers, body, and query if log level is debug
+        if (isDebugLevel) {
+            const sanitizedBody = sanitizeObject(req.body)
+            const sanitizedQuery = sanitizeObject(req.query)
+            const sanitizedHeaders = { ...req.headers }
+
+            const sensitiveHeaders = getSensitiveHeaderFields()
+            sensitiveHeaders.forEach((header) => {
+                if (sanitizedHeaders[header]) {
+                    sanitizedHeaders[header] = '********'
                 }
-            },
-            transports: [
-                ...(!process.env.STORAGE_TYPE || process.env.STORAGE_TYPE === 'local'
-                    ? [
-                          new transports.File({
-                              filename: path.join(logDir, config.logging.express.filename ?? 'server-requests.log.jsonl'),
-                              level: config.logging.express.level ?? 'debug'
-                          })
-                      ]
-                    : []),
-                ...(process.env.STORAGE_TYPE === 's3'
-                    ? [
-                          new transports.Stream({
-                              stream: s3ServerReqStream
-                          })
-                      ]
-                    : []),
-                ...(process.env.STORAGE_TYPE === 'gcs' ? [gcsServerReqStream] : [])
-            ]
-        })
+            })
+
+            requestMetadata.request.body = sanitizedBody
+            requestMetadata.request.query = sanitizedQuery
+            requestMetadata.request.headers = sanitizedHeaders
+        }
 
         const getRequestEmoji = (method: string) => {
             const requetsEmojis: Record<string, string> = {
@@ -254,10 +272,10 @@ export function expressRequestLogger(req: Request, res: Response, next: NextFunc
         }
 
         if (req.method !== 'GET') {
-            fileLogger.info(`${getRequestEmoji(req.method)} ${req.method} ${req.url}`)
+            requestLogger.info(`${getRequestEmoji(req.method)} ${req.method} ${req.url}`, requestMetadata)
             logger.info(`${getRequestEmoji(req.method)} ${req.method} ${req.url}`)
         } else {
-            fileLogger.http(`${getRequestEmoji(req.method)} ${req.method} ${req.url}`)
+            requestLogger.http(`${getRequestEmoji(req.method)} ${req.method} ${req.url}`, requestMetadata)
         }
     }
 

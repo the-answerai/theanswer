@@ -1,34 +1,42 @@
-import { BaseMessage, AIMessage, AIMessageChunk, isBaseMessage, ChatMessage, MessageContentComplex } from '@langchain/core/messages'
-import { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager'
-import { BaseChatModel, type BaseChatModelParams } from '@langchain/core/language_models/chat_models'
-import { ChatGeneration, ChatGenerationChunk, ChatResult } from '@langchain/core/outputs'
-import { ToolCallChunk } from '@langchain/core/messages/tool'
-import { NewTokenIndices } from '@langchain/core/callbacks/base'
 import {
-    EnhancedGenerateContentResponse,
-    Content,
-    Part,
-    Tool,
     GenerativeModel,
-    GoogleGenerativeAI as GenerativeAI
-} from '@google/generative-ai'
-import type {
-    FunctionCallPart,
-    FunctionResponsePart,
-    SafetySetting,
-    UsageMetadata,
+    GoogleGenerativeAI as GenerativeAI,
     FunctionDeclarationsTool as GoogleGenerativeAIFunctionDeclarationsTool,
-    GenerateContentRequest
+    FunctionDeclaration as GenerativeAIFunctionDeclaration,
+    type FunctionDeclarationSchema as GenerativeAIFunctionDeclarationSchema,
+    GenerateContentRequest,
+    SafetySetting,
+    Part as GenerativeAIPart,
+    ModelParams,
+    RequestOptions,
+    type CachedContent,
+    Schema
 } from '@google/generative-ai'
-import { ICommonObject, IMultiModalOption, IVisionChatModal } from '../../../src'
-import { StructuredToolInterface } from '@langchain/core/tools'
-import { isStructuredTool } from '@langchain/core/utils/function_calling'
-import { zodToJsonSchema } from 'zod-to-json-schema'
-import { BaseLanguageModelCallOptions } from '@langchain/core/language_models/base'
-import type FlowiseGoogleAICacheManager from '../../cache/GoogleGenerativeAIContextCache/FlowiseGoogleAICacheManager'
-
-const DEFAULT_IMAGE_MAX_TOKEN = 8192
-const DEFAULT_IMAGE_MODEL = 'gemini-1.5-flash-latest'
+import { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager'
+import { AIMessageChunk, BaseMessage, UsageMetadata } from '@langchain/core/messages'
+import { ChatGenerationChunk, ChatResult } from '@langchain/core/outputs'
+import { getEnvironmentVariable } from '@langchain/core/utils/env'
+import {
+    BaseChatModel,
+    type BaseChatModelCallOptions,
+    type LangSmithParams,
+    type BaseChatModelParams
+} from '@langchain/core/language_models/chat_models'
+import { NewTokenIndices } from '@langchain/core/callbacks/base'
+import { BaseLanguageModelInput, StructuredOutputMethodOptions } from '@langchain/core/language_models/base'
+import { Runnable, RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables'
+import { InferInteropZodOutput, InteropZodType, isInteropZodSchema } from '@langchain/core/utils/types'
+import { BaseLLMOutputParser, JsonOutputParser } from '@langchain/core/output_parsers'
+import { schemaToGenerativeAIParameters, removeAdditionalProperties } from './utils/zod_to_genai_parameters.js'
+import {
+    convertBaseMessagesToContent,
+    convertResponseContentToChatGenerationChunk,
+    mapGenerateContentResultToChatResult
+} from './utils/common.js'
+import { GoogleGenerativeAIToolsOutputParser } from './utils/output_parsers.js'
+import { GoogleGenerativeAIToolType } from './utils/types.js'
+import { convertToolsToGenAI } from './utils/tools.js'
+import { IMultiModalOption, IVisionChatModal } from '../../../src'
 
 interface TokenUsage {
     completionTokens?: number
@@ -36,45 +44,549 @@ interface TokenUsage {
     totalTokens?: number
 }
 
-interface GoogleGenerativeAIChatCallOptions extends BaseLanguageModelCallOptions {
-    tools?: StructuredToolInterface[] | GoogleGenerativeAIFunctionDeclarationsTool[]
+export type BaseMessageExamplePair = {
+    input: BaseMessage
+    output: BaseMessage
+}
+
+export interface GoogleGenerativeAIChatCallOptions extends BaseChatModelCallOptions {
+    tools?: GoogleGenerativeAIToolType[]
+    /**
+     * Allowed functions to call when the mode is "any".
+     * If empty, any one of the provided functions are called.
+     */
+    allowedFunctionNames?: string[]
     /**
      * Whether or not to include usage data, like token counts
      * in the streamed response chunks.
      * @default true
      */
     streamUsage?: boolean
+
+    /**
+     * JSON schema to be returned by the model.
+     */
+    responseSchema?: Schema
 }
 
+/**
+ * An interface defining the input to the ChatGoogleGenerativeAI class.
+ */
 export interface GoogleGenerativeAIChatInput extends BaseChatModelParams, Pick<GoogleGenerativeAIChatCallOptions, 'streamUsage'> {
-    modelName?: string
-    model?: string
+    /**
+     * Model Name to use
+     *
+     * Note: The format must follow the pattern - `{model}`
+     */
+    model: string
+
+    /**
+     * Controls the randomness of the output.
+     *
+     * Values can range from [0.0,2.0], inclusive. A value closer to 2.0
+     * will produce responses that are more varied and creative, while
+     * a value closer to 0.0 will typically result in less surprising
+     * responses from the model.
+     *
+     * Note: The default value varies by model
+     */
     temperature?: number
+
+    /**
+     * Maximum number of tokens to generate in the completion.
+     */
     maxOutputTokens?: number
+
+    /**
+     * Top-p changes how the model selects tokens for output.
+     *
+     * Tokens are selected from most probable to least until the sum
+     * of their probabilities equals the top-p value.
+     *
+     * For example, if tokens A, B, and C have a probability of
+     * .3, .2, and .1 and the top-p value is .5, then the model will
+     * select either A or B as the next token (using temperature).
+     *
+     * Note: The default value varies by model
+     */
     topP?: number
+
+    /**
+     * Top-k changes how the model selects tokens for output.
+     *
+     * A top-k of 1 means the selected token is the most probable among
+     * all tokens in the model's vocabulary (also called greedy decoding),
+     * while a top-k of 3 means that the next token is selected from
+     * among the 3 most probable tokens (using temperature).
+     *
+     * Note: The default value varies by model
+     */
     topK?: number
+
+    /**
+     * The set of character sequences (up to 5) that will stop output generation.
+     * If specified, the API will stop at the first appearance of a stop
+     * sequence.
+     *
+     * Note: The stop sequence will not be included as part of the response.
+     * Note: stopSequences is only supported for Gemini models
+     */
     stopSequences?: string[]
+
+    /**
+     * A list of unique `SafetySetting` instances for blocking unsafe content. The API will block
+     * any prompts and responses that fail to meet the thresholds set by these settings. If there
+     * is no `SafetySetting` for a given `SafetyCategory` provided in the list, the API will use
+     * the default safety setting for that category.
+     */
     safetySettings?: SafetySetting[]
+
+    /**
+     * Google API key to use
+     */
     apiKey?: string
+
+    /**
+     * Google API version to use
+     */
     apiVersion?: string
+
+    /**
+     * Google API base URL to use
+     */
     baseUrl?: string
+
+    /** Whether to stream the results or not */
     streaming?: boolean
-    responseModalities?: string[]
+
+    /**
+     * Whether or not to force the model to respond with JSON.
+     * Available for `gemini-1.5` models and later.
+     * @default false
+     */
+    json?: boolean
+
+    /**
+     * Whether or not model supports system instructions.
+     * The following models support system instructions:
+     * - All Gemini 1.5 Pro model versions
+     * - All Gemini 1.5 Flash model versions
+     * - Gemini 1.0 Pro version gemini-1.0-pro-002
+     */
+    convertSystemMessageToHumanContent?: boolean | undefined
+
+    /** Thinking budget for Gemini 2.5 thinking models. Supports -1 (dynamic), 0 (off), or positive integers. */
+    thinkingBudget?: number
 }
 
-class LangchainChatGoogleGenerativeAI
+/**
+ * Google Generative AI chat model integration.
+ *
+ * Setup:
+ * Install `@langchain/google-genai` and set an environment variable named `GOOGLE_API_KEY`.
+ *
+ * ```bash
+ * npm install @langchain/google-genai
+ * export GOOGLE_API_KEY="your-api-key"
+ * ```
+ *
+ * ## [Constructor args](https://api.js.langchain.com/classes/langchain_google_genai.ChatGoogleGenerativeAI.html#constructor)
+ *
+ * ## [Runtime args](https://api.js.langchain.com/interfaces/langchain_google_genai.GoogleGenerativeAIChatCallOptions.html)
+ *
+ * Runtime args can be passed as the second argument to any of the base runnable methods `.invoke`. `.stream`, `.batch`, etc.
+ * They can also be passed via `.withConfig`, or the second arg in `.bindTools`, like shown in the examples below:
+ *
+ * ```typescript
+ * // When calling `.withConfig`, call options should be passed via the first argument
+ * const llmWithArgsBound = llm.withConfig({
+ *   stop: ["\n"],
+ * });
+ *
+ * // When calling `.bindTools`, call options should be passed via the second argument
+ * const llmWithTools = llm.bindTools(
+ *   [...],
+ *   {
+ *     stop: ["\n"],
+ *   }
+ * );
+ * ```
+ *
+ * ## Examples
+ *
+ * <details open>
+ * <summary><strong>Instantiate</strong></summary>
+ *
+ * ```typescript
+ * import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+ *
+ * const llm = new ChatGoogleGenerativeAI({
+ *   model: "gemini-1.5-flash",
+ *   temperature: 0,
+ *   maxRetries: 2,
+ *   // apiKey: "...",
+ *   // other params...
+ * });
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Invoking</strong></summary>
+ *
+ * ```typescript
+ * const input = `Translate "I love programming" into French.`;
+ *
+ * // Models also accept a list of chat messages or a formatted prompt
+ * const result = await llm.invoke(input);
+ * console.log(result);
+ * ```
+ *
+ * ```txt
+ * AIMessage {
+ *   "content": "There are a few ways to translate \"I love programming\" into French, depending on the level of formality and nuance you want to convey:\n\n**Formal:**\n\n* **J'aime la programmation.** (This is the most literal and formal translation.)\n\n**Informal:**\n\n* **J'adore programmer.** (This is a more enthusiastic and informal translation.)\n* **J'aime beaucoup programmer.** (This is a slightly less enthusiastic but still informal translation.)\n\n**More specific:**\n\n* **J'aime beaucoup coder.** (This specifically refers to writing code.)\n* **J'aime beaucoup développer des logiciels.** (This specifically refers to developing software.)\n\nThe best translation will depend on the context and your intended audience. \n",
+ *   "response_metadata": {
+ *     "finishReason": "STOP",
+ *     "index": 0,
+ *     "safetyRatings": [
+ *       {
+ *         "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+ *         "probability": "NEGLIGIBLE"
+ *       },
+ *       {
+ *         "category": "HARM_CATEGORY_HATE_SPEECH",
+ *         "probability": "NEGLIGIBLE"
+ *       },
+ *       {
+ *         "category": "HARM_CATEGORY_HARASSMENT",
+ *         "probability": "NEGLIGIBLE"
+ *       },
+ *       {
+ *         "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+ *         "probability": "NEGLIGIBLE"
+ *       }
+ *     ]
+ *   },
+ *   "usage_metadata": {
+ *     "input_tokens": 10,
+ *     "output_tokens": 149,
+ *     "total_tokens": 159
+ *   }
+ * }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Streaming Chunks</strong></summary>
+ *
+ * ```typescript
+ * for await (const chunk of await llm.stream(input)) {
+ *   console.log(chunk);
+ * }
+ * ```
+ *
+ * ```txt
+ * AIMessageChunk {
+ *   "content": "There",
+ *   "response_metadata": {
+ *     "index": 0
+ *   }
+ *   "usage_metadata": {
+ *     "input_tokens": 10,
+ *     "output_tokens": 1,
+ *     "total_tokens": 11
+ *   }
+ * }
+ * AIMessageChunk {
+ *   "content": " are a few ways to translate \"I love programming\" into French, depending on",
+ * }
+ * AIMessageChunk {
+ *   "content": " the level of formality and nuance you want to convey:\n\n**Formal:**\n\n",
+ * }
+ * AIMessageChunk {
+ *   "content": "* **J'aime la programmation.** (This is the most literal and formal translation.)\n\n**Informal:**\n\n* **J'adore programmer.** (This",
+ * }
+ * AIMessageChunk {
+ *   "content": " is a more enthusiastic and informal translation.)\n* **J'aime beaucoup programmer.** (This is a slightly less enthusiastic but still informal translation.)\n\n**More",
+ * }
+ * AIMessageChunk {
+ *   "content": " specific:**\n\n* **J'aime beaucoup coder.** (This specifically refers to writing code.)\n* **J'aime beaucoup développer des logiciels.** (This specifically refers to developing software.)\n\nThe best translation will depend on the context and",
+ * }
+ * AIMessageChunk {
+ *   "content": " your intended audience. \n",
+ * }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Aggregate Streamed Chunks</strong></summary>
+ *
+ * ```typescript
+ * import { AIMessageChunk } from '@langchain/core/messages';
+ * import { concat } from '@langchain/core/utils/stream';
+ *
+ * const stream = await llm.stream(input);
+ * let full: AIMessageChunk | undefined;
+ * for await (const chunk of stream) {
+ *   full = !full ? chunk : concat(full, chunk);
+ * }
+ * console.log(full);
+ * ```
+ *
+ * ```txt
+ * AIMessageChunk {
+ *   "content": "There are a few ways to translate \"I love programming\" into French, depending on the level of formality and nuance you want to convey:\n\n**Formal:**\n\n* **J'aime la programmation.** (This is the most literal and formal translation.)\n\n**Informal:**\n\n* **J'adore programmer.** (This is a more enthusiastic and informal translation.)\n* **J'aime beaucoup programmer.** (This is a slightly less enthusiastic but still informal translation.)\n\n**More specific:**\n\n* **J'aime beaucoup coder.** (This specifically refers to writing code.)\n* **J'aime beaucoup développer des logiciels.** (This specifically refers to developing software.)\n\nThe best translation will depend on the context and your intended audience. \n",
+ *   "usage_metadata": {
+ *     "input_tokens": 10,
+ *     "output_tokens": 277,
+ *     "total_tokens": 287
+ *   }
+ * }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Bind tools</strong></summary>
+ *
+ * ```typescript
+ * import { z } from 'zod';
+ *
+ * const GetWeather = {
+ *   name: "GetWeather",
+ *   description: "Get the current weather in a given location",
+ *   schema: z.object({
+ *     location: z.string().describe("The city and state, e.g. San Francisco, CA")
+ *   }),
+ * }
+ *
+ * const GetPopulation = {
+ *   name: "GetPopulation",
+ *   description: "Get the current population in a given location",
+ *   schema: z.object({
+ *     location: z.string().describe("The city and state, e.g. San Francisco, CA")
+ *   }),
+ * }
+ *
+ * const llmWithTools = llm.bindTools([GetWeather, GetPopulation]);
+ * const aiMsg = await llmWithTools.invoke(
+ *   "Which city is hotter today and which is bigger: LA or NY?"
+ * );
+ * console.log(aiMsg.tool_calls);
+ * ```
+ *
+ * ```txt
+ * [
+ *   {
+ *     name: 'GetWeather',
+ *     args: { location: 'Los Angeles, CA' },
+ *     type: 'tool_call'
+ *   },
+ *   {
+ *     name: 'GetWeather',
+ *     args: { location: 'New York, NY' },
+ *     type: 'tool_call'
+ *   },
+ *   {
+ *     name: 'GetPopulation',
+ *     args: { location: 'Los Angeles, CA' },
+ *     type: 'tool_call'
+ *   },
+ *   {
+ *     name: 'GetPopulation',
+ *     args: { location: 'New York, NY' },
+ *     type: 'tool_call'
+ *   }
+ * ]
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Structured Output</strong></summary>
+ *
+ * ```typescript
+ * const Joke = z.object({
+ *   setup: z.string().describe("The setup of the joke"),
+ *   punchline: z.string().describe("The punchline to the joke"),
+ *   rating: z.number().optional().describe("How funny the joke is, from 1 to 10")
+ * }).describe('Joke to tell user.');
+ *
+ * const structuredLlm = llm.withStructuredOutput(Joke, { name: "Joke" });
+ * const jokeResult = await structuredLlm.invoke("Tell me a joke about cats");
+ * console.log(jokeResult);
+ * ```
+ *
+ * ```txt
+ * {
+ *   setup: "Why don\\'t cats play poker?",
+ *   punchline: "Why don\\'t cats play poker? Because they always have an ace up their sleeve!"
+ * }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Multimodal</strong></summary>
+ *
+ * ```typescript
+ * import { HumanMessage } from '@langchain/core/messages';
+ *
+ * const imageUrl = "https://example.com/image.jpg";
+ * const imageData = await fetch(imageUrl).then(res => res.arrayBuffer());
+ * const base64Image = Buffer.from(imageData).toString('base64');
+ *
+ * const message = new HumanMessage({
+ *   content: [
+ *     { type: "text", text: "describe the weather in this image" },
+ *     {
+ *       type: "image_url",
+ *       image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+ *     },
+ *   ]
+ * });
+ *
+ * const imageDescriptionAiMsg = await llm.invoke([message]);
+ * console.log(imageDescriptionAiMsg.content);
+ * ```
+ *
+ * ```txt
+ * The weather in the image appears to be clear and sunny. The sky is mostly blue with a few scattered white clouds, indicating fair weather. The bright sunlight is casting shadows on the green, grassy hill, suggesting it is a pleasant day with good visibility. There are no signs of rain or stormy conditions.
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Usage Metadata</strong></summary>
+ *
+ * ```typescript
+ * const aiMsgForMetadata = await llm.invoke(input);
+ * console.log(aiMsgForMetadata.usage_metadata);
+ * ```
+ *
+ * ```txt
+ * { input_tokens: 10, output_tokens: 149, total_tokens: 159 }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Response Metadata</strong></summary>
+ *
+ * ```typescript
+ * const aiMsgForResponseMetadata = await llm.invoke(input);
+ * console.log(aiMsgForResponseMetadata.response_metadata);
+ * ```
+ *
+ * ```txt
+ * {
+ *   finishReason: 'STOP',
+ *   index: 0,
+ *   safetyRatings: [
+ *     {
+ *       category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+ *       probability: 'NEGLIGIBLE'
+ *     },
+ *     {
+ *       category: 'HARM_CATEGORY_HATE_SPEECH',
+ *       probability: 'NEGLIGIBLE'
+ *     },
+ *     { category: 'HARM_CATEGORY_HARASSMENT', probability: 'NEGLIGIBLE' },
+ *     {
+ *       category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+ *       probability: 'NEGLIGIBLE'
+ *     }
+ *   ]
+ * }
+ * ```
+ * </details>
+ *
+ * <br />
+ *
+ * <details>
+ * <summary><strong>Document Messages</strong></summary>
+ *
+ * This example will show you how to pass documents such as PDFs to Google
+ * Generative AI through messages.
+ *
+ * ```typescript
+ * const pdfPath = "/Users/my_user/Downloads/invoice.pdf";
+ * const pdfBase64 = await fs.readFile(pdfPath, "base64");
+ *
+ * const response = await llm.invoke([
+ *   ["system", "Use the provided documents to answer the question"],
+ *   [
+ *     "user",
+ *     [
+ *       {
+ *         type: "application/pdf", // If the `type` field includes a single slash (`/`), it will be treated as inline data.
+ *         data: pdfBase64,
+ *       },
+ *       {
+ *         type: "text",
+ *         text: "Summarize the contents of this PDF",
+ *       },
+ *     ],
+ *   ],
+ * ]);
+ *
+ * console.log(response.content);
+ * ```
+ *
+ * ```txt
+ * This is a billing invoice from Twitter Developers for X API Basic Access. The transaction date is January 7, 2025,
+ * and the amount is $194.34, which has been paid. The subscription period is from January 7, 2025 21:02 to February 7, 2025 00:00 (UTC).
+ * The tax is $0.00, with a tax rate of 0%. The total amount is $194.34. The payment was made using a Visa card ending in 7022,
+ * expiring in 12/2026. The billing address is Brace Sproul, 1234 Main Street, San Francisco, CA, US 94103. The company being billed is
+ * X Corp, located at 865 FM 1209 Building 2, Bastrop, TX, US 78602. Terms and conditions apply.
+ * ```
+ * </details>
+ *
+ * <br />
+ */
+export class LangchainChatGoogleGenerativeAI
     extends BaseChatModel<GoogleGenerativeAIChatCallOptions, AIMessageChunk>
     implements GoogleGenerativeAIChatInput
 {
-    modelName = 'gemini-pro'
+    static lc_name() {
+        return 'ChatGoogleGenerativeAI'
+    }
 
-    temperature?: number
+    lc_serializable = true
+
+    get lc_secrets(): { [key: string]: string } | undefined {
+        return {
+            apiKey: 'GOOGLE_API_KEY'
+        }
+    }
+
+    lc_namespace = ['langchain', 'chat_models', 'google_genai']
+
+    get lc_aliases() {
+        return {
+            apiKey: 'google_api_key'
+        }
+    }
+
+    model: string
+
+    temperature?: number // default value chosen based on model
 
     maxOutputTokens?: number
 
-    topP?: number
+    topP?: number // default value chosen based on model
 
-    topK?: number
+    topK?: number // default value chosen based on model
 
     stopSequences: string[] = []
 
@@ -82,46 +594,39 @@ class LangchainChatGoogleGenerativeAI
 
     apiKey?: string
 
-    baseUrl?: string
-
     streaming = false
+
+    json?: boolean
 
     streamUsage = true
 
-    responseModalities?: string[]
+    convertSystemMessageToHumanContent: boolean | undefined
+
+    thinkingBudget?: number
 
     private client: GenerativeModel
 
-    private contextCache?: FlowiseGoogleAICacheManager
-
-    private userContext?: { organizationId: string; userId: string; userEmail: string }
-
     get _isMultimodalModel() {
-        return (
-            this.modelName.includes('vision') ||
-            this.modelName.startsWith('gemini-1.5') ||
-            this.modelName.startsWith('gemini-2.5') ||
-            this.modelName.includes('image-preview')
-        )
+        return this.model.includes('vision') || this.model.startsWith('gemini-1.5') || this.model.startsWith('gemini-2')
     }
 
-    constructor(fields?: GoogleGenerativeAIChatInput) {
-        super(fields ?? {})
+    constructor(fields: GoogleGenerativeAIChatInput) {
+        super(fields)
 
-        this.modelName = fields?.model?.replace(/^models\//, '') ?? fields?.modelName?.replace(/^models\//, '') ?? 'gemini-pro'
+        this.model = fields.model.replace(/^models\//, '')
 
-        this.maxOutputTokens = fields?.maxOutputTokens ?? this.maxOutputTokens
+        this.maxOutputTokens = fields.maxOutputTokens ?? this.maxOutputTokens
 
         if (this.maxOutputTokens && this.maxOutputTokens < 0) {
             throw new Error('`maxOutputTokens` must be a positive integer')
         }
 
-        this.temperature = fields?.temperature ?? this.temperature
-        if (this.temperature && (this.temperature < 0 || this.temperature > 1)) {
-            throw new Error('`temperature` must be in the range of [0.0,1.0]')
+        this.temperature = fields.temperature ?? this.temperature
+        if (this.temperature && (this.temperature < 0 || this.temperature > 2)) {
+            throw new Error('`temperature` must be in the range of [0.0,2.0]')
         }
 
-        this.topP = fields?.topP ?? this.topP
+        this.topP = fields.topP ?? this.topP
         if (this.topP && this.topP < 0) {
             throw new Error('`topP` must be a positive integer')
         }
@@ -130,14 +635,14 @@ class LangchainChatGoogleGenerativeAI
             throw new Error('`topP` must be below 1.')
         }
 
-        this.topK = fields?.topK ?? this.topK
+        this.topK = fields.topK ?? this.topK
         if (this.topK && this.topK < 0) {
             throw new Error('`topK` must be a positive integer')
         }
 
-        this.stopSequences = fields?.stopSequences ?? this.stopSequences
+        this.stopSequences = fields.stopSequences ?? this.stopSequences
 
-        this.apiKey = fields?.apiKey ?? process.env['GOOGLE_API_KEY']
+        this.apiKey = fields.apiKey ?? getEnvironmentVariable('GOOGLE_API_KEY')
         if (!this.apiKey) {
             throw new Error(
                 'Please set an API key for Google GenerativeAI ' +
@@ -147,7 +652,7 @@ class LangchainChatGoogleGenerativeAI
             )
         }
 
-        this.safetySettings = fields?.safetySettings ?? this.safetySettings
+        this.safetySettings = fields.safetySettings ?? this.safetySettings
         if (this.safetySettings && this.safetySettings.length > 0) {
             const safetySettingsSet = new Set(this.safetySettings.map((s) => s.category))
             if (safetySettingsSet.size !== this.safetySettings.length) {
@@ -155,45 +660,77 @@ class LangchainChatGoogleGenerativeAI
             }
         }
 
-        this.streaming = fields?.streaming ?? this.streaming
+        this.streaming = fields.streaming ?? this.streaming
+        this.json = fields.json
+        this.thinkingBudget = fields.thinkingBudget
 
-        this.streamUsage = fields?.streamUsage ?? this.streamUsage
-
-        this.responseModalities = fields?.responseModalities ?? this.responseModalities
-
-        this.getClient()
-    }
-
-    async getClient(prompt?: Content[], tools?: Tool[]) {
-        const modelConfig: any = {
-            model: this.modelName,
-            tools,
-            safetySettings: this.safetySettings as SafetySetting[],
-            generationConfig: {
-                candidateCount: 1,
-                stopSequences: this.stopSequences,
-                maxOutputTokens: this.maxOutputTokens,
-                temperature: this.temperature,
-                topP: this.topP,
-                topK: this.topK
+        this.client = new GenerativeAI(this.apiKey).getGenerativeModel(
+            {
+                model: this.model,
+                safetySettings: this.safetySettings as SafetySetting[],
+                generationConfig: {
+                    stopSequences: this.stopSequences,
+                    maxOutputTokens: this.maxOutputTokens,
+                    temperature: this.temperature,
+                    topP: this.topP,
+                    topK: this.topK,
+                    ...(this.json ? { responseMimeType: 'application/json' } : {})
+                }
+            },
+            {
+                apiVersion: fields.apiVersion,
+                baseUrl: fields.baseUrl
+            }
+        )
+        if (this.thinkingBudget !== undefined) {
+            ;(this.client.generationConfig as any).thinkingConfig = {
+                ...(this.thinkingBudget !== undefined ? { thinkingBudget: this.thinkingBudget } : {})
             }
         }
+        this.streamUsage = fields.streamUsage ?? this.streamUsage
+    }
 
-        // Add responseModalities for image generation models
-        if (this.responseModalities && this.responseModalities.length > 0) {
-            modelConfig.config = { responseModalities: this.responseModalities }
+    useCachedContent(cachedContent: CachedContent, modelParams?: ModelParams, requestOptions?: RequestOptions): void {
+        if (!this.apiKey) return
+        this.client = new GenerativeAI(this.apiKey).getGenerativeModelFromCachedContent(cachedContent, modelParams, requestOptions)
+        if (this.thinkingBudget !== undefined) {
+            ;(this.client.generationConfig as any).thinkingConfig = {
+                ...(this.thinkingBudget !== undefined ? { thinkingBudget: this.thinkingBudget } : {})
+            }
         }
+    }
 
-        this.client = new GenerativeAI(this.apiKey ?? '').getGenerativeModel(modelConfig, {
-            baseUrl: this.baseUrl
-        })
-        if (this.contextCache) {
-            const cachedContent = await this.contextCache.lookup({
-                contents: prompt ? [{ ...prompt[0], parts: prompt[0].parts.slice(0, 1) }] : [],
-                model: this.modelName,
-                tools
-            })
-            this.client.cachedContent = cachedContent as any
+    get useSystemInstruction(): boolean {
+        return typeof this.convertSystemMessageToHumanContent === 'boolean'
+            ? !this.convertSystemMessageToHumanContent
+            : this.computeUseSystemInstruction
+    }
+
+    get computeUseSystemInstruction(): boolean {
+        // This works on models from April 2024 and later
+        //   Vertex AI: gemini-1.5-pro and gemini-1.0-002 and later
+        //   AI Studio: gemini-1.5-pro-latest
+        if (this.model === 'gemini-1.0-pro-001') {
+            return false
+        } else if (this.model.startsWith('gemini-pro-vision')) {
+            return false
+        } else if (this.model.startsWith('gemini-1.0-pro-vision')) {
+            return false
+        } else if (this.model === 'gemini-pro') {
+            // on AI Studio gemini-pro is still pointing at gemini-1.0-pro-001
+            return false
+        }
+        return true
+    }
+
+    getLsParams(options: this['ParsedCallOptions']): LangSmithParams {
+        return {
+            ls_provider: 'google_genai',
+            ls_model_name: this.model,
+            ls_model_type: 'chat',
+            ls_temperature: this.client.generationConfig.temperature,
+            ls_max_tokens: this.client.generationConfig.maxOutputTokens,
+            ls_stop: options.stop
         }
     }
 
@@ -205,488 +742,301 @@ class LangchainChatGoogleGenerativeAI
         return 'googlegenerativeai'
     }
 
-    override bindTools(tools: (StructuredToolInterface | Record<string, unknown>)[], kwargs?: Partial<ICommonObject>) {
-        //@ts-ignore
-        return this.bind({ tools: convertToGeminiTools(tools), ...kwargs })
+    override bindTools(
+        tools: GoogleGenerativeAIToolType[],
+        kwargs?: Partial<GoogleGenerativeAIChatCallOptions>
+    ): Runnable<BaseLanguageModelInput, AIMessageChunk, GoogleGenerativeAIChatCallOptions> {
+        return this.withConfig({
+            tools: convertToolsToGenAI(tools)?.tools,
+            ...kwargs
+        })
     }
 
     invocationParams(options?: this['ParsedCallOptions']): Omit<GenerateContentRequest, 'contents'> {
-        const tools = options?.tools as GoogleGenerativeAIFunctionDeclarationsTool[] | StructuredToolInterface[] | undefined
-        if (Array.isArray(tools) && !tools.some((t: any) => !('lc_namespace' in t))) {
-            return {
-                tools: convertToGeminiTools(options?.tools as StructuredToolInterface[]) as any
-            }
-        }
-        return {
-            tools: options?.tools as GoogleGenerativeAIFunctionDeclarationsTool[] | undefined
-        }
-    }
+        const toolsAndConfig = options?.tools?.length
+            ? convertToolsToGenAI(options.tools, {
+                  toolChoice: options.tool_choice,
+                  allowedFunctionNames: options.allowedFunctionNames
+              })
+            : undefined
 
-    convertFunctionResponse(prompts: Content[]) {
-        for (let i = 0; i < prompts.length; i += 1) {
-            if (prompts[i].role === 'function') {
-                if (prompts[i - 1].role === 'model') {
-                    const toolName = prompts[i - 1].parts[0].functionCall?.name ?? ''
-                    prompts[i].parts = [
-                        {
-                            functionResponse: {
-                                name: toolName,
-                                response: {
-                                    name: toolName,
-                                    content: prompts[i].parts[0].text
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-    }
-
-    setContextCache(contextCache: FlowiseGoogleAICacheManager): void {
-        this.contextCache = contextCache
-    }
-
-    setUserContext(userContext: { organizationId: string; userId: string; userEmail: string }): void {
-        this.userContext = userContext
-    }
-
-    /**
-     * Extract user context from stored instance or use fallbacks
-     */
-    extractUserContext(options?: any): { organizationId: string; userId: string; userEmail: string } {
-        // First try stored user context (set during initialization)
-        if (this.userContext) {
-            return this.userContext
-        }
-
-        // Try to get user from Flowise run params (from buildAgentflow.ts)
-        const user = options?.user || options?.runParams?.user
-
-        if (user?.id && user?.organizationId) {
-            return {
-                organizationId: user.organizationId,
-                userId: user.id,
-                userEmail: user.email || `${user.id}@local`
-            }
-        }
-
-        // Fallback to system context for tool calls or when user context is unavailable
-        return {
-            organizationId: 'system-org',
-            userId: 'chat-system',
-            userEmail: 'system@chat.local'
-        }
-    }
-
-    async uploadImageToStorage(imageData: any, userContext: { organizationId: string; userId: string; userEmail: string }) {
-        try {
-            // Import and use the storage utility directly
-            const { addSingleFileToStorage } = await import('../../../src/storageUtils')
-            const crypto = await import('node:crypto')
-
-            // Convert base64 to Buffer
-            const buffer = Buffer.from(imageData.data, 'base64')
-
-            // Generate unique identifier for this image generation session
-            const timestamp = Date.now()
-            const randomSuffix = crypto.randomBytes(8).toString('hex')
-            const sessionId = `${timestamp}_${randomSuffix}`
-
-            // Create image filename with session ID
-            const mimeType = imageData.mimeType || 'image/png'
-            const fileExtension = mimeType.split('/')[1] || 'png'
-            const imageFilename = `${sessionId}_chat_generated_image.${fileExtension}`
-
-            // Store the image using organization/user folder structure
-            const imageStorageUrl = await addSingleFileToStorage(
-                mimeType,
-                buffer,
-                imageFilename,
-                'gemini-images',
-                userContext.organizationId,
-                userContext.userId
-            )
-
-            // Convert FILE-STORAGE:: reference to a full URL with domain
-            const domain = process.env.DOMAIN || process.env.FLOWISE_DOMAIN || 'http://localhost:4000'
-            const imageFileName = imageStorageUrl.replace('FILE-STORAGE::', '')
-            const fullImageUrl = `${domain}/api/v1/get-upload-file?chatflowId=gemini-images&chatId=${userContext.organizationId}%2F${userContext.userId}&fileName=${imageFileName}`
-            return {
-                url: fullImageUrl,
-                success: true,
-                sessionId
-            }
-        } catch (error) {
-            console.warn('Upload error:', error)
-            return { success: false, error: String(error) }
-        }
-    }
-
-    async getNumTokens(prompt: BaseMessage[]) {
-        const contents = convertBaseMessagesToContent(prompt, this._isMultimodalModel)
-        const { totalTokens } = await this.client.countTokens({ contents })
-        return totalTokens
-    }
-
-    /**
-     * Handles non-streaming (single-shot) generation from the Google Generative AI API.
-     * Prepares the prompt, manages tools, and returns a ChatResult with generations and usage metadata.
-     *
-     * @param prompt - The prompt in Google API Content[] format.
-     * @param options - Parsed call options, including tools and signal.
-     * @param _runManager - Optional callback manager for handling new tokens.
-     * @returns Promise resolving to a ChatResult object.
-     */
-    async _generateNonStreaming(
-        prompt: Content[],
-        options: this['ParsedCallOptions'],
-        _runManager?: CallbackManagerForLLMRun
-    ): Promise<ChatResult> {
-        //@ts-ignore
-        const tools = options.tools ?? []
-
-        // Convert any function response parts in the prompt for compatibility
-        this.convertFunctionResponse(prompt)
-
-        // Re-initialize client if tools are provided
-        if (tools.length > 0) {
-            await this.getClient(prompt, tools as Tool[])
+        if (options?.responseSchema) {
+            this.client.generationConfig.responseSchema = options.responseSchema
+            this.client.generationConfig.responseMimeType = 'application/json'
         } else {
-            await this.getClient(prompt)
-        }
-        // Call the API and handle errors
-        const res = await this.caller.callWithOptions({ signal: options?.signal }, async () => {
-            let output
-            try {
-                // Make the actual API call to generate content
-                output = await this.client.generateContent({
-                    contents: prompt
-                })
-            } catch (e: any) {
-                // If a 400 Bad Request error occurs, annotate the error object
-                if (e.message?.includes('400 Bad Request')) {
-                    e.status = 400
-                }
-                throw e
-            }
-            return output
-        })
-
-        // Extract usage metadata from the response for reporting token usage
-        let genAIUsageMetadata = {
-            usageMetadata: res.response.usageMetadata as {
-                promptTokenCount: number
-                candidatesTokenCount: number
-                totalTokenCount: number
-            }
+            this.client.generationConfig.responseSchema = undefined
+            this.client.generationConfig.responseMimeType = this.json ? 'application/json' : undefined
         }
 
-        // Map the API response to a ChatResult object for LangChain
-        const generationResult = mapGenerateContentResultToChatResult(res.response, this.modelName, genAIUsageMetadata)
-
-        // Handle image data if present in non-streaming mode
-        if (generationResult.generations?.[0]?.message?.additional_kwargs?.imageData) {
-            try {
-                const imageData = generationResult.generations[0].message.additional_kwargs.imageData
-
-                // Extract user context from LangChain run config or use fallbacks
-                const userContext = this.extractUserContext(options)
-
-                const uploadResponse = await this.uploadImageToStorage(imageData, userContext)
-
-                if (uploadResponse.success) {
-                    // Update the generation with the uploaded image URL
-                    generationResult.generations[0].message.additional_kwargs.imageUrl = uploadResponse.url
-                    generationResult.generations[0].message.additional_kwargs.imageSessionId = uploadResponse.sessionId
-                    const imageMarkdown = `\n\n![Generated Image](${uploadResponse.url})`
-                    generationResult.generations[0].text += imageMarkdown
-                    // CRITICAL: Also update the message content to include the image markdown
-                    generationResult.generations[0].message.content = generationResult.generations[0].text
-                }
-            } catch (error) {
-                console.warn('Failed to upload generated image:', error)
-            }
+        return {
+            ...(toolsAndConfig?.tools ? { tools: toolsAndConfig.tools } : {}),
+            ...(toolsAndConfig?.toolConfig ? { toolConfig: toolsAndConfig.toolConfig } : {})
         }
-
-        // Optionally notify the run manager of the new token (for streaming UI updates)
-        await _runManager?.handleLLMNewToken(generationResult.generations?.length ? generationResult.generations[0].text : '')
-        return generationResult
     }
 
-    /**
-     * Main generation method for the chat model. Handles both streaming and non-streaming cases.
-     * Converts messages to prompt format, manages streaming, and aggregates results.
-     *
-     * @param messages - The array of BaseMessage objects representing the conversation so far.
-     * @param options - Parsed call options, including tools and streaming usage flags.
-     * @param runManager - Optional callback manager for handling new tokens.
-     * @returns Promise resolving to a ChatResult object.
-     */
     async _generate(
         messages: BaseMessage[],
         options: this['ParsedCallOptions'],
         runManager?: CallbackManagerForLLMRun
     ): Promise<ChatResult> {
-        // Convert input messages to Google API content format
-        let prompt = convertBaseMessagesToContent(messages, this._isMultimodalModel)
-        prompt = checkIfEmptyContentAndSameRole(prompt)
+        const prompt = convertBaseMessagesToContent(messages, this._isMultimodalModel, this.useSystemInstruction)
+        let actualPrompt = prompt
+        if (prompt[0].role === 'system') {
+            const [systemInstruction] = prompt
+            this.client.systemInstruction = systemInstruction
+            actualPrompt = prompt.slice(1)
+        }
 
-        // Handle streaming mode
+        // Ensure actualPrompt is never empty
+        if (actualPrompt.length === 0) {
+            actualPrompt = [{ role: 'user', parts: [{ text: '...' }] }]
+        }
+
+        const parameters = this.invocationParams(options)
+
+        // Handle streaming
         if (this.streaming) {
             const tokenUsage: TokenUsage = {}
-            // Start streaming response chunks from the API
             const stream = this._streamResponseChunks(messages, options, runManager)
-            // Store the final chunks by their index (for multi-candidate support)
             const finalChunks: Record<number, ChatGenerationChunk> = {}
-            // Track custom text modifications (like image markdown) separately
-            const customTextModifications: Record<number, string> = {}
 
-            // Aggregate all streamed chunks by their index
             for await (const chunk of stream) {
-                // Get the candidate index for this chunk
                 const index = (chunk.generationInfo as NewTokenIndices)?.completion ?? 0
-
-                // Attach model name to generation info if missing
-                if (chunk.generationInfo) {
-                    if (!chunk.generationInfo.model_name && this.modelName) {
-                        chunk.generationInfo.model_name = this.modelName
-                    }
-                }
-
                 if (finalChunks[index] === undefined) {
-                    // First chunk for this index
                     finalChunks[index] = chunk
-                    // Track any custom text modifications
-                    customTextModifications[index] = chunk.text
                 } else {
-                    // Concatenate the chunks for the same index
-                    const existingChunk = finalChunks[index]
-                    const concatenated = existingChunk.concat(chunk)
-
-                    // Preserve custom text modifications by manually tracking them
-                    customTextModifications[index] = (customTextModifications[index] || '') + chunk.text
-
-                    // Use the latest chunk's usage_metadata (which has the correct diff details)
-                    // @ts-ignore - Custom metadata structure
-                    concatenated.message.usage_metadata = chunk.message.usage_metadata
-                    finalChunks[index] = concatenated
-                }
-
-                // Aggregate token usage for all chunks
-                // @ts-ignore - Custom metadata structure
-                if (chunk.message.usage_metadata) {
-                    // @ts-ignore - Custom metadata structure
-                    const usage = chunk.message.usage_metadata as UsageMetadata
-
-                    for (const key of ['input_tokens', 'output_tokens', 'total_tokens'] as const) {
-                        // @ts-ignore - Custom metadata structure
-                        tokenUsage[key] = (tokenUsage[key] ?? 0) + (usage[key] ?? 0)
-                    }
-
-                    for (const detailKey of ['input_token_details', 'output_token_details'] as const) {
-                        // @ts-ignore - Custom metadata structure
-                        tokenUsage[detailKey] ??= {}
-                        // @ts-ignore - Custom metadata structure
-                        const detail = usage[detailKey] ?? {}
-                        for (const modality in detail) {
-                            // @ts-ignore - Custom metadata structure
-                            tokenUsage[detailKey][modality] = (tokenUsage[detailKey][modality] ?? 0) + detail[modality]
-                        }
-                    }
+                    finalChunks[index] = finalChunks[index].concat(chunk)
                 }
             }
-
-            // Sort and collect all generations in order by index
             const generations = Object.entries(finalChunks)
                 .sort(([aKey], [bKey]) => parseInt(aKey, 10) - parseInt(bKey, 10))
-                .map(([indexStr, value]) => {
-                    const index = parseInt(indexStr, 10)
-                    // Override the text with our custom modifications to preserve image markdown
-                    if (customTextModifications[index] !== undefined) {
-                        value.text = customTextModifications[index]
-                        // Also update the message content
-                        if (value.message) {
-                            value.message.content = customTextModifications[index]
-                        }
-                    }
-                    return value
-                })
+                .map(([_, value]) => value)
 
-            // Attach aggregated token usage to each generation
-            for (const generation of generations) {
-                // @ts-ignore - Custom metadata structure
-                generation.message.usage_metadata = tokenUsage
-            }
-
-            // Return all generations and estimated token usage
             return { generations, llmOutput: { estimatedTokenUsage: tokenUsage } }
         }
 
-        // Fallback to non-streaming mode
-        return this._generateNonStreaming(prompt, options, runManager)
+        const res = await this.completionWithRetry({
+            ...parameters,
+            contents: actualPrompt
+        })
+
+        let usageMetadata: UsageMetadata | undefined
+        if ('usageMetadata' in res.response) {
+            const genAIUsageMetadata = res.response.usageMetadata as {
+                promptTokenCount: number | undefined
+                candidatesTokenCount: number | undefined
+                totalTokenCount: number | undefined
+            }
+            usageMetadata = {
+                input_tokens: genAIUsageMetadata.promptTokenCount ?? 0,
+                output_tokens: genAIUsageMetadata.candidatesTokenCount ?? 0,
+                total_tokens: genAIUsageMetadata.totalTokenCount ?? 0
+            }
+        }
+
+        const generationResult = mapGenerateContentResultToChatResult(res.response, {
+            usageMetadata
+        })
+        // may not have generations in output if there was a refusal for safety reasons, malformed function call, etc.
+        if (generationResult.generations?.length > 0) {
+            await runManager?.handleLLMNewToken(generationResult.generations[0]?.text ?? '')
+        }
+        return generationResult
     }
 
-    /**
-     * Streams response chunks from the Google Generative AI API as they arrive.
-     * Handles token usage calculation and yields ChatGenerationChunk objects for each chunk.
-     *
-     * @param messages - The array of BaseMessage objects representing the conversation so far.
-     * @param options - Parsed call options, including tools and streaming usage flags.
-     * @param runManager - Optional callback manager for handling new tokens.
-     * @returns AsyncGenerator yielding ChatGenerationChunk objects as they are received from the API.
-     */
     async *_streamResponseChunks(
         messages: BaseMessage[],
         options: this['ParsedCallOptions'],
         runManager?: CallbackManagerForLLMRun
     ): AsyncGenerator<ChatGenerationChunk> {
-        // Convert input messages to Google API content format
-        let prompt = convertBaseMessagesToContent(messages, this._isMultimodalModel)
-        prompt = checkIfEmptyContentAndSameRole(prompt)
+        const prompt = convertBaseMessagesToContent(messages, this._isMultimodalModel, this.useSystemInstruction)
+        let actualPrompt = prompt
+        if (prompt[0].role === 'system') {
+            const [systemInstruction] = prompt
+            this.client.systemInstruction = systemInstruction
+            actualPrompt = prompt.slice(1)
+        }
 
-        // Convert any function response parts in the prompt for compatibility
-        this.convertFunctionResponse(prompt)
+        // Ensure actualPrompt is never empty
+        if (actualPrompt.length === 0) {
+            actualPrompt = [{ role: 'user', parts: [{ text: '...' }] }]
+        }
 
-        // Prepare API request parameters
         const parameters = this.invocationParams(options)
         const request = {
             ...parameters,
-            contents: prompt
+            contents: actualPrompt
         }
-
-        // Re-initialize client if tools are provided
-        const tools = options.tools ?? []
-        if (tools.length > 0) {
-            await this.getClient(prompt, tools as Tool[])
-        } else {
-            await this.getClient(prompt)
-        }
-
-        // Start streaming from the API
         const stream = await this.caller.callWithOptions({ signal: options?.signal }, async () => {
             const { stream } = await this.client.generateContentStream(request)
             return stream
         })
 
-        let index = 0 // Tracks the chunk index for multi-candidate support
-        let prevInputTokenDetails: Record<string, number> = {} // For diffing input tokens
-        let prevOutputTokenDetails: Record<string, number> = {} // For diffing output tokens
-
-        // Iterate over each streamed response chunk
+        let usageMetadata: UsageMetadata | undefined
+        let index = 0
         for await (const response of stream) {
-            let usageMetadata: UsageMetadata | undefined
-
-            // If usage metadata is available and streaming usage is enabled, calculate token diffs
             if ('usageMetadata' in response && this.streamUsage !== false && options.streamUsage !== false) {
-                const meta = response.usageMetadata as {
-                    promptTokenCount?: number
-                    candidatesTokenCount?: number
-                    thoughtsTokenCount?: number
-                    totalTokenCount?: number
-                    promptTokensDetails?: { modality: string; tokenCount: number }[]
-                    candidatesTokensDetails?: { modality: string; tokenCount: number }[]
+                const genAIUsageMetadata = response.usageMetadata as {
+                    promptTokenCount: number | undefined
+                    candidatesTokenCount: number | undefined
+                    totalTokenCount: number | undefined
                 }
-
-                // Extract current input token details by modality
-                const currentInputTokenDetails = Array.isArray(meta.promptTokensDetails)
-                    ? meta.promptTokensDetails.reduce((acc: Record<string, number>, { modality, tokenCount }) => {
-                          if (modality && typeof tokenCount === 'number') {
-                              acc[modality.toLowerCase()] = tokenCount // e.g., text, image
-                          }
-                          return acc
-                      }, {})
-                    : {}
-
-                // Extract current output token details by modality
-                const currentOutputTokenDetails = Array.isArray(meta.candidatesTokensDetails)
-                    ? meta.candidatesTokensDetails.reduce((acc: Record<string, number>, { modality, tokenCount }) => {
-                          if (modality && typeof tokenCount === 'number') {
-                              acc[modality.toLowerCase()] = tokenCount
-                          }
-                          return acc
-                      }, {})
-                    : {
-                          text: meta.candidatesTokenCount ?? 0,
-                          reasoning: meta.thoughtsTokenCount ?? 0
-                      }
-
-                // Calculate the difference in input tokens since the last chunk
-                const diffInputTokenDetails: Record<string, number> = {}
-                for (const modality in currentInputTokenDetails) {
-                    const prev = prevInputTokenDetails[modality] ?? 0
-                    const curr = currentInputTokenDetails[modality]
-                    const diff = curr - prev
-                    if (diff > 0) {
-                        diffInputTokenDetails[modality] = diff // Only count new tokens
+                if (!usageMetadata) {
+                    usageMetadata = {
+                        input_tokens: genAIUsageMetadata.promptTokenCount ?? 0,
+                        output_tokens: genAIUsageMetadata.candidatesTokenCount ?? 0,
+                        total_tokens: genAIUsageMetadata.totalTokenCount ?? 0
                     }
-                }
-
-                // Calculate the difference in output tokens since the last chunk
-                const diffOutputTokenDetails: Record<string, number> = {}
-                for (const modality in currentOutputTokenDetails) {
-                    const prev = prevOutputTokenDetails[modality] ?? 0
-                    const curr = currentOutputTokenDetails[modality]
-                    const diff = curr - prev
-                    if (diff > 0) {
-                        diffOutputTokenDetails[modality] = diff
+                } else {
+                    // Under the hood, LangChain combines the prompt tokens. Google returns the updated
+                    // total each time, so we need to find the difference between the tokens.
+                    const outputTokenDiff = (genAIUsageMetadata.candidatesTokenCount ?? 0) - usageMetadata.output_tokens
+                    usageMetadata = {
+                        input_tokens: 0,
+                        output_tokens: outputTokenDiff,
+                        total_tokens: outputTokenDiff
                     }
-                }
-
-                // Update previous values for next iteration
-                prevInputTokenDetails = currentInputTokenDetails
-                prevOutputTokenDetails = currentOutputTokenDetails
-
-                // Compose a standard usageMetadata object for this chunk
-                usageMetadata = {
-                    // @ts-ignore
-                    input_tokens: Object.values(diffInputTokenDetails).reduce((sum, val) => sum + val, 0),
-                    output_tokens: Object.values(diffOutputTokenDetails).reduce((sum, val) => sum + val, 0),
-                    total_tokens:
-                        Object.values(diffInputTokenDetails).reduce((sum, val) => sum + val, 0) +
-                        Object.values(diffOutputTokenDetails).reduce((sum, val) => sum + val, 0),
-                    input_token_details: diffInputTokenDetails,
-                    output_token_details: diffOutputTokenDetails
                 }
             }
 
-            // Convert the API response chunk to a ChatGenerationChunk
             const chunk = convertResponseContentToChatGenerationChunk(response, {
                 usageMetadata,
                 index
             })
-            index += 1 // Increment chunk index for next chunk
-            if (!chunk) continue // Skip if chunk is null
-
-            // Handle image data if present
-            if (chunk.message.additional_kwargs?.imageData) {
-                try {
-                    const imageData = chunk.message.additional_kwargs.imageData
-
-                    // Extract user context from LangChain run config or use fallbacks
-                    const userContext = this.extractUserContext(options)
-
-                    const uploadResponse = await this.uploadImageToStorage(imageData, userContext)
-
-                    if (uploadResponse.success) {
-                        // Update the chunk with the uploaded image URL
-                        chunk.message.additional_kwargs.imageUrl = uploadResponse.url
-                        chunk.message.additional_kwargs.imageSessionId = uploadResponse.sessionId
-                        const imageMarkdown = `\n\n![Generated Image](${uploadResponse.url})`
-                        chunk.text += imageMarkdown
-                        // CRITICAL: Also update the message content to include the image markdown
-                        chunk.message.content = chunk.text
-                    }
-                } catch (error) {
-                    console.warn('Failed to upload generated image:', error)
-                }
+            index += 1
+            if (!chunk) {
+                continue
             }
 
-            // Yield the chunk to the consumer
             yield chunk
-            // Optionally notify the run manager of the new token (for streaming UI updates)
             await runManager?.handleLLMNewToken(chunk.text ?? '')
         }
+    }
+
+    async completionWithRetry(
+        request: string | GenerateContentRequest | (string | GenerativeAIPart)[],
+        options?: this['ParsedCallOptions']
+    ) {
+        return this.caller.callWithOptions({ signal: options?.signal }, async () => {
+            try {
+                return await this.client.generateContent(request)
+            } catch (e: any) {
+                // TODO: Improve error handling
+                if (e.message?.includes('400 Bad Request')) {
+                    e.status = 400
+                }
+                throw e
+            }
+        })
+    }
+
+    // eslint-disable-next-line
+    withStructuredOutput<RunOutput extends Record<string, any> = Record<string, any>>(
+        outputSchema: InteropZodType<RunOutput> | Record<string, any>,
+        config?: StructuredOutputMethodOptions<false>
+    ): Runnable<BaseLanguageModelInput, RunOutput>
+
+    // eslint-disable-next-line
+    withStructuredOutput<RunOutput extends Record<string, any> = Record<string, any>>(
+        outputSchema: InteropZodType<RunOutput> | Record<string, any>,
+        config?: StructuredOutputMethodOptions<true>
+    ): Runnable<BaseLanguageModelInput, { raw: BaseMessage; parsed: RunOutput }>
+
+    // eslint-disable-next-line
+    withStructuredOutput<RunOutput extends Record<string, any> = Record<string, any>>(
+        outputSchema: InteropZodType<RunOutput> | Record<string, any>,
+        config?: StructuredOutputMethodOptions<boolean>
+    ): Runnable<BaseLanguageModelInput, RunOutput> | Runnable<BaseLanguageModelInput, { raw: BaseMessage; parsed: RunOutput }> {
+        const schema: InteropZodType<RunOutput> | Record<string, any> = outputSchema
+        const name = config?.name
+        const method = config?.method
+        const includeRaw = config?.includeRaw
+        if (method === 'jsonMode') {
+            throw new Error(`ChatGoogleGenerativeAI only supports "jsonSchema" or "functionCalling" as a method.`)
+        }
+
+        let llm
+        let outputParser: BaseLLMOutputParser<RunOutput>
+        if (method === 'functionCalling') {
+            let functionName = name ?? 'extract'
+            let tools: GoogleGenerativeAIFunctionDeclarationsTool[]
+            if (isInteropZodSchema(schema)) {
+                const jsonSchema = schemaToGenerativeAIParameters(schema)
+                tools = [
+                    {
+                        functionDeclarations: [
+                            {
+                                name: functionName,
+                                description: jsonSchema.description ?? 'A function available to call.',
+                                parameters: jsonSchema as GenerativeAIFunctionDeclarationSchema
+                            }
+                        ]
+                    }
+                ]
+                outputParser = new GoogleGenerativeAIToolsOutputParser<InferInteropZodOutput<typeof schema>>({
+                    returnSingle: true,
+                    keyName: functionName,
+                    zodSchema: schema
+                })
+            } else {
+                let geminiFunctionDefinition: GenerativeAIFunctionDeclaration
+                if (typeof schema.name === 'string' && typeof schema.parameters === 'object' && schema.parameters != null) {
+                    geminiFunctionDefinition = schema as GenerativeAIFunctionDeclaration
+                    geminiFunctionDefinition.parameters = removeAdditionalProperties(
+                        schema.parameters
+                    ) as GenerativeAIFunctionDeclarationSchema
+                    functionName = schema.name
+                } else {
+                    geminiFunctionDefinition = {
+                        name: functionName,
+                        description: schema.description ?? '',
+                        parameters: removeAdditionalProperties(schema) as GenerativeAIFunctionDeclarationSchema
+                    }
+                }
+                tools = [
+                    {
+                        functionDeclarations: [geminiFunctionDefinition]
+                    }
+                ]
+                outputParser = new GoogleGenerativeAIToolsOutputParser<RunOutput>({
+                    returnSingle: true,
+                    keyName: functionName
+                })
+            }
+            llm = this.bindTools(tools).withConfig({
+                allowedFunctionNames: [functionName]
+            })
+        } else {
+            const jsonSchema = schemaToGenerativeAIParameters(schema)
+            llm = this.withConfig({
+                responseSchema: jsonSchema as Schema
+            })
+            outputParser = new JsonOutputParser()
+        }
+
+        if (!includeRaw) {
+            return llm.pipe(outputParser).withConfig({
+                runName: 'ChatGoogleGenerativeAIStructuredOutput'
+            }) as Runnable<BaseLanguageModelInput, RunOutput>
+        }
+
+        const parserAssign = RunnablePassthrough.assign({
+            parsed: (input: any, config) => outputParser.invoke(input.raw, config)
+        })
+        const parserNone = RunnablePassthrough.assign({
+            parsed: () => null
+        })
+        const parsedWithFallback = parserAssign.withFallbacks({
+            fallbacks: [parserNone]
+        })
+        return RunnableSequence.from<BaseLanguageModelInput, { raw: BaseMessage; parsed: RunOutput }>([
+            {
+                raw: llm
+            },
+            parsedWithFallback
+        ]).withConfig({
+            runName: 'StructuredOutputRunnable'
+        })
     }
 }
 
@@ -696,15 +1046,15 @@ export class ChatGoogleGenerativeAI extends LangchainChatGoogleGenerativeAI impl
     multiModalOption: IMultiModalOption
     id: string
 
-    constructor(id: string, fields?: GoogleGenerativeAIChatInput) {
+    constructor(id: string, fields: GoogleGenerativeAIChatInput) {
         super(fields)
         this.id = id
-        this.configuredModel = fields?.modelName ?? ''
+        this.configuredModel = fields?.model ?? ''
         this.configuredMaxToken = fields?.maxOutputTokens
     }
 
     revertToOriginalModel(): void {
-        this.modelName = this.configuredModel
+        this.model = this.configuredModel
         this.maxOutputTokens = this.configuredMaxToken
     }
 
@@ -713,425 +1063,6 @@ export class ChatGoogleGenerativeAI extends LangchainChatGoogleGenerativeAI impl
     }
 
     setVisionModel(): void {
-        if (this.modelName === 'gemini-1.0-pro-latest') {
-            this.modelName = DEFAULT_IMAGE_MODEL
-            this.maxOutputTokens = this.configuredMaxToken ? this.configuredMaxToken : DEFAULT_IMAGE_MAX_TOKEN
-        }
+        // pass
     }
-}
-
-function messageContentMedia(content: MessageContentComplex): Part {
-    if ('mimeType' in content && 'data' in content) {
-        return {
-            inlineData: {
-                mimeType: content.mimeType,
-                data: content.data
-            }
-        }
-    }
-
-    throw new Error('Invalid media content')
-}
-
-function getMessageAuthor(message: BaseMessage) {
-    const type = message._getType()
-    if (ChatMessage.isInstance(message)) {
-        return message.role
-    }
-    return message.name ?? type
-}
-
-function convertAuthorToRole(author: string) {
-    switch (author.toLowerCase()) {
-        case 'ai':
-        case 'assistant':
-        case 'model':
-            return 'model'
-        case 'function':
-        case 'tool':
-            return 'function'
-        case 'system':
-        case 'human':
-        default:
-            return 'user'
-    }
-}
-
-function convertMessageContentToParts(message: BaseMessage, isMultimodalModel: boolean): Part[] {
-    if (typeof message.content === 'string' && message.content !== '') {
-        return [{ text: message.content }]
-    }
-
-    let functionCalls: FunctionCallPart[] = []
-    let functionResponses: FunctionResponsePart[] = []
-    let messageParts: Part[] = []
-
-    if ('tool_calls' in message && Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
-        functionCalls = message.tool_calls.map((tc) => ({
-            functionCall: {
-                name: tc.name,
-                args: tc.args
-            }
-        }))
-    } else if (message._getType() === 'tool' && message.name && message.content) {
-        functionResponses = [
-            {
-                functionResponse: {
-                    name: message.name,
-                    response: message.content
-                }
-            }
-        ]
-    } else if (Array.isArray(message.content)) {
-        messageParts = message.content.map((c) => {
-            if (c.type === 'text') {
-                return {
-                    text: c.text
-                }
-            }
-
-            if (c.type === 'image_url') {
-                if (!isMultimodalModel) {
-                    throw new Error(`This model does not support images`)
-                }
-                let source
-                if (typeof c.image_url === 'string') {
-                    source = c.image_url
-                } else if (typeof c.image_url === 'object' && 'url' in c.image_url) {
-                    source = c.image_url.url
-                } else {
-                    throw new Error('Please provide image as base64 encoded data URL')
-                }
-                const [dm, data] = source.split(',')
-                if (!dm.startsWith('data:')) {
-                    throw new Error('Please provide image as base64 encoded data URL')
-                }
-
-                const [mimeType, encoding] = dm.replace(/^data:/, '').split(';')
-                if (encoding !== 'base64') {
-                    throw new Error('Please provide image as base64 encoded data URL')
-                }
-
-                return {
-                    inlineData: {
-                        data,
-                        mimeType
-                    }
-                }
-            } else if (c.type === 'media') {
-                return messageContentMedia(c)
-            } else if (c.type === 'tool_use') {
-                return {
-                    functionCall: {
-                        name: c.name,
-                        args: c.input
-                    }
-                }
-            }
-            throw new Error(`Unknown content type ${(c as { type: string }).type}`)
-        })
-    }
-
-    return [...messageParts, ...functionCalls, ...functionResponses]
-}
-
-/*
- * This is a dedicated logic for Multi Agent Supervisor to handle the case where the content is empty, and the role is the same
- */
-
-function checkIfEmptyContentAndSameRole(contents: Content[]) {
-    let prevRole = ''
-    const validContents: Content[] = []
-
-    for (const content of contents) {
-        // Skip only if completely empty
-        if (!content.parts || !content.parts.length) {
-            continue
-        }
-
-        // Ensure role is always either 'user' or 'model'
-        content.role = content.role === 'model' ? 'model' : 'user'
-
-        // Handle consecutive messages
-        if (content.role === prevRole && validContents.length > 0) {
-            // Merge with previous content if same role
-            validContents[validContents.length - 1].parts.push(...content.parts)
-            continue
-        }
-
-        validContents.push(content)
-        prevRole = content.role
-    }
-
-    return validContents
-}
-
-function convertBaseMessagesToContent(messages: BaseMessage[], isMultimodalModel: boolean) {
-    return messages.reduce<{
-        content: Content[]
-        mergeWithPreviousContent: boolean
-    }>(
-        (acc, message, index) => {
-            if (!isBaseMessage(message)) {
-                throw new Error('Unsupported message input')
-            }
-            const author = getMessageAuthor(message)
-            if (author === 'system' && index !== 0) {
-                throw new Error('System message should be the first one')
-            }
-            const role = convertAuthorToRole(author)
-
-            const prevContent = acc.content[acc.content.length]
-            if (!acc.mergeWithPreviousContent && prevContent && prevContent.role === role) {
-                throw new Error('Google Generative AI requires alternate messages between authors')
-            }
-
-            const parts = convertMessageContentToParts(message, isMultimodalModel)
-
-            if (acc.mergeWithPreviousContent) {
-                const prevContent = acc.content[acc.content.length - 1]
-                if (!prevContent) {
-                    throw new Error('There was a problem parsing your system message. Please try a prompt without one.')
-                }
-                prevContent.parts.push(...parts)
-
-                return {
-                    mergeWithPreviousContent: false,
-                    content: acc.content
-                }
-            }
-            let actualRole = role
-            if (actualRole === 'function' || actualRole === 'tool') {
-                // GenerativeAI API will throw an error if the role is not "user" or "model."
-                actualRole = 'user'
-            }
-            const content: Content = {
-                role: actualRole,
-                parts
-            }
-            return {
-                mergeWithPreviousContent: author === 'system',
-                content: [...acc.content, content]
-            }
-        },
-        { content: [], mergeWithPreviousContent: false }
-    ).content
-}
-
-/**
- * Maps the Google Generative AI API response to a ChatResult object for LangChain.
- * Handles function calls, usage metadata, and error/rejection cases.
- *
- * @param response - The EnhancedGenerateContentResponse from the API.
- * @param model_name - The name of the model used for generation.
- * @param extra - Optional extra data, such as usage metadata.
- * @returns ChatResult object with generations and optional LLM output details.
- */
-function mapGenerateContentResultToChatResult(
-    response: EnhancedGenerateContentResponse,
-    model_name?: string,
-    extra?: {
-        usageMetadata: UsageMetadata | undefined
-    }
-): ChatResult {
-    // if rejected or error, return empty generations with reason in filters
-    if (!response.candidates || response.candidates.length === 0 || !response.candidates[0]) {
-        return {
-            generations: [],
-            llmOutput: {
-                filters: response.promptFeedback // Provide feedback for why generation failed
-            }
-        }
-    }
-
-    // Extract function calls if present (for tool/function calling)
-    const functionCalls = response.functionCalls()
-    // Use the first candidate (Google API may return multiple candidates)
-    const [candidate] = response.candidates
-
-    // Extract content and generation info from the candidate
-    const { content, ...generationInfo } = candidate
-
-    // Handle both text and image content
-    let text = ''
-    let imageData: any = null
-
-    if (content?.parts) {
-        for (const part of content.parts) {
-            if (part.text) {
-                text += part.text
-            } else if (part.inlineData) {
-                // Store image data for handling
-                imageData = part.inlineData
-            }
-        }
-    }
-
-    // Extract usage metadata if available (for reporting token usage)
-    const usageMetadata: any = extra?.usageMetadata
-
-    // Build the ChatGeneration object for LangChain
-    const additionalKwargs: any = {
-        model_name,
-        ...generationInfo
-    }
-
-    if (imageData) {
-        additionalKwargs.imageData = imageData
-    }
-
-    const generation: ChatGeneration = {
-        text,
-        message: new AIMessage({
-            content: text,
-            tool_calls: functionCalls,
-            additional_kwargs: additionalKwargs,
-            usage_metadata: {
-                input_tokens: usageMetadata?.promptTokenCount ?? 0, // Number of prompt tokens used
-                output_tokens: (usageMetadata?.candidatesTokenCount ?? 0) + (usageMetadata?.thoughtsTokenCount ?? 0), // Output tokens
-                total_tokens: usageMetadata?.totalTokenCount ?? 0, // Total tokens used
-                input_token_details: Array.isArray(usageMetadata?.promptTokensDetails)
-                    ? usageMetadata?.promptTokensDetails.reduce((acc: any, curr: any) => {
-                          if (curr.modality && typeof curr.tokenCount === 'number') {
-                              acc[curr.modality.toLowerCase()] = curr.tokenCount // e.g., text, image
-                          }
-                          return acc
-                      }, {})
-                    : {},
-
-                output_token_details: {
-                    text: usageMetadata?.candidatesTokenCount ?? 0,
-                    reasoning: usageMetadata?.thoughtsTokenCount ?? 0
-                }
-            }
-        }),
-        generationInfo: {
-            model_name,
-            ...generationInfo
-        }
-    }
-
-    return {
-        generations: [generation]
-    }
-}
-
-function convertResponseContentToChatGenerationChunk(
-    response: EnhancedGenerateContentResponse,
-    extra: {
-        usageMetadata?: UsageMetadata | undefined
-        index: number
-    }
-): ChatGenerationChunk | null {
-    if (!response || !response.candidates || response.candidates.length === 0) {
-        return null
-    }
-    const functionCalls = response.functionCalls()
-    const [candidate] = response.candidates
-    const { content, ...generationInfo } = candidate
-
-    // Handle both text and image content
-    let text = ''
-    let imageData: any = null
-
-    if (content?.parts) {
-        for (const part of content.parts) {
-            if (part.text) {
-                text += part.text
-            } else if (part.inlineData) {
-                // Store image data for handling
-                imageData = part.inlineData
-            }
-        }
-    }
-
-    const toolCallChunks: ToolCallChunk[] = []
-    if (functionCalls) {
-        toolCallChunks.push(
-            ...functionCalls.map((fc) => ({
-                ...fc,
-                args: JSON.stringify(fc.args),
-                index: extra.index
-            }))
-        )
-    }
-
-    const additionalKwargs: any = {}
-    if (imageData) {
-        additionalKwargs.imageData = imageData
-    }
-
-    return new ChatGenerationChunk({
-        text,
-        message: new AIMessageChunk({
-            content: text,
-            name: !content ? undefined : content.role,
-            tool_call_chunks: toolCallChunks,
-            // Each chunk can have unique "generationInfo", and merging strategy is unclear,
-            // so leave blank for now.
-            additional_kwargs: additionalKwargs,
-            usage_metadata: extra.usageMetadata as any
-        }),
-        generationInfo
-    })
-}
-
-function zodToGeminiParameters(zodObj: any) {
-    // Gemini doesn't accept either the $schema or additionalProperties
-    // attributes, so we need to explicitly remove them.
-    const jsonSchema: any = zodToJsonSchema(zodObj)
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const { $schema, additionalProperties, ...rest } = jsonSchema
-
-    // Ensure all properties have type specified
-    if (rest.properties) {
-        Object.keys(rest.properties).forEach((key) => {
-            const prop = rest.properties[key]
-
-            // Handle enum types
-            if (prop.enum?.length) {
-                rest.properties[key] = {
-                    type: 'string',
-                    format: 'enum',
-                    enum: prop.enum
-                }
-            }
-            // Handle missing type
-            else if (!prop.type && !prop.oneOf && !prop.anyOf && !prop.allOf) {
-                // Infer type from other properties
-                if (prop.minimum !== undefined || prop.maximum !== undefined) {
-                    prop.type = 'number'
-                } else if (prop.format === 'date-time') {
-                    prop.type = 'string'
-                } else if (prop.items) {
-                    prop.type = 'array'
-                } else if (prop.properties) {
-                    prop.type = 'object'
-                } else {
-                    // Default to string if type can't be inferred
-                    prop.type = 'string'
-                }
-            }
-        })
-    }
-
-    return rest
-}
-
-function convertToGeminiTools(structuredTools: (StructuredToolInterface | Record<string, unknown>)[]) {
-    return [
-        {
-            functionDeclarations: structuredTools.map((structuredTool) => {
-                if (isStructuredTool(structuredTool)) {
-                    const jsonSchema = zodToGeminiParameters(structuredTool.schema)
-                    return {
-                        name: structuredTool.name,
-                        description: structuredTool.description,
-                        parameters: jsonSchema
-                    }
-                }
-                return structuredTool
-            })
-        }
-    ]
 }
