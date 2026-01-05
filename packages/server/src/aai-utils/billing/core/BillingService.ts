@@ -340,7 +340,7 @@ export class BillingService implements BillingProvider {
                 customer: customerId,
                 status: 'active',
                 limit: 1,
-                expand: ['data.items.data.price.product']
+                expand: ['data.items.data.price']
             })
             return subscriptions.data[0] || null
         } catch (error) {

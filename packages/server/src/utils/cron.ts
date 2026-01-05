@@ -22,6 +22,7 @@ const API_HOST = process.env.API_HOST || `http://localhost:${process.env.PORT ||
  * Default: true
  */
 const ENABLE_BILLING_SYNC_CRON = process.env.ENABLE_BILLING_SYNC_CRON !== 'false'
+const ENABLE_CSV_RUN_CRON = process.env.ENABLE_CSV_RUN_CRON === 'true'
 
 /**
  * Initialize cron jobs
@@ -50,7 +51,10 @@ export function initCronJobs() {
         logger.info('📅 [cron]: Billing usage sync cron job is disabled')
     }
 
-    initCsvRun()
-    processCsvRows()
-    generateCsv()
+    if (ENABLE_CSV_RUN_CRON) {
+        logger.info('📅 [cron]: Initializing csv run cron job')
+        initCsvRun()
+        processCsvRows()
+        generateCsv()
+    }
 }
