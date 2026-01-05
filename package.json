@@ -124,6 +124,7 @@
             "sqlite3"
         ],
         "overrides": {
+            "@opentelemetry/sdk-trace-base": "1.27.0",
             "axios": "^1.12.1",
             "body-parser": "2.0.2",
             "braces": "3.0.3",
