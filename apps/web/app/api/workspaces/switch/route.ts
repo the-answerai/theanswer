@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         // Call Flowise server to update active workspace
         // The Flowise endpoint expects the workspace ID as a query parameter
         const apiHost = session.user.chatflowDomain || process.env.FLOWISE_DOMAIN || process.env.API_HOST
-        const response = await fetch(`${apiHost}/api/v1/workspaces/switch?id=${workspaceId}`, {
+        const response = await fetch(`${apiHost}/api/v1/workspace/switch?id=${workspaceId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
