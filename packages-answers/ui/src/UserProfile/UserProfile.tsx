@@ -618,11 +618,6 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                             </Table>
                         </TableContainer>
                     </Grid>
-                    <Grid item sm={12} sx={{ textAlign: 'right' }}>
-                        <Button variant='outlined' onClick={handleAddNewField}>
-                            Add New Field
-                        </Button>
-                    </Grid>
                 </Grid>
                 {/* Need to check both because the context fields don't trigger dirtyFields unless a new one is added */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
