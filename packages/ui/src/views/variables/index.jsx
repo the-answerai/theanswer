@@ -93,6 +93,9 @@ const Variables = () => {
     const [variables, setVariables] = useState([])
     const [showHowToDialog, setShowHowToDialog] = useState(false)
     const [tabValue, setTabValue] = useState(0)
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
     const { hasFeature } = usePermissions()
     const isAdmin = hasFeature('org:manage')
     const [myVariables, setMyVariables] = useState([])
