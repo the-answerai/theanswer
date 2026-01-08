@@ -226,31 +226,35 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
                     console.log(`Added user ${user.id} to Default Workspace ${orgWsId}`)
                 }
 
-                // Check if user already has a personal workspace
-                const existingPersonalWs = await queryRunner.query(
-                    `SELECT w.id FROM workspace w
-                     JOIN workspace_user wu ON w.id = wu."workspaceId"
-                     WHERE w."organizationId" = $1 AND w.name = 'Personal Workspace' AND wu."userId" = $2`,
-                    [org.id, user.id]
-                )
-
-                if (!existingPersonalWs.length) {
-                    // Create personal workspace
-                    const personalWsResult = await queryRunner.query(
-                        `INSERT INTO workspace (id, name, "organizationId", "createdBy", "updatedBy", "createdDate", "updatedDate")
-                         VALUES (uuid_generate_v4(), 'Personal Workspace', $1, $2, $2, NOW(), NOW())
-                         RETURNING id`,
+                // Personal workspaces can be disabled for custom deployments via AAI_DISABLE_PERSONAL_WORKSPACES=true
+                // When disabled, users only have access to org-wide workspaces (e.g., Default Workspace)
+                if (process.env.AAI_DISABLE_PERSONAL_WORKSPACES !== 'true') {
+                    // Check if user already has a personal workspace
+                    const existingPersonalWs = await queryRunner.query(
+                        `SELECT w.id FROM workspace w
+                         JOIN workspace_user wu ON w.id = wu."workspaceId"
+                         WHERE w."organizationId" = $1 AND w.name = 'Personal Workspace' AND wu."userId" = $2`,
                         [org.id, user.id]
                     )
-                    const personalWsId = personalWsResult[0].id
 
-                    // Link user to personal workspace
-                    await queryRunner.query(
-                        `INSERT INTO workspace_user ("workspaceId", "userId", "roleId", status, "createdBy", "updatedBy", "createdDate", "updatedDate")
-                         VALUES ($1, $2, $3, 'active', $2, $2, NOW(), NOW())`,
-                        [personalWsId, user.id, personalRoleId]
-                    )
-                    console.log(`Created Personal Workspace ${personalWsId} for user ${user.id}`)
+                    if (!existingPersonalWs.length) {
+                        // Create personal workspace
+                        const personalWsResult = await queryRunner.query(
+                            `INSERT INTO workspace (id, name, "organizationId", "createdBy", "updatedBy", "createdDate", "updatedDate")
+                             VALUES (uuid_generate_v4(), 'Personal Workspace', $1, $2, $2, NOW(), NOW())
+                             RETURNING id`,
+                            [org.id, user.id]
+                        )
+                        const personalWsId = personalWsResult[0].id
+
+                        // Link user to personal workspace
+                        await queryRunner.query(
+                            `INSERT INTO workspace_user ("workspaceId", "userId", "roleId", status, "createdBy", "updatedBy", "createdDate", "updatedDate")
+                             VALUES ($1, $2, $3, 'active', $2, $2, NOW(), NOW())`,
+                            [personalWsId, user.id, personalRoleId]
+                        )
+                        console.log(`Created Personal Workspace ${personalWsId} for user ${user.id}`)
+                    }
                 }
             }
         }

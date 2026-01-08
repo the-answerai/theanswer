@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 
 // material-ui
 import { Box, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
@@ -11,6 +12,7 @@ import { useError } from '@/store/context/ErrorContext'
 import MainCard from '@/ui-component/cards/MainCard'
 import TablePagination, { DEFAULT_ITEMS_PER_PAGE } from '@/ui-component/pagination/TablePagination'
 import DocumentStoreCard from '@/ui-component/cards/DocumentStoreCard'
+import { getSharedBadge } from '@/aai'
 import AddDocStoreDialog from '@/views/docstore/AddDocStoreDialog'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import { StyledPermissionButton } from '@/ui-component/button/RBACButtons'
@@ -31,6 +33,7 @@ import { DocumentStoreTable } from '@/ui-component/table/DocumentStoreTable'
 
 const Documents = () => {
     const theme = useTheme()
+    const activeWorkspaceId = useSelector((state) => state.auth?.user?.activeWorkspaceId)
 
     const navigate = useNavigate()
     const getAllDocumentStores = useApi(documentsApi.getAllDocumentStores)
@@ -224,6 +227,7 @@ const Documents = () => {
                                             images={images[data.id]}
                                             data={data}
                                             onClick={() => goToDocumentStore(data.id)}
+                                            badge={getSharedBadge(data.workspaceId, activeWorkspaceId)}
                                         />
                                     ))}
                                 </Box>

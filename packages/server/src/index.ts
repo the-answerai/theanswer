@@ -45,6 +45,8 @@ import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthM
 import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
 import { populateWorkspaceData } from './middlewares/authentication/populateWorkspaceData'
 import { User } from './database/entities/User'
+import { initAAI } from './aai/repository'
+import { requestContextMiddleware } from './aai/middleware'
 declare global {
     namespace Express {
         interface User extends LoggedInUser {}
@@ -170,6 +172,9 @@ export class App {
     }
 
     async config() {
+        // Initialize AAI overrides with DataSource for repository wrapping
+        initAAI(this.AppDataSource)
+
         // Limit is needed to allow sending/receiving base64 encoded string
         const flowise_file_size_limit = process.env.FLOWISE_FILE_SIZE_LIMIT || '50mb'
         this.app.use(express.json({ limit: flowise_file_size_limit }))
@@ -364,6 +369,10 @@ export class App {
         // AAI Post-Auth Middleware - runs AFTER passport auth to enhance req.user with AAI data
         // This bridges enterprise passport auth with AAI business logic (Stripe, workspaces, chatflows)
         this.app.use(aaiPostAuthMiddleware(this.AppDataSource))
+
+        // AAI Request Context Middleware - populates AsyncLocalStorage with workspace context
+        // IMPORTANT: Must run AFTER aaiPostAuthMiddleware to access req.user.assignedWorkspaces
+        this.app.use(requestContextMiddleware)
 
         if (process.env.ENABLE_METRICS === 'true') {
             switch (process.env.METRICS_PROVIDER) {

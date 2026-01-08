@@ -70,25 +70,28 @@ export const findOrCreateWorkspacesForUser = async (
         })
         await workspaceUserRepo.save(defaultMembership)
 
-        // Create Personal Workspace for the user
-        const personalWorkspace = workspaceRepo.create({
-            name: 'Personal Workspace',
-            organizationId,
-            createdBy: user.id,
-            updatedBy: user.id
-        })
-        await workspaceRepo.save(personalWorkspace)
+        // Personal workspaces can be disabled for custom deployments via AAI_DISABLE_PERSONAL_WORKSPACES=true
+        // When disabled, users only have access to org-wide workspaces (e.g., Default Workspace)
+        if (process.env.AAI_DISABLE_PERSONAL_WORKSPACES !== 'true') {
+            const personalWorkspace = workspaceRepo.create({
+                name: 'Personal Workspace',
+                organizationId,
+                createdBy: user.id,
+                updatedBy: user.id
+            })
+            await workspaceRepo.save(personalWorkspace)
 
-        // Add user to Personal Workspace
-        const personalMembership = workspaceUserRepo.create({
-            workspaceId: personalWorkspace.id,
-            userId: user.id,
-            roleId: personalRole.id,
-            status: 'active',
-            createdBy: user.id,
-            updatedBy: user.id
-        })
-        await workspaceUserRepo.save(personalMembership)
+            // Add user to Personal Workspace
+            const personalMembership = workspaceUserRepo.create({
+                workspaceId: personalWorkspace.id,
+                userId: user.id,
+                roleId: personalRole.id,
+                status: 'active',
+                createdBy: user.id,
+                updatedBy: user.id
+            })
+            await workspaceUserRepo.save(personalMembership)
+        }
 
         console.log(`[Auth] Created workspaces for new user ${user.id}`)
     } catch (error) {

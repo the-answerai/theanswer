@@ -52,7 +52,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ===========================|| DOC STORE CARD ||=========================== //
 
-const DocumentStoreCard = ({ data, images, onClick }) => {
+const DocumentStoreCard = ({ data, images, onClick, badge }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
 
@@ -93,6 +93,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                 {data.name}
                             </Typography>
                             <DocumentStoreStatus status={data.status} />
+                            {badge}
                         </div>
                         <span
                             style={{
@@ -212,7 +213,8 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
 DocumentStoreCard.propTypes = {
     data: PropTypes.object,
     images: PropTypes.array,
-    onClick: PropTypes.func
+    onClick: PropTypes.func,
+    badge: PropTypes.node
 }
 
 export default DocumentStoreCard
