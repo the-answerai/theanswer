@@ -369,8 +369,15 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
         } else {
             img = utilNodesPNG // Utilities and Tools tab
         }
-        // Handle both Next.js (object with src) and Vite (string) image imports
-        return typeof img === 'object' && img?.src ? img.src : img
+        // Handle various import formats from transpiled packages
+        if (typeof img === 'string') return img
+        if (img && typeof img === 'object') {
+            if (img.src) return img.src
+            if (img.default?.src) return img.default.src
+            if (typeof img.default === 'string') return img.default
+        }
+        console.warn(`[AddNodes] Unable to extract image URL from:`, img)
+        return ''
     }
 
     const renderIcon = (node) => {
