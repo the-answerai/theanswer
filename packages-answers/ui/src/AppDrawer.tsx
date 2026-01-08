@@ -608,7 +608,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 open={drawerOpen}
                 variant='permanent'
                 className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
-                sx={{ zIndex: 2000 }}
+                sx={{ zIndex: 1200 }}
             >
                 <Box
                     sx={{
@@ -920,12 +920,12 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                 slotProps={{
                                     root: {
                                         sx: {
-                                            zIndex: 3000
+                                            zIndex: 1400
                                         }
                                     },
                                     paper: {
                                         sx: {
-                                            zIndex: 3000,
+                                            zIndex: 1400,
                                             minWidth: 220,
                                             maxHeight: 'calc(100vh - 100px)'
                                         }
