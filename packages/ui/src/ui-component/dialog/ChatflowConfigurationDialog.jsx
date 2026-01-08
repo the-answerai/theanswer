@@ -21,6 +21,7 @@ import ChatLinksSettings from '@/ui-component/extended/ChatLinksSettings'
 import JlincSettings from '@/ui-component/extended/JlincSettings'
 import AllowedDomains from '@/ui-component/extended/AllowedDomains'
 import ChatflowGuardrails from '@/ui-component/extended/ChatflowGuardrails'
+import RateLimit from '@/ui-component/extended/RateLimit'
 // import AnalyseFlow from '@/ui-component/extended/AnalyseFlow'
 
 const CHATFLOW_CONFIGURATION_TABS = [
@@ -192,6 +193,7 @@ const ChatflowConfigurationDialog = ({ show, isAgentCanvas, dialogProps, onCance
                         {item.id === 'generalSettings' ? <GeneralSettings dialogProps={dialogProps} /> : null}
                         {item.id === 'guardrails' ? <ChatflowGuardrails dialogProps={dialogProps} /> : null}
                         {item.id === 'jlinc' ? <JlincSettings dialogProps={dialogProps} /> : null}
+                        {item.id === 'rateLimiting' ? <RateLimit dialogProps={dialogProps} /> : null}
                     </TabPanel>
                 ))}
             </DialogContent>
