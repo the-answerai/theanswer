@@ -24,11 +24,8 @@ const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
     try {
         const appServer = getRunningExpressApp()
 
-        // Get user's assigned workspace IDs for workspace-based access
-        const workspaceIds = user.assignedWorkspaces?.map((ws) => ws.id) || []
-
         // Build query to fetch chats accessible via:
-        // 1. Workspace membership (chatflow.workspaceId in user's workspaces)
+        // 1. Active workspace (chatflow.workspaceId matches user's active workspace)
         // 2. Legacy userId ownership (ownerId matches user.id)
         const queryBuilder = appServer.AppDataSource.getRepository(Chat)
             .createQueryBuilder('chat')
@@ -36,14 +33,15 @@ const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
             .where('chat.chatflowChatId IS NOT NULL')
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // Access control: workspace membership OR legacy userId ownership
-        if (workspaceIds.length > 0) {
+        // Access control: Filter by ACTIVE workspace only (security fix for cross-workspace leak)
+        if (user.activeWorkspaceId) {
+            // Show chats from active workspace OR user's own chats (legacy ownership)
             queryBuilder.andWhere(
-                '(chatflow.workspaceId IN (:...workspaceIds) OR chat.ownerId = :userId)',
-                { workspaceIds, userId: user.id }
+                '(chatflow.workspaceId = :activeWorkspaceId OR chat.ownerId = :userId)',
+                { activeWorkspaceId: user.activeWorkspaceId, userId: user.id }
             )
         } else {
-            // Fallback to legacy userId-only access if no workspaces assigned
+            // Fallback to legacy userId-only access if no active workspace
             queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
         }
 
@@ -66,24 +64,22 @@ const getChatById = async (chatId: string, user: IUser) => {
     try {
         const appServer = getRunningExpressApp()
 
-        // Get user's assigned workspace IDs for workspace-based access
-        const workspaceIds = user.assignedWorkspaces?.map((ws) => ws.id) || []
-
-        // Build query with workspace-based OR legacy userId access control
+        // Build query with active workspace OR legacy userId access control
         const queryBuilder = appServer.AppDataSource.getRepository(Chat)
             .createQueryBuilder('chat')
             .leftJoinAndSelect('chat.chatflow', 'chatflow')
             .where('chat.id = :chatId', { chatId })
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // Access control: workspace membership OR legacy userId ownership
-        if (workspaceIds.length > 0) {
+        // Access control: Filter by ACTIVE workspace only (security fix for cross-workspace leak)
+        if (user.activeWorkspaceId) {
+            // Allow access to chat from active workspace OR user's own chat (legacy ownership)
             queryBuilder.andWhere(
-                '(chatflow.workspaceId IN (:...workspaceIds) OR chat.ownerId = :userId)',
-                { workspaceIds, userId: user.id }
+                '(chatflow.workspaceId = :activeWorkspaceId OR chat.ownerId = :userId)',
+                { activeWorkspaceId: user.activeWorkspaceId, userId: user.id }
             )
         } else {
-            // Fallback to legacy userId-only access if no workspaces assigned
+            // Fallback to legacy userId-only access if no active workspace
             queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
         }
 
