@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useParams } from 'react-router-dom'
 
 // material-ui
 import {
@@ -74,8 +75,7 @@ const EvalDatasetRows = () => {
     const getDatasetRows = useApi(datasetsApi.getDataset)
     const reorderDatasetRowApi = useApi(datasetsApi.reorderDatasetRow)
 
-    const URLpath = document.location.pathname.toString().split('/')
-    const datasetId = URLpath[URLpath.length - 1] === 'dataset_rows' ? '' : URLpath[URLpath.length - 1]
+    const { id: datasetId } = useParams()
 
     const { hasPermission } = useAuth()
 
@@ -89,6 +89,12 @@ const EvalDatasetRows = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageLimit, setPageLimit] = useState(DEFAULT_ITEMS_PER_PAGE)
     const [total, setTotal] = useState(0)
+
+    // Early return if datasetId is invalid (after all hooks)
+    if (!datasetId) {
+        console.error('Invalid dataset ID')
+        return null
+    }
     const onChange = (page, pageLimit) => {
         setCurrentPage(page)
         setPageLimit(pageLimit)
