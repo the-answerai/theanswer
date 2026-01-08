@@ -1,3 +1,8 @@
+---
+name: ticket-status-sync
+description: "Synchronizes Linear ticket status with git workflow events"
+---
+
 # Ticket Status Sync Skill
 
 This skill synchronizes Linear ticket status with git workflow events, keeping tickets up-to-date with development progress.

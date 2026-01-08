@@ -119,8 +119,11 @@ This agent is invoked by:
 - Direct user requests to create pull requests
 
 Uses these skills:
+- `commit-helper`: Validates conventional commits and runs security checks
+- `branch-workflow`: Branch validation and protection enforcement
 - `pr-description-generator`: Creates comprehensive PR descriptions with Linear integration
 - `ticket-status-sync`: Updates Linear ticket status to "In Review" when PR is created
+- `theanswer-patterns`: Multi-tenancy and authentication validation during commits
 
 After creating the PR:
 - Provides PR URL and number

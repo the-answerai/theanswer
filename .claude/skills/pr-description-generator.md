@@ -1,3 +1,8 @@
+---
+name: pr-description-generator
+description: "Generates comprehensive PR descriptions with Linear integration"
+---
+
 # PR Description Generator Skill
 
 This skill generates comprehensive, standardized pull request descriptions by analyzing commits and Linear ticket context.
