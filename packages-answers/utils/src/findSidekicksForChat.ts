@@ -129,7 +129,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
                 }
 
                 const flowData = parseFlowData(chatflow.flowData)
-                const nodes = flowData.nodes || []
+                const nodes = flowData?.nodes || []
                 const imgUploadSizeAndTypes: any[] = []
                 let isImageUploadAllowed = false
 

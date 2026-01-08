@@ -59,7 +59,7 @@ export async function findSidekickById(user: User, id: string) {
     }
 
     const flowData = parseFlowData(chatflow.flowData)
-    const nodes = flowData.nodes || []
+    const nodes = flowData?.nodes || []
     const imgUploadSizeAndTypes: any[] = []
     let isImageUploadAllowed = false
 
