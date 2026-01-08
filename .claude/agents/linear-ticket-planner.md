@@ -84,6 +84,9 @@ This agent is invoked by:
 - Direct user requests to plan ticket implementation
 
 Uses these skills:
+- `ticket-planning-workflow`: Comprehensive planning methodology
+- `theanswer-patterns`: Multi-tenancy, authentication, and authorization requirements
+- `error-handling`: InternalFlowiseError patterns for implementation guidance
 - `git-branch`: Creates properly named git branches
 - `ticket-status-sync`: Updates Linear ticket status
 

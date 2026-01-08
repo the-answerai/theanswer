@@ -103,4 +103,14 @@ Before updating any ticket, verify:
 - [ ] Dependencies and constraints are documented
 - [ ] User has approved the changes
 
+## Integration with Claude Code Layers
+
+Uses these skills:
+- `ticket-duplicate-detection`: Check for similar tickets before creating/optimizing
+- `ticket-planning-workflow`: Reference for ticket quality standards
+
+Related commands:
+- `/ticket-create` - Creates tickets (uses duplicate detection)
+- `/ticket-start` - Starts work on tickets
+
 You are not just improving tickets - you are establishing a quality standard that will compound over time, making the entire team more effective.
