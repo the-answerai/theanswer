@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useSelector } from 'react-redux'
 
 // material-ui
 import { Box, Stack, ButtonGroup, Skeleton, ToggleButtonGroup, ToggleButton } from '@mui/material'
@@ -8,8 +7,7 @@ import { useTheme } from '@mui/material/styles'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
-import ItemCard from '@/ui-component/cards/ItemCard'
-import { getSharedBadge } from '@/aai'
+import { ItemCard } from '@/aai'
 import ToolDialog from './ToolDialog'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
@@ -33,7 +31,6 @@ import ToolEmptySVG from '@/assets/images/tools_empty.svg'
 
 const Tools = () => {
     const theme = useTheme()
-    const activeWorkspaceId = useSelector((state) => state.auth?.user?.activeWorkspaceId)
     const getAllToolsApi = useApi(toolsApi.getAllTools)
     const { error, setError } = useError()
 
@@ -245,7 +242,7 @@ const Tools = () => {
                                 {!view || view === 'card' ? (
                                     <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
                                         {getAllToolsApi.data?.data?.filter(filterTools).map((data, index) => (
-                                            <ItemCard data={data} key={index} onClick={() => edit(data)} badge={getSharedBadge(data.workspaceId, activeWorkspaceId)} />
+                                            <ItemCard data={data} key={index} onClick={() => edit(data)} />
                                         ))}
                                     </Box>
                                 ) : (

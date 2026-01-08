@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
 
 // material-ui
 import { Box, Skeleton, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material'
@@ -9,8 +8,7 @@ import { useTheme } from '@mui/material/styles'
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
-import ItemCard from '@/ui-component/cards/ItemCard'
-import { getSharedBadge } from '@/aai'
+import { ItemCard } from '@/aai'
 import { gridSpacing } from '@/store/constant'
 import WorkflowEmptySVG from '@/assets/images/workflow_empty.svg'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
@@ -38,7 +36,6 @@ import { IconPlus, IconLayoutGrid, IconList } from '@tabler/icons-react'
 const Chatflows = () => {
     const navigate = useNavigate()
     const theme = useTheme()
-    const activeWorkspaceId = useSelector((state) => state.auth?.user?.activeWorkspaceId)
 
     const [isLoading, setLoading] = useState(true)
     const [images, setImages] = useState({})
@@ -201,7 +198,7 @@ const Chatflows = () => {
                             {!view || view === 'card' ? (
                                 <Box display='grid' gridTemplateColumns='repeat(3, 1fr)' gap={gridSpacing}>
                                     {getAllChatflowsApi.data?.data?.filter(filterFlows).map((data, index) => (
-                                        <ItemCard key={index} onClick={() => goToCanvas(data)} data={data} images={images[data.id]} badge={getSharedBadge(data.workspaceId, activeWorkspaceId)} />
+                                        <ItemCard key={index} onClick={() => goToCanvas(data)} data={data} images={images[data.id]} />
                                     ))}
                                 </Box>
                             ) : (

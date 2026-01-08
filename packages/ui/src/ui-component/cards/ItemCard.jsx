@@ -48,7 +48,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 // ===========================|| CONTRACT CARD ||=========================== //
 
-const ItemCard = ({ data, images, icons, onClick, badge }) => {
+const ItemCard = ({ data, images, icons, onClick }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
 
@@ -116,7 +116,6 @@ const ItemCard = ({ data, images, icons, onClick, badge }) => {
                             >
                                 {data.templateName || data.name}
                             </Typography>
-                            {badge}
                         </div>
                         {data.description && (
                             <span
@@ -214,8 +213,7 @@ ItemCard.propTypes = {
     data: PropTypes.object,
     images: PropTypes.array,
     icons: PropTypes.array,
-    onClick: PropTypes.func,
-    badge: PropTypes.node
+    onClick: PropTypes.func
 }
 
 export default ItemCard
