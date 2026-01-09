@@ -33,9 +33,11 @@ const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
             .where('chat.chatflowChatId IS NOT NULL')
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // SECURITY FIX (AGENT-589): Filter by ACTIVE workspace ONLY
-        // All users (including admins) see only chats from the current workspace
-        // This prevents cross-workspace data leakage
+        // SECURITY FIX (AGENT-589): Filter by user ownership AND active workspace
+        // Users only see their own chats in the current workspace
+        // This prevents cross-user and cross-workspace data leakage
+        queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
+
         if (user.activeWorkspaceId) {
             queryBuilder.andWhere('chatflow.workspaceId = :activeWorkspaceId', {
                 activeWorkspaceId: user.activeWorkspaceId
@@ -71,9 +73,11 @@ const getChatById = async (chatId: string, user: IUser) => {
             .where('chat.id = :chatId', { chatId })
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // SECURITY FIX (AGENT-589): Filter by ACTIVE workspace ONLY
-        // All users (including admins) can only access chats from the current workspace
-        // This prevents cross-workspace data leakage
+        // SECURITY FIX (AGENT-589): Filter by user ownership AND active workspace
+        // Users can only access their own chats in the current workspace
+        // This prevents cross-user and cross-workspace data leakage
+        queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
+
         if (user.activeWorkspaceId) {
             queryBuilder.andWhere('chatflow.workspaceId = :activeWorkspaceId', {
                 activeWorkspaceId: user.activeWorkspaceId
