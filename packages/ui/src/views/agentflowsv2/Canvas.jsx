@@ -164,19 +164,17 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
             setEdges(flowData.edges || [])
 
             // Preserve chatflow configuration settings from imported file
-            // These include: chatbotConfig, speechToText, textToSpeech, followUpPrompts, apiConfig, analytic
-            const configFields = {
-                name: flowData.name,
-                description: flowData.description,
-                category: flowData.category,
-                chatbotConfig: flowData.chatbotConfig,
-                speechToText: flowData.speechToText,
-                textToSpeech: flowData.textToSpeech,
-                followUpPrompts: flowData.followUpPrompts,
-                apiConfig: flowData.apiConfig,
-                analytic: flowData.analytic,
-                type: flowData.type
-            }
+            // Only include fields that are actually defined to avoid overwriting existing values with undefined
+            const configFieldKeys = [
+                'name', 'description', 'category', 'chatbotConfig', 'visibility',
+                'speechToText', 'textToSpeech', 'followUpPrompts', 'apiConfig', 'analytic', 'type'
+            ]
+            const configFields = configFieldKeys.reduce((acc, key) => {
+                if (flowData[key] !== undefined) {
+                    acc[key] = flowData[key]
+                }
+                return acc
+            }, {})
 
             // Update chatflow in redux store with configuration from imported file
             dispatch({
