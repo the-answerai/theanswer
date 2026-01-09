@@ -32,38 +32,28 @@ const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHa
 
     const handleSidekickSelect = useCallback(
         (sidekick: Sidekick) => {
-            // Check if this is a personal sidekick (owned by user) vs marketplace template
-            const isPersonalSidekick = sidekick.chatflow.isOwner
+            // Use isExecutable (TheAnswer pattern) to determine if sidekick can be used directly
+            // isExecutable = isOwner || visibility.includes('AnswerAI')
+            if (sidekick.isExecutable) {
+                // Update local storage
+                const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
+                sidekickHistory.lastUsed = sidekick
+                localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
 
-            if (isPersonalSidekick) {
-                // Handle personal sidekicks - these can be used directly in chat
+                // Update context
+                setSelectedSidekick(sidekick as unknown as SidekickListItem)
+                setSidekick(sidekick as unknown as SidekickListItem)
+
                 if (!chat?.id) {
-                    // Update local storage first
-                    const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
-                    sidekickHistory.lastUsed = sidekick
-                    localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
-
-                    // Update context first
-                    setSelectedSidekick(sidekick as unknown as SidekickListItem)
-                    setSidekick(sidekick as unknown as SidekickListItem)
-
-                    // Navigate to chat with this sidekick
-                    const newUrl = `/chat/${sidekick.id}`
-                    router.push(newUrl)
+                    // No active chat - navigate to chat with this sidekick
+                    router.push(`/chat/${sidekick.id}`)
                 } else {
-                    // Already in a chat, just switch sidekicks
-                    setSelectedSidekick(sidekick as unknown as SidekickListItem)
-                    setSidekick(sidekick as unknown as SidekickListItem)
-                    const sidekickHistory = JSON.parse(localStorage.getItem('sidekickHistory') || '{}')
-                    sidekickHistory.lastUsed = sidekick
-                    localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
+                    // Already in chat - just switch sidekicks (no navigation)
                     setIsMarketplaceDialogOpen(false)
                 }
             } else {
-                // Handle marketplace sidekicks - these are templates that need to be viewed/cloned
-                // Always navigate to marketplace regardless of current chat state
-                const marketplaceUrl = `/sidekick-studio/marketplace/${sidekick.id}`
-                router.push(marketplaceUrl)
+                // Non-executable sidekicks (templates) - navigate to marketplace to view/clone
+                router.push(`/sidekick-studio/marketplace/${sidekick.id}`)
             }
         },
         [chat, setSidekick, setSelectedSidekick, router]

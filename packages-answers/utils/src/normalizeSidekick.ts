@@ -67,18 +67,36 @@ export function parseObjectRecursively(obj: any): any {
 
 // Function to parse the 'chatbotConfig' JSON string using the generic parsing approach
 
-export const parseFlowData = (flowDataJson: string): FlowData => parseObjectRecursively(JSON.parse(flowDataJson)) as FlowData
-
-export function parseChatbotConfig(chatbotConfigJson?: string): ChatbotConfig | null {
-    if (!chatbotConfigJson) return null
-    const parsedObj = JSON.parse(chatbotConfigJson)
-    return parseObjectRecursively(parsedObj) as ChatbotConfig
+export const parseFlowData = (flowDataJson: string | undefined | null): FlowData | null => {
+    if (!flowDataJson) return null
+    try {
+        return parseObjectRecursively(JSON.parse(flowDataJson)) as FlowData
+    } catch (e) {
+        console.error('Failed to parse flowData:', e)
+        return null
+    }
 }
 
-export function parseAnswersConfig(answersConfigJson?: string): AnswersConfig | null {
+export function parseChatbotConfig(chatbotConfigJson?: string | null): ChatbotConfig | null {
+    if (!chatbotConfigJson) return null
+    try {
+        const parsedObj = JSON.parse(chatbotConfigJson)
+        return parseObjectRecursively(parsedObj) as ChatbotConfig
+    } catch (e) {
+        console.error('Failed to parse chatbotConfig:', e)
+        return null
+    }
+}
+
+export function parseAnswersConfig(answersConfigJson?: string | null): AnswersConfig | null {
     if (!answersConfigJson) return null
-    const parsedObj = JSON.parse(answersConfigJson)
-    return parseObjectRecursively(parsedObj) as AnswersConfig
+    try {
+        const parsedObj = JSON.parse(answersConfigJson)
+        return parseObjectRecursively(parsedObj) as AnswersConfig
+    } catch (e) {
+        console.error('Failed to parse answersConfig:', e)
+        return null
+    }
 }
 
 export const normalizeSidekickList = (sidekicks: Partial<Sidekick>[], user?: User): SidekickListItem[] => {

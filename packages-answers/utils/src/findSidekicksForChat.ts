@@ -101,7 +101,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
                         categories,
                         isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
                         isFavorite: false,
-                        isExecutable: chatflow.isOwner || chatflow.visibility.includes('AnswerAI'),
+                        isExecutable: true, // Server already filters by workspace access
                         // In lightweight mode, return minimal constraints
                         constraints: {
                             isSpeechToTextEnabled: false,
@@ -129,7 +129,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
                 }
 
                 const flowData = parseFlowData(chatflow.flowData)
-                const nodes = flowData.nodes || []
+                const nodes = flowData?.nodes || []
                 const imgUploadSizeAndTypes: any[] = []
                 let isImageUploadAllowed = false
 
@@ -168,7 +168,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
                     categories,
                     isAvailable: chatflow.isPublic || chatflow.visibility.includes('Organization'),
                     isFavorite: false,
-                    isExecutable: chatflow.isOwner || chatflow.visibility.includes('AnswerAI'),
+                    isExecutable: true, // Server already filters by workspace access
                     constraints: {
                         isSpeechToTextEnabled,
                         isImageUploadAllowed,
