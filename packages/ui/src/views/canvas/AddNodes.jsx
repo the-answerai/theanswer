@@ -361,7 +361,7 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
     const getImage = (tabValue) => {
         let img
         if (tabValue === 0) {
-            img = AAIPNG // Answer tab - will use AAI icon for now
+            img = AAIPNG // Answer tab
         } else if (tabValue === 1) {
             img = LangChainPNG // LangChain tab
         } else if (tabValue === 2) {
@@ -369,15 +369,8 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
         } else {
             img = utilNodesPNG // Utilities and Tools tab
         }
-        // Handle various import formats from transpiled packages
-        if (typeof img === 'string') return img
-        if (img && typeof img === 'object') {
-            if (img.src) return img.src
-            if (img.default?.src) return img.default.src
-            if (typeof img.default === 'string') return img.default
-        }
-        console.warn(`[AddNodes] Unable to extract image URL from:`, img)
-        return ''
+        // Next.js StaticImageData has .src property
+        return img?.src || img || ''
     }
 
     const renderIcon = (node) => {
