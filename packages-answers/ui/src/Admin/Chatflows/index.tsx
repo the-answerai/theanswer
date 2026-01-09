@@ -28,6 +28,7 @@ import {
     ToggleButtonGroup,
     ToggleButton
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import TemplateIcon from '@mui/icons-material/AccountTree'
 import HistoryIcon from '@mui/icons-material/History'
@@ -70,6 +71,8 @@ const SkeletonRow = () => {
 }
 
 const AdminChatflows = () => {
+    const theme = useTheme()
+    const isDarkMode = theme.palette.mode === 'dark'
     const [error, setError] = useState<null | string>(null)
     const [page, setPage] = useState(0)
     const [rowsPerPage, setRowsPerPage] = useState(25)
@@ -352,18 +355,18 @@ const AdminChatflows = () => {
             </Box>
             <Box sx={{ pb: 4 }} display='flex' alignItems='center' justifyContent='space-between'>
                 <Box>
-                    <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
+                    <Typography variant='h4' sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
                         All {flowType === 'CHATFLOW' ? 'Chatflows' : 'Agent Flows'}
                     </Typography>
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                         Manage {flowType === 'CHATFLOW' ? 'chatflow' : 'agent flow'} configurations
                     </Typography>
                 </Box>
                 <IconButton
                     onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                     sx={{
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        '&:hover': { color: 'rgba(255, 255, 255, 0.9)' },
+                        color: theme.palette.text.secondary,
+                        '&:hover': { color: theme.palette.text.primary },
                         transition: 'transform 0.2s ease-in-out',
                         transform: isFilterExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
                     }}
@@ -375,7 +378,7 @@ const AdminChatflows = () => {
             {/* Flow Type and Version Filters */}
             <Box sx={{ mb: 3, display: 'flex', gap: 3, alignItems: 'center' }}>
                 <Box>
-                    <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1, fontSize: '0.875rem' }}>
+                    <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1, fontSize: '0.875rem' }}>
                         Flow Type
                     </Typography>
                     <ToggleButtonGroup
@@ -385,14 +388,14 @@ const AdminChatflows = () => {
                         sx={{
                             borderRadius: 2,
                             '& .MuiToggleButton-root': {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                color: theme.palette.text.secondary,
+                                border: `1px solid ${theme.palette.divider}`,
                                 '&:hover': {
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                    bgcolor: theme.palette.action.hover
                                 },
                                 '&.Mui-selected': {
                                     bgcolor: 'rgba(33, 150, 243, 0.3)',
-                                    color: 'rgba(33, 150, 243, 0.9)',
+                                    color: isDarkMode ? 'rgba(33, 150, 243, 0.9)' : '#1976d2',
                                     '&:hover': {
                                         bgcolor: 'rgba(33, 150, 243, 0.4)'
                                     }
@@ -411,7 +414,7 @@ const AdminChatflows = () => {
 
                 {flowType === 'AGENTFLOW' && (
                     <Box>
-                        <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1, fontSize: '0.875rem' }}>
+                        <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1, fontSize: '0.875rem' }}>
                             Agent Flow Version
                         </Typography>
                         <ToggleButtonGroup
@@ -421,14 +424,14 @@ const AdminChatflows = () => {
                             sx={{
                                 borderRadius: 2,
                                 '& .MuiToggleButton-root': {
-                                    color: 'rgba(255, 255, 255, 0.7)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    color: theme.palette.text.secondary,
+                                    border: `1px solid ${theme.palette.divider}`,
                                     '&:hover': {
-                                        bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                        bgcolor: theme.palette.action.hover
                                     },
                                     '&.Mui-selected': {
                                         bgcolor: 'rgba(76, 175, 80, 0.3)',
-                                        color: 'rgba(76, 175, 80, 0.9)',
+                                        color: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
                                         '&:hover': {
                                             bgcolor: 'rgba(76, 175, 80, 0.4)'
                                         }
@@ -460,21 +463,21 @@ const AdminChatflows = () => {
                             <Box
                                 sx={{
                                     p: 3,
-                                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                                    border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
                                     borderRadius: '12px',
-                                    bgcolor: 'rgba(255, 193, 7, 0.1)',
+                                    bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.08)',
                                     backdropFilter: 'blur(20px)'
                                 }}
                             >
                                 {/* Header Section */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <TemplateIcon sx={{ color: 'rgba(255, 193, 7, 0.9)', fontSize: '2rem' }} />
+                                        <TemplateIcon sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b', fontSize: '2rem' }} />
                                         <Box>
-                                            <Typography variant='h6' sx={{ color: 'rgba(255, 193, 7, 0.9)', fontWeight: 600, mb: 0.5 }}>
+                                            <Typography variant='h6' sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914', fontWeight: 600, mb: 0.5 }}>
                                                 Organization Default Template
                                             </Typography>
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                                                 This is the template used for all new user chatflows
                                             </Typography>
                                         </Box>
@@ -482,9 +485,9 @@ const AdminChatflows = () => {
                                     <Chip
                                         label='DEFAULT TEMPLATE'
                                         sx={{
-                                            bgcolor: 'rgba(255, 193, 7, 0.3)',
-                                            color: 'rgba(255, 193, 7, 0.9)',
-                                            border: '1px solid rgba(255, 193, 7, 0.5)',
+                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.3)' : 'rgba(184, 134, 11, 0.15)',
+                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
+                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid #b8860b',
                                             fontSize: '0.75rem',
                                             fontWeight: 600
                                         }}
@@ -499,11 +502,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 NAME
                                             </Typography>
-                                            <Typography variant='body1' sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+                                            <Typography variant='body1' sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
                                                 {fullDefaultTemplate.name}
                                             </Typography>
                                         </Box>
@@ -513,11 +516,11 @@ const AdminChatflows = () => {
                                             <Box sx={{ mb: 2 }}>
                                                 <Typography
                                                     variant='body2'
-                                                    sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                    sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                                 >
                                                     DESCRIPTION
                                                 </Typography>
-                                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                                <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
                                                     {fullDefaultTemplate.description}
                                                 </Typography>
                                             </Box>
@@ -527,7 +530,7 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 CATEGORY
                                             </Typography>
@@ -542,9 +545,9 @@ const AdminChatflows = () => {
                                                             sx={{
                                                                 height: 20,
                                                                 fontSize: '0.65rem',
-                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
-                                                                color: 'rgba(255, 193, 7, 0.9)',
-                                                                border: '1px solid rgba(255, 193, 7, 0.4)',
+                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
+                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
+                                                                border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.4)' : '1px solid #b8860b',
                                                                 '& .MuiChip-label': {
                                                                     px: 0.75,
                                                                     py: 0.25
@@ -559,11 +562,11 @@ const AdminChatflows = () => {
                                         <Box>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 OWNER
                                             </Typography>
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
                                                 {fullDefaultTemplate.isOwner
                                                     ? 'Me'
                                                     : fullDefaultTemplate.user?.name ||
@@ -579,11 +582,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 CREATED
                                             </Typography>
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
                                                 {fullDefaultTemplate.createdDate
                                                     ? format(new Date(fullDefaultTemplate.createdDate), 'MMM d, yyyy h:mm a')
                                                     : 'N/A'}
@@ -594,11 +597,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 UPDATED
                                             </Typography>
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
                                                 {fullDefaultTemplate.updatedDate
                                                     ? format(new Date(fullDefaultTemplate.updatedDate), 'MMM d, yyyy h:mm a')
                                                     : 'N/A'}
@@ -609,11 +612,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
                                             >
                                                 VERSION
                                             </Typography>
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
                                                 v{fullDefaultTemplate.currentVersion || 1}
                                             </Typography>
                                         </Box>
@@ -622,7 +625,7 @@ const AdminChatflows = () => {
                                         <Box>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.75rem', mb: 1 }}
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 1 }}
                                             >
                                                 ACTIONS
                                             </Typography>
@@ -632,13 +635,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => window.open(getCanvasFullUrl(fullDefaultTemplate), '_blank')}
                                                         sx={{
-                                                            color: 'rgba(255, 193, 7, 0.8)',
-                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
-                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
+                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
+                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
                                                             '&:hover': {
-                                                                color: 'rgba(255, 193, 7, 0.9)',
-                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
-                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
+                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
+                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
                                                             }
                                                         }}
                                                     >
@@ -650,13 +653,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => handleOpenMetrics(fullDefaultTemplate.id)}
                                                         sx={{
-                                                            color: 'rgba(255, 193, 7, 0.8)',
-                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
-                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
+                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
+                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
                                                             '&:hover': {
-                                                                color: 'rgba(255, 193, 7, 0.9)',
-                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
-                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
+                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
+                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
                                                             }
                                                         }}
                                                     >
@@ -668,13 +671,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => handleOpenVersions(fullDefaultTemplate.id)}
                                                         sx={{
-                                                            color: 'rgba(255, 193, 7, 0.8)',
-                                                            bgcolor: 'rgba(255, 193, 7, 0.1)',
-                                                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
+                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
+                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
                                                             '&:hover': {
-                                                                color: 'rgba(255, 193, 7, 0.9)',
-                                                                bgcolor: 'rgba(255, 193, 7, 0.2)',
-                                                                borderColor: 'rgba(255, 193, 7, 0.5)'
+                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
+                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
+                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
                                                             }
                                                         }}
                                                     >
@@ -692,9 +695,9 @@ const AdminChatflows = () => {
 
             <Box
                 sx={{
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '12px',
-                    bgcolor: 'rgba(0, 0, 0, 0.2)',
+                    bgcolor: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : theme.palette.background.paper,
                     backdropFilter: 'blur(20px)'
                 }}
             >
@@ -704,17 +707,17 @@ const AdminChatflows = () => {
                         maxHeight: isFilterExpanded ? '300px' : '0px',
                         overflow: 'hidden',
                         transition: 'max-height 0.3s ease-in-out',
-                        borderBottom: isFilterExpanded ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+                        borderBottom: isFilterExpanded ? `1px solid ${theme.palette.divider}` : 'none'
                     }}
                 >
                     <Box sx={{ p: 3 }}>
-                        <Typography variant='h6' sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
+                        <Typography variant='h6' sx={{ color: theme.palette.text.primary, mb: 2 }}>
                             Filter Options
                         </Typography>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
                             {/* Keyword Filter */}
                             <Box>
-                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1 }}>
                                     Search
                                 </Typography>
                                 <TextField
@@ -728,19 +731,19 @@ const AdminChatflows = () => {
                                     sx={{
                                         width: '100%',
                                         '& .MuiOutlinedInput-root': {
-                                            color: 'rgba(255, 255, 255, 0.7)',
+                                            color: theme.palette.text.primary,
                                             '& fieldset': {
-                                                borderColor: 'rgba(255, 255, 255, 0.2)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&:hover fieldset': {
-                                                borderColor: 'rgba(255, 255, 255, 0.3)'
+                                                borderColor: theme.palette.text.secondary
                                             },
                                             '&.Mui-focused fieldset': {
-                                                borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                borderColor: theme.palette.primary.main
                                             }
                                         },
                                         '& .MuiInputBase-input': {
-                                            color: 'rgba(255, 255, 255, 0.7)'
+                                            color: theme.palette.text.primary
                                         }
                                     }}
                                 />
@@ -748,7 +751,7 @@ const AdminChatflows = () => {
 
                             {/* Category Filter */}
                             <Box>
-                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1 }}>
                                     Categories
                                 </Typography>
                                 <Autocomplete
@@ -767,31 +770,31 @@ const AdminChatflows = () => {
                                             size='small'
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: 'rgba(255, 255, 255, 0.7)',
+                                                    color: theme.palette.text.primary,
                                                     '& fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.2)'
+                                                        borderColor: theme.palette.divider
                                                     },
                                                     '&:hover fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                                                        borderColor: theme.palette.text.secondary
                                                     },
                                                     '&.Mui-focused fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                        borderColor: theme.palette.primary.main
                                                     }
                                                 },
                                                 '& .MuiInputBase-input': {
-                                                    color: 'rgba(255, 255, 255, 0.7)'
+                                                    color: theme.palette.text.primary
                                                 }
                                             }}
                                         />
                                     )}
                                     sx={{
                                         '& .MuiAutocomplete-tag': {
-                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                            color: 'rgba(255, 255, 255, 0.7)',
-                                            border: '1px solid rgba(255, 255, 255, 0.2)'
+                                            bgcolor: theme.palette.action.selected,
+                                            color: theme.palette.text.primary,
+                                            border: `1px solid ${theme.palette.divider}`
                                         },
                                         '& .MuiAutocomplete-popupIndicator': {
-                                            color: 'rgba(255, 255, 255, 0.7)'
+                                            color: theme.palette.text.secondary
                                         }
                                     }}
                                 />
@@ -799,7 +802,7 @@ const AdminChatflows = () => {
 
                             {/* Owner Filter */}
                             <Box>
-                                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1 }}>
                                     Owners
                                 </Typography>
                                 <Autocomplete
@@ -819,31 +822,31 @@ const AdminChatflows = () => {
                                             size='small'
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
-                                                    color: 'rgba(255, 255, 255, 0.7)',
+                                                    color: theme.palette.text.primary,
                                                     '& fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.2)'
+                                                        borderColor: theme.palette.divider
                                                     },
                                                     '&:hover fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                                                        borderColor: theme.palette.text.secondary
                                                     },
                                                     '&.Mui-focused fieldset': {
-                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                        borderColor: theme.palette.primary.main
                                                     }
                                                 },
                                                 '& .MuiInputBase-input': {
-                                                    color: 'rgba(255, 255, 255, 0.7)'
+                                                    color: theme.palette.text.primary
                                                 }
                                             }}
                                         />
                                     )}
                                     sx={{
                                         '& .MuiAutocomplete-tag': {
-                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                            color: 'rgba(255, 255, 255, 0.7)',
-                                            border: '1px solid rgba(255, 255, 255, 0.2)'
+                                            bgcolor: theme.palette.action.selected,
+                                            color: theme.palette.text.primary,
+                                            border: `1px solid ${theme.palette.divider}`
                                         },
                                         '& .MuiAutocomplete-popupIndicator': {
-                                            color: 'rgba(255, 255, 255, 0.7)'
+                                            color: theme.palette.text.secondary
                                         }
                                     }}
                                 />
@@ -851,8 +854,8 @@ const AdminChatflows = () => {
                         </Box>
 
                         {/* Template Filters */}
-                        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                            <Typography variant='h6' sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
+                        <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
+                            <Typography variant='h6' sx={{ color: theme.palette.text.primary, mb: 2 }}>
                                 Template Management
                             </Typography>
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, alignItems: 'start' }}>
@@ -868,19 +871,19 @@ const AdminChatflows = () => {
                                                 }}
                                                 sx={{
                                                     '& .MuiSwitch-switchBase.Mui-checked': {
-                                                        color: 'rgba(255, 193, 7, 0.9)',
+                                                        color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b',
                                                         '&:hover': {
                                                             backgroundColor: 'rgba(255, 193, 7, 0.1)'
                                                         }
                                                     },
                                                     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                                        backgroundColor: 'rgba(255, 193, 7, 0.5)'
+                                                        backgroundColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#daa520'
                                                     }
                                                 }}
                                             />
                                         }
                                         label={
-                                            <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                            <Typography variant='body2' sx={{ color: theme.palette.text.secondary }}>
                                                 Show only template-derived chatflows
                                             </Typography>
                                         }
@@ -889,14 +892,14 @@ const AdminChatflows = () => {
 
                                 {/* Template Status Filter */}
                                 <Box>
-                                    <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                    <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mb: 1 }}>
                                         Template Status
                                     </Typography>
                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                         {[
-                                            { value: 'up_to_date', label: 'Up-to-date', color: 'rgba(76, 175, 80, 0.7)' },
-                                            { value: 'outdated', label: 'Outdated', color: 'rgba(255, 152, 0, 0.7)' },
-                                            { value: 'not_from_template', label: 'Not from template', color: 'rgba(158, 158, 158, 0.7)' }
+                                            { value: 'up_to_date', label: 'Up-to-date', color: isDarkMode ? 'rgba(76, 175, 80, 0.7)' : '#2e7d32' },
+                                            { value: 'outdated', label: 'Outdated', color: isDarkMode ? 'rgba(255, 152, 0, 0.7)' : '#e65100' },
+                                            { value: 'not_from_template', label: 'Not from template', color: isDarkMode ? 'rgba(158, 158, 158, 0.7)' : '#616161' }
                                         ].map((status) => (
                                             <FormControlLabel
                                                 key={status.value}
@@ -924,7 +927,7 @@ const AdminChatflows = () => {
                                                 label={
                                                     <Typography
                                                         variant='body2'
-                                                        sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.8rem' }}
+                                                        sx={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}
                                                     >
                                                         {status.label}
                                                     </Typography>
