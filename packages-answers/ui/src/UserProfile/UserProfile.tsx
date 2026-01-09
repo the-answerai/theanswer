@@ -105,6 +105,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
     const router = useRouter()
     const [_loading, setLoading] = useState(false)
     const [_error, setError] = useState<string | null>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const {
         handleSubmit,
@@ -156,6 +157,9 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
 
     const onSubmit = async (data: OrgInput) => {
         setLoading(true)
+        setSuccessMessage(null)
+        setError(null)
+
         // Could check dirtyFields here, but the contextField array doesn't trigger it unless a new field is added
         const changedFields = Object.keys({ ...touchedFields })
 
@@ -169,13 +173,18 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
         }
 
         try {
-            await axios.patch(`/api/users`, { ...formData })
+            await axios.put(`/api/v1/user`, { ...formData })
+            setSuccessMessage('User settings saved successfully')
             router.refresh()
+            // Reset form with the updated data to preserve saved values
+            reset({
+                ...user,
+                contextFields: data.contextFields
+            })
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
-            reset()
         }
     }
     const handleDeleteField = (index: number) => {
@@ -518,117 +527,136 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                 </CardContent>
             </Card>
 
-            <Divider sx={{ my: 3 }} />
+            {/* TODO: User Variables Section - Hidden until API endpoint is implemented (AGENT-618) */}
+            {/* The /api/users endpoint was never created when this feature was added.
+                Uncommenting this section requires creating apps/web/app/api/users/route.ts
+                that updates contextFields in Prisma database. */}
+            {false && (
+                <>
+                    <Divider sx={{ my: 3 }} />
 
-            {/* User Variables Section (Existing) */}
-            <Box>
-                <Typography variant='h6' gutterBottom>
-                    User Variables
-                </Typography>
-            </Box>
+                    <Box>
+                        <Typography variant='h6' gutterBottom>
+                            User Variables
+                        </Typography>
+                    </Box>
 
-            <Box component='form' onSubmit={handleSubmit(onSubmit)}>
-                <Grid container direction='row' rowSpacing={4} columnSpacing={4}>
-                    <Grid item sm={12} sx={{ textAlign: 'right' }}>
-                        <Button variant='outlined' onClick={handleAddNewField}>
-                            Add New Field
-                        </Button>
-                    </Grid>
-                    <Grid item sm={12}>
-                        <TableContainer>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>ID</TableCell>
-                                        <TableCell>Help Text</TableCell>
-                                        <TableCell>Field Text Value</TableCell>
-                                        <TableCell>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {fields.map((field, index) => (
-                                        <TableRow key={field.fieldId}>
-                                            <TableCell sx={{ width: '20%' }}>
-                                                <TextField
-                                                    {...register(`contextFields.${index}.fieldId`, {
-                                                        required: true
-                                                    })}
-                                                    onChange={(e) => {
-                                                        const updatedFields = [...fields]
-                                                        updatedFields[index].fieldId = e.target.value
-                                                        setValue(`contextFields.${index}.fieldId`, e.target.value)
-                                                    }}
-                                                    label='Field ID'
-                                                    required
-                                                    placeholder='Enter a Field ID that will be used to reference this field in your Sidekicks.'
-                                                    multiline
-                                                    rows={3}
-                                                    fullWidth
-                                                    size='small'
-                                                    error={Boolean(errors.contextFields?.[index]?.fieldId)}
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ width: '30%' }}>
-                                                <TextField
-                                                    {...register(`contextFields.${index}.helpText`, {
-                                                        required: true
-                                                    })}
-                                                    onChange={(e) => {
-                                                        const updatedFields = [...fields]
-                                                        updatedFields[index].helpText = e.target.value
-                                                        setValue(`contextFields.${index}.helpText`, e.target.value)
-                                                    }}
-                                                    label='Field Help Text'
-                                                    placeholder='Enter help text that will allow users to understand how this field could be used.'
-                                                    multiline
-                                                    rows={3}
-                                                    fullWidth
-                                                    size='small'
-                                                    error={Boolean(errors.contextFields?.[index]?.helpText)}
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ width: '40%' }}>
-                                                <TextField
-                                                    {...register(`contextFields.${index}.fieldTextValue`, {
-                                                        required: true
-                                                    })}
-                                                    onChange={(e) => {
-                                                        const updatedFields = [...fields]
-                                                        updatedFields[index].fieldTextValue = e.target.value
-                                                        setValue(`contextFields.${index}.fieldTextValue`, e.target.value)
-                                                    }}
-                                                    label='Field Value'
-                                                    required
-                                                    placeholder='Enter the value that will be returned when the Field ID is referenced in a Sidekick.'
-                                                    multiline
-                                                    rows={3}
-                                                    fullWidth
-                                                    size='small'
-                                                    error={Boolean(errors.contextFields?.[index]?.fieldTextValue)}
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ width: '10%' }}>
-                                                <IconButton onClick={() => handleDeleteField(index)}>
-                                                    <Delete />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Grid>
-                </Grid>
-                {/* Need to check both because the context fields don't trigger dirtyFields unless a new one is added */}
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button variant='contained' type='submit'>
-                        Save User
-                    </Button>
-                    <Button disabled={!isDirty} color='error' variant='outlined' onClick={handleCancel}>
-                        Cancel
-                    </Button>
-                </Box>
-            </Box>
+                    {successMessage && (
+                        <Alert severity='success' onClose={() => setSuccessMessage(null)} sx={{ mb: 2 }}>
+                            {successMessage}
+                        </Alert>
+                    )}
+                    {_error && (
+                        <Alert severity='error' onClose={() => setError(null)} sx={{ mb: 2 }}>
+                            {_error}
+                        </Alert>
+                    )}
+
+                    <Box component='form' onSubmit={handleSubmit(onSubmit)}>
+                        <Grid container direction='row' rowSpacing={4} columnSpacing={4}>
+                            <Grid item sm={12} sx={{ textAlign: 'right' }}>
+                                <Button variant='outlined' onClick={handleAddNewField}>
+                                    Add New Field
+                                </Button>
+                            </Grid>
+                            <Grid item sm={12}>
+                                <TableContainer>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>ID</TableCell>
+                                                <TableCell>Help Text</TableCell>
+                                                <TableCell>Field Text Value</TableCell>
+                                                <TableCell>Actions</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {fields.map((field, index) => (
+                                                <TableRow key={field.fieldId}>
+                                                    <TableCell sx={{ width: '20%' }}>
+                                                        <TextField
+                                                            {...register(`contextFields.${index}.fieldId`, {
+                                                                required: true
+                                                            })}
+                                                            onChange={(e) => {
+                                                                const updatedFields = [...fields]
+                                                                updatedFields[index].fieldId = e.target.value
+                                                                setValue(`contextFields.${index}.fieldId`, e.target.value)
+                                                            }}
+                                                            label='Field ID'
+                                                            required
+                                                            placeholder='Enter a Field ID that will be used to reference this field in your Sidekicks.'
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            size='small'
+                                                            error={Boolean(errors.contextFields?.[index]?.fieldId)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ width: '30%' }}>
+                                                        <TextField
+                                                            {...register(`contextFields.${index}.helpText`, {
+                                                                required: true
+                                                            })}
+                                                            onChange={(e) => {
+                                                                const updatedFields = [...fields]
+                                                                updatedFields[index].helpText = e.target.value
+                                                                setValue(`contextFields.${index}.helpText`, e.target.value)
+                                                            }}
+                                                            label='Field Help Text'
+                                                            placeholder='Enter help text that will allow users to understand how this field could be used.'
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            size='small'
+                                                            error={Boolean(errors.contextFields?.[index]?.helpText)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ width: '40%' }}>
+                                                        <TextField
+                                                            {...register(`contextFields.${index}.fieldTextValue`, {
+                                                                required: true
+                                                            })}
+                                                            onChange={(e) => {
+                                                                const updatedFields = [...fields]
+                                                                updatedFields[index].fieldTextValue = e.target.value
+                                                                setValue(`contextFields.${index}.fieldTextValue`, e.target.value)
+                                                            }}
+                                                            label='Field Value'
+                                                            required
+                                                            placeholder='Enter the value that will be returned when the Field ID is referenced in a Sidekick.'
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            size='small'
+                                                            error={Boolean(errors.contextFields?.[index]?.fieldTextValue)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ width: '10%' }}>
+                                                        <IconButton onClick={() => handleDeleteField(index)}>
+                                                            <Delete />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </Grid>
+                            <Grid item sm={12}>
+                                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                                    <Button variant='contained' type='submit'>
+                                        Save User
+                                    </Button>
+                                    <Button disabled={!isDirty} color='error' variant='outlined' onClick={handleCancel}>
+                                        Cancel
+                                    </Button>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </>
+            )}
         </Box>
     )
 }
