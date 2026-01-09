@@ -1,7 +1,10 @@
+import { useState, useCallback } from 'react'
 import { Box, Card, CardContent, Chip, Stack } from '@mui/material'
 import { IconTool, IconDeviceSdCard } from '@tabler/icons-react'
 import { MemoizedReactMarkdown } from '@/ui-component/markdown/MemoizedReactMarkdown'
 import nextAgentGIF from '@/assets/images/next-agent.gif'
+import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
+import multiagent_workerPNG from '@/assets/images/multiagent_worker.png'
 import PropTypes from 'prop-types'
 
 const AgentReasoningCard = ({
@@ -19,6 +22,18 @@ const AgentReasoningCard = ({
     onURLClick,
     getLabel
 }) => {
+    // Fallback image based on agent type (supervisor has instructions)
+    const fallbackIcon = agent.instructions ? multiagent_supervisorPNG : multiagent_workerPNG
+    const [iconSrc, setIconSrc] = useState(getAgentIcon(agent.nodeName, agent.instructions))
+    const [hasError, setHasError] = useState(false)
+
+    const handleImageError = useCallback(() => {
+        if (!hasError) {
+            setHasError(true)
+            setIconSrc(fallbackIcon)
+        }
+    }, [hasError, fallbackIcon])
+
     if (agent.nextAgent) {
         return (
             <Card
@@ -77,8 +92,9 @@ const AgentReasoningCard = ({
                                 height: '25px',
                                 width: 'auto'
                             }}
-                            src={getAgentIcon(agent.nodeName, agent.instructions)}
+                            src={iconSrc}
                             alt='agentPNG'
+                            onError={handleImageError}
                         />
                     </Box>
                     <div>{agent.agentName}</div>
