@@ -28,7 +28,7 @@ import {
     ToggleButtonGroup,
     ToggleButton
 } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import TemplateIcon from '@mui/icons-material/AccountTree'
 import HistoryIcon from '@mui/icons-material/History'
@@ -394,10 +394,10 @@ const AdminChatflows = () => {
                                     bgcolor: theme.palette.action.hover
                                 },
                                 '&.Mui-selected': {
-                                    bgcolor: 'rgba(33, 150, 243, 0.3)',
-                                    color: isDarkMode ? 'rgba(33, 150, 243, 0.9)' : '#1976d2',
+                                    bgcolor: alpha(theme.palette.primary.main, 0.3),
+                                    color: theme.palette.primary.main,
                                     '&:hover': {
-                                        bgcolor: 'rgba(33, 150, 243, 0.4)'
+                                        bgcolor: alpha(theme.palette.primary.main, 0.4)
                                     }
                                 }
                             }
@@ -430,10 +430,10 @@ const AdminChatflows = () => {
                                         bgcolor: theme.palette.action.hover
                                     },
                                     '&.Mui-selected': {
-                                        bgcolor: 'rgba(76, 175, 80, 0.3)',
-                                        color: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
+                                        bgcolor: alpha(theme.palette.success.main, 0.3),
+                                        color: theme.palette.success.main,
                                         '&:hover': {
-                                            bgcolor: 'rgba(76, 175, 80, 0.4)'
+                                            bgcolor: alpha(theme.palette.success.main, 0.4)
                                         }
                                     }
                                 }
@@ -697,7 +697,7 @@ const AdminChatflows = () => {
                 sx={{
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '12px',
-                    bgcolor: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : theme.palette.background.paper,
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     backdropFilter: 'blur(20px)'
                 }}
             >
@@ -897,9 +897,9 @@ const AdminChatflows = () => {
                                     </Typography>
                                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                         {[
-                                            { value: 'up_to_date', label: 'Up-to-date', color: isDarkMode ? 'rgba(76, 175, 80, 0.7)' : '#2e7d32' },
-                                            { value: 'outdated', label: 'Outdated', color: isDarkMode ? 'rgba(255, 152, 0, 0.7)' : '#e65100' },
-                                            { value: 'not_from_template', label: 'Not from template', color: isDarkMode ? 'rgba(158, 158, 158, 0.7)' : '#616161' }
+                                            { value: 'up_to_date', label: 'Up-to-date', color: theme.palette.success.main },
+                                            { value: 'outdated', label: 'Outdated', color: theme.palette.warning.main },
+                                            { value: 'not_from_template', label: 'Not from template', color: theme.palette.text.disabled }
                                         ].map((status) => (
                                             <FormControlLabel
                                                 key={status.value}
@@ -1008,13 +1008,13 @@ const AdminChatflows = () => {
                                         }
                                     }}
                                     sx={{
-                                        bgcolor: 'rgba(255, 152, 0, 0.8)',
-                                        color: '#fff',
+                                        bgcolor: alpha(theme.palette.warning.main, 0.8),
+                                        color: theme.palette.common.white,
                                         '&:hover': {
-                                            bgcolor: 'rgba(255, 152, 0, 0.9)'
+                                            bgcolor: alpha(theme.palette.warning.main, 0.9)
                                         },
                                         '&:disabled': {
-                                            bgcolor: 'rgba(255, 152, 0, 0.3)',
+                                            bgcolor: alpha(theme.palette.warning.main, 0.3),
                                             color: theme.palette.text.disabled
                                         }
                                     }}
@@ -1310,9 +1310,9 @@ const AdminChatflows = () => {
                                                         label='Up-to-date'
                                                         size='small'
                                                         sx={{
-                                                            bgcolor: 'rgba(76, 175, 80, 0.2)',
-                                                            color: 'rgba(76, 175, 80, 0.9)',
-                                                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                                                            bgcolor: alpha(theme.palette.success.main, 0.2),
+                                                            color: theme.palette.success.main,
+                                                            border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
                                                             fontSize: '0.65rem',
                                                             height: '20px'
                                                         }}
@@ -1323,9 +1323,9 @@ const AdminChatflows = () => {
                                                         label='Outdated'
                                                         size='small'
                                                         sx={{
-                                                            bgcolor: 'rgba(255, 152, 0, 0.2)',
-                                                            color: 'rgba(255, 152, 0, 0.9)',
-                                                            border: '1px solid rgba(255, 152, 0, 0.3)',
+                                                            bgcolor: alpha(theme.palette.warning.main, 0.2),
+                                                            color: theme.palette.warning.main,
+                                                            border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
                                                             fontSize: '0.65rem',
                                                             height: '20px'
                                                         }}
@@ -1336,9 +1336,9 @@ const AdminChatflows = () => {
                                                         label='Not from template'
                                                         size='small'
                                                         sx={{
-                                                            bgcolor: 'rgba(158, 158, 158, 0.2)',
-                                                            color: 'rgba(158, 158, 158, 0.9)',
-                                                            border: '1px solid rgba(158, 158, 158, 0.3)',
+                                                            bgcolor: alpha(theme.palette.grey[500], 0.2),
+                                                            color: theme.palette.text.secondary,
+                                                            border: `1px solid ${alpha(theme.palette.grey[500], 0.3)}`,
                                                             fontSize: '0.65rem',
                                                             height: '20px'
                                                         }}
@@ -1459,7 +1459,7 @@ const AdminChatflows = () => {
                 PaperProps={{
                     sx: {
                         height: '95vh',
-                        bgcolor: 'rgba(0, 0, 0, 0.9)',
+                        bgcolor: theme.palette.background.paper,
                         backdropFilter: 'blur(20px)',
                         border: `1px solid ${theme.palette.divider}`
                     }
@@ -1469,7 +1469,7 @@ const AdminChatflows = () => {
                     sx={{
                         color: theme.palette.text.primary,
                         borderBottom: `1px solid ${theme.palette.divider}`,
-                        bgcolor: 'rgba(0, 0, 0, 0.2)'
+                        bgcolor: alpha(theme.palette.background.default, 0.5)
                     }}
                 >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1502,7 +1502,7 @@ const AdminChatflows = () => {
                 fullWidth
                 PaperProps={{
                     sx: {
-                        bgcolor: 'rgba(0, 0, 0, 0.9)',
+                        bgcolor: theme.palette.background.paper,
                         backdropFilter: 'blur(20px)',
                         border: `1px solid ${theme.palette.divider}`
                     }
@@ -1512,7 +1512,7 @@ const AdminChatflows = () => {
                     sx={{
                         color: theme.palette.text.primary,
                         borderBottom: `1px solid ${theme.palette.divider}`,
-                        bgcolor: 'rgba(0, 0, 0, 0.2)'
+                        bgcolor: alpha(theme.palette.background.default, 0.5)
                     }}
                 >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1638,7 +1638,7 @@ const AdminChatflows = () => {
                 fullWidth
                 PaperProps={{
                     sx: {
-                        bgcolor: 'rgba(0, 0, 0, 0.9)',
+                        bgcolor: theme.palette.background.paper,
                         backdropFilter: 'blur(20px)',
                         border: `1px solid ${theme.palette.divider}`
                     }
@@ -1659,10 +1659,10 @@ const AdminChatflows = () => {
                         onClick={handleRollbackConfirm}
                         variant='contained'
                         sx={{
-                            bgcolor: 'rgba(244, 67, 54, 0.8)',
-                            color: '#fff',
+                            bgcolor: alpha(theme.palette.error.main, 0.8),
+                            color: theme.palette.common.white,
                             '&:hover': {
-                                bgcolor: 'rgba(244, 67, 54, 0.9)'
+                                bgcolor: alpha(theme.palette.error.main, 0.9)
                             }
                         }}
                     >
