@@ -33,16 +33,16 @@ const getAllChats = async (user: IUser, options: PaginationOptions = {}) => {
             .where('chat.chatflowChatId IS NOT NULL')
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // Access control: Filter by ACTIVE workspace only (security fix for cross-workspace leak)
+        // SECURITY FIX (AGENT-589): Filter by ACTIVE workspace ONLY
+        // All users (including admins) see only chats from the current workspace
+        // This prevents cross-workspace data leakage
         if (user.activeWorkspaceId) {
-            // Show chats from active workspace OR user's own chats (legacy ownership)
-            queryBuilder.andWhere(
-                '(chatflow.workspaceId = :activeWorkspaceId OR chat.ownerId = :userId)',
-                { activeWorkspaceId: user.activeWorkspaceId, userId: user.id }
-            )
+            queryBuilder.andWhere('chatflow.workspaceId = :activeWorkspaceId', {
+                activeWorkspaceId: user.activeWorkspaceId
+            })
         } else {
-            // Fallback to legacy userId-only access if no active workspace
-            queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
+            // No active workspace = no chats visible (security default)
+            queryBuilder.andWhere('1 = 0')
         }
 
         // Apply cursor-based pagination
@@ -71,16 +71,16 @@ const getChatById = async (chatId: string, user: IUser) => {
             .where('chat.id = :chatId', { chatId })
             .andWhere('chat.organizationId = :organizationId', { organizationId: user.organizationId })
 
-        // Access control: Filter by ACTIVE workspace only (security fix for cross-workspace leak)
+        // SECURITY FIX (AGENT-589): Filter by ACTIVE workspace ONLY
+        // All users (including admins) can only access chats from the current workspace
+        // This prevents cross-workspace data leakage
         if (user.activeWorkspaceId) {
-            // Allow access to chat from active workspace OR user's own chat (legacy ownership)
-            queryBuilder.andWhere(
-                '(chatflow.workspaceId = :activeWorkspaceId OR chat.ownerId = :userId)',
-                { activeWorkspaceId: user.activeWorkspaceId, userId: user.id }
-            )
+            queryBuilder.andWhere('chatflow.workspaceId = :activeWorkspaceId', {
+                activeWorkspaceId: user.activeWorkspaceId
+            })
         } else {
-            // Fallback to legacy userId-only access if no active workspace
-            queryBuilder.andWhere('chat.ownerId = :userId', { userId: user.id })
+            // No active workspace = chat not accessible (security default)
+            queryBuilder.andWhere('1 = 0')
         }
 
         const chat = await queryBuilder.getOne()
