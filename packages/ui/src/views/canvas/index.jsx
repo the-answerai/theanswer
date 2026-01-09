@@ -172,6 +172,30 @@ const Canvas = ({ chatflowid: chatflowId }) => {
 
             setNodes(nodes)
             setEdges(flowData.edges || [])
+
+            // Preserve chatflow configuration settings from imported file
+            // Only include fields that are actually defined to avoid overwriting existing values with undefined
+            const configFieldKeys = [
+                'name', 'description', 'category', 'chatbotConfig', 'visibility',
+                'speechToText', 'textToSpeech', 'followUpPrompts', 'apiConfig', 'analytic', 'type',
+                'answersConfig', 'browserExtConfig'
+            ]
+            const configFields = configFieldKeys.reduce((acc, key) => {
+                if (flowData[key] !== undefined) {
+                    acc[key] = flowData[key]
+                }
+                return acc
+            }, {})
+
+            // Update chatflow in redux store with configuration from imported file
+            dispatch({
+                type: SET_CHATFLOW,
+                chatflow: {
+                    ...chatflow,
+                    ...configFields
+                }
+            })
+
             setTimeout(() => setDirty(), 0)
         } catch (e) {
             console.error(e)
