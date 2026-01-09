@@ -26,6 +26,7 @@ import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import ListItemIcon from '@mui/material/ListItemIcon'
+import Snackbar from '@mui/material/Snackbar'
 
 import Delete from '@mui/icons-material/Delete'
 import Person from '@mui/icons-material/Person'
@@ -105,6 +106,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
     const router = useRouter()
     const [_loading, setLoading] = useState(false)
     const [_error, setError] = useState<string | null>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const {
         handleSubmit,
@@ -156,6 +158,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
 
     const onSubmit = async (data: OrgInput) => {
         setLoading(true)
+        setError(null)
         // Could check dirtyFields here, but the contextField array doesn't trigger it unless a new field is added
         const changedFields = Object.keys({ ...touchedFields })
 
@@ -168,14 +171,19 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
             formData[field as keyof OrgInput] = data[field]
         }
 
+        // Always include contextFields since they don't trigger touchedFields properly
+        formData.contextFields = data.contextFields
+
         try {
             await axios.patch(`/api/users`, { ...formData })
+            setSuccessMessage('User settings saved successfully')
+            // Reset form with current values to clear dirty state while preserving data
+            reset(data)
             router.refresh()
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
-            reset()
         }
     }
     const handleDeleteField = (index: number) => {
@@ -547,7 +555,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                                 </TableHead>
                                 <TableBody>
                                     {fields.map((field, index) => (
-                                        <TableRow key={field.fieldId}>
+                                        <TableRow key={field.id}>
                                             <TableCell sx={{ width: '20%' }}>
                                                 <TextField
                                                     {...register(`contextFields.${index}.fieldId`, {
@@ -620,7 +628,7 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                     </Grid>
                 </Grid>
                 {/* Need to check both because the context fields don't trigger dirtyFields unless a new one is added */}
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                     <Button variant='contained' type='submit'>
                         Save User
                     </Button>
@@ -629,6 +637,18 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                     </Button>
                 </Box>
             </Box>
+
+            {/* Success notification */}
+            <Snackbar
+                open={!!successMessage}
+                autoHideDuration={4000}
+                onClose={() => setSuccessMessage(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSuccessMessage(null)} severity='success' sx={{ width: '100%' }}>
+                    {successMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     )
 }
