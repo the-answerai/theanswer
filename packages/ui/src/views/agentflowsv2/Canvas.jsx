@@ -162,6 +162,31 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
 
             setNodes(nodes)
             setEdges(flowData.edges || [])
+
+            // Preserve chatflow configuration settings from imported file
+            // These include: chatbotConfig, speechToText, textToSpeech, followUpPrompts, apiConfig, analytic
+            const configFields = {
+                name: flowData.name,
+                description: flowData.description,
+                category: flowData.category,
+                chatbotConfig: flowData.chatbotConfig,
+                speechToText: flowData.speechToText,
+                textToSpeech: flowData.textToSpeech,
+                followUpPrompts: flowData.followUpPrompts,
+                apiConfig: flowData.apiConfig,
+                analytic: flowData.analytic,
+                type: flowData.type
+            }
+
+            // Update chatflow in redux store with configuration from imported file
+            dispatch({
+                type: SET_CHATFLOW,
+                chatflow: {
+                    ...chatflow,
+                    ...configFields
+                }
+            })
+
             setTimeout(() => setDirty(), 0)
         } catch (e) {
             console.error(e)
