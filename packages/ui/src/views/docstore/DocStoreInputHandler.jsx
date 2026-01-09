@@ -42,7 +42,7 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
     const [showManageScrapedLinksDialog, setShowManageScrapedLinksDialog] = useState(false)
     const [manageScrapedLinksDialogProps, setManageScrapedLinksDialogProps] = useState({})
     const [reloadTimestamp, setReloadTimestamp] = useState(Date.now().toString())
-    const [selectedCredential, setSelectedCredential] = useState(null)
+    const [selectedCredential, setSelectedCredential] = useState(data.credential || null)
     const [selectedCredentialData, setSelectedCredentialData] = useState(null)
 
     const handleCredentialDataChange = useCallback((credData) => {
