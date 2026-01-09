@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { useState, useContext } from 'react'
+import { useState, useContext, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
 // material-ui
@@ -42,6 +42,12 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
     const [showManageScrapedLinksDialog, setShowManageScrapedLinksDialog] = useState(false)
     const [manageScrapedLinksDialogProps, setManageScrapedLinksDialogProps] = useState({})
     const [reloadTimestamp, setReloadTimestamp] = useState(Date.now().toString())
+    const [selectedCredential, setSelectedCredential] = useState(null)
+    const [selectedCredentialData, setSelectedCredentialData] = useState(null)
+
+    const handleCredentialDataChange = useCallback((credData) => {
+        setSelectedCredentialData(credData)
+    }, [])
 
     const handleDataChange = ({ inputParam, newValue }) => {
         data.inputs[inputParam.name] = newValue
@@ -150,9 +156,8 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
                                 onSelect={(newValue) => {
                                     data.credential = newValue
                                     data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
-                                    if (handleCredentialChange) {
-                                        handleCredentialChange(newValue)
-                                    }
+                                    setSelectedCredential(newValue)
+                                    setSelectedCredentialData(null) // Reset credential data when credential changes
                                 }}
                             />
                         )}
