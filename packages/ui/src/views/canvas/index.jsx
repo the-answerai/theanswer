@@ -177,7 +177,8 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             // Only include fields that are actually defined to avoid overwriting existing values with undefined
             const configFieldKeys = [
                 'name', 'description', 'category', 'chatbotConfig', 'visibility',
-                'speechToText', 'textToSpeech', 'followUpPrompts', 'apiConfig', 'analytic', 'type'
+                'speechToText', 'textToSpeech', 'followUpPrompts', 'apiConfig', 'analytic', 'type',
+                'answersConfig', 'browserExtConfig'
             ]
             const configFields = configFieldKeys.reduce((acc, key) => {
                 if (flowData[key] !== undefined) {
