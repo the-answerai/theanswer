@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { Handle, Position, useUpdateNodeInternals } from 'reactflow'
-import { useEffect, useRef, useState, useContext } from 'react'
+import { useEffect, useRef, useState, useContext, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { cloneDeep } from 'lodash'
 import showdown from 'showdown'
@@ -166,6 +166,14 @@ const NodeInputHandler = ({
 
     const [promptGeneratorDialogOpen, setPromptGeneratorDialogOpen] = useState(false)
     const [promptGeneratorDialogProps, setPromptGeneratorDialogProps] = useState({})
+
+    // State for Google Drive/Gmail credential handling
+    const [selectedCredential, setSelectedCredential] = useState(data.credential || null)
+    const [selectedCredentialData, setSelectedCredentialData] = useState(null)
+
+    const handleCredentialDataChange = useCallback((credData) => {
+        setSelectedCredentialData(credData)
+    }, [])
 
     const handleDataChange = ({ inputParam, newValue }) => {
         data.inputs[inputParam.name] = newValue
@@ -983,6 +991,8 @@ const NodeInputHandler = ({
                                 onSelect={(newValue) => {
                                     data.credential = newValue
                                     data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
+                                    setSelectedCredential(newValue)
+                                    setSelectedCredentialData(null) // Reset credential data when credential changes
                                 }}
                             />
                         )}
