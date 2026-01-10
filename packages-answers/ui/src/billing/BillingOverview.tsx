@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Card, Typography, Button, Chip, Grid, Stack, Divider, useTheme, Alert, AlertTitle } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import WarningIcon from '@mui/icons-material/Warning'
 import { useSubscriptionDialog } from '../SubscriptionDialogContext'
 
@@ -50,7 +51,7 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
             case 'past_due':
                 return theme.palette.error.main
             default:
-                return 'rgba(255, 255, 255, 0.5)'
+                return theme.palette.text.secondary
         }
     }
 
@@ -79,7 +80,7 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                     <AlertTitle sx={{ fontWeight: 600, color: theme.palette.warning.light }}>
                         You&apos;re approaching your usage limit
                     </AlertTitle>
-                    <Typography sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.8)' }}>
+                    <Typography sx={{ mb: 2, color: theme.palette.text.secondary }}>
                         You&apos;ve used {usagePercentage}% of your free credits. When you reach 100%, some features may be limited. Upgrade
                         now to continue using all features without interruption.
                     </Typography>
@@ -101,15 +102,15 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
             <Card
                 elevation={0}
                 sx={{
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '12px',
-                    bgcolor: 'rgba(0, 0, 0, 0.2)',
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     backdropFilter: 'blur(20px)',
                     p: 0
                 }}
             >
                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='h5' sx={{ fontWeight: 600, color: '#fff' }}>
+                    <Typography variant='h5' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
                         Billing Overview
                     </Typography>
                     {/* <Button
@@ -117,7 +118,7 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                         variant='outlined'
                         sx={{
                             borderColor: 'rgba(255, 255, 255, 0.1)',
-                            color: '#fff',
+                            color: theme.palette.text.primary,
                             '&:hover': {
                                 borderColor: 'rgba(255, 255, 255, 0.2)',
                                 bgcolor: 'rgba(255, 255, 255, 0.05)'
@@ -133,11 +134,11 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                         <Grid item xs={12} md={6}>
                             <Stack spacing={2}>
                                 <Box>
-                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 0.5 }}>
+                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 0.5 }}>
                                         Current Plan
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Typography variant='h6' sx={{ color: '#fff', fontWeight: 600 }}>
+                                        <Typography variant='h6' sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                             {currentPlan?.name || 'Free'}
                                         </Typography>
                                         <Chip
@@ -156,10 +157,10 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                                 </Box>
                                 {currentPlan?.pricePerMonth && currentPlan.pricePerMonth > 0 && (
                                     <Box>
-                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 0.5 }}>
+                                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 0.5 }}>
                                             Plan Cost
                                         </Typography>
-                                        <Typography sx={{ color: '#fff' }}>${currentPlan.pricePerMonth}/month</Typography>
+                                        <Typography sx={{ color: theme.palette.text.primary }}>${currentPlan.pricePerMonth}/month</Typography>
                                     </Box>
                                 )}
                             </Stack>
@@ -169,20 +170,20 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                             <Stack spacing={2}>
                                 {billingPeriod && (
                                     <Box>
-                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 0.5 }}>
+                                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 0.5 }}>
                                             Current Period
                                         </Typography>
-                                        <Typography sx={{ color: '#fff' }}>
+                                        <Typography sx={{ color: theme.palette.text.primary }}>
                                             {new Date(billingPeriod.start).toLocaleDateString()} -{' '}
                                             {new Date(billingPeriod.end).toLocaleDateString()}
                                         </Typography>
                                     </Box>
                                 )}
                                 <Box>
-                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 0.5 }}>
+                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 0.5 }}>
                                         Credits Included
                                     </Typography>
-                                    <Typography sx={{ color: '#fff' }}>
+                                    <Typography sx={{ color: theme.palette.text.primary }}>
                                         {currentPlan?.creditsIncluded === -1
                                             ? 'Unlimited'
                                             : currentPlan?.creditsIncluded.toLocaleString() || '10,000'}{' '}
@@ -193,15 +194,15 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                         </Grid>
                     </Grid>
 
-                    <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                    <Divider sx={{ my: 3, borderColor: theme.palette.divider }} />
 
                     <Box>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem', mb: 1.5 }}>Plan Features</Typography>
+                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 1.5 }}>Plan Features</Typography>
                         <Grid container spacing={2}>
                             {currentPlan?.features &&
                                 currentPlan.features.map((feature: string) => (
                                     <Grid item xs={12} sm={6} key={feature}>
-                                        <Typography sx={{ color: '#fff', fontSize: '0.875rem' }}>• {feature}</Typography>
+                                        <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem' }}>• {feature}</Typography>
                                     </Grid>
                                 ))}
                         </Grid>
