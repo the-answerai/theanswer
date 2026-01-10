@@ -175,6 +175,7 @@ const saveChatflow = async (req: Request, res: Response, next: NextFunction) => 
         const newChatFlow = new ChatFlow()
         Object.assign(newChatFlow, body)
         newChatFlow.workspaceId = workspaceId
+        newChatFlow.organizationId = orgId
         const apiResponse = await chatflowsService.saveChatflow(
             newChatFlow,
             orgId,
