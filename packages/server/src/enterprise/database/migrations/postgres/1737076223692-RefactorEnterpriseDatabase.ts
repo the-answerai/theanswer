@@ -22,7 +22,7 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
             create table "user" (
                 "id" uuid default uuid_generate_v4() primary key,
                 "name" varchar(100) not null,
-                "email" varchar(255) not null unique,
+                "email" varchar(255) not null,
                 "credential" text null,
                 "tempToken" text null,
                 "tokenExpiry" timestamp null,
