@@ -37,7 +37,10 @@ const ChatflowGuardrails = ({ dialogProps }) => {
     // Load organization config
     useEffect(() => {
         const loadOrgConfig = async () => {
-            if (!dialogProps.chatflow?.organizationId) return
+            if (!dialogProps.chatflow?.organizationId) {
+                setLoadingOrgConfig(false)
+                return
+            }
 
             try {
                 setLoadingOrgConfig(true)

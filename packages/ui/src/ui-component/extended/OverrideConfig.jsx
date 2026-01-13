@@ -335,7 +335,7 @@ const OverrideConfig = ({ dialogProps }) => {
     }
 
     useEffect(() => {
-        if (dialogProps.chatflow) {
+        if (dialogProps.chatflow?.id) {
             getConfigApi.request(dialogProps.chatflow.id)
             getAllVariablesApi.request()
         }
