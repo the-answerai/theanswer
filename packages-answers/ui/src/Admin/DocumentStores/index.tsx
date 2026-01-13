@@ -20,6 +20,7 @@ import {
     Tooltip,
     Typography
 } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import LaunchIcon from '@mui/icons-material/Launch'
 import documentStoreApi from '@/api/documentstore'
@@ -60,6 +61,7 @@ type OrderableColumn = 'name' | 'updatedDate' | 'totalChunks' | 'loadersCount'
 type Order = 'asc' | 'desc'
 
 const AdminDocumentStores = () => {
+    const theme = useTheme()
     const {
         data: documentStoresData,
         isLoading,
@@ -168,10 +170,10 @@ const AdminDocumentStores = () => {
 
             <Box sx={{ pb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
                 <Box>
-                    <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
+                    <Typography variant='h4' sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
                         Document Stores
                     </Typography>
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                         Review and manage every document store in your organization.
                     </Typography>
                 </Box>
@@ -194,14 +196,14 @@ const AdminDocumentStores = () => {
                 </Box>
             </Box>
 
-            <TableContainer component={Paper} sx={{ backgroundColor: 'rgba(16, 24, 40, 0.6)' }}>
+            <TableContainer component={Paper} sx={{ backgroundColor: alpha(theme.palette.background.paper, 0.8) }}>
                 <Table>
                     <TableHead>
                         <TableRow>
                             {columns.map((column) => {
                                 const isSortable = ['name', 'updatedDate', 'totalChunks', 'loadersCount'].includes(column.id)
                                 return (
-                                    <TableCell key={column.id} sx={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
+                                    <TableCell key={column.id} sx={{ color: theme.palette.text.secondary, fontWeight: 600 }}>
                                         {isSortable ? (
                                             <TableSortLabel
                                                 active={orderBy === column.id}
@@ -216,7 +218,7 @@ const AdminDocumentStores = () => {
                                     </TableCell>
                                 )
                             })}
-                            <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Actions</TableCell>
+                            <TableCell sx={{ color: theme.palette.text.secondary, fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -224,7 +226,7 @@ const AdminDocumentStores = () => {
                         {!isLoading && paginatedData.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={columns.length + 1}>
-                                    <Box sx={{ py: 4, textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
+                                    <Box sx={{ py: 4, textAlign: 'center', color: theme.palette.text.secondary }}>
                                         {isError ? 'Failed to load document stores.' : 'No document stores found.'}
                                     </Box>
                                 </TableCell>
@@ -241,9 +243,9 @@ const AdminDocumentStores = () => {
                                     <TableRow key={store.id} hover>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                <Typography sx={{ fontWeight: 600, color: '#fff' }}>{store.name}</Typography>
+                                                <Typography sx={{ fontWeight: 600, color: theme.palette.text.primary }}>{store.name}</Typography>
                                                 {store.description && (
-                                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
+                                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                                                         {store.description}
                                                     </Typography>
                                                 )}
@@ -253,16 +255,16 @@ const AdminDocumentStores = () => {
                                             <Chip label={store.status} size='small' color='primary' variant='outlined' />
                                         </TableCell>
                                         <TableCell>
-                                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>{ownerLabel}</Typography>
+                                            <Typography sx={{ color: theme.palette.text.secondary }}>{ownerLabel}</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>{loadersCount}</Typography>
+                                            <Typography sx={{ color: theme.palette.text.secondary }}>{loadersCount}</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>{store.totalChunks ?? 0}</Typography>
+                                            <Typography sx={{ color: theme.palette.text.secondary }}>{store.totalChunks ?? 0}</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>{updatedAt}</Typography>
+                                            <Typography sx={{ color: theme.palette.text.secondary }}>{updatedAt}</Typography>
                                         </TableCell>
                                         <TableCell>
                                             <Tooltip title='Open document store'>

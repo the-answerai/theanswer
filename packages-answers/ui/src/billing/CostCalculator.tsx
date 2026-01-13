@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, TextField, Grid, Stack, Tooltip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
     Chat as ChatIcon,
     Image as ImageIcon,
@@ -62,6 +63,7 @@ const USAGE_TEMPLATES: UsageTemplate[] = [
 ]
 
 const CostCalculator = () => {
+    const theme = useTheme()
     const [selectedTemplate, setSelectedTemplate] = useState<string>('')
     const [aiTokens, setAiTokens] = useState<string>('')
     const [computeCredits, setComputeCredits] = useState<string>('')
@@ -98,16 +100,16 @@ const CostCalculator = () => {
         <Box sx={{ width: '100%', px: 4, py: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
-                    <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
+                    <Typography variant='h4' sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
                         Cost Calculator
                     </Typography>
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                         Select a template or customize usage to estimate costs • 1 Credit = ${BILLING_CONFIG.CREDIT_TO_USD.toFixed(3)} USD
                     </Typography>
                 </Box>
 
                 <Box>
-                    <Typography sx={{ color: '#fff', fontSize: '1rem', fontWeight: 500, mb: 3 }}>Templates</Typography>
+                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '1rem', fontWeight: 500, mb: 3 }}>Templates</Typography>
                     <Grid container spacing={2}>
                         {USAGE_TEMPLATES.map((template) => (
                             <Grid item xs={12} sm={6} md={3} key={template.name}>
@@ -120,20 +122,20 @@ const CostCalculator = () => {
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
                                         border: '1px solid',
-                                        borderColor: selectedTemplate === template.name ? 'primary.main' : 'rgba(255, 255, 255, 0.1)',
+                                        borderColor: selectedTemplate === template.name ? 'primary.main' : theme.palette.divider,
                                         '&:hover': {
-                                            borderColor: selectedTemplate === template.name ? 'primary.main' : 'rgba(255, 255, 255, 0.2)'
+                                            borderColor: selectedTemplate === template.name ? 'primary.main' : theme.palette.divider
                                         }
                                     }}
                                 >
                                     <Stack spacing={1}>
                                         <Stack direction='row' alignItems='center' spacing={1}>
                                             {template.icon}
-                                            <Typography sx={{ color: '#fff', fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
                                                 {template.name}
                                             </Typography>
                                         </Stack>
-                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+                                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                             {template.description}
                                         </Typography>
                                     </Stack>
@@ -150,23 +152,23 @@ const CostCalculator = () => {
                                 p: 2.5,
                                 height: '100%',
                                 borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                border: `1px solid ${theme.palette.divider}`,
                                 '&:hover': {
-                                    borderColor: 'rgba(255, 255, 255, 0.2)'
+                                    borderColor: theme.palette.divider
                                 }
                             }}
                         >
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: '#fff', fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
                                         AI Tokens
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.AI_TOKENS} arrow>
-                                        <InfoIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.5)' }} />
+                                        <InfoIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
                                     </Tooltip>
                                 </Stack>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     {BILLING_CONFIG.RATES.AI_TOKENS.UNIT.toLocaleString()} tokens = {BILLING_CONFIG.RATES.AI_TOKENS.CREDITS}{' '}
                                     Credits (${BILLING_CONFIG.RATES.AI_TOKENS.COST})
                                 </Typography>
@@ -179,13 +181,13 @@ const CostCalculator = () => {
                                     placeholder='Enter Credits'
                                     InputProps={{
                                         sx: {
-                                            color: 'white',
+                                            color: theme.palette.text.primary,
                                             fontSize: '0.875rem',
                                             '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.1)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.2)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: 'primary.main'
@@ -194,7 +196,7 @@ const CostCalculator = () => {
                                     }}
                                 />
                                 {aiTokens && (
-                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                         Cost: ${((Number(aiTokens) || 0) * BILLING_CONFIG.CREDIT_TO_USD).toFixed(2)}
                                     </Typography>
                                 )}
@@ -207,23 +209,23 @@ const CostCalculator = () => {
                                 p: 2.5,
                                 height: '100%',
                                 borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                border: `1px solid ${theme.palette.divider}`,
                                 '&:hover': {
-                                    borderColor: 'rgba(255, 255, 255, 0.2)'
+                                    borderColor: theme.palette.divider
                                 }
                             }}
                         >
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: '#fff', fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
                                         Compute Time
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.COMPUTE} arrow>
-                                        <InfoIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.5)' }} />
+                                        <InfoIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
                                     </Tooltip>
                                 </Stack>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     {BILLING_CONFIG.RATES.COMPUTE.UNIT} minute = {BILLING_CONFIG.RATES.COMPUTE.CREDITS} Credits ($
                                     {BILLING_CONFIG.RATES.COMPUTE.COST})
                                 </Typography>
@@ -236,13 +238,13 @@ const CostCalculator = () => {
                                     placeholder='Enter Credits'
                                     InputProps={{
                                         sx: {
-                                            color: 'white',
+                                            color: theme.palette.text.primary,
                                             fontSize: '0.875rem',
                                             '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.1)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.2)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: 'primary.main'
@@ -251,7 +253,7 @@ const CostCalculator = () => {
                                     }}
                                 />
                                 {computeCredits && (
-                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                         Cost: ${((Number(computeCredits) || 0) * BILLING_CONFIG.CREDIT_TO_USD).toFixed(2)}
                                     </Typography>
                                 )}
@@ -264,23 +266,23 @@ const CostCalculator = () => {
                                 p: 2.5,
                                 height: '100%',
                                 borderRadius: '8px',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                border: `1px solid ${theme.palette.divider}`,
                                 '&:hover': {
-                                    borderColor: 'rgba(255, 255, 255, 0.2)'
+                                    borderColor: theme.palette.divider
                                 }
                             }}
                         >
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: '#fff', fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
                                         Storage
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.STORAGE} arrow>
-                                        <InfoIcon sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.5)' }} />
+                                        <InfoIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
                                     </Tooltip>
                                 </Stack>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     {BILLING_CONFIG.RATES.STORAGE.UNIT} GB/month = {BILLING_CONFIG.RATES.STORAGE.CREDITS} Credits ($
                                     {BILLING_CONFIG.RATES.STORAGE.COST})
                                 </Typography>
@@ -293,13 +295,13 @@ const CostCalculator = () => {
                                     placeholder='Enter Credits'
                                     InputProps={{
                                         sx: {
-                                            color: 'white',
+                                            color: theme.palette.text.primary,
                                             fontSize: '0.875rem',
                                             '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.1)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(255,255,255,0.2)'
+                                                borderColor: theme.palette.divider
                                             },
                                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                                 borderColor: 'primary.main'
@@ -308,7 +310,7 @@ const CostCalculator = () => {
                                     }}
                                 />
                                 {storageCredits && (
-                                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                         Cost: ${((Number(storageCredits) || 0) * BILLING_CONFIG.CREDIT_TO_USD).toFixed(2)}
                                     </Typography>
                                 )}
@@ -318,10 +320,10 @@ const CostCalculator = () => {
                 </Grid>
 
                 {totalCredits > 0 && (
-                    <Box sx={{ mt: 2, p: 2, borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <Box sx={{ mt: 2, p: 2, borderRadius: '8px', border: `1px solid ${theme.palette.divider}` }}>
                         <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                            <Typography sx={{ color: '#fff', fontSize: '1rem', fontWeight: 500 }}>Total Cost</Typography>
-                            <Typography sx={{ color: '#fff', fontSize: '1.25rem', fontWeight: 600 }}>
+                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '1rem', fontWeight: 500 }}>Total Cost</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '1.25rem', fontWeight: 600 }}>
                                 ${(totalCredits * BILLING_CONFIG.CREDIT_TO_USD).toFixed(2)}
                             </Typography>
                         </Stack>
