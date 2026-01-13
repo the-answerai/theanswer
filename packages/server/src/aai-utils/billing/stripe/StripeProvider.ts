@@ -440,7 +440,7 @@ export class StripeProvider {
                                 } catch (error: any) {
                                     // Check if this is a duplicate identifier error
                                     if (error.message?.includes('An event already exists with identifier')) {
-                                        log.warn('Meter event already exists, marking trace as processed', {
+                                        log.debug('Meter event already exists, marking trace as processed', {
                                             traceId: data.traceId,
                                             identifier: stripeMeterEvent.identifier,
                                             message: 'Duplicate meter event - trace was likely processed before but metadata update failed'

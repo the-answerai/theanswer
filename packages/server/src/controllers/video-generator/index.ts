@@ -21,7 +21,7 @@ const resolveUserContext = (req: Request) => {
         email: (req.body?.userEmail as string) || undefined
     }
 
-    if (!user?.id && req.headers['x-request-from'] === 'internal') {
+    if (!user?.id && (req.headers['x-request-from'] === 'internal' || req.headers['x-request-from'] === 'aai')) {
         user = {
             id: 'tool-system',
             organizationId: 'system-org',

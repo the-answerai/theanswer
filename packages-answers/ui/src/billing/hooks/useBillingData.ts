@@ -18,7 +18,7 @@ export interface UsageDashboard {
 }
 
 export interface CurrentPlan {
-    name: 'Free' | 'Pro'
+    name: string
     status: 'active' | 'inactive'
     creditsIncluded: number
 }

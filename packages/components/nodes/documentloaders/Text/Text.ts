@@ -15,7 +15,6 @@ class Text_DocumentLoaders implements INode {
     baseClasses: string[]
     inputs: INodeParams[]
     outputs: INodeOutputsValue[]
-    tags: string[]
 
     constructor() {
         this.label = 'Text File'
@@ -26,7 +25,6 @@ class Text_DocumentLoaders implements INode {
         this.category = 'Document Loaders'
         this.description = `Load data from text files`
         this.baseClasses = [this.type]
-        this.tags = ['AAI']
         this.inputs = [
             {
                 label: 'Txt File',
@@ -100,11 +98,12 @@ class Text_DocumentLoaders implements INode {
             } else {
                 files = [fileName]
             }
+            const orgId = options.orgId
             const chatflowid = options.chatflowid
 
             for (const file of files) {
                 if (!file) continue
-                const fileData = await getFileFromStorage(file, chatflowid)
+                const fileData = await getFileFromStorage(file, orgId, chatflowid)
                 const blob = new Blob([fileData])
                 const loader = new TextLoader(blob)
 

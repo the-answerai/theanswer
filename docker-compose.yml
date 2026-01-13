@@ -68,6 +68,10 @@ services:
             - AAI_DEFAULT_REDIS_URL=redis://redis:6379
             - REDIS_URL=redis://redis:6379
             - DISABLE_FLOWISE_TELEMETRY=${DISABLE_FLOWISE_TELEMETRY:-true}
+            # ⚠️ CRITICAL: Required for credential encryption persistence in container deployments
+            # Without this, each container rebuild generates a new encryption key, making all stored credentials permanently unreadable.
+            # Generate with: openssl rand -base64 32
+            - FLOWISE_SECRETKEY_OVERWRITE=${FLOWISE_SECRETKEY_OVERWRITE}
         volumes:
             - flowise_data:/root/.flowise
         depends_on:

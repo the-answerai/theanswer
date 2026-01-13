@@ -17,7 +17,7 @@ Visit our [organization repositories](https://github.com/orgs/the-answerai/repos
 -   **[aai-browser-sidekick](https://github.com/the-answerai/aai-browser-sidekick)** - Chrome extension
 -   **[FlowiseChatEmbed](https://github.com/the-answerai/FlowiseChatEmbed)** - Chat embedding (1.5k⭐)
 -   **[mcp-inspector](https://github.com/the-answerai/mcp-inspector)** - MCP testing tool
--   **Various MCP servers** - HubSpot, Jira, Confluence integrations
+-   **Various Tools (MCP)** - HubSpot, Jira, Confluence integrations
 
 ### 2. Find Your First Issue
 

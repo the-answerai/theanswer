@@ -6,7 +6,7 @@
  * Key requirements:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: Contentful_MCP }
  *
@@ -38,7 +38,7 @@ class Contentful_MCP implements INode {
         this.version = 1.0
         this.type = 'Contentful MCP Tool'
         this.icon = 'contentful.svg'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP Server for the Contentful API'
         this.documentation = 'https://github.com/modelcontextprotocol/servers/tree/main/src/contentful'

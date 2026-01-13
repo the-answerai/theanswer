@@ -15,6 +15,7 @@ import {
     IconButton,
     Tooltip
 } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 import { useUsageEvents } from './hooks/useUsageEvents'
 import { format } from 'date-fns'
 import { useUser } from '@auth0/nextjs-auth0/client'
@@ -36,6 +37,7 @@ const SkeletonRow = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 }
 
 const UsageEventsTable: React.FC = () => {
+    const theme = useTheme()
     const { user } = useUser()
     const roles = user?.['https://theanswer.ai/roles'] as unknown as string[] | undefined
     const isAdmin = Array.isArray(roles) && roles.includes('Admin')
@@ -69,9 +71,9 @@ const UsageEventsTable: React.FC = () => {
                 sx={{
                     p: 3,
                     mb: 3,
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '12px',
-                    bgcolor: 'rgba(0, 0, 0, 0.2)',
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     backdropFilter: 'blur(20px)'
                 }}
             >
@@ -87,17 +89,17 @@ const UsageEventsTable: React.FC = () => {
             sx={{
                 p: 3,
                 mb: 3,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: '12px',
-                bgcolor: 'rgba(0, 0, 0, 0.2)',
+                bgcolor: alpha(theme.palette.background.paper, 0.8),
                 backdropFilter: 'blur(20px)'
             }}
         >
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                <Typography variant='h6' sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
+                <Typography variant='h6' sx={{ color: theme.palette.text.primary, fontWeight: 600, mb: 1 }}>
                     Detailed Usage Events
                 </Typography>
-                <Typography variant='body2' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                <Typography variant='body2' sx={{ color: theme.palette.text.secondary }}>
                     Individual events that consumed credits
                 </Typography>
             </Box>
@@ -111,22 +113,22 @@ const UsageEventsTable: React.FC = () => {
                                     direction={params.sortBy === 'timestamp' ? params.sortOrder : 'asc'}
                                     onClick={() => handleSortRequest('timestamp')}
                                     sx={{
-                                        color: 'rgba(255, 255, 255, 0.7)',
+                                        color: theme.palette.text.secondary,
                                         '&.MuiTableSortLabel-active': {
-                                            color: 'rgba(255, 255, 255, 0.9)'
+                                            color: theme.palette.text.primary
                                         },
                                         '& .MuiTableSortLabel-icon': {
-                                            color: 'rgba(255, 255, 255, 0.5) !important'
+                                            color: `${theme.palette.text.secondary} !important`
                                         }
                                     }}
                                 >
                                     Timestamp
                                 </TableSortLabel>
                             </TableCell>
-                            {isAdmin && <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>User</TableCell>}
-                            <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Chatflow</TableCell>
-                            {/* <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Total Credits</TableCell> */}
-                            <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Usage</TableCell>
+                            {isAdmin && <TableCell sx={{ color: theme.palette.text.secondary }}>User</TableCell>}
+                            <TableCell sx={{ color: theme.palette.text.secondary }}>Chatflow</TableCell>
+                            {/* <TableCell sx={{ color: theme.palette.text.secondary }}>Total Credits</TableCell> */}
+                            <TableCell sx={{ color: theme.palette.text.secondary }}>Usage</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -135,7 +137,7 @@ const UsageEventsTable: React.FC = () => {
                             Array.from({ length: pagination?.limit || 10 }).map((_, index) => <SkeletonRow key={index} isAdmin={isAdmin} />)
                         ) : events.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={isAdmin ? 5 : 4} align='center' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                <TableCell colSpan={isAdmin ? 5 : 4} align='center' sx={{ color: theme.palette.text.secondary }}>
                                     No usage events found.
                                 </TableCell>
                             </TableRow>
@@ -144,11 +146,11 @@ const UsageEventsTable: React.FC = () => {
                                 <TableRow
                                     key={event.id}
                                     hover
-                                    sx={{ '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.03)' } }}
+                                    sx={{ '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.05) } }}
                                     onMouseEnter={() => setHoveredRow(event.id)}
                                     onMouseLeave={() => setHoveredRow(null)}
                                 >
-                                    <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)', position: 'relative' }}>
+                                    <TableCell sx={{ color: theme.palette.text.primary, position: 'relative' }}>
                                         {format(new Date(event.timestamp), 'MMM d, yyyy HH:mm:ss')}
                                         {hoveredRow === event.id && (
                                             <Tooltip title='View in Langfuse' placement='top'>
@@ -157,8 +159,8 @@ const UsageEventsTable: React.FC = () => {
                                                     sx={{
                                                         position: 'absolute',
                                                         right: 8,
-                                                        color: 'rgba(255, 255, 255, 0.7)',
-                                                        '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }
+                                                        color: theme.palette.text.secondary,
+                                                        '&:hover': { color: theme.palette.text.primary }
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation()
@@ -170,9 +172,9 @@ const UsageEventsTable: React.FC = () => {
                                             </Tooltip>
                                         )}
                                     </TableCell>
-                                    {isAdmin && <TableCell sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>{event.userId}</TableCell>}
-                                    <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>{event.chatflowName || 'Unknown'}</TableCell>
-                                    {/* <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>{event.totalCredits.toFixed(2)}</TableCell> */}
+                                    {isAdmin && <TableCell sx={{ color: theme.palette.text.secondary }}>{event.userId}</TableCell>}
+                                    <TableCell sx={{ color: theme.palette.text.primary }}>{event.chatflowName || 'Unknown'}</TableCell>
+                                    {/* <TableCell sx={{ color: theme.palette.text.primary }}>{event.totalCredits.toFixed(2)}</TableCell> */}
                                     <TableCell>
                                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                                             {event.breakdown.ai_tokens > 0 && (
@@ -214,16 +216,16 @@ const UsageEventsTable: React.FC = () => {
                 rowsPerPageOptions={[5, 10, 25, 50]}
                 sx={{
                     borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    '.MuiTablePagination-selectIcon': { color: 'rgba(255, 255, 255, 0.7)' },
-                    '.MuiTablePagination-select': { color: 'rgba(255, 255, 255, 0.9)' },
-                    '.MuiTablePagination-selectLabel': { color: 'rgba(255, 255, 255, 0.7)' },
-                    '.MuiTablePagination-displayedRows': { color: 'rgba(255, 255, 255, 0.7)' },
+                    color: theme.palette.text.primary,
+                    '.MuiTablePagination-selectIcon': { color: theme.palette.text.secondary },
+                    '.MuiTablePagination-select': { color: theme.palette.text.primary },
+                    '.MuiTablePagination-selectLabel': { color: theme.palette.text.secondary },
+                    '.MuiTablePagination-displayedRows': { color: theme.palette.text.secondary },
                     '.MuiTablePagination-actions': {
                         '& .MuiIconButton-root': {
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: theme.palette.text.secondary,
                             '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)' },
-                            '&:hover': { color: 'rgba(255, 255, 255, 0.9)' }
+                            '&:hover': { color: theme.palette.text.primary }
                         }
                     }
                 }}

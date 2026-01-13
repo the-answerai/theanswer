@@ -36,7 +36,8 @@ import { InternalFlowiseError } from '../errors/internalFlowiseError'
 import { getErrorMessage } from '../errors/utils'
 import logger from './logger'
 import { Variable } from '../database/entities/Variable'
-import { DataSource, IsNull } from 'typeorm'
+import { getWorkspaceSearchOptions } from '../enterprise/utils/ControllerServiceUtils'
+import { DataSource } from 'typeorm'
 import { CachePool } from '../CachePool'
 
 /**
@@ -61,7 +62,9 @@ export const buildAgentGraph = async ({
     cachePool,
     baseURL,
     signal,
-    user
+    user,
+    orgId,
+    workspaceId
 }: {
     agentflow: IChatFlow
     flowConfig: IFlowConfig
@@ -82,6 +85,8 @@ export const buildAgentGraph = async ({
     baseURL: string
     signal?: AbortController
     user?: IUser
+    orgId: string
+    workspaceId?: string
 }): Promise<any> => {
     try {
         const chatflowid = flowConfig.chatflowid
@@ -92,9 +97,12 @@ export const buildAgentGraph = async ({
 
         const options = {
             user,
+            orgId,
+            workspaceId,
             chatId,
             sessionId,
             chatflowid,
+            chatflowId: chatflowid,
             logger,
             analytic,
             appDataSource,
@@ -399,7 +407,7 @@ export const buildAgentGraph = async ({
             }
         } catch (e) {
             // clear agent memory because checkpoints were saved during runtime
-            await clearSessionMemory(user!, nodes, componentNodes, chatId, appDataSource, sessionId)
+            await clearSessionMemory(user!, nodes, componentNodes, chatId, appDataSource, orgId, sessionId)
             if (getErrorMessage(e).includes('Aborted')) {
                 if (shouldStreamResponse && sseStreamer) {
                     sseStreamer.streamAbortEvent(chatId)
@@ -410,7 +418,7 @@ export const buildAgentGraph = async ({
         }
         return streamResults
     } catch (e) {
-        logger.error('[server]: Error:', e)
+        logger.error(`[server]: [${orgId}]: Error:`, e)
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error buildAgentGraph - ${getErrorMessage(e)}`)
     }
 }
@@ -474,9 +482,7 @@ const compileMultiAgentsGraph = async (params: MultiAgentsGraphParams) => {
     const workerNodes = reactFlowNodes.filter((node) => workerNodeIds.includes(node.data.id))
 
     /*** Get API Config ***/
-    const availableVariables = await appDataSource
-        .getRepository(Variable)
-        .find({ where: user ? { userId: user.id } : { userId: IsNull() } })
+    const availableVariables = await appDataSource.getRepository(Variable).findBy(getWorkspaceSearchOptions(agentflow.workspaceId))
     const { nodeOverrides, variableOverrides, apiOverrideStatus } = getAPIOverrideConfig(agentflow)
 
     let supervisorWorkers: { [key: string]: IMultiAgentNode[] } = {}
@@ -587,7 +593,7 @@ const compileMultiAgentsGraph = async (params: MultiAgentsGraphParams) => {
 
             const graph = workflowGraph.compile({ checkpointer: memory })
 
-            const loggerHandler = new ConsoleCallbackHandler(logger)
+            const loggerHandler = new ConsoleCallbackHandler(logger, options?.orgId)
             const callbacks = await additionalCallbacks(flowNodeData, options)
             const config = { configurable: { thread_id: threadId } }
 
@@ -709,9 +715,7 @@ const compileSeqAgentsGraph = async (params: SeqAgentsGraphParams) => {
     let interruptToolNodeNames = []
 
     /*** Get API Config ***/
-    const availableVariables = await appDataSource
-        .getRepository(Variable)
-        .find({ where: user ? { userId: user.id } : { userId: IsNull() } })
+    const availableVariables = await appDataSource.getRepository(Variable).findBy(getWorkspaceSearchOptions(agentflow.workspaceId))
     const { nodeOverrides, variableOverrides, apiOverrideStatus } = getAPIOverrideConfig(agentflow)
 
     const initiateNode = async (node: IReactFlowNode) => {
@@ -1022,7 +1026,7 @@ const compileSeqAgentsGraph = async (params: SeqAgentsGraphParams) => {
             interruptBefore: interruptToolNodeNames as any
         })
 
-        const loggerHandler = new ConsoleCallbackHandler(logger)
+        const loggerHandler = new ConsoleCallbackHandler(logger, options?.orgId)
         const callbacks = await additionalCallbacks(flowNodeData as any, options)
         const config = { configurable: { thread_id: threadId }, bindModel }
 
@@ -1070,7 +1074,7 @@ const compileSeqAgentsGraph = async (params: SeqAgentsGraphParams) => {
             configurable: config
         })
     } catch (e) {
-        logger.error('Error compile graph', e)
+        logger.error(`[${options.orgId}]: Error compile graph`, e)
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error compile graph - ${getErrorMessage(e)}`)
     }
 }

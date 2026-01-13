@@ -229,7 +229,7 @@ class AAIGoogleGenerativeAI_ChatModels implements INode {
 
         const obj: Partial<GoogleGenerativeAIChatInput> = {
             apiKey: apiKey,
-            modelName: customModelName || modelName,
+            model: customModelName || modelName,
             streaming: streaming ?? true
         }
 
@@ -239,7 +239,7 @@ class AAIGoogleGenerativeAI_ChatModels implements INode {
         if (cache) obj.cache = cache
         if (temperature) obj.temperature = parseFloat(temperature)
         if (baseUrl) obj.baseUrl = baseUrl
-        if (responseModalities) obj.responseModalities = convertMultiOptionsToStringArray(responseModalities)
+        // if (responseModalities) obj.responseModalities = convertMultiOptionsToStringArray(responseModalities)
 
         // Safety Settings
         let harmCategories: string[] = convertMultiOptionsToStringArray(harmCategory)
@@ -260,18 +260,18 @@ class AAIGoogleGenerativeAI_ChatModels implements INode {
             }
         }
 
-        const model = new ChatGoogleGenerativeAI(nodeData.id, obj)
+        const model = new ChatGoogleGenerativeAI(nodeData.id, obj as GoogleGenerativeAIChatInput)
         model.setMultiModalOption(multiModalOption)
-        if (contextCache) model.setContextCache(contextCache)
+        // if (contextCache) model.setContextCache(contextCache)
 
         // Set user context for image uploads
-        if (_options?.user) {
-            model.setUserContext({
-                organizationId: _options.user.organizationId,
-                userId: _options.user.id,
-                userEmail: _options.user.email || `${_options.user.id}@local`
-            })
-        }
+        // if (_options?.user) {
+        //     model.setUserContext({
+        //         organizationId: _options.user.organizationId,
+        //         userId: _options.user.id,
+        //         userEmail: _options.user.email || `${_options.user.id}@local`
+        //     })
+        // }
 
         return model
     }

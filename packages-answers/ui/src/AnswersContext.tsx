@@ -668,7 +668,7 @@ export function AnswersProvider({
                 body: JSON.stringify(params),
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-request-from': 'internal',
+                    'x-request-from': 'aai',
                     ...(token ? { Authorization: `Bearer ${token}` } : {})
                 },
                 async onopen(response) {
@@ -829,7 +829,7 @@ export function AnswersProvider({
                 const token = sessionStorage.getItem('access_token')
                 const response = await fetch(`${baseURL}/api/v1/chatflows-uploads/${sidekick.id}`, {
                     headers: {
-                        'x-request-from': 'internal',
+                        'x-request-from': 'aai',
                         ...(token ? { Authorization: `Bearer ${token}` } : {})
                     },
                     signal: abortController.signal

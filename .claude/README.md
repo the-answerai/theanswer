@@ -25,7 +25,7 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 
 ## Architecture
 
-3-layer system: **Commands** → **Agents** → **Skills**
+4-layer system: **Commands** → **Agents** → **Skills** + **Rules**
 
 ```
 USER
@@ -33,15 +33,46 @@ USER
 COMMANDS (5 core)
   /ticket-create  /ticket-start  /push  /pr-review  /blog-write
   ↓
-AGENTS (5 specialized)
-  linear-ticket-creator   linear-ticket-planner
-  git-pr-manager         git-pr-reviewer
-  blog-post-writer
+AGENTS (7 specialized)
+  linear-ticket-creator   linear-ticket-planner   linear-ticket-optimizer
+  git-pr-manager          git-pr-reviewer
+  integration-docs-updater  integration-validator
   ↓
-SKILLS (8 patterns)
-  branch-workflow  commit-helper  pr-description-generator
-  ticket-planning-workflow  pr-review-workflow  blog-writing-workflow  etc.
+SKILLS (10 reusable patterns)
+  branch-workflow       commit-helper         git-branch
+  pr-description-gen    pr-review-workflow    ticket-planning-workflow
+  ticket-status-sync    ticket-duplicate-detection
+  theanswer-patterns    error-handling
+  ↓
+RULES (3 path-specific)
+  api-routes.md → packages/server/src/routes/**
+  components.md → packages/components/nodes/**
+  web-app.md    → apps/web/**
 ```
+
+## YAML Frontmatter Standard
+
+All skills and agents use YAML frontmatter for metadata:
+
+**Skills format:**
+```yaml
+---
+name: skill-name
+description: One-line description of capability
+---
+```
+
+**Agents format:**
+```yaml
+---
+name: agent-name
+description: When to invoke this agent
+model: sonnet
+color: blue|cyan|yellow|green|purple
+---
+```
+
+See `agents/git-pr-manager.md` as the reference template.
 
 ## Commands
 
@@ -140,27 +171,38 @@ Write technical blog posts, articles, and content.
 ```
 .claude/
 ├── README.md                          # This file
+├── ARCHITECTURE.md                    # Detailed optimization plan
 ├── commands/                          # 5 core user commands
 │   ├── ticket-create.md
 │   ├── ticket-start.md
 │   ├── push.md                        # ⭐ Main workflow command
 │   ├── pr-review.md
-│   └── blog-write.md                  # Blog post creation
-├── agents/                            # 5 specialized agents
+│   └── blog-write.md
+├── agents/                            # 7 specialized agents
 │   ├── linear-ticket-creator.md
 │   ├── linear-ticket-planner.md
+│   ├── linear-ticket-optimizer.md
 │   ├── git-pr-manager.md
 │   ├── git-pr-reviewer.md
-│   └── blog-post-writer.md            # Content creation
-└── skills/                            # 8 reusable patterns
-    ├── branch-workflow.md             # Branch lifecycle
-    ├── commit-helper.md               # Commit validation
-    ├── git-branch.md                  # Branch creation
-    ├── pr-description-generator.md    # PR descriptions
-    ├── pr-review-workflow.md          # Review methodology
-    ├── ticket-planning-workflow.md    # Ticket planning
-    ├── ticket-status-sync.md          # Linear sync
-    └── blog-writing-workflow.md       # Content patterns
+│   ├── integration-docs-updater.md
+│   └── integration-validator.md
+├── skills/                            # 10 reusable patterns
+│   ├── branch-workflow.md             # Branch lifecycle
+│   ├── commit-helper.md               # Commit validation
+│   ├── git-branch.md                  # Branch creation
+│   ├── pr-description-generator.md    # PR descriptions
+│   ├── pr-review-workflow.md          # Review methodology
+│   ├── ticket-planning-workflow.md    # Ticket planning
+│   ├── ticket-status-sync.md          # Linear sync
+│   ├── ticket-duplicate-detection.md  # Duplicate detection
+│   ├── theanswer-patterns.md          # Multi-tenancy, auth patterns
+│   └── error-handling.md              # InternalFlowiseError patterns
+├── rules/                             # 3 path-specific rules
+│   ├── api-routes.md                  # packages/server/src/routes/**
+│   ├── components.md                  # packages/components/nodes/**
+│   └── web-app.md                     # apps/web/**
+└── examples/                          # Detailed examples
+    └── oauth2-ticket-example.md       # Complete ticket planning example
 ```
 
 ## TheAnswer-Specific Patterns
@@ -263,12 +305,12 @@ All commands enforce TheAnswer requirements:
 ## Extending the System
 
 ### Add a New Skill
-1. Create `.claude/skills/your-skill.md`
+1. Create `.claude/skills/your-skill.md` with YAML frontmatter
 2. Document workflow and patterns
 3. Reference in relevant agents
 
 ### Add a New Agent
-1. Create `.claude/agents/your-agent.md`
+1. Create `.claude/agents/your-agent.md` with YAML frontmatter
 2. Define responsibilities and workflow
 3. Reference in relevant commands
 
@@ -277,10 +319,22 @@ All commands enforce TheAnswer requirements:
 2. Write as concise executable prompt
 3. Reference agents/skills to use
 
+### Add Path-Specific Rules
+1. Create `.claude/rules/your-rule.md` with globs frontmatter
+2. Define rules that apply to specific file paths
+3. Rules auto-apply when working in matched paths
+
+**Token Efficiency Guidelines:**
+- Keep files under 500 lines (extract examples to `examples/`)
+- Reference skills instead of duplicating content
+- Use progressive disclosure: summary in main file, details in referenced files
+- Single responsibility: one skill = one capability
+
 **Best Practices:**
 - Commands: Concise prompts (< 50 lines)
-- Agents: Workflow orchestration (100-150 lines)
-- Skills: Detailed patterns (400-600 lines)
+- Agents: Workflow orchestration (100-200 lines)
+- Skills: Focused patterns (200-500 lines)
+- Rules: Path-specific guidance (50-150 lines)
 
 ## Support
 
@@ -300,9 +354,11 @@ All commands enforce TheAnswer requirements:
 | File | Purpose |
 |------|---------|
 | README.md | Architecture overview (this file) |
-| COMMAND_STRUCTURE.md | How layers work together |
+| ARCHITECTURE.md | Detailed optimization plan and standards |
 | commands/*.md | Individual command reference |
-| skills/*.md | Detailed implementation patterns |
-| agents/*.md | Agent behaviors |
+| agents/*.md | Agent behaviors and triggers |
+| skills/*.md | Reusable implementation patterns |
+| rules/*.md | Path-specific auto-applied rules |
+| examples/*.md | Detailed walkthroughs and examples |
 
 **Start here:** This README → Try `/ticket-start` or `/push`

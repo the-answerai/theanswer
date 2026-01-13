@@ -41,6 +41,8 @@ export class CustomTemplate implements ICustomTemplate {
 
     @Column({ nullable: true, type: 'text' })
     category?: string
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 
     @Column({ type: 'timestamp' })
     @CreateDateColumn()

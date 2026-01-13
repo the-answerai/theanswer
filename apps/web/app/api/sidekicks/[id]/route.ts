@@ -34,8 +34,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json(response)
     } catch (error) {
         console.error('Error fetching sidekick details:', error)
-        if (error instanceof Error && error.message === 'Unauthorized') {
-            return respond401()
+        if (error instanceof Error) {
+            if (error.message === 'Unauthorized') {
+                return respond401()
+            }
+            if (error.message === 'NotFound') {
+                return NextResponse.json({ error: 'Sidekick not found' }, { status: 404 })
+            }
         }
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }

@@ -5,6 +5,7 @@ export class ChatOpenAI extends LangchainChatOpenAI implements IVisionChatModal 
     configuredModel: string
     configuredMaxToken?: number
     multiModalOption: IMultiModalOption
+    builtInTools: Record<string, any>[] = []
     id: string
 
     constructor(id: string, fields?: ChatOpenAIFields) {
@@ -25,5 +26,9 @@ export class ChatOpenAI extends LangchainChatOpenAI implements IVisionChatModal 
 
     setVisionModel(): void {
         // pass
+    }
+
+    addBuiltInTools(builtInTool: Record<string, any>): void {
+        this.builtInTools.push(builtInTool)
     }
 }

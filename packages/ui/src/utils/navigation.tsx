@@ -2,7 +2,11 @@
 
 import { useRouter as useNextRouter, usePathname as useNextPathname, useParams as useNextParams } from 'next/navigation'
 import NextLink, { LinkProps as NextLinkProps } from 'next/link'
-import React from 'react'
+import React, { createContext, useRef, useEffect } from 'react'
+
+// Mock NavigationContext for usePrompt compatibility in Next.js
+// Returns null navigator so usePrompt can gracefully fallback to beforeunload
+export const UNSAFE_NavigationContext = createContext<{ navigator: null } | null>(null)
 
 // Debug configuration
 interface NavigationDebugConfig {
@@ -55,6 +59,10 @@ export const usePathname = useNextPathname
 
 export const useNavigationState = () => {
     const [state, setState] = React.useState<any>(() => {
+        // Check for browser environment before accessing sessionStorage
+        if (typeof window === 'undefined') {
+            return {}
+        }
         const serializedState = sessionStorage.getItem('navigationState')
         if (serializedState) {
             return JSON.parse(serializedState)
@@ -64,6 +72,11 @@ export const useNavigationState = () => {
 
     const setNavigationState = (newState: any) => {
         logger.debug('Setting navigation state', newState)
+        // Check for browser environment before accessing sessionStorage
+        if (typeof window === 'undefined') {
+            setState(newState)
+            return
+        }
         if (newState) {
             try {
                 const serializedState = JSON.stringify(newState)
@@ -103,6 +116,13 @@ export const getHref = (path: string) => {
 
 export const useNavigate = () => {
     const nextRouter = useNextRouter()
+    const mounted = useRef(false)
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+        }
+    }, [])
     const [, setNavigationState] = useNavigationState()
     const navigate = (url: string | number, options?: { state?: any; replace?: boolean }) => {
         // console.log('[Navigation] navigate', url, options)
@@ -112,7 +132,9 @@ export const useNavigate = () => {
         if (options?.state) {
             logger.debug('Setting navigation state during navigate', options.state)
         }
-        setNavigationState(options?.state || null)
+        if (mounted.current) {
+            setNavigationState(options?.state || null)
+        }
 
         if (url === -1) {
             logger.info('Executing browser back navigation')

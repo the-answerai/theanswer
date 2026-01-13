@@ -245,9 +245,13 @@ services:
           # =========================================
           # Flowise Security & API Keys
           # =========================================
-          # Flowise Encryption Key Override
-          # - key: FLOWISE_SECRETKEY_OVERWRITE
-          #   sync: false
+          # ⚠️ CRITICAL: FLOWISE_SECRETKEY_OVERWRITE is REQUIRED for Render deployments
+          # Render containers are ephemeral - without this variable, each deploy generates
+          # a new encryption key, making ALL stored credentials permanently unreadable.
+          # Generate once with: openssl rand -base64 32
+          # Store as a Render secret and NEVER regenerate unless rotating credentials.
+          - key: FLOWISE_SECRETKEY_OVERWRITE
+            sync: false
           - key: SECRETKEY_PATH
             value: '/var/data'
           - key: APIKEY_STORAGE_TYPE

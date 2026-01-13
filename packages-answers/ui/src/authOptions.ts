@@ -112,7 +112,7 @@ export const authOptions: AuthOptions = {
                 // Allows callback URLs on the same origin
                 if (new URL(url).origin === baseUrl) finalUrl = url
             } catch (err) {
-                console.log('Redirect error', { err, url, baseUrl })
+                console.error('Redirect error', { err, url, baseUrl })
             }
             return finalUrl
         }
@@ -168,8 +168,7 @@ export const authOptions: AuthOptions = {
 
                     return chatApp?.user! as AnswersUser
                 } catch (e) {
-                    console.log(e)
-                    // throw e;
+                    console.error('ChatApp auth error:', e)
                 }
                 return null
                 // Return a user object with the necessary fields

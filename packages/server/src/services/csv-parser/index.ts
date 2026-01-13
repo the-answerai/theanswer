@@ -72,7 +72,7 @@ const createCsvParseRun = async (user: IUser, body: any) => {
         let originalCsvUrl
 
         if (file) {
-            const uniqueDocumentPath = getUniqueDocumentPath({ organizationId: user.organizationId, title: name })
+            const uniqueDocumentPath = getUniqueDocumentPath({ organizationId: user.organizationId || '', title: name })
             const key = `csv-parse-runs/${uniqueDocumentPath}.csv`
             // Convert data URL to Buffer
             const base64Data = file.replace(/^data:text\/csv;base64,/, '')

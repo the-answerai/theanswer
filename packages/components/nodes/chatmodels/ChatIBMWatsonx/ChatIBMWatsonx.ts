@@ -135,14 +135,14 @@ class ChatIBMWatsonx_ChatModels implements INode {
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
         const cache = nodeData.inputs?.cache as BaseCache
         const temperature = nodeData.inputs?.temperature as string
-        const modelName = (nodeData.inputs?.modelName as string) ?? ''
+        const modelName = nodeData.inputs?.modelName as string
         const maxTokens = nodeData.inputs?.maxTokens as string
         const frequencyPenalty = nodeData.inputs?.frequencyPenalty as string
         const logprobs = nodeData.inputs?.logprobs as boolean
         const n = nodeData.inputs?.n as string
         const presencePenalty = nodeData.inputs?.presencePenalty as string
         const topP = nodeData.inputs?.topP as string
-        const streaming = nodeData.inputs?.streaming ?? true
+        const streaming = nodeData.inputs?.streaming as boolean
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const version = getCredentialParam('version', credentialData, nodeData)
@@ -161,13 +161,13 @@ class ChatIBMWatsonx_ChatModels implements INode {
             watsonxAIBearerToken
         }
 
-        //@ts-ignore
-        const obj: ChatWatsonxInput & WatsonxAuth = {
+        const obj = {
             ...auth,
-            streaming: streaming,
+            streaming: streaming ?? true,
             model: modelName,
             temperature: temperature ? parseFloat(temperature) : undefined
-        }
+        } as ChatWatsonxInput & WatsonxAuth
+
         if (cache) obj.cache = cache
         if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)
         if (frequencyPenalty) obj.frequencyPenalty = parseInt(frequencyPenalty, 10)

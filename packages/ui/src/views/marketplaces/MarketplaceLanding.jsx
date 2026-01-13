@@ -21,7 +21,7 @@ import {
     Button,
     IconButton
 } from '@mui/material'
-import { useNavigate } from '@/utils/navigation'
+import { useNavigate } from 'react-router-dom'
 import { IconCopy, IconDownload, IconShare } from '@tabler/icons-react'
 import MarketplaceCanvas from './MarketplaceCanvas'
 import { StyledButton } from '@/ui-component/button/StyledButton'
@@ -29,7 +29,7 @@ import ErrorBoundary from '@/ErrorBoundary'
 import { baseURL } from '@/store/constant'
 import { Snackbar } from '@mui/material'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { useNavigationState } from '@/utils/navigation'
+import { useNavigationState } from 'react-router-dom'
 import { Star as StarIcon, StarBorder as StarBorderIcon, Edit as EditIcon } from '@mui/icons-material'
 import { styled, alpha } from '@mui/material/styles'
 

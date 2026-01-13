@@ -115,7 +115,7 @@ class DataEngineService {
 
         // Add user context headers if user provided
         if (user) {
-            headers['X-Organization-Id'] = user.organizationId
+            headers['X-Organization-Id'] = user.organizationId || ''
             headers['X-User-Id'] = user.id
             headers['X-User-Email'] = user.email || ''
         }

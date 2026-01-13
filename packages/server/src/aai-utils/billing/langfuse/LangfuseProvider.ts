@@ -211,6 +211,37 @@ export class LangfuseProvider {
     }
 
     /**
+     * Find the oldest unprocessed trace to set the boundary for time-windowed sync
+     * Returns null if no unprocessed traces exist
+     */
+    private async findOldestUnprocessedTrace(): Promise<Date | null> {
+        try {
+            const response = await this.fetchTraces({
+                fromTimestamp: new Date('2020-01-01').toISOString(),
+                limit: 1,
+                page: 1,
+                filter: LangfuseProvider.UNPROCESSED_FILTER,
+                fields: 'core',
+                orderBy: 'timestamp.asc'
+            })
+
+            if (response.data.length === 0) {
+                return null
+            }
+
+            log.info('Found oldest unprocessed trace', {
+                traceId: response.data[0].id,
+                timestamp: response.data[0].timestamp
+            })
+
+            return new Date(response.data[0].timestamp)
+        } catch (error) {
+            log.warn('Failed to find oldest trace, using fallback', { error })
+            return null
+        }
+    }
+
+    /**
      * Convert traces to credits and sync to Stripe
      */
     private async processAndSyncTraces(traces: Trace[]) {
@@ -293,15 +324,16 @@ export class LangfuseProvider {
 
             const CHUNK_SIZE_DAYS = BILLING_CONFIG.SYNC.CHUNK_SIZE_DAYS
             const NOW = new Date()
-            // Start from NOW and work backwards to the newest unprocessed trace
-            // (which marks the boundary of unprocessed data)
-            const OLDEST_BOUNDARY = new Date('2020-01-01')
+            // Find oldest unprocessed trace to set dynamic boundary (fallback to 2020-01-01)
+            const oldestTraceDate = await this.findOldestUnprocessedTrace()
+            const OLDEST_BOUNDARY = oldestTraceDate ?? new Date('2020-01-01')
             let windowEnd = new Date(NOW)
             let windowNumber = 0
             const totalWindowsEstimate = Math.ceil((NOW.getTime() - OLDEST_BOUNDARY.getTime()) / (CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000))
 
             log.info('Starting time-windowed sync from current time backwards', {
                 newestTrace: newestTraceDate.toISOString(),
+                oldestTrace: OLDEST_BOUNDARY.toISOString(),
                 now: NOW.toISOString(),
                 chunkSizeDays: CHUNK_SIZE_DAYS,
                 estimatedWindows: totalWindowsEstimate
@@ -708,7 +740,6 @@ export class LangfuseProvider {
                 limit,
                 page,
                 userId,
-                filter: LangfuseProvider.UNPROCESSED_FILTER,
                 fields: 'core,metrics,io', // Exclude observations & scores - faster response
                 orderBy: 'timestamp.desc' // Show newest events first in UI
                 // Note: We can't directly filter by customerId in the API call

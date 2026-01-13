@@ -185,7 +185,7 @@
                 "type": "CustomTool",
                 "baseClasses": ["CustomTool", "Tool", "StructuredTool", "Runnable"],
                 "category": "Tools",
-                "description": "Use custom tool you've created in AnswerAI within chatflow",
+                "description": "Use custom tool you've created in Flowise within chatflow",
                 "inputParams": [
                     {
                         "label": "Select Tool",

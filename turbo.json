@@ -107,7 +107,7 @@
             "outputs": ["dist/**"]
         },
         "db#build": {
-            "cache": false,
+            "cache": true,
             "outputs": ["dist/**", "generated/**"],
             "outputMode": "new-only"
         },

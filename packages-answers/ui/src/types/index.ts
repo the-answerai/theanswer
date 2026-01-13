@@ -1,3 +1,7 @@
+// AAI User Types
+export { FlowiseUser, AssignedWorkspace, AuthState } from './user'
+export type { default as FlowiseUserType } from './user'
+
 export interface FileUpload {
     data: string
     preview: string

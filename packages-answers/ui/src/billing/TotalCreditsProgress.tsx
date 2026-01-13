@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Typography, LinearProgress, Alert, Tooltip, IconButton, Stack, Skeleton, Grid } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 import { Info as InfoIcon, Business as BusinessIcon } from '@mui/icons-material'
 import { UsageSummary } from './hooks/useBillingData'
 
@@ -12,15 +13,17 @@ interface TotalCreditsProgressProps {
 }
 
 const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummary, isLoading = false, isError = false }) => {
+    const theme = useTheme()
+
     if (isError) {
         return (
             <Box
                 sx={{
                     p: 3,
                     mb: 3,
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${theme.palette.divider}`,
                     borderRadius: '12px',
-                    bgcolor: 'rgba(0, 0, 0, 0.2)',
+                    bgcolor: alpha(theme.palette.background.paper, 0.8),
                     backdropFilter: 'blur(20px)'
                 }}
             >
@@ -88,15 +91,15 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
             sx={{
                 p: 3,
                 mb: 3,
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: '12px',
-                bgcolor: 'rgba(0, 0, 0, 0.2)',
+                bgcolor: alpha(theme.palette.background.paper, 0.8),
                 backdropFilter: 'blur(20px)'
             }}
         >
             <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ mb: 2 }}>
                 <Stack direction='row' spacing={1} alignItems='center'>
-                    <Typography variant='h5' sx={{ color: '#fff', fontWeight: 600 }}>
+                    <Typography variant='h5' sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                         Total Credits Usage
                     </Typography>
                     <Tooltip
@@ -104,7 +107,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         arrow
                         placement='top'
                     >
-                        <IconButton size='small' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                        <IconButton size='small' sx={{ color: theme.palette.text.secondary }}>
                             <InfoIcon fontSize='small' />
                         </IconButton>
                     </Tooltip>
@@ -112,7 +115,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                 {isLoading ? (
                     <Skeleton variant='text' width={120} height={24} />
                 ) : (
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '1rem' }}>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '1rem' }}>
                         {formattedUsed} / {formattedLimit} Credits
                     </Typography>
                 )}
@@ -127,7 +130,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                     sx={{
                         height: 16,
                         borderRadius: 8,
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                        bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.primary.main, 0.1),
                         '& .MuiLinearProgress-bar': {
                             bgcolor: progressColor
                         },
@@ -144,10 +147,10 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                     </>
                 ) : (
                     <>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                             {percentageUsed.toFixed(1)}% Used
                         </Typography>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                             {(100 - percentageUsed).toFixed(1)}% Remaining
                         </Typography>
                     </>
@@ -157,35 +160,35 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
             {/* Usage Statistics */}
             <Box sx={{ mt: 3 }}>
                 {hasOrgData && (
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', mb: 1 }}>Personal Usage</Typography>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 1 }}>Personal Usage</Typography>
                 )}
                 <Grid container spacing={2}>
                     <Grid item xs={6} sm={3}>
-                        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Total Chats</Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 600 }}>{usageSummary?.usageDashboard?.totalChats || 0}</Typography>
+                        <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Chats</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>{usageSummary?.usageDashboard?.totalChats || 0}</Typography>
                         </Box>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Total Messages</Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                        <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Messages</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                 {usageSummary?.usageDashboard?.totalMessages || 0}
                             </Typography>
                         </Box>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Messages Sent</Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                        <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Messages Sent</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                 {usageSummary?.usageDashboard?.totalMessagesSent || 0}
                             </Typography>
                         </Box>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Answers</Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                        <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Answers</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                 {usageSummary?.usageDashboard?.totalMessagesGenerated || 0}
                             </Typography>
                         </Box>
@@ -197,43 +200,43 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
             {hasOrgData && (
                 <Box sx={{ mt: 3 }}>
                     <Stack direction='row' spacing={1} alignItems='center' sx={{ mb: 1 }}>
-                        <BusinessIcon sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '1rem' }} />
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>Organization Usage</Typography>
+                        <BusinessIcon sx={{ color: theme.palette.text.secondary, fontSize: '1rem' }} />
+                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>Organization Usage</Typography>
                         <Tooltip title='Usage statistics for your entire organization. Only visible to admin users.' arrow placement='top'>
-                            <IconButton size='small' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                            <IconButton size='small' sx={{ color: theme.palette.text.secondary }}>
                                 <InfoIcon fontSize='small' />
                             </IconButton>
                         </Tooltip>
                     </Stack>
                     <Grid container spacing={2}>
                         <Grid item xs={6} sm={3}>
-                            <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Total Chats</Typography>
-                                <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                            <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Chats</Typography>
+                                <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                     {usageSummary?.usageDashboard?.organizationTotalChats || 0}
                                 </Typography>
                             </Box>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Total Messages</Typography>
-                                <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                            <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Messages</Typography>
+                                <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                     {usageSummary?.usageDashboard?.organizationTotalMessages || 0}
                                 </Typography>
                             </Box>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Messages Sent</Typography>
-                                <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                            <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Messages Sent</Typography>
+                                <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                     {usageSummary?.usageDashboard?.organizationTotalMessagesSent || 0}
                                 </Typography>
                             </Box>
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>Answers</Typography>
-                                <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                            <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Answers</Typography>
+                                <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                     {usageSummary?.usageDashboard?.organizationTotalMessagesGenerated || 0}
                                 </Typography>
                             </Box>
@@ -246,7 +249,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
             {!isLoading && totalUsed > 0 && (
                 <>
                     <Box sx={{ mt: 3 }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem', mb: 1 }}>
+                        <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 1 }}>
                             Resource Distribution
                         </Typography>
                         <Box sx={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', mb: 1 }}>
@@ -257,19 +260,19 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         <Stack direction='row' spacing={2} sx={{ mt: 1 }}>
                             <Stack direction='row' spacing={0.5} alignItems='center'>
                                 <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#3f51b5' }} />
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     AI Tokens ({aiTokensPercentage.toFixed(1)}%)
                                 </Typography>
                             </Stack>
                             <Stack direction='row' spacing={0.5} alignItems='center'>
                                 <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#4caf50' }} />
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     Compute ({computePercentage.toFixed(1)}%)
                                 </Typography>
                             </Stack>
                             <Stack direction='row' spacing={0.5} alignItems='center'>
                                 <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ff9800' }} />
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>
                                     Storage ({storagePercentage.toFixed(1)}%)
                                 </Typography>
                             </Stack>
@@ -284,38 +287,38 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                     <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
 
                     <Stack direction='row' spacing={1} alignItems='center' sx={{ mb: 2 }}>
-                        <ReceiptIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
-                        <Typography sx={{ color: '#fff', fontWeight: 600 }}>Upcoming Invoice</Typography>
+                        <ReceiptIcon sx={{ color: theme.palette.text.secondary }} />
+                        <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>Upcoming Invoice</Typography>
                         <Tooltip
                             title='This is a preview of your next invoice based on your current usage and subscription.'
                             arrow
                             placement='top'
                         >
-                            <IconButton size='small' sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                            <IconButton size='small' sx={{ color: theme.palette.text.secondary }}>
                                 <InfoIcon fontSize='small' />
                             </IconButton>
                         </Tooltip>
                     </Stack>
 
-                    <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)', p: 2, borderRadius: '8px' }}>
+                    <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                         <Stack direction='row' justifyContent='space-between' sx={{ mb: 1 }}>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>Amount Due:</Typography>
-                            <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>Amount Due:</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
                                 {upcomingInvoiceAmount.toFixed(2)} {upcomingInvoiceCurrency}
                             </Typography>
                         </Stack>
 
                         <Stack direction='row' justifyContent='space-between'>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>Due Date:</Typography>
-                            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>Due Date:</Typography>
+                            <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                                 {upcomingInvoiceDueDate}
                             </Typography>
                         </Stack>
 
                         {usageSummary?.upcomingInvoice?.totalCreditsUsed && (
                             <Stack direction='row' justifyContent='space-between' sx={{ mt: 1 }}>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>Credits Used:</Typography>
-                                <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>Credits Used:</Typography>
+                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                                     {usageSummary.upcomingInvoice.totalCreditsUsed.toLocaleString()} Credits
                                 </Typography>
                             </Stack>

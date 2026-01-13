@@ -80,7 +80,7 @@ export const utilGetUploadsConfig = async (chatflowid: string): Promise<IUploadC
     /*
      * Condition for isImageUploadAllowed
      * 1.) one of the imgUploadAllowedNodes exists
-     * 2.) any chat model with allowImageUploads is ON
+     * 2.) one of the imgUploadLLMNodes exists + allowImageUploads is ON
      */
     const imgUploadSizeAndTypes: IUploadFileSizeAndTypes[] = []
     const imgUploadAllowedNodes = [
@@ -113,12 +113,7 @@ export const utilGetUploadsConfig = async (chatflowid: string): Promise<IUploadC
             }
         })
     } else {
-        // Check if any chat model has allowImageUploads enabled
-        const hasChatModelWithImageUploads = nodes.some((node: IReactFlowNode) => {
-            return node.data.category === 'Chat Models' && node.data.inputs?.['allowImageUploads'] === true
-        })
-
-        if (nodes.some((node) => imgUploadAllowedNodes.includes(node.data.name)) || hasChatModelWithImageUploads) {
+        if (nodes.some((node) => imgUploadAllowedNodes.includes(node.data.name))) {
             nodes.forEach((node: IReactFlowNode) => {
                 const data = node.data
                 if (data.category === 'Chat Models' && data.inputs?.['allowImageUploads'] === true) {

@@ -1,3 +1,8 @@
+---
+name: git-branch
+description: "Creates properly formatted git branches from Linear ticket IDs"
+---
+
 # Git Branch Skill
 
 This skill helps create standardized branch names from Linear tickets and sets up the branch with proper conventions.

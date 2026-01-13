@@ -1,3 +1,8 @@
+---
+name: commit-helper
+description: "Validates and creates conventional commits with semantic versioning"
+---
+
 # Commit Helper Skill
 
 This skill validates and standardizes git commits according to TheAnswer conventions, ensuring quality and consistency.

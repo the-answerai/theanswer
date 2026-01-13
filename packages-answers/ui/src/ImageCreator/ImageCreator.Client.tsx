@@ -257,6 +257,7 @@ const ImageCreator = () => {
 
             const response = await fetch(`${flowiseDomain}/api/v1/dalle-image/archive?page=${page}&limit=20`, {
                 headers: {
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 }
             })
@@ -317,9 +318,6 @@ const ImageCreator = () => {
             const zip = new JSZip()
             const selectedArray = Array.from(selectedImages)
 
-            // Show loading state
-            console.log(`Creating zip file with ${selectedArray.length} images...`)
-
             // Add each selected image to the zip
             for (const sessionId of selectedArray) {
                 const img = archivedImages.find((img) => img.sessionId === sessionId)
@@ -332,8 +330,6 @@ const ImageCreator = () => {
                         // Add image to zip with descriptive filename
                         const fileName = `archived-${img.sessionId}.png`
                         zip.file(fileName, blob)
-
-                        console.log(`Added to zip: ${fileName}`)
                     } catch (error) {
                         console.error(`Failed to add image ${sessionId} to zip:`, error)
                     }
@@ -350,8 +346,6 @@ const ImageCreator = () => {
             link.click()
             link.remove()
             window.URL.revokeObjectURL(zipUrl)
-
-            console.log('Zip file downloaded successfully!')
 
             // Clear selection after successful download
             setSelectedImages(new Set())
@@ -540,6 +534,7 @@ const ImageCreator = () => {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'x-request-from': 'aai',
                             Authorization: `Bearer ${accessToken}`
                         },
                         body: JSON.stringify(requestBody)

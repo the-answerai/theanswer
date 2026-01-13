@@ -3,7 +3,7 @@ import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../
 import { ListKeyOptions, RecordManagerInterface, UpdateOptions } from '@langchain/community/indexes/base'
 import { DataSource } from 'typeorm'
 import { getHost, getSSL } from '../../vectorstores/Postgres/utils'
-import { getDatabase, getPort, getTableName, PostgresConnectionManager } from './utils'
+import { getDatabase, getPort, getTableName } from './utils'
 
 const serverCredentialsExists = !!process.env.POSTGRES_RECORDMANAGER_USER && !!process.env.POSTGRES_RECORDMANAGER_PASSWORD
 
@@ -187,28 +187,12 @@ class PostgresRecordManager implements RecordManagerInterface {
     config: PostgresRecordManagerOptions
     tableName: string
     namespace: string
-    private configHash: string
-    private isDestroying = false
 
     constructor(namespace: string, config: PostgresRecordManagerOptions) {
         const { tableName } = config
         this.namespace = namespace
         this.tableName = tableName
         this.config = config
-        // Generate config hash for change detection
-        this.configHash = this.generateConfigHash(config.postgresConnectionOptions)
-    }
-
-    /**
-     * Generate a hash of the connection configuration to detect changes
-     */
-    private generateConfigHash(config: any): string {
-        return JSON.stringify({
-            host: config?.host || 'localhost',
-            port: config?.port || 5432,
-            database: config?.database || 'postgres',
-            username: config?.username || 'postgres'
-        })
     }
 
     sanitizeTableName(tableName: string): string {
@@ -232,32 +216,16 @@ class PostgresRecordManager implements RecordManagerInterface {
         if (postgresConnectionOptions.port === 3006) {
             throw new Error('Invalid port number')
         }
-
-        // Prevent use after destroy
-        if (this.isDestroying) {
-            throw new Error('RecordManager is being destroyed')
-        }
-
-        // Check if config has changed
-        const currentHash = this.generateConfigHash(postgresConnectionOptions)
-        if (this.configHash !== currentHash) {
-            console.log('PostgresRecordManager - Config changed, will use new connection')
-            // Destroy old connection with old config
-            await PostgresConnectionManager.destroy(JSON.parse(this.configHash))
-            this.configHash = currentHash
-        }
-
-        // Use singleton connection manager
-        return PostgresConnectionManager.getDataSource(postgresConnectionOptions)
+        const dataSource = new DataSource(postgresConnectionOptions)
+        await dataSource.initialize()
+        return dataSource
     }
 
     async createSchema(): Promise<void> {
         const dataSource = await this.getDataSource()
-        const queryRunner = dataSource.createQueryRunner()
         try {
+            const queryRunner = dataSource.createQueryRunner()
             const tableName = this.sanitizeTableName(this.tableName)
-
-            await queryRunner.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
 
             await queryRunner.manager.query(`
   CREATE TABLE IF NOT EXISTS "${tableName}" (
@@ -272,6 +240,8 @@ class PostgresRecordManager implements RecordManagerInterface {
   CREATE INDEX IF NOT EXISTS key_index ON "${tableName}" (key);
   CREATE INDEX IF NOT EXISTS namespace_index ON "${tableName}" (namespace);
   CREATE INDEX IF NOT EXISTS group_id_index ON "${tableName}" (group_id);`)
+
+            await queryRunner.release()
         } catch (e: any) {
             // This error indicates that the table already exists
             // Due to asynchronous nature of the code, it is possible that
@@ -282,21 +252,22 @@ class PostgresRecordManager implements RecordManagerInterface {
             }
             throw e
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
     async getTime(): Promise<number> {
         const dataSource = await this.getDataSource()
-        const queryRunner = dataSource.createQueryRunner()
         try {
-            const res = await queryRunner.manager.query('SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS now')
-            return Number.parseFloat(res[0].now)
+            const queryRunner = dataSource.createQueryRunner()
+            const res = await queryRunner.manager.query('SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS extract')
+            await queryRunner.release()
+            return Number.parseFloat(res[0].extract)
         } catch (error) {
             console.error('Error getting time in PostgresRecordManager:')
             throw error
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
@@ -344,11 +315,12 @@ class PostgresRecordManager implements RecordManagerInterface {
         const query = `INSERT INTO "${tableName}" (key, namespace, updated_at, group_id) VALUES ${valuesPlaceholders} ON CONFLICT (key, namespace) DO UPDATE SET updated_at = EXCLUDED.updated_at;`
         try {
             await queryRunner.manager.query(query, recordsToUpsert.flat())
+            await queryRunner.release()
         } catch (error) {
             console.error('Error updating in PostgresRecordManager:')
             throw error
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
@@ -369,12 +341,13 @@ class PostgresRecordManager implements RecordManagerInterface {
         `
         try {
             const res = await queryRunner.manager.query(query, [this.namespace, ...keys.flat()])
+            await queryRunner.release()
             return res.map((row: { ex: boolean }) => row.ex)
         } catch (error) {
             console.error('Error checking existence of keys in PostgresRecordManager:')
             throw error
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
@@ -417,12 +390,13 @@ class PostgresRecordManager implements RecordManagerInterface {
 
         try {
             const res = await queryRunner.manager.query(query, values)
+            await queryRunner.release()
             return res.map((row: { key: string }) => row.key)
         } catch (error) {
             console.error('Error listing keys in PostgresRecordManager:')
             throw error
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
     }
 
@@ -438,22 +412,13 @@ class PostgresRecordManager implements RecordManagerInterface {
         try {
             const query = `DELETE FROM "${tableName}" WHERE namespace = $1 AND key = ANY($2);`
             await queryRunner.manager.query(query, [this.namespace, keys])
+            await queryRunner.release()
         } catch (error) {
             console.error('Error deleting keys')
             throw error
         } finally {
-            await queryRunner.release()
+            await dataSource.destroy()
         }
-    }
-
-    /**
-     * Cleanup method to explicitly destroy the DataSource connection for this configuration.
-     * This removes the connection from the singleton pool.
-     * Note: This only destroys the connection if no other RecordManager instances are using it.
-     */
-    async destroy(): Promise<void> {
-        this.isDestroying = true
-        await PostgresConnectionManager.destroy(this.config.postgresConnectionOptions)
     }
 }
 

@@ -10,6 +10,13 @@ export enum ChatflowVisibility {
     MARKETPLACE = 'Marketplace'
 }
 
+export enum EnumChatflowType {
+    CHATFLOW = 'CHATFLOW',
+    AGENTFLOW = 'AGENTFLOW',
+    MULTIAGENT = 'MULTIAGENT',
+    ASSISTANT = 'ASSISTANT'
+}
+
 @Entity()
 export class ChatFlow implements IChatFlow {
     @PrimaryGeneratedColumn('uuid')
@@ -56,12 +63,15 @@ export class ChatFlow implements IChatFlow {
     speechToText?: string
 
     @Column({ nullable: true, type: 'text' })
+    textToSpeech?: string
+
+    @Column({ nullable: true, type: 'text' })
     followUpPrompts?: string
 
     @Column({ nullable: true, type: 'text' })
     category?: string
 
-    @Column({ nullable: true, type: 'text' })
+    @Column({ type: 'varchar', length: 20, default: EnumChatflowType.CHATFLOW })
     type?: ChatflowType
 
     @Column({ nullable: true, type: 'jsonb' })
@@ -92,11 +102,13 @@ export class ChatFlow implements IChatFlow {
 
     @Index()
     @Column({ type: 'uuid', nullable: true })
-    templateId: string
+    templateId?: string
 
     @Column({ nullable: true, type: 'int', default: 1 })
     currentVersion?: number
 
     @Column({ nullable: true, type: 'text' })
     s3Location?: string
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

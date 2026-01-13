@@ -28,13 +28,15 @@ import {
 
 // project imports
 import MainCard from '@/ui-component/cards/MainCard'
-import { StyledButton } from '@/ui-component/button/StyledButton'
 import ConfirmDialog from '@/ui-component/dialog/ConfirmDialog'
-import { refreshVariablesCache } from '@/ui-component/input/suggestionOption'
 import AddEditVariableDialog from './AddEditVariableDialog'
 import HowToUseVariablesDialog from './HowToUseVariablesDialog'
 import ViewHeader from '@/layout/MainLayout/ViewHeader'
 import ErrorBoundary from '@/ErrorBoundary'
+import { StyledPermissionButton } from '@/ui-component/button/RBACButtons'
+import { Available } from '@/ui-component/rbac/available'
+import { refreshVariablesCache } from '@/ui-component/input/suggestionOption'
+import TablePagination, { DEFAULT_ITEMS_PER_PAGE } from '@/ui-component/pagination/TablePagination'
 
 // API
 import variablesApi from '@/api/variables'
@@ -50,6 +52,9 @@ import useNotifier from '@/utils/useNotifier'
 // Icons
 import { IconTrash, IconEdit, IconX, IconPlus, IconVariable } from '@tabler/icons-react'
 import VariablesEmptySVG from '@/assets/images/variables_empty.svg'
+
+// const
+import { useError } from '@/store/context/ErrorContext'
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderColor: theme.palette.grey[900] + 25,
@@ -77,17 +82,20 @@ const Variables = () => {
     const customization = useSelector((state) => state.customization)
     const dispatch = useDispatch()
     useNotifier()
+    const { error, setError } = useError()
 
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
     const [isLoading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
     const [showVariableDialog, setShowVariableDialog] = useState(false)
     const [variableDialogProps, setVariableDialogProps] = useState({})
     const [variables, setVariables] = useState([])
     const [showHowToDialog, setShowHowToDialog] = useState(false)
     const [tabValue, setTabValue] = useState(0)
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue)
+    }
     const { hasFeature } = usePermissions()
     const isAdmin = hasFeature('org:manage')
     const [myVariables, setMyVariables] = useState([])
@@ -96,8 +104,27 @@ const Variables = () => {
     const { confirm } = useConfirm()
 
     const getAllVariables = useApi(variablesApi.getAllVariables)
-
     const [search, setSearch] = useState('')
+
+    /* Table Pagination */
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageLimit, setPageLimit] = useState(DEFAULT_ITEMS_PER_PAGE)
+    const [total, setTotal] = useState(0)
+
+    const onChange = (page, pageLimit) => {
+        setCurrentPage(page)
+        setPageLimit(pageLimit)
+        refresh(page, pageLimit)
+    }
+
+    const refresh = (page, limit) => {
+        const params = {
+            page: page || currentPage,
+            limit: limit || pageLimit
+        }
+        getAllVariables.request(params)
+    }
+
     const onSearchChange = (event) => {
         setSearch(event.target.value)
     }
@@ -177,16 +204,12 @@ const Variables = () => {
 
     const onConfirm = () => {
         setShowVariableDialog(false)
-        getAllVariables.request()
+        refresh(currentPage, pageLimit)
         refreshVariablesCache()
     }
 
-    const handleTabChange = (event, newValue) => {
-        setTabValue(newValue)
-    }
-
     useEffect(() => {
-        getAllVariables.request()
+        refresh(currentPage, pageLimit)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -195,17 +218,9 @@ const Variables = () => {
     }, [getAllVariables.loading])
 
     useEffect(() => {
-        if (getAllVariables.error) {
-            setError(getAllVariables.error)
-        }
-    }, [getAllVariables.error])
-
-    useEffect(() => {
         if (getAllVariables.data) {
-            setVariables(getAllVariables.data)
-            const allVariables = getAllVariables.data
-            setMyVariables(allVariables.filter((variable) => variable.isOwner))
-            setOrganizationVariables(allVariables.filter((variable) => !variable.isOwner))
+            setVariables(getAllVariables.data.data)
+            setTotal(getAllVariables.data.total)
         }
     }, [getAllVariables.data])
 
@@ -232,7 +247,8 @@ const Variables = () => {
                             <Button variant='outlined' sx={{ borderRadius: 2, height: '100%' }} onClick={() => setShowHowToDialog(true)}>
                                 How To Use
                             </Button>
-                            <StyledButton
+                            <StyledPermissionButton
+                                permissionId={'variables:create'}
                                 variant='contained'
                                 sx={{ borderRadius: 2, height: '100%' }}
                                 onClick={addNew}
@@ -240,7 +256,7 @@ const Variables = () => {
                                 id='btn_createVariable'
                             >
                                 Add Variable
-                            </StyledButton>
+                            </StyledPermissionButton>
                         </ViewHeader>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label='variable tabs'>
@@ -260,65 +276,95 @@ const Variables = () => {
                                 <div>No Variables Yet</div>
                             </Stack>
                         ) : (
-                            <TableContainer
-                                sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
-                                component={Paper}
-                            >
-                                <Table sx={{ minWidth: 650 }} aria-label='simple table'>
-                                    <TableHead
-                                        sx={{
-                                            backgroundColor: customization.isDarkMode
-                                                ? theme.palette.common.black
-                                                : theme.palette.grey[100],
-                                            height: 56
-                                        }}
-                                    >
-                                        <TableRow>
-                                            <StyledTableCell>Name</StyledTableCell>
-                                            <StyledTableCell>Value</StyledTableCell>
-                                            <StyledTableCell>Type</StyledTableCell>
-                                            <StyledTableCell>Visibility</StyledTableCell>
-                                            <StyledTableCell>Last Updated</StyledTableCell>
-                                            <StyledTableCell>Created</StyledTableCell>
-                                            <StyledTableCell> </StyledTableCell>
-                                            <StyledTableCell> </StyledTableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {isLoading ? (
-                                            <>
-                                                <StyledTableRow>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                    <StyledTableCell>
-                                                        <Skeleton variant='text' />
-                                                    </StyledTableCell>
-                                                </StyledTableRow>
-                                            </>
-                                        ) : (
-                                            <>
-                                                {(tabValue === 0 ? myVariables : organizationVariables)
-                                                    .filter(filterVariables)
-                                                    .map((variable, index) => (
+                            <>
+                                <TableContainer
+                                    sx={{ border: 1, borderColor: theme.palette.grey[900] + 25, borderRadius: 2 }}
+                                    component={Paper}
+                                >
+                                    <Table sx={{ minWidth: 650 }} aria-label='simple table'>
+                                        <TableHead
+                                            sx={{
+                                                backgroundColor: customization.isDarkMode
+                                                    ? theme.palette.common.black
+                                                    : theme.palette.grey[100],
+                                                height: 56
+                                            }}
+                                        >
+                                            <TableRow>
+                                                <StyledTableCell>Name</StyledTableCell>
+                                                <StyledTableCell>Value</StyledTableCell>
+                                                <StyledTableCell>Type</StyledTableCell>
+                                                <StyledTableCell>Last Updated</StyledTableCell>
+                                                <StyledTableCell>Created</StyledTableCell>
+                                                <Available permissionId={'variables:update'}>
+                                                    <StyledTableCell> </StyledTableCell>
+                                                </Available>
+                                                <Available permissionId={'variables:delete'}>
+                                                    <StyledTableCell> </StyledTableCell>
+                                                </Available>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {isLoading ? (
+                                                <>
+                                                    <StyledTableRow>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <Available permission={'variables:create,variables:update'}>
+                                                            <StyledTableCell>
+                                                                <Skeleton variant='text' />
+                                                            </StyledTableCell>
+                                                        </Available>
+                                                        <Available permission={'variables:delete'}>
+                                                            <StyledTableCell>
+                                                                <Skeleton variant='text' />
+                                                            </StyledTableCell>
+                                                        </Available>
+                                                    </StyledTableRow>
+                                                    <StyledTableRow>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <Available permission={'variables:create,variables:update'}>
+                                                            <StyledTableCell>
+                                                                <Skeleton variant='text' />
+                                                            </StyledTableCell>
+                                                        </Available>
+                                                        <Available permission={'variables:delete'}>
+                                                            <StyledTableCell>
+                                                                <Skeleton variant='text' />
+                                                            </StyledTableCell>
+                                                        </Available>
+                                                    </StyledTableRow>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {variables.filter(filterVariables).map((variable, index) => (
                                                         <StyledTableRow
                                                             key={index}
                                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
@@ -360,37 +406,20 @@ const Variables = () => {
                                                                 />
                                                             </StyledTableCell>
                                                             <StyledTableCell>
-                                                                {variable.visibility.map((visibility, index) => (
-                                                                    <Chip
-                                                                        key={index}
-                                                                        label={
-                                                                            visibility.toLowerCase() === 'private'
-                                                                                ? 'Private'
-                                                                                : visibility.toLowerCase() === 'organization'
-                                                                                ? 'Organization'
-                                                                                : visibility.charAt(0).toUpperCase() + visibility.slice(1)
-                                                                        }
-                                                                        color={'primary'}
-                                                                        size='small'
-                                                                        sx={{ mr: 1, mb: 1 }}
-                                                                    />
-                                                                ))}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
                                                                 {moment(variable.updatedDate).format('MMMM Do, YYYY HH:mm:ss')}
                                                             </StyledTableCell>
                                                             <StyledTableCell>
                                                                 {moment(variable.createdDate).format('MMMM Do, YYYY HH:mm:ss')}
                                                             </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {(variable.isOwner || (isAdmin && tabValue === 1)) && (
+                                                            <Available permission={'variables:create,variables:update'}>
+                                                                <StyledTableCell>
                                                                     <IconButton title='Edit' color='primary' onClick={() => edit(variable)}>
                                                                         <IconEdit />
                                                                     </IconButton>
-                                                                )}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {(variable.isOwner || (isAdmin && tabValue === 1)) && (
+                                                                </StyledTableCell>
+                                                            </Available>
+                                                            <Available permission={'variables:delete'}>
+                                                                <StyledTableCell>
                                                                     <IconButton
                                                                         title='Delete'
                                                                         color='error'
@@ -398,15 +427,18 @@ const Variables = () => {
                                                                     >
                                                                         <IconTrash />
                                                                     </IconButton>
-                                                                )}
-                                                            </StyledTableCell>
+                                                                </StyledTableCell>
+                                                            </Available>
                                                         </StyledTableRow>
                                                     ))}
-                                            </>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                                </>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                {/* Pagination and Page Size Controls */}
+                                <TablePagination currentPage={currentPage} limit={pageLimit} total={total} onChange={onChange} />
+                            </>
                         )}
                     </Stack>
                 )}

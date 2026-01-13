@@ -44,4 +44,6 @@ export class Credential implements ICredential {
         default: 'Private'
     })
     visibility?: CredentialVisibility[]
+    @Column({ nullable: false, type: 'text' })
+    workspaceId: string
 }

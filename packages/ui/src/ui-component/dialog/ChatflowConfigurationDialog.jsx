@@ -4,20 +4,24 @@ import { createPortal } from 'react-dom'
 import { Box, Dialog, DialogContent, DialogTitle, Tabs, Tab } from '@mui/material'
 import { tabsClasses } from '@mui/material/Tabs'
 import SpeechToText from '@/ui-component/extended/SpeechToText'
-import RateLimit from '@/ui-component/extended/RateLimit'
-import AllowedDomains from '@/ui-component/extended/AllowedDomains'
+import TextToSpeech from '@/ui-component/extended/TextToSpeech'
+import Security from '@/ui-component/extended/Security'
 import ChatFeedback from '@/ui-component/extended/ChatFeedback'
+// import AnalyseFlow from '@/ui-component/extended/AnalyseFlow'
 import StarterPrompts from '@/ui-component/extended/StarterPrompts'
 import Leads from '@/ui-component/extended/Leads'
 import FollowUpPrompts from '@/ui-component/extended/FollowUpPrompts'
+import FileUpload from '@/ui-component/extended/FileUpload'
+import PostProcessing from '@/ui-component/extended/PostProcessing'
+
+// AAI
 import VisibilitySettings from '@/ui-component/extended/VisibilitySettings'
 import GeneralSettings from '@/ui-component/extended/GeneralSettings'
 import ChatLinksSettings from '@/ui-component/extended/ChatLinksSettings'
-import FileUpload from '@/ui-component/extended/FileUpload'
-import PostProcessing from '@/ui-component/extended/PostProcessing'
-import Security from '@/ui-component/extended/Security'
 import JlincSettings from '@/ui-component/extended/JlincSettings'
+import AllowedDomains from '@/ui-component/extended/AllowedDomains'
 import ChatflowGuardrails from '@/ui-component/extended/ChatflowGuardrails'
+import RateLimit from '@/ui-component/extended/RateLimit'
 // import AnalyseFlow from '@/ui-component/extended/AnalyseFlow'
 
 const CHATFLOW_CONFIGURATION_TABS = [
@@ -62,17 +66,21 @@ const CHATFLOW_CONFIGURATION_TABS = [
         id: 'speechToText'
     },
     {
-        label: 'Chat Feedback',
-        id: 'chatFeedback'
+        label: 'Text to Speech',
+        id: 'textToSpeech'
     },
     {
-        label: 'Allowed Domains',
-        id: 'allowedDomains'
+        label: 'Chat Feedback',
+        id: 'chatFeedback'
     },
     // {
     //     label: 'Analyse Chatflow',
     //     id: 'analyseChatflow'
     // },
+    {
+        label: 'Allowed Domains',
+        id: 'allowedDomains'
+    },
     {
         label: 'Leads',
         id: 'leads'
@@ -168,22 +176,24 @@ const ChatflowConfigurationDialog = ({ show, isAgentCanvas, dialogProps, onCance
                 </Tabs>
                 {filteredTabs.map((item, index) => (
                     <TabPanel key={item.id} value={tabValue} index={index}>
-                        {item.id === 'rateLimiting' && <RateLimit dialogProps={dialogProps} />}
+                        {item.id === 'security' && <Security dialogProps={dialogProps} />}
                         {item.id === 'conversationStarters' ? <StarterPrompts dialogProps={dialogProps} /> : null}
                         {item.id === 'followUpPrompts' ? <FollowUpPrompts dialogProps={dialogProps} /> : null}
                         {item.id === 'speechToText' ? <SpeechToText dialogProps={dialogProps} /> : null}
+                        {item.id === 'textToSpeech' ? <TextToSpeech dialogProps={dialogProps} /> : null}
                         {item.id === 'chatFeedback' ? <ChatFeedback dialogProps={dialogProps} /> : null}
-                        {item.id === 'allowedDomains' ? <AllowedDomains dialogProps={dialogProps} /> : null}
                         {/* {item.id === 'analyseChatflow' ? <AnalyseFlow dialogProps={dialogProps} /> : null} */}
                         {item.id === 'leads' ? <Leads dialogProps={dialogProps} /> : null}
+                        {item.id === 'fileUpload' ? <FileUpload dialogProps={dialogProps} /> : null}
+                        {item.id === 'postProcessing' ? <PostProcessing dialogProps={dialogProps} /> : null}
+                        {/* AAI  */}
+                        {item.id === 'allowedDomains' ? <AllowedDomains dialogProps={dialogProps} /> : null}
                         {item.id === 'visibilitySettings' ? <VisibilitySettings dialogProps={dialogProps} /> : null}
                         {item.id === 'chatLinks' ? <ChatLinksSettings dialogProps={dialogProps} /> : null}
                         {item.id === 'generalSettings' ? <GeneralSettings dialogProps={dialogProps} /> : null}
-                        {item.id === 'fileUpload' ? <FileUpload dialogProps={dialogProps} /> : null}
-                        {item.id === 'postProcessing' ? <PostProcessing dialogProps={dialogProps} /> : null}
-                        {item.id === 'security' ? <Security dialogProps={dialogProps} /> : null}
                         {item.id === 'guardrails' ? <ChatflowGuardrails dialogProps={dialogProps} /> : null}
                         {item.id === 'jlinc' ? <JlincSettings dialogProps={dialogProps} /> : null}
+                        {item.id === 'rateLimiting' ? <RateLimit dialogProps={dialogProps} /> : null}
                     </TabPanel>
                 ))}
             </DialogContent>

@@ -27,7 +27,7 @@ async function extractFilters(prompt: string, filters: AnswersFilters) {
                 // console.log('Using AI Filter:', filters)
             }
         } catch (error) {
-            console.log('PINECONE ERROR: Could not parse filters', error)
+            console.error('PINECONE ERROR: Could not parse filters', error)
         }
     }
     return filters

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Stack, Typography, CircularProgress, Button } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import TotalCreditsProgress from './TotalCreditsProgress'
 import { useBillingData } from './hooks/useBillingData'
@@ -9,6 +10,7 @@ import BillingOverview from './BillingOverview'
 import { useSubscriptionDialog } from '../SubscriptionDialogContext'
 
 const BillingDashboard: React.FC = () => {
+    const theme = useTheme()
     const { billingData, isLoading, isError } = useBillingData()
     const { openDialog } = useSubscriptionDialog()
 
@@ -52,10 +54,10 @@ const BillingDashboard: React.FC = () => {
             </Box>
             <Stack spacing={4}>
                 <Box>
-                    <Typography variant='h4' sx={{ fontWeight: 600, color: '#fff', mb: 1 }}>
+                    <Typography variant='h4' sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
                         Usage Overview
                     </Typography>
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                         Manage your subscription and monitor your usage
                     </Typography>
                 </Box>

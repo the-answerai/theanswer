@@ -51,10 +51,10 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
     const additionalContext = csvConfig?.context || ''
     const combinedQuestion = `### ${JSON.stringify(row.rowData)} ### ${additionalContext}`.trim()
     const response = await executeFlow({
-        user: user,
+        user: user as any,
         incomingInput: {
             question: combinedQuestion,
-            user: user
+            user: user as any
         },
         chatflow,
         chatId: uuidv4(),
@@ -64,7 +64,12 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
         componentNodes: appServer.nodesPool.componentNodes,
         sseStreamer: appServer.sseStreamer,
         telemetry: appServer.telemetry,
-        cachePool: appServer.cachePool
+        cachePool: appServer.cachePool,
+        usageCacheManager: appServer.usageCacheManager,
+        orgId: user.organizationId || '',
+        workspaceId: '',
+        subscriptionId: '',
+        productId: ''
     })
 
     return response?.json

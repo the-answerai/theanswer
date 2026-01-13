@@ -3,6 +3,7 @@ import _ from 'lodash'
 import nodesService from '../../services/nodes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
+import { getWorkspaceSearchOptionsFromReq } from '../../enterprise/utils/ControllerServiceUtils'
 
 const getAllNodes = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -67,7 +68,10 @@ const getSingleNodeAsyncOptions = async (req: Request, res: Response, next: Next
                 `Error: nodesController.getSingleNodeAsyncOptions - name not provided!`
             )
         }
-        const apiResponse = await nodesService.getSingleNodeAsyncOptions(req.params.name, req.body, req.user)
+        const body = req.body
+        body.searchOptions = getWorkspaceSearchOptionsFromReq(req)
+        const user = req.user ? { id: req.user.id, organizationId: req.user.activeOrganizationId, roles: req.user.roles, permissions: req.user.permissions } : undefined
+        const apiResponse = await nodesService.getSingleNodeAsyncOptions(req.params.name, body, user)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -82,7 +86,9 @@ const executeCustomFunction = async (req: Request, res: Response, next: NextFunc
                 `Error: nodesController.executeCustomFunction - body not provided!`
             )
         }
-        const apiResponse = await nodesService.executeCustomFunction(req.user!, req.body)
+        const orgId = req.user?.activeOrganizationId
+        const workspaceId = req.user?.activeWorkspaceId
+        const apiResponse = await nodesService.executeCustomFunction(req.body, workspaceId, orgId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

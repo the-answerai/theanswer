@@ -149,9 +149,6 @@ const ImageCropModal = ({ open, onClose, imageSrc, resolution, aspectRatio, onCr
     const handleConfirm = async () => {
         setProcessing(true)
         try {
-            console.log(`[Image Crop] Creating image with dimensions: ${targetWidth}x${targetHeight} (${currentAspectRatio})`)
-            console.log(`[Image Crop] Mode: ${fitMode ? 'FIT with padding' : 'CROP'}`)
-
             let finalImage: string
             if (fitMode) {
                 // Fit mode - add black bars
@@ -164,12 +161,9 @@ const ImageCropModal = ({ open, onClose, imageSrc, resolution, aspectRatio, onCr
 
             // Verify the image dimensions
             const img = await createImage(finalImage)
-            console.log(`[Image Crop] Actual created dimensions: ${img.width}x${img.height}`)
 
             if (img.width !== targetWidth || img.height !== targetHeight) {
                 console.error(`[Image Crop] DIMENSION MISMATCH! Expected ${targetWidth}x${targetHeight}, got ${img.width}x${img.height}`)
-            } else {
-                console.log('[Image Crop] ✓ Dimensions match perfectly')
             }
 
             onCropComplete(finalImage, currentAspectRatio)

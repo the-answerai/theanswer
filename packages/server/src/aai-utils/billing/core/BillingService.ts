@@ -339,7 +339,8 @@ export class BillingService implements BillingProvider {
             const subscriptions = await this.stripeClient.subscriptions.list({
                 customer: customerId,
                 status: 'active',
-                limit: 1
+                limit: 1,
+                expand: ['data.items.data.price']
             })
             return subscriptions.data[0] || null
         } catch (error) {

@@ -13,8 +13,8 @@ const UserFormPage = async ({ params }: any) => {
 
     if (!session?.user?.email) return null
 
-    // Only returns the fields we'll be editing
-    const user = await prisma.user
+    // Get context fields from Prisma (for editing user variables)
+    const prismaUser = await prisma.user
         .findFirst({
             where: {
                 id: session.user.id
@@ -23,6 +23,11 @@ const UserFormPage = async ({ params }: any) => {
         })
         .then((data: any) => JSON.parse(JSON.stringify(data)))
 
+    // Merge Prisma data with enriched session data (from Flowise /auth/me)
+    const user = {
+        ...session.user,
+        contextFields: prismaUser?.contextFields || []
+    }
     return <UserProfile {...params} user={user} />
 }
 

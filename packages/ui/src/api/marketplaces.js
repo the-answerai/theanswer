@@ -1,19 +1,27 @@
 import client from './client'
 
+const getAllChatflowsMarketplaces = () => client.get('/marketplaces/chatflows')
 const getAllToolsMarketplaces = () => client.get('/marketplaces/tools')
 const getAllTemplatesFromMarketplaces = () => client.get('/marketplaces/templates')
-const getSpecificMarketplaceTemplate = (id) => client.get(`/marketplaces/templates/${id}`)
+
 const getAllCustomTemplates = () => client.get('/marketplaces/custom')
-const getOrganizationTemplates = () => client.get('/marketplaces/organization')
 const saveAsCustomTemplate = (body) => client.post('/marketplaces/custom', body)
 const deleteCustomTemplate = (id) => client.delete(`/marketplaces/custom/${id}`)
 
+
+// AAI 
+const getSpecificMarketplaceTemplate = (id) => client.get(`/marketplaces/templates/${id}`)
+const getOrganizationTemplates = () => client.get('/marketplaces/organization')
+
 export default {
+    getAllChatflowsMarketplaces,
     getAllToolsMarketplaces,
     getAllTemplatesFromMarketplaces,
-    getSpecificMarketplaceTemplate,
+
     getAllCustomTemplates,
-    getOrganizationTemplates,
     saveAsCustomTemplate,
-    deleteCustomTemplate
+    deleteCustomTemplate,
+    // AAI
+    getSpecificMarketplaceTemplate,
+    getOrganizationTemplates,
 }

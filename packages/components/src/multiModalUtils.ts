@@ -16,7 +16,7 @@ export const addImagesToMessages = async (
             for (const upload of imageUploads) {
                 let bf = upload.data
                 if (upload.type == 'stored-file') {
-                    const contents = await getFileFromStorage(upload.name, options.chatflowid, options.chatId)
+                    const contents = await getFileFromStorage(upload.name, options.orgId, options.chatflowid, options.chatId)
                     // as the image is stored in the server, read the file and convert it to base64
                     bf = 'data:' + upload.mime + ';base64,' + contents.toString('base64')
 
@@ -43,11 +43,11 @@ export const addImagesToMessages = async (
 }
 
 export const getAudioUploads = (uploads: IFileUpload[]) => {
-    return uploads.filter((upload: IFileUpload) => !!upload?.mime?.startsWith('audio/'))
+    return uploads.filter((upload: IFileUpload) => upload.mime.startsWith('audio/'))
 }
 
 export const getImageUploads = (uploads: IFileUpload[]) => {
-    return uploads.filter((upload: IFileUpload) => !!upload?.mime?.startsWith('image/'))
+    return uploads.filter((upload: IFileUpload) => upload.mime.startsWith('image/'))
 }
 
 export const llmSupportsVision = (value: any): value is IVisionChatModal => !!value?.multiModalOption

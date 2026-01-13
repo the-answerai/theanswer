@@ -6,7 +6,7 @@
  * Key features:
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
- * - Sets category = 'MCP Servers'
+ * - Sets category = 'Tools (MCP)'
  * - Automatically uses user's API key from database (no manual credential setup required)
  * - Uses API_HOST environment variable for base URL
  * - Exposes available actions via mcpActions input
@@ -39,7 +39,7 @@ class AnswerAgent_MCP implements INode {
         this.version = 1.0
         this.type = 'AnswerAgent MCP Tool'
         this.icon = 'answerai-square-black.png'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP server that integrates with AnswerAgent API • Zero configuration required'
         this.documentation = 'https://www.npmjs.com/package/@answerai/answeragent-mcp'

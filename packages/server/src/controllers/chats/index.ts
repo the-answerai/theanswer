@@ -17,6 +17,7 @@ const getAllChats = async (req: Request, res: Response, next: NextFunction) => {
         const apiResponse = await chatsService.getAllChats(req.user, { limit, cursor })
         return res.json(apiResponse)
     } catch (error) {
+        console.log('getAllChats error', error)
         next(error)
     }
 }

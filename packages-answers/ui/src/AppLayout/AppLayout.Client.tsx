@@ -1,6 +1,6 @@
 'use client'
 import { Session } from '@auth0/nextjs-auth0'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
 
@@ -10,6 +10,8 @@ import GlobalStyles from '../GlobalStyles'
 import { AppSettings } from 'types'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
 import { Auth0Setup } from '@/hooks/useAuth0Setup'
+// @ts-ignore
+import { ErrorProvider } from '@/store/context/ErrorContext'
 import dynamic from 'next/dynamic'
 import { PermissionProvider } from '../PermissionProvider'
 const HelpChatDrawer = dynamic(() => import('../HelpChatDrawer'), { ssr: false })
@@ -36,6 +38,19 @@ export default function AppLayout({
     }
     noDrawer?: boolean
 }) {
+    // Protect against paste events with null clipboardData
+    // (caused by browser extensions like Grammarly, LastPass, 1Password)
+    useEffect(() => {
+        function handlePasteCapture(e: ClipboardEvent): void {
+            if (!e.clipboardData) {
+                e.stopImmediatePropagation()
+                return
+            }
+        }
+        window.addEventListener('paste', handlePasteCapture, true)
+        return () => window.removeEventListener('paste', handlePasteCapture, true)
+    }, [])
+
     // const authorizationParams = {
     //     organization: session?.user.organizationId,
     //     redirect_uri: typeof window !== 'undefined' ? window?.location?.origin : '',
@@ -50,11 +65,12 @@ export default function AppLayout({
                     <UnifiedThemeProvider>
                         <CssBaseline enableColorScheme />
                         <GlobalStyles />
-                        <SubscriptionDialogProvider>
-                            <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', overflowY: 'auto' }}>
+                        <ErrorProvider>
+                            <SubscriptionDialogProvider>
+                            <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
                                 {!noDrawer && <AppDrawer params={params} session={session} />}
-                                <div style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
-                                    <div style={{ width: '100%', position: 'relative' }}>{children}</div>
+                                <div style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'auto' }}>
+                                    <div style={{ width: '100%', height: '100%', position: 'relative' }}>{children}</div>
                                 </div>
                                 <React.Suspense fallback={<div>Loading...</div>}>
                                     <HelpChatProvider>
@@ -65,7 +81,8 @@ export default function AppLayout({
                                     </HelpChatProvider>
                                 </React.Suspense>
                             </div>
-                        </SubscriptionDialogProvider>
+                            </SubscriptionDialogProvider>
+                        </ErrorProvider>
                     </UnifiedThemeProvider>
                 </PermissionProvider>
             </Auth0Setup>

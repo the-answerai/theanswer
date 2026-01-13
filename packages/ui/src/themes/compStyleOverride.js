@@ -56,19 +56,10 @@ export default function componentStyleOverrides(theme) {
             },
             styleOverrides: {
                 root: {
-                    backgroundImage: 'none',
-                    backgroundColor: theme?.customization?.isDarkMode ? '#1a1a1a' : '#ffffff',
-                    borderColor: theme?.palette?.primary?.main ?? 'grey'
+                    backgroundImage: 'none'
                 },
                 rounded: {
-                    borderRadius: `${theme?.customization?.borderRadius ?? 8}px`
-                }
-            }
-        },
-        MuiCard: {
-            styleOverrides: {
-                root: {
-                    backgroundColor: theme?.customization?.isDarkMode ? '#1a1a1a' : '#ffffff'
+                    borderRadius: `${theme?.customization?.borderRadius}px`
                 }
             }
         },
@@ -141,22 +132,13 @@ export default function componentStyleOverrides(theme) {
         MuiInputBase: {
             styleOverrides: {
                 input: {
-                    // color: theme.textDark,
+                    color: theme.textDark,
                     '&::placeholder': {
                         color: theme.darkTextSecondary,
                         fontSize: '0.875rem'
                     },
                     '&.Mui-disabled': {
                         WebkitTextFillColor: theme?.customization?.isDarkMode ? theme.colors?.grey500 : theme.darkTextSecondary
-                    }
-                }
-            }
-        },
-        MuiFormControlLabel: {
-            styleOverrides: {
-                root: {
-                    '&.Mui-disabled *': {
-                        color: '#858585!important'
                     }
                 }
             }
@@ -200,7 +182,7 @@ export default function componentStyleOverrides(theme) {
             styleOverrides: {
                 root: {
                     '&.Mui-disabled': {
-                        // color: theme.colors?.grey300
+                        color: theme.colors?.grey300
                     }
                 },
                 mark: {

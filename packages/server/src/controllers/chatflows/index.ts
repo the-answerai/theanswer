@@ -1,19 +1,24 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import apiKeyService from '../../services/apikey'
 import { ChatFlow } from '../../database/entities/ChatFlow'
-import { RateLimiterManager } from '../../utils/rateLimit'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { ChatflowType } from '../../Interface'
+import apiKeyService from '../../services/apikey'
 import chatflowsService from '../../services/chatflows'
-import checkOwnership from '../../utils/checkOwnership'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
+import { checkUsageLimit } from '../../utils/quotaUsage'
+import { RateLimiterManager } from '../../utils/rateLimit'
+import { getPageAndLimitParams } from '../../utils/pagination'
+import { WorkspaceUserErrorMessage, WorkspaceUserService } from '../../enterprise/services/workspace-user.service'
+import { QueryRunner } from 'typeorm'
+import { GeneralErrorMessage } from '../../utils/constants'
 
 const checkIfChatflowIsValidForStreaming = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.checkIfChatflowIsValidForStreaming - id not provided!`
+                `Error: chatflowsController.checkIfChatflowIsValidForStreaming - id not provided!`
             )
         }
         const apiResponse = await chatflowsService.checkIfChatflowIsValidForStreaming(req.params.id)
@@ -28,7 +33,7 @@ const checkIfChatflowIsValidForUploads = async (req: Request, res: Response, nex
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.checkIfChatflowIsValidForUploads - id not provided!`
+                `Error: chatflowsController.checkIfChatflowIsValidForUploads - id not provided!`
             )
         }
         const apiResponse = await chatflowsService.checkIfChatflowIsValidForUploads(req.params.id)
@@ -41,9 +46,23 @@ const checkIfChatflowIsValidForUploads = async (req: Request, res: Response, nex
 const deleteChatflow = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.deleteChatflow - id not provided!`)
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.deleteChatflow - id not provided!`)
         }
-        const apiResponse = await chatflowsService.deleteChatflow(req.params.id, req.user)
+        const orgId = req.user?.activeOrganizationId
+        if (!orgId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.deleteChatflow - organization ${orgId} not found!`
+            )
+        }
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.deleteChatflow - workspace ${workspaceId} not found!`
+            )
+        }
+        const apiResponse = await chatflowsService.deleteChatflow(req.params.id, orgId, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -52,17 +71,14 @@ const deleteChatflow = async (req: Request, res: Response, next: NextFunction) =
 
 const getAllChatflows = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user?.id
-        if (!userId) {
-            return res.status(401).send('Unauthorized')
-        }
+        const { page, limit } = getPageAndLimitParams(req)
 
-        const filter = req.query.filter ? JSON.parse(decodeURIComponent(req.query.filter as string)) : undefined
-
-        const apiResponse = await chatflowsService.getAllChatflows(req.user, req.query?.type as ChatflowType, {
-            ...res.locals.filter,
-            ...filter
-        })
+        const apiResponse = await chatflowsService.getAllChatflows(
+            req.query?.type as ChatflowType,
+            req.user?.activeWorkspaceId,
+            page,
+            limit
+        )
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -94,7 +110,7 @@ const getChatflowByApiKey = async (req: Request, res: Response, next: NextFuncti
         if (typeof req.params === 'undefined' || !req.params.apikey) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getChatflowByApiKey - apikey not provided!`
+                `Error: chatflowsController.getChatflowByApiKey - apikey not provided!`
             )
         }
         const apikey = await apiKeyService.getApiKey(req.params.apikey)
@@ -111,23 +127,16 @@ const getChatflowByApiKey = async (req: Request, res: Response, next: NextFuncti
 const getChatflowById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.getChatflowById - id not provided!`)
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.getChatflowById - id not provided!`)
         }
-        const apiResponse = await chatflowsService.getChatflowById(req.params.id, req.user)
-
-        // Check if the chatflow is public (Marketplace) for unauthenticated users
-        if (!req.user && (!apiResponse.visibility || !apiResponse.visibility.includes('Marketplace') || !apiResponse.isPublic)) {
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
             throw new InternalFlowiseError(
-                StatusCodes.UNAUTHORIZED,
-                `Error: chatflowsRouter.getChatflowById - Unauthorized access to non-public chatflow!`
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.getChatflowById - workspace ${workspaceId} not found!`
             )
         }
-
-        // For authenticated users, check ownership
-        if (req.user && !(await checkOwnership(apiResponse, req.user, req))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
-
+        const apiResponse = await chatflowsService.getChatflowById(req.params.id, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -140,44 +149,41 @@ const saveChatflow = async (req: Request, res: Response, next: NextFunction) => 
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: chatflowsRouter.saveChatflow - Unauthorized!`)
         }
         if (!req.body) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - body not provided!`)
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.saveChatflow - body not provided!`)
         }
+        const orgId = req.user?.activeOrganizationId
+        if (!orgId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.saveChatflow - organization ${orgId} not found!`
+            )
+        }
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.saveChatflow - workspace ${workspaceId} not found!`
+            )
+        }
+        const subscriptionId = req.user?.activeOrganizationSubscriptionId || ''
         const body = req.body
+
+        const existingChatflowCount = await chatflowsService.getAllChatflowsCountByOrganization(body.type, orgId)
+        const newChatflowCount = 1
+        await checkUsageLimit('flows', subscriptionId, getRunningExpressApp().usageCacheManager, existingChatflowCount + newChatflowCount)
+
         const newChatFlow = new ChatFlow()
+        Object.assign(newChatFlow, body)
+        newChatFlow.workspaceId = workspaceId
+        newChatFlow.organizationId = orgId
+        const apiResponse = await chatflowsService.saveChatflow(
+            newChatFlow,
+            orgId,
+            workspaceId,
+            subscriptionId,
+            getRunningExpressApp().usageCacheManager
+        )
 
-        Object.assign(newChatFlow, { ...body, userId: req.user?.id, organizationId: req.user?.organizationId })
-
-        const apiResponse = await chatflowsService.saveChatflow(newChatFlow)
-
-        // TODO: Abstract sending to AnswerAI through events endpoint and move to service
-        const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
-        try {
-            await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer ' + req.auth?.token!,
-                    cookie: req.headers.cookie!
-                },
-                body: JSON.stringify({
-                    chatflow: apiResponse,
-                    chatflowDomain: req.auth?.payload?.chatflowDomain
-                })
-            })
-        } catch (err) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - AnswerAI sync failed!`)
-        }
-
-        return res.json(apiResponse)
-    } catch (error) {
-        next(error)
-    }
-}
-
-const importChatflows = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const chatflows: Partial<ChatFlow>[] = req.body.Chatflows
-        const apiResponse = await chatflowsService.importChatflows(req.user!, chatflows)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -187,17 +193,27 @@ const importChatflows = async (req: Request, res: Response, next: NextFunction) 
 const updateChatflow = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (typeof req.params === 'undefined' || !req.params.id) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.updateChatflow - id not provided!`)
+            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.updateChatflow - id not provided!`)
         }
-
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, req.user!)
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.saveChatflow - workspace ${workspaceId} not found!`
+            )
+        }
+        const chatflow = await chatflowsService.getChatflowById(req.params.id, workspaceId)
         if (!chatflow) {
             return res.status(404).send(`Chatflow ${req.params.id} not found`)
         }
-
-        if (!(await checkOwnership(chatflow, req.user, req))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
+        const orgId = req.user?.activeOrganizationId
+        if (!orgId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                `Error: chatflowsController.saveChatflow - organization ${orgId} not found!`
+            )
         }
+        const subscriptionId = req.user?.activeOrganizationSubscriptionId || ''
         const body = req.body
         const updateChatFlow = new ChatFlow()
         Object.assign(updateChatFlow, body)
@@ -211,27 +227,7 @@ const updateChatflow = async (req: Request, res: Response, next: NextFunction) =
         const rateLimiterManager = RateLimiterManager.getInstance()
         await rateLimiterManager.updateRateLimiter(updateChatFlow)
 
-        const apiResponse = await chatflowsService.updateChatflow(chatflow, updateChatFlow, req.user!)
-
-        // TODO: Abstract sending to AnswerAI through events endpoint and move to service
-        const ANSWERAI_DOMAIN = req.auth?.payload.answersDomain ?? process.env.ANSWERAI_DOMAIN ?? 'https://beta.theanswer.ai'
-        try {
-            await fetch(ANSWERAI_DOMAIN + '/api/sidekicks/new', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer ' + req.auth?.token!,
-                    cookie: req.headers.cookie!
-                },
-                body: JSON.stringify({
-                    chatflow: apiResponse,
-                    chatflowDomain: req.auth?.payload?.chatflowDomain
-                })
-            })
-        } catch (err) {
-            throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsRouter.saveChatflow - AnswerAI sync failed!`)
-        }
-
+        const apiResponse = await chatflowsService.updateChatflow(chatflow, updateChatFlow, orgId, workspaceId, subscriptionId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -239,17 +235,31 @@ const updateChatflow = async (req: Request, res: Response, next: NextFunction) =
 }
 
 const getSinglePublicChatflow = async (req: Request, res: Response, next: NextFunction) => {
+    let queryRunner: QueryRunner | undefined
     try {
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getSinglePublicChatflow - id not provided!`
+                `Error: chatflowsController.getSinglePublicChatflow - id not provided!`
             )
         }
-        const apiResponse = await chatflowsService.getSinglePublicChatflow(req.params.id, req.user)
-        return res.json(apiResponse)
+        const chatflow = await chatflowsService.getChatflowById(req.params.id)
+        if (!chatflow) return res.status(StatusCodes.NOT_FOUND).json({ message: 'Chatflow not found' })
+        if (chatflow.isPublic) return res.status(StatusCodes.OK).json(chatflow)
+        if (!req.user) return res.status(StatusCodes.UNAUTHORIZED).json({ message: GeneralErrorMessage.UNAUTHORIZED })
+        queryRunner = getRunningExpressApp().AppDataSource.createQueryRunner()
+        const workspaceUserService = new WorkspaceUserService()
+        const workspaceUser = await workspaceUserService.readWorkspaceUserByUserId(req.user.id, queryRunner)
+        if (workspaceUser.length === 0)
+            return res.status(StatusCodes.NOT_FOUND).json({ message: WorkspaceUserErrorMessage.WORKSPACE_USER_NOT_FOUND })
+        const workspaceIds = workspaceUser.map((user) => user.workspaceId)
+        if (!workspaceIds.includes(chatflow.workspaceId))
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'You are not in the workspace that owns this chatflow' })
+        return res.status(StatusCodes.OK).json(chatflow)
     } catch (error) {
         next(error)
+    } finally {
+        if (queryRunner) await queryRunner.release()
     }
 }
 
@@ -258,10 +268,10 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(
                 StatusCodes.PRECONDITION_FAILED,
-                `Error: chatflowsRouter.getSinglePublicChatbotConfig - id not provided!`
+                `Error: chatflowsController.getSinglePublicChatbotConfig - id not provided!`
             )
         }
-        const apiResponse = await chatflowsService.getSinglePublicChatbotConfig(req.params.id, req.user)
+        const apiResponse = await chatflowsService.getSinglePublicChatbotConfig(req.params.id)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -270,7 +280,7 @@ const getSinglePublicChatbotConfig = async (req: Request, res: Response, next: N
 
 const getDefaultChatflowTemplate = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const apiResponse = await chatflowsService.getDefaultChatflowTemplate(req.user!)
+        const apiResponse = await chatflowsService.getDefaultChatflowTemplate()
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -344,6 +354,27 @@ const rollbackChatflowToVersion = async (req: Request, res: Response, next: Next
     }
 }
 
+const checkIfChatflowHasChanged = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (typeof req.params === 'undefined' || !req.params.id) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                `Error: chatflowsController.checkIfChatflowHasChanged - id not provided!`
+            )
+        }
+        if (!req.params.lastUpdatedDateTime) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                `Error: chatflowsController.checkIfChatflowHasChanged - lastUpdatedDateTime not provided!`
+            )
+        }
+        const apiResponse = await chatflowsService.checkIfChatflowHasChanged(req.params.id, req.params.lastUpdatedDateTime)
+        return res.json(apiResponse)
+    } catch (error) {
+        next(error)
+    }
+}
+
 export default {
     checkIfChatflowIsValidForStreaming,
     checkIfChatflowIsValidForUploads,
@@ -352,7 +383,6 @@ export default {
     getChatflowByApiKey,
     getChatflowById,
     saveChatflow,
-    importChatflows,
     updateChatflow,
     getSinglePublicChatflow,
     getSinglePublicChatbotConfig,
@@ -361,5 +391,6 @@ export default {
     bulkUpdateChatflows,
     getChatflowVersions,
     getChatflowVersion,
-    rollbackChatflowToVersion
+    rollbackChatflowToVersion,
+    checkIfChatflowHasChanged
 }

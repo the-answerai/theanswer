@@ -126,7 +126,7 @@ theanswer/
 │   │   ├── nodes/                   # 29 node categories
 │   │   │   ├── agents/              # LangChain agent implementations
 │   │   │   ├── chatmodels/          # LLM integrations (OpenAI, Anthropic, etc.)
-│   │   │   ├── tools/               # Agent tools and MCP servers
+│   │   │   ├── tools/               # Agent tools and Tools (MCP)
 │   │   │   ├── documentloaders/     # Data source loaders
 │   │   │   └── vectorstores/        # Vector database connectors
 │   │   └── credentials/             # API credential definitions

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useLocation } from '@/utils/navigation'
+import { useLocation } from 'react-router-dom'
 
 function notifyParentOfNavigation() {
     const currentUrl = window.location.href

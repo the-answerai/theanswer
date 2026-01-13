@@ -633,7 +633,7 @@
                 "type": "Youtube MCP Tool",
                 "baseClasses": ["Tool"],
                 "tags": ["AAI"],
-                "category": "MCP Servers",
+                "category": "Tools (MCP)",
                 "description": "MCP server that integrates the Youtube API",
                 "inputParams": [
                     {

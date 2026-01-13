@@ -123,7 +123,9 @@ const getSingleNodeAsyncOptions = async (
                     isOrgAdmin: user?.permissions?.includes('org:manage'),
                     componentNodes: appServer.nodesPool.componentNodes,
                     previousNodes: requestBody.previousNodes,
-                    currentNode: requestBody.currentNode
+                    currentNode: requestBody.currentNode,
+                    searchOptions: requestBody.searchOptions,
+                    cachePool: appServer.cachePool
                 })
 
                 return dbResponse
@@ -142,7 +144,7 @@ const getSingleNodeAsyncOptions = async (
 }
 
 // execute custom function node
-const executeCustomFunction = async (user: IUser, requestBody: any) => {
+const executeCustomFunction = async (user: IUser, requestBody: any, workspaceId?: string, orgId?: string) => {
     const appServer = getRunningExpressApp()
     const executeData = {
         appDataSource: appServer.AppDataSource,
@@ -152,14 +154,16 @@ const executeCustomFunction = async (user: IUser, requestBody: any) => {
         logger,
         userId: user?.id,
         organizationId: user?.organizationId,
-        isOrgAdmin: user?.permissions?.includes('org:manage')
+        isOrgAdmin: user?.permissions?.includes('org:manage'),
+        orgId,
+        workspaceId
     }
 
     if (process.env.MODE === MODE.QUEUE) {
         const predictionQueue = appServer.queueManager.getQueue('prediction')
 
         const job = await predictionQueue.addJob(omit(executeData, OMIT_QUEUE_JOB_DATA))
-        logger.debug(`[server]: Execute Custom Function Job added to queue: ${job.id}`)
+        logger.debug(`[server]: Execute Custom Function Job added to queue by ${orgId}: ${job.id}`)
 
         const queueEvents = predictionQueue.getQueueEvents()
         const result = await job.waitUntilFinished(queueEvents)

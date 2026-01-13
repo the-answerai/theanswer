@@ -1,8 +1,10 @@
 import PropTypes from 'prop-types'
 import { Handle, Position, useUpdateNodeInternals } from 'reactflow'
-import { useEffect, useRef, useState, useContext } from 'react'
+import { useEffect, useRef, useState, useContext, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { cloneDeep } from 'lodash'
+import showdown from 'showdown'
+import parser from 'html-react-parser'
 
 // material-ui
 import { useTheme, styled } from '@mui/material/styles'
@@ -44,8 +46,6 @@ import { TabPanel } from '@/ui-component/tabs/TabPanel'
 import { TabsList } from '@/ui-component/tabs/TabsList'
 import { ArrayRenderer } from '@/ui-component/array/ArrayRenderer'
 import { Tab } from '@/ui-component/tabs/Tab'
-import { ContentfulConfig } from '@/ui-component/contentful/ContentfulConfig'
-import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
 import { ConfigInput } from '@/views/agentflowsv2/ConfigInput'
 import { BackdropLoader } from '@/ui-component/loading/BackdropLoader'
 import DocStoreInputHandler from '@/views/docstore/DocStoreInputHandler'
@@ -81,6 +81,10 @@ import useNotifier from '@/utils/useNotifier'
 import { baseURL, FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 
+// AAI
+import { ContentfulConfig } from '@/ui-component/contentful/ContentfulConfig'
+import { GoogleDrivePicker } from '@/ui-component/drive/GoogleDrivePicker'
+
 const EDITABLE_OPTIONS = ['selectedTool', 'selectedAssistant']
 
 const CustomWidthTooltip = styled(({ className, ...props }) => <Tooltip {...props} classes={{ popper: className }} />)({
@@ -99,6 +103,13 @@ const StyledPopper = styled(Popper)({
             margin: 10
         }
     }
+})
+
+const markdownConverter = new showdown.Converter({
+    simplifiedAutoLink: true,
+    strikethrough: true,
+    tables: true,
+    tasklists: true
 })
 
 // ===========================|| NodeInputHandler ||=========================== //
@@ -125,10 +136,6 @@ const NodeInputHandler = ({
     const dispatch = useDispatch()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
-
-    // Add credential state management for GoogleDrivePicker
-    const [selectedCredential, setSelectedCredential] = useState('')
-    const [selectedCredentialData, setSelectedCredentialData] = useState({})
 
     const [position, setPosition] = useState(0)
     const [showExpandDialog, setShowExpandDialog] = useState(false)
@@ -160,21 +167,13 @@ const NodeInputHandler = ({
     const [promptGeneratorDialogOpen, setPromptGeneratorDialogOpen] = useState(false)
     const [promptGeneratorDialogProps, setPromptGeneratorDialogProps] = useState({})
 
-    // Add credential handling functions
-    const handleCredentialChange = (credentialId) => {
-        setSelectedCredential(credentialId)
-    }
+    // State for Google Drive/Gmail credential handling
+    const [selectedCredential, setSelectedCredential] = useState(data.credential || null)
+    const [selectedCredentialData, setSelectedCredentialData] = useState(null)
 
-    const handleCredentialDataChange = (credentialData) => {
-        setSelectedCredentialData(credentialData)
-    }
-
-    // Initialize credential state from data
-    useEffect(() => {
-        if (data.credential) {
-            setSelectedCredential(data.credential)
-        }
-    }, [data.credential])
+    const handleCredentialDataChange = useCallback((credData) => {
+        setSelectedCredentialData(credData)
+    }, [])
 
     const handleDataChange = ({ inputParam, newValue }) => {
         data.inputs[inputParam.name] = newValue
@@ -981,7 +980,7 @@ const NodeInputHandler = ({
                                 }}
                             >
                                 <IconAlertTriangle size={30} color='orange' />
-                                <span style={{ color: 'rgb(116,66,16)', marginLeft: 10 }}>{inputParam.warning}</span>
+                                <span style={{ color: 'rgb(116,66,16)', marginLeft: 10 }}>{parser(inputParam.warning)}</span>
                             </div>
                         )}
                         {inputParam.type === 'credential' && (
@@ -992,6 +991,8 @@ const NodeInputHandler = ({
                                 onSelect={(newValue) => {
                                     data.credential = newValue
                                     data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
+                                    setSelectedCredential(newValue)
+                                    setSelectedCredentialData(null) // Reset credential data when credential changes
                                 }}
                             />
                         )}
@@ -1082,6 +1083,7 @@ const NodeInputHandler = ({
                                             variant='outlined'
                                             onClick={() => {
                                                 data.inputs[inputParam.name] = inputParam.codeExample
+                                                setReloadTimestamp(Date.now().toString())
                                             }}
                                         >
                                             See Example
@@ -1089,10 +1091,11 @@ const NodeInputHandler = ({
                                     )}
                                 </div>
                                 <div
+                                    key={`${reloadTimestamp}_${data.id}}`}
                                     style={{
                                         marginTop: '10px',
                                         border: '1px solid',
-                                        borderColor: theme.palette.grey['300'],
+                                        borderColor: theme.palette.grey[900] + 25,
                                         borderRadius: '6px',
                                         height: inputParam.rows ? '100px' : '200px'
                                     }}
@@ -1112,7 +1115,8 @@ const NodeInputHandler = ({
                         )}
 
                         {(inputParam.type === 'string' || inputParam.type === 'password' || inputParam.type === 'number') &&
-                            (inputParam?.acceptVariable ? (
+                            (inputParam?.acceptVariable &&
+                            (window.location.href.includes('v2/agentcanvas') || window.location.href.includes('v2/marketplace')) ? (
                                 <RichInput
                                     key={data.inputs[inputParam.name]}
                                     placeholder={inputParam.placeholder}
@@ -1432,7 +1436,12 @@ const NodeInputHandler = ({
                 onCancel={() => setPromptGeneratorDialogOpen(false)}
                 onConfirm={(generatedInstruction) => {
                     try {
-                        data.inputs[inputParam.name] = generatedInstruction
+                        if (inputParam?.acceptVariable && window.location.href.includes('v2/agentcanvas')) {
+                            const htmlContent = markdownConverter.makeHtml(generatedInstruction)
+                            data.inputs[inputParam.name] = htmlContent
+                        } else {
+                            data.inputs[inputParam.name] = generatedInstruction
+                        }
                         setPromptGeneratorDialogOpen(false)
                     } catch (error) {
                         enqueueSnackbar({

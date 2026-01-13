@@ -4,7 +4,9 @@ import PropTypes from 'prop-types'
 
 import { styled, alpha } from '@mui/material/styles'
 import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
+import { PermissionMenuItem } from '@/ui-component/button/RBACButtons'
+import EditIcon from '@mui/icons-material/Edit'
+import Divider from '@mui/material/Divider'
 import FileCopyIcon from '@mui/icons-material/FileCopy'
 import FileDownloadIcon from '@mui/icons-material/Downloading'
 import FileDeleteIcon from '@mui/icons-material/Delete'
@@ -13,18 +15,28 @@ import PictureInPictureAltIcon from '@mui/icons-material/PictureInPictureAlt'
 import ThumbsUpDownOutlinedIcon from '@mui/icons-material/ThumbsUpDownOutlined'
 import VpnLockOutlinedIcon from '@mui/icons-material/VpnLockOutlined'
 import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined'
-import SettingsIcon from '@mui/icons-material/Settings'
 import ExportTemplateOutlinedIcon from '@mui/icons-material/BookmarksOutlined'
 import Button from '@mui/material/Button'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { IconX } from '@tabler/icons-react'
 
+import chatflowsApi from '@/api/chatflows'
+
+import useApi from '@/hooks/useApi'
+import useConfirm from '@/hooks/useConfirm'
 import { uiBaseURL } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
-import ChatflowConfigurationDialog from '../dialog/ChatflowConfigurationDialog'
+
+import SaveChatflowDialog from '@/ui-component/dialog/SaveChatflowDialog'
+import TagDialog from '@/ui-component/dialog/TagDialog'
+import StarterPromptsDialog from '@/ui-component/dialog/StarterPromptsDialog'
+
 import { generateExportFlowData } from '@/utils/genericHelper'
+import useNotifier from '@/utils/useNotifier'
+import ChatFeedbackDialog from '../dialog/ChatFeedbackDialog'
+import AllowedDomainsDialog from '../dialog/AllowedDomainsDialog'
+import SpeechToTextDialog from '../dialog/SpeechToTextDialog'
 import ExportAsTemplateDialog from '@/ui-component/dialog/ExportAsTemplateDialog'
-import { Divider } from '@mui/material'
 
 const StyledMenu = styled((props) => (
     <Menu
@@ -62,16 +74,28 @@ const StyledMenu = styled((props) => (
     }
 }))
 
-export default function FlowListMenu({ chatflow, isAgentCanvas }) {
+export default function FlowListMenu({ chatflow, isAgentCanvas, isAgentflowV2, setError, updateFlowsApi }) {
+    const { confirm } = useConfirm()
     const dispatch = useDispatch()
+    const updateChatflowApi = useApi(chatflowsApi.updateChatflow)
 
+    useNotifier()
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
+    const [flowDialogOpen, setFlowDialogOpen] = useState(false)
+    const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
+    const [categoryDialogProps, setCategoryDialogProps] = useState({})
     const [anchorEl, setAnchorEl] = useState(null)
     const open = Boolean(anchorEl)
-    const [chatflowConfigurationDialogOpen, setChatflowConfigurationDialogOpen] = useState(false)
-    const [chatflowConfigurationDialogProps, setChatflowConfigurationDialogProps] = useState({})
+    const [conversationStartersDialogOpen, setConversationStartersDialogOpen] = useState(false)
+    const [conversationStartersDialogProps, setConversationStartersDialogProps] = useState({})
+    const [chatFeedbackDialogOpen, setChatFeedbackDialogOpen] = useState(false)
+    const [chatFeedbackDialogProps, setChatFeedbackDialogProps] = useState({})
+    const [allowedDomainsDialogOpen, setAllowedDomainsDialogOpen] = useState(false)
+    const [allowedDomainsDialogProps, setAllowedDomainsDialogProps] = useState({})
+    const [speechToTextDialogOpen, setSpeechToTextDialogOpen] = useState(false)
+    const [speechToTextDialogProps, setSpeechToTextDialogProps] = useState({})
 
     const [exportTemplateDialogOpen, setExportTemplateDialogOpen] = useState(false)
     const [exportTemplateDialogProps, setExportTemplateDialogProps] = useState({})
@@ -86,9 +110,9 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         setAnchorEl(null)
     }
 
-    const handleChatflowConfiguration = () => {
+    const handleFlowRename = () => {
         setAnchorEl(null)
-        setChatflowConfigurationDialogOpen(true)
+        setFlowDialogOpen(true)
     }
 
     const handleFlowStarterPrompts = () => {
@@ -142,7 +166,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         }
         try {
             await updateChatflowApi.request(chatflow.id, updateBody)
-            if (isAgentCanvas && localStorage.getItem('agentFlowVersion') === 'v2') {
+            if (isAgentCanvas && isAgentflowV2) {
                 await updateFlowsApi.request('AGENTFLOW')
             } else {
                 await updateFlowsApi.request(isAgentCanvas ? 'MULTIAGENT' : undefined)
@@ -217,7 +241,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
         if (isConfirmed) {
             try {
                 await chatflowsApi.deleteChatflow(chatflow.id)
-                if (isAgentCanvas && localStorage.getItem('agentFlowVersion') === 'v2') {
+                if (isAgentCanvas && isAgentflowV2) {
                     await updateFlowsApi.request('AGENTFLOW')
                 } else {
                     await updateFlowsApi.request(isAgentCanvas ? 'MULTIAGENT' : undefined)
@@ -225,10 +249,11 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
             } catch (error) {
                 if (setError) setError(error)
                 enqueueSnackbar({
-                    message: 'Chatflow Configuration Saved',
+                    message: typeof error.response.data === 'object' ? error.response.data.message : error.response.data,
                     options: {
                         key: new Date().getTime() + Math.random(),
-                        variant: 'success',
+                        variant: 'error',
+                        persist: true,
                         action: (key) => (
                             <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
                                 <IconX />
@@ -238,17 +263,19 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
                 })
             }
         }
-        setChatflowConfigurationDialogOpen(true)
     }
 
     const handleDuplicate = () => {
         setAnchorEl(null)
         try {
-            const duplicatedFlow = generateExportFlowData(chatflow)
-            delete duplicatedFlow.id
-            duplicatedFlow.visibility = ['Private']
-            localStorage.setItem('duplicatedFlowData', JSON.stringify(duplicatedFlow))
-            window.open(`${uiBaseURL}/${isAgentCanvas ? 'agentcanvas' : 'canvas'}`, '_blank')
+            localStorage.setItem('duplicatedFlowData', chatflow.flowData)
+            if (isAgentflowV2) {
+                window.open(`${uiBaseURL}/v2/agentcanvas`, '_blank')
+            } else if (isAgentCanvas) {
+                window.open(`${uiBaseURL}/agentcanvas`, '_blank')
+            } else {
+                window.open(`${uiBaseURL}/canvas`, '_blank')
+            }
         } catch (e) {
             console.error(e)
         }
@@ -296,53 +323,120 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
                 open={open}
                 onClose={handleClose}
             >
-                <MenuItem onClick={handleChatflowConfiguration} disableRipple>
-                    <SettingsIcon />
-                    Configuration
-                </MenuItem>
-                <MenuItem onClick={handleDuplicate} disableRipple>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:update' : 'chatflows:update'}
+                    onClick={handleFlowRename}
+                    disableRipple
+                >
+                    <EditIcon />
+                    Rename
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:duplicate' : 'chatflows:duplicate'}
+                    onClick={handleDuplicate}
+                    disableRipple
+                >
                     <FileCopyIcon />
                     Duplicate
-                </MenuItem>
-                <MenuItem onClick={handleExport} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:export' : 'chatflows:export'}
+                    onClick={handleExport}
+                    disableRipple
+                >
                     <FileDownloadIcon />
                     Export
-                </MenuItem>
-                <MenuItem onClick={handleExportTemplate} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem permissionId={'templates:flowexport'} onClick={handleExportTemplate} disableRipple>
                     <ExportTemplateOutlinedIcon />
                     Save As Template
-                </MenuItem>
+                </PermissionMenuItem>
                 <Divider sx={{ my: 0.5 }} />
-                <MenuItem onClick={handleFlowStarterPrompts} disableRipple>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:config' : 'chatflows:config'}
+                    onClick={handleFlowStarterPrompts}
+                    disableRipple
+                >
                     <PictureInPictureAltIcon />
                     Starter Prompts
-                </MenuItem>
-                <MenuItem onClick={handleFlowChatFeedback} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:config' : 'chatflows:config'}
+                    onClick={handleFlowChatFeedback}
+                    disableRipple
+                >
                     <ThumbsUpDownOutlinedIcon />
                     Chat Feedback
-                </MenuItem>
-                <MenuItem onClick={handleAllowedDomains} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:domains' : 'chatflows:domains'}
+                    onClick={handleAllowedDomains}
+                    disableRipple
+                >
                     <VpnLockOutlinedIcon />
                     Allowed Domains
-                </MenuItem>
-                <MenuItem onClick={handleSpeechToText} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:config' : 'chatflows:config'}
+                    onClick={handleSpeechToText}
+                    disableRipple
+                >
                     <MicNoneOutlinedIcon />
                     Speech To Text
-                </MenuItem>
-                <MenuItem onClick={handleFlowCategory} disableRipple>
+                </PermissionMenuItem>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:update' : 'chatflows:update'}
+                    onClick={handleFlowCategory}
+                    disableRipple
+                >
                     <FileCategoryIcon />
                     Update Category
-                </MenuItem>
+                </PermissionMenuItem>
                 <Divider sx={{ my: 0.5 }} />
-                <MenuItem onClick={handleDelete} disableRipple>
+                <PermissionMenuItem
+                    permissionId={isAgentCanvas ? 'agentflows:delete' : 'chatflows:delete'}
+                    onClick={handleDelete}
+                    disableRipple
+                >
                     <FileDeleteIcon />
                     Delete
-                </MenuItem>
+                </PermissionMenuItem>
             </StyledMenu>
-            <ChatflowConfigurationDialog
-                show={chatflowConfigurationDialogOpen}
-                dialogProps={chatflowConfigurationDialogProps}
-                onCancel={() => setChatflowConfigurationDialogOpen(false)}
+            <SaveChatflowDialog
+                show={flowDialogOpen}
+                dialogProps={{
+                    title: `Rename ${title}`,
+                    confirmButtonName: 'Rename',
+                    cancelButtonName: 'Cancel'
+                }}
+                onCancel={() => setFlowDialogOpen(false)}
+                onConfirm={saveFlowRename}
+            />
+            <TagDialog
+                isOpen={categoryDialogOpen}
+                dialogProps={categoryDialogProps}
+                onClose={() => setCategoryDialogOpen(false)}
+                onSubmit={saveFlowCategory}
+            />
+            <StarterPromptsDialog
+                show={conversationStartersDialogOpen}
+                dialogProps={conversationStartersDialogProps}
+                onCancel={() => setConversationStartersDialogOpen(false)}
+            />
+            <ChatFeedbackDialog
+                show={chatFeedbackDialogOpen}
+                dialogProps={chatFeedbackDialogProps}
+                onCancel={() => setChatFeedbackDialogOpen(false)}
+            />
+            <AllowedDomainsDialog
+                show={allowedDomainsDialogOpen}
+                dialogProps={allowedDomainsDialogProps}
+                onCancel={() => setAllowedDomainsDialogOpen(false)}
+            />
+            <SpeechToTextDialog
+                show={speechToTextDialogOpen}
+                dialogProps={speechToTextDialogProps}
+                onCancel={() => setSpeechToTextDialogOpen(false)}
             />
             {exportTemplateDialogOpen && (
                 <ExportAsTemplateDialog
@@ -358,6 +452,7 @@ export default function FlowListMenu({ chatflow, isAgentCanvas }) {
 FlowListMenu.propTypes = {
     chatflow: PropTypes.object,
     isAgentCanvas: PropTypes.bool,
+    isAgentflowV2: PropTypes.bool,
     setError: PropTypes.func,
     updateFlowsApi: PropTypes.object
 }

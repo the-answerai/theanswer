@@ -109,6 +109,12 @@ let nextConfig = withBundleAnalyzer({
         NEXT_PUBLIC_ERROR_REPORTING_ENABLED: process.env.LINEAR_API_KEY ? 'true' : ''
     },
     webpack: (config, { isServer }) => {
+        // Redirect react-router-dom imports to our navigation shim
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'react-router-dom': require.resolve('../../packages/ui/src/utils/navigation.tsx')
+        }
+
         config.externals = [...config.externals, 'db', 'puppeteer', 'handlebars']
         config.plugins = [
             ...config.plugins,
@@ -139,6 +145,7 @@ let nextConfig = withBundleAnalyzer({
                 }
             ]
         })
+
         if (isServer) {
             config.plugins = [...config.plugins, new PrismaPlugin()]
             // Avoid AWS SDK Node.js require issue

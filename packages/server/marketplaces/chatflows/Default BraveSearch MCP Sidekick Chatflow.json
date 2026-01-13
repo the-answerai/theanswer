@@ -150,7 +150,7 @@
                 "type": "BraveSearch MCP Tool",
                 "baseClasses": ["Tool"],
                 "tags": ["AAI"],
-                "category": "MCP Servers",
+                "category": "Tools (MCP)",
                 "description": "MCP server that integrates the Brave Search API - a real-time API to access web search capabilities",
                 "inputParams": [
                     {

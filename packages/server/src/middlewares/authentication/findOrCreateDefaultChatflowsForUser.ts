@@ -1,8 +1,13 @@
 import { DataSource } from 'typeorm'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { User } from '../../database/entities/User'
+import { Workspace } from '../../enterprise/database/entities/workspace.entity'
 
-export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSource, user: User) => {
+export const findOrCreateDefaultChatflowsForUser = async (
+    AppDataSource: DataSource,
+    user: User,
+    activeWorkspaceId?: string
+) => {
     if (!user) return
 
     // Always check database for latest defaultChatflowId to avoid race conditions
@@ -66,6 +71,16 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
         })
 
         if (template) {
+            // Always use Personal Workspace for default chatflows
+            const workspaceRepo = AppDataSource.getRepository(Workspace)
+            const personalWs = await workspaceRepo.findOne({
+                where: {
+                    organizationId: user.organizationId,
+                    name: 'Personal Workspace'
+                }
+            })
+            const targetWorkspaceId = personalWs?.id || activeWorkspaceId
+
             const templateCopy = { ...template }
             delete (templateCopy as any).id
             delete (templateCopy as any).createdDate
@@ -75,7 +90,8 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
                 ...templateCopy,
                 parentChatflowId: firstId,
                 userId: user.id,
-                organizationId: user.organizationId
+                organizationId: user.organizationId,
+                workspaceId: targetWorkspaceId
             }
 
             // Insert the new chatflow

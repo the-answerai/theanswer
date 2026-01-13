@@ -19,7 +19,7 @@ import openAISVG from '@/assets/images/openai.svg'
 import assemblyAIPng from '@/assets/images/assemblyai.png'
 import localAiPng from '@/assets/images/localai.png'
 import azureSvg from '@/assets/images/azure_openai.svg'
-import groqPng from '@/assets/images/groq.gif'
+import groqPng from '@/assets/images/groq.png'
 
 // store
 import useNotifier from '@/utils/useNotifier'
@@ -385,10 +385,14 @@ const SpeechToText = ({ dialogProps }) => {
                                     width: 50,
                                     height: 50,
                                     borderRadius: '50%',
-                                    backgroundColor: 'white'
+                                    backgroundColor: 'white',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}
                             >
-                                {/* <Image
+                                <img
                                     style={{
                                         width: '100%',
                                         height: '100%',
@@ -397,14 +401,22 @@ const SpeechToText = ({ dialogProps }) => {
                                     }}
                                     alt='AI'
                                     src={speechToTextProviders[selectedProvider].icon}
-                                /> */}
+                                />
                             </div>
                         </ListItemAvatar>
                         <ListItemText
                             sx={{ ml: 1 }}
                             primary={speechToTextProviders[selectedProvider].label}
                             secondary={
-                                <a target='_blank' rel='noreferrer' href={speechToTextProviders[selectedProvider].url}>
+                                <a
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    href={speechToTextProviders[selectedProvider].url}
+                                    style={{
+                                        color: theme?.customization?.isDarkMode ? '#90caf9' : '#1976d2',
+                                        textDecoration: 'underline'
+                                    }}
+                                >
                                     {speechToTextProviders[selectedProvider].url}
                                 </a>
                             }

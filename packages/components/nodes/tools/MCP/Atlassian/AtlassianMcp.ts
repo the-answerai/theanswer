@@ -44,7 +44,7 @@ class Atlassian_MCP implements INode {
         this.version = 1.0
         this.type = 'Atlassian MCP Tool'
         this.icon = 'atlassian.svg'
-        this.category = 'MCP Servers'
+        this.category = 'Tools (MCP)'
         this.tags = ['AAI']
         this.description = 'MCP server that integrates with Atlassian JIRA and Confluence using OAuth authentication'
         this.documentation = 'https://support.atlassian.com/rovo/docs/getting-started-with-the-atlassian-remote-mcp-server/'

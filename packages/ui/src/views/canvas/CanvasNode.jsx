@@ -82,6 +82,8 @@ const CanvasNode = ({ data }) => {
                     componentNode?.deprecateMessage ??
                         'This node will be deprecated in the next release. Change to a new node tagged with NEW'
                 )
+            } else if (componentNode.warning) {
+                setWarningMessage(componentNode.warning)
             } else {
                 setWarningMessage('')
             }
@@ -189,7 +191,7 @@ const CanvasNode = ({ data }) => {
                                     >
                                         <img
                                             style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'contain' }}
-                                            src={LlamaindexPNG}
+                                            src={typeof LlamaindexPNG === 'object' && LlamaindexPNG?.src ? LlamaindexPNG.src : LlamaindexPNG}
                                             alt='LlamaIndex'
                                         />
                                     </div>

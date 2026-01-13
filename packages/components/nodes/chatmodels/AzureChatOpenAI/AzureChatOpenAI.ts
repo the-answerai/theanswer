@@ -27,7 +27,7 @@ class AzureChatOpenAI_ChatModels implements INode {
     constructor() {
         this.label = 'Azure ChatOpenAI'
         this.name = 'azureChatOpenAI'
-        this.version = 7.0
+        this.version = 7.1
         this.type = 'AzureChatOpenAI'
         this.icon = 'Azure.svg'
         this.category = 'Chat Models'
@@ -156,6 +156,15 @@ class AzureChatOpenAI_ChatModels implements INode {
                 additionalParams: true
             },
             {
+                label: 'Reasoning',
+                description: 'Whether the model supports reasoning. Only applicable for reasoning models.',
+                name: 'reasoning',
+                type: 'boolean',
+                default: false,
+                optional: true,
+                additionalParams: true
+            },
+            {
                 label: 'Reasoning Effort',
                 description: 'Constrains effort on reasoning for reasoning models. Only applicable for o1 and o3 models.',
                 name: 'reasoningEffort',
@@ -174,9 +183,34 @@ class AzureChatOpenAI_ChatModels implements INode {
                         name: 'high'
                     }
                 ],
-                default: 'medium',
-                optional: false,
-                additionalParams: true
+                additionalParams: true,
+                show: {
+                    reasoning: true
+                }
+            },
+            {
+                label: 'Reasoning Summary',
+                description: `A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process`,
+                name: 'reasoningSummary',
+                type: 'options',
+                options: [
+                    {
+                        label: 'Auto',
+                        name: 'auto'
+                    },
+                    {
+                        label: 'Concise',
+                        name: 'concise'
+                    },
+                    {
+                        label: 'Detailed',
+                        name: 'detailed'
+                    }
+                ],
+                additionalParams: true,
+                show: {
+                    reasoning: true
+                }
             }
         ]
     }
@@ -200,7 +234,8 @@ class AzureChatOpenAI_ChatModels implements INode {
         const topP = nodeData.inputs?.topP as string
         const basePath = nodeData.inputs?.basepath as string
         const baseOptions = nodeData.inputs?.baseOptions
-        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.ReasoningEffort | null
+        const reasoningEffort = nodeData.inputs?.reasoningEffort as OpenAIClient.Chat.ChatCompletionReasoningEffort | null
+        const reasoningSummary = nodeData.inputs?.reasoningSummary as 'auto' | 'concise' | 'detailed' | null
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const azureOpenAIApiKey = getCredentialParam('azureOpenAIApiKey', credentialData, nodeData)
@@ -244,6 +279,9 @@ class AzureChatOpenAI_ChatModels implements INode {
             const reasoning: OpenAIClient.Reasoning = {}
             if (reasoningEffort) {
                 reasoning.effort = reasoningEffort
+            }
+            if (reasoningSummary) {
+                reasoning.summary = reasoningSummary
             }
             obj.reasoning = reasoning
 

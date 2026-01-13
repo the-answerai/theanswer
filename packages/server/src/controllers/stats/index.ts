@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import { Request, Response, NextFunction } from 'express'
 import statsService from '../../services/stats'
-import { ChatMessageRatingType, ChatType } from '../../Interface'
+import { ChatMessageRatingType, ChatType, IUser } from '../../Interface'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 
 const getChatflowStats = async (req: Request, res: Response, next: NextFunction) => {
@@ -46,14 +46,15 @@ const getChatflowStats = async (req: Request, res: Response, next: NextFunction)
             }
         }
         const apiResponse = await statsService.getChatflowStats(
-            req.user!,
+            req.user as IUser,
             chatflowid,
             chatTypes,
             startDate,
             endDate,
             '',
             true,
-            feedbackTypeFilters
+            feedbackTypeFilters,
+            req.user?.activeWorkspaceId
         )
         return res.json(apiResponse)
     } catch (error) {

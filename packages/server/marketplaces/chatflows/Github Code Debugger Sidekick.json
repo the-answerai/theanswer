@@ -699,7 +699,7 @@
                 "type": "Github MCP Tool",
                 "baseClasses": ["Tool"],
                 "tags": ["AAI"],
-                "category": "MCP Servers",
+                "category": "Tools (MCP)",
                 "description": "MCP Server for the GitHub API",
                 "inputParams": [
                     {

@@ -106,7 +106,7 @@ export class DallePostTool extends Tool {
             // Convert FILE-STORAGE:: reference to a full URL with domain
             const domain =
                 process.env.API_HOST || process.env.DOMAIN || process.env.FLOWISE_DOMAIN || this.baseURL || 'http://localhost:4000'
-            const imageFileName = imageStorageUrl.replace('FILE-STORAGE::', '')
+            const imageFileName = imageStorageUrl.path.replace('FILE-STORAGE::', '')
             const fullImageUrl = `${domain}/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${orgId}%2F${usrId}&fileName=${imageFileName}`
 
             const response = {
@@ -117,7 +117,7 @@ export class DallePostTool extends Tool {
 
             // Add JSON URL to response if JSON was stored
             if (jsonStorageUrl) {
-                const jsonFileName = jsonStorageUrl.replace('FILE-STORAGE::', '')
+                const jsonFileName = jsonStorageUrl.path.replace('FILE-STORAGE::', '')
                 response.jsonUrl = `${domain}/api/v1/get-upload-file?chatflowId=dalle-images&chatId=${orgId}%2F${usrId}&fileName=${jsonFileName}`
             }
 

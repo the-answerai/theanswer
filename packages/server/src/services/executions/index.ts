@@ -1,42 +1,36 @@
 import { StatusCodes } from 'http-status-codes'
-import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { getErrorMessage } from '../../errors/utils'
-import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { Execution } from '../../database/entities/Execution'
-import { ExecutionState, IAgentflowExecutedData, IUser } from '../../Interface'
 import { In } from 'typeorm'
 import { ChatMessage } from '../../database/entities/ChatMessage'
-import { _removeCredentialId } from '../../utils/buildAgentflow'
+import { Execution } from '../../database/entities/Execution'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { getErrorMessage } from '../../errors/utils'
+import { ExecutionState, IAgentflowExecutedData } from '../../Interface'
+import { _removeCredentialId } from '../../utils'
+import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 
-interface ExecutionFilters {
+export interface ExecutionFilters {
     id?: string
     agentflowId?: string
+    agentflowName?: string
     sessionId?: string
     state?: ExecutionState
     startDate?: Date
     endDate?: Date
     page?: number
     limit?: number
+    workspaceId?: string
 }
 
-interface UserFilter {
-    userId?: string
-    organizationId: string
-}
-
-const getExecutionById = async (executionId: string, user?: IUser): Promise<Execution | null> => {
+const getExecutionById = async (executionId: string, workspaceId?: string): Promise<Execution | null> => {
     try {
         const appServer = getRunningExpressApp()
         const executionRepository = appServer.AppDataSource.getRepository(Execution)
 
-        const queryOptions: any = { where: { id: executionId } }
+        const query: any = { id: executionId }
+        // Add workspace filtering if provided
+        if (workspaceId) query.workspaceId = workspaceId
 
-        // If user is provided, add user/organization filtering
-        if (user) {
-            queryOptions.where.organizationId = user.organizationId
-        }
-
-        const res = await executionRepository.findOne(queryOptions)
+        const res = await executionRepository.findOne({ where: query })
         if (!res) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Execution ${executionId} not found`)
         }
@@ -69,32 +63,27 @@ const getPublicExecutionById = async (executionId: string): Promise<Execution | 
     }
 }
 
-const getAllExecutions = async (filters: ExecutionFilters = {}, userFilter?: UserFilter): Promise<{ data: Execution[]; total: number }> => {
+const getAllExecutions = async (filters: ExecutionFilters = {}): Promise<{ data: Execution[]; total: number }> => {
     try {
         const appServer = getRunningExpressApp()
-        const { id, agentflowId, sessionId, state, startDate, endDate, page = 1, limit = 10 } = filters
+        const { id, agentflowId, agentflowName, sessionId, state, startDate, endDate, page = 1, limit = 12, workspaceId } = filters
 
         // Handle UUID fields properly using raw parameters to avoid type conversion issues
         // This uses the query builder instead of direct objects for compatibility with UUID fields
         const queryBuilder = appServer.AppDataSource.getRepository(Execution)
             .createQueryBuilder('execution')
             .leftJoinAndSelect('execution.agentflow', 'agentflow')
-            .orderBy('execution.createdDate', 'DESC')
+            .orderBy('execution.updatedDate', 'DESC')
             .skip((page - 1) * limit)
             .take(limit)
 
-        // Apply user/organization filtering if provided
-        if (userFilter) {
-            queryBuilder.andWhere('execution.organizationId = :organizationId', { organizationId: userFilter.organizationId })
-            if (userFilter.userId) {
-                queryBuilder.andWhere('execution.userId = :userId', { userId: userFilter.userId })
-            }
-        }
-
         if (id) queryBuilder.andWhere('execution.id = :id', { id })
         if (agentflowId) queryBuilder.andWhere('execution.agentflowId = :agentflowId', { agentflowId })
+        if (agentflowName)
+            queryBuilder.andWhere('LOWER(agentflow.name) LIKE LOWER(:agentflowName)', { agentflowName: `%${agentflowName}%` })
         if (sessionId) queryBuilder.andWhere('execution.sessionId = :sessionId', { sessionId })
         if (state) queryBuilder.andWhere('execution.state = :state', { state })
+        if (workspaceId) queryBuilder.andWhere('execution.workspaceId = :workspaceId', { workspaceId })
 
         // Date range conditions
         if (startDate && endDate) {
@@ -116,18 +105,15 @@ const getAllExecutions = async (filters: ExecutionFilters = {}, userFilter?: Use
     }
 }
 
-const updateExecution = async (executionId: string, data: Partial<Execution>, user?: IUser): Promise<Execution | null> => {
+const updateExecution = async (executionId: string, data: Partial<Execution>, workspaceId?: string): Promise<Execution | null> => {
     try {
         const appServer = getRunningExpressApp()
 
-        const queryOptions: any = { id: executionId }
+        const query: any = { id: executionId }
+        // Add workspace filtering if provided
+        if (workspaceId) query.workspaceId = workspaceId
 
-        // If user is provided, add user/organization filtering
-        if (user) {
-            queryOptions.organizationId = user.organizationId
-        }
-
-        const execution = await appServer.AppDataSource.getRepository(Execution).findOneBy(queryOptions)
+        const execution = await appServer.AppDataSource.getRepository(Execution).findOneBy(query)
         if (!execution) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Execution ${executionId} not found`)
         }
@@ -145,32 +131,24 @@ const updateExecution = async (executionId: string, data: Partial<Execution>, us
 }
 
 /**
- * Delete multiple executions by their IDs with user scoping
+ * Delete multiple executions by their IDs
  * @param executionIds Array of execution IDs to delete
- * @param userFilter User/organization filter to ensure only owned executions are deleted
+ * @param workspaceId Optional workspace ID to filter executions
  * @returns Object with success status and count of deleted executions
  */
-const deleteExecutions = async (executionIds: string[], userFilter?: UserFilter): Promise<{ success: boolean; deletedCount: number }> => {
+const deleteExecutions = async (executionIds: string[], workspaceId?: string): Promise<{ success: boolean; deletedCount: number }> => {
     try {
         const appServer = getRunningExpressApp()
         const executionRepository = appServer.AppDataSource.getRepository(Execution)
 
-        let whereConditions: any = {
-            id: In(executionIds)
-        }
+        // Create the where condition with workspace filtering if provided
+        const whereCondition: any = { id: In(executionIds) }
+        if (workspaceId) whereCondition.workspaceId = workspaceId
 
-        // Apply user/organization filtering if provided
-        if (userFilter) {
-            whereConditions.organizationId = userFilter.organizationId
-            if (userFilter.userId) {
-                whereConditions.userId = userFilter.userId
-            }
-        }
+        // Delete executions where id is in the provided array and belongs to the workspace
+        const result = await executionRepository.delete(whereCondition)
 
-        // Delete executions where id is in the provided array and user has access
-        const result = await executionRepository.delete(whereConditions)
-
-        // Update chat message executionId column to NULL for the deleted executions
+        // Update chat message executionId column to NULL
         await appServer.AppDataSource.getRepository(ChatMessage).update({ executionId: In(executionIds) }, { executionId: null as any })
 
         return {

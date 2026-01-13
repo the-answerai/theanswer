@@ -139,8 +139,8 @@ export const generateFollowUpPrompts = async (
                 const chain = prompt.pipe(llm).pipe(parser)
                 const structuredResponse = await chain.invoke(
                     {
-                        history: apiMessageContent,
-                        format_instructions: formatInstructions
+                    history: apiMessageContent,
+                    format_instructions: formatInstructions
                     },
                     callbacks.length ? { callbacks } : undefined
                 )
@@ -220,6 +220,7 @@ export const generateFollowUpPrompts = async (
                     model: providerConfig.modelName,
                     temperature: parseFloat(`${providerConfig.temperature}`)
                 })
+                // @ts-ignore
                 const structuredLLM = model.withStructuredOutput(FollowUpPromptType)
                 const structuredResponse = await structuredLLM.invoke(followUpPromptsPrompt, callbacks.length ? { callbacks } : undefined)
                 return structuredResponse

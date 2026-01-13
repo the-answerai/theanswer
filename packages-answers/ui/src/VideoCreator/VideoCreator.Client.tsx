@@ -556,6 +556,7 @@ const VideoCreator = () => {
         try {
             const response = await fetch(`${user.chatflowDomain}/api/v1/video-generator/recent`, {
                 headers: {
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 }
             })
@@ -598,6 +599,7 @@ const VideoCreator = () => {
             try {
                 const response = await fetch(`${user.chatflowDomain}/api/v1/video-generator/status/${jobId}`, {
                     headers: {
+                        'x-request-from': 'aai',
                         Authorization: `Bearer ${accessToken}`
                     }
                 })
@@ -648,16 +650,7 @@ const VideoCreator = () => {
             if (aspectRatio === '9:16') {
                 const [width, height] = size.split('x').map(Number)
                 actualSize = `${height}x${width}` // Swap for portrait
-                console.log(`[Video Creator] Adjusted size for 9:16: ${size} → ${actualSize}`)
             }
-
-            console.log('[Video Creator] Generation params:', {
-                model,
-                provider,
-                size: actualSize,
-                aspectRatio,
-                hasReferenceImage: !!referenceImage
-            })
 
             const body: Record<string, unknown> = {
                 prompt: generationPrompt,
@@ -695,6 +688,7 @@ const VideoCreator = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(body)
@@ -848,6 +842,7 @@ const VideoCreator = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-request-from': 'aai',
                     Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(enhancePayload)
