@@ -80,12 +80,13 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 throw new Error('Failed to load Fiddler credential component')
             }
 
-            // Configure modal for ADD mode
+            // Configure modal for ADD mode with org visibility for shared credentials
             const dialogProps = {
                 type: 'ADD',
                 cancelButtonName: 'Cancel',
                 confirmButtonName: 'Add',
-                credentialComponent: componentCredential
+                credentialComponent: componentCredential,
+                defaultVisibility: ['Organization'] // AAI enhancement: force org visibility for Fiddler
             }
 
             setCredentialDialogProps(dialogProps)
