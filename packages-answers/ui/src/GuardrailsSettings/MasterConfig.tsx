@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import { useDispatch } from 'react-redux'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
@@ -10,7 +11,11 @@ import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
+import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
+import useConfirm from 'flowise-ui/src/hooks/useConfirm'
+import { IconTrash, IconEdit, IconX } from '@tabler/icons-react'
 
+// Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
 
 interface MasterConfigProps {
@@ -34,6 +39,12 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     const [showCredentialDialog, setShowCredentialDialog] = useState(false)
     const [credentialDialogProps, setCredentialDialogProps] = useState<any>({})
     const [showCredentialDropdown, setShowCredentialDropdown] = useState(false)
+
+    // Hooks for snackbar notifications and confirmation dialog
+    const dispatch = useDispatch()
+    const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
+    const closeSnackbar = (...args: any[]) => dispatch(closeSnackbarAction(...args))
+    const { confirm } = useConfirm()
 
     // Load Fiddler credentials on mount
     useEffect(() => {
@@ -76,37 +87,35 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
             const componentCredential = response.data
 
-            if (!componentCredential || !componentCredential.name) {
+            if (!componentCredential?.name) {
                 throw new Error('Failed to load Fiddler credential component')
             }
 
-            // Configure modal for ADD mode with org visibility for shared credentials
-            const dialogProps = {
+            // Use core dialog with defaultVisibility for org-wide credentials
+            setCredentialDialogProps({
                 type: 'ADD',
                 cancelButtonName: 'Cancel',
                 confirmButtonName: 'Add',
                 credentialComponent: componentCredential,
-                defaultVisibility: ['Organization'] // AAI enhancement: force org visibility for Fiddler
-            }
-
-            setCredentialDialogProps(dialogProps)
+                defaultVisibility: ['Organization'] // AAI enhancement: force org visibility
+            })
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
-            alert('Failed to load credential creation form. Please try again.')
         }
     }
 
-    const handleCredentialDialogConfirm = (newCredentialId: string) => {
+    const handleCredentialDialogConfirm = (credentialId: string) => {
         setShowCredentialDialog(false)
 
-        // Auto-select the newly created credential
-        if (newCredentialId) {
-            setSelectedCredential(newCredentialId)
-            onConfigChange({ credentialId: newCredentialId })
+        // Refresh credentials list
+        loadCredentials()
 
-            // Refresh the credentials list
-            loadCredentials()
+        // For new credentials, auto-select and auto-enable guardrails
+        if (credentialId && credentialDialogProps.type === 'ADD') {
+            setSelectedCredential(credentialId)
+            setEnabled(true)
+            onConfigChange({ credentialId: credentialId, enabled: true })
         }
     }
 
@@ -115,22 +124,63 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     }
 
     const handleEditCredential = async () => {
-        if (!selectedCredential) return
+        if (!selectedCredentialObj) return
 
-        try {
-            // Configure modal for EDIT mode
-            const dialogProps = {
-                type: 'EDIT',
-                cancelButtonName: 'Cancel',
-                confirmButtonName: 'Save',
-                credentialId: selectedCredential
+        setCredentialDialogProps({
+            type: 'EDIT',
+            cancelButtonName: 'Cancel',
+            confirmButtonName: 'Save',
+            data: selectedCredentialObj,
+            defaultVisibility: ['Organization']
+        })
+        setShowCredentialDialog(true)
+    }
+
+    const handleDeleteCredential = async () => {
+        if (!selectedCredentialObj) return
+
+        const isConfirmed = await confirm({
+            title: 'Delete',
+            description: `Delete credential "${selectedCredentialObj.name}"?`,
+            confirmButtonName: 'Delete',
+            cancelButtonName: 'Cancel'
+        })
+
+        if (isConfirmed) {
+            try {
+                await credentialsApi.deleteCredential(selectedCredentialObj.id)
+                enqueueSnackbar({
+                    message: 'Credential deleted',
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'success',
+                        action: (key: any) => (
+                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                <IconX />
+                            </Button>
+                        )
+                    }
+                })
+                // Clear selection and refresh
+                setSelectedCredential('')
+                onConfigChange({ credentialId: '' })
+                loadCredentials()
+            } catch (error: any) {
+                const errorData = error.response?.data || `${error.response?.status}: ${error.response?.statusText}`
+                enqueueSnackbar({
+                    message: `Failed to delete credential: ${errorData}`,
+                    options: {
+                        key: new Date().getTime() + Math.random(),
+                        variant: 'error',
+                        persist: true,
+                        action: (key: any) => (
+                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                                <IconX />
+                            </Button>
+                        )
+                    }
+                })
             }
-
-            setCredentialDialogProps(dialogProps)
-            setShowCredentialDialog(true)
-        } catch (error) {
-            console.error('Error opening credential editor:', error)
-            alert('Failed to open credential editor. Please try again.')
         }
     }
 
@@ -209,11 +259,32 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button variant='outlined' size='small' onClick={handleEditCredential}>
+                            <Button
+                                variant='outlined'
+                                size='small'
+                                disabled={!enabled}
+                                onClick={handleEditCredential}
+                                startIcon={<IconEdit size={16} />}
+                            >
                                 Edit
                             </Button>
+                            <Button
+                                variant='outlined'
+                                size='small'
+                                color='error'
+                                disabled={!enabled}
+                                onClick={handleDeleteCredential}
+                                startIcon={<IconTrash size={16} />}
+                            >
+                                Delete
+                            </Button>
                             {credentials.length > 1 && (
-                                <Button variant='outlined' size='small' onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}>
+                                <Button
+                                    variant='outlined'
+                                    size='small'
+                                    disabled={!enabled}
+                                    onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
+                                >
                                     Change
                                 </Button>
                             )}
@@ -222,6 +293,9 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 ) : (
                     // Not Connected - Show connect button
                     <Box>
+                        <Alert severity='warning' sx={{ mb: 2 }}>
+                            Please connect a Fiddler API credential to enable guardrails
+                        </Alert>
                         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                             <Button variant='contained' color='primary' onClick={handleCreateCredential}>
                                 Connect Fiddler
@@ -236,9 +310,6 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 </Button>
                             )}
                         </Box>
-                        <Alert severity='warning' sx={{ mt: 2 }}>
-                            Please connect a Fiddler API credential to enable guardrails
-                        </Alert>
                     </Box>
                 )}
 
@@ -265,7 +336,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                     }}
                                     onClick={() => {
                                         setSelectedCredential(cred.id)
-                                        onConfigChange({ credentialId: cred.id })
+                                        setEnabled(true)
+                                        onConfigChange({ credentialId: cred.id, enabled: true })
                                         setShowCredentialDropdown(false)
                                     }}
                                 >
@@ -277,7 +349,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 )}
             </Box>
 
-            {/* Credential Creation Modal */}
+            {/* Credential Modal - uses core dialog with defaultVisibility enhancement */}
             <AddEditCredentialDialog
                 show={showCredentialDialog}
                 dialogProps={credentialDialogProps}
