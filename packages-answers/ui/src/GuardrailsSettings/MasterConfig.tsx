@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 
+// Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
 
 interface MasterConfigProps {
@@ -76,23 +77,21 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
             const componentCredential = response.data
 
-            if (!componentCredential || !componentCredential.name) {
+            if (!componentCredential?.name) {
                 throw new Error('Failed to load Fiddler credential component')
             }
 
-            // Configure modal for ADD mode
-            const dialogProps = {
+            // Use core dialog with defaultVisibility for org-wide credentials
+            setCredentialDialogProps({
                 type: 'ADD',
                 cancelButtonName: 'Cancel',
                 confirmButtonName: 'Add',
-                credentialComponent: componentCredential
-            }
-
-            setCredentialDialogProps(dialogProps)
+                credentialComponent: componentCredential,
+                defaultVisibility: ['Organization'] // AAI enhancement: force org visibility
+            })
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
-            alert('Failed to load credential creation form. Please try again.')
         }
     }
 
@@ -113,25 +112,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         setShowCredentialDialog(false)
     }
 
-    const handleEditCredential = async () => {
-        if (!selectedCredential) return
-
-        try {
-            // Configure modal for EDIT mode
-            const dialogProps = {
-                type: 'EDIT',
-                cancelButtonName: 'Cancel',
-                confirmButtonName: 'Save',
-                credentialId: selectedCredential
-            }
-
-            setCredentialDialogProps(dialogProps)
-            setShowCredentialDialog(true)
-        } catch (error) {
-            console.error('Error opening credential editor:', error)
-            alert('Failed to open credential editor. Please try again.')
-        }
-    }
+    // Note: Edit functionality is available in the main Credentials page
+    // This page focuses on creating and selecting credentials for guardrails
 
     // Get the currently selected credential object
     const selectedCredentialObj = credentials.find((cred) => cred.id === selectedCredential)
@@ -208,9 +190,6 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button variant='outlined' size='small' onClick={handleEditCredential}>
-                                Edit
-                            </Button>
                             {credentials.length > 1 && (
                                 <Button variant='outlined' size='small' onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}>
                                     Change
@@ -276,7 +255,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 )}
             </Box>
 
-            {/* Credential Creation Modal */}
+            {/* Credential Modal - uses core dialog with defaultVisibility enhancement */}
             <AddEditCredentialDialog
                 show={showCredentialDialog}
                 dialogProps={credentialDialogProps}

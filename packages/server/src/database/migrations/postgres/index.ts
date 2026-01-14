@@ -66,6 +66,7 @@ import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-A
 import { AddOrganizationConfig1753200000001 } from './1753200000001-AddOrganizationConfig'
 import { AddGuardrailsMetadataToChatMessage1753200000002 } from './1753200000002-AddGuardrailsMetadataToChatMessage'
 import { BackfillDocumentStoreFileChunkUserScoping1731429600000 } from './1731429600000-BackfillDocumentStoreFileChunkUserScoping'
+import { UpdateFiddlerCredentialsVisibility1768413137117 } from './1768413137117-UpdateFiddlerCredentialsVisibility'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -135,5 +136,6 @@ export const postgresMigrations = [
     AddTrackingMetadataToChatMessage1753200000000,
     AddOrganizationConfig1753200000001,
     AddGuardrailsMetadataToChatMessage1753200000002,
-    BackfillDocumentStoreFileChunkUserScoping1731429600000
+    BackfillDocumentStoreFileChunkUserScoping1731429600000,
+    UpdateFiddlerCredentialsVisibility1768413137117
 ]
