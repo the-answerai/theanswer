@@ -130,6 +130,10 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
             const defaultCredentialData = initializeDefaultNodeData(dialogProps.credentialComponent.inputs || [])
             setCredentialData(defaultCredentialData)
             setComponentCredential(dialogProps.credentialComponent)
+            // Support defaultVisibility prop for pre-configured visibility (e.g., org-wide credentials)
+            if (dialogProps.defaultVisibility) {
+                setVisibility(dialogProps.defaultVisibility)
+            }
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
