@@ -1,8 +1,10 @@
 import React from 'react'
+import type { Metadata } from 'next'
 import { prisma } from '@db/client'
 import Chat from '@ui/Chat'
 import ChatNotFound from '@ui/ChatNotFound'
 import getCachedSession from '@ui/getCachedSession'
+import { generateOGMetadata } from '../../../../../lib/og'
 
 import auth0 from '@utils/auth/auth0'
 import type { Chatflow, Chat as ChatType, User } from 'types'
@@ -148,9 +150,14 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
     }
 }
 
-export const metadata = {
-    title: 'Chats | Answer Agent',
-    description: 'Your current Answer Agent chat'
+export const metadata: Metadata = {
+    title: 'Chat',
+    description: 'AI-powered conversations with Answer Agent',
+    openGraph: generateOGMetadata({
+        title: 'Chat with Answer Agent',
+        description: 'AI-powered conversations for your organization',
+        type: 'chat'
+    })
 }
 
 const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
