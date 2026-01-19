@@ -146,6 +146,65 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
         }
 
         console.log('AAI data restore completed')
+
+        // Fix users with invalid organizationId (orphaned references)
+        await this.fixInvalidOrganizationIds(queryRunner)
+    }
+
+    /**
+     * Fix users whose organizationId references a non-existent organization.
+     * These users will be assigned to a fallback organization to ensure they
+     * get proper workspace access.
+     */
+    private async fixInvalidOrganizationIds(queryRunner: QueryRunner): Promise<void> {
+        console.log('Checking for users with invalid organizationId...')
+
+        // Find users whose organizationId doesn't exist in the organization table
+        const orphanedUsers = await queryRunner.query(`
+            SELECT u.id, u."organizationId", u.email
+            FROM "user" u
+            WHERE u."organizationId" IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM organization o WHERE o.id = u."organizationId")
+        `)
+
+        if (orphanedUsers.length === 0) {
+            console.log('No users with invalid organizationId found')
+            return
+        }
+
+        console.log(`Found ${orphanedUsers.length} users with invalid organizationId`)
+
+        // Get a fallback organization (first valid org)
+        const fallbackOrg = await queryRunner.query(`
+            SELECT id FROM organization ORDER BY "createdDate" ASC LIMIT 1
+        `)
+
+        if (fallbackOrg.length === 0) {
+            console.log('No fallback organization available - cannot fix orphaned users')
+            return
+        }
+
+        const fallbackOrgId = fallbackOrg[0].id
+        console.log(`Using fallback organization: ${fallbackOrgId}`)
+
+        // Update orphaned users to use fallback organization
+        for (const user of orphanedUsers) {
+            console.log(`Fixing user ${user.id} (${user.email}): ${user.organizationId} -> ${fallbackOrgId}`)
+            await queryRunner.query(
+                `UPDATE "user" SET "organizationId" = $1 WHERE id = $2`,
+                [fallbackOrgId, user.id]
+            )
+
+            // Also ensure they have an organization_user entry
+            await queryRunner.query(`
+                INSERT INTO organization_user ("organizationId", "userId", "roleId", status, "createdBy", "updatedBy", "createdDate", "updatedDate")
+                SELECT $1, $2, r.id, 'active', $2, $2, NOW(), NOW()
+                FROM role r WHERE r.name = 'member'
+                ON CONFLICT ("organizationId", "userId") DO NOTHING
+            `, [fallbackOrgId, user.id])
+        }
+
+        console.log(`Fixed ${orphanedUsers.length} users with invalid organizationId`)
     }
 
     // =========================================================================
