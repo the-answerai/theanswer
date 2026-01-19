@@ -545,10 +545,22 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         const hasOrgIdColumn = tempUserColumns.some((col: { column_name: string }) => col.column_name === 'organizationId')
 
         if (hasOrgIdColumn && organizations.length > 0) {
+            // Get list of valid organization IDs that were actually migrated
+            const migratedOrgs = await queryRunner.query('select "id" from "organization";')
+            const validOrgIds = new Set(migratedOrgs.map((org: { id: string }) => org.id))
+            const fallbackOrgId = organizations[0].id
+
             for (let user of users) {
                 // First user is owner, others are members
                 const roleId = user.id === firstUserId ? ownerRoleId : memberRoleId
-                const orgId = user.organizationId || organizations[0].id
+
+                // Use user's orgId only if it exists in the migrated organizations
+                // Otherwise fall back to first organization
+                let orgId = user.organizationId
+                if (!orgId || !validOrgIds.has(orgId)) {
+                    console.log(`User ${user.id} has invalid organizationId ${orgId}, using fallback ${fallbackOrgId}`)
+                    orgId = fallbackOrgId
+                }
 
                 await queryRunner.query(`
                     insert into "organization_user" ("organizationId", "userId", "roleId", "status", "createdBy", "updatedBy")
