@@ -94,6 +94,7 @@ import { AAIRestoreDataAndCreateWorkspaces1737076223693 } from './aai/1737076223
 import { AAIBackfillWorkspaceId1760000000002 } from './aai/1760000000002-AAIBackfillWorkspaceId'
 import { AddOrganizationConfig1753200000001 } from './aai/1753200000001-AddOrganizationConfig'
 import { AddGuardrailsMetadataToChatMessage1753200000002 } from './aai/1753200000002-AddGuardrailsMetadataToChatMessage'
+import { UpdateFiddlerCredentialsVisibility1768413137117 } from './aai/1768413137117-UpdateFiddlerCredentialsVisibility'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -187,6 +188,7 @@ export const postgresMigrations = [
     AddTextToSpeechToChatFlow1754986480347,
     ModifyChatflowType1755066758601,
     AddChatFlowNameIndex1759424903973,
+    UpdateFiddlerCredentialsVisibility1768413137117,
     // AAI: Backfill workspaceId - runs LAST after all feature migrations
     AAIBackfillWorkspaceId1760000000002
 ]

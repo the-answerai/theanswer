@@ -545,16 +545,34 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
         const hasOrgIdColumn = tempUserColumns.some((col: { column_name: string }) => col.column_name === 'organizationId')
 
         if (hasOrgIdColumn && organizations.length > 0) {
+            // Get list of valid organization IDs that were actually migrated
+            const migratedOrgs = await queryRunner.query('select "id" from "organization";')
+            const validOrgIds = new Set(migratedOrgs.map((org: { id: string }) => org.id))
+            const fallbackOrgId = migratedOrgs[0]?.id || organizations[0].id
+
+            let usersWithFallback = 0
             for (let user of users) {
                 // First user is owner, others are members
                 const roleId = user.id === firstUserId ? ownerRoleId : memberRoleId
-                const orgId = user.organizationId || organizations[0].id
+
+                // Use user's orgId if valid, otherwise fall back to first org
+                // The backup migration should capture all user-referenced orgs,
+                // but fallback ensures migration doesn't fail for edge cases
+                let orgId = user.organizationId
+                if (!orgId || !validOrgIds.has(orgId)) {
+                    console.warn(`WARNING: User ${user.id} (email: ${user.email}) has organizationId ${orgId} which doesn't exist - using fallback ${fallbackOrgId}. This may indicate Auth0 sync issue.`)
+                    orgId = fallbackOrgId
+                    usersWithFallback++
+                }
 
                 await queryRunner.query(`
                     insert into "organization_user" ("organizationId", "userId", "roleId", "status", "createdBy", "updatedBy")
                     values ('${orgId}','${user.id}','${roleId}','${OrganizationUserStatus.ACTIVE}','${firstUserId}','${firstUserId}')
                     on conflict ("organizationId", "userId") do nothing;
                 `)
+            }
+            if (usersWithFallback > 0) {
+                console.warn(`WARNING: ${usersWithFallback} users were assigned to fallback organization due to invalid organizationId. Review Auth0 sync for these users.`)
             }
             console.log('AAI organization_user relationships created')
         }
