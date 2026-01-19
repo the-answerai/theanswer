@@ -153,8 +153,9 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
 
     /**
      * Fix users whose organizationId references a non-existent organization.
-     * These users will be assigned to a fallback organization to ensure they
-     * get proper workspace access.
+     * With the updated backup migration, all user-referenced orgs should be captured.
+     * This method provides a fallback for edge cases while logging warnings
+     * so Auth0 sync issues can be investigated.
      */
     private async fixInvalidOrganizationIds(queryRunner: QueryRunner): Promise<void> {
         console.log('Checking for users with invalid organizationId...')
@@ -168,11 +169,11 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
         `)
 
         if (orphanedUsers.length === 0) {
-            console.log('No users with invalid organizationId found')
+            console.log('All user organizationId references are valid')
             return
         }
 
-        console.log(`Found ${orphanedUsers.length} users with invalid organizationId`)
+        console.warn(`WARNING: Found ${orphanedUsers.length} users with organizationId referencing non-existent organizations`)
 
         // Get a fallback organization (first valid org)
         const fallbackOrg = await queryRunner.query(`
@@ -180,16 +181,19 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
         `)
 
         if (fallbackOrg.length === 0) {
-            console.log('No fallback organization available - cannot fix orphaned users')
+            console.warn('No fallback organization available - skipping orphaned users')
+            for (const user of orphanedUsers) {
+                console.warn(`  - User ${user.id} (${user.email}) references non-existent org ${user.organizationId}`)
+            }
             return
         }
 
         const fallbackOrgId = fallbackOrg[0].id
-        console.log(`Using fallback organization: ${fallbackOrgId}`)
+        console.warn(`Using fallback organization: ${fallbackOrgId}. Review Auth0 sync for these users:`)
 
         // Update orphaned users to use fallback organization
         for (const user of orphanedUsers) {
-            console.log(`Fixing user ${user.id} (${user.email}): ${user.organizationId} -> ${fallbackOrgId}`)
+            console.warn(`  - Fixing user ${user.id} (${user.email}): ${user.organizationId} -> ${fallbackOrgId}`)
             await queryRunner.query(
                 `UPDATE "user" SET "organizationId" = $1 WHERE id = $2`,
                 [fallbackOrgId, user.id]
@@ -204,7 +208,7 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
             `, [fallbackOrgId, user.id])
         }
 
-        console.log(`Fixed ${orphanedUsers.length} users with invalid organizationId`)
+        console.warn(`Fixed ${orphanedUsers.length} users with invalid organizationId. These may indicate Auth0 sync issues.`)
     }
 
     // =========================================================================
