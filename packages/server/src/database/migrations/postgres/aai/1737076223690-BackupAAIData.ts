@@ -78,14 +78,17 @@ export class BackupAAIData1737076223690 implements MigrationInterface {
                 orgColumns.push('"organizationConfig"')
             }
 
-            // Backup AAI organization columns that exist
+            // Backup ALL organizations that are either:
+            // 1. Have auth0Id (AAI organizations)
+            // 2. Are referenced by any user's organizationId (to preserve user-org relationships)
             await queryRunner.query(`
                 CREATE TABLE IF NOT EXISTS "aai_organization_backup" AS
                 SELECT ${orgColumns.join(', ')}
                 FROM "organization"
-                WHERE "auth0Id" IS NOT NULL;
+                WHERE "auth0Id" IS NOT NULL
+                   OR id IN (SELECT DISTINCT "organizationId" FROM "user" WHERE "organizationId" IS NOT NULL);
             `)
-            console.log(`AAI Organization backup created with columns: ${orgColumns.join(', ')}`)
+            console.log(`AAI Organization backup created with columns: ${orgColumns.join(', ')} (includes all user-referenced orgs)`)
         } else {
             console.log('No auth0Id column found in organization table - skipping organization backup')
         }
