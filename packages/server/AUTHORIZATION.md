@@ -365,3 +365,137 @@ Permissions are resolved in order:
     - Verify organization isolation
     - Check user context
     - Validate error responses
+
+## OAuth Token Refresh
+
+TheAnswer provides dedicated routes for refreshing OAuth tokens for integrated services.
+
+### Routes Overview
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/credentials/refresh-token` | POST | `credentials:update` | Refresh Google OAuth tokens |
+| `/api/v1/credentials/refresh-atlassian-token` | POST | `credentials:update` | Refresh Atlassian OAuth tokens |
+| `/api/v1/oauth2-credential/refresh/:credentialId` | POST | None | Generic OAuth2 refresh (Flowise) |
+
+### Architecture
+
+These routes are implemented in `packages/server/src/aai/routes/credentials-refresh.ts` as AAI-specific routes, separate from Flowise core code. This design:
+
+1. **Survives Flowise upgrades** - No merge conflicts
+2. **Clear separation** - AAI code in `aai/` directory
+3. **Router ordering** - Mounted before Flowise credentials router
+
+```
+Request: POST /api/v1/credentials/refresh-token
+
+1. Express checks routers in order
+2. AAI credentials router → Has /refresh-token → Handles request
+3. Flowise credentials router → Never reached for this path
+```
+
+### Google OAuth Refresh
+
+Used by Google Drive Picker and Gmail Label Picker UI components.
+
+**Why Google needs a dedicated route:**
+
+| Generic OAuth2 | Google OAuth |
+|----------------|--------------|
+| Uses `refresh_token` field | Uses `googleRefreshToken` field |
+| Direct HTTP POST to token URL | Uses `googleapis` library |
+| Standard OAuth2 fields | Custom field names |
+
+**Request:**
+
+```typescript
+POST /api/v1/credentials/refresh-token
+Content-Type: application/json
+Authorization: Bearer <api-key>
+
+{
+    "credentialId": "credential-uuid"
+}
+```
+
+**Success Response:**
+
+```typescript
+{
+    "success": true,
+    "message": "Token refreshed successfully",
+    "data": {
+        "id": "credential-uuid",
+        "name": "My Google Drive",
+        // ... updated credential
+    }
+}
+```
+
+**Error Response (Token Expired/Revoked):**
+
+```typescript
+HTTP 401 Unauthorized
+{
+    "success": false,
+    "message": "Error: credentialsService.updateRefreshToken - Google authorization has expired or been revoked. Please re-authenticate your Google account in Credentials settings."
+}
+```
+
+### Atlassian OAuth Refresh
+
+Used by Atlassian MCP integrations.
+
+**Request:**
+
+```typescript
+POST /api/v1/credentials/refresh-atlassian-token
+Content-Type: application/json
+Authorization: Bearer <api-key>
+
+{
+    "credentialId": "credential-uuid"
+}
+```
+
+### Error Handling
+
+| Error | HTTP Status | Message |
+|-------|-------------|---------|
+| `invalid_grant` | 401 | Re-authentication required |
+| Credential not found | 404 | Credential not found |
+| Other errors | 500 | Internal server error |
+
+### Code Flow
+
+```
+UI (GoogleDrivePicker)
+    ↓
+POST /credentials/refresh-token
+    ↓
+credentialsController.updateAndRefreshToken()
+    ↓
+credentialsService.updateAndRefreshToken()
+    ↓
+GoogleOauth2Client.refreshToken()
+    ↓
+googleapis oauth2Client.refreshToken()
+    ↓
+Update credential in database
+    ↓
+Return updated credential
+```
+
+### Related Files
+
+| File | Purpose |
+|------|---------|
+| `src/aai/routes/credentials-refresh.ts` | Route definitions |
+| `src/controllers/credentials/index.ts` | Controller (lines 113-163) |
+| `src/services/credentials/index.ts` | Service (lines 200-263) |
+| `src/utils/refreshGoogleAccessToken.ts` | Google OAuth client |
+
+### UI Components
+
+-   `packages/ui/src/ui-component/drive/GoogleDrivePicker.jsx` - "Refresh Access Token" button
+-   `packages/ui/src/ui-component/gmail/GmailLabelPicker.jsx` - Gmail token refresh

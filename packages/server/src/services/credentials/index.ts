@@ -228,7 +228,11 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
         await appServer.AppDataSource.getRepository(Credential).merge(credential, updateCredentialEntity)
         const dbResponse = await appServer.AppDataSource.getRepository(Credential).save(credential)
         return dbResponse
-    } catch (error) {
+    } catch (error: any) {
+        // Return 401 for re-authentication required errors (e.g., invalid_grant)
+        if (error.code === 'REAUTH_REQUIRED' || error.message?.includes('re-authenticate')) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Error: credentialsService.updateRefreshToken - ${error.message}`)
+        }
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: credentialsService.updateRefreshToken - ${getErrorMessage(error)}`
