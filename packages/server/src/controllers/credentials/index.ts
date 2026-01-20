@@ -113,20 +113,25 @@ const updateCredential = async (req: Request, res: Response, next: NextFunction)
 const updateAndRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.credentialId) {
-            return res.status(400).json({
-                success: false,
-                message: 'Credential ID is required'
-            })
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: credentialsController.updateAndRefreshToken - credentialId not provided!'
+            )
         }
-
-        const apiResponse = await credentialsService.updateAndRefreshToken(req.body.credentialId, req.user?.id)
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                'Error: credentialsController.updateAndRefreshToken - workspace not found!'
+            )
+        }
+        const apiResponse = await credentialsService.updateAndRefreshToken(req.body.credentialId, workspaceId)
         return res.json({
             success: true,
             message: 'Token refreshed successfully',
             data: apiResponse
         })
     } catch (error) {
-        console.error('Error refreshing token:', error)
         next(error)
     }
 }
@@ -134,20 +139,25 @@ const updateAndRefreshToken = async (req: Request, res: Response, next: NextFunc
 const updateAndRefreshAtlassianToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.credentialId) {
-            return res.status(400).json({
-                success: false,
-                message: 'Credential ID is required'
-            })
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: credentialsController.updateAndRefreshAtlassianToken - credentialId not provided!'
+            )
         }
-
-        const apiResponse = await credentialsService.updateAndRefreshAtlassianToken(req.body.credentialId, (req.user as any)?.id)
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.NOT_FOUND,
+                'Error: credentialsController.updateAndRefreshAtlassianToken - workspace not found!'
+            )
+        }
+        const apiResponse = await credentialsService.updateAndRefreshAtlassianToken(req.body.credentialId, workspaceId)
         return res.json({
             success: true,
             message: 'Atlassian token refreshed successfully',
             data: apiResponse
         })
     } catch (error) {
-        console.error('Error refreshing Atlassian token:', error)
         next(error)
     }
 }

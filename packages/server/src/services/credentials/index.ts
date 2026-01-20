@@ -197,10 +197,13 @@ const updateCredential = async (credentialId: string, requestBody: any, workspac
     }
 }
 
-const updateAndRefreshToken = async (credentialId: string, userId?: string): Promise<any> => {
+const updateAndRefreshToken = async (credentialId: string, workspaceId: string): Promise<any> => {
     try {
         const appServer = getRunningExpressApp()
-        const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({ id: credentialId })
+        const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
+            id: credentialId,
+            workspaceId: workspaceId
+        })
         if (!credential) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found`)
         }
@@ -216,9 +219,8 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
             credentialName: credential.credentialName,
             plainDataObj: {
                 ...decryptedCredentialData,
-                googleAccessToken: access_token, // ✅ ACTUALIZA el nuevo access token
-                expiresAt: new Date(expiry_date) // ✅ ACTUALIZA la fecha de expiración
-                // expiresAt: new Date(Date.now() + 1 * 60 * 1000)
+                googleAccessToken: access_token,
+                expiresAt: new Date(expiry_date)
             },
             userId: credential.userId,
             organizationId: credential.organizationId,
@@ -240,12 +242,20 @@ const updateAndRefreshToken = async (credentialId: string, userId?: string): Pro
     }
 }
 
-const updateAndRefreshAtlassianToken = async (credentialId: string, userId?: string): Promise<any> => {
+const updateAndRefreshAtlassianToken = async (credentialId: string, workspaceId: string): Promise<any> => {
     try {
-        // Use centralized OAuth utility
-
         const appServer = getRunningExpressApp()
 
+        // Verify credential belongs to workspace before refresh
+        const existingCredential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
+            id: credentialId,
+            workspaceId: workspaceId
+        })
+        if (!existingCredential) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Credential ${credentialId} not found in workspace`)
+        }
+
+        // Use centralized OAuth utility
         const success = await refreshStoredCredentialTokens(credentialId, appServer.AppDataSource)
 
         if (!success) {
@@ -253,7 +263,10 @@ const updateAndRefreshAtlassianToken = async (credentialId: string, userId?: str
         }
 
         // Return the updated credential
-        const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({ id: credentialId })
+        const credential = await appServer.AppDataSource.getRepository(Credential).findOneBy({
+            id: credentialId,
+            workspaceId: workspaceId
+        })
         return credential
     } catch (error) {
         throw new InternalFlowiseError(
