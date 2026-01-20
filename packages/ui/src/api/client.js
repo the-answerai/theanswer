@@ -44,12 +44,9 @@ apiClient.interceptors.response.use(
             localStorage.removeItem('password')
             AuthUtils.removeCurrentUser()
 
-            // Redirect to login page
-            // Check if we're in a browser environment
+            // Redirect to Auth0 login page
             if (typeof window !== 'undefined') {
-                // Use Auth0 login for AAI, fallback to /login for enterprise
-                const loginUrl = window.location.pathname.includes('/sidekick') ? '/api/auth/login' : '/login'
-                window.location.href = loginUrl
+                window.location.href = '/api/auth/login'
             }
         }
 
