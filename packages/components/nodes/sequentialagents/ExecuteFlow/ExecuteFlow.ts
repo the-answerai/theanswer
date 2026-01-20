@@ -135,10 +135,6 @@ class ExecuteFlow_SeqAgents implements INode {
             }
 
             const searchOptions = options.searchOptions || {}
-            searchOptions.where = {
-                ...searchOptions.where,
-                userId: options.userId
-            }
             const chatflows = await appDataSource.getRepository(databaseEntities['ChatFlow']).findBy(searchOptions)
 
             for (let i = 0; i < chatflows.length; i += 1) {

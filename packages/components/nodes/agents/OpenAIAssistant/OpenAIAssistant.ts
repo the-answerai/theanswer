@@ -110,10 +110,6 @@ class OpenAIAssistant_Agents implements INode {
             }
 
             const searchOptions = options.searchOptions || {}
-            searchOptions.where = {
-                ...searchOptions.where,
-                userId: options.userId
-            }
             const assistants = await appDataSource.getRepository(databaseEntities['Assistant']).findBy({
                 ...searchOptions,
                 type: 'OPENAI'
