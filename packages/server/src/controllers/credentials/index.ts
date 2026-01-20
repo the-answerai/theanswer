@@ -126,11 +126,7 @@ const updateAndRefreshToken = async (req: Request, res: Response, next: NextFunc
             )
         }
         const apiResponse = await credentialsService.updateAndRefreshToken(req.body.credentialId, workspaceId)
-        return res.json({
-            success: true,
-            message: 'Token refreshed successfully',
-            data: apiResponse
-        })
+        return res.json(apiResponse)
     } catch (error) {
         next(error)
     }
@@ -152,11 +148,7 @@ const updateAndRefreshAtlassianToken = async (req: Request, res: Response, next:
             )
         }
         const apiResponse = await credentialsService.updateAndRefreshAtlassianToken(req.body.credentialId, workspaceId)
-        return res.json({
-            success: true,
-            message: 'Atlassian token refreshed successfully',
-            data: apiResponse
-        })
+        return res.json(apiResponse)
     } catch (error) {
         next(error)
     }

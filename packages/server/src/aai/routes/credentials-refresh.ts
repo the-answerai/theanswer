@@ -1,5 +1,6 @@
 import express, { Router } from 'express'
 import credentialsController from '../../controllers/credentials'
+import enforceAbility from '../../middlewares/authentication/enforceAbility'
 import { checkPermission } from '../../enterprise/rbac/PermissionCheck'
 
 /**
@@ -19,11 +20,17 @@ export function createCredentialsRefreshRouter(): Router {
     const router = express.Router()
 
     // Google OAuth refresh (used by GoogleDrivePicker, GmailLabelPicker)
-    router.post('/refresh-token', checkPermission('credentials:update'), credentialsController.updateAndRefreshToken)
+    router.post(
+        '/refresh-token',
+        enforceAbility('Credential'),
+        checkPermission('credentials:update'),
+        credentialsController.updateAndRefreshToken
+    )
 
     // Atlassian OAuth refresh
     router.post(
         '/refresh-atlassian-token',
+        enforceAbility('Credential'),
         checkPermission('credentials:update'),
         credentialsController.updateAndRefreshAtlassianToken
     )
