@@ -124,7 +124,11 @@ const NodeInputHandler = ({
     parentParamForArray = null,
     arrayIndex = null,
     onHideNodeInfoDialog,
-    onCustomDataChange
+    onCustomDataChange,
+    // Credential props for Google Drive/Gmail pickers (forwarded in recursive calls)
+    selectedCredential: selectedCredentialProp,
+    selectedCredentialData: selectedCredentialDataProp,
+    handleCredentialDataChange: handleCredentialDataChangeProp
 }) => {
     const theme = useTheme()
     const customization = useSelector((state) => state.customization)
@@ -168,12 +172,18 @@ const NodeInputHandler = ({
     const [promptGeneratorDialogProps, setPromptGeneratorDialogProps] = useState({})
 
     // State for Google Drive/Gmail credential handling
-    const [selectedCredential, setSelectedCredential] = useState(data.credential || null)
-    const [selectedCredentialData, setSelectedCredentialData] = useState(null)
+    // Use props if provided (for recursive/nested calls), otherwise use local state
+    const [selectedCredential, setSelectedCredential] = useState(selectedCredentialProp ?? data.credential ?? null)
+    const [selectedCredentialData, setSelectedCredentialData] = useState(selectedCredentialDataProp ?? null)
 
-    const handleCredentialDataChange = useCallback((credData) => {
-        setSelectedCredentialData(credData)
-    }, [])
+    const handleCredentialDataChange = useCallback(
+        (credData) => {
+            setSelectedCredentialData(credData)
+            // Also notify parent if callback prop is provided
+            handleCredentialDataChangeProp?.(credData)
+        },
+        [handleCredentialDataChangeProp]
+    )
 
     const handleDataChange = ({ inputParam, newValue }) => {
         data.inputs[inputParam.name] = newValue
@@ -1024,6 +1034,9 @@ const NodeInputHandler = ({
                                                 data={data}
                                                 isAdditionalParams={true}
                                                 disablePadding={true}
+                                                selectedCredential={selectedCredential}
+                                                selectedCredentialData={selectedCredentialData}
+                                                handleCredentialDataChange={handleCredentialDataChange}
                                             />
                                         </TabPanel>
                                     ))}
@@ -1475,7 +1488,11 @@ NodeInputHandler.propTypes = {
     parentParamForArray: PropTypes.object,
     arrayIndex: PropTypes.number,
     onCustomDataChange: PropTypes.func,
-    onHideNodeInfoDialog: PropTypes.func
+    onHideNodeInfoDialog: PropTypes.func,
+    // Credential props for Google Drive/Gmail pickers (forwarded in recursive calls)
+    selectedCredential: PropTypes.string,
+    selectedCredentialData: PropTypes.object,
+    handleCredentialDataChange: PropTypes.func
 }
 
 export default NodeInputHandler
