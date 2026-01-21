@@ -566,7 +566,7 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
             const chatflow = createNewChatflowApi.data
             dispatch({ type: SET_CHATFLOW, chatflow })
             saveChatflowSuccess()
-            window.history.replaceState(state, null, `/v2/agentcanvas/${chatflow.id}`)
+            window.history.replaceState(state, null, `/sidekick-studio/v2/agentcanvas/${chatflow.id}`)
         } else if (createNewChatflowApi.error) {
             errorFailed(`Failed to save ${canvasTitle}: ${createNewChatflowApi.error.response.data.message}`)
         }
