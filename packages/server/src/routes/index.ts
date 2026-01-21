@@ -88,6 +88,7 @@ import adminRouter from './admin'
 import pricingRouter from './pricing'
 import { createAuth0Router } from '../aai/routes/auth0'
 import { createAuthMeRouter } from '../aai/routes/auth-me'
+import { createCredentialsRefreshRouter } from '../aai/routes/credentials-refresh'
 
 import organizationsRouter from './organizations'
 
@@ -103,6 +104,8 @@ router.use('/chatmessage', chatMessageRouter)
 router.use('/chatflows-uploads', chatflowsUploadsRouter)
 router.use('/components-credentials', componentsCredentialsRouter)
 router.use('/components-credentials-icon', componentsCredentialsIconRouter)
+// AAI: Credential refresh routes (must be BEFORE Flowise credentials router to intercept refresh requests)
+router.use('/credentials', createCredentialsRefreshRouter())
 router.use('/credentials', credentialsRouter)
 router.use('/datasets', IdentityManager.checkFeatureByPlan('feat:datasets'), datasetRouter)
 router.use('/document-store', documentStoreRouter)
@@ -185,5 +188,5 @@ router.use('/organizations', organizationsRouter)
 
 export default router
 
-// Export Auth0 and AuthMe router factories for use in index.ts where AppDataSource is available
-export { createAuth0Router, createAuthMeRouter }
+// Export router factories for use in index.ts where AppDataSource is available
+export { createAuth0Router, createAuthMeRouter, createCredentialsRefreshRouter }
