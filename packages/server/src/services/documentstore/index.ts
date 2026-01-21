@@ -1658,26 +1658,24 @@ const getRecordManagerProviders = async () => {
     }
 }
 
-const queryVectorStore = async (data: ICommonObject, userId: string, organizationId: string) => {
+const queryVectorStore = async (data: ICommonObject, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
         const componentNodes = appServer.nodesPool.componentNodes
 
         const entity = await appServer.AppDataSource.getRepository(DocumentStore).findOneBy({
             id: data.storeId,
-            userId,
-            organizationId
+            workspaceId
         })
         if (!entity) {
-            throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Document store ${data.storeId} not found`)
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Document store ${data.storeId} not found`)
         }
         const options: ICommonObject = {
             chatflowid: data.storeId ?? uuidv4(),
             appDataSource: appServer.AppDataSource,
             databaseEntities,
             logger,
-            organizationId,
-            userId
+            workspaceId
         }
 
         if (!entity.embeddingConfig) {

@@ -522,14 +522,20 @@ const insertIntoVectorStore = async (req: Request, res: Response, next: NextFunc
 const queryVectorStore = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (typeof req.body === 'undefined') {
-            throw new Error('Error: documentStoreController.queryVectorStore - body not provided!')
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: documentStoreController.queryVectorStore - body not provided!'
+            )
+        }
+        const workspaceId = req.user?.activeWorkspaceId
+        if (!workspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: documentStoreController.queryVectorStore - workspaceId not provided!'
+            )
         }
         const body = req.body
-        const apiResponse = await documentStoreService.queryVectorStore(
-            { ...body, userId: req.user?.id!, organizationId: req.user?.organizationId! },
-            req.user?.id!,
-            req.user?.organizationId!
-        )
+        const apiResponse = await documentStoreService.queryVectorStore(body, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
