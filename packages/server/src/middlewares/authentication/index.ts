@@ -124,9 +124,17 @@ export const authenticationHandlerMiddleware =
                 return res.status(401).send("Unauthorized: API key organization doesn't match")
             }
 
-            // Store API key user with additional auth0 org info
-            req.user = apiKeyUser as any
-            ;(req.user as any).auth0OrgId = organization?.auth0Id
+            // Populate workspace data for API key users (same as JWT users)
+            const workspaceData = organization
+                ? await populateWorkspaceData(AppDataSource, apiKeyUser, organization.id)
+                : {}
+
+            // Store API key user with workspace data and additional auth0 org info
+            req.user = {
+                ...apiKeyUser,
+                ...workspaceData,
+                auth0OrgId: organization?.auth0Id
+            } as any
 
             // Apply billing customer override for organizational billing consolidation
             if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID && req.user) {
