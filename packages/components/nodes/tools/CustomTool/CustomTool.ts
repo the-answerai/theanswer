@@ -84,20 +84,22 @@ class CustomTool_Tools implements INode {
             }
 
             const searchOptions = options.searchOptions || {}
-            searchOptions.where = {
-                ...searchOptions.where,
-                ...(isAdmin
-                    ? [{ organizationId }, { organizationId, userId: IsNull() }]
-                    : [
-                          { organizationId, userId },
-                          { organizationId, userId: IsNull() },
-                          {
-                              organizationId,
-                              visibility: Like('%Organization%')
-                          }
-                      ])
-            }
-            const tools = await appDataSource.getRepository(databaseEntities['Tool']).findBy(searchOptions)
+
+            // Build where conditions as an array for OR logic
+            const whereConditions = isAdmin
+                ? [
+                      { ...searchOptions.where, organizationId },
+                      { ...searchOptions.where, organizationId, userId: IsNull() }
+                  ]
+                : [
+                      { ...searchOptions.where, organizationId, userId },
+                      { ...searchOptions.where, organizationId, userId: IsNull() },
+                      { ...searchOptions.where, organizationId, visibility: Like('%Organization%') }
+                  ]
+
+            const tools = await appDataSource.getRepository(databaseEntities['Tool']).find({
+                where: whereConditions
+            })
 
             for (let i = 0; i < tools.length; i += 1) {
                 const data = {
