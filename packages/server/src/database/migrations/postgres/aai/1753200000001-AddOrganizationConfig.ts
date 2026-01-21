@@ -8,6 +8,6 @@ export class AddOrganizationConfig1753200000001 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "organizationConfig"`)
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN IF EXISTS "organizationConfig"`)
     }
 }
