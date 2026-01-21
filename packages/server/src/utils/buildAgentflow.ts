@@ -11,7 +11,8 @@ import {
     IMessage,
     IServerSideEventStreamer,
     convertChatHistoryToText,
-    generateFollowUpPrompts
+    generateFollowUpPrompts,
+    isAnalyticsEnabled
 } from 'flowise-components'
 import {
     IncomingAgentflowInput,
@@ -1885,7 +1886,7 @@ export const executeAgentFlow = async ({
     let parentTraceIds: ICommonObject | undefined
 
     try {
-        if (chatflow.analytic) {
+        if (isAnalyticsEnabled(chatflow.analytic)) {
             // Override config analytics
             let analyticInputs: ICommonObject = {}
             if (overrideConfig?.analytics && Object.keys(overrideConfig.analytics).length > 0) {
