@@ -111,6 +111,10 @@ const getCachedSession = cache(async (req?: any, res: any = new Response()): Pro
                     // Merge enriched data into session.user (Flowise data takes priority)
                     session.user = { ...session.user, ...enrichedUser }
                 }
+            } else if (response.status === 401) {
+                console.warn('[getCachedSession] Auth token expired or invalid for /auth/me enrichment')
+            } else {
+                console.warn(`[getCachedSession] Unexpected status ${response.status} from /auth/me`)
             }
         }
     } catch (err: any) {
