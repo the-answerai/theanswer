@@ -25,7 +25,24 @@ export class GoogleOauth2Client {
     }
 
     async refreshToken() {
-        const { tokens } = await this.oauth2Client.refreshToken(this.oauth2Client.credentials.refresh_token)
-        return tokens
+        try {
+            const { tokens } = await this.oauth2Client.refreshToken(this.oauth2Client.credentials.refresh_token)
+            return tokens
+        } catch (error: any) {
+            const errorMessage = error.message || ''
+            const errorResponse = error.response?.data?.error || ''
+
+            // Handle invalid_grant error with user-friendly message
+            if (errorMessage.includes('invalid_grant') || errorResponse === 'invalid_grant') {
+                const customError = new Error(
+                    'Google authorization has expired or been revoked. ' +
+                        'Please re-authenticate your Google account in Credentials settings.'
+                )
+                ;(customError as any).code = 'REAUTH_REQUIRED'
+                ;(customError as any).requiresReauth = true
+                throw customError
+            }
+            throw error
+        }
     }
 }
