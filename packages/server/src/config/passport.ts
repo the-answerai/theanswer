@@ -8,13 +8,24 @@ export default function (passport: any) {
     // Configure Auth0 SSO strategy for browser login flow
     configureAuth0Strategy()
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        // Validate API_HOST is set for Google OAuth callback
+        if (!process.env.API_HOST) {
+            console.error(
+                '❌ ERROR: API_HOST environment variable is not set.\n' +
+                    '   Google OAuth will fail with redirect_uri_mismatch error.\n' +
+                    '   Fix: Add API_HOST to your .env file:\n' +
+                    '        API_HOST=http://localhost:3000  (for local development)\n' +
+                    '        API_HOST=https://yourdomain.com (for production)'
+            )
+        }
+
         passport.use(
             `google`,
             new GoogleStrategy(
                 {
                     clientID: process.env.GOOGLE_CLIENT_ID ?? '',
                     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-                    callbackURL: process.env.GOOGLE_CALLBACK_URL ?? '',
+                    callbackURL: `${process.env.API_HOST}/api/v1/google-auth/callback`,
                     proxy: true
                 },
                 async (accessToken, refreshToken, profile, done) => {

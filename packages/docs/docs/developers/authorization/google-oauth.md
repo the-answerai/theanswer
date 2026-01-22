@@ -8,6 +8,38 @@ description: Complete guide to setting up Google OAuth for AnswerAgentAI integra
 
 Google OAuth 2.0 is required for integrating Google services with AnswerAgentAI, including Gmail, Google Drive, and Google Calendar. This guide covers the complete setup process from creating a Google Cloud Console project to configuring OAuth in your AnswerAgentAI instance.
 
+## Two Types of OAuth Callbacks
+
+AnswerAgentAI uses two different OAuth callback URLs depending on the use case. **You need to add BOTH to your Google Cloud Console if using both features.**
+
+### 1. User Authentication Callback
+
+**URL Pattern:** `${API_HOST}/api/v1/google-auth/callback`
+
+Used for TheAnswer user authentication via Google. This is automatically derived from your `API_HOST` environment variable.
+
+| Environment | Callback URL |
+|-------------|--------------|
+| Local | `http://localhost:3000/api/v1/google-auth/callback` |
+| Staging | `https://staging.theanswer.ai/api/v1/google-auth/callback` |
+| Production | `https://app.theanswer.ai/api/v1/google-auth/callback` |
+
+### 2. Flowise Credential Callback
+
+**URL Pattern:** `${FLOWISE_HOST}/api/v1/oauth2-credential/callback`
+
+Used for Google Drive, Gmail, and Calendar document loaders/tools within Flowise chatflows. The exact URL is displayed in the credential configuration dialog.
+
+| Environment | Callback URL |
+|-------------|--------------|
+| Local | `http://localhost:4000/api/v1/oauth2-credential/callback` |
+| Staging | `https://staging.theanswer.ai/api/v1/oauth2-credential/callback` |
+| Production | `https://app.theanswer.ai/api/v1/oauth2-credential/callback` |
+
+:::tip
+When configuring Google Cloud Console, add all the callback URLs for the environments you'll be using. Check the "OAUTH REDIRECT URL" field in the Flowise credential dialog to see the exact URL to use.
+:::
+
 ## Prerequisites
 
 -   A Google account
@@ -132,13 +164,13 @@ For each API:
     **For Local Development:**
 
     ```
-    http://localhost:3000/api/v1/callback/googleoauth
+    http://localhost:3000/api/v1/google-auth/callback
     ```
 
     **For Production:**
 
     ```
-    https://yourdomain.com/api/v1/callback/googleoauth
+    https://yourdomain.com/api/v1/google-auth/callback
     ```
 
 5. **Create and Download**
@@ -154,10 +186,12 @@ Add the following environment variables to your AnswerAgentAI instance:
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID=your_client_id_here
 GOOGLE_CLIENT_SECRET=your_client_secret_here
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/v1/callback/googleoauth
 
-# For production, use your domain:
-# GOOGLE_CALLBACK_URL=https://yourdomain.com/api/v1/callback/googleoauth
+# Note: The callback URL is automatically derived from API_HOST
+# Make sure API_HOST is set correctly in your environment:
+# - Local: API_HOST=http://localhost:3000
+# - Production: API_HOST=https://yourdomain.com
+# The callback URL will be: ${API_HOST}/api/v1/google-auth/callback
 ```
 
 ## Step 7: Credential Configuration in AnswerAgentAI
@@ -227,8 +261,14 @@ Once developers have set up the Google OAuth application, end users can connect 
 
 1. **"Error 400: redirect_uri_mismatch"**
 
-    - Ensure the redirect URI in Google Console matches your AnswerAgentAI instance URL
-    - Check that GOOGLE_CALLBACK_URL environment variable is correct
+    - The callback URL is automatically derived from `API_HOST`:
+      - If `API_HOST=http://localhost:3000`, callback is `http://localhost:3000/api/v1/google-auth/callback`
+      - If `API_HOST=https://app.example.com`, callback is `https://app.example.com/api/v1/google-auth/callback`
+    - Add the exact callback URL to Google Cloud Console:
+      - Go to APIs & Services → Credentials
+      - Edit your OAuth 2.0 Client ID
+      - Under "Authorized redirect URIs", add your callback URL
+    - Ensure the URL matches **exactly** (including http vs https, no trailing slashes)
 
 2. **"Access Blocked: This app's request is invalid"**
 

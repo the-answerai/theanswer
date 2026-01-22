@@ -12,10 +12,17 @@ export class GoogleOauth2Client {
             throw new Error('Refresh token is required')
         }
 
+        if (!process.env.API_HOST) {
+            throw new Error(
+                'API_HOST environment variable is not set. ' +
+                    'Please set API_HOST in your .env file (e.g., http://localhost:3000)'
+            )
+        }
+
         this.oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
             process.env.GOOGLE_CLIENT_SECRET,
-            process.env.GOOGLE_CALLBACK_URL
+            `${process.env.API_HOST}/api/v1/google-auth/callback`
         )
 
         this.oauth2Client.setCredentials({

@@ -120,10 +120,18 @@ class Gmail implements INode {
             throw new Error('Credentials not found')
         }
 
+        // Validate API_HOST is set for OAuth redirect
+        if (!process.env.API_HOST) {
+            throw new Error(
+                'API_HOST environment variable is not set. ' +
+                    'Please set API_HOST in your .env file (e.g., http://localhost:3000)'
+            )
+        }
+
         const credentials = {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            redirectUrl: process.env.GOOGLE_CALLBACK_URL,
+            redirectUrl: `${process.env.API_HOST}/api/v1/google-auth/callback`,
             accessToken: credentialData.googleAccessToken,
             refreshToken: credentialData.googleRefreshToken,
             expiresAt: credentialData.expiresAt
