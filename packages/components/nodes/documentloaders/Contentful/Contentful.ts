@@ -548,6 +548,9 @@ class ContentfulLoader extends BaseDocumentLoader {
     private async runQuery(): Promise<Document[]> {
         let query: any = this.metadata || {}
 
+        // Explicitly exclude archived entries
+        query['sys.archivedAt[exists]'] = false
+
         if (this.limit) {
             query.limit = this.limit
         }
@@ -569,15 +572,19 @@ class ContentfulLoader extends BaseDocumentLoader {
         let allEntries: ContentfulEntry[] = []
         let total: number
         let skip = 0
+        let itemsProcessed = 0
 
         try {
             do {
                 query.skip = skip
                 const response: ContentfulLoaderResponse = await client.getEntries(query)
-                allEntries = allEntries.concat(response.items)
+                // Filter out archived entries as a safety measure
+                const nonArchivedItems = response.items.filter((entry) => !entry.sys.archivedVersion)
+                allEntries = allEntries.concat(nonArchivedItems)
                 total = response.total || 0
+                itemsProcessed += response.items.length
                 skip += response.items.length
-            } while (this.includeAll && allEntries.length < total)
+            } while (this.includeAll && itemsProcessed < total)
 
             return allEntries.map((entry) => this.createDocumentFromEntry(entry))
         } catch (error) {
