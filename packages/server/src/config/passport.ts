@@ -10,10 +10,12 @@ export default function (passport: any) {
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         // Validate API_HOST is set for Google OAuth callback
         if (!process.env.API_HOST) {
-            console.warn(
-                '⚠️  WARNING: API_HOST environment variable is not set.\n' +
-                    '   Google OAuth callback URL will be invalid.\n' +
-                    '   Please set API_HOST in your .env file (e.g., http://localhost:3000)'
+            console.error(
+                '❌ ERROR: API_HOST environment variable is not set.\n' +
+                    '   Google OAuth will fail with redirect_uri_mismatch error.\n' +
+                    '   Fix: Add API_HOST to your .env file:\n' +
+                    '        API_HOST=http://localhost:3000  (for local development)\n' +
+                    '        API_HOST=https://yourdomain.com (for production)'
             )
         }
 
