@@ -250,7 +250,7 @@ export const authenticationHandlerMiddleware =
                             user.stripeCustomerId = DEFAULT_CUSTOMER_ID
                         }
 
-                        req.user = { ...authUser, ...user, roles, permissions } as any
+                        req.user = { ...authUser, ...user, ...workspaceData, roles, permissions } as any
                     } else {
                         // User authenticated but from unauthorized organization - treat as anonymous user
                         console.warn(`Auth: User ${email} from org '${userOrgId}' treated as anonymous - not in allowed orgs`)
