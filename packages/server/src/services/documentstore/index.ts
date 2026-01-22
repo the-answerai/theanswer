@@ -1675,7 +1675,8 @@ const queryVectorStore = async (data: ICommonObject, workspaceId: string) => {
             appDataSource: appServer.AppDataSource,
             databaseEntities,
             logger,
-            workspaceId
+            workspaceId,
+            organizationId: entity.organizationId
         }
 
         if (!entity.embeddingConfig) {

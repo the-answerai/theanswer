@@ -12,7 +12,7 @@ const getAllApiKeys = async (req: Request, res: Response, next: NextFunction) =>
         if (!req.user?.activeWorkspaceId) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Workspace ID is required`)
         }
-        const apiResponse = await apikeyService.getAllApiKeys(req.user?.activeWorkspaceId, autoCreateNewKey, page, limit)
+        const apiResponse = await apikeyService.getAllApiKeys(req.user!, autoCreateNewKey, page, limit)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -27,7 +27,7 @@ const createApiKey = async (req: Request, res: Response, next: NextFunction) => 
         if (!req.user?.activeWorkspaceId) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Workspace ID is required`)
         }
-        const apiResponse = await apikeyService.createApiKey(req.body.keyName, req.user?.activeWorkspaceId)
+        const apiResponse = await apikeyService.createApiKey(req.body.keyName, req.user!)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -63,6 +63,8 @@ const importKeys = async (req: Request, res: Response, next: NextFunction) => {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Workspace ID is required`)
         }
         req.body.workspaceId = req.user?.activeWorkspaceId
+        req.body.organizationId = req.user?.activeOrganizationId
+        req.body.userId = req.user?.id
         const apiResponse = await apikeyService.importKeys(req.body)
         return res.json(apiResponse)
     } catch (error) {
