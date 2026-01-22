@@ -34,6 +34,7 @@ import {
 import { useTheme, styled, alpha } from '@mui/material/styles'
 import DatePicker from 'react-datepicker'
 
+import Image from 'next/image'
 import robotPNG from '@/assets/images/robot.png'
 import userPNG from '@/assets/images/account.png'
 import msgEmptySVG from '@/assets/images/message_empty.svg'
@@ -1226,21 +1227,21 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                         >
                                                             {/* Display the correct icon depending on the message type */}
                                                             {message.type === 'apiMessage' ? (
-                                                                <img
+                                                                <Image
                                                                     style={{ marginLeft: '10px' }}
                                                                     src={robotPNG}
                                                                     alt='AI'
-                                                                    width='25'
-                                                                    height='25'
+                                                                    width={25}
+                                                                    height={25}
                                                                     className='boticon'
                                                                 />
                                                             ) : (
-                                                                <img
+                                                                <Image
                                                                     style={{ marginLeft: '10px' }}
                                                                     src={userPNG}
                                                                     alt='Me'
-                                                                    width='25'
-                                                                    height='25'
+                                                                    width={25}
+                                                                    height={25}
                                                                     className='usericon'
                                                                 />
                                                             )}
