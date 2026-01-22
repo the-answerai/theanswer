@@ -123,7 +123,7 @@ class Gmail implements INode {
         const credentials = {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            redirectUrl: process.env.GOOGLE_CALLBACK_URL,
+            redirectUrl: `${process.env.API_HOST}/api/v1/google-auth/callback`,
             accessToken: credentialData.googleAccessToken,
             refreshToken: credentialData.googleRefreshToken,
             expiresAt: credentialData.expiresAt

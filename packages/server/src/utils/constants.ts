@@ -59,7 +59,7 @@ export const WHITELIST_URLS = [
 
     // AAI
     '/api/v1/google-auth',
-    process.env.GOOGLE_CALLBACK_URL ?? '/api/v1/google-auth/callback',
+    '/api/v1/google-auth/callback',
     '/api/v1/salesforce-auth',
     '/api/v1/salesforce-auth/callback',
     '/api/v1/atlassian-auth',
