@@ -8,6 +8,7 @@ import { ApiKey } from '../../database/entities/ApiKey'
 import { Not, IsNull } from 'typeorm'
 import { getWorkspaceSearchOptions } from '../../enterprise/utils/ControllerServiceUtils'
 import { v4 as uuidv4 } from 'uuid'
+import { IUser } from '../../Interface'
 
 const getAllApiKeysFromDB = async (workspaceId: string, page: number = -1, limit: number = -1) => {
     const appServer = getRunningExpressApp()
@@ -27,12 +28,13 @@ const getAllApiKeysFromDB = async (workspaceId: string, page: number = -1, limit
     }
 }
 
-const getAllApiKeys = async (workspaceId: string, autoCreateNewKey?: boolean, page: number = -1, limit: number = -1) => {
+const getAllApiKeys = async (user: IUser, autoCreateNewKey?: boolean, page: number = -1, limit: number = -1) => {
     try {
+        const workspaceId = user.activeWorkspaceId!
         let keys = await getAllApiKeysFromDB(workspaceId, page, limit)
         const isEmpty = keys?.total === 0 || (Array.isArray(keys) && keys?.length === 0)
         if (isEmpty && autoCreateNewKey) {
-            await createApiKey('DefaultKey', workspaceId)
+            await createApiKey('DefaultKey', user)
             keys = await getAllApiKeysFromDB(workspaceId, page, limit)
         }
         return keys
@@ -71,7 +73,7 @@ const getApiKeyById = async (apiKeyId: string) => {
     }
 }
 
-const createApiKey = async (keyName: string, workspaceId: string) => {
+const createApiKey = async (keyName: string, user: IUser) => {
     try {
         const apiKey = generateAPIKey()
         const apiSecret = generateSecretHash(apiKey)
@@ -81,10 +83,12 @@ const createApiKey = async (keyName: string, workspaceId: string) => {
         newKey.apiKey = apiKey
         newKey.apiSecret = apiSecret
         newKey.keyName = keyName
-        newKey.workspaceId = workspaceId
+        newKey.workspaceId = user.activeWorkspaceId!
+        newKey.organizationId = user.activeOrganizationId!
+        newKey.userId = user.id
         const key = appServer.AppDataSource.getRepository(ApiKey).create(newKey)
         await appServer.AppDataSource.getRepository(ApiKey).save(key)
-        return await getAllApiKeysFromDB(workspaceId)
+        return await getAllApiKeysFromDB(user.activeWorkspaceId!)
     } catch (error) {
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error: apikeyService.createApiKey - ${getErrorMessage(error)}`)
     }
@@ -126,6 +130,8 @@ const importKeys = async (body: any) => {
     try {
         const jsonFile = body.jsonFile
         const workspaceId = body.workspaceId
+        const organizationId = body.organizationId
+        const userId = body.userId
         const splitDataURI = jsonFile.split(',')
         if (splitDataURI[0] !== 'data:application/json;base64') {
             throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Invalid dataURI`)
@@ -198,6 +204,8 @@ const importKeys = async (body: any) => {
                         currentKey.apiKey = key.apiKey
                         currentKey.apiSecret = key.apiSecret
                         currentKey.workspaceId = workspaceId
+                        currentKey.organizationId = organizationId
+                        currentKey.userId = userId
                         await appServer.AppDataSource.getRepository(ApiKey).save(currentKey)
                         break
                     }
@@ -220,6 +228,8 @@ const importKeys = async (body: any) => {
                 newKey.apiSecret = key.apiSecret
                 newKey.keyName = key.keyName
                 newKey.workspaceId = workspaceId
+                newKey.organizationId = organizationId
+                newKey.userId = userId
                 const newKeyEntity = appServer.AppDataSource.getRepository(ApiKey).create(newKey)
                 await appServer.AppDataSource.getRepository(ApiKey).save(newKeyEntity)
             }
