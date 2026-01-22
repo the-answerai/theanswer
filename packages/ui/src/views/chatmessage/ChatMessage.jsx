@@ -41,6 +41,7 @@ import {
     IconSparkles,
     IconVolume
 } from '@tabler/icons-react'
+import Image from 'next/image'
 import robotPNG from '@/assets/images/robot.png'
 import userPNG from '@/assets/images/account.png'
 import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
@@ -2422,9 +2423,9 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                                 >
                                     {/* Display the correct icon depending on the message type */}
                                     {message.type === 'apiMessage' || message.type === 'leadCaptureMessage' ? (
-                                        <img src={robotPNG} alt='AI' width='30' height='30' className='boticon' />
+                                        <Image src={robotPNG} alt='AI' width={30} height={30} className='boticon' />
                                     ) : (
-                                        <img src={userPNG} alt='Me' width='30' height='30' className='usericon' />
+                                        <Image src={userPNG} alt='Me' width={30} height={30} className='usericon' />
                                     )}
                                     <div
                                         style={{
