@@ -14,14 +14,7 @@
 import util from 'node:util';
 import { exec } from 'node:child_process';
 const execPromise = util.promisify(exec);
-import {
-  log,
-  handleError,
-  determineEnvironmentMapping,
-  loadEnvironmentVariables,
-  validateDeployment,
-  shouldPreserveVar
-} from './utils.js';
+import { log, loadEnvironmentVariables, validateDeployment, shouldPreserveVar } from './utils.js';
 import axios from 'axios';
 import fs from 'node:fs';
 import path from 'node:path';

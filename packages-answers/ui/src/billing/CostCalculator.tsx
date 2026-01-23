@@ -131,7 +131,14 @@ const CostCalculator = () => {
                                     <Stack spacing={1}>
                                         <Stack direction='row' alignItems='center' spacing={1}>
                                             {template.icon}
-                                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                            <Typography
+                                                sx={{
+                                                    color: theme.palette.text.primary,
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    flexGrow: 1
+                                                }}
+                                            >
                                                 {template.name}
                                             </Typography>
                                         </Stack>
@@ -161,7 +168,9 @@ const CostCalculator = () => {
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography
+                                        sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}
+                                    >
                                         AI Tokens
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.AI_TOKENS} arrow>
@@ -218,7 +227,9 @@ const CostCalculator = () => {
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography
+                                        sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}
+                                    >
                                         Compute Time
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.COMPUTE} arrow>
@@ -275,7 +286,9 @@ const CostCalculator = () => {
                             <Stack spacing={2}>
                                 <Stack direction='row' alignItems='center' spacing={1}>
                                     <CreditIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                                    <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}>
+                                    <Typography
+                                        sx={{ color: theme.palette.text.primary, fontSize: '0.875rem', fontWeight: 500, flexGrow: 1 }}
+                                    >
                                         Storage
                                     </Typography>
                                     <Tooltip title={BILLING_CONFIG.RATE_DESCRIPTIONS.STORAGE} arrow>
@@ -322,7 +335,9 @@ const CostCalculator = () => {
                 {totalCredits > 0 && (
                     <Box sx={{ mt: 2, p: 2, borderRadius: '8px', border: `1px solid ${theme.palette.divider}` }}>
                         <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '1rem', fontWeight: 500 }}>Total Cost</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontSize: '1rem', fontWeight: 500 }}>
+                                Total Cost
+                            </Typography>
                             <Typography sx={{ color: theme.palette.text.primary, fontSize: '1.25rem', fontWeight: 600 }}>
                                 ${(totalCredits * BILLING_CONFIG.CREDIT_TO_USD).toFixed(2)}
                             </Typography>

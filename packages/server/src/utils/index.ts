@@ -68,7 +68,6 @@ import {
     SecretsManagerClientConfig
 } from '@aws-sdk/client-secrets-manager'
 import { fetchMCPMetadata, MCPOAuthMetadata } from './mcp-metadata'
-import { LoggedInUser } from '../enterprise/Interface.Enterprise'
 
 export const QUESTION_VAR_PREFIX = 'question'
 export const FILE_ATTACHMENT_PREFIX = 'file_attachment'

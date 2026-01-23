@@ -78,9 +78,7 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
         }
 
         // Count records missing workspaceId
-        const countResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
-        )
+        const countResult = await queryRunner.query(`SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`)
         const totalMissing = parseInt(countResult[0].count)
 
         if (totalMissing === 0) {
@@ -203,9 +201,7 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
         }
 
         // Count records missing workspaceId
-        const countResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
-        )
+        const countResult = await queryRunner.query(`SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`)
         const totalMissing = parseInt(countResult[0].count)
 
         if (totalMissing === 0) {
@@ -266,9 +262,7 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
      * Log any remaining records that couldn't be assigned a workspace
      */
     private async logRemaining(queryRunner: QueryRunner, tableName: string): Promise<void> {
-        const remainingResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`
-        )
+        const remainingResult = await queryRunner.query(`SELECT COUNT(*) as count FROM "${tableName}" WHERE "workspaceId" IS NULL`)
         const remaining = parseInt(remainingResult[0].count)
 
         if (remaining > 0) {
@@ -306,15 +300,11 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
         }
 
         // Count messages missing userId
-        const missingUserIdResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`
-        )
+        const missingUserIdResult = await queryRunner.query(`SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`)
         const missingUserId = parseInt(missingUserIdResult[0].count)
 
         // Count messages missing organizationId
-        const missingOrgIdResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`
-        )
+        const missingOrgIdResult = await queryRunner.query(`SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`)
         const missingOrgId = parseInt(missingOrgIdResult[0].count)
 
         console.log(`chat_message: ${missingUserId} records missing userId, ${missingOrgId} missing organizationId`)
@@ -351,14 +341,10 @@ export class AAIBackfillWorkspaceId1760000000002 implements MigrationInterface {
         }
 
         // Log remaining
-        const remainingUserIdResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`
-        )
+        const remainingUserIdResult = await queryRunner.query(`SELECT COUNT(*) as count FROM chat_message WHERE "userId" IS NULL`)
         const remainingUserId = parseInt(remainingUserIdResult[0].count)
 
-        const remainingOrgIdResult = await queryRunner.query(
-            `SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`
-        )
+        const remainingOrgIdResult = await queryRunner.query(`SELECT COUNT(*) as count FROM chat_message WHERE "organizationId" IS NULL`)
         const remainingOrgId = parseInt(remainingOrgIdResult[0].count)
 
         if (remainingUserId > 0 || remainingOrgId > 0) {

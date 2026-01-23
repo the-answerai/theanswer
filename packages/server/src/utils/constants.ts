@@ -70,7 +70,7 @@ export const WHITELIST_URLS = [
     '/api/v1/gmail/message',
     // '/api/v1/marketplaces/templates  ',
     '/api/v1/billing/usage/sync',
-    '/api/v1/langfuse/healthcheck',
+    '/api/v1/langfuse/healthcheck'
 ]
 
 export const enum GeneralErrorMessage {

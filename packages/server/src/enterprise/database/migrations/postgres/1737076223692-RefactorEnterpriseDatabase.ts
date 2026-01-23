@@ -560,7 +560,9 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
                 // but fallback ensures migration doesn't fail for edge cases
                 let orgId = user.organizationId
                 if (!orgId || !validOrgIds.has(orgId)) {
-                    console.warn(`WARNING: User ${user.id} (email: ${user.email}) has organizationId ${orgId} which doesn't exist - using fallback ${fallbackOrgId}. This may indicate Auth0 sync issue.`)
+                    console.warn(
+                        `WARNING: User ${user.id} (email: ${user.email}) has organizationId ${orgId} which doesn't exist - using fallback ${fallbackOrgId}. This may indicate Auth0 sync issue.`
+                    )
                     orgId = fallbackOrgId
                     usersWithFallback++
                 }
@@ -572,7 +574,9 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
                 `)
             }
             if (usersWithFallback > 0) {
-                console.warn(`WARNING: ${usersWithFallback} users were assigned to fallback organization due to invalid organizationId. Review Auth0 sync for these users.`)
+                console.warn(
+                    `WARNING: ${usersWithFallback} users were assigned to fallback organization due to invalid organizationId. Review Auth0 sync for these users.`
+                )
             }
             console.log('AAI organization_user relationships created')
         }
@@ -616,7 +620,9 @@ export class RefactorEnterpriseDatabase1737076223692 implements MigrationInterfa
                     // First update any NULL values to a valid user ID
                     const firstUser = await queryRunner.query(`SELECT id FROM "user" LIMIT 1`)
                     if (firstUser.length > 0) {
-                        await queryRunner.query(`UPDATE "workspace" SET "${col.column_name}" = '${firstUser[0].id}' WHERE "${col.column_name}" IS NULL`)
+                        await queryRunner.query(
+                            `UPDATE "workspace" SET "${col.column_name}" = '${firstUser[0].id}' WHERE "${col.column_name}" IS NULL`
+                        )
                     }
                     await queryRunner.query(`ALTER TABLE "workspace" ALTER COLUMN "${col.column_name}" SET NOT NULL;`)
                 }

@@ -30,8 +30,7 @@ const getRecordManagerProviders = () => client.get('/document-store/components/r
 
 const generateDocStoreToolDesc = (storeId, body) => client.post('/document-store/generate-tool-desc/' + storeId, body)
 
-
-// AAI 
+// AAI
 const getAdminDocumentStores = () => client.get('/admin/document-stores')
 const syncAndRefreshChunks = (storeId, fileId) => client.post(`/document-store/chunks/sync/${storeId}/${fileId}`)
 

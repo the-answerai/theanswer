@@ -54,7 +54,7 @@ export default {
     getIsChatflowStreaming,
     getAllowChatflowUploads,
     generateAgentflow,
-    // AAI 
+    // AAI
     getAdminChatflows,
     getDefaultChatflowTemplate,
     bulkUpdateChatflows,

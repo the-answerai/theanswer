@@ -14,11 +14,7 @@ import { Role } from '../../enterprise/database/entities/role.entity'
  *
  * Idempotent - safe to call multiple times.
  */
-export const findOrCreateWorkspacesForUser = async (
-    AppDataSource: DataSource,
-    user: User,
-    organizationId: string
-): Promise<void> => {
+export const findOrCreateWorkspacesForUser = async (AppDataSource: DataSource, user: User, organizationId: string): Promise<void> => {
     const workspaceUserRepo = AppDataSource.getRepository(WorkspaceUser)
     const workspaceRepo = AppDataSource.getRepository(Workspace)
     const roleRepo = AppDataSource.getRepository(Role)
@@ -95,6 +91,8 @@ export const findOrCreateWorkspacesForUser = async (
         // Log the actual error for debugging - don't fail authentication
         // The fallback in populateWorkspaceData will handle this case
         console.error(`[Auth] Error creating workspaces for user ${user.id}:`, error)
-        console.error(`[Auth] Error details - organizationId: ${organizationId}, memberRoleId: ${memberRole?.id}, personalRoleId: ${personalRole?.id}`)
+        console.error(
+            `[Auth] Error details - organizationId: ${organizationId}, memberRoleId: ${memberRole?.id}, personalRoleId: ${personalRole?.id}`
+        )
     }
 }

@@ -70,7 +70,9 @@ const getSingleNodeAsyncOptions = async (req: Request, res: Response, next: Next
         }
         const body = req.body
         body.searchOptions = getWorkspaceSearchOptionsFromReq(req)
-        const user = req.user ? { id: req.user.id, organizationId: req.user.activeOrganizationId, roles: req.user.roles, permissions: req.user.permissions } : undefined
+        const user = req.user
+            ? { id: req.user.id, organizationId: req.user.activeOrganizationId, roles: req.user.roles, permissions: req.user.permissions }
+            : undefined
         const apiResponse = await nodesService.getSingleNodeAsyncOptions(req.params.name, body, user)
         return res.json(apiResponse)
     } catch (error) {

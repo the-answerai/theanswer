@@ -3,11 +3,7 @@ import { ChatFlow } from '../../database/entities/ChatFlow'
 import { User } from '../../database/entities/User'
 import { Workspace } from '../../enterprise/database/entities/workspace.entity'
 
-export const findOrCreateDefaultChatflowsForUser = async (
-    AppDataSource: DataSource,
-    user: User,
-    activeWorkspaceId?: string
-) => {
+export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSource, user: User, activeWorkspaceId?: string) => {
     if (!user) return
 
     // Always check database for latest defaultChatflowId to avoid race conditions

@@ -17,8 +17,7 @@ export const configureAuth0Strategy = () => {
     const domain = process.env.AUTH0_DOMAIN
     const clientID = process.env.AUTH0_CLIENT_ID
     const clientSecret = process.env.AUTH0_CLIENT_SECRET
-    const callbackURL =
-        process.env.AUTH0_CALLBACK_URL || `${process.env.API_HOST || 'http://localhost:3000'}/api/v1/auth0/callback`
+    const callbackURL = process.env.AUTH0_CALLBACK_URL || `${process.env.API_HOST || 'http://localhost:3000'}/api/v1/auth0/callback`
 
     if (!domain || !clientID || !clientSecret) {
         console.log('[Auth0 SSO] Missing AUTH0_DOMAIN, AUTH0_CLIENT_ID, or AUTH0_CLIENT_SECRET - Auth0 SSO disabled')

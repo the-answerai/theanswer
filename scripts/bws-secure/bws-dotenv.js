@@ -153,6 +153,7 @@ function loadBwsSecrets(encryptionKey) {
       );
 
       // These are data processing operations, not command executions
+      // eslint-disable-next-line no-control-regex
       const cleanOutput = output.replaceAll(/\u001B\[\d+m/g, '').trim();
       const globalSecrets = parseEnvironmentOutput(cleanOutput);
 

@@ -176,9 +176,19 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             // Preserve chatflow configuration settings from imported file
             // Only include fields that are actually defined to avoid overwriting existing values with undefined
             const configFieldKeys = [
-                'name', 'description', 'category', 'chatbotConfig', 'visibility',
-                'speechToText', 'textToSpeech', 'followUpPrompts', 'apiConfig', 'analytic', 'type',
-                'answersConfig', 'browserExtConfig'
+                'name',
+                'description',
+                'category',
+                'chatbotConfig',
+                'visibility',
+                'speechToText',
+                'textToSpeech',
+                'followUpPrompts',
+                'apiConfig',
+                'analytic',
+                'type',
+                'answersConfig',
+                'browserExtConfig'
             ]
             const configFields = configFieldKeys.reduce((acc, key) => {
                 if (flowData[key] !== undefined) {

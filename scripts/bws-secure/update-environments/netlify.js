@@ -15,14 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import axios from 'axios';
-import {
-  log,
-  handleError,
-  loadEnvironmentVariables,
-  validateDeployment,
-  shouldPreserveVar as shouldPreserveVariable,
-  getBuildOrAuthToken
-} from './utils.js';
+import { log, loadEnvironmentVariables, validateDeployment, getBuildOrAuthToken } from './utils.js';
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +35,7 @@ async function withRateLimitRetry(apiCall, maxRetries = 3, initialDelay = 1000) 
   let retries = 0;
   let delay = initialDelay;
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       return await apiCall();

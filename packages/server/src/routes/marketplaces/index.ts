@@ -9,9 +9,7 @@ router.get('/templates/:id', marketplacesController.getMarketplaceTemplate)
 router.get('/organization', checkPermission('templates:marketplace'), marketplacesController.getOrganizationTemplates)
 
 // READ
-router.get('/templates',
- checkPermission('templates:marketplace'),
- marketplacesController.getAllTemplates)
+router.get('/templates', checkPermission('templates:marketplace'), marketplacesController.getAllTemplates)
 
 router.post('/custom', checkAnyPermission('templates:flowexport,templates:toolexport'), marketplacesController.saveCustomTemplate)
 

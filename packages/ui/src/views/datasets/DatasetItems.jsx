@@ -90,11 +90,6 @@ const EvalDatasetRows = () => {
     const [pageLimit, setPageLimit] = useState(DEFAULT_ITEMS_PER_PAGE)
     const [total, setTotal] = useState(0)
 
-    // Early return if datasetId is invalid (after all hooks)
-    if (!datasetId) {
-        console.error('Invalid dataset ID')
-        return null
-    }
     const onChange = (page, pageLimit) => {
         setCurrentPage(page)
         setPageLimit(pageLimit)
@@ -287,6 +282,12 @@ const EvalDatasetRows = () => {
     useEffect(() => {
         setLoading(getDatasetRows.loading)
     }, [getDatasetRows.loading])
+
+    // Early return if datasetId is invalid (after all hooks)
+    if (!datasetId) {
+        console.error('Invalid dataset ID')
+        return null
+    }
 
     return (
         <>

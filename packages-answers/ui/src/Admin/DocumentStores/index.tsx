@@ -243,7 +243,9 @@ const AdminDocumentStores = () => {
                                     <TableRow key={store.id} hover>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                <Typography sx={{ fontWeight: 600, color: theme.palette.text.primary }}>{store.name}</Typography>
+                                                <Typography sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                                                    {store.name}
+                                                </Typography>
                                                 {store.description && (
                                                     <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
                                                         {store.description}
