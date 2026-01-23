@@ -98,6 +98,7 @@ export const buildAgentGraph = async ({
         const options = {
             user,
             orgId,
+            organizationId: orgId, // Alias for components expecting organizationId
             workspaceId,
             chatId,
             sessionId,
