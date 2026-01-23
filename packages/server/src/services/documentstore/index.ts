@@ -597,8 +597,8 @@ const deleteVectorStoreFromStore = async (storeId: string, workspaceId: string) 
 
         const options: ICommonObject = {
             chatflowid: storeId,
-            // organizationId,
-            // userId,
+            organizationId: entity.organizationId,
+            workspaceId: entity.workspaceId,
             appDataSource: appServer.AppDataSource,
             databaseEntities,
             logger
@@ -1543,6 +1543,8 @@ const _insertIntoVectorStoreWorkerThread = async (
         const options: ICommonObject = {
             chatflowid,
             user,
+            organizationId: entity.organizationId,
+            workspaceId,
             appDataSource,
             databaseEntities,
             logger
