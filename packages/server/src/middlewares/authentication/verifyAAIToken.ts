@@ -168,7 +168,7 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
             // Import verifyToken lazily to avoid circular dependencies
             try {
                 const { verifyToken } = await import('../../enterprise/middleware/passport')
-                
+
                 verifyToken(req, res, (passportErr?: any) => {
                     if (passportErr || !(req as any).user) {
                         // STEP 3: Both failed - return 401

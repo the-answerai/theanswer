@@ -57,8 +57,8 @@ class DocStore_DocumentLoaders implements INode {
 
             const appDataSource = options.appDataSource as DataSource
             const databaseEntities = options.databaseEntities as IDatabaseEntity
-            const userId = options.userId as string
-            const organizationId = options.organizationId as string
+            const _userId = options.userId as string
+            const _organizationId = options.organizationId as string
 
             if (appDataSource === undefined || !appDataSource) {
                 return returnData

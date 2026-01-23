@@ -1111,7 +1111,8 @@ AssistantDialog.propTypes = {
     show: PropTypes.bool,
     dialogProps: PropTypes.object,
     onCancel: PropTypes.func,
-    onConfirm: PropTypes.func
+    onConfirm: PropTypes.func,
+    setError: PropTypes.func
 }
 
 export default AssistantDialog

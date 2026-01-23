@@ -24,7 +24,6 @@ const getOrgCredentials = () => client.get('/admin/organizations/credentials')
 
 const updateOrgCredentials = (integrations) => client.put('/admin/organizations/credentials', { integrations })
 
-
 export default {
     getAllCredentials,
     getCredentialsByName,

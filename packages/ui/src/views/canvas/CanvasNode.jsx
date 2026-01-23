@@ -191,7 +191,9 @@ const CanvasNode = ({ data }) => {
                                     >
                                         <img
                                             style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'contain' }}
-                                            src={typeof LlamaindexPNG === 'object' && LlamaindexPNG?.src ? LlamaindexPNG.src : LlamaindexPNG}
+                                            src={
+                                                typeof LlamaindexPNG === 'object' && LlamaindexPNG?.src ? LlamaindexPNG.src : LlamaindexPNG
+                                            }
                                             alt='LlamaIndex'
                                         />
                                     </div>

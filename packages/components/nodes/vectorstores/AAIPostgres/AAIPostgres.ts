@@ -179,7 +179,7 @@ class AAIPostgres_VectorStores implements INode {
             const docs = nodeData.inputs?.document as Document[]
             const recordManager = nodeData.inputs?.recordManager
             const isFileUploadEnabled = nodeData.inputs?.fileUpload as boolean
-            const namespace = nodeData.inputs?.namespace as string
+            const _namespace = nodeData.inputs?.namespace as string
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
 
             // Verify required options
@@ -229,7 +229,7 @@ class AAIPostgres_VectorStores implements INode {
             const vectorStoreDriver: AAIVectorStoreDriver = AAIPostgres_VectorStores.getDriverFromConfig(nodeData, options)
             const tableName = getTableName()
             const recordManager = nodeData.inputs?.recordManager
-            const namespace = nodeData.inputs?.namespace as string
+            const _namespace = nodeData.inputs?.namespace as string
 
             // Verify required options
             if (!options.chatflowid) {
@@ -263,7 +263,7 @@ class AAIPostgres_VectorStores implements INode {
         const k = topK ? parseFloat(topK) : 4
         const _pgMetadataFilter = nodeData.inputs?.pgMetadataFilter
         const isFileUploadEnabled = nodeData.inputs?.fileUpload as boolean
-        const namespace = nodeData.inputs?.namespace as string
+        const _namespace = nodeData.inputs?.namespace as string
 
         // Verify required options
         if (!options.chatflowid) {

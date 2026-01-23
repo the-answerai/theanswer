@@ -6,8 +6,17 @@ import { getWorkspaceIdsFromContext, isMultiWorkspaceSharingEnabled, debugLog } 
 
 // Entities with workspaceId field - add new workspace-scoped entities here
 const WORKSPACE_ENTITIES = new Set([
-    'ChatFlow', 'Tool', 'Variable', 'DocumentStore', 'Credential',
-    'Assistant', 'Apikey', 'Dataset', 'Evaluation', 'Evaluator', 'Execution'
+    'ChatFlow',
+    'Tool',
+    'Variable',
+    'DocumentStore',
+    'Credential',
+    'Assistant',
+    'Apikey',
+    'Dataset',
+    'Evaluation',
+    'Evaluator',
+    'Execution'
 ])
 
 export function initAAI(dataSource: DataSource) {
@@ -73,21 +82,24 @@ function wrapQueryBuilder<T extends ObjectLiteral>(qb: SelectQueryBuilder<T>, al
     const wsIds = getWorkspaceIdsFromContext()
     if (!wsIds || wsIds.length <= 1) return qb
 
-    const origAnd = qb.andWhere.bind(qb), origWhere = qb.where.bind(qb)
+    const origAnd = qb.andWhere.bind(qb),
+        origWhere = qb.where.bind(qb)
 
-    const upgrade = (orig: Function, method: string) => (cond: any, params?: any): SelectQueryBuilder<T> => {
-        if (typeof cond === 'string' && cond.includes('.workspaceId')) {
-            if (cond.includes('= :workspaceId') && params?.workspaceId) {
-                const newCond = cond.replace(/(\w+)\.workspaceId\s*=\s*:workspaceId/, '$1.workspaceId IN (:...aaiWsIds)')
-                const newParams = { ...params, aaiWsIds: wsIds }
-                delete newParams.workspaceId
-                debugLog(`QB.${method} - upgraded`, { original: cond, wsIds })
-                return orig(newCond, newParams)
+    const upgrade =
+        (orig: Function, method: string) =>
+        (cond: any, params?: any): SelectQueryBuilder<T> => {
+            if (typeof cond === 'string' && cond.includes('.workspaceId')) {
+                if (cond.includes('= :workspaceId') && params?.workspaceId) {
+                    const newCond = cond.replace(/(\w+)\.workspaceId\s*=\s*:workspaceId/, '$1.workspaceId IN (:...aaiWsIds)')
+                    const newParams = { ...params, aaiWsIds: wsIds }
+                    delete newParams.workspaceId
+                    debugLog(`QB.${method} - upgraded`, { original: cond, wsIds })
+                    return orig(newCond, newParams)
+                }
+                debugLog(`QB.${method} - workspace filter not upgraded (unexpected format)`, { cond })
             }
-            debugLog(`QB.${method} - workspace filter not upgraded (unexpected format)`, { cond })
+            return orig(cond, params)
         }
-        return orig(cond, params)
-    }
 
     qb.andWhere = upgrade(origAnd, 'andWhere') as typeof qb.andWhere
     qb.where = upgrade(origWhere, 'where') as typeof qb.where

@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
-import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { updateNetlifyEnvVars } from './update-environments/netlify.js';
-import { log, validateDeployment } from './update-environments/utils.js';
+import { log } from './update-environments/utils.js';
 import dotenv from 'dotenv';
 
 // Get the directory name in ESM

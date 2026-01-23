@@ -49,13 +49,10 @@ const fetcher = () =>
 export const useUserPlans = () => {
     const { data: activeUserPlan, mutate: mutateActiveUserPlan } = useSWR<ActiveUserPlan | null>('plan', fetcher)
 
-    const handleCancelPlan = useCallback(
-        async (onEnd: Function) => {
-            // Cancel not supported in Flowise API currently
-            onEnd()
-        },
-        []
-    )
+    const handleCancelPlan = useCallback(async (onEnd: Function) => {
+        // Cancel not supported in Flowise API currently
+        onEnd()
+    }, [])
 
     const isActivePlan = useCallback(
         (plan: Plan) => {

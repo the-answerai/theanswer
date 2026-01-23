@@ -8,7 +8,6 @@ import { Button, Avatar, Box, ButtonBase, Switch, Typography, Link } from '@mui/
 import { useTheme, styled, darken } from '@mui/material/styles'
 
 // project imports
-import LogoSection from '../LogoSection'
 import ProfileSection from './ProfileSection'
 import WorkspaceSwitcher from '@/layout/MainLayout/Header/WorkspaceSwitcher'
 import OrgWorkspaceBreadcrumbs from '@/layout/MainLayout/Header/OrgWorkspaceBreadcrumbs'

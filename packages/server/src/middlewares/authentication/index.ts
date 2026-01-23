@@ -73,7 +73,7 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<{
 export const authenticationHandlerMiddleware =
     ({ whitelistURLs, AppDataSource }: { whitelistURLs: string[]; AppDataSource: DataSource }) =>
     async (req: Request, res: Response, next: NextFunction) => {
-    console.log('[AuthenticationHandlerMiddleware] checking', req.url, req.method)
+        console.log('[AuthenticationHandlerMiddleware] checking', req.url, req.method)
         /**
          * Organization-Based Authentication Security Model:
          *
@@ -137,9 +137,7 @@ export const authenticationHandlerMiddleware =
             }
 
             // Populate workspace data for API key users (same as JWT users)
-            const workspaceData = organization
-                ? await populateWorkspaceData(AppDataSource, apiKeyUser, organization.id)
-                : {}
+            const workspaceData = organization ? await populateWorkspaceData(AppDataSource, apiKeyUser, organization.id) : {}
 
             // Store API key user with workspace data and additional auth0 org info
             req.user = {

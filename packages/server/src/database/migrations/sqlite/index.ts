@@ -51,7 +51,6 @@ import { AddPersonalWorkspace1734074497540 } from '../../../enterprise/database/
 import { RefactorEnterpriseDatabase1737076223692 } from '../../../enterprise/database/migrations/sqlite/1737076223692-RefactorEnterpriseDatabase'
 import { ExecutionLinkWorkspaceId1746862866554 } from '../../../enterprise/database/migrations/sqlite/1746862866554-ExecutionLinkWorkspaceId'
 
-
 // AAI
 import { AddAnswersConfig1714692854264 } from './1714692854264-AddAnswersConfig'
 import { AddUser1716422641414 } from './1716422641414-AddUser'
@@ -67,7 +66,6 @@ import { AddPlans1722954819677 } from './1722954819676-AddPlans'
 import { AddUserScopingToExecution1738091000000 } from './1738091000000-AddUserScopingToExecution'
 import { AddVersioningToChatFlow1753000000000 } from './1753000000000-AddVersioningToChatFlow'
 import { AddTrackingMetadataToChatMessage1753200000000 } from './1753200000000-AddTrackingMetadataToChatMessage'
-
 
 export const sqliteMigrations = [
     Init1693835579790,

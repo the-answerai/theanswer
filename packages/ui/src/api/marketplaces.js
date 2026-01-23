@@ -8,8 +8,7 @@ const getAllCustomTemplates = () => client.get('/marketplaces/custom')
 const saveAsCustomTemplate = (body) => client.post('/marketplaces/custom', body)
 const deleteCustomTemplate = (id) => client.delete(`/marketplaces/custom/${id}`)
 
-
-// AAI 
+// AAI
 const getSpecificMarketplaceTemplate = (id) => client.get(`/marketplaces/templates/${id}`)
 const getOrganizationTemplates = () => client.get('/marketplaces/organization')
 
@@ -23,5 +22,5 @@ export default {
     deleteCustomTemplate,
     // AAI
     getSpecificMarketplaceTemplate,
-    getOrganizationTemplates,
+    getOrganizationTemplates
 }

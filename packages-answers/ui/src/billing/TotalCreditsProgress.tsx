@@ -130,7 +130,10 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                     sx={{
                         height: 16,
                         borderRadius: 8,
-                        bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.default, 0.3) : alpha(theme.palette.primary.main, 0.1),
+                        bgcolor:
+                            theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.background.default, 0.3)
+                                : alpha(theme.palette.primary.main, 0.1),
                         '& .MuiLinearProgress-bar': {
                             bgcolor: progressColor
                         },
@@ -166,7 +169,9 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                     <Grid item xs={6} sm={3}>
                         <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                             <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Chats</Typography>
-                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>{usageSummary?.usageDashboard?.totalChats || 0}</Typography>
+                            <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
+                                {usageSummary?.usageDashboard?.totalChats || 0}
+                            </Typography>
                         </Box>
                     </Grid>
                     <Grid item xs={6} sm={3}>

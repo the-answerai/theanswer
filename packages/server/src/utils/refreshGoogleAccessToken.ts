@@ -14,8 +14,7 @@ export class GoogleOauth2Client {
 
         if (!process.env.API_HOST) {
             throw new Error(
-                'API_HOST environment variable is not set. ' +
-                    'Please set API_HOST in your .env file (e.g., http://localhost:3000)'
+                'API_HOST environment variable is not set. ' + 'Please set API_HOST in your .env file (e.g., http://localhost:3000)'
             )
         }
 

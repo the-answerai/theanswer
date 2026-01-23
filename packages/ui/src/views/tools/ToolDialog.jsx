@@ -101,7 +101,6 @@ const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, set
     const [showHowToDialog, setShowHowToDialog] = useState(false)
     const [visibility, setVisibility] = useState(['Private'])
 
-
     const [exportAsTemplateDialogOpen, setExportAsTemplateDialogOpen] = useState(false)
     const [exportAsTemplateDialogProps, setExportAsTemplateDialogProps] = useState({})
 
@@ -561,7 +560,7 @@ const ToolDialog = ({ show, dialogProps, onUseTemplate, onCancel, onConfirm, set
                         <FormControl component='fieldset' sx={{ width: '100%', mb: 2 }}>
                             <FormGroup>
                                 {TOOL_VISIBILITY_OPTIONS.map((type) => {
-                                    const isDisabled = type === 'Private' || (type === 'Organization')
+                                    const isDisabled = type === 'Private' || type === 'Organization'
                                     return (
                                         <FormControlLabel
                                             key={type}

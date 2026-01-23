@@ -412,7 +412,7 @@ const updateChatflow = async (
             ...dbResponse,
             // Override userId to track who actually made this change
             versionMetadata: {
-                originalUserId: dbResponse.userId, // Preserve original owner
+                originalUserId: dbResponse.userId // Preserve original owner
                 // editedByUserId: user.id, // Track who made this change
                 // editedByName: user.name || 'Unknown User',
                 // editedByEmail: user.email
@@ -978,7 +978,6 @@ const getAdminChatflows = async (user?: IUser, type?: ChatflowType, filter?: any
                 isFromTemplate
             }
         })
-
 
         if (type === 'MULTIAGENT') {
             return dbResponse.filter((chatflow) => chatflow.type === 'MULTIAGENT')

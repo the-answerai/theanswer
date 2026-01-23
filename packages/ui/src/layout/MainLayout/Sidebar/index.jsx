@@ -11,7 +11,6 @@ import { BrowserView, MobileView } from 'react-device-detect'
 
 // project imports
 import MenuList from './MenuList'
-import LogoSection from '../LogoSection'
 import CloudMenuList from '@/layout/MainLayout/Sidebar/CloudMenuList'
 
 // store

@@ -25,11 +25,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
     const sidekicksByCategoryCache = useRef<Record<string, { data: Sidekick[]; timestamp: number }>>({})
 
     // Logger utility (no-op in production)
-    const perfLog = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (_message: string, ..._args: any[]) => {},
-        []
-    )
+    const perfLog = useCallback((_message: string, ..._args: any[]) => {}, [])
 
     // Fetcher with better caching and error handling
     const fetcher = useCallback(async (url: string) => {

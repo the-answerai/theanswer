@@ -124,10 +124,7 @@ export const createAuth0Router = (AppDataSource: DataSource) => {
 
                 if (domain && clientId) {
                     // Redirect to Auth0 logout
-                    const logoutUrl =
-                        `https://${domain}/v2/logout?` +
-                        `client_id=${clientId}&` +
-                        `returnTo=${encodeURIComponent(returnTo)}`
+                    const logoutUrl = `https://${domain}/v2/logout?` + `client_id=${clientId}&` + `returnTo=${encodeURIComponent(returnTo)}`
                     res.redirect(logoutUrl)
                 } else {
                     // Just redirect to signin if Auth0 not configured
