@@ -9,6 +9,9 @@ on:
     workflow_dispatch:
 permissions:
     contents: read
+concurrency:
+    group: ci-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 jobs:
     build:
         strategy:
@@ -32,11 +35,25 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: 'pnpm'
                   cache-dependency-path: 'pnpm-lock.yaml'
+            - name: Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: .turbo
+                  key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.sha }}
+                  restore-keys: |
+                      turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+                      turbo-${{ runner.os }}-
             - run: pnpm install
             - run: pnpm lint
             - run: pnpm build
               env:
                   NODE_OPTIONS: '--max_old_space_size=4096'
+            - name: Cache Cypress binary
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/Cypress
+                  key: cypress-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: cypress-${{ runner.os }}-
             - name: Cypress install
               run: pnpm cypress install
             - name: Install dependencies (Cypress Action)
