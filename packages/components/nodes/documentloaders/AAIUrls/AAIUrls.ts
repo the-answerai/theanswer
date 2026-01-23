@@ -373,7 +373,7 @@ class AAIUrlsLoader extends BaseDocumentLoader {
         let allUrls: any[] = []
         let currentPage = 0
 
-        console.log('[AAIUrls] Starting load with params:', {
+        console.info('[AAIUrls] Starting load with params:', {
             limit: this.limit,
             searchTerm: this.searchTerm,
             includeTags: this.includeTags,
@@ -385,7 +385,7 @@ class AAIUrlsLoader extends BaseDocumentLoader {
             const remainingItems = this.limit - allUrls.length
             const currentPageSize = Math.min(pageSize, remainingItems)
 
-            console.log(`[AAIUrls] Fetching page ${currentPage}, size ${currentPageSize}`)
+            console.info(`[AAIUrls] Fetching page ${currentPage}, size ${currentPageSize}`)
 
             // Retry logic with exponential backoff
             let retryCount = 0
@@ -492,13 +492,13 @@ class AAIUrlsLoader extends BaseDocumentLoader {
                         throw new Error(`Failed to fetch URLs from AAI Datastore: ${error.message}`)
                     }
 
-                    console.log(`[AAIUrls] Page ${currentPage} response:`, {
+                    console.info(`[AAIUrls] Page ${currentPage} response:`, {
                         hasData: !!data,
                         urlsCount: data?.length || 0
                     })
 
                     if (!data || data.length === 0) {
-                        console.log('[AAIUrls] No more data, stopping pagination')
+                        console.info('[AAIUrls] No more data, stopping pagination')
                         shouldStopPagination = true
                         break
                     }
@@ -558,7 +558,7 @@ class AAIUrlsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.log(`[AAIUrls] Load complete. Total URLs: ${allUrls.length}`)
+        console.info(`[AAIUrls] Load complete. Total URLs: ${allUrls.length}`)
 
         // Truncate to exact limit
         if (allUrls.length > this.limit) {

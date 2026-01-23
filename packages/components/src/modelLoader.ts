@@ -2,7 +2,7 @@ import axios from 'axios'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const MASTER_MODEL_LIST = 'https://raw.githubusercontent.com/the-answerai/theanswer/production/packages-answers/assets/models.json'
+const _MASTER_MODEL_LIST = 'https://raw.githubusercontent.com/the-answerai/theanswer/production/packages-answers/assets/models.json'
 import { INodeOptionsValue } from './Interface'
 
 export enum MODEL_TYPE {

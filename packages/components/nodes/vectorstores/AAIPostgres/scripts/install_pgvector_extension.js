@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 // Script to install pgvector extension in your AAI database
 // This script uses the same environment variables as your AAI Postgres node

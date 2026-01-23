@@ -192,7 +192,7 @@ class AAIExaSearch_Tools implements INode {
         this.baseClasses = [this.type, ...getBaseClasses(ExaSearchResults)]
     }
 
-    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
+    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<any> {
         const description = nodeData.inputs?.description as string
         const numResults = nodeData.inputs?.numResults as string
         const type = nodeData.inputs?.type as 'keyword' | 'neural' | 'auto' | undefined
