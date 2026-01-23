@@ -1,0 +1,1221 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "TheAnswer",
+    "description": "Enterprise AI workflow platform built on Flowise with advanced multi-tenancy, authentication, and integration capabilities",
+    "repository": "https://github.com/the-answerai/theanswer",
+    "license": "Proprietary (SEE LICENSE IN LICENSE.md)",
+    "nodeVersion": ">=18.15.0 <19.0.0 || ^20",
+    "pnpmVersion": ">=9",
+    "projectType": "Monorepo - Web App + Backend API + Components Library"
+  },
+  "core_frameworks": [
+    {
+      "name": "React",
+      "package": "react",
+      "version": "18.2.0",
+      "installed_version": "18.2.0",
+      "type": "frontend_framework",
+      "purpose": "UI library for building user interfaces with component-based architecture",
+      "documentation": "https://react.dev/",
+      "github": "https://github.com/facebook/react",
+      "usage": [
+        "Main UI component library across web app and Flowise UI",
+        "Server and Client Components in Next.js",
+        "Interactive dashboards and flow editor"
+      ],
+      "key_modules": [
+        "react/jsx-runtime",
+        "react-dom",
+        "react-dom/client"
+      ]
+    },
+    {
+      "name": "Next.js",
+      "package": "next",
+      "version": "^14.2.32",
+      "installed_version": "14.2.32",
+      "type": "framework",
+      "purpose": "React-based full-stack framework with App Router, server/client components, and built-in API routes",
+      "documentation": "https://nextjs.org/docs",
+      "github": "https://github.com/vercel/next.js",
+      "usage": [
+        "Main web application (apps/web)",
+        "Server-side rendering for main UI",
+        "API routes for backend endpoints",
+        "Authentication middleware with Auth0",
+        "Dynamic routing and page generation"
+      ],
+      "key_modules": [
+        "next/app",
+        "next/server",
+        "next/navigation",
+        "next/image"
+      ]
+    },
+    {
+      "name": "Express.js",
+      "package": "express",
+      "version": "^4.17.3",
+      "installed_version": "4.19.2",
+      "type": "backend_framework",
+      "purpose": "Minimal and flexible Node.js web application framework for building the Flowise server API",
+      "documentation": "https://expressjs.com/",
+      "github": "https://github.com/expressjs/express",
+      "usage": [
+        "Core REST API server (packages/server)",
+        "Route handling and middleware pipeline",
+        "Error handling and response formatting",
+        "Authentication and authorization middleware"
+      ],
+      "key_modules": [
+        "express/Router",
+        "express-session",
+        "express-rate-limit"
+      ]
+    },
+    {
+      "name": "TypeScript",
+      "package": "typescript",
+      "version": "~5.5.4",
+      "installed_version": "5.5.4",
+      "type": "language",
+      "purpose": "Type-safe JavaScript superset for the entire codebase",
+      "documentation": "https://www.typescriptlang.org/",
+      "github": "https://github.com/microsoft/TypeScript",
+      "usage": [
+        "Type definitions across server, components, and web packages",
+        "Strict type checking for API contracts",
+        "Entity and interface definitions",
+        "Component prop typing"
+      ],
+      "compiler_options": {
+        "target": "ES2022",
+        "module": "Node16",
+        "strict": true,
+        "esModuleInterop": true,
+        "declaration": true
+      }
+    },
+    {
+      "name": "TypeORM",
+      "package": "typeorm",
+      "version": "^0.3.6",
+      "installed_version": "0.3.6",
+      "type": "orm",
+      "purpose": "Object-relational mapper for TypeScript with database migrations and query builders",
+      "documentation": "https://typeorm.io/",
+      "github": "https://github.com/typeorm/typeorm",
+      "usage": [
+        "Database entity definitions (packages/server/src/database/entities)",
+        "Flowise core entities (Chatflows, Credentials, Tools, etc.)",
+        "Database migrations and schema management",
+        "Query builders for complex database operations",
+        "Multi-tenancy with organizationId and userId filtering"
+      ],
+      "key_modules": [
+        "typeorm/decorator",
+        "typeorm/Repository",
+        "typeorm/QueryBuilder"
+      ]
+    },
+    {
+      "name": "Prisma",
+      "package": "@prisma/client",
+      "version": "^5.22.0",
+      "installed_version": "5.22.0",
+      "type": "orm",
+      "purpose": "Next-generation ORM for TheAnswer-specific extensions with type-safe database access",
+      "documentation": "https://www.prisma.io/docs/",
+      "github": "https://github.com/prisma/prisma",
+      "usage": [
+        "TheAnswer extensions database layer (packages-answers/db)",
+        "Type-safe generated client code",
+        "Schema migrations for custom features",
+        "Seed scripts for test data"
+      ],
+      "key_modules": [
+        "@prisma/client",
+        "@prisma/sdk"
+      ]
+    },
+    {
+      "name": "LangChain",
+      "package": "langchain",
+      "version": "^0.3.5",
+      "installed_version": "0.3.5",
+      "type": "library",
+      "purpose": "Framework for building applications powered by language models with chains, agents, and tools",
+      "documentation": "https://js.langchain.com/",
+      "github": "https://github.com/langchain-ai/langchainjs",
+      "usage": [
+        "Agent implementations in components (agents, tools, chains)",
+        "Vector store integrations",
+        "Document loading and processing",
+        "Memory management for conversations",
+        "Prompt templating and output parsing",
+        "LangChain hub integration for prompt management"
+      ],
+      "key_modules": [
+        "@langchain/core",
+        "@langchain/community",
+        "@langchain/openai",
+        "@langchain/anthropic",
+        "langchain/agents",
+        "langchain/tools"
+      ]
+    },
+    {
+      "name": "Auth0",
+      "package": "@auth0/nextjs-auth0",
+      "version": "3.5.0",
+      "installed_version": "3.5.0",
+      "type": "authentication",
+      "purpose": "Enterprise authentication and authorization platform for secure user management and organization access control",
+      "documentation": "https://auth0.com/docs/quickstart/webapp/nextjs",
+      "github": "https://github.com/auth0/nextjs-auth0",
+      "usage": [
+        "OAuth2/OIDC authentication for web app",
+        "JWT token generation and validation",
+        "Multi-organization support via org_id claims",
+        "Role-based access control",
+        "Social login integrations (Google, GitHub, etc.)",
+        "API authentication with JWT bearer tokens"
+      ],
+      "key_modules": [
+        "@auth0/nextjs-auth0/edge",
+        "@auth0/nextjs-auth0/client",
+        "@auth0/auth0-react"
+      ]
+    },
+    {
+      "name": "LangGraph",
+      "package": "@langchain/langgraph",
+      "version": "^0.0.22",
+      "installed_version": "0.0.22",
+      "type": "library",
+      "purpose": "Framework for building stateful, multi-actor applications with LangChain using graph-based workflows",
+      "documentation": "https://langchain-ai.github.io/langgraphjs/",
+      "github": "https://github.com/langchain-ai/langgraphjs",
+      "usage": [
+        "Multi-agent workflow orchestration",
+        "Stateful agent implementations",
+        "Sequential and parallel agent execution",
+        "Tool use and action planning"
+      ]
+    },
+    {
+      "name": "Model Context Protocol (MCP)",
+      "package": "@modelcontextprotocol/sdk",
+      "version": "^1.10.1",
+      "installed_version": "1.10.1",
+      "type": "framework",
+      "purpose": "Protocol for connecting AI models to external tools and data sources via standardized interfaces",
+      "documentation": "https://modelcontextprotocol.io/",
+      "github": "https://github.com/modelcontextprotocol/typescript-sdk",
+      "usage": [
+        "MCP tool implementations for external integrations",
+        "Tool definitions and execution framework",
+        "Server implementations (Brave Search, Slack, GitHub, PostgreSQL, Sequential Thinking)",
+        "Standard interface for AI model tool access"
+      ],
+      "key_modules": [
+        "@modelcontextprotocol/sdk/client",
+        "@modelcontextprotocol/sdk/server"
+      ]
+    }
+  ],
+  "build_tools": [
+    {
+      "name": "Turbo",
+      "package": "turbo",
+      "version": "1.10.16",
+      "installed_version": "1.10.16",
+      "type": "build_tool",
+      "purpose": "Monorepo task orchestrator for incremental builds, caching, and parallel execution",
+      "documentation": "https://turbo.build/",
+      "github": "https://github.com/vercel/turbo",
+      "usage": [
+        "Build orchestration across all workspaces",
+        "Incremental builds with Turbo cache",
+        "Parallel task execution (dev, build, test)",
+        "Task dependency management"
+      ],
+      "config_file": "turbo.json",
+      "npm_scripts": [
+        "pnpm build - Build all packages with Turbo",
+        "pnpm build-force - Clean build ignoring cache",
+        "pnpm dev - Start all dev servers"
+      ]
+    },
+    {
+      "name": "TypeScript Compiler",
+      "package": "typescript",
+      "version": "~5.5.4",
+      "installed_version": "5.5.4",
+      "type": "compiler",
+      "purpose": "Compile TypeScript to JavaScript with type checking",
+      "documentation": "https://www.typescriptlang.org/",
+      "github": "https://github.com/microsoft/TypeScript",
+      "usage": [
+        "Server and component compilation",
+        "Type checking during builds",
+        "Source map generation for debugging"
+      ],
+      "config_file": "tsconfig.json",
+      "npm_scripts": [
+        "pnpm build - Runs tsc compiler"
+      ]
+    },
+    {
+      "name": "Gulp",
+      "package": "gulp",
+      "version": "^4.0.2",
+      "installed_version": "4.0.2",
+      "type": "build_tool",
+      "purpose": "Task runner for build automation and asset processing",
+      "documentation": "https://gulpjs.com/",
+      "github": "https://github.com/gulpjs/gulp",
+      "usage": [
+        "Post-compilation asset processing",
+        "Used in server and components builds"
+      ],
+      "config_file": "gulpfile.js",
+      "npm_scripts": [
+        "Runs after TypeScript compilation"
+      ]
+    },
+    {
+      "name": "Webpack",
+      "package": "webpack",
+      "version": "^5.101.3",
+      "installed_version": "5.101.3",
+      "type": "bundler",
+      "purpose": "Module bundler for web applications with code splitting and asset optimization",
+      "documentation": "https://webpack.js.org/",
+      "github": "https://github.com/webpack/webpack",
+      "usage": [
+        "Web app bundling and optimization",
+        "Asset management and loaders",
+        "Code splitting for performance"
+      ],
+      "config_file": "next.config.js",
+      "npm_scripts": [
+        "Part of Next.js build pipeline"
+      ]
+    }
+  ],
+  "testing_frameworks": [
+    {
+      "name": "Jest",
+      "package": "jest",
+      "version": "^29.7.0",
+      "installed_version": "29.7.0",
+      "type": "testing",
+      "purpose": "Unit and integration testing framework for JavaScript/TypeScript",
+      "documentation": "https://jestjs.io/",
+      "github": "https://github.com/jestjs/jest",
+      "usage": [
+        "Unit tests for server services and controllers",
+        "Component tests for Flowise nodes",
+        "API endpoint testing with supertest",
+        "Database migration testing"
+      ],
+      "npm_scripts": [
+        "pnpm test - Run all tests",
+        "pnpm test:auth - Run authentication tests",
+        "pnpm test:coverage - Generate coverage reports"
+      ],
+      "config_file": "jest.config.cjs, jest.config.all.js"
+    },
+    {
+      "name": "Playwright",
+      "package": "@playwright/test",
+      "version": "^1.55.0",
+      "installed_version": "1.55.0",
+      "type": "testing",
+      "purpose": "End-to-end testing framework for browser automation and user workflow testing",
+      "documentation": "https://playwright.dev/",
+      "github": "https://github.com/microsoft/playwright",
+      "usage": [
+        "E2E tests for web app (apps/web/e2e)",
+        "Authentication flow testing",
+        "Role-based access control testing",
+        "User interaction and navigation testing"
+      ],
+      "npm_scripts": [
+        "pnpm test:e2e - Run E2E tests with UI",
+        "pnpm test:e2e:dev - Run in dev mode",
+        "pnpm test:e2e:debug - Debug mode step-through",
+        "pnpm test:e2e:setup - Install browsers"
+      ],
+      "config_file": "playwright.config.ts"
+    },
+    {
+      "name": "Cypress",
+      "package": "cypress",
+      "version": "^13.17.0",
+      "installed_version": "13.17.0",
+      "type": "testing",
+      "purpose": "Browser-based testing framework for component and E2E testing",
+      "documentation": "https://docs.cypress.io/",
+      "github": "https://github.com/cypress-io/cypress",
+      "usage": [
+        "Component testing for React components",
+        "Chatflow testing and validation",
+        "Server integration testing"
+      ],
+      "npm_scripts": [
+        "pnpm test:cmp - Component tests",
+        "pnpm test:chatflows - Chatflow testing"
+      ],
+      "config_file": "cypress.config.ts"
+    },
+    {
+      "name": "ts-jest",
+      "package": "ts-jest",
+      "version": "^29.3.2",
+      "installed_version": "29.3.2",
+      "type": "testing",
+      "purpose": "TypeScript preprocessor for Jest to directly test TypeScript files",
+      "documentation": "https://kulshekhar.github.io/ts-jest/",
+      "github": "https://github.com/kulshekhar/ts-jest",
+      "usage": [
+        "Direct TypeScript compilation in Jest tests",
+        "Server and component testing without pre-compilation"
+      ]
+    },
+    {
+      "name": "Supertest",
+      "package": "supertest",
+      "version": "^7.1.0",
+      "installed_version": "7.1.0",
+      "type": "testing",
+      "purpose": "HTTP assertion library for testing Express servers",
+      "documentation": "https://github.com/visionmedia/supertest",
+      "github": "https://github.com/visionmedia/supertest",
+      "usage": [
+        "API endpoint testing",
+        "REST API validation",
+        "Authentication and authorization testing"
+      ]
+    }
+  ],
+  "runtime_dependencies": [
+    {
+      "name": "Node.js",
+      "version": ">=18.15.0 <19.0.0 || ^20",
+      "type": "runtime",
+      "purpose": "JavaScript runtime environment for server-side execution",
+      "documentation": "https://nodejs.org/",
+      "features": [
+        "Built-in fetch API (Node 18+)",
+        "ES modules support",
+        "Native crypto and compression",
+        "Stream processing"
+      ]
+    },
+    {
+      "name": "PostgreSQL with pgvector",
+      "version": "16 (with pgvector extension)",
+      "type": "database",
+      "purpose": "Primary relational database with vector search capability for embeddings",
+      "documentation": "https://www.postgresql.org/",
+      "github": "https://github.com/pgvector/pgvector",
+      "features": [
+        "Multi-tenancy with UUID foreign keys",
+        "Full ACID compliance",
+        "Vector similarity search for embeddings",
+        "JSON and JSONB support"
+      ]
+    },
+    {
+      "name": "Redis",
+      "version": "latest",
+      "type": "cache_database",
+      "purpose": "In-memory data store for caching, session management, and rate limiting",
+      "documentation": "https://redis.io/",
+      "github": "https://github.com/redis/redis",
+      "features": [
+        "Session storage with connect-redis",
+        "Cache management with cache-manager",
+        "Rate limit state with rate-limit-redis",
+        "Pub/Sub for real-time updates"
+      ]
+    }
+  ],
+  "package_managers": [
+    {
+      "name": "pnpm",
+      "version": ">=9",
+      "type": "package_manager",
+      "documentation": "https://pnpm.io/",
+      "github": "https://github.com/pnpm/pnpm",
+      "lock_file": "pnpm-lock.yaml",
+      "lock_file_version": "9.0",
+      "usage": "Primary package manager for monorepo dependency management with workspace support and strict dependency resolution"
+    }
+  ],
+  "services_and_apis": [
+    {
+      "name": "Auth0 Authentication API",
+      "version": "v1",
+      "type": "external_api",
+      "purpose": "Enterprise authentication and authorization service with multi-tenancy and role-based access control",
+      "documentation": "https://auth0.com/docs/api/authentication",
+      "github": null,
+      "base_url": "https://{tenant}.auth0.com",
+      "authentication": "OAuth2 / OIDC",
+      "environment_variables": [
+        {
+          "name": "AUTH0_ISSUER_BASE_URL",
+          "description": "Auth0 tenant domain URL",
+          "required": true
+        },
+        {
+          "name": "AUTH0_CLIENT_ID",
+          "description": "OAuth2 application client ID",
+          "required": true
+        },
+        {
+          "name": "AUTH0_CLIENT_SECRET",
+          "description": "OAuth2 application client secret",
+          "required": true
+        },
+        {
+          "name": "AUTH0_AUDIENCE",
+          "description": "API audience identifier for JWT validation",
+          "required": true
+        },
+        {
+          "name": "AUTH0_SCOPE",
+          "description": "OAuth2 scopes for user permissions",
+          "required": false
+        }
+      ],
+      "endpoints_available": [
+        "POST /oauth/token - Get access tokens",
+        "POST /oauth/authorize - Initiate OAuth flow",
+        "GET /userinfo - Get authenticated user information",
+        "POST /logout - Revoke session",
+        "GET /well-known/openid-configuration - OIDC discovery"
+      ]
+    },
+    {
+      "name": "AWS S3",
+      "version": "v2",
+      "type": "external_api",
+      "purpose": "Cloud object storage for file uploads, chatflow assets, and backup storage",
+      "documentation": "https://docs.aws.amazon.com/s3/",
+      "github": null,
+      "base_url": "https://{bucket}.s3.{region}.amazonaws.com",
+      "authentication": "AWS Signature Version 4",
+      "environment_variables": [
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "description": "AWS IAM access key",
+          "required": true
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "description": "AWS IAM secret key",
+          "required": true
+        },
+        {
+          "name": "AWS_S3_BUCKET",
+          "description": "S3 bucket name for storage",
+          "required": true
+        },
+        {
+          "name": "AWS_S3_REGION",
+          "description": "AWS region for bucket",
+          "required": true
+        }
+      ],
+      "endpoints_available": [
+        "PUT /object - Upload file",
+        "GET /object - Download file",
+        "DELETE /object - Delete file",
+        "HEAD /object - Check object metadata"
+      ]
+    },
+    {
+      "name": "Stripe Billing API",
+      "version": "v1",
+      "type": "external_api",
+      "purpose": "Payment processing and billing management for SaaS features and metered usage",
+      "documentation": "https://stripe.com/docs/api",
+      "github": null,
+      "base_url": "https://api.stripe.com/v1",
+      "authentication": "API Key in Authorization header",
+      "environment_variables": [
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "description": "Stripe secret API key for server-side operations",
+          "required": true
+        },
+        {
+          "name": "STRIPE_WEBHOOK_SECRET",
+          "description": "Webhook signing secret for event verification",
+          "required": true
+        },
+        {
+          "name": "STRIPE_METER_PREFIX",
+          "description": "Prefix for metered billing metrics",
+          "required": false
+        }
+      ],
+      "endpoints_available": [
+        "POST /customers - Create billing customer",
+        "POST /subscriptions - Create subscription",
+        "POST /billing_meter_events - Record usage metrics",
+        "POST /webhook_endpoints - Register webhooks"
+      ]
+    },
+    {
+      "name": "Langfuse Observability API",
+      "version": "v1",
+      "type": "external_api",
+      "purpose": "LLM observability and monitoring platform for tracking model performance, costs, and errors",
+      "documentation": "https://docs.langfuse.com/",
+      "github": "https://github.com/langfuse/langfuse",
+      "base_url": "https://cloud.langfuse.com",
+      "authentication": "API Key pair (public + secret)",
+      "environment_variables": [
+        {
+          "name": "LANGFUSE_PUBLIC_KEY",
+          "description": "Public key for Langfuse integration",
+          "required": false
+        },
+        {
+          "name": "LANGFUSE_SECRET_KEY",
+          "description": "Secret key for Langfuse integration",
+          "required": false
+        },
+        {
+          "name": "LANGFUSE_HOST",
+          "description": "Langfuse host URL (default: cloud.langfuse.com)",
+          "required": false
+        }
+      ],
+      "endpoints_available": [
+        "POST /api/public/traces - Log traces",
+        "POST /api/public/observations - Log observations",
+        "GET /api/public/traces - Fetch traces",
+        "POST /api/public/scores - Log quality scores"
+      ]
+    },
+    {
+      "name": "OpenAI API",
+      "version": "v1",
+      "type": "external_api",
+      "purpose": "Large language model access and embeddings for AI-powered features",
+      "documentation": "https://platform.openai.com/docs/api-reference",
+      "github": null,
+      "base_url": "https://api.openai.com/v1",
+      "authentication": "Bearer token in Authorization header",
+      "environment_variables": [
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "OpenAI API key",
+          "required": false
+        }
+      ],
+      "endpoints_available": [
+        "POST /chat/completions - Chat completions",
+        "POST /embeddings - Generate embeddings",
+        "POST /images/generations - Generate images",
+        "POST /audio/speech - Text-to-speech"
+      ]
+    },
+    {
+      "name": "Pinecone Vector Database",
+      "version": "v1",
+      "type": "external_api",
+      "purpose": "Managed vector database for storing and querying document embeddings in RAG workflows",
+      "documentation": "https://docs.pinecone.io/",
+      "github": "https://github.com/pinecone-io/pinecone-ts-client",
+      "base_url": "https://{environment}.pinecone.io",
+      "authentication": "API Key",
+      "environment_variables": [
+        {
+          "name": "PINECONE_API_KEY",
+          "description": "Pinecone API key",
+          "required": false
+        },
+        {
+          "name": "PINECONE_ENVIRONMENT",
+          "description": "Pinecone environment (e.g., us-west-2)",
+          "required": false
+        },
+        {
+          "name": "PINECONE_INDEX",
+          "description": "Index name for vector storage",
+          "required": false
+        }
+      ],
+      "endpoints_available": [
+        "POST /vectors/upsert - Upsert vectors",
+        "POST /query - Query vectors",
+        "DELETE /vectors - Delete vectors",
+        "GET /describe_index_stats - Get index statistics"
+      ]
+    }
+  ],
+  "source_code_structure": {
+    "root_directory": "/Users/bradtaylor/Github/theanswer",
+    "entry_points": {
+      "server": "packages/server/src/index.ts",
+      "web": "apps/web/app/layout.tsx",
+      "components": "packages/components/src/index.ts"
+    },
+    "directories": {
+      "packages": {
+        "description": "Core Flowise packages (forked and extended)",
+        "subdirectories": [
+          {
+            "path": "packages/server",
+            "description": "Express.js backend API with routes, controllers, services, and database entities"
+          },
+          {
+            "path": "packages/ui",
+            "description": "Flowise React UI components and UI library"
+          },
+          {
+            "path": "packages/components",
+            "description": "Flowise nodes (agents, chat models, tools, vector stores, document loaders, etc.)"
+          },
+          {
+            "path": "packages/embed",
+            "description": "Chat embed widget (git submodule)"
+          },
+          {
+            "path": "packages/embed-react",
+            "description": "React component wrapper for chat embed"
+          },
+          {
+            "path": "packages/docs",
+            "description": "Docusaurus documentation site"
+          },
+          {
+            "path": "packages/api-documentation",
+            "description": "API documentation and OpenAPI specs"
+          }
+        ]
+      },
+      "packages-answers": {
+        "description": "TheAnswer-specific extensions and custom implementations",
+        "subdirectories": [
+          {
+            "path": "packages-answers/db",
+            "description": "Prisma database layer for TheAnswer-specific data"
+          },
+          {
+            "path": "packages-answers/ui",
+            "description": "TheAnswer custom UI components and extensions"
+          },
+          {
+            "path": "packages-answers/utils",
+            "description": "Shared utility functions and helpers"
+          },
+          {
+            "path": "packages-answers/types",
+            "description": "Shared TypeScript type definitions"
+          }
+        ]
+      },
+      "apps": {
+        "description": "Application-specific packages",
+        "subdirectories": [
+          {
+            "path": "apps/web",
+            "description": "Next.js 14 web application with App Router, Auth0, and E2E tests"
+          },
+          {
+            "path": "apps/desktop",
+            "description": "Desktop application (if applicable)"
+          }
+        ]
+      },
+      "src": {
+        "description": "Server source code structure",
+        "subdirectories": [
+          {
+            "path": "packages/server/src/routes",
+            "description": "RESTful API endpoint definitions with enforceAbility middleware"
+          },
+          {
+            "path": "packages/server/src/controllers",
+            "description": "Request handlers with validation and authorization using checkOwnership"
+          },
+          {
+            "path": "packages/server/src/services",
+            "description": "Business logic layer with database operations and multi-tenancy filtering"
+          },
+          {
+            "path": "packages/server/src/database/entities",
+            "description": "TypeORM entity definitions with required multi-tenancy fields"
+          },
+          {
+            "path": "packages/server/src/database/migrations",
+            "description": "TypeORM database schema migrations"
+          },
+          {
+            "path": "packages/server/src/middlewares/authentication",
+            "description": "Auth middleware (enforceAbility, JWT validation, API key verification)"
+          },
+          {
+            "path": "packages/server/src/utils",
+            "description": "Utility functions (checkOwnership, error handling, data transformation)"
+          }
+        ]
+      },
+      "nodes": {
+        "description": "Flowise component node implementations",
+        "subdirectories": [
+          {
+            "path": "packages/components/nodes/agents",
+            "description": "LangChain agent implementations"
+          },
+          {
+            "path": "packages/components/nodes/chatmodels",
+            "description": "LLM provider integrations (OpenAI, Anthropic, AWS Bedrock, Google, etc.)"
+          },
+          {
+            "path": "packages/components/nodes/tools",
+            "description": "Agent tools, integrations, and MCP servers"
+          },
+          {
+            "path": "packages/components/nodes/vectorstores",
+            "description": "Vector database connectors (Pinecone, Chroma, Qdrant, FAISS, etc.)"
+          },
+          {
+            "path": "packages/components/nodes/documentloaders",
+            "description": "Data source loaders (PDF, CSV, web, APIs, etc.)"
+          }
+        ]
+      }
+    }
+  },
+  "key_features": [
+    "Multi-tenant SaaS architecture with organization and user-level access control",
+    "Enterprise authentication with Auth0 OAuth2/OIDC and JWT",
+    "No-code AI workflow builder with drag-and-drop flow editor",
+    "LLM integrations (OpenAI, Anthropic, AWS Bedrock, Google, Ollama, Groq, etc.)",
+    "Vector-based RAG with multiple vector store backends (Pinecone, Chroma, Qdrant)",
+    "Agent framework with LangChain and LangGraph for multi-step reasoning",
+    "Tool integrations including MCP (Model Context Protocol) servers",
+    "Real-time chat embedding and widget deployment",
+    "Comprehensive observability with Langfuse tracking",
+    "Metered billing with Stripe integration",
+    "Database connections and SQL agents",
+    "Document processing with multiple format support",
+    "API key management and secure credential storage",
+    "Organization-scoped resource management",
+    "Audit logging and activity tracking"
+  ],
+  "development_setup": {
+    "prerequisites": [
+      "Node.js >=18.15.0 <19.0.0 || ^20",
+      "pnpm >=9",
+      "Docker and Docker Compose (for PostgreSQL and Redis)",
+      "Git with submodule support"
+    ],
+    "installation": [
+      "git clone https://github.com/the-answerai/theanswer.git",
+      "cd theanswer",
+      "pnpm install",
+      "pnpm submodule:init",
+      "cp .env.template .env",
+      "Edit .env with your configuration",
+      "pnpm dev-docker (start PostgreSQL and Redis)",
+      "pnpm db:migrate (run database migrations)",
+      "pnpm dev (start development servers)"
+    ],
+    "scripts": {
+      "build": "pnpm secure-run 'turbo run build'",
+      "dev": "pnpm secure-run 'turbo run dev dev-docker'",
+      "dev-docker": "docker compose -f './docker-compose.dev.yml' up -d",
+      "start": "pnpm secure-run 'npx turbo run start'",
+      "test": "turbo run test",
+      "test:auth": "pnpm secure-run 'turbo run test:auth'",
+      "test:e2e": "pnpm --filter web test:e2e",
+      "test:e2e:debug": "pnpm --filter web test:e2e:debug",
+      "lint": "eslint '**/*.{js,jsx,ts,tsx}'",
+      "lint-fix": "pnpm lint --fix",
+      "migration:generate": "turbo typeorm:migration-generate",
+      "migration:run": "pnpm secure-run 'turbo typeorm:migration-run'",
+      "db:migrate": "pnpm secure-run 'pnpm db migrate dev'",
+      "db:studio": "pnpm secure-run 'pnpm db studio'",
+      "clean": "pnpm --filter './packages/**' clean",
+      "nuke": "pnpm --filter './packages/**' nuke && rimraf node_modules .turbo"
+    }
+  },
+  "error_handling": {
+    "strategies": [
+      "Custom InternalFlowiseError class for consistent error responses",
+      "HTTP status code mapping with http-status-codes package",
+      "Error wrapping with context (Error: serviceName.methodName - description)",
+      "Try-catch blocks with getErrorMessage utility",
+      "Async error handling in Express with next() middleware pattern",
+      "Multi-tenancy validation with UnauthorizedError for ownership checks"
+    ],
+    "implementation": "All routes use enforceAbility middleware. All controllers check ownership via checkOwnership(). All services wrap errors with descriptive messages. Database errors are caught and wrapped with transaction rollback support."
+  },
+  "performance_optimizations": [
+    "Turbo incremental builds with caching for monorepo",
+    "Next.js automatic code splitting and static generation",
+    "React Server Components default to reduce JavaScript payload",
+    "Database query builder with indexed fields (userId, organizationId)",
+    "Redis caching layer for sessions and rate limiting",
+    "Lazy loading of heavy dependencies (LangChain modules)",
+    "Batch API requests for related data",
+    "Maximum result limits to prevent memory issues",
+    "Connection pooling for database and Redis",
+    "Optimized LLM prompts for shorter context windows",
+    "Vector store query pagination and filtering"
+  ],
+  "security_considerations": [
+    "All routes protected with enforceAbility middleware",
+    "Multi-tenancy enforcement with organizationId filtering in all queries",
+    "Resource ownership verification with checkOwnership() before access",
+    "JWT token validation with Auth0 JWKS",
+    "API key storage in secure credential system",
+    "Input validation on all endpoints",
+    "SQL injection prevention via TypeORM parameterized queries",
+    "XSS prevention with React's built-in escaping",
+    "CSRF protection with SameSite cookies",
+    "Rate limiting on sensitive endpoints",
+    "Sanitized HTML content with sanitize-html package",
+    "No hardcoded secrets in codebase (use .env)",
+    "Error messages don't leak sensitive information",
+    "Soft deletion for audit trail preservation"
+  ],
+  "scalability_features": [
+    "Stateless API design enabling horizontal scaling",
+    "Distributed job queue with BullMQ for async tasks",
+    "Redis pub/sub for real-time updates",
+    "Database connection pooling",
+    "Session storage in Redis for load balancing",
+    "S3 for distributed file storage",
+    "Vector database for scalable similarity search",
+    "OpenTelemetry instrumentation for distributed tracing",
+    "Circuit breaker pattern for external API resilience",
+    "Query pagination and result limits",
+    "Database query optimization with indexes",
+    "Caching strategies (Redis, in-memory)"
+  ],
+  "bin_entries": {
+    "flowise": "packages/server/bin/run"
+  },
+  "configuration_files": [
+    {
+      "file": "package.json",
+      "purpose": "Monorepo metadata, workspace definitions, npm scripts, and dependencies"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "purpose": "Locked dependency versions for reproducible installs"
+    },
+    {
+      "file": "turbo.json",
+      "purpose": "Build task configuration, dependencies, caching, and environment variables"
+    },
+    {
+      "file": "tsconfig.json",
+      "purpose": "TypeScript compiler configuration for the entire monorepo"
+    },
+    {
+      "file": "packages/server/src/database/entities/index.ts",
+      "purpose": "TypeORM entity registration"
+    },
+    {
+      "file": "packages/server/src/index.ts",
+      "purpose": "Express server entry point with route registration"
+    },
+    {
+      "file": "apps/web/middleware.ts",
+      "purpose": "Auth0 middleware for route protection"
+    },
+    {
+      "file": "apps/web/next.config.js",
+      "purpose": "Next.js configuration with webpack customization"
+    },
+    {
+      "file": ".env.template",
+      "purpose": "Environment variable template with all configuration options"
+    },
+    {
+      "file": "docker-compose.dev.yml",
+      "purpose": "Development database services (PostgreSQL, Redis) configuration"
+    },
+    {
+      "file": ".eslintrc.js",
+      "purpose": "ESLint configuration for code linting"
+    },
+    {
+      "file": "jest.config.cjs, jest.config.all.js",
+      "purpose": "Jest testing framework configuration"
+    },
+    {
+      "file": "apps/web/playwright.config.ts",
+      "purpose": "Playwright E2E testing configuration"
+    }
+  ],
+  "external_documentation": [
+    {
+      "title": "TheAnswer GitHub Repository",
+      "url": "https://github.com/the-answerai/theanswer"
+    },
+    {
+      "title": "Flowise Documentation",
+      "url": "https://docs.flowiseai.com/"
+    },
+    {
+      "title": "LangChain Documentation",
+      "url": "https://js.langchain.com/"
+    },
+    {
+      "title": "Next.js 14 Documentation",
+      "url": "https://nextjs.org/docs"
+    },
+    {
+      "title": "TypeORM Documentation",
+      "url": "https://typeorm.io/"
+    },
+    {
+      "title": "Prisma Documentation",
+      "url": "https://www.prisma.io/docs/"
+    },
+    {
+      "title": "Auth0 Authentication",
+      "url": "https://auth0.com/docs/"
+    },
+    {
+      "title": "Express.js Documentation",
+      "url": "https://expressjs.com/"
+    },
+    {
+      "title": "Turbo Monorepo",
+      "url": "https://turbo.build/"
+    },
+    {
+      "title": "Model Context Protocol",
+      "url": "https://modelcontextprotocol.io/"
+    },
+    {
+      "title": "Playwright Testing",
+      "url": "https://playwright.dev/"
+    },
+    {
+      "title": "Jest Testing",
+      "url": "https://jestjs.io/"
+    }
+  ],
+  "github_repositories": [
+    {
+      "name": "TheAnswer Main Repository",
+      "url": "https://github.com/the-answerai/theanswer"
+    },
+    {
+      "name": "Flowise Repository",
+      "url": "https://github.com/FlowiseAI/Flowise"
+    },
+    {
+      "name": "LangChain Repository",
+      "url": "https://github.com/langchain-ai/langchainjs"
+    },
+    {
+      "name": "Model Context Protocol SDK",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk"
+    },
+    {
+      "name": "Next.js Repository",
+      "url": "https://github.com/vercel/next.js"
+    },
+    {
+      "name": "TypeORM Repository",
+      "url": "https://github.com/typeorm/typeorm"
+    },
+    {
+      "name": "Prisma Repository",
+      "url": "https://github.com/prisma/prisma"
+    },
+    {
+      "name": "Auth0 Next.js SDK",
+      "url": "https://github.com/auth0/nextjs-auth0"
+    },
+    {
+      "name": "Turbo Repository",
+      "url": "https://github.com/vercel/turbo"
+    }
+  ],
+  "dependencies_summary": {
+    "production": 245,
+    "development": 75,
+    "total": 320,
+    "production_packages": [
+      "@answerai/answeragent-mcp@^1.2.0",
+      "@answerai/confluence-mcp@^1.0.0",
+      "@answerai/jira-mcp@^1.1.0",
+      "@auth0/nextjs-auth0@3.5.0",
+      "@aws-sdk/client-s3@^3.844.0",
+      "@bull-board/api@^6.11.0",
+      "@bull-board/express@^6.11.0",
+      "@langchain/anthropic@0.3.33",
+      "@langchain/core@0.3.61",
+      "@langchain/langgraph@^0.0.22",
+      "@langchain/openai@0.6.3",
+      "@modelcontextprotocol/sdk@^1.10.1",
+      "@prisma/client@^5.22.0",
+      "express@^4.17.3",
+      "langchain@^0.3.5",
+      "next@^14.2.32",
+      "pg@^8.11.1",
+      "prisma@^5.22.0",
+      "react@18.2.0",
+      "react-dom@18.2.0",
+      "stripe@^17.7.0",
+      "typeorm@^0.3.6"
+    ],
+    "dev_packages": [
+      "@jest/globals@^29.7.0",
+      "@playwright/test@^1.55.0",
+      "@types/jest@^29.5.14",
+      "@types/node@18.15.11",
+      "@types/react@18.2.15",
+      "@typescript-eslint/typescript-estree@^7.18.0",
+      "cypress@^13.17.0",
+      "eslint@^8.57.1",
+      "jest@^29.7.0",
+      "prettier@^2.8.8",
+      "ts-jest@^29.3.2",
+      "typescript@~5.5.4"
+    ]
+  },
+  "data_formats": [
+    {
+      "name": "JSON",
+      "purpose": "Primary data exchange format for APIs and configuration",
+      "encoding": "UTF-8"
+    },
+    {
+      "name": "YAML",
+      "purpose": "Configuration files (turbo.json converted, docker-compose.yml)",
+      "encoding": "UTF-8"
+    },
+    {
+      "name": "TypeScript Types",
+      "purpose": "Type-safe data definitions and API contracts",
+      "type_definitions": "packages/server/src/Interface.ts"
+    },
+    {
+      "name": "LangChain Message Format",
+      "purpose": "Standardized message format for chat and agent communication",
+      "conversion": "Converted to/from user-friendly formats"
+    }
+  ],
+  "tools_available": [
+    {
+      "name": "MCP Tools",
+      "description": "Model Context Protocol server integrations exposing external APIs as tools to AI models",
+      "implementations": [
+        {
+          "name": "Brave Search",
+          "package": "@modelcontextprotocol/server-brave-search",
+          "purpose": "Web search integration for information retrieval"
+        },
+        {
+          "name": "GitHub",
+          "package": "@modelcontextprotocol/server-github",
+          "purpose": "Repository management and code access"
+        },
+        {
+          "name": "PostgreSQL",
+          "package": "@modelcontextprotocol/server-postgres",
+          "purpose": "Database querying and management"
+        },
+        {
+          "name": "Slack",
+          "package": "@modelcontextprotocol/server-slack",
+          "purpose": "Slack workspace integration"
+        },
+        {
+          "name": "Sequential Thinking",
+          "package": "@modelcontextprotocol/server-sequential-thinking",
+          "purpose": "Multi-step reasoning framework"
+        }
+      ]
+    },
+    {
+      "name": "TheAnswer MCP Integrations",
+      "description": "Custom MCP servers built by TheAnswer team",
+      "implementations": [
+        {
+          "name": "AnswerAgent MCP",
+          "package": "@answerai/answeragent-mcp",
+          "purpose": "AnswerAgent integration and operations"
+        },
+        {
+          "name": "Confluence MCP",
+          "package": "@answerai/confluence-mcp",
+          "purpose": "Confluence document access and management"
+        },
+        {
+          "name": "Jira MCP",
+          "package": "@answerai/jira-mcp",
+          "purpose": "Jira issue management and tracking"
+        },
+        {
+          "name": "Salesforce MCP",
+          "package": "@answerai/salesforce-mcp",
+          "purpose": "Salesforce data access and operations"
+        }
+      ]
+    },
+    {
+      "name": "Agent Tools",
+      "description": "LangChain-based tools for agent capabilities",
+      "implementations": [
+        {
+          "name": "Calculator",
+          "purpose": "Mathematical operations"
+        },
+        {
+          "name": "Web Scraper",
+          "purpose": "Extract data from web pages"
+        },
+        {
+          "name": "Retriever",
+          "purpose": "Query vector stores for relevant documents"
+        },
+        {
+          "name": "Database Query",
+          "purpose": "Execute SQL queries against databases"
+        },
+        {
+          "name": "API Caller",
+          "purpose": "Call external REST APIs"
+        }
+      ]
+    }
+  ],
+  "last_updated": "2026-01-22",
+  "metadata": {
+    "generated_by": "spec-tech-stack-maintainer agent",
+    "format_version": "1.0",
+    "completeness": "comprehensive",
+    "includes": [
+      "Core frameworks (React 18, Next.js 14, Express, TypeScript)",
+      "Database systems (PostgreSQL + pgvector, Redis, Prisma, TypeORM)",
+      "Authentication (Auth0 OAuth2/OIDC)",
+      "Build system (Turbo monorepo orchestrator)",
+      "Testing frameworks (Jest, Playwright, Cypress)",
+      "AI/ML frameworks (LangChain, LangGraph, MCP)",
+      "External integrations (Stripe, Langfuse, S3, Pinecone, etc.)",
+      "Development setup and configuration",
+      "Security, performance, and scalability considerations",
+      "Complete source code structure documentation"
+    ]
+  }
+}
