@@ -41,12 +41,14 @@ import {
     IconSparkles,
     IconVolume
 } from '@tabler/icons-react'
-import Image from 'next/image'
 import robotPNG from '@/assets/images/robot.png'
 import userPNG from '@/assets/images/account.png'
 import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
 import multiagent_workerPNG from '@/assets/images/multiagent_worker.png'
 import audioUploadSVG from '@/assets/images/wave-sound.jpg'
+
+// Helper to extract src from Next.js StaticImageData or return string as-is
+const getImageSrc = (img) => img?.src || img || ''
 
 // project import
 import NodeInputHandler from '@/views/canvas/NodeInputHandler'
@@ -1239,9 +1241,9 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
         if (nodeName) {
             return `${baseURL}/api/v1/node-icon/${nodeName}`
         } else if (instructions) {
-            return multiagent_supervisorPNG
+            return getImageSrc(multiagent_supervisorPNG)
         } else {
-            return multiagent_workerPNG
+            return getImageSrc(multiagent_workerPNG)
         }
     }
 
@@ -2423,9 +2425,9 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                                 >
                                     {/* Display the correct icon depending on the message type */}
                                     {message.type === 'apiMessage' || message.type === 'leadCaptureMessage' ? (
-                                        <Image src={robotPNG} alt='AI' width={30} height={30} className='boticon' />
+                                        <img src={getImageSrc(robotPNG)} alt='AI' width='30' height='30' className='boticon' />
                                     ) : (
-                                        <Image src={userPNG} alt='Me' width={30} height={30} className='usericon' />
+                                        <img src={getImageSrc(userPNG)} alt='Me' width='30' height='30' className='usericon' />
                                     )}
                                     <div
                                         style={{

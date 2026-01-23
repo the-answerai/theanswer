@@ -34,12 +34,14 @@ import {
 import { useTheme, styled, alpha } from '@mui/material/styles'
 import DatePicker from 'react-datepicker'
 
-import Image from 'next/image'
 import robotPNG from '@/assets/images/robot.png'
 import userPNG from '@/assets/images/account.png'
 import msgEmptySVG from '@/assets/images/message_empty.svg'
 import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
 import multiagent_workerPNG from '@/assets/images/multiagent_worker.png'
+
+// Helper to extract src from Next.js StaticImageData or return string as-is
+const getImageSrc = (img) => img?.src || img || ''
 import { IconTool, IconDeviceSdCard, IconFileExport, IconEraser, IconX, IconDownload, IconPaperclip, IconBulb } from '@tabler/icons-react'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 
@@ -1227,21 +1229,21 @@ const ViewMessagesDialog = ({ show, dialogProps, onCancel }) => {
                                                         >
                                                             {/* Display the correct icon depending on the message type */}
                                                             {message.type === 'apiMessage' ? (
-                                                                <Image
+                                                                <img
                                                                     style={{ marginLeft: '10px' }}
-                                                                    src={robotPNG}
+                                                                    src={getImageSrc(robotPNG)}
                                                                     alt='AI'
-                                                                    width={25}
-                                                                    height={25}
+                                                                    width='25'
+                                                                    height='25'
                                                                     className='boticon'
                                                                 />
                                                             ) : (
-                                                                <Image
+                                                                <img
                                                                     style={{ marginLeft: '10px' }}
-                                                                    src={userPNG}
+                                                                    src={getImageSrc(userPNG)}
                                                                     alt='Me'
-                                                                    width={25}
-                                                                    height={25}
+                                                                    width='25'
+                                                                    height='25'
                                                                     className='usericon'
                                                                 />
                                                             )}

@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react'
 import { Box, Card, CardContent, Chip, Stack } from '@mui/material'
 import { IconTool, IconDeviceSdCard } from '@tabler/icons-react'
 import { MemoizedReactMarkdown } from '@/ui-component/markdown/MemoizedReactMarkdown'
-import Image from 'next/image'
 import nextAgentGIF from '@/assets/images/next-agent.gif'
 import multiagent_supervisorPNG from '@/assets/images/multiagent_supervisor.png'
 import multiagent_workerPNG from '@/assets/images/multiagent_worker.png'
 import PropTypes from 'prop-types'
+
+// Helper to extract src from Next.js StaticImageData or return string as-is
+const getImageSrc = (img) => img?.src || img || ''
 
 const AgentReasoningCard = ({
     agent,
@@ -58,16 +60,14 @@ const AgentReasoningCard = ({
                         flexDirection='row'
                     >
                         <Box sx={{ height: 'auto', pr: 1 }}>
-                            <Image
+                            <img
                                 style={{
                                     objectFit: 'cover',
                                     height: '35px',
                                     width: 'auto'
                                 }}
-                                src={nextAgentGIF}
+                                src={getImageSrc(nextAgentGIF)}
                                 alt='agentPNG'
-                                width={35}
-                                height={35}
                             />
                         </Box>
                         <div>{agent.nextAgent}</div>
@@ -89,7 +89,7 @@ const AgentReasoningCard = ({
                     flexDirection='row'
                 >
                     <Box sx={{ height: 'auto', pr: 1 }}>
-                        <Image
+                        <img
                             style={{
                                 objectFit: 'cover',
                                 height: '25px',
@@ -97,8 +97,6 @@ const AgentReasoningCard = ({
                             }}
                             src={iconSrc}
                             alt='agentPNG'
-                            width={25}
-                            height={25}
                             onError={handleImageError}
                         />
                     </Box>
