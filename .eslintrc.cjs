@@ -25,7 +25,7 @@ module.exports = {
         '**/generated/**',
         '**/.turbo/**',
         '**/coverage/**',
-        '**/scripts/bws-secure/**'
+        '**/scripts/**'
     ],
     plugins: ['unused-imports'],
     rules: {
