@@ -35,7 +35,7 @@ const looksLikeJWT = (token: string): boolean => {
     return parts.length === 3
 }
 
-const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<User | null> => {
+const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<{ user: User; organizationId: string | null; workspaceId: string | null } | null> => {
     const authHeader = req.headers.authorization
     if (!authHeader?.startsWith('Bearer ')) {
         return null
@@ -62,7 +62,12 @@ const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<U
         return null
     }
 
-    return user
+    // Return user with API key's org/workspace context (may differ from user's current org)
+    return {
+        user,
+        organizationId: apiKeyData.organizationId,
+        workspaceId: apiKeyData.workspaceId
+    }
 }
 
 export const authenticationHandlerMiddleware =
@@ -97,7 +102,7 @@ export const authenticationHandlerMiddleware =
         }
 
         // Try API key authentication first
-        let apiKeyUser: User | null = null
+        let apiKeyResult: { user: User; organizationId: string | null; workspaceId: string | null } | null = null
         let apiKeyError: any
         const authHeader = req.headers.authorization
         const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
@@ -106,17 +111,24 @@ export const authenticationHandlerMiddleware =
         // Only try API key auth if token doesn't look like a JWT
         if (token && !isTokenJWT) {
             try {
-                apiKeyUser = await tryApiKeyAuth(req, AppDataSource)
+                apiKeyResult = await tryApiKeyAuth(req, AppDataSource)
             } catch (error) {
                 apiKeyError = error
             }
         }
 
-        if (apiKeyUser) {
+        if (apiKeyResult) {
+            const { user: apiKeyUser, organizationId: apiKeyOrgId, workspaceId: apiKeyWorkspaceId } = apiKeyResult
+
+            // Use API key's organizationId (falls back to user's org if key has no org)
+            const effectiveOrgId = apiKeyOrgId || apiKeyUser.organizationId
+
             // For API key users, we need to get the organization's auth0Id
-            const organization = await AppDataSource.getRepository(Organization).findOne({
-                where: { id: apiKeyUser.organizationId }
-            })
+            const organization = effectiveOrgId
+                ? await AppDataSource.getRepository(Organization).findOne({
+                      where: { id: effectiveOrgId }
+                  })
+                : null
 
             const isValidApiKeyOrg = organization?.auth0Id && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(organization.auth0Id)
 
@@ -145,7 +157,7 @@ export const authenticationHandlerMiddleware =
         }
 
         // If we have a token that doesn't look like a JWT and API key auth failed, return error
-        if (token && !isTokenJWT && !apiKeyUser) {
+        if (token && !isTokenJWT && !apiKeyResult) {
             if (apiKeyError) {
                 console.error('[Auth] API key verification failed:', {
                     error: apiKeyError instanceof Error ? apiKeyError.message : apiKeyError,
