@@ -4,13 +4,14 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 
 ## Quick Start
 
-**5 Core Commands:**
+**6 Core Commands:**
 ```bash
 /ticket-create          # Create new Linear ticket
 /ticket-start AAI-123   # Start work on ticket
 /push                   # Commit + Push + Create/Update PR
 /pr-review 456          # Review pull request
 /blog-write             # Write technical blog posts and articles
+/issue-triage 278       # Triage GitHub issues (close or create Linear tickets)
 ```
 
 **Daily Workflow:**
@@ -30,19 +31,20 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 ```
 USER
   ↓
-COMMANDS (5 core)
-  /ticket-create  /ticket-start  /push  /pr-review  /blog-write
+COMMANDS (6 core)
+  /ticket-create  /ticket-start  /push  /pr-review  /blog-write  /issue-triage
   ↓
-AGENTS (7 specialized)
+AGENTS (8 specialized)
   linear-ticket-creator   linear-ticket-planner   linear-ticket-optimizer
-  git-pr-manager          git-pr-reviewer
+  git-pr-manager          git-pr-reviewer         github-issue-triager
   integration-docs-updater  integration-validator
   ↓
-SKILLS (10 reusable patterns)
+SKILLS (12 reusable patterns)
   branch-workflow       commit-helper         git-branch
   pr-description-gen    pr-review-workflow    ticket-planning-workflow
   ticket-status-sync    ticket-duplicate-detection
   theanswer-patterns    error-handling
+  linear-constants      github-issue-analysis
   ↓
 RULES (3 path-specific)
   api-routes.md → packages/server/src/routes/**
@@ -166,27 +168,60 @@ Write technical blog posts, articles, and content.
 /blog-write OAuth2 authentication implementation
 ```
 
+### `/issue-triage [issue_numbers...]`
+Triage GitHub issues - analyze relevance, close fixed/outdated issues, or create Linear tickets.
+
+**What it does:**
+- Fetches GitHub issue details
+- Searches codebase for related fixes
+- Determines if issue is still relevant
+- Takes action:
+  - **Close** if fixed (with PR/commit reference)
+  - **Close** if outdated (architecture changed)
+  - **Create Linear ticket** if still valid
+
+**Example:**
+```bash
+# Single issue
+/issue-triage 278
+
+# Multiple issues (parallel execution)
+/issue-triage 278 316 331 343
+```
+
+**Output:**
+```
+Issue #278: Created AGENT-650 (bug still exists)
+Issue #316: Closed (feature implemented in PR #567)
+Issue #331: Created AGENT-651 (UX improvement valid)
+Issue #343: Closed (outdated - chatflow list refactored)
+
+Summary: 2 tickets created, 2 issues closed
+```
+
 ## Directory Structure
 
 ```
 .claude/
 ├── README.md                          # This file
 ├── ARCHITECTURE.md                    # Detailed optimization plan
-├── commands/                          # 5 core user commands
+├── commands/                          # 6 core user commands
 │   ├── ticket-create.md
 │   ├── ticket-start.md
 │   ├── push.md                        # ⭐ Main workflow command
 │   ├── pr-review.md
-│   └── blog-write.md
-├── agents/                            # 7 specialized agents
+│   ├── blog-write.md
+│   └── issue-triage.md                # GitHub issue triage
+├── agents/                            # 8 specialized agents
 │   ├── linear-ticket-creator.md
 │   ├── linear-ticket-planner.md
 │   ├── linear-ticket-optimizer.md
 │   ├── git-pr-manager.md
 │   ├── git-pr-reviewer.md
+│   ├── github-issue-triager.md        # Autonomous issue analysis
 │   ├── integration-docs-updater.md
 │   └── integration-validator.md
-├── skills/                            # 10 reusable patterns
+├── skills/                            # 12 reusable patterns
 │   ├── branch-workflow.md             # Branch lifecycle
 │   ├── commit-helper.md               # Commit validation
 │   ├── git-branch.md                  # Branch creation
@@ -196,7 +231,9 @@ Write technical blog posts, articles, and content.
 │   ├── ticket-status-sync.md          # Linear sync
 │   ├── ticket-duplicate-detection.md  # Duplicate detection
 │   ├── theanswer-patterns.md          # Multi-tenancy, auth patterns
-│   └── error-handling.md              # InternalFlowiseError patterns
+│   ├── error-handling.md              # InternalFlowiseError patterns
+│   ├── linear-constants.md            # Pre-cached Linear config
+│   └── github-issue-analysis.md       # Issue analysis methodology
 ├── rules/                             # 3 path-specific rules
 │   ├── api-routes.md                  # packages/server/src/routes/**
 │   ├── components.md                  # packages/components/nodes/**
