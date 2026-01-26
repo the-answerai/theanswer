@@ -611,7 +611,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 open={drawerOpen}
                 variant='permanent'
                 className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
-                sx={{ zIndex: 1200 }}
             >
                 <Box
                     sx={{
