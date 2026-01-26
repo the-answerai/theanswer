@@ -105,11 +105,7 @@ export const findOrCreateUser = async (
 }
 
 // Helper to update user's organizationId
-export const updateUserOrganization = async (
-    AppDataSource: DataSource,
-    userId: string,
-    organizationId: string
-): Promise<void> => {
+export const updateUserOrganization = async (AppDataSource: DataSource, userId: string, organizationId: string): Promise<void> => {
     const userRepo = AppDataSource.getRepository(User)
     await userRepo.update(userId, { organizationId, updatedBy: userId })
 }

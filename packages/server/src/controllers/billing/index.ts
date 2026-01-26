@@ -57,8 +57,7 @@ const getUsageSummary = async (req: Request, res: Response, next: NextFunction) 
 
         // Get credits limit from price metadata, product metadata, or use defaults
         const metadataCredits =
-            parseInt(price?.metadata?.credits_included || '0') ||
-            parseInt((product?.metadata?.credits_included as string) || '0')
+            parseInt(price?.metadata?.credits_included || '0') || parseInt((product?.metadata?.credits_included as string) || '0')
 
         const isPro = hasActiveSubscription && price?.id !== BILLING_CONFIG.PRICE_IDS.FREE_MONTHLY
         const planLimits = metadataCredits || (isPro ? BILLING_CONFIG.PLAN_LIMITS.PRO : BILLING_CONFIG.PLAN_LIMITS.FREE)

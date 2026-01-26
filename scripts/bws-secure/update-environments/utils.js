@@ -213,7 +213,7 @@ function validateValue(key, value) {
       return { isValid: false, error: 'Token seems too short (min 10 chars)' };
     }
     // Basic format check for common token patterns
-    if (!value.match(/^[A-Za-z0-9_\-\.]+$/)) {
+    if (!value.match(/^[A-Za-z0-9_\-.]+$/)) {
       return {
         isValid: false,
         error: 'Token contains invalid characters (should be alphanumeric with _ - .)'

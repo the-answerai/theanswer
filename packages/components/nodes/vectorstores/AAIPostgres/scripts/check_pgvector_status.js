@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 // Script to check pgvector extension status in your AAI database
 // This script only checks status and doesn't make any changes

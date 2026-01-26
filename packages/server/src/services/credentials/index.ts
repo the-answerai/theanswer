@@ -64,7 +64,7 @@ const getAllCredentials = async (paramCredentialName: any, workspaceId: string) 
                         ...getWorkspaceSearchOptions(workspaceId)
                     }
                     const credentials = await appServer.AppDataSource.getRepository(Credential).findBy(searchOptions)
-                    dbResponse.push(...credentials.map(c => omit(c, ['encryptedData'])))
+                    dbResponse.push(...credentials.map((c) => omit(c, ['encryptedData'])))
                 }
             } else {
                 const searchOptions = {

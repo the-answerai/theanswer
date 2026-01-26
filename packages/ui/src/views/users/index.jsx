@@ -165,7 +165,6 @@ const Users = () => {
     useNotifier()
     const { error, setError } = useError()
     const currentUser = useSelector((state) => state.auth.user)
-    if (!currentUser) return null
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
@@ -290,7 +289,9 @@ const Users = () => {
     }
 
     useEffect(() => {
-        getAllUsersByWorkspaceIdApi.request(currentUser.activeWorkspaceId)
+        if (currentUser?.activeWorkspaceId) {
+            getAllUsersByWorkspaceIdApi.request(currentUser.activeWorkspaceId)
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -315,6 +316,9 @@ const Users = () => {
             setUsers(users)
         }
     }, [getAllUsersByWorkspaceIdApi.data])
+
+    // Early return if currentUser is not available (after all hooks)
+    if (!currentUser) return null
 
     return (
         <>

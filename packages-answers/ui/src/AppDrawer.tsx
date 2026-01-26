@@ -79,6 +79,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
     flexShrink: 0,
     whiteSpace: 'nowrap',
     boxSizing: 'border-box',
+    height: '100%',
     transition: theme.transitions.create('width', {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.enteringScreen
@@ -91,7 +92,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
         }),
         overflowX: 'hidden',
         overflowY: open ? 'auto' : 'hidden',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative',
+        height: '100%'
     }
 }))
 
@@ -608,7 +611,6 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                 open={drawerOpen}
                 variant='permanent'
                 className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
-                sx={{ zIndex: 1200 }}
             >
                 <Box
                     sx={{

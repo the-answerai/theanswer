@@ -194,18 +194,18 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
         // Update orphaned users to use fallback organization
         for (const user of orphanedUsers) {
             console.warn(`  - Fixing user ${user.id} (${user.email}): ${user.organizationId} -> ${fallbackOrgId}`)
-            await queryRunner.query(
-                `UPDATE "user" SET "organizationId" = $1 WHERE id = $2`,
-                [fallbackOrgId, user.id]
-            )
+            await queryRunner.query(`UPDATE "user" SET "organizationId" = $1 WHERE id = $2`, [fallbackOrgId, user.id])
 
             // Also ensure they have an organization_user entry
-            await queryRunner.query(`
+            await queryRunner.query(
+                `
                 INSERT INTO organization_user ("organizationId", "userId", "roleId", status, "createdBy", "updatedBy", "createdDate", "updatedDate")
                 SELECT $1, $2, r.id, 'active', $2, $2, NOW(), NOW()
                 FROM role r WHERE r.name = 'member'
                 ON CONFLICT ("organizationId", "userId") DO NOTHING
-            `, [fallbackOrgId, user.id])
+            `,
+                [fallbackOrgId, user.id]
+            )
         }
 
         console.warn(`Fixed ${orphanedUsers.length} users with invalid organizationId. These may indicate Auth0 sync issues.`)
@@ -237,10 +237,7 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
 
         for (const org of orgs) {
             // Get users in this organization
-            const users = await queryRunner.query(
-                `SELECT id FROM "user" WHERE "organizationId" = $1`,
-                [org.id]
-            )
+            const users = await queryRunner.query(`SELECT id FROM "user" WHERE "organizationId" = $1`, [org.id])
 
             if (users.length === 0) {
                 console.log(`Organization ${org.id} has no users - skipping`)
@@ -279,7 +276,7 @@ export class AAIRestoreDataAndCreateWorkspaces1737076223693 implements Migration
                 )
 
                 if (!existingOrgMembership.length) {
-                    const roleId = user.id === adminId ? (ownerRoleId || memberRoleId) : memberRoleId
+                    const roleId = user.id === adminId ? ownerRoleId || memberRoleId : memberRoleId
 
                     await queryRunner.query(
                         `INSERT INTO workspace_user ("workspaceId", "userId", "roleId", status, "createdBy", "updatedBy", "createdDate", "updatedDate")

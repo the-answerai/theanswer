@@ -23,24 +23,18 @@ import { promises as fsPromises } from 'node:fs'; // For async operations
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
-import { hideBin } from 'yargs/helpers';
-import yargs from 'yargs/yargs';
 import {
   readVars as readNetlifyVariables,
   updateNetlifyEnvVars as updateNetlifyEnvironmentVariables
 } from './netlify.js';
 import {
   handleError,
-  readEnvFile as readEnvironmentFile,
   validateValue,
   shouldPreserveVar as shouldPreserveVariable,
-  getBuildOrAuthToken,
-  validateDeployment,
   decryptContent
 } from './utils.js';
 import {
   readVars as readVercelVariables,
-  updateVars as updateVercelVariables,
   updateVercelEnvVars as updateVercelEnvironmentVariables
 } from './vercel.js';
 import logger from '../logger.js';

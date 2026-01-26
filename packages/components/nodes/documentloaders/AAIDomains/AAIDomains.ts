@@ -378,7 +378,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         let allDomains: any[] = []
         let currentPage = 0
 
-        console.log('[AAIDomains] Starting load with params:', {
+        console.info('[AAIDomains] Starting load with params:', {
             limit: this.limit,
             searchTerm: this.searchTerm,
             includeTags: this.includeTags,
@@ -392,7 +392,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             const remainingItems = this.limit - allDomains.length
             const currentPageSize = Math.min(pageSize, remainingItems)
 
-            console.log(`[AAIDomains] Fetching page ${currentPage}, size ${currentPageSize}`)
+            console.info(`[AAIDomains] Fetching page ${currentPage}, size ${currentPageSize}`)
 
             // Retry logic with exponential backoff
             let retryCount = 0
@@ -502,13 +502,13 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         throw new Error(`Failed to fetch domains from AAI Datastore: ${error.message}`)
                     }
 
-                    console.log(`[AAIDomains] Page ${currentPage} response:`, {
+                    console.info(`[AAIDomains] Page ${currentPage} response:`, {
                         hasData: !!data,
                         domainsCount: data?.length || 0
                     })
 
                     if (!data || data.length === 0) {
-                        console.log('[AAIDomains] No more data, stopping pagination')
+                        console.info('[AAIDomains] No more data, stopping pagination')
                         shouldStopPagination = true
                         break
                     }
@@ -563,7 +563,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.log(`[AAIDomains] Load complete. Total domains: ${allDomains.length}`)
+        console.info(`[AAIDomains] Load complete. Total domains: ${allDomains.length}`)
 
         // Truncate to exact limit
         if (allDomains.length > this.limit) {

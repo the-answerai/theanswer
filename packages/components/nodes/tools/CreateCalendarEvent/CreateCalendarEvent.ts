@@ -105,7 +105,7 @@ export class CreateCalendarEventTool extends Tool {
                 attendees: eventDetails.attendees?.map((email) => ({ email }))
             }
 
-            const response = await calendar.events.insert({
+            const _response = await calendar.events.insert({
                 calendarId: eventDetails.calendar || this.calendarId,
                 requestBody: event,
                 sendUpdates: 'all'

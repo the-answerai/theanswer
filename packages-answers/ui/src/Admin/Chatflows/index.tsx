@@ -474,7 +474,10 @@ const AdminChatflows = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <TemplateIcon sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b', fontSize: '2rem' }} />
                                         <Box>
-                                            <Typography variant='h6' sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914', fontWeight: 600, mb: 0.5 }}>
+                                            <Typography
+                                                variant='h6'
+                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914', fontWeight: 600, mb: 0.5 }}
+                                            >
                                                 Organization Default Template
                                             </Typography>
                                             <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
@@ -502,7 +505,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 NAME
                                             </Typography>
@@ -516,7 +523,11 @@ const AdminChatflows = () => {
                                             <Box sx={{ mb: 2 }}>
                                                 <Typography
                                                     variant='body2'
-                                                    sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                    sx={{
+                                                        color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
                                                 >
                                                     DESCRIPTION
                                                 </Typography>
@@ -530,7 +541,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 CATEGORY
                                             </Typography>
@@ -547,7 +562,9 @@ const AdminChatflows = () => {
                                                                 fontSize: '0.65rem',
                                                                 bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
                                                                 color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
-                                                                border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.4)' : '1px solid #b8860b',
+                                                                border: isDarkMode
+                                                                    ? '1px solid rgba(255, 193, 7, 0.4)'
+                                                                    : '1px solid #b8860b',
                                                                 '& .MuiChip-label': {
                                                                     px: 0.75,
                                                                     py: 0.25
@@ -562,7 +579,11 @@ const AdminChatflows = () => {
                                         <Box>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 OWNER
                                             </Typography>
@@ -582,7 +603,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 CREATED
                                             </Typography>
@@ -597,7 +622,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 UPDATED
                                             </Typography>
@@ -612,7 +641,11 @@ const AdminChatflows = () => {
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 0.5 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 0.5
+                                                }}
                                             >
                                                 VERSION
                                             </Typography>
@@ -625,7 +658,11 @@ const AdminChatflows = () => {
                                         <Box>
                                             <Typography
                                                 variant='body2'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914', fontSize: '0.75rem', mb: 1 }}
+                                                sx={{
+                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    fontSize: '0.75rem',
+                                                    mb: 1
+                                                }}
                                             >
                                                 ACTIONS
                                             </Typography>

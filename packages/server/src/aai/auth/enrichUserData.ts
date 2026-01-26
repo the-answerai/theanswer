@@ -182,11 +182,7 @@ export async function enrichUserWithAAIData(
     auth0Roles: string[] = []
 ): Promise<EnrichedUserData> {
     // Populate workspace data
-    const workspaceData: WorkspaceData = await populateWorkspaceData(
-        AppDataSource,
-        user,
-        organization.id
-    )
+    const workspaceData: WorkspaceData = await populateWorkspaceData(AppDataSource, user, organization.id)
 
     // Load subscription/features data
     const subscriptionData = await loadOrganizationSubscriptionData(organization)

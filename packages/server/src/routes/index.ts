@@ -68,7 +68,6 @@ import accountRouter from '../enterprise/routes/account.route'
 import loginMethodRouter from '../enterprise/routes/login-method.route'
 import { IdentityManager } from '../IdentityManager'
 
-
 // AAI
 import langfuseRouter from './langfuse'
 import planRouter from './plan'

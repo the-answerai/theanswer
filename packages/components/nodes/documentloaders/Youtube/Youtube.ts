@@ -47,7 +47,7 @@ class Youtube_DocumentLoaders implements INode {
             }
         ]
     }
-    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
+    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<any> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
 
         const videoId = nodeData.inputs?.videoId as string

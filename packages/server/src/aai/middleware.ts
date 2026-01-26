@@ -17,9 +17,8 @@ export const requestContextMiddleware = (req: Request, res: Response, next: Next
             debugLog(`Shared workspace "${getSharedWorkspaceName()}" not found for user`)
         }
 
-        const workspaceIds = activeId && sharedId && activeId !== sharedId
-            ? [activeId, sharedId]
-            : [activeId || sharedId].filter(Boolean) as string[]
+        const workspaceIds =
+            activeId && sharedId && activeId !== sharedId ? [activeId, sharedId] : ([activeId || sharedId].filter(Boolean) as string[])
 
         debugLog('Context setup', { activeId, sharedId, workspaceIds })
         requestContext.run({ workspaceIds }, () => next())

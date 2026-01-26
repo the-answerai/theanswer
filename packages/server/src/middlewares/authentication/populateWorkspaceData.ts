@@ -24,11 +24,7 @@ export interface WorkspaceData {
  * Populate workspace data for a user.
  * Returns workspace context required by Flowise 3.0.11 LoggedInUser type.
  */
-export async function populateWorkspaceData(
-    AppDataSource: DataSource,
-    user: User,
-    organizationId: string
-): Promise<WorkspaceData> {
+export async function populateWorkspaceData(AppDataSource: DataSource, user: User, organizationId: string): Promise<WorkspaceData> {
     const workspaceUsers = await AppDataSource.getRepository(WorkspaceUser)
         .createQueryBuilder('wu')
         .leftJoinAndSelect('wu.workspace', 'workspace')
@@ -66,12 +62,14 @@ export async function populateWorkspaceData(
             activeOrganizationId: organizationId,
             activeWorkspace: fallbackWorkspace.name,
             isOrganizationAdmin: false,
-            assignedWorkspaces: [{
-                id: fallbackWorkspace.id,
-                name: fallbackWorkspace.name,
-                role: 'member',
-                organizationId
-            }]
+            assignedWorkspaces: [
+                {
+                    id: fallbackWorkspace.id,
+                    name: fallbackWorkspace.name,
+                    role: 'member',
+                    organizationId
+                }
+            ]
         }
     }
 

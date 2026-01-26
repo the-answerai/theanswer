@@ -696,7 +696,11 @@ const AddNodes = ({ nodesData, node, isAgentCanvas, isAgentflowv2, onFlowGenerat
                                                                                                 onError={(e) => {
                                                                                                     e.target.onerror = null
                                                                                                     e.target.style.padding = '5px'
-                                                                                                    e.target.src = typeof toolSVG === 'object' && toolSVG?.src ? toolSVG.src : toolSVG
+                                                                                                    e.target.src =
+                                                                                                        typeof toolSVG === 'object' &&
+                                                                                                        toolSVG?.src
+                                                                                                            ? toolSVG.src
+                                                                                                            : toolSVG
                                                                                                 }}
                                                                                             />
                                                                                         </div>

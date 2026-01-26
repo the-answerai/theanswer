@@ -160,7 +160,9 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                                         <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem', mb: 0.5 }}>
                                             Plan Cost
                                         </Typography>
-                                        <Typography sx={{ color: theme.palette.text.primary }}>${currentPlan.pricePerMonth}/month</Typography>
+                                        <Typography sx={{ color: theme.palette.text.primary }}>
+                                            ${currentPlan.pricePerMonth}/month
+                                        </Typography>
                                     </Box>
                                 )}
                             </Stack>
@@ -202,7 +204,9 @@ const BillingOverview: React.FC<BillingOverviewProps> = ({
                             {currentPlan?.features &&
                                 currentPlan.features.map((feature: string) => (
                                     <Grid item xs={12} sm={6} key={feature}>
-                                        <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem' }}>• {feature}</Typography>
+                                        <Typography sx={{ color: theme.palette.text.primary, fontSize: '0.875rem' }}>
+                                            • {feature}
+                                        </Typography>
                                     </Grid>
                                 ))}
                         </Grid>

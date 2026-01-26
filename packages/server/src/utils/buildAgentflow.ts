@@ -64,7 +64,6 @@ import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/
 import { getWorkspaceSearchOptions } from '../enterprise/utils/ControllerServiceUtils'
 import { UsageCacheManager } from '../UsageCacheManager'
 import { generateTTSForResponseStream, shouldAutoPlayTTS } from './buildChatflow'
-import { LoggedInUser } from '../enterprise/Interface.Enterprise'
 
 interface IWaitingNode {
     nodeId: string

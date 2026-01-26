@@ -260,22 +260,14 @@ export const hasPermission = (userPermissions: string[], required: string, isOrg
 /**
  * Check if user has any of the specified permissions.
  */
-export const hasAnyPermission = (
-    userPermissions: string[],
-    required: string[],
-    isOrgAdmin: boolean = false
-): boolean => {
+export const hasAnyPermission = (userPermissions: string[], required: string[], isOrgAdmin: boolean = false): boolean => {
     return required.some((perm) => hasPermission(userPermissions, perm, isOrgAdmin))
 }
 
 /**
  * Check if user has all of the specified permissions.
  */
-export const hasAllPermissions = (
-    userPermissions: string[],
-    required: string[],
-    isOrgAdmin: boolean = false
-): boolean => {
+export const hasAllPermissions = (userPermissions: string[], required: string[], isOrgAdmin: boolean = false): boolean => {
     return required.every((perm) => hasPermission(userPermissions, perm, isOrgAdmin))
 }
 

@@ -19,7 +19,7 @@ export class IUser {
     activeWorkspaceId: string
     loginMode?: string
     activeOrganizationId?: string
- 
+
     // AAI (optional - may not be set by enterprise passport)
     stripeCustomerId?: string
     organizationId?: string

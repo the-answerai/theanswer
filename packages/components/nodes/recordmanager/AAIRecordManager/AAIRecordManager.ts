@@ -219,7 +219,7 @@ class PostgresRecordManager implements RecordManagerInterface {
         // Check if config has changed
         const currentHash = this.generateConfigHash(postgresConnectionOptions)
         if (this.configHash !== currentHash) {
-            console.log('AAI PostgresRecordManager - Config changed, will use new connection')
+            console.info('AAI PostgresRecordManager - Config changed, will use new connection')
             // Destroy old connection with old config
             await PostgresConnectionManager.destroy(JSON.parse(this.configHash))
             this.configHash = currentHash
@@ -228,7 +228,7 @@ class PostgresRecordManager implements RecordManagerInterface {
         // Use singleton connection manager
         try {
             const dataSource = await PostgresConnectionManager.getDataSource(postgresConnectionOptions)
-            console.log('AAI PostgresRecordManager - Connection successful')
+            console.info('AAI PostgresRecordManager - Connection successful')
             return dataSource
         } catch (error) {
             console.error('AAI PostgresRecordManager - Connection failed:', error)

@@ -13,7 +13,6 @@ import { DataSource } from 'typeorm'
 import { CachePool } from './CachePool'
 import { Telemetry } from './utils/telemetry'
 import { ChatflowVisibility } from './database/entities/ChatFlow'
-import { LoggedInUser } from './enterprise/Interface.Enterprise'
 import { UsageCacheManager } from './UsageCacheManager'
 import { InputValidationResult } from './types/guardrails'
 

@@ -177,10 +177,7 @@ async function findOrCreateAAIUser(
  * Find existing AAI organization (WITHOUT creating).
  * Used to check if org exists before creating user (chicken-egg problem).
  */
-async function findExistingAAIOrganization(
-    AppDataSource: DataSource,
-    passportUser: any
-): Promise<Organization | null> {
+async function findExistingAAIOrganization(AppDataSource: DataSource, passportUser: any): Promise<Organization | null> {
     const orgRepo = AppDataSource.getRepository(Organization)
     const auth0OrgId = passportUser.org_id
 

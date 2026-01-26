@@ -36,10 +36,6 @@ import { GeneralRole, Role } from './enterprise/database/entities/role.entity'
 import { migrateApiKeysFromJsonToDb } from './utils/apiKey'
 import { ExpressAdapter } from '@bull-board/express'
 
-import passport from 'passport'
-import passportConfig from './config/passport'
-import session from 'express-session'
-
 import { createRedisStore } from './AppConfig'
 import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
 import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
@@ -70,7 +66,7 @@ declare global {
     }
 }
 
-// AAI 
+// AAI
 // passportConfig(passport)
 
 export class App {
@@ -262,6 +258,93 @@ export class App {
         await initializeJwtCookieMiddleware(this.app, this.identityManager)
 
         this.app.use(async (req, res, next) => {
+            // Helper to detect JWT tokens (three dot-separated base64 segments)
+            const looksLikeJWT = (): boolean => {
+                const authHeader = req.headers.authorization as string | undefined
+                const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
+                return token ? token.split('.').length === 3 : false
+            }
+
+            // Helper for API key authentication (used as primary or fallback)
+            const handleApiKeyAuth = async () => {
+                // Only check license validity for non-open-source platforms
+                if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {
+                    if (!this.identityManager.isLicenseValid()) {
+                        return res.status(401).json({ error: 'Unauthorized Access' })
+                    }
+                }
+
+                const { isValid, apiKey, workspaceId: apiKeyWorkSpaceId } = await validateAPIKey(req)
+                if (!isValid || !apiKey) {
+                    return res.status(401).json({ error: 'Unauthorized Access' })
+                }
+
+                // Find workspace
+                const workspace = await this.AppDataSource.getRepository(Workspace).findOne({
+                    where: { id: apiKeyWorkSpaceId }
+                })
+                if (!workspace) {
+                    return res.status(401).json({ error: 'Unauthorized Access' })
+                }
+
+                // Find user associated with API key
+                const user = await this.AppDataSource.getRepository(User).findOne({
+                    where: { id: apiKey.userId }
+                })
+                if (!user) {
+                    return res.status(401).json({ error: 'Unauthorized Access' })
+                }
+
+                // Find owner role
+                const ownerRole = await this.AppDataSource.getRepository(Role).findOne({
+                    where: { name: GeneralRole.OWNER, organizationId: IsNull() }
+                })
+                if (!ownerRole) {
+                    return res.status(401).json({ error: 'Unauthorized Access' })
+                }
+
+                // Find organization
+                const activeOrganizationId = workspace.organizationId as string
+                const org = await this.AppDataSource.getRepository(Organization).findOne({
+                    where: { id: activeOrganizationId }
+                })
+                if (!org) {
+                    return res.status(401).json({ error: 'Unauthorized Access' })
+                }
+                const subscriptionId = org.subscriptionId as string
+                const customerId = org.customerId as string
+                const features = await this.identityManager.getFeaturesByPlan(subscriptionId)
+                const productId = await this.identityManager.getProductIdFromSubscription(subscriptionId)
+
+                // Populate workspace data for full context (like AAI token flow)
+                const workspaceData = await populateWorkspaceData(this.AppDataSource, user, activeOrganizationId)
+
+                // Set complete req.user matching AAI token flow
+                // @ts-ignore
+                req.user = {
+                    // User identity (required for multi-tenancy)
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    organizationId: activeOrganizationId,
+                    // Permissions and features
+                    permissions: [...JSON.parse(ownerRole.permissions)],
+                    features,
+                    // Organization context
+                    activeOrganizationId: activeOrganizationId,
+                    activeOrganizationSubscriptionId: subscriptionId,
+                    activeOrganizationCustomerId: customerId,
+                    activeOrganizationProductId: productId,
+                    isOrganizationAdmin: true,
+                    // Workspace context (from populateWorkspaceData)
+                    activeWorkspaceId: apiKeyWorkSpaceId!,
+                    activeWorkspace: workspace.name,
+                    roleId: workspaceData.roleId || ownerRole.id,
+                    assignedWorkspaces: workspaceData.assignedWorkspaces || []
+                }
+                next()
+            }
+
             // Step 1: Check if the req path contains /api/v1 regardless of case
             if (URL_CASE_INSENSITIVE_REGEX.test(req.path)) {
                 // Step 2: Check if the req path is casesensitive
@@ -270,89 +353,22 @@ export class App {
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()
-                    } else if (req.headers['x-request-from'] === 'aai') {
-                        // AAI requests: Auth0 RS256 JWT (primary) with enterprise HS256 fallback
-                        verifyAAIToken(this.AppDataSource)(req, res, next)
+                    } else if (req.headers['x-request-from'] === 'aai' || looksLikeJWT()) {
+                        // AAI requests OR auto-detected JWT tokens: Auth0 RS256 JWT (primary) with enterprise HS256 fallback
+                        // If JWT fails, fall through to API key validation
+                        verifyAAIToken(this.AppDataSource)(req, res, (err?: any) => {
+                            if (err || !req.user) {
+                                // JWT verification failed - fall through to API key validation
+                                handleApiKeyAuth()
+                            } else {
+                                next()
+                            }
+                        })
                     } else if (req.headers['x-request-from'] === 'internal') {
                         // Enterprise internal requests: HS256 passport
                         verifyToken(req, res, next)
                     } else {
-                        // Only check license validity for non-open-source platforms
-                        if (this.identityManager.getPlatformType() !== Platform.OPEN_SOURCE) {
-                            if (!this.identityManager.isLicenseValid()) {
-                                return res.status(401).json({ error: 'Unauthorized Access' })
-                            }
-                        }
-
-                        const { isValid, apiKey, workspaceId: apiKeyWorkSpaceId } = await validateAPIKey(req)
-                        if (!isValid || !apiKey) {
-                            return res.status(401).json({ error: 'Unauthorized Access' })
-                        }
-
-                        // Find workspace
-                        const workspace = await this.AppDataSource.getRepository(Workspace).findOne({
-                            where: { id: apiKeyWorkSpaceId }
-                        })
-                        if (!workspace) {
-                            return res.status(401).json({ error: 'Unauthorized Access' })
-                        }
-
-                        // Find user associated with API key
-                        const user = await this.AppDataSource.getRepository(User).findOne({
-                            where: { id: apiKey.userId }
-                        })
-                        if (!user) {
-                            return res.status(401).json({ error: 'Unauthorized Access' })
-                        }
-
-                        // Find owner role
-                        const ownerRole = await this.AppDataSource.getRepository(Role).findOne({
-                            where: { name: GeneralRole.OWNER, organizationId: IsNull() }
-                        })
-                        if (!ownerRole) {
-                            return res.status(401).json({ error: 'Unauthorized Access' })
-                        }
-
-                        // Find organization
-                        const activeOrganizationId = workspace.organizationId as string
-                        const org = await this.AppDataSource.getRepository(Organization).findOne({
-                            where: { id: activeOrganizationId }
-                        })
-                        if (!org) {
-                            return res.status(401).json({ error: 'Unauthorized Access' })
-                        }
-                        const subscriptionId = org.subscriptionId as string
-                        const customerId = org.customerId as string
-                        const features = await this.identityManager.getFeaturesByPlan(subscriptionId)
-                        const productId = await this.identityManager.getProductIdFromSubscription(subscriptionId)
-
-                        // Populate workspace data for full context (like AAI token flow)
-                        const workspaceData = await populateWorkspaceData(this.AppDataSource, user, activeOrganizationId)
-
-                        // Set complete req.user matching AAI token flow
-                        // @ts-ignore
-                        req.user = {
-                            // User identity (required for multi-tenancy)
-                            id: user.id,
-                            email: user.email,
-                            name: user.name,
-                            organizationId: activeOrganizationId,
-                            // Permissions and features
-                            permissions: [...JSON.parse(ownerRole.permissions)],
-                            features,
-                            // Organization context
-                            activeOrganizationId: activeOrganizationId,
-                            activeOrganizationSubscriptionId: subscriptionId,
-                            activeOrganizationCustomerId: customerId,
-                            activeOrganizationProductId: productId,
-                            isOrganizationAdmin: true,
-                            // Workspace context (from populateWorkspaceData)
-                            activeWorkspaceId: apiKeyWorkSpaceId!,
-                            activeWorkspace: workspace.name,
-                            roleId: workspaceData.roleId || ownerRole.id,
-                            assignedWorkspaces: workspaceData.assignedWorkspaces || []
-                        }
-                        next()
+                        handleApiKeyAuth()
                     }
                 } else {
                     return res.status(401).json({ error: 'Unauthorized Access' })

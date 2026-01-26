@@ -78,7 +78,7 @@ class AAIEmbedding_Embeddings implements INode {
         }
     }
 
-    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
+    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<any> {
         const stripNewLines = nodeData.inputs?.stripNewLines as boolean
         const batchSize = nodeData.inputs?.batchSize as string
         const timeout = nodeData.inputs?.timeout as string

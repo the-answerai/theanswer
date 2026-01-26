@@ -73,11 +73,9 @@ export const utilGetChatMessage = async ({
         throw new Error('Chatflow not found')
     }
 
-
     // Check access: workspace membership OR same organization (legacy)
     const hasWorkspaceAccess = workspaceIds.length > 0 && workspaceIds.includes(chatflow.workspaceId)
     const hasLegacyAccess = chatflow.organizationId === user.organizationId
-
 
     if (!hasWorkspaceAccess && !hasLegacyAccess) {
         throw new Error('Unauthorized access')
@@ -131,8 +129,6 @@ export const utilGetChatMessage = async ({
         id: messageId ?? undefined
     }
 
-
-
     const messages = await appServer.AppDataSource.getRepository(ChatMessage).find({
         where: whereClause,
         relations: {
@@ -142,7 +138,6 @@ export const utilGetChatMessage = async ({
             createdDate: sortOrder === 'DESC' ? 'DESC' : 'ASC'
         }
     })
-
 
     return messages
 }
