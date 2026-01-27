@@ -13,7 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconTrash, IconEdit, IconX } from '@tabler/icons-react'
+import { IconX, IconUnlink, IconExternalLink } from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
@@ -123,64 +123,35 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         setShowCredentialDialog(false)
     }
 
-    const handleEditCredential = async () => {
-        if (!selectedCredentialObj) return
-
-        setCredentialDialogProps({
-            type: 'EDIT',
-            cancelButtonName: 'Cancel',
-            confirmButtonName: 'Save',
-            data: selectedCredentialObj,
-            defaultVisibility: ['Organization']
-        })
-        setShowCredentialDialog(true)
+    const handleManageCredentials = () => {
+        window.open('/admin/org-credentials', '_blank')
     }
 
-    const handleDeleteCredential = async () => {
+    const handleDisconnect = async () => {
         if (!selectedCredentialObj) return
 
         const isConfirmed = await confirm({
-            title: 'Delete',
-            description: `Delete credential "${selectedCredentialObj.name}"?`,
-            confirmButtonName: 'Delete',
+            title: 'Disconnect',
+            description: `Disconnect credential "${selectedCredentialObj.name}" from guardrails? The credential will not be deleted.`,
+            confirmButtonName: 'Disconnect',
             cancelButtonName: 'Cancel'
         })
 
         if (isConfirmed) {
-            try {
-                await credentialsApi.deleteCredential(selectedCredentialObj.id)
-                enqueueSnackbar({
-                    message: 'Credential deleted',
-                    options: {
-                        key: new Date().getTime() + Math.random(),
-                        variant: 'success',
-                        action: (key: any) => (
-                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                <IconX />
-                            </Button>
-                        )
-                    }
-                })
-                // Clear selection and refresh
-                setSelectedCredential('')
-                onConfigChange({ credentialId: '' })
-                loadCredentials()
-            } catch (error: any) {
-                const errorData = error.response?.data || `${error.response?.status}: ${error.response?.statusText}`
-                enqueueSnackbar({
-                    message: `Failed to delete credential: ${errorData}`,
-                    options: {
-                        key: new Date().getTime() + Math.random(),
-                        variant: 'error',
-                        persist: true,
-                        action: (key: any) => (
-                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                <IconX />
-                            </Button>
-                        )
-                    }
-                })
-            }
+            setSelectedCredential('')
+            onConfigChange({ credentialId: '', enabled: false })
+            enqueueSnackbar({
+                message: 'Credential disconnected from guardrails',
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'success',
+                    action: (key: any) => (
+                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
         }
     }
 
@@ -258,25 +229,26 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 {selectedCredentialObj.name}
                             </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                             <Button
                                 variant='outlined'
                                 size='small'
                                 disabled={!enabled}
-                                onClick={handleEditCredential}
-                                startIcon={<IconEdit size={16} />}
+                                onClick={handleManageCredentials}
+                                startIcon={<IconExternalLink size={16} />}
+                                title='Manage credentials'
                             >
-                                Edit
+                                Manage
                             </Button>
                             <Button
                                 variant='outlined'
                                 size='small'
                                 color='error'
                                 disabled={!enabled}
-                                onClick={handleDeleteCredential}
-                                startIcon={<IconTrash size={16} />}
+                                onClick={handleDisconnect}
+                                startIcon={<IconUnlink size={16} />}
                             >
-                                Delete
+                                Disconnect
                             </Button>
                             {credentials.length > 1 && (
                                 <Button
