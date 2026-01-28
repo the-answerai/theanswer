@@ -13,7 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconX, IconUnlink, IconExternalLink } from '@tabler/icons-react'
+import { IconX, IconUnlink, IconExternalLink, IconShieldCheck } from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
@@ -158,11 +158,16 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     // Get the currently selected credential object
     const selectedCredentialObj = credentials.find((cred) => cred.id === selectedCredential)
 
+    // Detect read-only mode: credential is configured but user doesn't have access
+    const hasConfiguredCredential = !!config?.credentialId
+    const userCanAccessCredential = !!selectedCredentialObj
+    const isReadOnlyMode = hasConfiguredCredential && !userCanAccessCredential && !loadingCredentials
+
     return (
         <Box variant='outlined' sx={{ mb: 3 }}>
             {/* Enable/Disable Toggle */}
             <FormControlLabel
-                control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' />}
+                control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' disabled={isReadOnlyMode} />}
                 label='Enable Guardrails'
                 sx={{ mb: 2 }}
             />
@@ -177,6 +182,26 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             Loading credentials...
                         </Typography>
                     </Box>
+                ) : isReadOnlyMode ? (
+                    // Read-only: credential configured but user can't access it
+                    <Card
+                        variant='outlined'
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 1.5,
+                            bgcolor: 'action.hover',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <IconShieldCheck size={20} />
+                            <Typography variant='body2'>Guardrails are configured for your organization.</Typography>
+                        </Box>
+                        <Typography variant='caption' color='text.secondary' sx={{ mt: 1, display: 'block' }}>
+                            Contact an admin with access to manage the Fiddler credential.
+                        </Typography>
+                    </Card>
                 ) : selectedCredentialObj ? (
                     // Connected State - Show credential name with edit button
                     <Card
