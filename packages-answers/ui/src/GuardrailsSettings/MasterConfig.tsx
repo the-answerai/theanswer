@@ -13,14 +13,30 @@ import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconTrash, IconEdit, IconX } from '@tabler/icons-react'
+import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
 
+const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
+
+interface GuardrailConfig {
+    enabled?: boolean
+    credentialId?: string
+}
+
+interface CredentialDialogProps {
+    type: 'ADD' | 'EDIT'
+    cancelButtonName: string
+    confirmButtonName: string
+    credentialComponent: Record<string, unknown>
+    defaultVisibility?: string[]
+    data?: Credential
+}
+
 interface MasterConfigProps {
-    config: any
-    onConfigChange: (updates: Partial<any>) => void
+    config: GuardrailConfig
+    onConfigChange: (updates: Partial<GuardrailConfig>) => void
 }
 
 interface Credential {
@@ -37,7 +53,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     // Credential modal state
     const [showCredentialDialog, setShowCredentialDialog] = useState(false)
-    const [credentialDialogProps, setCredentialDialogProps] = useState<any>({})
+    const [credentialDialogProps, setCredentialDialogProps] = useState<Partial<CredentialDialogProps>>({})
+    const [editLoading, setEditLoading] = useState(false)
     const [showCredentialDropdown, setShowCredentialDropdown] = useState(false)
 
     // Hooks for snackbar notifications and confirmation dialog
@@ -45,6 +62,21 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     const enqueueSnackbar = (...args: any[]) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args: any[]) => dispatch(closeSnackbarAction(...args))
     const { confirm } = useConfirm()
+
+    const showSnackbar = (message: string, variant: 'success' | 'error') => {
+        enqueueSnackbar({
+            message,
+            options: {
+                key: new Date().getTime() + Math.random(),
+                variant,
+                action: (key: any) => (
+                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                        <IconX />
+                    </Button>
+                )
+            }
+        })
+    }
 
     // Load Fiddler credentials on mount
     useEffect(() => {
@@ -59,11 +91,12 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     const loadCredentials = async () => {
         try {
-            setLoadingCredentials(false)
-            const response = await credentialsApi.getCredentialsByName('fiddlerApi')
+            setLoadingCredentials(true)
+            const response = await credentialsApi.getCredentialsByName(FIDDLER_CREDENTIAL_NAME)
             setCredentials(response.data || [])
         } catch (error) {
             console.error('Failed to load Fiddler credentials:', error)
+            showSnackbar('Failed to load credentials', 'error')
         } finally {
             setLoadingCredentials(false)
         }
@@ -75,16 +108,10 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         onConfigChange({ enabled: newEnabled })
     }
 
-    const handleCredentialChange = (event: any) => {
-        const newCredentialId = event.target.value
-        setSelectedCredential(newCredentialId)
-        onConfigChange({ credentialId: newCredentialId })
-    }
-
     const handleCreateCredential = async () => {
         try {
             // Load the Fiddler credential component schema
-            const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
+            const response = await credentialsApi.getSpecificComponentCredential(FIDDLER_CREDENTIAL_NAME)
             const componentCredential = response.data
 
             if (!componentCredential?.name) {
@@ -102,6 +129,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
+            showSnackbar('Failed to load credential component', 'error')
         }
     }
 
@@ -125,67 +153,54 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     const handleEditCredential = async () => {
         if (!selectedCredentialObj) return
-
-        setCredentialDialogProps({
-            type: 'EDIT',
-            cancelButtonName: 'Cancel',
-            confirmButtonName: 'Save',
-            data: selectedCredentialObj,
-            defaultVisibility: ['Organization']
-        })
-        setShowCredentialDialog(true)
+        setEditLoading(true)
+        try {
+            const response = await credentialsApi.getSpecificComponentCredential(FIDDLER_CREDENTIAL_NAME)
+            const componentCredential = response.data
+            if (!componentCredential?.name) {
+                throw new Error('Failed to load Fiddler credential component')
+            }
+            setCredentialDialogProps({
+                type: 'EDIT',
+                cancelButtonName: 'Cancel',
+                confirmButtonName: 'Save',
+                credentialComponent: componentCredential,
+                data: selectedCredentialObj
+            })
+            setShowCredentialDialog(true)
+        } catch (error) {
+            console.error('Error loading credential component:', error)
+            showSnackbar('Failed to load credential editor', 'error')
+        } finally {
+            setEditLoading(false)
+        }
     }
 
-    const handleDeleteCredential = async () => {
-        if (!selectedCredentialObj) return
+    const handleDisconnect = async () => {
+        if (!selectedCredential && !config?.credentialId) return
+        const credName = selectedCredentialObj?.name || 'Fiddler credential'
 
         const isConfirmed = await confirm({
-            title: 'Delete',
-            description: `Delete credential "${selectedCredentialObj.name}"?`,
-            confirmButtonName: 'Delete',
+            title: 'Disconnect',
+            description: `Disconnect "${credName}" from guardrails? The credential will not be deleted.`,
+            confirmButtonName: 'Disconnect',
             cancelButtonName: 'Cancel'
         })
 
         if (isConfirmed) {
-            try {
-                await credentialsApi.deleteCredential(selectedCredentialObj.id)
-                enqueueSnackbar({
-                    message: 'Credential deleted',
-                    options: {
-                        key: new Date().getTime() + Math.random(),
-                        variant: 'success',
-                        action: (key: any) => (
-                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                <IconX />
-                            </Button>
-                        )
-                    }
-                })
-                // Clear selection and refresh
-                setSelectedCredential('')
-                onConfigChange({ credentialId: '' })
-                loadCredentials()
-            } catch (error: any) {
-                const errorData = error.response?.data || `${error.response?.status}: ${error.response?.statusText}`
-                enqueueSnackbar({
-                    message: `Failed to delete credential: ${errorData}`,
-                    options: {
-                        key: new Date().getTime() + Math.random(),
-                        variant: 'error',
-                        persist: true,
-                        action: (key: any) => (
-                            <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                                <IconX />
-                            </Button>
-                        )
-                    }
-                })
-            }
+            setSelectedCredential('')
+            onConfigChange({ credentialId: '', enabled: false })
+            showSnackbar('Credential disconnected from guardrails', 'success')
         }
     }
 
     // Get the currently selected credential object
     const selectedCredentialObj = credentials.find((cred) => cred.id === selectedCredential)
+
+    // Detect read-only mode: credential is configured but user doesn't have access
+    const hasConfiguredCredential = !!config?.credentialId
+    const userCanAccessCredential = !!selectedCredentialObj
+    const isReadOnlyMode = hasConfiguredCredential && !userCanAccessCredential && !loadingCredentials
 
     return (
         <Box variant='outlined' sx={{ mb: 3 }}>
@@ -206,6 +221,59 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             Loading credentials...
                         </Typography>
                     </Box>
+                ) : isReadOnlyMode ? (
+                    // Read-only: credential configured but user can't access it
+                    <Card
+                        variant='outlined'
+                        sx={{
+                            p: 2.5,
+                            borderRadius: 1.5,
+                            bgcolor: 'action.hover',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 2
+                        }}
+                    >
+                        <Box sx={{ flex: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <IconShieldCheck size={20} aria-label="Guardrails configured" />
+                                <Typography variant='body2'>
+                                    Fiddler guardrails are active and configured for your organization.
+                                </Typography>
+                            </Box>
+                            <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block', ml: 3.5 }}>
+                                This credential is managed by another member of your organization.
+                                {config?.credentialId && (
+                                    <> (ID: {config.credentialId.slice(0, 8)}…)</>
+                                )}
+                            </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            {/* Disconnect is intentionally always enabled in read-only mode so any org member can disconnect guardrails */}
+                            <Button
+                                variant='outlined'
+                                size='small'
+                                color='error'
+                                onClick={handleDisconnect}
+                                startIcon={<IconUnlink size={16} />}
+                            >
+                                Disconnect
+                            </Button>
+                            {/* Show Change when user owns any credentials they could switch to */}
+                            {credentials.length > 0 && (
+                                <Button
+                                    variant='outlined'
+                                    size='small'
+                                    onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
+                                >
+                                    Change
+                                </Button>
+                            )}
+                        </Box>
+                    </Card>
                 ) : selectedCredentialObj ? (
                     // Connected State - Show credential name with edit button
                     <Card
@@ -258,13 +326,13 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 {selectedCredentialObj.name}
                             </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                             <Button
                                 variant='outlined'
                                 size='small'
-                                disabled={!enabled}
+                                disabled={!enabled || editLoading}
                                 onClick={handleEditCredential}
-                                startIcon={<IconEdit size={16} />}
+                                startIcon={editLoading ? <CircularProgress size={16} /> : <IconEdit size={16} />}
                             >
                                 Edit
                             </Button>
@@ -272,12 +340,12 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 variant='outlined'
                                 size='small'
                                 color='error'
-                                disabled={!enabled}
-                                onClick={handleDeleteCredential}
-                                startIcon={<IconTrash size={16} />}
+                                onClick={handleDisconnect}
+                                startIcon={<IconUnlink size={16} />}
                             >
-                                Delete
+                                Disconnect
                             </Button>
+                            {/* > 1 because the currently selected credential doesn't count as an alternative */}
                             {credentials.length > 1 && (
                                 <Button
                                     variant='outlined'

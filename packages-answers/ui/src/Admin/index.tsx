@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 // material-ui
-import { Container, Stack, Typography, Card, CardContent, CardActions, Button } from '@mui/material'
+import { Container, Stack, Typography, Card, CardContent, CardActions, Button, Box } from '@mui/material'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { usePermissions } from '../PermissionProvider'
 
@@ -17,7 +17,13 @@ const AdminDashboard = () => {
                 <Typography variant='h2' component='h1'>
                     Admin Dashboard
                 </Typography>
-                <Stack flexDirection='row' sx={{ gap: 3 }}>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+                        gap: 3
+                    }}
+                >
                     <Card variant='outlined'>
                         <CardContent>
                             <Typography variant='h5' component='div'>
@@ -87,7 +93,7 @@ const AdminDashboard = () => {
                             </Card>
                         </>
                     )}
-                </Stack>
+                </Box>
             </Stack>
         </Container>
     )
