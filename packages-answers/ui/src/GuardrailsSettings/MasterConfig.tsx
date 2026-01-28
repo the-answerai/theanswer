@@ -25,6 +25,15 @@ interface GuardrailConfig {
     credentialId?: string
 }
 
+interface CredentialDialogProps {
+    type: 'ADD' | 'EDIT'
+    cancelButtonName: string
+    confirmButtonName: string
+    credentialComponent: Record<string, unknown>
+    defaultVisibility?: string[]
+    data?: Credential
+}
+
 interface MasterConfigProps {
     config: GuardrailConfig
     onConfigChange: (updates: Partial<GuardrailConfig>) => void
@@ -44,7 +53,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     // Credential modal state
     const [showCredentialDialog, setShowCredentialDialog] = useState(false)
-    const [credentialDialogProps, setCredentialDialogProps] = useState<any>({})
+    const [credentialDialogProps, setCredentialDialogProps] = useState<Partial<CredentialDialogProps>>({})
+    const [editLoading, setEditLoading] = useState(false)
     const [showCredentialDropdown, setShowCredentialDropdown] = useState(false)
 
     // Hooks for snackbar notifications and confirmation dialog
@@ -142,6 +152,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     const handleEditCredential = async () => {
         if (!selectedCredentialObj) return
+        setEditLoading(true)
         try {
             const response = await credentialsApi.getSpecificComponentCredential(FIDDLER_CREDENTIAL_NAME)
             const componentCredential = response.data
@@ -159,10 +170,13 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         } catch (error) {
             console.error('Error loading credential component:', error)
             showSnackbar('Failed to load credential editor', 'error')
+        } finally {
+            setEditLoading(false)
         }
     }
 
     const handleDisconnect = async () => {
+        if (!selectedCredential && !config?.credentialId) return
         const credName = selectedCredentialObj?.name || 'Fiddler credential'
 
         const isConfirmed = await confirm({
@@ -311,9 +325,9 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             <Button
                                 variant='outlined'
                                 size='small'
-                                disabled={!enabled}
+                                disabled={!enabled || editLoading}
                                 onClick={handleEditCredential}
-                                startIcon={<IconEdit size={16} />}
+                                startIcon={editLoading ? <CircularProgress size={16} /> : <IconEdit size={16} />}
                             >
                                 Edit
                             </Button>
