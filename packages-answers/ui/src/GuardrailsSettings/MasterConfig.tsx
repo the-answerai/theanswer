@@ -13,7 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconX, IconUnlink, IconExternalLink, IconShieldCheck } from '@tabler/icons-react'
+import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
@@ -123,16 +123,33 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         setShowCredentialDialog(false)
     }
 
-    const handleManageCredentials = () => {
-        window.open('/admin/org-credentials', '_blank')
+    const handleEditCredential = async () => {
+        if (!selectedCredentialObj) return
+        try {
+            const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
+            const componentCredential = response.data
+            if (!componentCredential?.name) {
+                throw new Error('Failed to load Fiddler credential component')
+            }
+            setCredentialDialogProps({
+                type: 'EDIT',
+                cancelButtonName: 'Cancel',
+                confirmButtonName: 'Save',
+                credentialComponent: componentCredential,
+                credential: selectedCredentialObj
+            })
+            setShowCredentialDialog(true)
+        } catch (error) {
+            console.error('Error loading credential component:', error)
+        }
     }
 
     const handleDisconnect = async () => {
-        if (!selectedCredentialObj) return
+        const credName = selectedCredentialObj?.name || 'Fiddler credential'
 
         const isConfirmed = await confirm({
             title: 'Disconnect',
-            description: `Disconnect credential "${selectedCredentialObj.name}" from guardrails? The credential will not be deleted.`,
+            description: `Disconnect "${credName}" from guardrails? The credential will not be deleted.`,
             confirmButtonName: 'Disconnect',
             cancelButtonName: 'Cancel'
         })
@@ -167,7 +184,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         <Box variant='outlined' sx={{ mb: 3 }}>
             {/* Enable/Disable Toggle */}
             <FormControlLabel
-                control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' disabled={isReadOnlyMode} />}
+                control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' />}
                 label='Enable Guardrails'
                 sx={{ mb: 2 }}
             />
@@ -191,16 +208,44 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             borderRadius: 1.5,
                             bgcolor: 'action.hover',
                             border: '1px solid',
-                            borderColor: 'divider'
+                            borderColor: 'divider',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 2
                         }}
                     >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <IconShieldCheck size={20} />
-                            <Typography variant='body2'>Guardrails are configured for your organization.</Typography>
+                        <Box sx={{ flex: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <IconShieldCheck size={20} />
+                                <Typography variant='body2'>
+                                    Fiddler guardrails are active and configured for your organization.
+                                </Typography>
+                            </Box>
+                            <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block', ml: 3.5 }}>
+                                The connected credential is managed in another workspace.
+                            </Typography>
                         </Box>
-                        <Typography variant='caption' color='text.secondary' sx={{ mt: 1, display: 'block' }}>
-                            Contact an admin with access to manage the Fiddler credential.
-                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <Button
+                                variant='outlined'
+                                size='small'
+                                color='error'
+                                onClick={handleDisconnect}
+                                startIcon={<IconUnlink size={16} />}
+                            >
+                                Disconnect
+                            </Button>
+                            {credentials.length > 0 && (
+                                <Button
+                                    variant='outlined'
+                                    size='small'
+                                    onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
+                                >
+                                    Change
+                                </Button>
+                            )}
+                        </Box>
                     </Card>
                 ) : selectedCredentialObj ? (
                     // Connected State - Show credential name with edit button
@@ -259,11 +304,10 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 variant='outlined'
                                 size='small'
                                 disabled={!enabled}
-                                onClick={handleManageCredentials}
-                                startIcon={<IconExternalLink size={16} />}
-                                title='Manage credentials'
+                                onClick={handleEditCredential}
+                                startIcon={<IconEdit size={16} />}
                             >
-                                Manage
+                                Edit
                             </Button>
                             <Button
                                 variant='outlined'
