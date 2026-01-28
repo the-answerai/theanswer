@@ -18,9 +18,16 @@ import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-reac
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
 
+const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
+
+interface GuardrailConfig {
+    enabled?: boolean
+    credentialId?: string
+}
+
 interface MasterConfigProps {
-    config: any
-    onConfigChange: (updates: Partial<any>) => void
+    config: GuardrailConfig
+    onConfigChange: (updates: Partial<GuardrailConfig>) => void
 }
 
 interface Credential {
@@ -46,6 +53,21 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     const closeSnackbar = (...args: any[]) => dispatch(closeSnackbarAction(...args))
     const { confirm } = useConfirm()
 
+    const showSnackbar = (message: string, variant: 'success' | 'error') => {
+        enqueueSnackbar({
+            message,
+            options: {
+                key: new Date().getTime() + Math.random(),
+                variant,
+                action: (key: any) => (
+                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                        <IconX />
+                    </Button>
+                )
+            }
+        })
+    }
+
     // Load Fiddler credentials on mount
     useEffect(() => {
         loadCredentials()
@@ -60,7 +82,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     const loadCredentials = async () => {
         try {
             setLoadingCredentials(true)
-            const response = await credentialsApi.getCredentialsByName('fiddlerApi')
+            const response = await credentialsApi.getCredentialsByName(FIDDLER_CREDENTIAL_NAME)
             setCredentials(response.data || [])
         } catch (error) {
             console.error('Failed to load Fiddler credentials:', error)
@@ -75,16 +97,10 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         onConfigChange({ enabled: newEnabled })
     }
 
-    const handleCredentialChange = (event: any) => {
-        const newCredentialId = event.target.value
-        setSelectedCredential(newCredentialId)
-        onConfigChange({ credentialId: newCredentialId })
-    }
-
     const handleCreateCredential = async () => {
         try {
             // Load the Fiddler credential component schema
-            const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
+            const response = await credentialsApi.getSpecificComponentCredential(FIDDLER_CREDENTIAL_NAME)
             const componentCredential = response.data
 
             if (!componentCredential?.name) {
@@ -102,18 +118,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
-            enqueueSnackbar({
-                message: 'Failed to load credential component',
-                options: {
-                    key: new Date().getTime() + Math.random(),
-                    variant: 'error',
-                    action: (key: any) => (
-                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                            <IconX />
-                        </Button>
-                    )
-                }
-            })
+            showSnackbar('Failed to load credential component', 'error')
         }
     }
 
@@ -138,7 +143,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
     const handleEditCredential = async () => {
         if (!selectedCredentialObj) return
         try {
-            const response = await credentialsApi.getSpecificComponentCredential('fiddlerApi')
+            const response = await credentialsApi.getSpecificComponentCredential(FIDDLER_CREDENTIAL_NAME)
             const componentCredential = response.data
             if (!componentCredential?.name) {
                 throw new Error('Failed to load Fiddler credential component')
@@ -153,18 +158,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
-            enqueueSnackbar({
-                message: 'Failed to load credential editor',
-                options: {
-                    key: new Date().getTime() + Math.random(),
-                    variant: 'error',
-                    action: (key: any) => (
-                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                            <IconX />
-                        </Button>
-                    )
-                }
-            })
+            showSnackbar('Failed to load credential editor', 'error')
         }
     }
 
@@ -181,18 +175,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         if (isConfirmed) {
             setSelectedCredential('')
             onConfigChange({ credentialId: '', enabled: false })
-            enqueueSnackbar({
-                message: 'Credential disconnected from guardrails',
-                options: {
-                    key: new Date().getTime() + Math.random(),
-                    variant: 'success',
-                    action: (key: any) => (
-                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
-                            <IconX />
-                        </Button>
-                    )
-                }
-            })
+            showSnackbar('Credential disconnected from guardrails', 'success')
         }
     }
 
@@ -241,16 +224,17 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                     >
                         <Box sx={{ flex: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <IconShieldCheck size={20} />
+                                <IconShieldCheck size={20} aria-label="Guardrails configured" />
                                 <Typography variant='body2'>
                                     Fiddler guardrails are active and configured for your organization.
                                 </Typography>
                             </Box>
                             <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block', ml: 3.5 }}>
-                                The connected credential is managed in another workspace.
+                                This credential is managed by another member of your organization.
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            {/* Disconnect is intentionally always enabled in read-only mode so any org member can disconnect guardrails */}
                             <Button
                                 variant='outlined'
                                 size='small'
