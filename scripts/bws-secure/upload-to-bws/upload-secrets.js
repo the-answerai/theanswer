@@ -11,7 +11,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
+import readline from 'node:readline';
+import { promises as fsPromises } from 'node:fs';
+import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 
 // Get the directory name in ESM
@@ -50,10 +53,10 @@ const rootEnvPath = path.join(__dirname, '../../../.env');
 // Check for and load whichever .env file we find
 if (fs.existsSync(localEnvPath)) {
   console.log(`Loading environment from local .env at: ${localEnvPath}`);
-  dotenv.config({ path: localEnvPath });
+  dotenv.config({ path: localEnvPath, quiet: true });
 } else if (fs.existsSync(rootEnvPath)) {
   console.log(`Loading environment from root .env at: ${rootEnvPath}`);
-  dotenv.config({ path: rootEnvPath });
+  dotenv.config({ path: rootEnvPath, quiet: true });
 } else {
   console.log('No local or root .env file found. Relying on existing environment variables.');
 }

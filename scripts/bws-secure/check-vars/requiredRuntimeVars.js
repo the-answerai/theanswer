@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { promises as fsPromises } from 'node:fs';
 // Fixed ESM import - glob doesn't provide a default export in ESM
 import * as globModule from 'glob';
+import { promisify } from 'node:util';
 import logger from '../logger.js';
 
 // Get the directory name in ESM
@@ -428,7 +429,7 @@ function wildcardToRegex(pattern) {
  */
 function parseGlobPath(userPath) {
   const slashIndex = userPath.indexOf('/');
-  const starIndex = userPath.search(/[*?]/);
+  const starIndex = userPath.search(/[\*\?]/);
 
   // If the wildcard (* or ?) appears before an actual slash, or no slash at all,
   // assume the user typed something like "**/*.js" with no base directory

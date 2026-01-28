@@ -105,7 +105,7 @@ function decryptContent(encrypted, encryptionKey) {
 
 function loadBwsSecrets(encryptionKey) {
   // Always load from .env file first
-  const environmentConfig = dotenv.config();
+  const environmentConfig = dotenv.config({ quiet: true });
   const environmentToken = environmentConfig.parsed?.BWS_ACCESS_TOKEN;
 
   // Override any existing token with the one from .env
@@ -153,7 +153,6 @@ function loadBwsSecrets(encryptionKey) {
       );
 
       // These are data processing operations, not command executions
-      // eslint-disable-next-line no-control-regex
       const cleanOutput = output.replaceAll(/\u001B\[\d+m/g, '').trim();
       const globalSecrets = parseEnvironmentOutput(cleanOutput);
 

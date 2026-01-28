@@ -18,6 +18,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+import dotenv from 'dotenv';
 import crypto from 'node:crypto';
 import { log } from './utils.js';
 
