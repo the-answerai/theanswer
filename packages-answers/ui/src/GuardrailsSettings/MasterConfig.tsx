@@ -17,6 +17,7 @@ import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-reac
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
+const ConfirmDialog = dynamic(() => import('flowise-ui/src/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
 const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
 
@@ -37,6 +38,7 @@ interface CredentialDialogProps {
 interface MasterConfigProps {
     config: GuardrailConfig
     onConfigChange: (updates: Partial<GuardrailConfig>) => void
+    onSave: (config: GuardrailConfig) => void
 }
 
 interface Credential {
@@ -45,7 +47,7 @@ interface Credential {
     credentialName: string
 }
 
-export default function MasterConfig({ config, onConfigChange }: MasterConfigProps) {
+export default function MasterConfig({ config, onConfigChange, onSave }: MasterConfigProps) {
     const [enabled, setEnabled] = useState<boolean>(config?.enabled ?? false)
     const [selectedCredential, setSelectedCredential] = useState<string>(config?.credentialId ?? '')
     const [credentials, setCredentials] = useState<Credential[]>([])
@@ -144,6 +146,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setSelectedCredential(credentialId)
             setEnabled(true)
             onConfigChange({ credentialId: credentialId, enabled: true })
+            onSave({ ...config, credentialId, enabled: true })
         }
     }
 
@@ -190,6 +193,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         if (isConfirmed) {
             setSelectedCredential('')
             onConfigChange({ credentialId: '', enabled: false })
+            onSave({ ...config, credentialId: '', enabled: false })
             showSnackbar('Credential disconnected from guardrails', 'success')
         }
     }
@@ -265,7 +269,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             {/* Show Change when user owns any credentials they could switch to */}
                             {credentials.length > 0 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     size='small'
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
                                 >
@@ -348,7 +353,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             {/* > 1 because the currently selected credential doesn't count as an alternative */}
                             {credentials.length > 1 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     size='small'
                                     disabled={!enabled}
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
@@ -370,7 +376,8 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             </Button>
                             {credentials.length > 0 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
                                     sx={{ minWidth: 140 }}
                                 >
@@ -406,6 +413,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                         setSelectedCredential(cred.id)
                                         setEnabled(true)
                                         onConfigChange({ credentialId: cred.id, enabled: true })
+                                        onSave({ ...config, credentialId: cred.id, enabled: true })
                                         setShowCredentialDropdown(false)
                                     }}
                                 >
@@ -424,6 +432,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 onCancel={handleCredentialDialogCancel}
                 onConfirm={handleCredentialDialogConfirm}
             />
+            <ConfirmDialog />
         </Box>
     )
 }
