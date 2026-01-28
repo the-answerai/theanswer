@@ -269,7 +269,8 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             {/* Show Change when user owns any credentials they could switch to */}
                             {credentials.length > 0 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     size='small'
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
                                 >
@@ -352,7 +353,8 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             {/* > 1 because the currently selected credential doesn't count as an alternative */}
                             {credentials.length > 1 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     size='small'
                                     disabled={!enabled}
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
@@ -374,7 +376,8 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             </Button>
                             {credentials.length > 0 && (
                                 <Button
-                                    variant='outlined'
+                                    variant='contained'
+                                    color='secondary'
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
                                     sx={{ minWidth: 140 }}
                                 >
