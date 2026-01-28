@@ -96,6 +96,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setCredentials(response.data || [])
         } catch (error) {
             console.error('Failed to load Fiddler credentials:', error)
+            showSnackbar('Failed to load credentials', 'error')
         } finally {
             setLoadingCredentials(false)
         }
@@ -339,7 +340,6 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                                 variant='outlined'
                                 size='small'
                                 color='error'
-                                disabled={!enabled}
                                 onClick={handleDisconnect}
                                 startIcon={<IconUnlink size={16} />}
                             >
