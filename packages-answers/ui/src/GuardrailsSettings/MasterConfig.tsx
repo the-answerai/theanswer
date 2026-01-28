@@ -245,6 +245,9 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             </Box>
                             <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block', ml: 3.5 }}>
                                 This credential is managed by another member of your organization.
+                                {config?.credentialId && (
+                                    <> (ID: {config.credentialId.slice(0, 8)}…)</>
+                                )}
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -258,6 +261,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             >
                                 Disconnect
                             </Button>
+                            {/* Show Change when user owns any credentials they could switch to */}
                             {credentials.length > 0 && (
                                 <Button
                                     variant='outlined'
@@ -341,6 +345,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                             >
                                 Disconnect
                             </Button>
+                            {/* > 1 because the currently selected credential doesn't count as an alternative */}
                             {credentials.length > 1 && (
                                 <Button
                                     variant='outlined'
