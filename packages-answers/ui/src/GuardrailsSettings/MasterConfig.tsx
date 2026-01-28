@@ -148,7 +148,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 cancelButtonName: 'Cancel',
                 confirmButtonName: 'Save',
                 credentialComponent: componentCredential,
-                credential: selectedCredentialObj
+                data: selectedCredentialObj
             })
             setShowCredentialDialog(true)
         } catch (error) {
