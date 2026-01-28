@@ -97,7 +97,7 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
             </Typography>
 
             {/* Master Configuration - Shared across all modes */}
-            <MasterConfig config={config} onConfigChange={handleConfigChange} />
+            <MasterConfig config={config} onConfigChange={handleConfigChange} onSave={handleSave} />
 
             <Box
                 sx={{

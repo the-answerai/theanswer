@@ -17,6 +17,7 @@ import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-reac
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
+const ConfirmDialog = dynamic(() => import('flowise-ui/src/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
 const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
 
@@ -37,6 +38,7 @@ interface CredentialDialogProps {
 interface MasterConfigProps {
     config: GuardrailConfig
     onConfigChange: (updates: Partial<GuardrailConfig>) => void
+    onSave: (config: GuardrailConfig) => void
 }
 
 interface Credential {
@@ -45,7 +47,7 @@ interface Credential {
     credentialName: string
 }
 
-export default function MasterConfig({ config, onConfigChange }: MasterConfigProps) {
+export default function MasterConfig({ config, onConfigChange, onSave }: MasterConfigProps) {
     const [enabled, setEnabled] = useState<boolean>(config?.enabled ?? false)
     const [selectedCredential, setSelectedCredential] = useState<string>(config?.credentialId ?? '')
     const [credentials, setCredentials] = useState<Credential[]>([])
@@ -190,6 +192,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
         if (isConfirmed) {
             setSelectedCredential('')
             onConfigChange({ credentialId: '', enabled: false })
+            onSave({ ...config, credentialId: '', enabled: false })
             showSnackbar('Credential disconnected from guardrails', 'success')
         }
     }
@@ -424,6 +427,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
                 onCancel={handleCredentialDialogCancel}
                 onConfirm={handleCredentialDialogConfirm}
             />
+            <ConfirmDialog />
         </Box>
     )
 }
