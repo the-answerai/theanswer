@@ -59,7 +59,7 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
 
     const loadCredentials = async () => {
         try {
-            setLoadingCredentials(false)
+            setLoadingCredentials(true)
             const response = await credentialsApi.getCredentialsByName('fiddlerApi')
             setCredentials(response.data || [])
         } catch (error) {
@@ -102,6 +102,18 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
+            enqueueSnackbar({
+                message: 'Failed to load credential component',
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'error',
+                    action: (key: any) => (
+                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
         }
     }
 
@@ -141,6 +153,18 @@ export default function MasterConfig({ config, onConfigChange }: MasterConfigPro
             setShowCredentialDialog(true)
         } catch (error) {
             console.error('Error loading credential component:', error)
+            enqueueSnackbar({
+                message: 'Failed to load credential editor',
+                options: {
+                    key: new Date().getTime() + Math.random(),
+                    variant: 'error',
+                    action: (key: any) => (
+                        <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                            <IconX />
+                        </Button>
+                    )
+                }
+            })
         }
     }
 
