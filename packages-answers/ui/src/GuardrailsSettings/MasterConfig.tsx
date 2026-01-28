@@ -146,6 +146,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
             setSelectedCredential(credentialId)
             setEnabled(true)
             onConfigChange({ credentialId: credentialId, enabled: true })
+            onSave({ ...config, credentialId, enabled: true })
         }
     }
 
@@ -409,6 +410,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                         setSelectedCredential(cred.id)
                                         setEnabled(true)
                                         onConfigChange({ credentialId: cred.id, enabled: true })
+                                        onSave({ ...config, credentialId: cred.id, enabled: true })
                                         setShowCredentialDropdown(false)
                                     }}
                                 >
