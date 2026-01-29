@@ -39,8 +39,8 @@ async function finalizeUserSetup(
     )
     if (defaultChatflowId && finalUser.defaultChatflowId !== defaultChatflowId) {
         try {
-            await AppDataSource.getRepository(User).update(finalUser.id, { defaultChatflowId })
             finalUser.defaultChatflowId = defaultChatflowId
+            finalUser = await AppDataSource.getRepository(User).save(finalUser)
         } catch (error) {
             console.warn(`Failed to update defaultChatflowId for user ${finalUser.id}:`, error)
         }
@@ -262,22 +262,24 @@ export const authenticationHandlerMiddleware =
                             // Validate org exists and JWT org matches DB org
                             if (!existingOrg || existingOrg.auth0Id !== userOrgId) {
                                 console.warn(
-                                    `[Auth] Org mismatch for user ${auth0Id}: ` +
-                                    `JWT org_id=${userOrgId}, DB org auth0Id=${existingOrg?.auth0Id ?? 'missing'}. ` +
-                                    `Falling through to slow path.`
+                                    `[Auth:Security] Org mismatch detected — user=${auth0Id}, ` +
+                                    `jwt_org=${userOrgId}, db_org=${existingOrg?.auth0Id ?? 'deleted'}. ` +
+                                    `Action: falling to slow path for re-validation.`
                                 )
                             } else {
-                                // Atomic profile update — avoids race condition with concurrent requests
-                                const updates: Partial<User> = {}
-                                if (existingUser.email !== email) updates.email = email
-                                if (existingUser.name !== name) updates.name = name
-                                if (Object.keys(updates).length > 0) {
-                                    await userRepo.update(existingUser.id, updates)
-                                    Object.assign(existingUser, updates)
+                                // Atomic profile update — save() returns the updated entity in one operation
+                                let freshUser: User
+                                const needsUpdate = existingUser.email !== email || existingUser.name !== name
+                                if (needsUpdate) {
+                                    if (existingUser.email !== email) existingUser.email = email
+                                    if (existingUser.name !== name) existingUser.name = name
+                                    freshUser = await userRepo.save(existingUser)
+                                } else {
+                                    freshUser = existingUser
                                 }
 
                                 const result = await finalizeUserSetup(
-                                    AppDataSource, existingUser, existingOrg, auth0Id, email, name, roles
+                                    AppDataSource, freshUser, existingOrg, auth0Id, email, name, roles
                                 )
 
                                 req.user = {
