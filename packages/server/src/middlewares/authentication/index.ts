@@ -12,6 +12,49 @@ import { findOrCreateDefaultChatflowsForUser } from './findOrCreateDefaultChatfl
 import { findOrCreateWorkspacesForUser } from './findOrCreateWorkspacesForUser'
 import { populateWorkspaceData } from './populateWorkspaceData'
 import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../../aai-utils/billing/config'
+import { WorkspaceData } from './populateWorkspaceData'
+
+/**
+ * Shared user setup: stripe, workspaces, default chatflows, permissions, billing.
+ * Each step is idempotent — no-ops when already set up, self-heals when missing.
+ */
+async function finalizeUserSetup(
+    AppDataSource: DataSource,
+    user: User,
+    organization: Organization,
+    auth0Id: string,
+    email: string,
+    name: string,
+    roles: string[]
+): Promise<{ user: User; workspaceData: WorkspaceData; permissions: string[] }> {
+    let finalUser = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
+
+    await findOrCreateWorkspacesForUser(AppDataSource, finalUser, organization.id)
+    const workspaceData = await populateWorkspaceData(AppDataSource, finalUser, organization.id)
+
+    const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
+        AppDataSource,
+        finalUser,
+        workspaceData.activeWorkspaceId
+    )
+    if (defaultChatflowId && finalUser.defaultChatflowId !== defaultChatflowId) {
+        try {
+            await AppDataSource.getRepository(User).update(finalUser.id, { defaultChatflowId })
+            finalUser.defaultChatflowId = defaultChatflowId
+        } catch (error) {
+            console.warn(`Failed to update defaultChatflowId for user ${finalUser.id}:`, error)
+        }
+    }
+
+    if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
+        finalUser.stripeCustomerId = DEFAULT_CUSTOMER_ID
+    }
+
+    const permissions: string[] = []
+    if (roles?.includes('Admin')) permissions.push('org:manage')
+
+    return { user: finalUser, workspaceData, permissions }
+}
 
 const jwtCheck = auth({
     authRequired: true,
@@ -207,7 +250,7 @@ export const authenticationHandlerMiddleware =
                 }
 
                 try {
-                    // FAST PATH: existing user with valid org — each step validates itself
+                    // FAST PATH: existing user with valid org — each step self-heals if misaligned
                     if (isValidOrg && userOrgId) {
                         const userRepo = AppDataSource.getRepository(User)
                         const existingUser = await userRepo.findOneBy({ auth0Id })
@@ -216,46 +259,36 @@ export const authenticationHandlerMiddleware =
                             const orgRepo = AppDataSource.getRepository(Organization)
                             const existingOrg = await orgRepo.findOneBy({ id: existingUser.organizationId })
 
-                            if (existingOrg) {
-                                // Update profile fields if changed
-                                let changed = false
-                                if (existingUser.email !== email) { existingUser.email = email; changed = true }
-                                if (existingUser.name !== name) { existingUser.name = name; changed = true }
-                                if (changed) await userRepo.save(existingUser)
-
-                                // Each function has its own guard — no-ops when already set up,
-                                // self-heals when something is missing
-                                let user = await ensureStripeCustomerForUser(AppDataSource, existingUser, existingOrg, auth0Id, email, name)
-                                await findOrCreateWorkspacesForUser(AppDataSource, user, existingOrg.id)
-                                const workspaceData = await populateWorkspaceData(AppDataSource, user, existingOrg.id)
-
-                                const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
-                                    AppDataSource,
-                                    user,
-                                    workspaceData.activeWorkspaceId
+                            // Validate org exists and JWT org matches DB org
+                            if (!existingOrg || existingOrg.auth0Id !== userOrgId) {
+                                console.warn(
+                                    `[Auth] Org mismatch for user ${auth0Id}: ` +
+                                    `JWT org_id=${userOrgId}, DB org auth0Id=${existingOrg?.auth0Id ?? 'missing'}. ` +
+                                    `Falling through to slow path.`
                                 )
-                                if (defaultChatflowId && user.defaultChatflowId !== defaultChatflowId) {
-                                    try {
-                                        await userRepo.update(user.id, { defaultChatflowId })
-                                        user.defaultChatflowId = defaultChatflowId
-                                    } catch (error) {
-                                        console.warn(`Failed to update defaultChatflowId for user ${user.id}:`, error)
-                                    }
+                            } else {
+                                // Atomic profile update — avoids race condition with concurrent requests
+                                const updates: Partial<User> = {}
+                                if (existingUser.email !== email) updates.email = email
+                                if (existingUser.name !== name) updates.name = name
+                                if (Object.keys(updates).length > 0) {
+                                    await userRepo.update(existingUser.id, updates)
+                                    Object.assign(existingUser, updates)
                                 }
 
-                                if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
-                                    user.stripeCustomerId = DEFAULT_CUSTOMER_ID
-                                }
+                                const result = await finalizeUserSetup(
+                                    AppDataSource, existingUser, existingOrg, auth0Id, email, name, roles
+                                )
 
-                                const permissions: string[] = []
-                                if (roles?.includes('Admin')) permissions.push('org:manage')
-
-                                req.user = { ...authUser, ...user, ...workspaceData, roles, permissions } as any
+                                req.user = {
+                                    ...authUser, ...result.user, ...result.workspaceData,
+                                    roles, permissions: result.permissions
+                                } as any
                                 return next()
                             }
                         }
                     }
-                    // END FAST PATH — fall through to slow path for new users
+                    // END FAST PATH — fall through to slow path for new users / org mismatch
 
                     if (isValidOrg && userOrgId) {
                         // Check if org exists first (handles chicken-egg problem)
@@ -274,43 +307,14 @@ export const authenticationHandlerMiddleware =
                             user.organizationId = organization.id
                         }
 
-                        // Replace the Stripe customer logic with the new ensureStripeCustomerForUser function
-                        user = await ensureStripeCustomerForUser(AppDataSource, user, organization, auth0Id, email, name)
-
-                        // Ensure user has workspaces and get active workspace
-                        await findOrCreateWorkspacesForUser(AppDataSource, user, organization.id)
-                        const workspaceData = await populateWorkspaceData(AppDataSource, user, organization.id)
-
-                        // Find or create default chatflows for the user (with workspaceId)
-                        const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
-                            AppDataSource,
-                            user,
-                            workspaceData.activeWorkspaceId
+                        const result = await finalizeUserSetup(
+                            AppDataSource, user, organization, auth0Id, email, name, roles
                         )
-                        // Update user with the latest defaultChatflowId
-                        if (defaultChatflowId && user.defaultChatflowId !== defaultChatflowId) {
-                            try {
-                                // Persist the update to the database to prevent race conditions
-                                await AppDataSource.getRepository(User).update(user.id, { defaultChatflowId })
-                                user.defaultChatflowId = defaultChatflowId
-                            } catch (error) {
-                                console.warn(`Failed to update defaultChatflowId for user ${user.id}:`, error)
-                                // Continue - don't break auth flow for non-critical update
-                            }
-                        }
 
-                        // Set permissions based on roles
-                        const permissions: string[] = []
-                        if (roles?.includes('Admin')) {
-                            permissions.push('org:manage')
-                        }
-
-                        // Apply billing customer override for organizational billing consolidation
-                        if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
-                            user.stripeCustomerId = DEFAULT_CUSTOMER_ID
-                        }
-
-                        req.user = { ...authUser, ...user, ...workspaceData, roles, permissions } as any
+                        req.user = {
+                            ...authUser, ...result.user, ...result.workspaceData,
+                            roles, permissions: result.permissions
+                        } as any
                     } else {
                         // User authenticated but from unauthorized organization - treat as anonymous user
                         console.warn(`Auth: User ${email} from org '${userOrgId}' treated as anonymous - not in allowed orgs`)
