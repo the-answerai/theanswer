@@ -207,7 +207,7 @@ export const authenticationHandlerMiddleware =
                 }
 
                 try {
-                    // FAST PATH: existing user with valid org — skip all findOrCreate logic
+                    // FAST PATH: existing user with valid org — each step validates itself
                     if (isValidOrg && userOrgId) {
                         const userRepo = AppDataSource.getRepository(User)
                         const existingUser = await userRepo.findOneBy({ auth0Id })
@@ -223,16 +223,34 @@ export const authenticationHandlerMiddleware =
                                 if (existingUser.name !== name) { existingUser.name = name; changed = true }
                                 if (changed) await userRepo.save(existingUser)
 
-                                const workspaceData = await populateWorkspaceData(AppDataSource, existingUser, existingOrg.id)
+                                // Each function has its own guard — no-ops when already set up,
+                                // self-heals when something is missing
+                                let user = await ensureStripeCustomerForUser(AppDataSource, existingUser, existingOrg, auth0Id, email, name)
+                                await findOrCreateWorkspacesForUser(AppDataSource, user, existingOrg.id)
+                                const workspaceData = await populateWorkspaceData(AppDataSource, user, existingOrg.id)
+
+                                const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
+                                    AppDataSource,
+                                    user,
+                                    workspaceData.activeWorkspaceId
+                                )
+                                if (defaultChatflowId && user.defaultChatflowId !== defaultChatflowId) {
+                                    try {
+                                        await userRepo.update(user.id, { defaultChatflowId })
+                                        user.defaultChatflowId = defaultChatflowId
+                                    } catch (error) {
+                                        console.warn(`Failed to update defaultChatflowId for user ${user.id}:`, error)
+                                    }
+                                }
 
                                 if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
-                                    existingUser.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                    user.stripeCustomerId = DEFAULT_CUSTOMER_ID
                                 }
 
                                 const permissions: string[] = []
                                 if (roles?.includes('Admin')) permissions.push('org:manage')
 
-                                req.user = { ...authUser, ...existingUser, ...workspaceData, roles, permissions } as any
+                                req.user = { ...authUser, ...user, ...workspaceData, roles, permissions } as any
                                 return next()
                             }
                         }
