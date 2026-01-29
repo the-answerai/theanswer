@@ -14,7 +14,6 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Organization } from '../../database/entities/Organization'
 import { ChatFlow } from '../../database/entities/ChatFlow'
 import { GuardrailsConfig, DEFAULT_GUARDRAILS_CONFIG, OrganizationConfig, ChatflowConfig, GuardrailAction } from '../../types/guardrails'
-import { IUser } from '../../Interface'
 
 /**
  * Load configuration from environment variables
@@ -192,8 +191,11 @@ export function deepMergeConfigs(base: Partial<GuardrailsConfig>, override: Part
 /**
  * Get complete guardrails configuration for a chatflow
  * Merges: Environment → Organization → Chatflow
+ *
+ * @param chatflowId - Chatflow ID for config hierarchy
+ * @param organizationId - Organization ID for org-level config (works for both authenticated and embed requests)
  */
-export async function getGuardrailsConfig(chatflowId: string, user: IUser): Promise<GuardrailsConfig> {
+export async function getGuardrailsConfig(chatflowId: string, organizationId?: string): Promise<GuardrailsConfig> {
     // Start with defaults
     let config: Partial<GuardrailsConfig> = { ...DEFAULT_GUARDRAILS_CONFIG }
 
@@ -202,8 +204,8 @@ export async function getGuardrailsConfig(chatflowId: string, user: IUser): Prom
     config = deepMergeConfigs(config, envConfig)
 
     // Layer 2: Organization config
-    if (user?.organizationId) {
-        const orgConfig = await getOrganizationConfig(user.organizationId)
+    if (organizationId) {
+        const orgConfig = await getOrganizationConfig(organizationId)
         config = deepMergeConfigs(config, orgConfig)
     }
 
