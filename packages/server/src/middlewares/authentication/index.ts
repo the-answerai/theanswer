@@ -207,6 +207,38 @@ export const authenticationHandlerMiddleware =
                 }
 
                 try {
+                    // FAST PATH: existing user with valid org — skip all findOrCreate logic
+                    if (isValidOrg && userOrgId) {
+                        const userRepo = AppDataSource.getRepository(User)
+                        const existingUser = await userRepo.findOneBy({ auth0Id })
+
+                        if (existingUser?.organizationId) {
+                            const orgRepo = AppDataSource.getRepository(Organization)
+                            const existingOrg = await orgRepo.findOneBy({ id: existingUser.organizationId })
+
+                            if (existingOrg) {
+                                // Update profile fields if changed
+                                let changed = false
+                                if (existingUser.email !== email) { existingUser.email = email; changed = true }
+                                if (existingUser.name !== name) { existingUser.name = name; changed = true }
+                                if (changed) await userRepo.save(existingUser)
+
+                                const workspaceData = await populateWorkspaceData(AppDataSource, existingUser, existingOrg.id)
+
+                                if (OVERRIDE_CUSTOMER_ID && DEFAULT_CUSTOMER_ID) {
+                                    existingUser.stripeCustomerId = DEFAULT_CUSTOMER_ID
+                                }
+
+                                const permissions: string[] = []
+                                if (roles?.includes('Admin')) permissions.push('org:manage')
+
+                                req.user = { ...authUser, ...existingUser, ...workspaceData, roles, permissions } as any
+                                return next()
+                            }
+                        }
+                    }
+                    // END FAST PATH — fall through to slow path for new users
+
                     if (isValidOrg && userOrgId) {
                         // Check if org exists first (handles chicken-egg problem)
                         const orgRepo = AppDataSource.getRepository(Organization)

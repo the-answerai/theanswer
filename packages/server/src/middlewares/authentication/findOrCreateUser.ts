@@ -24,10 +24,6 @@ export const findOrCreateUser = async (
             user.name = name
             changed = true
         }
-        if (organizationId && user.organizationId !== organizationId) {
-            user.organizationId = organizationId
-            changed = true
-        }
         if (changed) {
             user.updatedBy = user.id
             await userRepo.save(user)
