@@ -354,9 +354,9 @@ export const executeFlow = async ({
      * - Actions: block, redact, warn, continue
      */
     let guardrailsMetadata: Partial<GuardrailsMetadata> | undefined
-    if (user?.organizationId) {
+    if (workspaceId) {
         try {
-            const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+            const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
 
             if (guardrailsService) {
                 const validationResult = await guardrailsService.validateInput(question)
@@ -718,9 +718,9 @@ export const executeFlow = async ({
              * - Faithfulness checks (RAG hallucination detection)
              * - Always fails open (never blocks output)
              */
-            if (user?.organizationId && guardrailsMetadata) {
+            if (workspaceId && guardrailsMetadata) {
                 try {
-                    const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+                    const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
 
                     if (guardrailsService) {
                         // Extract context from sourceDocuments for faithfulness checking
@@ -1026,9 +1026,9 @@ export const executeFlow = async ({
          * - Faithfulness checks (RAG hallucination detection)
          * - Always fails open (never blocks output)
          */
-        if (user?.organizationId && guardrailsMetadata) {
+        if (workspaceId && guardrailsMetadata) {
             try {
-                const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, user)
+                const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
 
                 if (guardrailsService) {
                     // Extract context from sourceDocuments for faithfulness checking

@@ -18,7 +18,6 @@ import { getGuardrailsConfig } from './config'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Credential } from '../../database/entities/Credential'
 import { decryptCredentialData } from '../../utils'
-import { IUser } from '../../Interface'
 import {
     GuardrailsConfig,
     GuardrailAction,
@@ -82,29 +81,34 @@ export class FiddlerGuardrailsService {
      * Handles config loading, credential resolution, and service initialization
      *
      * @param chatflowId - Chatflow ID for config hierarchy
-     * @param user - User context for organization scoping
+     * @param workspaceId - Workspace ID for credential lookup (required, credentials are workspace-scoped)
+     * @param organizationId - Organization ID for org-level config (optional)
      * @returns Initialized service or null if disabled/no credentials
      *
      * @example
-     * const service = await FiddlerGuardrailsService.createFromContext(chatflowId, user)
+     * const service = await FiddlerGuardrailsService.createFromContext(chatflowId, workspaceId, orgId)
      * if (service) {
      *   const result = await service.validateInput(text)
      * }
      */
-    public static async createFromContext(chatflowId: string, user: IUser): Promise<FiddlerGuardrailsService | null> {
+    public static async createFromContext(
+        chatflowId: string,
+        workspaceId: string,
+        organizationId?: string
+    ): Promise<FiddlerGuardrailsService | null> {
         try {
             // 1. Load configuration (env → org → chatflow)
-            const config = await getGuardrailsConfig(chatflowId, user)
+            const config = await getGuardrailsConfig(chatflowId, organizationId)
 
             // 2. Check if guardrails are enabled
             if (!config.enabled) {
                 return null
             }
 
-            // 3. Load credentials with fallback chain
-            const credentials = await this.loadCredentials(user.organizationId!, config)
+            // 3. Load credentials with fallback chain (using workspaceId since credentials are workspace-scoped)
+            const credentials = await this.loadCredentials(workspaceId, config)
             if (!credentials) {
-                console.warn(`Guardrails enabled but no credentials found for organization ${user.organizationId}`)
+                console.warn(`Guardrails enabled but no credentials found for workspace ${workspaceId}`)
                 return null
             }
 
@@ -119,13 +123,13 @@ export class FiddlerGuardrailsService {
 
     /**
      * Load Fiddler credentials with multi-tier fallback
-     * Priority: Config credentialId → Org credential by name → Environment variables
+     * Priority: Config credentialId → Workspace credential by name → Environment variables
      *
-     * @param organizationId - Organization ID for scoping
+     * @param workspaceId - Workspace ID for credential scoping (credentials are workspace-scoped)
      * @param config - Guardrails configuration
      * @returns Credentials or null if not found
      */
-    private static async loadCredentials(organizationId: string, config: GuardrailsConfig): Promise<FiddlerCredentials | null> {
+    private static async loadCredentials(workspaceId: string, config: GuardrailsConfig): Promise<FiddlerCredentials | null> {
         try {
             const appServer = getRunningExpressApp()
             const credentialRepository = appServer.AppDataSource.getRepository(Credential)
@@ -135,7 +139,7 @@ export class FiddlerGuardrailsService {
                 const credential = await credentialRepository.findOne({
                     where: {
                         id: config.credentialId,
-                        organizationId
+                        workspaceId
                     }
                 })
 
@@ -148,11 +152,11 @@ export class FiddlerGuardrailsService {
                 }
             }
 
-            // Priority 2: Find org's Fiddler credential by name
+            // Priority 2: Find workspace's Fiddler credential by name
             const credentials = await credentialRepository.find({
                 where: {
                     credentialName: 'fiddlerApi',
-                    organizationId
+                    workspaceId
                 }
             })
 
@@ -169,7 +173,7 @@ export class FiddlerGuardrailsService {
             const envApiUrl = process.env.FIDDLER_API_URL
 
             if (envApiKey && envApiUrl) {
-                console.log(`Using Fiddler credentials from environment variables for organization ${organizationId}`)
+                console.log(`Using Fiddler credentials from environment variables for workspace ${workspaceId}`)
                 return {
                     apiKey: envApiKey,
                     apiUrl: envApiUrl
