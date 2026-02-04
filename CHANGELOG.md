@@ -7,6 +7,195 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.9](https://github.com/the-answerai/theanswer/compare/v2.2.8...v2.2.9) (2026-02-04)
+
+### Bug Fixes
+
+* **AGENT-582:** fix chat selector not switching chatflows when viewing previous chat ([c17d792](https://github.com/the-answerai/theanswer/commit/c17d79281d0f1d0244a331909a01a493d79caa22))
+* **AGENT-670:** add self-healing validation to fast path steps ([cffe384](https://github.com/the-answerai/theanswer/commit/cffe38493c69a7e34adf029341fe90155fda1621))
+* **AGENT-670:** address PR review feedback ([10eee70](https://github.com/the-answerai/theanswer/commit/10eee7027d9e9d0bc4b44274eff815434e9f184a))
+* **AGENT-670:** fix race conditions in auth middleware, add tests ([dc79650](https://github.com/the-answerai/theanswer/commit/dc7965074d403bb187b054b22ac9a36fa5cba5f0))
+* **AGENT-670:** optimize auth middleware with fast path, remove org overwrite ([3d7f419](https://github.com/the-answerai/theanswer/commit/3d7f419c8f58b333ba404de5b233e59794a24068))
+* **guardrails:** apply Fiddler guardrails to embed endpoint ([65621e8](https://github.com/the-answerai/theanswer/commit/65621e8f8654d9b62a0bd169e54cd440d18aa80a))
+
+---
+
+## [2.2.8](https://github.com/the-answerai/theanswer/compare/v2.2.7...v2.2.8) (2026-01-28)
+
+### Bug Fixes
+
+* **SUPPORT-5:** add ConfirmDialog and persist disconnect to API ([4cb3541](https://github.com/the-answerai/theanswer/commit/4cb354130f23bddeac6134273ac290e7e012c9b1))
+* **SUPPORT-5:** auto-save on credential connect ([25c750d](https://github.com/the-answerai/theanswer/commit/25c750d1f3979d306cbc187a3c0136ce45f32015))
+* **SUPPORT-5:** use contained secondary for credential action buttons ([f8c00c8](https://github.com/the-answerai/theanswer/commit/f8c00c82a237b2d12ecbf5063c9e5a7072433d3e))
+
+---
+
+## [2.2.7](https://github.com/the-answerai/theanswer/compare/v2.2.6...v2.2.7) (2026-01-28)
+
+### Bug Fixes
+
+* admin dashboard grid and guardrails credential management ([e74f76e](https://github.com/the-answerai/theanswer/commit/e74f76ef5b2654ed76b4f9da4e32a30a112257b4))
+* **SUPPORT-5:** add edit loading state, disconnect guard, and typed dialog props ([61e9bfa](https://github.com/the-answerai/theanswer/commit/61e9bfaed5d54469a57278577907efd90b1c4ef0))
+* **SUPPORT-5:** add error snackbar on credential load, responsive admin grid, allow disconnect when disabled ([b92d38f](https://github.com/the-answerai/theanswer/commit/b92d38fba873088c7ae44a4a5707ce6afe0976b7))
+* **SUPPORT-5:** document credential count logic, show ID in read-only mode ([96bca88](https://github.com/the-answerai/theanswer/commit/96bca885727e7a3ddb87e866f11ebc85d312cb34))
+* **SUPPORT-5:** fix loading race condition and add error snackbars ([0ff2721](https://github.com/the-answerai/theanswer/commit/0ff2721979a9943355fd11b8175bc7919f973a73))
+* **SUPPORT-5:** pass credential as data prop for edit dialog ([cb25d1a](https://github.com/the-answerai/theanswer/commit/cb25d1a1c7f717f564f2a009d54156d3cd501d3d))
+* **SUPPORT-5:** refine read-only state with disconnect/change and edit modal ([78743c0](https://github.com/the-answerai/theanswer/commit/78743c08c08c8cc448483e4b05cff368155e9564))
+* **SUPPORT-5:** show read-only state for cross-workspace Fiddler credentials ([c589c90](https://github.com/the-answerai/theanswer/commit/c589c901a0c133013eaefb1ded7be2a15a8ca909))
+
+### Code Refactoring
+
+* **SUPPORT-5:** clean up MasterConfig snackbar helpers, types, and dead code ([45398d3](https://github.com/the-answerai/theanswer/commit/45398d30eea02f0bf451d9505f16a67e4e1fc3b9))
+
+---
+
+## [2.2.6](https://github.com/the-answerai/theanswer/compare/v2.2.5...v2.2.6) (2026-01-26)
+
+### Bug Fixes
+
+* **AGENT-586:** fix AppDrawer overlapping page content ([455dc39](https://github.com/the-answerai/theanswer/commit/455dc39f4cc4072fe85614603cdb47bd808bf496))
+* **AGENT-586:** remove unnecessary zIndex from AppDrawer ([4ff5e4e](https://github.com/the-answerai/theanswer/commit/4ff5e4e69e2cc64de9b5280937d29b6d5d00a8c6))
+* exclude scripts directory from eslint ([3809952](https://github.com/the-answerai/theanswer/commit/3809952ad67cd2d531095c1902224c0266ee3209))
+* resolve all eslint lint errors ([4e28dd6](https://github.com/the-answerai/theanswer/commit/4e28dd6c8b041ab2e718f4eecaf581a3217e8310))
+* resolve remaining lint errors for CI ([52fbf2f](https://github.com/the-answerai/theanswer/commit/52fbf2f100cf9498668ad1f23f7ab362ae74da5a))
+* simplify no-console rule to always be warning ([8e273f3](https://github.com/the-answerai/theanswer/commit/8e273f38838098f30a17dba6765501b8efa423dd))
+* **SUPPORT-18:** auto-detect JWT tokens in browser extension requests ([a9e895e](https://github.com/the-answerai/theanswer/commit/a9e895ee6964dfcbdd42eae66fed201200b377f0))
+
+---
+
+## [2.2.5](https://github.com/the-answerai/theanswer/compare/v2.2.4...v2.2.5) (2026-01-23)
+
+### Bug Fixes
+
+* **AGENT-639:** add organizationId alias to buildAgentGraph options ([85b8f80](https://github.com/the-answerai/theanswer/commit/85b8f808f62c36730cc116e91af0e2b9940bbd39))
+* **AGENT-639:** use API key's organizationId for auth context ([0b9e915](https://github.com/the-answerai/theanswer/commit/0b9e9159d919826772360954086478a87e2b4cbc))
+
+---
+
+## [2.2.4](https://github.com/the-answerai/theanswer/compare/v2.2.3...v2.2.4) (2026-01-23)
+
+### Bug Fixes
+
+* **AGENT-639:** pass entity organizationId/workspaceId in vector store options ([734558e](https://github.com/the-answerai/theanswer/commit/734558e289a64137a42078bc561d2c1969edd0e9))
+* **ContentfulLoader:** exclude archived entries from query results ([ee96b8c](https://github.com/the-answerai/theanswer/commit/ee96b8cbfd357249a9ebd6fc66348be28623e983))
+
+---
+
+## [2.2.3](https://github.com/the-answerai/theanswer/compare/v2.2.2...v2.2.3) (2026-01-22)
+
+### Bug Fixes
+
+* **AGENT-559:** add API_HOST validation across all Google OAuth files ([91f96f5](https://github.com/the-answerai/theanswer/commit/91f96f5d7c63c8a99d91c8d795a06e9a8b42bb13))
+* **AGENT-559:** add API_HOST validation for Google OAuth ([66addc9](https://github.com/the-answerai/theanswer/commit/66addc953b3fb55d967aa837d898be41a8fa71d8))
+* **AGENT-559:** use API_HOST for Google OAuth callback URL ([6e2bcff](https://github.com/the-answerai/theanswer/commit/6e2bcff8e44892b495cab35befe60b942f44167e))
+
+---
+
+## [2.2.2](https://github.com/the-answerai/theanswer/compare/v2.2.1...v2.2.2) (2026-01-22)
+
+### Bug Fixes
+
+* **AGENT-639:** include workspaceData in JWT auth req.user ([dad085b](https://github.com/the-answerai/theanswer/commit/dad085b89156a5a0d29dad4f991de6fb2899f6d4))
+
+---
+
+## [2.2.1](https://github.com/the-answerai/theanswer/compare/v2.2.0...v2.2.1) (2026-01-22)
+
+### Bug Fixes
+
+* **AGENT-639:** add organizationId to queryVectorStore options ([ad1c853](https://github.com/the-answerai/theanswer/commit/ad1c853fe22368dfeff6db43f775e106082af384))
+* **AGENT-639:** populate organizationId and userId when creating API keys ([4d51edf](https://github.com/the-answerai/theanswer/commit/4d51edf3f3ed2ded5be25e12afb2162b73949411))
+
+---
+
+## [2.2.0](https://github.com/the-answerai/theanswer/compare/v2.1.5...v2.2.0) (2026-01-21)
+
+### Features
+
+* **AGENT-573:** use default chatflow for chat navigation ([2c10cff](https://github.com/the-answerai/theanswer/commit/2c10cffee73a71239928efdb86d85e3cdd192fe2))
+
+### Bug Fixes
+
+* **AGENT-405:** add /sidekick-studio prefix to agentflow URL after save ([5d93f7c](https://github.com/the-answerai/theanswer/commit/5d93f7ca60f82e12dfa3bdb6b2b9e91036568a63))
+* **AGENT-612:** fix agent avatar images in canvas chat ([56edb2e](https://github.com/the-answerai/theanswer/commit/56edb2e252b53f6f15ae61d8f8fe33b4c9a26cff))
+* **AGENT-617:** forward credential props in recursive NodeInputHandler tab calls ([de1c222](https://github.com/the-answerai/theanswer/commit/de1c22288fb39d47f85dba68055b94fc9a426f27))
+* **AGENT-626:** redirect to Auth0 login instead of non-existent /login route ([6ca5379](https://github.com/the-answerai/theanswer/commit/6ca5379af28b36153430768c1bb70f387215b20a))
+* **AGENT-639:** use workspaceId filter in queryVectorStore ([c26810d](https://github.com/the-answerai/theanswer/commit/c26810d038a47693a6280c88cf78e63688829ff1))
+* **SUPPORT-12:** add enforceAbility middleware and fix response format ([f6c2bbc](https://github.com/the-answerai/theanswer/commit/f6c2bbc26affa19d57da6479107a6cb5fda4d919))
+* **SUPPORT-12:** add multi-tenancy authorization to credential refresh ([72d2704](https://github.com/the-answerai/theanswer/commit/72d27045d69074401d394b4c97cfc5dacad20da0))
+* **SUPPORT-12:** restore AAI credential refresh routes lost in Flowise merge ([34d53a1](https://github.com/the-answerai/theanswer/commit/34d53a1f66aba8b7fe97b70402ea84df3b5527fb))
+
+---
+
+## [2.1.5](https://github.com/the-answerai/theanswer/compare/v2.1.4...v2.1.5) (2026-01-21)
+
+### Bug Fixes
+
+* **AGENT-635:** add IF EXISTS to migration down() for idempotency ([a857c1c](https://github.com/the-answerai/theanswer/commit/a857c1cb142e64e9b9d8085d2df1fcb849d33371))
+
+---
+
+## [2.1.4](https://github.com/the-answerai/theanswer/compare/v2.1.3...v2.1.4) (2026-01-21)
+
+### Bug Fixes
+
+* **AGENT-634:** populate workspace data for API key auth users ([6658da5](https://github.com/the-answerai/theanswer/commit/6658da529f2825f8e021dbc7abe58260ae4abbf5))
+* **AGENT-635:** make AddOrganizationConfig migration idempotent ([655ba49](https://github.com/the-answerai/theanswer/commit/655ba49a61068a91ff1a6b0de1a0911abed2715b))
+* **AGENT-638:** enable Langfuse tracing for agentflows via env vars ([ffe261d](https://github.com/the-answerai/theanswer/commit/ffe261dde1539494f52129de75a2f2703bce4aa2))
+
+---
+
+## [2.1.3](https://github.com/the-answerai/theanswer/compare/v2.1.2...v2.1.3) (2026-01-21)
+
+### Bug Fixes
+
+* **AGENT-633:** custom tools not appearing in agent nodes ([0de0073](https://github.com/the-answerai/theanswer/commit/0de00736d0bfb3658d9e2d25fbea2d4d6329edf5))
+
+### Code Refactoring
+
+* **AGENT-633:** simplify CustomTool to use workspace RBAC ([eded456](https://github.com/the-answerai/theanswer/commit/eded456f5a6d3958837c92f46ad9cf76b170fdf0))
+
+---
+
+## [2.1.2](https://github.com/the-answerai/theanswer/compare/v2.1.1...v2.1.2) (2026-01-20)
+
+### Bug Fixes
+
+* update answeragent-mcp version ([ac710e6](https://github.com/the-answerai/theanswer/commit/ac710e696b7a4950de10042a5325e55777bfa98d))
+
+---
+
+## [2.1.1](https://github.com/the-answerai/theanswer/compare/v2.1.0...v2.1.1) (2026-01-20)
+
+### Bug Fixes
+
+* **components:** remove userId override in dropdowns to respect workspace filtering ([50f01a1](https://github.com/the-answerai/theanswer/commit/50f01a16ba8ce9552d384020770daa64d45280fd)), closes [#853](https://github.com/the-answerai/theanswer/issues/853)
+
+---
+
+## [2.1.0](https://github.com/the-answerai/theanswer/compare/v2.0.1...v2.1.0) (2026-01-19)
+
+### Features
+
+* **SUPPORT-9:** add edit and delete credential features to Fiddler guardrails ([0565fc7](https://github.com/the-answerai/theanswer/commit/0565fc773f257a0751540594f0ede69ff0f51be8))
+
+### Bug Fixes
+
+* **AGENT-630:** backup all user-referenced orgs to preserve Auth0 alignment ([f7f6fdf](https://github.com/the-answerai/theanswer/commit/f7f6fdf10b24a2bc0c77d45453eb4a3e290233d4))
+* **AGENT-630:** fix orphaned users' organizationId before workspace creation ([f4a6a29](https://github.com/the-answerai/theanswer/commit/f4a6a2944c775f07661b010efa9fedb30e813373))
+* **AGENT-630:** handle invalid organizationId in AAI migration ([20e3e0e](https://github.com/the-answerai/theanswer/commit/20e3e0eba85ca085cae1c0410c1ebc44a5f617da))
+* **SUPPORT-8:** force Organization visibility for Fiddler credentials ([61bd5b7](https://github.com/the-answerai/theanswer/commit/61bd5b7db4559bcd20f66fbaa118c84d3a571388))
+
+---
+
+## [2.0.1](https://github.com/the-answerai/theanswer/compare/v2.0.0...v2.0.1) (2026-01-13)
+
+### Bug Fixes
+
+* **AGENT-620:** remove email unique constraint from user table ([f90d8d3](https://github.com/the-answerai/theanswer/commit/f90d8d34693a8bea184a9d20327278aaf72e04e3))
+
+---
+
 ## [2.0.0](https://github.com/the-answerai/theanswer/compare/v1.13.0...v2.0.0) (2026-01-13)
 
 This is a **major release** that upgrades the core Flowise engine from v1.x to **v3.0.11**, introduces **AgentFlow V2**, adds **40+ new components**, and implements critical security fixes for multi-tenant workspace isolation.
