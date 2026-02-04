@@ -4,8 +4,12 @@
 # Custom installer for bws CLI in a project repo #
 ##################################################
 
-DEFAULT_BWS_VERSION="0.5.0"
+DEFAULT_BWS_VERSION="1.0.0"
 BWS_VERSION="${BWS_VERSION:-$DEFAULT_BWS_VERSION}"
+
+# Determine script directory for finding local backups
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKUP_DIR="$SCRIPT_DIR/bin/backup"
 
 # Cross-platform temp base and cleanup trap
 TMP_BASE="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"
@@ -21,19 +25,33 @@ main() {
   -u | --uninstall)
     uninstall_bws
     ;;
+  -f | --force)
+    FORCE_INSTALL=1
+    run_install
+    ;;
   *)
-    check_required
-
-    # Check if BWS_VERSION is valid or fall back to default
-    platform_detect
-    arch_detect
-    check_version_availability
-
-    download_bws
-    validate_checksum
-    install_bws
+    FORCE_INSTALL=0
+    run_install
     ;;
   esac
+}
+
+run_install() {
+  check_required
+  platform_detect
+  arch_detect
+
+  # Skip if already installed at correct version (unless forced)
+  if [ "$FORCE_INSTALL" -eq 0 ] && check_already_installed; then
+    echo "bws v${BWS_VERSION} already installed, skipping."
+    echo "To force reinstall: sh ./scripts/bws-secure/bws-installer.sh -f"
+    exit 0
+  fi
+
+  check_version_availability
+  download_bws
+  validate_checksum
+  install_bws
 }
 
 error() {
@@ -50,6 +68,28 @@ check_required() {
   if ! command -v unzip >/dev/null; then
     error "unzip is required to install bws."
   fi
+}
+
+check_already_installed() {
+  bws_bin="$(pwd)/node_modules/.bin/bws"
+  
+  if [ ! -f "$bws_bin" ]; then
+    return 1  # Not installed
+  fi
+
+  # Get installed version (bws --version outputs "bws x.y.z")
+  installed_version="$("$bws_bin" --version 2>/dev/null | awk '{print $2}')"
+  
+  if [ -z "$installed_version" ]; then
+    return 1  # Couldn't determine version
+  fi
+
+  if [ "$installed_version" = "$BWS_VERSION" ]; then
+    return 0  # Already installed at correct version
+  fi
+
+  echo "Installed version ($installed_version) differs from requested ($BWS_VERSION), updating..."
+  return 1
 }
 
 platform_detect() {
@@ -92,22 +132,53 @@ downloader() {
   fi
 }
 
+downloader_with_check() {
+  if command -v curl >/dev/null; then
+    curl -L --fail --silent --show-error -o "$2" "$1" 2>/dev/null
+  else
+    wget -q -O "$2" "$1" 2>/dev/null
+  fi
+}
+
 extract() {
   unzip -o "$1" -d "$2"
 }
 
 download_bws() {
-  bws_url="https://github.com/bitwarden/sdk/releases/download/bws-v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
-  echo "Downloading bws from: $bws_url"
   tmp_dir="$(mktemp -d "$TMP_BASE/bws-secure.XXXXXXXXXX")"
-  downloader "$bws_url" "$tmp_dir/bws.zip"
+  local_backup="$BACKUP_DIR/v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
+  bws_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
+  
+  # Try download first, fall back to local backup if download fails
+  echo "Downloading bws from: $bws_url"
+  if downloader_with_check "$bws_url" "$tmp_dir/bws.zip"; then
+    USE_LOCAL_BACKUP=0
+  else
+    echo "Download failed, checking for local backup..."
+    if [ -f "$local_backup" ]; then
+      echo "Using local backup: $local_backup"
+      cp "$local_backup" "$tmp_dir/bws.zip"
+      USE_LOCAL_BACKUP=1
+    else
+      error "Download failed and no local backup found at: $local_backup"
+    fi
+  fi
 }
 
 validate_checksum() {
-  checksum_url="https://github.com/bitwarden/sdk/releases/download/bws-v${BWS_VERSION}/bws-sha256-checksums-${BWS_VERSION}.txt"
-  echo "Downloading checksum file from: $checksum_url"
+  local_checksum_file="$BACKUP_DIR/v${BWS_VERSION}/bws-sha256-checksums-${BWS_VERSION}.txt"
   checksum_file="$tmp_dir/bws-checksums.txt"
-  downloader "$checksum_url" "$checksum_file"
+  checksum_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${BWS_VERSION}/bws-sha256-checksums-${BWS_VERSION}.txt"
+  
+  # Try download first, fall back to local checksum file
+  if downloader_with_check "$checksum_url" "$checksum_file"; then
+    echo "Downloaded checksum file."
+  elif [ -f "$local_checksum_file" ]; then
+    echo "Using local checksum file: $local_checksum_file"
+    cp "$local_checksum_file" "$checksum_file"
+  else
+    error "Could not download checksum file and no local backup found."
+  fi
 
   expected_checksum="$(grep "bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip" "$checksum_file" | awk '{print $1}')"
   actual_checksum="$(checksum "$tmp_dir/bws.zip" | awk '{print $1}')"
@@ -178,18 +249,28 @@ uninstall_bws() {
 }
 
 check_version_availability() {
-  # Attempt a simple HEAD request to see if the requested version URL exists
-  test_url="https://github.com/bitwarden/sdk/releases/download/bws-v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
+  local_backup="$BACKUP_DIR/v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
+  test_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${BWS_VERSION}/bws-${ARCH}-${PLATFORM}-${BWS_VERSION}.zip"
 
+  # Attempt a HEAD request to see if the requested version URL exists
   if command -v curl >/dev/null; then
-    if ! curl --head --silent --fail "$test_url" >/dev/null; then
-      echo "Version bws-v${BWS_VERSION} not found. Falling back to default ${DEFAULT_BWS_VERSION}..."
+    if ! curl --head --silent --fail "$test_url" >/dev/null 2>&1; then
+      # Remote not available - check if we have local backup before falling back
+      if [ -f "$local_backup" ]; then
+        echo "Remote v${BWS_VERSION} unavailable, but local backup exists. Continuing..."
+        return 0
+      fi
+      echo "Version bws-v${BWS_VERSION} not found remotely or locally. Falling back to default ${DEFAULT_BWS_VERSION}..."
       BWS_VERSION="$DEFAULT_BWS_VERSION"
     fi
   else
     # Fallback if wget is used
-    if ! wget --spider -q "$test_url"; then
-      echo "Version bws-v${BWS_VERSION} not found. Falling back to default ${DEFAULT_BWS_VERSION}..."
+    if ! wget --spider -q "$test_url" 2>/dev/null; then
+      if [ -f "$local_backup" ]; then
+        echo "Remote v${BWS_VERSION} unavailable, but local backup exists. Continuing..."
+        return 0
+      fi
+      echo "Version bws-v${BWS_VERSION} not found remotely or locally. Falling back to default ${DEFAULT_BWS_VERSION}..."
       BWS_VERSION="$DEFAULT_BWS_VERSION"
     fi
   fi

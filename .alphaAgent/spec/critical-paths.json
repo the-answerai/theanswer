@@ -1,0 +1,288 @@
+{
+  "version": "1.0",
+  "paths": [
+    {
+      "id": "user-authentication",
+      "name": "User Authentication and Login Flow",
+      "description": "User authenticates via Auth0 and logs into TheAnswer application with proper organization selection and role-based access control",
+      "priority": "P0",
+      "coverage": "100%",
+      "files": [
+        "apps/web/middleware.ts",
+        "apps/web/app/(Main UI)/page.tsx",
+        "apps/web/app/(Main UI)/layout.tsx",
+        "apps/web/e2e/tests/auth.spec.ts",
+        "packages/server/src/routes/index.ts",
+        "packages/server/src/middlewares/authentication/enforceAbility.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for successful login and dashboard redirect",
+        "E2E test for role-based menu visibility (admin/builder/member)",
+        "Test invalid credentials error handling",
+        "Test organization selection during login",
+        "Test session persistence across page reloads"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "chatflow-creation-execution",
+      "name": "Chatflow Creation and Execution",
+      "description": "User creates a new chatflow/agentflow using the visual editor and executes it to test the AI workflow",
+      "priority": "P0",
+      "coverage": "50%",
+      "files": [
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/chatflows/page.tsx",
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(minimal-layout)/canvas/[chatflowid]/page.tsx",
+        "packages/server/src/routes/chatflows/index.ts",
+        "packages/server/src/controllers/chatflows/index.ts",
+        "packages/server/src/services/chatflows/index.ts",
+        "packages/server/src/database/entities/Chatflow.ts",
+        "packages/server/src/routes/predictions/index.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for creating chatflow with basic nodes",
+        "E2E test for chatflow execution with sample input",
+        "Integration test for chatflow CRUD operations",
+        "Test chatflow visibility by organization",
+        "Test permission checks for unauthorized users"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 3
+    },
+    {
+      "id": "api-key-management",
+      "name": "API Key Management",
+      "description": "User generates and manages API keys for programmatic access to chatflows and agentflows",
+      "priority": "P0",
+      "coverage": "40%",
+      "files": [
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/apikey/page.tsx",
+        "packages/server/src/routes/apikey/index.ts",
+        "packages/server/src/controllers/apikey/index.ts",
+        "packages/server/src/services/apikey/index.ts",
+        "packages/server/src/database/entities/ApiKey.ts",
+        "packages/server/src/middlewares/authentication/enforce-api-key.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for creating API key",
+        "E2E test for viewing and copying API keys",
+        "E2E test for deleting API key",
+        "Integration test for API key authentication",
+        "Test API key scoping to organization",
+        "Test API key usage in chatflow execution calls"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "oauth2-credential-setup",
+      "name": "OAuth2 Credential Setup and Authorization",
+      "description": "User configures OAuth2 credentials for integrations (Microsoft Graph, Google, etc.) by authorizing the application",
+      "priority": "P0",
+      "coverage": "35%",
+      "files": [
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/credentials/page.tsx",
+        "packages/server/src/routes/oauth2/index.ts",
+        "packages/server/src/routes/oauth2/templates.ts",
+        "packages/server/src/routes/credentials/index.ts",
+        "packages/server/src/controllers/credentials/index.ts",
+        "packages/server/src/database/entities/Credential.ts",
+        "packages/server/src/utils/encryption.ts"
+      ],
+      "proposed_tests": [
+        "Integration test for OAuth2 authorization URL generation",
+        "Integration test for OAuth2 callback and token exchange",
+        "Integration test for OAuth2 token refresh",
+        "E2E test for credential creation UI flow",
+        "Test credential encryption/decryption",
+        "Test credential access by organization",
+        "Test authorization error handling"
+      ],
+      "test_type": "integration",
+      "estimated_sessions": 3
+    },
+    {
+      "id": "chatflow-execution-api",
+      "name": "Chatflow Execution via API",
+      "description": "External API client executes a chatflow using API key authentication, sending input and receiving AI-generated output",
+      "priority": "P0",
+      "coverage": "45%",
+      "files": [
+        "packages/server/src/routes/chatflows/index.ts",
+        "packages/server/src/routes/predictions/index.ts",
+        "packages/server/src/routes/chatflows-streaming/index.ts",
+        "packages/server/src/controllers/predictions/index.ts",
+        "packages/server/src/services/chatflows/index.ts",
+        "packages/server/src/middlewares/authentication/enforce-api-key.ts",
+        "packages/server/src/database/entities/ApiKey.ts"
+      ],
+      "proposed_tests": [
+        "Integration test for API prediction endpoint with API key",
+        "Integration test for streaming predictions",
+        "Test input validation for chatflow execution",
+        "Test error handling for missing/invalid API keys",
+        "Test multi-tenancy isolation in API calls",
+        "Test rate limiting on API calls",
+        "Test response format consistency"
+      ],
+      "test_type": "integration",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "document-store-management",
+      "name": "Document Store Creation and Vector Search",
+      "description": "User uploads documents to a vector store and queries them using similarity search for RAG workflows",
+      "priority": "P1",
+      "coverage": "40%",
+      "files": [
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/document-stores/page.tsx",
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/document-stores/[storeId]/page.tsx",
+        "packages/server/src/routes/documentstore/index.ts",
+        "packages/server/src/controllers/documentstore/index.ts",
+        "packages/server/src/services/documentstore/index.ts",
+        "packages/server/src/routes/vectors/index.ts",
+        "packages/server/src/database/entities/DocumentStore.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for creating new document store",
+        "E2E test for uploading documents",
+        "Integration test for vector search",
+        "Test document chunking and embedding",
+        "Test document store access by organization",
+        "Test query performance with large datasets",
+        "Test document deletion and cleanup"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 3
+    },
+    {
+      "id": "assistant-creation",
+      "name": "OpenAI Assistant Creation and Management",
+      "description": "User creates and configures OpenAI assistants with custom instructions, tools, and knowledge bases",
+      "priority": "P1",
+      "coverage": "30%",
+      "files": [
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/assistants/page.tsx",
+        "apps/web/app/(Main UI)/(Studio Layout)/sidekick-studio/(main-layout)/assistants/custom/[id]/page.tsx",
+        "packages/server/src/routes/openai-assistants/index.ts",
+        "packages/server/src/controllers/openai-assistants/index.ts",
+        "packages/server/src/services/openai-assistants/index.ts",
+        "packages/server/src/routes/openai-assistants-files/index.ts",
+        "packages/server/src/database/entities/Assistant.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for creating custom assistant",
+        "E2E test for uploading assistant knowledge files",
+        "Integration test for assistant CRUD operations",
+        "Test assistant tool configuration",
+        "Test assistant visibility and permissions",
+        "Test assistant vector store integration"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "role-based-access-control",
+      "name": "Role-Based Access Control and Permissions",
+      "description": "System enforces role-based permissions (admin/builder/member) across all features and UI elements",
+      "priority": "P0",
+      "coverage": "85%",
+      "files": [
+        "packages/server/src/enterprise/rbac/PermissionCheck.ts",
+        "packages/server/src/utils/checkOwnership.ts",
+        "apps/web/e2e/tests/auth.spec.ts",
+        "apps/web/app/(Main UI)/layout.tsx",
+        "packages/server/src/routes/index.ts",
+        "packages/server/src/middlewares/authentication/enforceAbility.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for admin can access all sections",
+        "E2E test for builder cannot access billing",
+        "E2E test for member cannot access studio",
+        "Test API endpoint authorization for each role",
+        "Test permission inheritance in organization",
+        "Test cross-organization data isolation"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 1
+    },
+    {
+      "id": "chat-interface",
+      "name": "Chat Interface Interaction",
+      "description": "User sends messages to a deployed chatbot/chatflow and receives conversational AI responses",
+      "priority": "P0",
+      "coverage": "60%",
+      "files": [
+        "apps/web/app/(Main UI)/(Chat UI)/chat/[chatId]/page.tsx",
+        "apps/web/app/(Main UI)/(Chat UI)/chat/page.tsx",
+        "packages/server/src/routes/chats/index.ts",
+        "packages/server/src/routes/chat-messages/index.ts",
+        "packages/server/src/controllers/chat-messages/index.ts",
+        "packages/server/src/database/entities/ChatMessage.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for opening chat interface",
+        "E2E test for sending message and receiving response",
+        "E2E test for message history loading",
+        "Integration test for chat message storage",
+        "Test message streaming support",
+        "Test chat session isolation",
+        "Test message validation and rate limiting"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "billing-and-plan-management",
+      "name": "Billing and Plan Management",
+      "description": "Organization admins manage billing, upgrade plans, and monitor usage limits",
+      "priority": "P1",
+      "coverage": "35%",
+      "files": [
+        "apps/web/app/(Main UI)/billing/page.tsx",
+        "apps/web/app/(Main UI)/plans/page.tsx",
+        "packages/server/src/routes/billing/index.ts",
+        "packages/server/src/routes/plan/index.ts",
+        "packages/server/src/controllers/billing/index.ts",
+        "packages/server/src/database/entities/Organization.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for viewing billing information",
+        "E2E test for upgrading plan",
+        "E2E test for viewing usage metrics",
+        "Integration test for billing API",
+        "Test plan-based feature access restrictions",
+        "Test billing access restricted to admins"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    },
+    {
+      "id": "settings-and-organization-config",
+      "name": "Settings and Organization Configuration",
+      "description": "Admins configure organization settings, SSO, users, roles, and workspace variables",
+      "priority": "P1",
+      "coverage": "50%",
+      "files": [
+        "apps/web/app/(Main UI)/settings/organization/page.tsx",
+        "apps/web/app/(Main UI)/settings/user/page.tsx",
+        "apps/web/app/(Main UI)/settings/integrations/[[...app]]/page.tsx",
+        "packages/server/src/routes/settings/index.ts",
+        "packages/server/src/routes/organizations/index.ts",
+        "packages/server/src/routes/variables/index.ts",
+        "packages/server/src/controllers/settings/index.ts"
+      ],
+      "proposed_tests": [
+        "E2E test for updating organization settings",
+        "E2E test for managing SSO configuration",
+        "E2E test for inviting users to organization",
+        "E2E test for configuring workspace variables",
+        "Integration test for settings API endpoints",
+        "Test settings access control by role"
+      ],
+      "test_type": "e2e",
+      "estimated_sessions": 2
+    }
+  ]
+}

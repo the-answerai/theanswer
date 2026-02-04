@@ -1,0 +1,673 @@
+{
+  "version": "1.0",
+  "extracted_at": "2026-01-22T22:35:00Z",
+  "source": "mui-theme",
+  "source_files": [
+    "packages-answers/ui/src/theme/tokens/colors.ts",
+    "packages-answers/ui/src/theme/tokens/glassmorphism.ts",
+    "packages-answers/ui/src/theme/index.tsx",
+    "packages-answers/ui/src/theme/components/muiOverrides.ts",
+    "packages/ui/src/assets/theme-vars.js",
+    "apps/web/app/layout.tsx"
+  ],
+  "verified_visually": false,
+  "colors": {
+    "background": {
+      "light": {
+        "default": {
+          "value": "#ffffff",
+          "description": "Light mode default background"
+        },
+        "paper": {
+          "value": "#ffffff",
+          "description": "Light mode paper/card background"
+        }
+      },
+      "dark": {
+        "default": {
+          "value": "#0b0b0b",
+          "description": "Dark mode default background"
+        },
+        "paper": {
+          "value": "#161616",
+          "description": "Dark mode paper/card background"
+        }
+      },
+      "level1": {
+        "value": "#252525",
+        "description": "Dark theme level 1 elevation"
+      },
+      "level2": {
+        "value": "#0b0b0b",
+        "description": "Dark theme level 2 elevation"
+      }
+    },
+    "primary": {
+      "light": {
+        "main": {
+          "value": "rgba(15, 23, 42, 0.95)",
+          "description": "Light mode primary color - semi-transparent dark slate"
+        },
+        "light": {
+          "value": "rgba(30, 41, 59, 0.85)",
+          "description": "Light primary variant"
+        },
+        "dark": {
+          "value": "rgb(15, 23, 42)",
+          "description": "Dark primary variant - solid"
+        },
+        "gradient": {
+          "value": "linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)",
+          "description": "Light mode primary gradient for buttons"
+        }
+      },
+      "dark": {
+        "main": {
+          "value": "rgba(255, 255, 255, 0.12)",
+          "description": "Dark mode primary color - transparent white"
+        },
+        "light": {
+          "value": "rgba(255, 255, 255, 0.18)",
+          "description": "Dark primary light variant"
+        },
+        "dark": {
+          "value": "rgba(255, 255, 255, 0.08)",
+          "description": "Dark primary dark variant"
+        },
+        "gradient": {
+          "value": "linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(26, 26, 26, 0.6) 100%)",
+          "description": "Dark mode primary gradient"
+        }
+      },
+      "legacy": {
+        "main": {
+          "value": "#3b82f6",
+          "description": "Legacy blue primary (used in theme-vars.js)"
+        },
+        "light": {
+          "value": "#93c5fd",
+          "description": "Legacy primary light"
+        },
+        "dark": {
+          "value": "#1e3a8a",
+          "description": "Legacy primary dark"
+        }
+      }
+    },
+    "secondary": {
+      "light": {
+        "main": {
+          "value": "#ff6e40",
+          "description": "Light mode secondary - orange"
+        },
+        "light": {
+          "value": "#ff9e80",
+          "description": "Light secondary variant"
+        },
+        "dark": {
+          "value": "#dd2c00",
+          "description": "Dark secondary variant"
+        }
+      },
+      "dark": {
+        "main": {
+          "value": "#ff9e80",
+          "description": "Dark mode secondary - light orange"
+        },
+        "light": {
+          "value": "#ffc9b0",
+          "description": "Dark secondary light variant"
+        },
+        "dark": {
+          "value": "#ff6e40",
+          "description": "Dark secondary dark variant"
+        }
+      }
+    },
+    "text": {
+      "light": {
+        "primary": {
+          "value": "#1e293b",
+          "description": "Light mode primary text"
+        },
+        "secondary": {
+          "value": "#64748b",
+          "description": "Light mode secondary text"
+        },
+        "onGlass": {
+          "value": "#ffffff",
+          "description": "Text color on glass elements (light mode)"
+        },
+        "disabled": {
+          "value": "#94a3b8",
+          "description": "Disabled text color (light mode)"
+        }
+      },
+      "dark": {
+        "primary": {
+          "value": "#ffffff",
+          "description": "Dark mode primary text - white"
+        },
+        "secondary": {
+          "value": "#9e9e9e",
+          "description": "Dark mode secondary text"
+        },
+        "onGlass": {
+          "value": "#ffffff",
+          "description": "Text color on glass elements (dark mode)"
+        },
+        "disabled": {
+          "value": "#757575",
+          "description": "Disabled text color (dark mode)"
+        }
+      },
+      "legacy": {
+        "title": {
+          "value": "#d7dcec",
+          "description": "Dark mode text title (legacy)"
+        },
+        "primary": {
+          "value": "#bdc8f0",
+          "description": "Dark mode primary text (legacy)"
+        },
+        "secondary": {
+          "value": "#8492c4",
+          "description": "Dark mode secondary text (legacy)"
+        }
+      }
+    },
+    "divider": {
+      "light": {
+        "value": "rgba(15, 23, 42, 0.12)",
+        "description": "Light mode divider color"
+      },
+      "dark": {
+        "value": "rgba(255, 255, 255, 0.12)",
+        "description": "Dark mode divider color"
+      }
+    },
+    "action": {
+      "light": {
+        "hover": {
+          "value": "rgba(15, 23, 42, 0.04)",
+          "description": "Light mode hover state"
+        },
+        "selected": {
+          "value": "rgba(15, 23, 42, 0.08)",
+          "description": "Light mode selected state"
+        },
+        "disabled": {
+          "value": "rgba(15, 23, 42, 0.26)",
+          "description": "Light mode disabled state"
+        }
+      },
+      "dark": {
+        "hover": {
+          "value": "rgba(255, 255, 255, 0.08)",
+          "description": "Dark mode hover state"
+        },
+        "selected": {
+          "value": "rgba(255, 255, 255, 0.16)",
+          "description": "Dark mode selected state"
+        },
+        "disabled": {
+          "value": "rgba(255, 255, 255, 0.3)",
+          "description": "Dark mode disabled state"
+        }
+      }
+    },
+    "status": {
+      "success": {
+        "main": {
+          "value": "#4caf50",
+          "description": "Success status color - green"
+        },
+        "light": {
+          "value": "#81c784",
+          "description": "Success light variant"
+        },
+        "dark": {
+          "value": "#388e3c",
+          "description": "Success dark variant"
+        },
+        "legacy": {
+          "main": "#00e676",
+          "lightBackground": "#cdf5d8",
+          "light": "#69f0ae",
+          "dark": "#00c853"
+        }
+      },
+      "warning": {
+        "main": {
+          "value": "#ff9800",
+          "description": "Warning status color - orange"
+        },
+        "light": {
+          "value": "#ffb74d",
+          "description": "Warning light variant"
+        },
+        "dark": {
+          "value": "#f57c00",
+          "description": "Warning dark variant"
+        },
+        "legacy": {
+          "main": "#ffe57f",
+          "light": "#fff8e1",
+          "dark": "#ffc107"
+        }
+      },
+      "error": {
+        "main": {
+          "value": "#f44336",
+          "description": "Error status color - red"
+        },
+        "light": {
+          "value": "#e57373",
+          "description": "Error light variant"
+        },
+        "dark": {
+          "value": "#d32f2f",
+          "description": "Error dark variant"
+        },
+        "legacy": {
+          "light": "#f3d2d2",
+          "dark": "#c62828"
+        }
+      },
+      "info": {
+        "main": {
+          "value": "#2196f3",
+          "description": "Info status color - blue"
+        },
+        "light": {
+          "value": "#64b5f6",
+          "description": "Info light variant"
+        },
+        "dark": {
+          "value": "#1976d2",
+          "description": "Info dark variant"
+        }
+      }
+    },
+    "accent": {
+      "orange": {
+        "main": {
+          "value": "#ffab91",
+          "description": "Orange accent"
+        },
+        "light": {
+          "value": "#fbe9e7",
+          "description": "Orange light"
+        },
+        "dark": {
+          "value": "#d84315",
+          "description": "Orange dark"
+        }
+      },
+      "teal": {
+        "light": {
+          "value": "#76c893",
+          "description": "Teal light accent"
+        },
+        "main": {
+          "value": "#52b69a",
+          "description": "Teal accent"
+        },
+        "dark": {
+          "value": "#34a0a4",
+          "description": "Teal dark accent"
+        }
+      }
+    },
+    "grey": {
+      "50": {
+        "value": "#fafafa"
+      },
+      "100": {
+        "value": "#f5f5f5"
+      },
+      "200": {
+        "value": "#eeeeee"
+      },
+      "300": {
+        "value": "#e0e0e0"
+      },
+      "500": {
+        "value": "#9e9e9e"
+      },
+      "600": {
+        "value": "#757575"
+      },
+      "700": {
+        "value": "#616161"
+      },
+      "900": {
+        "value": "#212121"
+      }
+    }
+  },
+  "glassmorphism": {
+    "light": {
+      "glassPrimary": {
+        "background": "linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(59, 130, 246, 0.9) 50%, rgba(30, 58, 138, 0.95) 100%)",
+        "backdropFilter": "blur(20px) saturate(180%)",
+        "WebkitBackdropFilter": "blur(20px) saturate(180%)",
+        "border": "1px solid rgba(147, 197, 253, 0.5)",
+        "boxShadow": "0 8px 32px 0 rgba(59, 130, 246, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+        "color": "#ffffff",
+        "description": "Light mode primary glass for headers/navigation with blue gradient"
+      },
+      "glassSecondary": {
+        "background": "rgba(255, 255, 255, 0.85)",
+        "backdropFilter": "blur(16px)",
+        "WebkitBackdropFilter": "blur(16px)",
+        "border": "1px solid rgba(15, 23, 42, 0.1)",
+        "boxShadow": "0 4px 16px 0 rgba(0, 0, 0, 0.08)",
+        "description": "Light mode secondary glass for cards/panels"
+      },
+      "glassSubtle": {
+        "background": "rgba(255, 255, 255, 0.7)",
+        "backdropFilter": "blur(12px)",
+        "WebkitBackdropFilter": "blur(12px)",
+        "border": "1px solid rgba(15, 23, 42, 0.15)",
+        "boxShadow": "0 2px 8px 0 rgba(0, 0, 0, 0.05)",
+        "description": "Light mode subtle glass for buttons/inputs"
+      },
+      "glassHover": {
+        "background": "rgba(255, 255, 255, 0.95)",
+        "boxShadow": "0 12px 40px 0 rgba(0, 0, 0, 0.12)",
+        "transform": "translateY(-2px)",
+        "description": "Light mode hover state for glass elements"
+      },
+      "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    },
+    "dark": {
+      "glassPrimary": {
+        "background": "rgba(0, 0, 0, 0.6)",
+        "backdropFilter": "blur(16px)",
+        "WebkitBackdropFilter": "blur(16px)",
+        "border": "1px solid rgba(255, 255, 255, 0.08)",
+        "boxShadow": "0 8px 32px 0 rgba(0, 0, 0, 0.4)",
+        "description": "Dark mode primary glass for headers/navigation"
+      },
+      "glassSecondary": {
+        "background": "rgba(255, 255, 255, 0.03)",
+        "backdropFilter": "blur(12px)",
+        "WebkitBackdropFilter": "blur(12px)",
+        "border": "1px solid rgba(255, 255, 255, 0.08)",
+        "boxShadow": "0 4px 16px 0 rgba(0, 0, 0, 0.3)",
+        "description": "Dark mode secondary glass for cards/panels"
+      },
+      "glassSubtle": {
+        "background": "rgba(255, 255, 255, 0.05)",
+        "backdropFilter": "blur(8px)",
+        "WebkitBackdropFilter": "blur(8px)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)",
+        "boxShadow": "0 2px 8px 0 rgba(0, 0, 0, 0.2)",
+        "description": "Dark mode subtle glass for buttons/inputs"
+      },
+      "glassHover": {
+        "background": "rgba(255, 255, 255, 0.08)",
+        "boxShadow": "0 12px 40px 0 rgba(0, 0, 0, 0.5)",
+        "transform": "translateY(-2px)",
+        "description": "Dark mode hover state for glass elements"
+      },
+      "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    }
+  },
+  "typography": {
+    "font_families": {
+      "sans": ["var(--font-poppins)", "system-ui", "-apple-system", "sans-serif"],
+      "mono": ["Consolas", "monospace"]
+    },
+    "font_sizes": {
+      "h1": "2.5rem",
+      "h2": "2rem",
+      "h3": "1.75rem",
+      "h4": "1.5rem",
+      "h5": "1.25rem",
+      "h6": "1.125rem",
+      "body1": "1rem",
+      "body2": "0.875rem",
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem"
+    },
+    "font_weights": {
+      "100": "100",
+      "300": "300",
+      "normal": "400",
+      "medium": "500",
+      "600": "600",
+      "700": "700"
+    },
+    "line_heights": {
+      "h1": "1.2",
+      "h2": "1.3",
+      "h3": "1.3",
+      "h4": "1.4",
+      "h5": "1.4",
+      "h6": "1.4",
+      "body1": "1.5",
+      "body2": "1.5",
+      "tight": "1.25",
+      "normal": "1.5",
+      "relaxed": "1.75"
+    }
+  },
+  "spacing": {
+    "unit": "0.25rem",
+    "scale": {
+      "0": "0",
+      "1": "0.25rem",
+      "2": "0.5rem",
+      "3": "0.75rem",
+      "4": "1rem",
+      "5": "1.25rem",
+      "6": "1.5rem",
+      "8": "2rem",
+      "10": "2.5rem",
+      "12": "3rem",
+      "16": "4rem",
+      "20": "5rem",
+      "24": "6rem"
+    }
+  },
+  "breakpoints": {
+    "xs": "0px",
+    "sm": "600px",
+    "md": "900px",
+    "lg": "1200px",
+    "xl": "1536px",
+    "xxl": "1920px"
+  },
+  "border_radius": {
+    "none": "0",
+    "sm": "4px",
+    "md": "6px",
+    "lg": "8px",
+    "xl": "12px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+    "glass_light_1": "0 8px 32px 0 rgba(59, 130, 246, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+    "glass_light_2": "0 4px 16px 0 rgba(0, 0, 0, 0.08)",
+    "glass_dark_1": "0 8px 32px 0 rgba(0, 0, 0, 0.4)",
+    "glass_dark_2": "0 4px 16px 0 rgba(0, 0, 0, 0.3)"
+  },
+  "transitions": {
+    "duration": {
+      "shortest": "150ms",
+      "shorter": "200ms",
+      "short": "250ms",
+      "standard": "300ms",
+      "complex": "375ms",
+      "enteringScreen": "225ms",
+      "leavingScreen": "195ms"
+    },
+    "easing": {
+      "easeInOut": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "easeOut": "cubic-bezier(0.0, 0, 0.2, 1)",
+      "easeIn": "cubic-bezier(0.4, 0, 1, 1)",
+      "sharp": "cubic-bezier(0.4, 0, 0.6, 1)"
+    }
+  },
+  "components": {
+    "button": {
+      "base": {
+        "borderRadius": "8px",
+        "textTransform": "none",
+        "transition": "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+      },
+      "contained": {
+        "light": {
+          "background": "linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)",
+          "color": "#ffffff",
+          "boxShadow": "0 4px 12px 0 rgba(59, 130, 246, 0.3)"
+        },
+        "dark": {
+          "uses": "glassPrimary"
+        },
+        "hover": {
+          "transform": "translateY(-2px)"
+        },
+        "disabled": {
+          "light": {
+            "backgroundColor": "rgba(0, 0, 0, 0.12)",
+            "color": "rgba(0, 0, 0, 0.26)"
+          },
+          "dark": {
+            "backgroundColor": "rgba(255, 255, 255, 0.12)",
+            "color": "rgba(255, 255, 255, 0.3)"
+          }
+        }
+      },
+      "outlined": {
+        "uses": "glassSubtle"
+      },
+      "text": {
+        "background": "transparent",
+        "backdropFilter": "none",
+        "border": "none",
+        "boxShadow": "none"
+      }
+    },
+    "card": {
+      "light": {
+        "background": "#ffffff",
+        "border": "1px solid rgba(15, 23, 42, 0.08)",
+        "boxShadow": "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+        "borderRadius": "12px"
+      },
+      "dark": {
+        "background": "#1a1a1a",
+        "border": "1px solid rgba(255, 255, 255, 0.08)",
+        "boxShadow": "0 1px 3px 0 rgba(0, 0, 0, 0.3)",
+        "borderRadius": "12px"
+      },
+      "hover": {
+        "transform": "translateY(-2px)"
+      }
+    },
+    "input": {
+      "light": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "rgba(15, 23, 42, 0.23)",
+        "borderRadius": "8px"
+      },
+      "dark": {
+        "backgroundColor": "rgba(255, 255, 255, 0.05)",
+        "borderColor": "rgba(255, 255, 255, 0.23)",
+        "borderRadius": "8px"
+      },
+      "focus": {
+        "light": {
+          "boxShadow": "0 0 0 3px rgba(59, 130, 246, 0.1)"
+        },
+        "dark": {
+          "boxShadow": "0 0 0 3px rgba(77, 182, 172, 0.1)"
+        }
+      }
+    },
+    "drawer": {
+      "uses": "glassPrimary",
+      "borderRight": "none"
+    },
+    "appBar": {
+      "uses": "glassPrimary",
+      "boxShadow": "none"
+    },
+    "backdrop": {
+      "light": {
+        "backgroundColor": "rgba(0, 0, 0, 0.5)",
+        "backdropFilter": "blur(8px)"
+      },
+      "dark": {
+        "backgroundColor": "rgba(0, 0, 0, 0.75)",
+        "backdropFilter": "blur(8px)"
+      }
+    }
+  },
+  "animations": {
+    "pulseGradient": {
+      "0%, 100%": {
+        "backgroundPosition": "0% 50%"
+      },
+      "50%": {
+        "backgroundPosition": "100% 50%"
+      }
+    }
+  },
+  "_visual_verification": {
+    "verified": false,
+    "reason": "Static analysis only - visual verification requires running dev server and application to be accessible",
+    "computed_values": null,
+    "discrepancies": null
+  },
+  "_metadata": {
+    "analysis_notes": "Extracted from Material-UI theme configuration and glassmorphism tokens. The project uses a unified theme system with light/dark mode support. Primary design system source is packages-answers/ui with Material-UI theme overrides. Legacy theme-vars.js in packages/ui provides fallback colors. Apps/web uses Next.js with Poppins font family via Google Fonts.",
+    "files_analyzed": [
+      "packages-answers/ui/src/theme/tokens/colors.ts - Core color tokens for light and dark modes",
+      "packages-answers/ui/src/theme/tokens/glassmorphism.ts - Glassmorphism effect tokens with backdrop blur",
+      "packages-answers/ui/src/theme/index.tsx - Theme provider and MUI theme creation",
+      "packages-answers/ui/src/theme/components/muiOverrides.ts - MUI component customizations with glass styling",
+      "packages/ui/src/assets/theme-vars.js - Legacy Flowise theme variables",
+      "apps/web/app/layout.tsx - Root layout with Poppins font configuration"
+    ],
+    "design_system_architecture": {
+      "primary_source": "Material-UI (MUI) v5 with custom extensions",
+      "theme_modes": ["light", "dark"],
+      "key_features": [
+        "Unified glassmorphism design tokens (blur effects, backdrop filters)",
+        "Gradient-based primary colors (blue gradient in light mode)",
+        "Light/dark mode responsive colors",
+        "Component-level overrides for MUI components",
+        "Status colors for success/warning/error/info",
+        "Smooth transitions and animations"
+      ],
+      "font_strategy": "Google Fonts Poppins with system font fallback",
+      "spacing_system": "Base unit of 0.25rem with Tailwind-inspired scale",
+      "border_radius_values": [0, 4, 6, 8, 12, 9999]
+    },
+    "implementation_notes": {
+      "light_mode": "Uses white backgrounds with blue gradient primary buttons and dark text. Glassmorphism elements use light semi-transparent backgrounds.",
+      "dark_mode": "Uses dark backgrounds (#0b0b0b, #161616) with glassmorphism using very transparent white overlays and light text. Primary buttons use glass styling with optional dark overlay.",
+      "glassmorphism": "Implemented via CSS backdrop-filter and -webkit-backdrop-filter with varying blur amounts (8-20px) depending on component type.",
+      "transitions": "All interactive elements use 300ms standard transition with cubic-bezier easing for smooth animations.",
+      "component_customization": "Extensive MUI component overrides including Button, Card, Input, Drawer, AppBar, Menu, and more with consistent glass styling application."
+    },
+    "warnings": [
+      "Legacy color variables exist in packages/ui/src/assets/theme-vars.js - these may conflict with new unified theme",
+      "Two separate theme systems: Modern unified theme in packages-answers/ui and legacy Flowise theme in packages/ui - may cause inconsistencies",
+      "Visual verification not performed - actual rendered values should be verified when dev server is running"
+    ]
+  }
+}

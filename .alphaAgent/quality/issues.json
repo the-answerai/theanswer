@@ -1,0 +1,365 @@
+{
+  "version": "1.0",
+  "issues": [
+    {
+      "id": "issue-001",
+      "file_path": "packages/server/src/services/documentstore/index.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "File is 2573 lines long. This is significantly above the recommended 500-line threshold. Should be split into multiple focused modules for maintainability and testability.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-002",
+      "file_path": "packages/server/src/utils/index.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Utility file is 2495 lines long, indicating too many unrelated utilities in one module. Should be refactored into smaller, specialized utility modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-003",
+      "file_path": "packages/server/src/utils/buildAgentflow.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "File is 2312 lines long. Complex agent flow building logic should be split into smaller functions and modules for better maintainability and testing.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-004",
+      "file_path": "packages/components/src/handler.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "File is 2218 lines long. Contains complex handler logic that should be modularized into smaller, focused handler classes.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-005",
+      "file_path": "packages/embed/src/components/Bot.tsx",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Component file is 2095 lines long. This React component should be broken down into smaller, reusable sub-components for better maintainability and reusability.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-006",
+      "file_path": "packages/components/src/utils.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Utility file is 1943 lines. Large utility files should be split into focused modules (e.g., nodeUtils, componentUtils, dataUtils).",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-007",
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "issue_type": "security",
+      "severity": "critical",
+      "description": "Route 'GET /customer/status' (line 8) lacks enforceAbility middleware. This endpoint is exposed without authentication checks. All routes must use enforceAbility middleware.",
+      "line_number": 8,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-008",
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "issue_type": "security",
+      "severity": "critical",
+      "description": "Routes 'GET /usage/sync' and 'POST /usage/sync' (lines 33-34) lack enforceAbility middleware. These internal endpoints are exposed without authentication. Must add proper authorization.",
+      "line_number": 33,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-009",
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "issue_type": "security",
+      "severity": "critical",
+      "description": "Route 'POST /webhooks' (line 37) lacks enforceAbility middleware. Webhook handlers should implement secret verification instead of (or in addition to) enforceAbility.",
+      "line_number": 37,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-010",
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "issue_type": "style",
+      "severity": "medium",
+      "description": "TODO comment on line 11 'Remove this route' suggests dead code. Either remove the commented route or create a ticket to track its removal.",
+      "line_number": 11,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-011",
+      "file_path": "packages/server/src/controllers/billing/index.ts",
+      "issue_type": "style",
+      "severity": "medium",
+      "description": "console.error statement on line 34 in production code. Should use logger.error() instead of console for consistent logging and better observability.",
+      "line_number": 34,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-012",
+      "file_path": "packages/server/src/controllers/billing/index.ts",
+      "issue_type": "style",
+      "severity": "medium",
+      "description": "Error silencing on line 35 (commented out next(error)) masks potential issues. Either handle the error properly or use a guard clause to prevent silent failures.",
+      "line_number": 35,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-013",
+      "file_path": "apps/web/e2e",
+      "issue_type": "testing",
+      "severity": "high",
+      "description": "Critical features lack E2E test coverage. Only 2 E2E test files exist (auth.spec.ts, guardrails-settings.spec.ts). Missing tests for: user workflows, chatflow management, API interactions, and sidekick features.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-014",
+      "file_path": "packages/server/src/services/chatflows/index.ts",
+      "issue_type": "performance",
+      "severity": "high",
+      "description": "Query on line 40 fetches ChatFlow without checking workspace. Should implement workspace filtering in all service queries to prevent cross-workspace data leakage and improve query performance.",
+      "line_number": 40,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-015",
+      "file_path": "packages/components",
+      "issue_type": "testing",
+      "severity": "high",
+      "description": "Flowise component nodes lack unit test coverage. No test files found for critical nodes like Agent.ts, handler.ts, utils.ts. Missing tests for component initialization and error handling.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-016",
+      "file_path": "packages/server/src/services/documentstore/index.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Service contains mixed concerns: document storage, upserting, file management, and vector store integration. Should be refactored into specialized services with clear separation of concerns.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-017",
+      "file_path": "packages/server/src",
+      "issue_type": "documentation",
+      "severity": "medium",
+      "description": "Many service files lack JSDoc comments on exported functions. Critical services like documentstore, chatflows, and billing should have comprehensive documentation for public APIs.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-018",
+      "file_path": "packages/components/nodes/agentflow/Agent/Agent.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Agent component file is 2530 lines. Complex agent logic should be extracted into smaller modules for graph building, execution, and state management.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-019",
+      "file_path": "packages/server/src/utils/buildChatflow.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "File is 1546 lines. Complex chatflow building logic should be split into separate modules for graph construction, validation, and execution.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-020",
+      "file_path": "packages/server/src/services/video-generator/index.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Service file is 1575 lines containing video generation logic that should be split into separate modules for rendering, encoding, and API interactions.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-021",
+      "file_path": "packages/components/src",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Multiple large utility files (handler.ts, utils.ts, agents.ts, storageUtils.ts) exceed recommended sizes. Consider extracting common patterns into separate utility libraries.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-022",
+      "file_path": "packages/server/src/utils/buildAgentGraph.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "File is 1105 lines. Graph building logic should be modularized into separate functions for graph construction, validation, and traversal.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-023",
+      "file_path": "packages/components/nodes/sequentialagents/Agent/Agent.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Sequential agent implementation is 1090 lines. Should be refactored to extract agent execution logic, state management, and orchestration into separate modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-024",
+      "file_path": "packages/server/src/aai-utils/billing/stripe/StripeProvider.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "File is 1076 lines containing comprehensive Stripe integration. Should be split into separate modules for subscription management, usage tracking, and invoice handling.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-025",
+      "file_path": "packages/components/nodes/chatmodels/ChatGoogleGenerativeAI/FlowiseChatGoogleGenerativeAI.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Chat model implementation is 1068 lines. Should extract common chat model patterns into a base class to reduce duplication across model implementations.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-026",
+      "file_path": "packages/server/src/services/chatflows/index.ts",
+      "issue_type": "complexity",
+      "severity": "high",
+      "description": "Chatflows service is 1023 lines with mixed concerns: CRUD operations, execution logic, validation, and messaging. Should be split into separate services.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-027",
+      "file_path": "packages/components/nodes/agentflow/LLM/LLM.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "LLM node implementation is 1013 lines. Should extract LLM selection, configuration, and initialization logic into separate modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-028",
+      "file_path": "packages/components/nodes/tools/MicrosoftTeams/core.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Microsoft Teams tool implementation is 1669 lines. Complex API interactions should be split into separate modules for channels, messages, and team management.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-029",
+      "file_path": "packages/components/nodes/tools/Jira/core.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Jira tool integration is 1172 lines containing multiple API operations. Should extract into separate modules for issue management, workflow, and project operations.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-030",
+      "file_path": "packages/components/src/storageUtils.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Storage utilities file is 1108 lines. Should be split into separate modules for file operations, storage management, and caching.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-031",
+      "file_path": "packages/components/src/agents.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Agents utility file is 1079 lines with mixed agent creation, execution, and utility logic. Should be refactored into focused agent factory and executor modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-032",
+      "file_path": "packages/components/nodes/tools/Gmail/core.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Gmail tool implementation is 1079 lines. Complex Gmail API operations should be extracted into separate modules for email management and label operations.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-033",
+      "file_path": "packages/components/nodes/documentloaders/FireCrawl/FireCrawl.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "FireCrawl loader is 1047 lines. Web scraping and document processing logic should be split into separate modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-034",
+      "file_path": "packages/components/nodes/documentloaders/S3File/S3File.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "S3 file loader is 1037 lines. File handling and S3 operations should be extracted into separate utility modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-035",
+      "file_path": "packages/components/nodes/tools/GoogleDrive/core.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Google Drive tool is 982 lines. Drive API operations should be split into separate modules for file, folder, and permission management.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-036",
+      "file_path": "packages/components/nodes/tools/MicrosoftOutlook/core.ts",
+      "issue_type": "complexity",
+      "severity": "medium",
+      "description": "Microsoft Outlook tool is 969 lines. Complex email and calendar operations should be extracted into focused modules.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-037",
+      "file_path": "packages/server/src",
+      "issue_type": "testing",
+      "severity": "high",
+      "description": "Limited test coverage for core services. Only 12 test files found across entire server package. Critical services like chatflows, documentstore, and billing need comprehensive test coverage.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-038",
+      "file_path": "packages/server/src/routes",
+      "issue_type": "security",
+      "severity": "high",
+      "description": "Public routes (public-chatflows, public-executions) intentionally lack authentication. These should be thoroughly tested for XSS, CSRF, and data exposure vulnerabilities.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-039",
+      "file_path": "packages/server/src/utils",
+      "issue_type": "documentation",
+      "severity": "medium",
+      "description": "Large utility modules (index.ts, buildAgentflow.ts, buildChatflow.ts) lack comprehensive JSDoc comments explaining exported functions and their parameters.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    },
+    {
+      "id": "issue-040",
+      "file_path": "packages/components/nodes",
+      "issue_type": "documentation",
+      "severity": "medium",
+      "description": "Node components lack consistent JSDoc documentation. Many complex nodes (Agent.ts, handler.ts) missing parameter documentation and implementation details.",
+      "line_number": null,
+      "detected_at": "2026-01-22T00:00:00Z"
+    }
+  ]
+}

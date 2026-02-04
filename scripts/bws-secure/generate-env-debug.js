@@ -24,11 +24,11 @@ const envPath = possibleEnvPaths.find((path) => fs.existsSync(path));
 
 if (envPath) {
   console.log(`\x1b[36mLoading .env from:\x1b[0m ${envPath}`);
-  dotenv.config({ path: envPath });
+  dotenv.config({ path: envPath, quiet: true });
 } else {
   console.log('\x1b[33mNo .env file found in common locations. Using process.env directly.\x1b[0m');
   // Still call config() to ensure dotenv is initialized
-  dotenv.config();
+  dotenv.config({ quiet: true });
 }
 
 // Log environment loading status

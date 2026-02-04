@@ -7,12 +7,13 @@
  */
 
 import axios from 'axios';
+import fs from 'node:fs';
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Load environment variables from .env file
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);

@@ -1,0 +1,946 @@
+{
+  "version": "1.0",
+  "features": [
+    {
+      "id": "user-authentication",
+      "category": "auth",
+      "description": "Users can authenticate via Auth0 JWT tokens or API keys and maintain secure sessions",
+      "steps": [
+        "Navigate to login page",
+        "Authenticate via Auth0 or use API key",
+        "Access authenticated routes with token/key"
+      ],
+      "status": "completed",
+      "depends_on": [],
+      "blocks": [
+        "chatflow-management",
+        "user-organization-management",
+        "api-key-management"
+      ],
+      "priority": 1,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can authenticate via Auth0",
+        "Users can use API keys for programmatic access",
+        "Sessions are maintained securely",
+        "Unauthorized requests are rejected"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatflow-management",
+      "category": "business-logic",
+      "description": "Users can create, edit, deploy, and manage AI chatflows (conversation flows) and agent flows visually",
+      "steps": [
+        "Navigate to chatflows page",
+        "Click 'Create New Chatflow'",
+        "Design flow by adding nodes and connections",
+        "Configure chatflow settings (name, description, visibility)",
+        "Save or deploy chatflow"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication",
+        "credentials-management"
+      ],
+      "blocks": [
+        "chatflow-execution",
+        "chatflow-versioning",
+        "chatflow-deployment"
+      ],
+      "priority": 1,
+      "estimated_sessions": 5,
+      "acceptance_criteria": [
+        "Users can create new chatflows",
+        "Users can edit existing chatflows",
+        "Users can view chatflow history",
+        "Chatflows can be deployed to production",
+        "Chatflows support both simple flows and agent flows",
+        "Chatflow visibility can be set (Private/Public/Organization/Marketplace)"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "agent-flow-builder",
+      "category": "business-logic",
+      "description": "Users can build advanced AI agent flows with multi-agent orchestration and tool integration",
+      "steps": [
+        "Navigate to agentflows page",
+        "Create new agentflow",
+        "Add agents and configure their tools",
+        "Set up agent orchestration and communication",
+        "Deploy and test agent system"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management",
+        "tools-management"
+      ],
+      "blocks": [],
+      "priority": 1,
+      "estimated_sessions": 6,
+      "acceptance_criteria": [
+        "Users can create agent flows",
+        "Multiple agents can be configured in one flow",
+        "Agents can use external tools",
+        "Agent orchestration logic can be customized",
+        "Multi-agent flows can be executed and monitored"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "credentials-management",
+      "category": "data",
+      "description": "Users can securely store and manage API credentials for integrations with LLMs, services, and tools",
+      "steps": [
+        "Navigate to credentials page",
+        "Click 'Add Credential'",
+        "Select credential type",
+        "Enter API key/token",
+        "Save credential securely"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [
+        "chatflow-management",
+        "assistant-management",
+        "tools-management"
+      ],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can add new credentials",
+        "Credentials are encrypted at rest",
+        "Users can update credentials",
+        "Users can delete credentials",
+        "Credentials are scoped to organization"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "assistant-management",
+      "category": "business-logic",
+      "description": "Users can create and manage AI assistants with custom models, document stores, and tools",
+      "steps": [
+        "Navigate to assistants page",
+        "Create new assistant",
+        "Configure model, system prompt, and tools",
+        "Optionally connect knowledge base (document store)",
+        "Deploy assistant for use"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "credentials-management",
+        "document-store-management"
+      ],
+      "blocks": [
+        "chatbot-deployment",
+        "chat-interface"
+      ],
+      "priority": 2,
+      "estimated_sessions": 4,
+      "acceptance_criteria": [
+        "Users can create custom assistants",
+        "Assistants support multiple LLM models",
+        "Assistants can access document stores",
+        "Assistants can use tools",
+        "Assistant instructions can be auto-generated"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "document-store-management",
+      "category": "data",
+      "description": "Users can create and manage document stores to upload files for RAG (Retrieval-Augmented Generation) and chatflow use",
+      "steps": [
+        "Navigate to document stores page",
+        "Create new document store",
+        "Upload files (PDF, DOCX, TXT, etc.)",
+        "Configure chunking and vector store settings",
+        "Query documents or connect to chatflow"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [
+        "assistant-management",
+        "chatflow-management"
+      ],
+      "priority": 2,
+      "estimated_sessions": 4,
+      "acceptance_criteria": [
+        "Users can create document stores",
+        "Users can upload multiple file types",
+        "Files are chunked and vectorized",
+        "Document stores can be queried",
+        "Chunking configuration is customizable",
+        "Refresh/update of documents supported"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chat-interface",
+      "category": "ui",
+      "description": "Users can interact with deployed chatflows and assistants through a web-based chat interface",
+      "steps": [
+        "Navigate to chat page",
+        "Select a chatflow or assistant",
+        "Send message",
+        "Receive and view response",
+        "Continue conversation"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management",
+        "assistant-management"
+      ],
+      "blocks": [
+        "chat-history-management"
+      ],
+      "priority": 1,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can select a chatflow to interact with",
+        "Messages are sent and responses displayed",
+        "Chat supports streaming responses",
+        "Chat history is maintained",
+        "Chat supports file uploads and attachments"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chat-history-management",
+      "category": "data",
+      "description": "Users can view, search, and manage their chat history and conversation records",
+      "steps": [
+        "Navigate to chats page",
+        "View list of past conversations",
+        "Select a chat to view details",
+        "Search or filter chats",
+        "Delete specific chats"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chat-interface"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can view all their chats",
+        "Chats can be searched and filtered",
+        "Chat messages can be viewed",
+        "Chats can be deleted",
+        "Chat metadata (title, date) is displayed"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "tools-management",
+      "category": "integration",
+      "description": "Users can create and manage tools that agents and chatflows can use to interact with external systems",
+      "steps": [
+        "Navigate to tools page",
+        "Create new tool or use existing",
+        "Configure tool endpoint and parameters",
+        "Test tool functionality",
+        "Use tool in chatflows/agents"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [
+        "agent-flow-builder"
+      ],
+      "priority": 2,
+      "estimated_sessions": 3,
+      "acceptance_criteria": [
+        "Users can create custom tools",
+        "Tools can call external APIs",
+        "Tool parameters are configurable",
+        "Tools can be used in chatflows and agents",
+        "Tool results are displayed in chat"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "api-key-management",
+      "category": "auth",
+      "description": "Users can generate and manage API keys for programmatic access to chatflows and agents",
+      "steps": [
+        "Navigate to API Keys page",
+        "Click 'Generate New API Key'",
+        "Name the API key",
+        "Configure scope and permissions",
+        "Copy and store key securely"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Users can create API keys",
+        "API keys can be scoped to specific resources",
+        "API keys have configurable permissions",
+        "API keys can be revoked",
+        "API key usage is tracked"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-organization-management",
+      "category": "auth",
+      "description": "Admins can manage organizations, workspaces, users, and roles within the system",
+      "steps": [
+        "Navigate to admin panel",
+        "Manage organizations/workspaces",
+        "Add or remove users",
+        "Configure roles and permissions",
+        "Set organization settings"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 4,
+      "acceptance_criteria": [
+        "Admins can create organizations",
+        "Admins can manage users in organization",
+        "Admins can assign roles",
+        "Admins can configure organization settings",
+        "Multi-tenancy is enforced"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatbot-deployment",
+      "category": "business-logic",
+      "description": "Users can deploy chatflows and assistants as standalone chatbots with custom branding and configuration",
+      "steps": [
+        "Select a chatflow or assistant",
+        "Click 'Deploy as Chatbot'",
+        "Configure chatbot settings",
+        "Get embed code or share link",
+        "Monitor chatbot usage and analytics"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management",
+        "assistant-management"
+      ],
+      "blocks": [
+        "chatbot-analytics"
+      ],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Chatflows can be deployed as chatbots",
+        "Chatbots can be embedded in websites",
+        "Chatbots can be shared via public links",
+        "Chatbot branding is customizable",
+        "Public chatbots have analytics tracking"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatbot-analytics",
+      "category": "ui",
+      "description": "Users can view analytics and metrics for deployed chatbots including usage, engagement, and performance",
+      "steps": [
+        "Navigate to chatbot analytics page",
+        "Select a deployed chatbot",
+        "View usage metrics and trends",
+        "View engagement statistics",
+        "Export analytics reports"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatbot-deployment"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can view chatbot usage metrics",
+        "Conversation analytics are displayed",
+        "User engagement metrics are tracked",
+        "Performance metrics are available",
+        "Analytics can be filtered by date range"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatflow-versioning",
+      "category": "data",
+      "description": "Users can version chatflows and rollback to previous versions",
+      "steps": [
+        "Open a chatflow",
+        "View version history",
+        "Select a previous version",
+        "Rollback to previous version",
+        "Compare versions"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Chatflow versions are automatically saved",
+        "Users can view version history",
+        "Users can rollback to previous versions",
+        "Versions can be compared",
+        "Version metadata is displayed"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatflow-deployment",
+      "category": "business-logic",
+      "description": "Users can deploy chatflows to production and manage deployment settings",
+      "steps": [
+        "Open chatflow",
+        "Review configuration",
+        "Click 'Deploy'",
+        "Configure deployment settings",
+        "Monitor deployment status"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 1,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Chatflows can be deployed",
+        "Deployment status is visible",
+        "Deployed chatflows are publicly accessible",
+        "Deployment can be disabled/enabled"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "chatflow-execution",
+      "category": "business-logic",
+      "description": "System can execute chatflows with node processing, tool calling, and streaming responses",
+      "steps": [
+        "Chatflow is triggered via API or UI",
+        "Each node in flow is executed",
+        "Tools are called as needed",
+        "Results are streamed or returned",
+        "Execution completes with final response"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 1,
+      "estimated_sessions": 3,
+      "acceptance_criteria": [
+        "Chatflows execute without errors",
+        "Nodes process data correctly",
+        "Tools are called and results used",
+        "Responses are streamed in real-time",
+        "Errors are handled gracefully"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "evaluations-system",
+      "category": "business-logic",
+      "description": "Users can create and run evaluations on chatflows and assistants to measure performance and quality",
+      "steps": [
+        "Navigate to evaluations page",
+        "Create new evaluation",
+        "Select chatflow/assistant to evaluate",
+        "Configure evaluation metrics",
+        "Run evaluation and view results"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management",
+        "assistant-management"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 3,
+      "acceptance_criteria": [
+        "Users can create evaluations",
+        "Evaluations can run on chatflows/assistants",
+        "Multiple evaluation metrics are supported",
+        "Results are displayed with visualizations",
+        "Evaluations can be re-run",
+        "Evaluation history is maintained"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "dataset-management",
+      "category": "data",
+      "description": "Users can create and manage datasets with rows of data for testing and evaluation",
+      "steps": [
+        "Navigate to datasets page",
+        "Create new dataset",
+        "Add rows of data",
+        "Configure dataset schema",
+        "Use dataset in evaluations"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [
+        "evaluations-system"
+      ],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can create datasets",
+        "Datasets can have custom columns",
+        "Data rows can be added/edited/deleted",
+        "Datasets can be exported",
+        "Datasets can be used in evaluations"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "variables-management",
+      "category": "data",
+      "description": "Users can create and manage variables to use in chatflows for dynamic configuration",
+      "steps": [
+        "Navigate to variables page",
+        "Create new variable",
+        "Set variable name and value",
+        "Use variable in chatflow",
+        "Update variable value"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Users can create variables",
+        "Variables can be used in chatflows",
+        "Variables can be updated dynamically",
+        "Variable types are enforced",
+        "Variables are scoped to organization"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "export-import-flows",
+      "category": "data",
+      "description": "Users can export chatflows/agents as JSON and import them from other sources",
+      "steps": [
+        "Open chatflow",
+        "Click 'Export'",
+        "Save JSON file",
+        "Navigate to import",
+        "Select JSON file to import",
+        "Chatflow is created from JSON"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Chatflows can be exported as JSON",
+        "JSON can be imported to create new flows",
+        "Export format is standardized",
+        "Large flows can be exported/imported",
+        "Credentials are handled securely in export"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "marketplace-feature",
+      "category": "integration",
+      "description": "Users can browse, download, and share chatflows from the marketplace",
+      "steps": [
+        "Navigate to marketplace",
+        "Search for flows",
+        "View flow details",
+        "Download/import flow",
+        "Publish own flows to marketplace"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management",
+        "export-import-flows"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can browse marketplace flows",
+        "Flows can be filtered and searched",
+        "Flows can be imported from marketplace",
+        "Users can publish flows to marketplace",
+        "Marketplace metadata is displayed"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "csv-data-transformer",
+      "category": "data",
+      "description": "Users can transform and process CSV data through AI-powered pipeline",
+      "steps": [
+        "Navigate to CSV Transformer",
+        "Upload CSV file",
+        "Configure transformation rules",
+        "Preview transformed data",
+        "Export or save results"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can upload CSV files",
+        "Transformations can be configured",
+        "Preview shows transformation results",
+        "Transformed data can be exported",
+        "Batch processing is supported"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "media-creation",
+      "category": "integration",
+      "description": "Users can generate images using DALL-E and create media content through AI",
+      "steps": [
+        "Navigate to media creator",
+        "Enter image description",
+        "Select DALL-E model options",
+        "Generate image",
+        "Download or use image in flows"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "credentials-management"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Users can generate images via DALL-E",
+        "Multiple image variants can be generated",
+        "Images can be downloaded",
+        "Images can be used in chatflows",
+        "Image generation is tracked in usage"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "settings-management",
+      "category": "ui",
+      "description": "Users can manage their account, organization, and system settings",
+      "steps": [
+        "Navigate to settings",
+        "Configure user profile",
+        "Configure organization settings",
+        "Manage integrations",
+        "Update system preferences"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Users can update profile",
+        "Organization settings are configurable",
+        "Integrations can be configured",
+        "User preferences are saved",
+        "SSO configuration is available for admins"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "billing-usage-tracking",
+      "category": "data",
+      "description": "System tracks usage metrics and displays billing information for users",
+      "steps": [
+        "Navigate to billing page",
+        "View current plan",
+        "Check usage statistics",
+        "View billing history",
+        "Upgrade or change plan"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-authentication"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Users can view current plan",
+        "Usage metrics are displayed",
+        "Billing history is available",
+        "Users can upgrade plans",
+        "Usage limits are enforced"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "message-feedback-system",
+      "category": "data",
+      "description": "Users can provide feedback on chat messages for improvement and quality tracking",
+      "steps": [
+        "In chat, select a message",
+        "Provide feedback (thumbs up/down)",
+        "Add comments if needed",
+        "Submit feedback"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chat-interface"
+      ],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Users can rate messages",
+        "Feedback can include comments",
+        "Feedback is stored and analyzed",
+        "Feedback is visible to admins"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "sso-saml-integration",
+      "category": "integration",
+      "description": "Organizations can configure SSO and SAML authentication for enterprise access",
+      "steps": [
+        "Navigate to SSO settings",
+        "Configure SAML provider",
+        "Add authentication details",
+        "Test SSO login",
+        "Enable for organization"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "user-organization-management"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "SAML SSO can be configured",
+        "Users can login via SSO",
+        "SSO settings are secure",
+        "Multiple SAML providers can be configured"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "oauth-integrations",
+      "category": "integration",
+      "description": "System supports OAuth2 integrations with external services like Google, Atlassian, Salesforce",
+      "steps": [
+        "Navigate to integrations",
+        "Select OAuth provider",
+        "Authorize application",
+        "Grant necessary permissions",
+        "Integration is connected"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "credentials-management"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "OAuth integrations are available",
+        "Users can authorize services",
+        "Token refresh is automatic",
+        "Multiple integrations can be connected"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "node-component-system",
+      "category": "business-logic",
+      "description": "System provides extensible node/component system for building chatflows with 29+ node categories",
+      "steps": [
+        "Open chatflow editor",
+        "Browse available node categories",
+        "Drag node to canvas",
+        "Configure node parameters",
+        "Connect nodes together"
+      ],
+      "status": "completed",
+      "depends_on": [],
+      "blocks": [
+        "chatflow-management"
+      ],
+      "priority": 1,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Multiple node types are available",
+        "Nodes can be configured with parameters",
+        "Nodes can be connected in valid ways",
+        "Custom nodes can be created",
+        "Node validation is performed"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "llm-model-integration",
+      "category": "integration",
+      "description": "System integrates with multiple LLM providers (OpenAI, Anthropic, Gemini, etc.)",
+      "steps": [
+        "Configure LLM credentials",
+        "Select model in chatflow/assistant",
+        "Configure model parameters",
+        "Use model in conversation"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "credentials-management"
+      ],
+      "blocks": [
+        "assistant-management",
+        "chatflow-management"
+      ],
+      "priority": 1,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Multiple LLM providers are supported",
+        "Model parameters are configurable",
+        "Model switching is seamless",
+        "Token counting is accurate"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "vector-store-integration",
+      "category": "integration",
+      "description": "System supports multiple vector stores (Qdrant, Pinecone, Weaviate, etc.) for embeddings",
+      "steps": [
+        "Configure vector store credentials",
+        "Create document store with vector store",
+        "Upload and chunk documents",
+        "Query vectors in chatflow",
+        "Use results in agent/chatbot"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "document-store-management",
+        "credentials-management"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 2,
+      "acceptance_criteria": [
+        "Multiple vector stores are supported",
+        "Embeddings are generated and stored",
+        "Semantic search works correctly",
+        "Vector store can be queried"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "public-shared-flows",
+      "category": "data",
+      "description": "Users can share chatflows publicly via shareable links with different sharing options",
+      "steps": [
+        "Open chatflow",
+        "Click 'Share'",
+        "Generate shareable link",
+        "Configure share settings",
+        "Share link with others"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-management"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Public share links can be generated",
+        "Share settings are configurable",
+        "Public flows are accessible without auth",
+        "Share links can be revoked"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "browser-extension",
+      "category": "integration",
+      "description": "Users can install browser extension to use chatflows and assistants from any website",
+      "steps": [
+        "Install browser extension",
+        "Configure extension settings",
+        "Click extension icon",
+        "Interact with chatbot",
+        "Get responses on current page"
+      ],
+      "status": "completed",
+      "depends_on": [],
+      "blocks": [],
+      "priority": 3,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Extension can be installed",
+        "Extension authenticates with account",
+        "Chatbots are accessible from extension",
+        "Extension works on multiple websites"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "tracing-monitoring",
+      "category": "data",
+      "description": "Users can trace and monitor chatflow execution with detailed step-by-step logs",
+      "steps": [
+        "Navigate to tracing/monitoring",
+        "View execution traces",
+        "See detailed step logs",
+        "Monitor token usage",
+        "Debug issues in flow"
+      ],
+      "status": "completed",
+      "depends_on": [
+        "chatflow-execution"
+      ],
+      "blocks": [],
+      "priority": 2,
+      "estimated_sessions": 1,
+      "acceptance_criteria": [
+        "Execution traces are recorded",
+        "Detailed logs are available",
+        "Token usage is tracked",
+        "Performance metrics are shown"
+      ],
+      "implemented_at": "2026-01-01T00:00:00Z"
+    }
+  ]
+}

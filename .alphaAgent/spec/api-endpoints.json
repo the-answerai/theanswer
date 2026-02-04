@@ -1,0 +1,1028 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "framework": "Express.js (Server) + Next.js App Router (Web)",
+    "authentication": "checkPermission/checkAnyPermission middleware (Express) + Auth0 (Next.js)",
+    "base_path_flowise": "/api/v1",
+    "base_path_nextjs": "/api",
+    "description": "TheAnswer API with Flowise core and Next.js extensions"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/v1/ping",
+      "description": "Health check endpoint",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/ping/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "HEAD",
+      "path": "/api/v1/ping",
+      "description": "Health check endpoint (HEAD)",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/ping/index.ts",
+      "line_number": 9
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/apikey",
+      "description": "Create API key",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/apikey/import",
+      "description": "Import API keys",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/apikey",
+      "description": "Get all API keys",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/apikey",
+      "description": "Update API key",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/apikey/:id",
+      "description": "Update API key by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/apikey",
+      "description": "Delete API key",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/apikey/:id",
+      "description": "Delete API key by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/apikey/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assistants",
+      "description": "Create assistant",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assistants",
+      "description": "Get all assistants",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assistants/:id",
+      "description": "Get assistant by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/assistants",
+      "description": "Update assistant",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/assistants/:id",
+      "description": "Update assistant by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/assistants",
+      "description": "Delete assistant",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 18
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/assistants/:id",
+      "description": "Delete assistant by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 18
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assistants/components/chatmodels",
+      "description": "Get available chat models for assistants",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 20
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assistants/components/docstores",
+      "description": "Get available document stores for assistants",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 21
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assistants/components/tools",
+      "description": "Get available tools for assistants",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 22
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/assistants/generate/instruction",
+      "description": "Generate assistant instruction",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/assistants/index.ts",
+      "line_number": 25
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/attachments/:chatflowId/:chatId",
+      "description": "Create attachment (file upload)",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/attachments/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chatflows",
+      "description": "Create chatflow",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatflows",
+      "description": "Get all chatflows",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatflows/:id",
+      "description": "Get chatflow by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 19
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatflows/apikey/:apikey",
+      "description": "Get chatflow by API key",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 24
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chatflows",
+      "description": "Update chatflow",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 27
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chatflows/:id",
+      "description": "Update chatflow by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 27
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chatflows",
+      "description": "Delete chatflow",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 34
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chatflows/:id",
+      "description": "Delete chatflow by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 34
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatflows/has-changed/:id/:lastUpdatedDateTime",
+      "description": "Check if chatflow has changed",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chatflows/index.ts",
+      "line_number": 37
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatflows-streaming/:id",
+      "description": "Check if chatflow is valid for streaming",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chatflows-streaming/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chatmessage/:id",
+      "description": "Get all chat messages",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chat-messages/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chatmessage/abort/:chatflowid/:chatid",
+      "description": "Abort chat message",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chat-messages/index.ts",
+      "line_number": 13
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chatmessage",
+      "description": "Remove all chat messages",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chat-messages/index.ts",
+      "line_number": 16
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/chatmessage/:id",
+      "description": "Remove chat message by ID",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/chat-messages/index.ts",
+      "line_number": 16
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chats",
+      "description": "Get all chats",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chats/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chats/:id",
+      "description": "Get chat by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/chats/index.ts",
+      "line_number": 9
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/credentials",
+      "description": "Create credential",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/credentials",
+      "description": "Get all credentials",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/credentials/:id",
+      "description": "Get credential by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/credentials",
+      "description": "Update credential",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/credentials/:id",
+      "description": "Update credential by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/credentials",
+      "description": "Delete credential",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/credentials/:id",
+      "description": "Delete credential by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/credentials/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nodes",
+      "description": "Get all nodes",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/nodes/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nodes/:name",
+      "description": "Get node by name",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/nodes/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/nodes/category/:name",
+      "description": "Get nodes by category",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/nodes/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tools",
+      "description": "Create tool",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tools",
+      "description": "Get all tools",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tools/:id",
+      "description": "Get tool by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tools",
+      "description": "Update tool",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tools/:id",
+      "description": "Update tool by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tools",
+      "description": "Delete tool",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 18
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tools/:id",
+      "description": "Delete tool by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/tools/index.ts",
+      "line_number": 18
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/variables",
+      "description": "Create variable",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/variables",
+      "description": "Get all variables",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/variables",
+      "description": "Update variable",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/variables/:id",
+      "description": "Update variable by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/variables",
+      "description": "Delete variable",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/variables/:id",
+      "description": "Delete variable by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/variables/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public-chatflows/:id",
+      "description": "Get public chatflow by ID (no auth required)",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/public-chatflows/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public-executions/:id",
+      "description": "Get public execution by ID",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/public-executions/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/feedback/:id",
+      "description": "Create chat message feedback",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/feedback",
+      "description": "Create chat message feedback",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/feedback",
+      "description": "Get all chat message feedback",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/feedback/:id",
+      "description": "Get chat message feedback by ID",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 9
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/feedback",
+      "description": "Update chat message feedback",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/feedback/:id",
+      "description": "Update chat message feedback by ID",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/feedback/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/prediction",
+      "description": "Create prediction (with file upload and rate limiting)",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/predictions/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/prediction/:id",
+      "description": "Create prediction by chatflow ID (with file upload and rate limiting)",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/predictions/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings",
+      "description": "Get settings list",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/settings/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/customer/status",
+      "description": "Get customer billing status",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/usage/summary",
+      "description": "Get usage summary",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 13
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/usage/events",
+      "description": "Get usage events",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/subscription/status",
+      "description": "Get subscription with usage",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 17
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/subscriptions",
+      "description": "Create checkout session",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 18
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/billing/subscriptions/:id",
+      "description": "Update subscription",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 19
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/billing/subscriptions/:id",
+      "description": "Cancel subscription",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 20
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/payment-methods",
+      "description": "Attach payment method",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 23
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/portal-sessions",
+      "description": "Create billing portal session",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 26
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/invoice/upcoming",
+      "description": "Get upcoming invoice",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 29
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/invoices/upcoming",
+      "description": "Get upcoming invoice",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 30
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/billing/usage/sync",
+      "description": "Usage sync handler",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 33
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/usage/sync",
+      "description": "Usage sync handler",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 34
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/billing/webhooks",
+      "description": "Handle billing webhook",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/billing/index.ts",
+      "line_number": 37
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/plan",
+      "description": "Get current plan",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/plan/index.ts",
+      "line_number": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/plan/history",
+      "description": "Get plan history",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/plan/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/executions",
+      "description": "Get all executions",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/executions/:id",
+      "description": "Get execution by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/executions",
+      "description": "Update execution",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/executions/:id",
+      "description": "Update execution by ID",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/executions/:id",
+      "description": "Delete execution by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/executions",
+      "description": "Delete multiple executions",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/executions/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evaluations",
+      "description": "Get all evaluations",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evaluations/:id",
+      "description": "Get evaluation by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 7
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/evaluations/:id",
+      "description": "Delete evaluation by ID",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 8
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/evaluations",
+      "description": "Create evaluation",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evaluations/is-outdated/:id",
+      "description": "Check if evaluation is outdated",
+      "auth_required": false,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/evaluations/run-again/:id",
+      "description": "Run evaluation again",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evaluations/versions/:id",
+      "description": "Get evaluation versions",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/evaluations",
+      "description": "Patch delete evaluations",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/evaluations/index.ts",
+      "line_number": 13
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/chatflows",
+      "description": "Get admin chatflows",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 10
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/chatflows/default-template",
+      "description": "Get default chatflow template",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 11
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/chatflows/:id/versions",
+      "description": "Get chatflow versions",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 12
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/chatflows/bulk-update",
+      "description": "Bulk update chatflows",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 14
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/chatflows/:id/rollback/:version",
+      "description": "Rollback chatflow to version",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 15
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/document-stores",
+      "description": "Get admin document stores",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 19
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/organizations/credentials",
+      "description": "Get organization credentials",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 23
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/organizations/credentials",
+      "description": "Update organization credentials",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/admin/index.ts",
+      "line_number": 26
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/domains",
+      "description": "Get domains (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 36
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/urls",
+      "description": "Get URLs (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 37
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/calls",
+      "description": "Get calls (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 38
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/tags",
+      "description": "Get tags (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 39
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/documents",
+      "description": "Get documents (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 40
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/tickets",
+      "description": "Get tickets (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 41
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-engine/chats",
+      "description": "Get chats (Data Engine)",
+      "auth_required": true,
+      "file_path": "packages/server/src/routes/data-engine/index.ts",
+      "line_number": 42
+    },
+    {
+      "method": "GET",
+      "path": "/api/chats",
+      "description": "Get all chats (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/chats/route.ts",
+      "line_number": 11
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/chats",
+      "description": "Delete chat by ID (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/chats/route.ts",
+      "line_number": 26
+    },
+    {
+      "method": "GET",
+      "path": "/api/chats/:id",
+      "description": "Get chat by ID (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/chats/[id]/route.ts",
+      "line_number": 0
+    },
+    {
+      "method": "POST",
+      "path": "/api/chats/:id/share",
+      "description": "Share chat with users (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/chats/[id]/share/route.ts",
+      "line_number": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings",
+      "description": "Get user and organization settings (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/settings/route.ts",
+      "line_number": 33
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings",
+      "description": "Update user app settings (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/settings/route.ts",
+      "line_number": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/sidekicks",
+      "description": "Get sidekicks for chat (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/sidekicks/route.ts",
+      "line_number": 19
+    },
+    {
+      "method": "GET",
+      "path": "/api/app-config",
+      "description": "Get app config (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/app-config/route.ts",
+      "line_number": 33
+    },
+    {
+      "method": "POST",
+      "path": "/api/app-config",
+      "description": "Create app config (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/app-config/route.ts",
+      "line_number": 8
+    },
+    {
+      "method": "PUT",
+      "path": "/api/app-config",
+      "description": "Update app config (Next.js)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/app-config/route.ts",
+      "line_number": 64
+    },
+    {
+      "method": "POST",
+      "path": "/api/images/generate",
+      "description": "Generate DALL-E image (Next.js proxy to Flowise)",
+      "auth_required": true,
+      "file_path": "apps/web/app/api/images/generate/route.ts",
+      "line_number": 5
+    }
+  ]
+}

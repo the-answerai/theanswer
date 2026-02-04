@@ -2,10 +2,11 @@
 
 /* eslint-disable no-console */
 
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs, { promises as fsPromises } from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { ensureBwsInstalled } from './bws-dotenv.js';
@@ -13,6 +14,7 @@ import {
   promptForProject,
   updateEnvironmentBwsSection,
   determineEnvironment,
+  normalizeEnvironment,
   readConfigFile,
   log
 } from './project-selector.js';
@@ -133,7 +135,6 @@ async function readConfigFileWithFallback() {
         );
 
         // Clean output of any ANSI codes
-        // eslint-disable-next-line no-control-regex
         const cleanOutput = output.replace(/\u001B\[\d+m/g, '').trim();
         const secrets = JSON.parse(cleanOutput);
 
@@ -816,7 +817,6 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
 
         if (result.status === 0) {
           // Always clean the output, even without DEBUG
-          // eslint-disable-next-line no-control-regex
           const cleanOutput = result.stdout.replaceAll(/\u001B\[\d+m/g, '').trim();
 
           try {
@@ -1578,7 +1578,13 @@ async function handleUploadCommand() {
       process.exit(0);
     }
 
-    const result = spawnSync(arguments_.join(' '), [], {
+    // Normalize command - strip wrapping quotes that may have been passed literally
+    // This handles cases like: pnpm secure-run "turbo dev" where quotes become part of argv
+    // Works cross-platform: Linux, macOS, Windows (cmd.exe, PowerShell), and CI/CD environments
+    let commandString = arguments_.join(' ');
+    commandString = commandString.replace(/^["'](.*)["']$/, '$1').trim();
+
+    const result = spawnSync(commandString, [], {
       stdio: 'inherit',
       env: process.env,
       shell: true
