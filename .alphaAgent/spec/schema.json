@@ -1,0 +1,1810 @@
+{
+  "version": "1.0",
+  "databaseType": "PostgreSQL",
+  "description": "Combined database schema from TypeORM (Flowise core) and Prisma (TheAnswer extensions)",
+  "tables": [
+    {
+      "name": "user",
+      "source": "TypeORM (enterprise)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "credential",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "tempToken",
+          "type": "TEXT",
+          "nullable": true,
+          "unique": true
+        },
+        {
+          "name": "tokenExpiry",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": "unverified",
+          "enum": ["active", "invited", "unverified", "deleted"]
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "createdBy",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "updatedBy",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "auth0Id",
+          "type": "VARCHAR",
+          "nullable": true,
+          "unique": true
+        },
+        {
+          "name": "stripeCustomerId",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "trialPlanId",
+          "type": "UUID",
+          "nullable": true
+        },
+        {
+          "name": "defaultChatflowId",
+          "type": "UUID",
+          "nullable": true
+        }
+      ],
+      "indexes": ["idx_user_email", "idx_user_organizationId", "idx_user_auth0Id"]
+    },
+    {
+      "name": "organization",
+      "source": "TypeORM (enterprise)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": "Default Organization"
+        },
+        {
+          "name": "customerId",
+          "type": "VARCHAR(100)",
+          "nullable": true
+        },
+        {
+          "name": "subscriptionId",
+          "type": "VARCHAR(100)",
+          "nullable": true
+        },
+        {
+          "name": "auth0Id",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "organizationConfig",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "currentPaidPlanId",
+          "type": "UUID",
+          "nullable": true
+        },
+        {
+          "name": "billingPoolEnabled",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "stripeCustomerId",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "enabledIntegrations",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "createdBy",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "updatedBy",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        }
+      ],
+      "indexes": ["idx_organization_auth0Id"]
+    },
+    {
+      "name": "chatflow",
+      "source": "TypeORM (Flowise core)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "flowData",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "deployed",
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        {
+          "name": "isPublic",
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        {
+          "name": "apikeyid",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "chatbotConfig",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "visibility",
+          "type": "SIMPLE_ARRAY",
+          "nullable": true,
+          "enum": ["Private", "Public", "Organization", "AnswerAI", "Marketplace"]
+        },
+        {
+          "name": "answersConfig",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "apiConfig",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "analytic",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "speechToText",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "textToSpeech",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "followUpPrompts",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR(20)",
+          "nullable": false,
+          "default": "CHATFLOW",
+          "enum": ["CHATFLOW", "AGENTFLOW", "MULTIAGENT", "ASSISTANT"]
+        },
+        {
+          "name": "browserExtConfig",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "parentChatflowId",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "deletedDate",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "templateId",
+          "type": "UUID",
+          "nullable": true
+        },
+        {
+          "name": "currentVersion",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": 1
+        },
+        {
+          "name": "s3Location",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "workspaceId",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ],
+      "indexes": ["idx_chatflow_userId", "idx_chatflow_organizationId", "idx_chatflow_parentChatflowId", "idx_chatflow_templateId"]
+    },
+    {
+      "name": "chat_message",
+      "source": "TypeORM (Flowise core)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "role",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "chatflowid",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "chatflow",
+            "column": "id"
+          }
+        },
+        {
+          "name": "executionId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "execution",
+            "column": "id"
+          }
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "sourceDocuments",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "usedTools",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "fileAnnotations",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "agentReasoning",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "fileUploads",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "artifacts",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "chatType",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "chatId",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "memoryType",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "sessionId",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "leadEmail",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "deletedDate",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "followUpPrompts",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "guardrails_metadata",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "tracking_metadata",
+          "type": "TEXT",
+          "nullable": true
+        }
+      ],
+      "indexes": ["idx_chat_message_chatflowid", "idx_chat_message_userId", "idx_chat_message_organizationId"]
+    },
+    {
+      "name": "credential",
+      "source": "TypeORM (Flowise core)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "credentialName",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "encryptedData",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "visibility",
+          "type": "SIMPLE_ARRAY",
+          "nullable": true,
+          "enum": ["Private", "Organization", "Platform"]
+        },
+        {
+          "name": "workspaceId",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ],
+      "indexes": ["idx_credential_userId", "idx_credential_organizationId"]
+    },
+    {
+      "name": "tool",
+      "source": "TypeORM (Flowise core)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "color",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "iconSrc",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "schema",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "func",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "visibility",
+          "type": "SIMPLE_ARRAY",
+          "nullable": true,
+          "enum": ["Private", "Organization"]
+        },
+        {
+          "name": "workspaceId",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ],
+      "indexes": ["idx_tool_userId", "idx_tool_organizationId"]
+    },
+    {
+      "name": "execution",
+      "source": "TypeORM (Flowise core)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "executionData",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "state",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "agentflowId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "chatflow",
+            "column": "id"
+          }
+        },
+        {
+          "name": "sessionId",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "isPublic",
+          "type": "BOOLEAN",
+          "nullable": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "createdDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "stoppedDate",
+          "type": "TIMESTAMP",
+          "nullable": false
+        },
+        {
+          "name": "workspaceId",
+          "type": "TEXT",
+          "nullable": false
+        }
+      ],
+      "indexes": ["idx_execution_agentflowId", "idx_execution_sessionId", "idx_execution_userId", "idx_execution_organizationId"]
+    },
+    {
+      "name": "chat",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "promptId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "prompt",
+            "column": "id"
+          }
+        },
+        {
+          "name": "journeyId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "journey",
+            "column": "id"
+          }
+        },
+        {
+          "name": "ownerId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "chatflowChatId",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "filters",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "deleted",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_chat_promptId", "idx_chat_journeyId", "idx_chat_ownerId", "idx_chat_organizationId"]
+    },
+    {
+      "name": "message",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "role",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "assistant"
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "contextSourceFilesUsed",
+          "type": "TEXT[]",
+          "nullable": false,
+          "default": "ARRAY[]::TEXT[]"
+        },
+        {
+          "name": "context",
+          "type": "TEXT",
+          "nullable": false,
+          "default": ""
+        },
+        {
+          "name": "sidekickJson",
+          "type": "JSONB",
+          "nullable": false,
+          "default": "{}"
+        },
+        {
+          "name": "promptId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "prompt",
+            "column": "id"
+          }
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "chatId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "chat",
+            "column": "id"
+          }
+        },
+        {
+          "name": "likes",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "dislikes",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "deleted",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "aiRequestId",
+          "type": "UUID",
+          "nullable": true,
+          "unique": true,
+          "foreignKey": {
+            "table": "ai_request",
+            "column": "id"
+          }
+        }
+      ],
+      "indexes": ["idx_message_promptId", "idx_message_userId", "idx_message_chatId"]
+    },
+    {
+      "name": "prompt",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "usages",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "likes",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "dislikes",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "deleted",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "tags",
+          "type": "TEXT[]",
+          "nullable": false,
+          "default": "ARRAY[]::TEXT[]"
+        }
+      ],
+      "indexes": ["idx_prompt_content"]
+    },
+    {
+      "name": "journey",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "goal",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "completedAt",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "filters",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "deleted",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": false
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_journey_organizationId"]
+    },
+    {
+      "name": "document",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "source",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "domain",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "url",
+          "type": "VARCHAR",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false,
+          "default": ""
+        },
+        {
+          "name": "metadata",
+          "type": "JSONB",
+          "nullable": false,
+          "default": "{}"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "pending"
+        },
+        {
+          "name": "lastSyncedAt",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_document_url", "idx_document_source"]
+    },
+    {
+      "name": "document_permission",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "documentId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "document",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_document_permission_documentId", "idx_document_permission_organizationId"]
+    },
+    {
+      "name": "sidekick",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "isGlobal",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": false
+        },
+        {
+          "name": "isSystem",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": false
+        },
+        {
+          "name": "isSharedWithOrg",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": false
+        },
+        {
+          "name": "isFavoriteByDefault",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": false
+        },
+        {
+          "name": "chatflow",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "chatflowApiKey",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "chatflowDomain",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "label",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "tags",
+          "type": "TEXT[]",
+          "nullable": false,
+          "default": "ARRAY[]::TEXT[]"
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "temperature",
+          "type": "FLOAT",
+          "nullable": false,
+          "default": 1
+        },
+        {
+          "name": "frequency",
+          "type": "FLOAT",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "presence",
+          "type": "FLOAT",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "maxCompletionTokens",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 500
+        },
+        {
+          "name": "aiModel",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "systemPromptTemplate",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "userPromptTemplate",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "contextStringRender",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "placeholder",
+          "type": "VARCHAR",
+          "nullable": true
+        }
+      ],
+      "indexes": ["idx_sidekick_organizationId", "idx_sidekick_userId"]
+    },
+    {
+      "name": "api_key",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "organizationId",
+          "type": "UUID",
+          "nullable": true,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "USER",
+          "enum": ["USER", "ORGANIZATION"]
+        },
+        {
+          "name": "key",
+          "type": "VARCHAR",
+          "nullable": false,
+          "unique": true
+        }
+      ],
+      "indexes": ["idx_api_key_userId", "idx_api_key_organizationId"]
+    },
+    {
+      "name": "ai_request",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "type",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "method",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "model",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "tokensUsed",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "tokensUsedUser",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "costUsdTotal",
+          "type": "DECIMAL",
+          "nullable": false
+        },
+        {
+          "name": "costUsdTotalUser",
+          "type": "DECIMAL",
+          "nullable": false
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "request",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_ai_request_userId"]
+    },
+    {
+      "name": "message_feedback",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "rating",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "thumbsUp",
+          "enum": ["thumbsUp", "thumbsDown"]
+        },
+        {
+          "name": "content",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tags",
+          "type": "TEXT[]",
+          "nullable": false,
+          "default": "ARRAY[]::TEXT[]"
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "messageId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "message",
+            "column": "id"
+          }
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_message_feedback_userId", "idx_message_feedback_messageId"],
+      "uniqueConstraints": ["idx_message_feedback_userId_messageId"]
+    },
+    {
+      "name": "plan",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "tokenLimit",
+          "type": "INTEGER",
+          "nullable": false
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "active_user_plan",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "unique": true,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "planId",
+          "type": "INTEGER",
+          "nullable": false,
+          "foreignKey": {
+            "table": "plan",
+            "column": "id"
+          }
+        },
+        {
+          "name": "renewalDate",
+          "type": "TIMESTAMP",
+          "nullable": false
+        },
+        {
+          "name": "tokensLeft",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "startDate",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "gpt3RequestCount",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "gpt4RequestCount",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": 0
+        },
+        {
+          "name": "stripeSubscriptionId",
+          "type": "VARCHAR",
+          "nullable": true
+        },
+        {
+          "name": "shouldRenew",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": true
+        }
+      ],
+      "indexes": ["idx_active_user_plan_userId"]
+    },
+    {
+      "name": "app_config",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "appId",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "appType",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "config",
+          "type": "JSONB",
+          "nullable": false
+        }
+      ],
+      "indexes": ["idx_app_config_userId"]
+    },
+    {
+      "name": "app_csv_parse_runs",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "userId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "user",
+            "column": "id"
+          }
+        },
+        {
+          "name": "orgId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "organization",
+            "column": "id"
+          }
+        },
+        {
+          "name": "startedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "completedAt",
+          "type": "TIMESTAMP",
+          "nullable": true
+        },
+        {
+          "name": "rowsRequested",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "rowsProcessed",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "configuration",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "originalCsvUrl",
+          "type": "TEXT",
+          "nullable": false
+        },
+        {
+          "name": "processedCsvUrl",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "chatflowChatId",
+          "type": "VARCHAR",
+          "nullable": false
+        },
+        {
+          "name": "includeOriginalColumns",
+          "type": "BOOLEAN",
+          "nullable": false,
+          "default": true
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "pending",
+          "enum": ["pending", "inProgress", "completeWithErrors", "complete", "generatingCsv", "ready"]
+        },
+        {
+          "name": "errorMessages",
+          "type": "TEXT[]",
+          "nullable": false,
+          "default": "ARRAY[]::TEXT[]"
+        }
+      ],
+      "indexes": ["idx_app_csv_parse_runs_userId", "idx_app_csv_parse_runs_orgId"]
+    },
+    {
+      "name": "app_csv_parse_rows",
+      "source": "Prisma (TheAnswer extensions)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "primaryKey": true
+        },
+        {
+          "name": "csvParseRunId",
+          "type": "UUID",
+          "nullable": false,
+          "foreignKey": {
+            "table": "app_csv_parse_runs",
+            "column": "id"
+          }
+        },
+        {
+          "name": "rowNumber",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "rowData",
+          "type": "JSONB",
+          "nullable": false
+        },
+        {
+          "name": "generatedData",
+          "type": "JSONB",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": "pending",
+          "enum": ["pending", "inProgress", "completeWithError", "complete"]
+        },
+        {
+          "name": "errorMessage",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "createdAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": ["idx_app_csv_parse_rows_csvParseRunId"]
+    }
+  ],
+  "migrations": [
+    "TypeORM migrations in packages/server/src/migrations/",
+    "Prisma migrations in packages-answers/db/prisma/migrations/"
+  ],
+  "notes": {
+    "multi_tenancy": "All resources include userId and organizationId for multi-tenant isolation",
+    "soft_delete": "Some entities use DeleteDateColumn for soft deletes (chatflow, chat_message, execution, chat, journey, prompt, message)",
+    "timestamps": "All entities include createdDate/createdAt and updatedDate/updatedAt fields",
+    "two_databases": "Project uses TypeORM for Flowise core and Prisma for TheAnswer extensions"
+  }
+}

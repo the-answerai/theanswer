@@ -1,0 +1,1733 @@
+{
+  "version": "1.0",
+  "variables": [
+    {
+      "name": "PORT",
+      "description": "Server port number for Express/Node.js",
+      "required": false,
+      "default": "3000",
+      "example": "3000",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "NODE_ENV",
+      "description": "Node environment (development, production, test)",
+      "required": false,
+      "default": "development",
+      "example": "development",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "DEBUG",
+      "description": "Debug namespace filter (e.g., 'billing:*' for selective debug logging)",
+      "required": false,
+      "example": "billing:*",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "LOG_LEVEL",
+      "description": "Logging verbosity level (error, warn, info, verbose, debug)",
+      "required": false,
+      "example": "info",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "DISABLE_FLOWISE_TELEMETRY",
+      "description": "Disable Flowise telemetry collection",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "CORS_ORIGINS",
+      "description": "CORS allowed origins (use '*' for development only)",
+      "required": false,
+      "default": "*",
+      "example": "*",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "IFRAME_ORIGINS",
+      "description": "Allowed origins for iframe embedding",
+      "required": false,
+      "default": "*",
+      "example": "*",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "DOMAIN",
+      "description": "Server domain URL",
+      "required": false,
+      "example": "http://localhost:4000",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "DATABASE_TYPE",
+      "description": "Database type (postgres, mysql, sqlite, etc.)",
+      "required": true,
+      "default": "postgres",
+      "example": "postgres",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_HOST",
+      "description": "Database server hostname",
+      "required": true,
+      "example": "localhost",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_PORT",
+      "description": "Database server port",
+      "required": true,
+      "default": "5432",
+      "example": "5432",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_USER",
+      "description": "Database username",
+      "required": true,
+      "example": "example_user",
+      "sensitive": true,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_PASSWORD",
+      "description": "Database password",
+      "required": true,
+      "example": "example_password",
+      "sensitive": true,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_NAME",
+      "description": "Database name",
+      "required": true,
+      "example": "example_db",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_URL",
+      "description": "Full database connection string (alternative to individual DATABASE_* vars)",
+      "required": false,
+      "example": "postgresql://example_user:example_password@localhost:5432/example_db?schema=public",
+      "sensitive": true,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_SSL",
+      "description": "Enable SSL connection to database",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_REJECT_UNAUTHORIZED",
+      "description": "Reject unauthorized SSL certificates",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "DATABASE_PATH",
+      "description": "Path to SQLite database file",
+      "required": false,
+      "example": "/root/.flowise",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_URL",
+      "description": "Redis connection URL",
+      "required": false,
+      "default": "redis://localhost:6379",
+      "example": "redis://localhost:6379",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_HOST",
+      "description": "Redis server hostname (alternative to REDIS_URL)",
+      "required": false,
+      "default": "localhost",
+      "example": "localhost",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_PORT",
+      "description": "Redis server port (alternative to REDIS_URL)",
+      "required": false,
+      "default": "6379",
+      "example": "6379",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_USERNAME",
+      "description": "Redis username for authentication",
+      "required": false,
+      "default": "default",
+      "example": "default",
+      "sensitive": true,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_PASSWORD",
+      "description": "Redis password for authentication",
+      "required": false,
+      "example": "password",
+      "sensitive": true,
+      "category": "database"
+    },
+    {
+      "name": "REDIS_TLS",
+      "description": "Enable TLS for Redis connection",
+      "required": false,
+      "example": "false",
+      "sensitive": false,
+      "category": "database"
+    },
+    {
+      "name": "AUTH0_ISSUER_BASE_URL",
+      "description": "Auth0 tenant domain (e.g., https://your-tenant.auth0.com)",
+      "required": true,
+      "example": "https://your-tenant.auth0.com",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_BASE_URL",
+      "description": "Application base URL for Auth0 callbacks",
+      "required": true,
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_CLIENT_ID",
+      "description": "Auth0 application client ID",
+      "required": true,
+      "example": "your_auth0_client_id",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_CLIENT_SECRET",
+      "description": "Auth0 application client secret",
+      "required": true,
+      "example": "your_auth0_client_secret",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_AUDIENCE",
+      "description": "Auth0 API audience identifier",
+      "required": true,
+      "example": "your_auth0_audience",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_SCOPE",
+      "description": "Auth0 OAuth scopes to request",
+      "required": false,
+      "default": "openid profile email",
+      "example": "openid profile email",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_TOKEN_SIGN_ALG",
+      "description": "Auth0 token signing algorithm",
+      "required": false,
+      "default": "RS256",
+      "example": "RS256",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_ORGANIZATION_ID",
+      "description": "Auth0 organization ID (if using Auth0 Organizations)",
+      "required": false,
+      "example": "your_auth0_org_id",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "AUTH0_JWKS_URI",
+      "description": "Auth0 JWKS endpoint URI for token validation",
+      "required": false,
+      "example": "https://your-tenant.auth0.com/.well-known/jwks.json",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "WEB_AUTH0_SECRET",
+      "description": "Auth0 secret for Web app session encryption",
+      "required": false,
+      "example": "your_web_auth0_secret",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "API_HOST",
+      "description": "Backend API host URL for frontend requests",
+      "required": true,
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "api"
+    },
+    {
+      "name": "FLOWISE_DOMAIN",
+      "description": "Flowise backend domain URL",
+      "required": false,
+      "default": "http://localhost:3000",
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "api"
+    },
+    {
+      "name": "ANSWERAI_DOMAIN",
+      "description": "TheAnswer application domain",
+      "required": false,
+      "default": "http://localhost:3000",
+      "example": "https://app.theanswer.ai",
+      "sensitive": false,
+      "category": "api"
+    },
+    {
+      "name": "ANSWERAI_API_KEY",
+      "description": "TheAnswer API key for internal authentication",
+      "required": false,
+      "example": "your_api_key",
+      "sensitive": true,
+      "category": "api"
+    },
+    {
+      "name": "APIKEY_STORAGE_TYPE",
+      "description": "Where to store API keys (db or local)",
+      "required": false,
+      "default": "db",
+      "example": "db",
+      "sensitive": false,
+      "category": "api"
+    },
+    {
+      "name": "STORAGE_TYPE",
+      "description": "Storage backend type (local, s3, gcs)",
+      "required": false,
+      "default": "local",
+      "example": "s3",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "BLOB_STORAGE_PATH",
+      "description": "Local path for blob storage",
+      "required": false,
+      "example": "/root/.flowise/storage",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "S3_STORAGE_BUCKET_NAME",
+      "description": "AWS S3 bucket name",
+      "required": false,
+      "example": "your_bucket_name",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "S3_STORAGE_ACCESS_KEY_ID",
+      "description": "AWS S3 access key ID",
+      "required": false,
+      "example": "your_access_key_id",
+      "sensitive": true,
+      "category": "storage"
+    },
+    {
+      "name": "S3_STORAGE_SECRET_ACCESS_KEY",
+      "description": "AWS S3 secret access key",
+      "required": false,
+      "example": "your_secret_access_key",
+      "sensitive": true,
+      "category": "storage"
+    },
+    {
+      "name": "S3_STORAGE_REGION",
+      "description": "AWS S3 region",
+      "required": false,
+      "example": "us-west-2",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "S3_ENDPOINT_URL",
+      "description": "Custom S3 endpoint URL (for S3-compatible services)",
+      "required": false,
+      "example": "https://s3.example.com",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "GOOGLE_CLOUD_STORAGE_CREDENTIAL",
+      "description": "Path to GCS service account JSON key file",
+      "required": false,
+      "example": "/path/to/keyfile.json",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "GOOGLE_CLOUD_STORAGE_PROJ_ID",
+      "description": "GCP project ID",
+      "required": false,
+      "example": "your-gcp-project-id",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "GOOGLE_CLOUD_STORAGE_BUCKET_NAME",
+      "description": "GCS bucket name",
+      "required": false,
+      "example": "your-bucket-name",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "DATA_SIDEKICK_URL",
+      "description": "Data Sidekick (data engine) API base URL",
+      "required": false,
+      "default": "http://localhost:3001",
+      "example": "http://localhost:3001",
+      "sensitive": false,
+      "category": "services"
+    },
+    {
+      "name": "DATA_SIDEKICK_CLIENT_ID",
+      "description": "Auth0 M2M client ID for Data Sidekick API",
+      "required": false,
+      "example": "your_m2m_client_id",
+      "sensitive": true,
+      "category": "services"
+    },
+    {
+      "name": "DATA_SIDEKICK_CLIENT_SECRET",
+      "description": "Auth0 M2M client secret for Data Sidekick API",
+      "required": false,
+      "example": "your_m2m_client_secret",
+      "sensitive": true,
+      "category": "services"
+    },
+    {
+      "name": "DATA_SIDEKICK_AUDIENCE",
+      "description": "Auth0 audience for Data Sidekick API",
+      "required": false,
+      "default": "https://data-sidekick-api",
+      "example": "https://data-sidekick-api",
+      "sensitive": false,
+      "category": "services"
+    },
+    {
+      "name": "DATA_ENGINE_SERVICE_KEY",
+      "description": "Legacy service key for Data Engine authentication",
+      "required": false,
+      "example": "your-shared-secret-key",
+      "sensitive": true,
+      "category": "services"
+    },
+    {
+      "name": "DATA_ENGINE_AUTH_ALLOW_FALLBACK",
+      "description": "Allow fallback to service key when M2M auth fails (true for dev, false for prod)",
+      "required": false,
+      "default": "true",
+      "example": "false",
+      "sensitive": false,
+      "category": "services"
+    },
+    {
+      "name": "STRIPE_SECRET_KEY",
+      "description": "Stripe API secret key",
+      "required": false,
+      "example": "sk_live_...",
+      "sensitive": true,
+      "category": "billing"
+    },
+    {
+      "name": "STRIPE_WEBHOOK_SECRET",
+      "description": "Stripe webhook signing secret",
+      "required": false,
+      "example": "whsec_...",
+      "sensitive": true,
+      "category": "billing"
+    },
+    {
+      "name": "STRIPE_METER_PREFIX",
+      "description": "Prefix for Stripe meter events",
+      "required": false,
+      "example": "your_meter_prefix",
+      "sensitive": false,
+      "category": "billing"
+    },
+    {
+      "name": "SPARK_RATE",
+      "description": "Spark usage rate for billing",
+      "required": false,
+      "default": "0.0004",
+      "example": "0.0004",
+      "sensitive": false,
+      "category": "billing"
+    },
+    {
+      "name": "BILLING_DEFAULT_STRIPE_CUSTOMER_ID",
+      "description": "Default Stripe customer ID for fallback billing",
+      "required": false,
+      "example": "cus_xxxxxxxxxxxxx",
+      "sensitive": false,
+      "category": "billing"
+    },
+    {
+      "name": "OVERRIDE_BILLING_CUSTOMER_ID",
+      "description": "Override Stripe customer ID (ignores trace metadata)",
+      "required": false,
+      "example": "cus_xxxxxxxxxxxxx",
+      "sensitive": false,
+      "category": "billing"
+    },
+    {
+      "name": "LANGFUSE_SECRET_KEY",
+      "description": "Langfuse secret key for LLM observability",
+      "required": false,
+      "example": "sk_lf_...",
+      "sensitive": true,
+      "category": "monitoring"
+    },
+    {
+      "name": "LANGFUSE_PUBLIC_KEY",
+      "description": "Langfuse public key",
+      "required": false,
+      "example": "pk_...",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "LANGFUSE_HOST",
+      "description": "Langfuse API host URL",
+      "required": false,
+      "default": "https://cloud.langfuse.com",
+      "example": "https://cloud.langfuse.com",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "LANGFUSE_RELEASE",
+      "description": "Langfuse release/version identifier",
+      "required": false,
+      "example": "1.0.0",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "LANGCHAIN_HANDLER",
+      "description": "LangChain event handler (e.g., 'langchain')",
+      "required": false,
+      "default": "langchain",
+      "example": "langchain",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "GOOGLE_CLIENT_ID",
+      "description": "Google OAuth 2.0 client ID",
+      "required": false,
+      "example": "your_google_client_id",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "GOOGLE_CLIENT_SECRET",
+      "description": "Google OAuth 2.0 client secret",
+      "required": false,
+      "example": "your_google_client_secret",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+      "description": "Google OAuth client ID for frontend (client-side)",
+      "required": false,
+      "example": "your_google_client_id",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "NEXT_PUBLIC_GOOGLE_DEVELOPER_KEY",
+      "description": "Google API key for frontend features",
+      "required": false,
+      "example": "your_google_api_key",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "NEXT_PUBLIC_ANSWER_ENGINE_DOMAIN",
+      "description": "Answer Engine domain for navigation links",
+      "required": false,
+      "example": "https://answerengine.com",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "ZOOM_CLIENT_ID",
+      "description": "Zoom OAuth application client ID",
+      "required": false,
+      "example": "your_zoom_client_id",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "ZOOM_CLIENT_SECRET",
+      "description": "Zoom OAuth application client secret",
+      "required": false,
+      "example": "your_zoom_client_secret",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "ZOOM_CALLBACK_URL",
+      "description": "Zoom OAuth callback URL",
+      "required": false,
+      "example": "https://app.example.com/auth/zoom/callback",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "ZOOM_SECRET",
+      "description": "Zoom webhook signing secret",
+      "required": false,
+      "example": "your_zoom_secret",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "FIDDLER_GUARDRAILS_ENABLED",
+      "description": "Enable Fiddler AI guardrails for LLM safety",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_SAFETY_ENABLED",
+      "description": "Enable safety checks (harmful, violent, etc.)",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_SAFETY_THRESHOLD",
+      "description": "Safety threshold 0-1 (higher = stricter)",
+      "required": false,
+      "default": "0.1",
+      "example": "0.1",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_SAFETY_ACTION",
+      "description": "Action on safety violation (block, redact, replace, warn, continue)",
+      "required": false,
+      "default": "block",
+      "example": "block",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_PII_ENABLED",
+      "description": "Enable PII detection",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_PII_THRESHOLD",
+      "description": "PII detection confidence threshold 0-1",
+      "required": false,
+      "default": "0.8",
+      "example": "0.8",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_PII_ACTION",
+      "description": "Action on PII detection (block, redact, replace, warn, continue)",
+      "required": false,
+      "default": "redact",
+      "example": "redact",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_FAITHFULNESS_ENABLED",
+      "description": "Enable hallucination/faithfulness detection for RAG",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_FAITHFULNESS_THRESHOLD",
+      "description": "Faithfulness score threshold 0-1",
+      "required": false,
+      "default": "0.7",
+      "example": "0.7",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_FAITHFULNESS_ACTION",
+      "description": "Action on low faithfulness (block, redact, replace, warn, continue)",
+      "required": false,
+      "default": "warn",
+      "example": "warn",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_CIRCUIT_FAILURE_THRESHOLD",
+      "description": "Consecutive failures before circuit breaker opens",
+      "required": false,
+      "default": "5",
+      "example": "5",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_CIRCUIT_RESET_TIMEOUT",
+      "description": "Milliseconds to wait before circuit recovery attempt",
+      "required": false,
+      "default": "30000",
+      "example": "30000",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_CIRCUIT_SUCCESS_THRESHOLD",
+      "description": "Successful calls needed to close circuit",
+      "required": false,
+      "default": "3",
+      "example": "3",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_CACHE_ENABLED",
+      "description": "Enable Redis caching for guardrails responses",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_CACHE_TTL",
+      "description": "Cache TTL in seconds",
+      "required": false,
+      "default": "3600",
+      "example": "3600",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "PUBLIC_ORG_ID",
+      "description": "Default organization ID for trial accounts",
+      "required": false,
+      "example": "your_org_id",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "TRIAL_PLAN_EXECUTIONS",
+      "description": "Number of chatflow executions allowed in trial plan",
+      "required": false,
+      "default": "999999999",
+      "example": "999999999",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SEEDCREDENTIALS_USER_ID",
+      "description": "User UUID for seeded credentials (leave empty for auto-generate)",
+      "required": false,
+      "example": "550e8400-e29b-41d4-a716-446655440000",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "SEEDCREDENTIALS_ORG_ID",
+      "description": "Organization UUID for seeded credentials (leave empty for auto-generate)",
+      "required": false,
+      "example": "550e8400-e29b-41d4-a716-446655440000",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_OPENAI_API_KEY",
+      "description": "OpenAI API key (auto-seeded as credential)",
+      "required": false,
+      "example": "sk-...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_ANTHROPHIC",
+      "description": "Anthropic (Claude) API key (auto-seeded as credential)",
+      "required": false,
+      "example": "sk-ant-...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_GROQ",
+      "description": "Groq API key (auto-seeded as credential)",
+      "required": false,
+      "example": "gsk_...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_DEEPSEEK",
+      "description": "DeepSeek API key (auto-seeded as credential)",
+      "required": false,
+      "example": "sk-...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REPLICATE",
+      "description": "Replicate API key (auto-seeded as credential)",
+      "required": false,
+      "example": "r8_...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_GOOGLE_GENERATIVE_AI_API_KEY",
+      "description": "Google Generative AI (Gemini) API key (auto-seeded as credential)",
+      "required": false,
+      "example": "AIzaSy...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_EXASEARCH",
+      "description": "Exa Search API key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_SERPAPI",
+      "description": "SerpAPI key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_BRAVE_SEARCH",
+      "description": "Brave Search API key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_GOOGLE_SEARCH_API",
+      "description": "Google Custom Search API key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_GOOGLE_SEARCH_API_ENGINE_ID",
+      "description": "Google Custom Search Engine ID (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_PINECONE",
+      "description": "Pinecone API key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_PINECONE_INDEX",
+      "description": "Pinecone index name (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_PINECONE_INDEX",
+      "description": "Alternative Pinecone index configuration",
+      "required": false,
+      "example": "...",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_AWS_BEDROCK_ACCESS_KEY",
+      "description": "AWS Bedrock access key (auto-seeded as credential)",
+      "required": false,
+      "example": "AKIA...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_AWS_BEDROCK_SECRET_KEY",
+      "description": "AWS Bedrock secret key (auto-seeded as credential)",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_SUPABASE_URL",
+      "description": "Supabase project URL (auto-seeded as credential)",
+      "required": false,
+      "example": "https://xxx.supabase.co",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_SUPABASE_API",
+      "description": "Supabase API key (auto-seeded as credential)",
+      "required": false,
+      "example": "eyJhbGc...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REDIS_URL",
+      "description": "Redis URL for credential seeding",
+      "required": false,
+      "default": "redis://localhost:6379",
+      "example": "redis://localhost:6379",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REDIS_HOST",
+      "description": "Redis host for credential seeding (alternative to URL)",
+      "required": false,
+      "default": "localhost",
+      "example": "localhost",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REDIS_PORT",
+      "description": "Redis port for credential seeding",
+      "required": false,
+      "default": "6379",
+      "example": "6379",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REDIS_USERNAME",
+      "description": "Redis username for credential seeding",
+      "required": false,
+      "default": "default",
+      "example": "default",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_REDIS_PASSWORD",
+      "description": "Redis password for credential seeding",
+      "required": false,
+      "example": "password",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_HOST",
+      "description": "PostgreSQL host for record manager (auto-seeded)",
+      "required": false,
+      "default": "127.0.0.1",
+      "example": "127.0.0.1",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_PORT",
+      "description": "PostgreSQL port for record manager",
+      "required": false,
+      "default": "5432",
+      "example": "5432",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_DATABASE",
+      "description": "PostgreSQL database for record manager",
+      "required": false,
+      "default": "example_db",
+      "example": "example_db",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_USER",
+      "description": "PostgreSQL user for record manager",
+      "required": false,
+      "default": "example_user",
+      "example": "example_user",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_PASSWORD",
+      "description": "PostgreSQL password for record manager",
+      "required": false,
+      "default": "example_password",
+      "example": "example_password",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_RECORDMANAGER_TABLE_NAME",
+      "description": "PostgreSQL table name for record manager",
+      "required": false,
+      "default": "upsertion_records",
+      "example": "upsertion_records",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_HOST",
+      "description": "PostgreSQL host for agent memory (auto-seeded)",
+      "required": false,
+      "default": "127.0.0.1",
+      "example": "127.0.0.1",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_PORT",
+      "description": "PostgreSQL port for agent memory",
+      "required": false,
+      "default": "5432",
+      "example": "5432",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_DATABASE",
+      "description": "PostgreSQL database for agent memory",
+      "required": false,
+      "default": "example_db",
+      "example": "example_db",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_USER",
+      "description": "PostgreSQL user for agent memory",
+      "required": false,
+      "default": "example_user",
+      "example": "example_user",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_PASSWORD",
+      "description": "PostgreSQL password for agent memory",
+      "required": false,
+      "default": "example_password",
+      "example": "example_password",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_POSTGRES_AGENTMEMORY_TABLE_NAME",
+      "description": "PostgreSQL table name for agent memory",
+      "required": false,
+      "default": "aai_agent_memory",
+      "example": "aai_agent_memory",
+      "sensitive": false,
+      "category": "credentials"
+    },
+    {
+      "name": "AAI_DEFAULT_GITHUB_TOKEN",
+      "description": "GitHub API token (auto-seeded as credential)",
+      "required": false,
+      "example": "ghp_...",
+      "sensitive": true,
+      "category": "credentials"
+    },
+    {
+      "name": "LINEAR_API_KEY",
+      "description": "Linear API key for error reporting",
+      "required": false,
+      "example": "lin_api_...",
+      "sensitive": true,
+      "category": "integrations"
+    },
+    {
+      "name": "LINEAR_ERROR_REPORT_TEAM_ID",
+      "description": "Linear team ID for error report tickets",
+      "required": false,
+      "example": "TEAM-123",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "LINEAR_ERROR_REPORT_BUG_LABEL_ID",
+      "description": "Linear bug label ID for error reports",
+      "required": false,
+      "example": "LABEL-456",
+      "sensitive": false,
+      "category": "integrations"
+    },
+    {
+      "name": "VITE_PORT",
+      "description": "Vite development server port",
+      "required": false,
+      "default": "8080",
+      "example": "8080",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "VITE_API_BASE_URL",
+      "description": "Vite API base URL (frontend)",
+      "required": false,
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "VITE_UI_BASE_URL",
+      "description": "Vite UI base URL",
+      "required": false,
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "MODE",
+      "description": "Queue mode (queue or main)",
+      "required": false,
+      "default": "main",
+      "example": "queue",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "QUEUE_NAME",
+      "description": "BullMQ queue name",
+      "required": false,
+      "default": "flowise-queue",
+      "example": "flowise-queue",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "WORKER_CONCURRENCY",
+      "description": "Maximum concurrent workers",
+      "required": false,
+      "default": "100000",
+      "example": "100000",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "QUEUE_REDIS_EVENT_STREAM_MAX_LEN",
+      "description": "Max Redis stream length for queue events",
+      "required": false,
+      "default": "100000",
+      "example": "100000",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "REMOVE_ON_AGE",
+      "description": "Remove completed jobs after N seconds",
+      "required": false,
+      "default": "86400",
+      "example": "86400",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "REMOVE_ON_COUNT",
+      "description": "Keep only last N completed jobs",
+      "required": false,
+      "default": "10000",
+      "example": "10000",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "ENABLE_BULLMQ_DASHBOARD",
+      "description": "Enable BullMQ admin dashboard",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "queue"
+    },
+    {
+      "name": "GLOBAL_AGENT_HTTP_PROXY",
+      "description": "HTTP proxy URL for outgoing requests",
+      "required": false,
+      "example": "http://proxy.example.com:8080",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "GLOBAL_AGENT_HTTPS_PROXY",
+      "description": "HTTPS proxy URL for outgoing requests",
+      "required": false,
+      "example": "https://proxy.example.com:8080",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "GLOBAL_AGENT_NO_PROXY",
+      "description": "Comma-separated hosts to bypass proxy",
+      "required": false,
+      "example": "localhost,127.0.0.1",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "TRUST_PROXY",
+      "description": "Trust X-Forwarded-* headers (true/false or proxy IP)",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "HTTP_DENY_LIST",
+      "description": "Comma-separated URLs to block from HTTP requests",
+      "required": false,
+      "example": "http://internal.example.com",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "CUSTOM_MCP_SECURITY_CHECK",
+      "description": "Enable security checks for custom MCP tools",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "CUSTOM_MCP_PROTOCOL",
+      "description": "MCP protocol type (stdio or sse)",
+      "required": false,
+      "default": "sse",
+      "example": "sse",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "JWT_AUTH_TOKEN_SECRET",
+      "description": "JWT secret key for access tokens",
+      "required": true,
+      "example": "AABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDD",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "JWT_REFRESH_TOKEN_SECRET",
+      "description": "JWT secret key for refresh tokens",
+      "required": true,
+      "example": "AABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDD",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "JWT_ISSUER",
+      "description": "JWT issuer identifier",
+      "required": true,
+      "example": "ISSUER",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "JWT_AUDIENCE",
+      "description": "JWT audience identifier",
+      "required": true,
+      "example": "AUDIENCE",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "JWT_TOKEN_EXPIRY_IN_MINUTES",
+      "description": "JWT access token expiry in minutes",
+      "required": false,
+      "default": "360",
+      "example": "360",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "JWT_REFRESH_TOKEN_EXPIRY_IN_MINUTES",
+      "description": "JWT refresh token expiry in minutes",
+      "required": false,
+      "default": "43200",
+      "example": "43200",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "POSTHOG_PUBLIC_API_KEY",
+      "description": "PostHog public API key for analytics",
+      "required": false,
+      "example": "phc_...",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "ENABLE_METRICS",
+      "description": "Enable metrics collection",
+      "required": false,
+      "default": "false",
+      "example": "false",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_PROVIDER",
+      "description": "Metrics provider (prometheus or open_telemetry)",
+      "required": false,
+      "default": "prometheus",
+      "example": "prometheus",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_INCLUDE_NODE_METRICS",
+      "description": "Include Node.js process metrics",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_SERVICE_NAME",
+      "description": "Service name for metrics",
+      "required": false,
+      "default": "FlowiseAI",
+      "example": "FlowiseAI",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_OPEN_TELEMETRY_METRIC_ENDPOINT",
+      "description": "OpenTelemetry metrics endpoint",
+      "required": false,
+      "example": "http://localhost:4318/v1/metrics",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_OPEN_TELEMETRY_PROTOCOL",
+      "description": "OpenTelemetry protocol (http, grpc, or proto)",
+      "required": false,
+      "default": "http",
+      "example": "http",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "METRICS_OPEN_TELEMETRY_DEBUG",
+      "description": "Enable OpenTelemetry debug logging",
+      "required": false,
+      "default": "false",
+      "example": "false",
+      "sensitive": false,
+      "category": "monitoring"
+    },
+    {
+      "name": "SHOW_COMMUNITY_NODES",
+      "description": "Show community-contributed Flowise nodes",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "FLOWISE_FILE_SIZE_LIMIT",
+      "description": "Maximum file upload size",
+      "required": false,
+      "default": "50mb",
+      "example": "50mb",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "DISABLED_NODES",
+      "description": "Comma-separated list of node names to disable",
+      "required": false,
+      "example": "bufferMemory,chatOpenAI",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "MODEL_LIST_CONFIG_JSON",
+      "description": "Path to custom model list JSON configuration file",
+      "required": false,
+      "example": "/path/to/models.json",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_STORAGE_TYPE",
+      "description": "Secret key storage type (local or aws)",
+      "required": false,
+      "default": "local",
+      "example": "local",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_PATH",
+      "description": "Path to store secret keys locally",
+      "required": false,
+      "example": "/root/.flowise",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "FLOWISE_SECRETKEY_OVERWRITE",
+      "description": "Override secret key encryption key",
+      "required": false,
+      "example": "myencryptionkey",
+      "sensitive": true,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_AWS_ACCESS_KEY",
+      "description": "AWS access key for secret key storage",
+      "required": false,
+      "example": "AKIA...",
+      "sensitive": true,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_AWS_SECRET_KEY",
+      "description": "AWS secret key for secret key storage",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_AWS_REGION",
+      "description": "AWS region for secret key storage",
+      "required": false,
+      "default": "us-west-2",
+      "example": "us-west-2",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SECRETKEY_AWS_NAME",
+      "description": "AWS secret name for secret key storage",
+      "required": false,
+      "default": "FlowiseEncryptionKey",
+      "example": "FlowiseEncryptionKey",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "LOG_PATH",
+      "description": "Path to store application logs",
+      "required": false,
+      "example": "/root/.flowise/logs",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "LOG_SANITIZE_BODY_FIELDS",
+      "description": "Comma-separated field names to sanitize in logs",
+      "required": false,
+      "example": "password,secret,token,apikey",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "LOG_SANITIZE_HEADER_FIELDS",
+      "description": "Comma-separated header names to sanitize in logs",
+      "required": false,
+      "example": "authorization,x-api-key",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "TOOL_FUNCTION_BUILTIN_DEP",
+      "description": "Comma-separated built-in Node.js modules to allow in tool functions",
+      "required": false,
+      "default": "crypto,fs",
+      "example": "crypto,fs",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "TOOL_FUNCTION_EXTERNAL_DEP",
+      "description": "Comma-separated npm packages to allow in tool functions",
+      "required": false,
+      "default": "moment,lodash",
+      "example": "moment,lodash",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "ALLOW_BUILTIN_DEP",
+      "description": "Allow all Node.js built-in modules in tool functions",
+      "required": false,
+      "default": "false",
+      "example": "false",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "APP_URL",
+      "description": "Application URL for email links",
+      "required": false,
+      "example": "http://localhost:3000",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SMTP_HOST",
+      "description": "SMTP server hostname",
+      "required": false,
+      "example": "smtp.host.com",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SMTP_PORT",
+      "description": "SMTP server port",
+      "required": false,
+      "default": "465",
+      "example": "465",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SMTP_USER",
+      "description": "SMTP username",
+      "required": false,
+      "example": "smtp_user",
+      "sensitive": true,
+      "category": "config"
+    },
+    {
+      "name": "SMTP_PASSWORD",
+      "description": "SMTP password",
+      "required": false,
+      "example": "smtp_password",
+      "sensitive": true,
+      "category": "config"
+    },
+    {
+      "name": "SMTP_SECURE",
+      "description": "Use TLS for SMTP connection",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "SENDER_EMAIL",
+      "description": "Sender email address",
+      "required": false,
+      "example": "team@example.com",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "ALLOW_UNAUTHORIZED_CERTS",
+      "description": "Allow connections to servers with invalid SSL certificates",
+      "required": false,
+      "default": "false",
+      "example": "false",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "EXPRESS_SESSION_SECRET",
+      "description": "Express session encryption secret",
+      "required": false,
+      "example": "flowise",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "SECURE_COOKIES",
+      "description": "Enable secure cookie flag",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "EXPIRE_AUTH_TOKENS_ON_RESTART",
+      "description": "Expire all tokens on application restart",
+      "required": false,
+      "example": "true",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "INVITE_TOKEN_EXPIRY_IN_HOURS",
+      "description": "Workspace invite token expiry in hours",
+      "required": false,
+      "default": "24",
+      "example": "24",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "PASSWORD_RESET_TOKEN_EXPIRY_IN_MINS",
+      "description": "Password reset token expiry in minutes",
+      "required": false,
+      "default": "15",
+      "example": "15",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "PASSWORD_SALT_HASH_ROUNDS",
+      "description": "bcrypt rounds for password hashing",
+      "required": false,
+      "default": "10",
+      "example": "10",
+      "sensitive": false,
+      "category": "auth"
+    },
+    {
+      "name": "TOKEN_HASH_SECRET",
+      "description": "Secret for hashing invitation/reset tokens",
+      "required": false,
+      "example": "popcorn",
+      "sensitive": true,
+      "category": "auth"
+    },
+    {
+      "name": "WORKSPACE_INVITE_TEMPLATE_PATH",
+      "description": "Path to custom workspace invite email template (Handlebars)",
+      "required": false,
+      "example": "/path/to/workspace_invite.hbs",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "LICENSE_URL",
+      "description": "Enterprise license validation URL",
+      "required": false,
+      "example": "https://license.example.com",
+      "sensitive": false,
+      "category": "enterprise"
+    },
+    {
+      "name": "FLOWISE_EE_LICENSE_KEY",
+      "description": "Flowise Enterprise Edition license key",
+      "required": false,
+      "example": "...",
+      "sensitive": true,
+      "category": "enterprise"
+    },
+    {
+      "name": "OFFLINE",
+      "description": "Run in offline mode (no external calls)",
+      "required": false,
+      "example": "false",
+      "sensitive": false,
+      "category": "enterprise"
+    },
+    {
+      "name": "PLAYWRIGHT_EXECUTABLE_FILE_PATH",
+      "description": "Path to Playwright browser executable",
+      "required": false,
+      "example": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "PUPPETEER_EXECUTABLE_FILE_PATH",
+      "description": "Path to Puppeteer browser executable",
+      "required": false,
+      "example": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "NUMBER_OF_PROXIES",
+      "description": "Number of proxies behind the server",
+      "required": false,
+      "default": "1",
+      "example": "1",
+      "sensitive": false,
+      "category": "config"
+    },
+    {
+      "name": "S3_FORCE_PATH_STYLE",
+      "description": "Use path-style URLs for S3 (vs virtual-hosted-style)",
+      "required": false,
+      "default": "false",
+      "example": "false",
+      "sensitive": false,
+      "category": "storage"
+    },
+    {
+      "name": "GOOGLE_CLOUD_STORAGE_UNIFORM_BUCKET_ACCESS",
+      "description": "Enable uniform bucket-level access in GCS",
+      "required": false,
+      "default": "true",
+      "example": "true",
+      "sensitive": false,
+      "category": "storage"
+    }
+  ]
+}
