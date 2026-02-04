@@ -44,19 +44,14 @@ const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHa
                 setSelectedSidekick(sidekick as unknown as SidekickListItem)
                 setSidekick(sidekick as unknown as SidekickListItem)
 
-                if (!chat?.id) {
-                    // No active chat - navigate to chat with this sidekick
-                    router.push(`/chat/${sidekick.id}`)
-                } else {
-                    // Already in chat - just switch sidekicks (no navigation)
-                    setIsMarketplaceDialogOpen(false)
-                }
+                setIsMarketplaceDialogOpen(false)
+                router.push(`/chat/${sidekick.id}`)
             } else {
                 // Non-executable sidekicks (templates) - navigate to marketplace to view/clone
                 router.push(`/sidekick-studio/marketplace/${sidekick.id}`)
             }
         },
-        [chat, setSidekick, setSelectedSidekick, router]
+        [setSidekick, setSelectedSidekick, router]
     )
 
     const handleCreateNewSidekick = useCallback(() => {
