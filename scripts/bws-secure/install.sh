@@ -105,7 +105,7 @@ if [ "$NODE_VERSION" -lt "20" ]; then
           packageJson.dependencies.yargs = '^18.0.0';
         }
         if (packageJson.dependencies && packageJson.dependencies.glob) {
-          packageJson.dependencies.glob = '^11.0.3';
+          packageJson.dependencies.glob = '^11.1.0';
         }
       } else {
         // For Node.js < 20, use compatible versions
@@ -359,8 +359,8 @@ try {
 
   // Add dependencies if they don't exist
   packageJson.devDependencies = packageJson.devDependencies || {};
-  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.2.2';
-  packageJson.devDependencies['dotenv-cli'] = packageJson.devDependencies['dotenv-cli'] || '^10.0.0';
+  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.2.3';
+  packageJson.devDependencies['dotenv-cli'] = packageJson.devDependencies['dotenv-cli'] || '^11.0.0';
   
   // Check Node.js version and apply appropriate versions
   const nodeVersion = process.version.match(/^v(\d+)\./)[1];
@@ -368,14 +368,14 @@ try {
   if (nodeVersionNum >= 20) {
     // For Node.js 20+, use newer versions
     packageJson.devDependencies['yargs'] = packageJson.devDependencies['yargs'] || '^18.0.0';
-    packageJson.devDependencies['glob'] = '^11.0.3';
+    packageJson.devDependencies['glob'] = '^11.1.0';
   } else {
     // For Node.js < 20, use compatible versions
     packageJson.devDependencies['yargs'] = packageJson.devDependencies['yargs'] || '^17.7.2';
     packageJson.devDependencies['glob'] = '^10.3.10';
   }
   
-  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.12.2';
+  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.13.2';
 
   // Detect existing indentation or use prettier config
   const originalContent = fs.readFileSync(packageJsonPath, 'utf8');
@@ -517,53 +517,6 @@ elif [ -f "node_modules/.bin/prettier" ]; then
 else
   echo "Prettier not found, skipping formatting (files may have different formatting than your project)"
 fi
-
-# Success message with box drawing characters
-echo -e "
-${GREEN}╔════════════════════════════════════════════════════════════╗
-║             ✅ BWS Secure Setup Complete!                  ║
-╚════════════════════════════════════════════════════════════╝${NC}
-
-📋 Next Steps:
-
-1. Configure your bwsconfig.json at:
-   $(pwd)/bwsconfig.json
-   - Set platform to 'vercel' or 'netlify'
-   - Update projectName to match your deployment
-   - Add your BWS project IDs for each environment
-
-2. Add your BWS token to .env:
-   BWS_ACCESS_TOKEN=your_token_here
-
-3. Update your build scripts to use secure-run:
-   \"dev\": \"secure-run next dev\"
-   \"build\": \"secure-run next build\"
-   \"start\": \"secure-run next start\"
-
-🔧 Added Scripts:
-   - secure-run: Runs commands with secure environment variables
-   - list-projects: Lists available BWS projects
-   - bws-deps: Ensures BWS dependencies are installed
-   - bws-update: Updates BWS Secure to the latest version
-
-📦 Dependencies:
-   - BWS CLI will be installed automatically when needed
-   - Required packages have been added to package.json
-     (dotenv, dotenv-cli, yargs, glob, axios)
-   - Run '$PM bws-deps' to verify BWS installation
-
-🔒 Security:
-   - Environment files are encrypted
-   - .gitignore has been updated
-   - Secrets are never logged
-
-📚 Documentation: https://github.com/last-rev-llc/bws-secure
-
-For help or issues:
-1. Check the README.md in scripts/bws-secure/
-2. Enable debug mode: DEBUG=true $PM build
-3. Open an issue on GitHub
-"
 
 echo "Checking Prettier configuration..."
 # Create or update .prettierignore

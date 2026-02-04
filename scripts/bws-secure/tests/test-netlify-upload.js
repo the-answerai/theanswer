@@ -1,9 +1,10 @@
 /* eslint-disable no-console */
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { updateNetlifyEnvVars } from './update-environments/netlify.js';
-import { log } from './update-environments/utils.js';
+import { log, validateDeployment } from './update-environments/utils.js';
 import dotenv from 'dotenv';
 
 // Get the directory name in ESM
@@ -11,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env file if it exists
-dotenv.config();
+dotenv.config({ quiet: true });
 
 async function testNetlifyUpload() {
   try {
