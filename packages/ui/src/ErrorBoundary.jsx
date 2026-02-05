@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import PropTypes from 'prop-types'
 
 import { Box, Card, IconButton, Stack, Typography, useTheme } from '@mui/material'
