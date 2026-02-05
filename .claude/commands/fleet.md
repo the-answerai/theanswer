@@ -4,7 +4,7 @@ description: Parallel work orchestration - tickets, goals, or any task
 
 # /fleet - Parallel Work Orchestration
 
-You ARE the orchestrator. Do not delegate to another agent for orchestration.
+You ARE the orchestrator (team lead). Do not delegate orchestration to another agent.
 
 ## Quick Reference
 
@@ -13,9 +13,26 @@ You ARE the orchestrator. Do not delegate to another agent for orchestration.
 /fleet "add logging to routes"  # Any goal, auto-decomposed
 /fleet                          # Check status
 /fleet test                     # Add tests to completed work
+/fleet verify                   # Review code quality (spawns reviewers)
 /fleet push                     # Commit and create PRs
-/fleet cleanup                  # Remove worktrees
+/fleet cleanup                  # Remove worktrees and tear down team
 ```
+
+## Execution Mode
+
+Fleet supports two modes. Detect which to use:
+
+- **Agent Teams mode**: If the Teammate and SendMessage tools are available (requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in settings). Preferred — teammates are full Claude Code sessions that can communicate.
+- **Subagent mode** (fallback): Use the Task tool with fleet agents. Works without Agent Teams enabled.
+
+## Fleet Roles
+
+| Role | Agent | Model | Skills | Purpose |
+|------|-------|-------|--------|---------|
+| **Implementer** | `fleet-implementer` | Sonnet | theanswer-patterns, error-handling, fleet-patterns | Write production code |
+| **Reviewer** | `fleet-reviewer` | Haiku | pr-review-workflow, theanswer-patterns, error-handling | Review code (read-only) |
+| **Tester** | `fleet-tester` | Sonnet | theanswer-patterns, fleet-patterns | Write focused tests |
+| **Architect** | `fleet-architect` | Opus | theanswer-patterns, error-handling | Plan before implementing (plan mode) |
 
 ---
 
@@ -60,6 +77,9 @@ Display:
 ```
 ## Fleet Plan
 
+### Mode: Agent Teams / Subagent (auto-detected)
+### Roles: Implementer (default) | Architect → Implementer (complex tickets)
+
 ### AAI-123: [title]
 1. □ Explore existing patterns
 2. □ Create service class
@@ -84,14 +104,70 @@ git fetch origin staging
 git worktree add -b feature/{id}-{slug} /home/max/dev/theanswer-worktrees/{id} origin/staging
 ```
 
-**Step 5: Spawn Workers (PARALLEL)**
+**Step 5: Spawn Workers**
 
-In ONE message, spawn all workers:
+#### Agent Teams Mode (preferred)
+
+Create an agent team and spawn one **fleet-implementer** teammate per work unit:
+
+```
+Create an agent team called "fleet-{timestamp}" for parallel ticket implementation.
+
+For each work unit, spawn a teammate:
+- Name: impl-{id} (e.g., impl-AAI-123)
+- Role: fleet-implementer
+- Model: Sonnet
+- Prompt:
+  "You are a fleet implementer working on ticket {id}: {title}.
+
+   ## Your Worktree
+   Work ONLY in: /home/max/dev/theanswer-worktrees/{id}
+   Branch: feature/{id}-{slug}
+
+   ## Your Tasks
+   Claim tasks prefixed with [{id}] from the shared task list.
+   Use TaskList to find unclaimed tasks, then TaskUpdate to claim (in_progress) and complete them.
+   When you finish a task, check TaskList for the next unclaimed [{id}] task.
+
+   ## Communication
+   - Message the lead when you complete all your tasks
+   - Message the lead if you are blocked or need clarification
+   - Message other teammates if your work overlaps with theirs
+
+   ## Rules
+   - Work ONLY in your worktree — never touch files outside it
+   - Do NOT commit or push — the lead handles all git operations
+   - No TODOs or placeholders — be complete
+   - Follow existing code patterns in the codebase"
+```
+
+For **complex tickets** (large scope, architectural decisions needed), spawn a **fleet-architect** first:
+```
+Spawn an architect teammate with plan approval required:
+- Name: arch-{id}
+- Role: fleet-architect
+- Model: Opus
+- Prompt: "Plan the implementation for ticket {id}: {title}. Explore the codebase,
+   identify patterns, and design the implementation approach.
+   Worktree: /home/max/dev/theanswer-worktrees/{id}"
+
+After architect's plan is approved, spawn a fleet-implementer to execute it.
+```
+
+After spawning all teammates:
+- Enter delegate mode — you (the lead) only coordinate, never implement code
+- Monitor teammate progress via the shared task list and incoming messages
+- Steer teammates if they go off track by messaging them directly
+- When all teammates report completion, proceed to the report step
+
+#### Subagent Mode (fallback)
+
+In ONE message, spawn all workers using **fleet-implementer**:
 
 ```yaml
 Task:
-  subagent_type: fleet-worker
-  description: "Work on AAI-123"
+  subagent_type: fleet-implementer
+  description: "Implement AAI-123"
   run_in_background: true
   prompt: |
     ## Your Assignment
@@ -103,20 +179,16 @@ Task:
     1. Explore existing patterns
     2. Create service class
     3. Add route endpoint
-    4. Update controller
-    5. Add validation
-    6. Add error handling
-    7. Verify patterns
+    ...
 
     ## Rules
     - Work ONLY in your worktree
-    - Follow TheAnswer patterns (organizationId, enforceAbility, InternalFlowiseError)
     - Do NOT commit
     - End with RESULT summary
 
 Task:
-  subagent_type: fleet-worker
-  description: "Work on AAI-456"
+  subagent_type: fleet-implementer
+  description: "Implement AAI-456"
   run_in_background: true
   prompt: |
     ...
@@ -127,10 +199,10 @@ Task:
 ```
 ## Fleet Launched
 
-| ID | Worktree | Status |
-|----|----------|--------|
-| AAI-123 | .../AAI-123 | Running |
-| AAI-456 | .../AAI-456 | Running |
+| ID | Worktree | Role | Mode | Status |
+|----|----------|------|------|--------|
+| AAI-123 | .../AAI-123 | Implementer | Teams/Subagent | Running |
+| AAI-456 | .../AAI-456 | Implementer | Teams/Subagent | Running |
 
 Use `/fleet` to check progress.
 ```
@@ -142,7 +214,10 @@ Use `/fleet` to check progress.
 Check progress:
 
 1. Run `TaskList` to show task status
-2. Check worktrees:
+
+2. **Agent Teams mode**: Check teammate status — are they active, idle, or finished? Review any pending messages.
+
+3. **Subagent mode**: Check worktrees:
 ```bash
 for dir in /home/max/dev/theanswer-worktrees/*/; do
   echo "$(basename $dir): $(cd $dir && git status --short | wc -l) files changed"
@@ -153,55 +228,70 @@ done
 
 ### Input: "test"
 
-Spawn workers to add tests:
+Spawn **fleet-tester** agents for each work unit:
 
 1. List worktrees with changes
-2. For each, spawn fleet-worker:
+
+2. **Agent Teams mode**: Spawn test teammates:
+```
+For each work unit with changes, spawn a teammate:
+- Name: tester-{id}
+- Role: fleet-tester
+- Model: Sonnet
+- Prompt: "Add tests for the implementation in /home/max/dev/theanswer-worktrees/{id}.
+   Read changed files, find existing test patterns, create ONE focused test file.
+   Do NOT commit."
+```
+
+3. **Subagent mode**: Spawn fleet-tester subagents:
 ```yaml
 Task:
-  subagent_type: fleet-worker
+  subagent_type: fleet-tester
+  run_in_background: true
   prompt: |
-    ## Your Assignment
-    Goal: Add tests for the implementation
     Worktree: /home/max/dev/theanswer-worktrees/{id}
-
-    1. Read the changed files to understand what was implemented
-    2. Find existing test patterns in the codebase
-    3. Create ONE focused test file
-    4. Do NOT commit
+    Read changed files, find existing test patterns, create ONE focused test file.
+    Do NOT commit.
 ```
 
 ---
 
 ### Input: "verify"
 
-Run verification directly (no agent needed):
+Spawn **fleet-reviewer** agents for each work unit:
 
-For each worktree:
-```bash
-cd {worktree}
+1. List worktrees with changes
 
-# Check for issues
-git diff --name-only | while read file; do
-  # Check for console.log
-  grep -n "console.log" "$file" && echo "⚠️ console.log in $file"
-  # Check for TODO
-  grep -n "TODO\|FIXME" "$file" && echo "⚠️ TODO in $file"
-done
-
-# Check TheAnswer patterns in new/modified .ts files
-# - organizationId in queries
-# - enforceAbility on routes
+2. **Agent Teams mode**: Spawn reviewer teammates:
+```
+For each work unit with changes, spawn a teammate:
+- Name: reviewer-{id}
+- Role: fleet-reviewer
+- Model: Haiku
+- Prompt: "Review the implementation in /home/max/dev/theanswer-worktrees/{id}.
+   Check for security, multi-tenancy, error handling, and code quality.
+   Report findings to the lead. Do NOT modify any files."
 ```
 
-Report:
+3. **Subagent mode**: Spawn fleet-reviewer subagents:
+```yaml
+Task:
+  subagent_type: fleet-reviewer
+  run_in_background: true
+  prompt: |
+    Worktree: /home/max/dev/theanswer-worktrees/{id}
+    Review for security, multi-tenancy, error handling, code quality.
+    Report findings. Do NOT modify files.
+```
+
+4. Collect and summarize all reviewer findings:
 ```
 ## Verification
 
-| ID | Files | Issues |
-|----|-------|--------|
-| AAI-123 | 3 | ✅ None |
-| AAI-456 | 2 | ⚠️ 1 console.log |
+| ID | Reviewer | Critical | Major | Minor |
+|----|----------|----------|-------|-------|
+| AAI-123 | reviewer-AAI-123 | 0 | 1 | 2 |
+| AAI-456 | reviewer-AAI-456 | 1 | 0 | 1 |
 ```
 
 ---
@@ -220,7 +310,7 @@ ID=$(basename $(pwd))
 git add -A
 git commit -m "feat($ID): implement changes
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 # Push
 git push -u origin $BRANCH
@@ -240,7 +330,14 @@ Update Linear to "In Review" via `mcp__linear__update_issue`.
 
 ### Input: "cleanup"
 
-Remove worktrees:
+Tear down everything:
+
+1. **Agent Teams mode** (do these first):
+   - Ask each teammate to shut down gracefully
+   - Wait for teammates to confirm shutdown
+   - Clean up the team
+
+2. **Both modes** — remove worktrees:
 ```bash
 for dir in /home/max/dev/theanswer-worktrees/*/; do
   git worktree remove "$dir" --force
@@ -258,8 +355,12 @@ rmdir /home/max/dev/theanswer-worktrees 2>/dev/null
 
 ## Key Rules
 
-1. **You orchestrate directly** - don't spawn an orchestrator agent
-2. **Always create tasks first** - 5-10 per work unit
-3. **Always get approval** - before creating worktrees
-4. **Spawn workers in parallel** - single message, multiple Task calls
-5. **Workers never commit** - you handle git operations
+1. **You orchestrate directly** — don't spawn an orchestrator agent
+2. **Always create tasks first** — 5-10 per work unit
+3. **Always get approval** — before creating worktrees
+4. **Prefer Agent Teams** — use if Teammate tool is available
+5. **Use the right role** — implementer (default), tester (/fleet test), reviewer (/fleet verify), architect (complex)
+6. **Worktree per worker** — each worker gets isolated worktree (prevents file conflicts)
+7. **Delegate mode in Agent Teams** — lead never implements, only coordinates
+8. **Workers never commit** — you (the lead) handle all git operations
+9. **Spawn workers in parallel** — all at once, whether teammates or subagents

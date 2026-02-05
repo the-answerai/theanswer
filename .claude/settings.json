@@ -3,5 +3,8 @@
     "aai-core@alphaagent-team": true,
     "aai-hooks@alphaagent-team": true,
     "aai-docs@alphaagent-team": true
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
 }
