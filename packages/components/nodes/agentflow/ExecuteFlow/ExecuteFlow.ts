@@ -190,6 +190,17 @@ class ExecuteFlow_Agentflow implements INode {
             }
             if (chatflowApiKey) headers = { ...headers, Authorization: `Bearer ${chatflowApiKey}` }
 
+            // Pass parent Langfuse trace context if available
+            const parentLangfuseTrace = options.parentLangfuseTrace || options.analytic?.parentLangfuseTrace
+            const parentLangfuseSpan = options.parentLangfuseSpan
+
+            if (parentLangfuseTrace && parentLangfuseTrace.id) {
+                headers['X-Langfuse-Parent-Trace-Id'] = parentLangfuseTrace.id
+            }
+            if (parentLangfuseSpan && parentLangfuseSpan.id) {
+                headers['X-Langfuse-Parent-Span-Id'] = parentLangfuseSpan.id
+            }
+
             const finalUrl = `${baseURL}/api/v1/prediction/${selectedFlowId}`
             const requestConfig: AxiosRequestConfig = {
                 method: 'POST',

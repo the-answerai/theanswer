@@ -185,8 +185,19 @@ class ExecuteFlow_SeqAgents implements INode {
 
         if (selectedFlowId === options.chatflowid) throw new Error('Cannot call the same agentflow!')
 
-        let headers = {}
+        let headers: Record<string, string> = {}
         if (chatflowApiKey) headers = { Authorization: `Bearer ${chatflowApiKey}` }
+
+        // Pass parent Langfuse trace context if available
+        const parentLangfuseTrace = options.parentLangfuseTrace || options.analytic?.parentLangfuseTrace
+        const parentLangfuseSpan = options.parentLangfuseSpan
+
+        if (parentLangfuseTrace && parentLangfuseTrace.id) {
+            headers['X-Langfuse-Parent-Trace-Id'] = parentLangfuseTrace.id
+        }
+        if (parentLangfuseSpan && parentLangfuseSpan.id) {
+            headers['X-Langfuse-Parent-Span-Id'] = parentLangfuseSpan.id
+        }
 
         const chatflowId = options.chatflowid
         const sessionId = options.sessionId

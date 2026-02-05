@@ -745,6 +745,29 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         }
 
                         analyticHandlersInstance?.setLangfuseCallbacksActive(true)
+                    } else if (analytic.parentLangfuseTraceId) {
+                        // Sub-workflow called via HTTP (Execute Flow) without parent trace objects.
+                        // Reconnect to parent trace using string IDs propagated via headers
+                        // so that LLM token usage is consolidated under the parent trace.
+                        const langfuseInstance = new Langfuse({
+                            secretKey: langFuseSecretKey,
+                            publicKey: langFusePublicKey,
+                            baseUrl: langFuseEndpoint ?? 'https://cloud.langfuse.com'
+                        })
+
+                        if (analytic.parentLangfuseSpanId) {
+                            // Construct span client directly to avoid sending a spurious create event.
+                            // This sets observationId so the CallbackHandler nests LLM calls under the parent span.
+                            handlerConfig.root = new LangfuseSpanClient(
+                                langfuseInstance as any,
+                                analytic.parentLangfuseSpanId,
+                                analytic.parentLangfuseTraceId
+                            )
+                        } else {
+                            handlerConfig.root = langfuseInstance.trace({ id: analytic.parentLangfuseTraceId })
+                        }
+                        handlerConfig.updateRoot = false
+                        analyticHandlersInstance?.setLangfuseCallbacksActive(true)
                     } else {
                         analyticHandlersInstance?.setLangfuseCallbacksActive(false)
                     }
@@ -1139,14 +1162,50 @@ export class AnalyticHandler {
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langFuse')) {
             let langfuseTraceClient: LangfuseTraceClient
 
+            // Check if parent trace context is provided from Execute Flow nodes
+            const analytic = this.options.analytic
+            let parentLangfuseTraceId: string | undefined
+            let parentLangfuseSpanId: string | undefined
+
+            if (analytic) {
+                try {
+                    const analyticConfig = typeof analytic === 'string' ? JSON.parse(analytic) : analytic
+                    parentLangfuseTraceId = analyticConfig.parentLangfuseTraceId
+                    parentLangfuseSpanId = analyticConfig.parentLangfuseSpanId
+                } catch {
+                    // Ignore parse errors
+                }
+            }
+
             if (!parentIds || !Object.keys(parentIds).length) {
                 const langfuse: Langfuse = this.handlers['langFuse'].client
-                langfuseTraceClient = langfuse.trace({
-                    name,
-                    sessionId: this.options.chatId,
-                    metadata: { tags: ['openai-assistant'] },
-                    ...this.nodeData?.inputs?.analytics?.langFuse
-                })
+
+                // If parent trace context is available, fetch the parent trace and create a child span
+                if (parentLangfuseTraceId) {
+                    try {
+                        // Fetch the parent trace by ID
+                        langfuseTraceClient = langfuse.trace({
+                            id: parentLangfuseTraceId
+                        })
+                    } catch (error) {
+                        // If fetching parent fails, create a new trace
+                        console.warn(`Failed to fetch parent Langfuse trace ${parentLangfuseTraceId}, creating new trace:`, error)
+                        langfuseTraceClient = langfuse.trace({
+                            name,
+                            sessionId: this.options.chatId,
+                            metadata: { tags: ['openai-assistant'] },
+                            ...this.nodeData?.inputs?.analytics?.langFuse
+                        })
+                    }
+                } else {
+                    // No parent trace context, create a new independent trace
+                    langfuseTraceClient = langfuse.trace({
+                        name,
+                        sessionId: this.options.chatId,
+                        metadata: { tags: ['openai-assistant'] },
+                        ...this.nodeData?.inputs?.analytics?.langFuse
+                    })
+                }
             } else {
                 langfuseTraceClient = this.handlers['langFuse'].trace[parentIds['langFuse']]
             }
@@ -1157,12 +1216,24 @@ export class AnalyticHandler {
                         text: input
                     }
                 })
-                const span = langfuseTraceClient.span({
-                    name,
-                    input: {
-                        text: input
-                    }
-                })
+                // If parent span ID is available, create span as child of parent span
+                // using langfuse.span() directly to set parentObservationId
+                const langfuse: Langfuse = this.handlers['langFuse'].client
+                const span = parentLangfuseSpanId
+                    ? langfuse.span({
+                          traceId: langfuseTraceClient.id,
+                          parentObservationId: parentLangfuseSpanId,
+                          name,
+                          input: {
+                              text: input
+                          }
+                      })
+                    : langfuseTraceClient.span({
+                          name,
+                          input: {
+                              text: input
+                          }
+                      })
                 this.handlers['langFuse'].trace = { [langfuseTraceClient.id]: langfuseTraceClient }
                 this.handlers['langFuse'].span = { [span.id]: span }
                 returnIds['langFuse'].trace = langfuseTraceClient.id
