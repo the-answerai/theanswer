@@ -18,6 +18,10 @@ on:
                 required: false
                 type: string
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     sync-docs:
         name: Sync Documentation
@@ -41,9 +45,7 @@ jobs:
                   version: 9
 
             - name: Install dependencies
-              run: |
-                  pnpm install --frozen-lockfile
-                  pnpm --filter flowise-docs install
+              run: pnpm install --frozen-lockfile
 
             - name: Build documentation
               run: pnpm --filter flowise-docs build

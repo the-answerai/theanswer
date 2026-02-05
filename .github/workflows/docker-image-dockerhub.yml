@@ -16,9 +16,16 @@ on:
                 required: true
                 default: 'latest'
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
 jobs:
-    docker:
+    setup:
         runs-on: ubuntu-latest
+        outputs:
+            node_version: ${{ steps.defaults.outputs.node_version }}
+            tag_version: ${{ steps.defaults.outputs.tag_version }}
         steps:
             - name: Set default values
               id: defaults
@@ -26,8 +33,14 @@ jobs:
                   echo "node_version=${{ github.event.inputs.node_version || '20' }}" >> $GITHUB_OUTPUT
                   echo "tag_version=${{ github.event.inputs.tag_version || 'latest' }}" >> $GITHUB_OUTPUT
 
+    main-image:
+        needs: setup
+        runs-on: ubuntu-latest
+        steps:
             - name: Checkout
               uses: actions/checkout@v4.1.1
+              with:
+                  fetch-depth: 1
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3.0.0
@@ -41,32 +54,51 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-            # -------------------------
-            # Build and push main image
-            # -------------------------
             - name: Build and push main image
               uses: docker/build-push-action@v5.3.0
               with:
                   context: .
                   file: ./docker/Dockerfile
                   build-args: |
-                      NODE_VERSION=${{ steps.defaults.outputs.node_version }}
+                      NODE_VERSION=${{ needs.setup.outputs.node_version }}
                   platforms: linux/amd64,linux/arm64
                   push: true
                   tags: |
-                      flowiseai/flowise:${{ steps.defaults.outputs.tag_version }}
+                      flowiseai/flowise:${{ needs.setup.outputs.tag_version }}
+                  cache-from: type=gha,scope=dockerhub-main
+                  cache-to: type=gha,mode=max,scope=dockerhub-main
 
-            # -------------------------
-            # Build and push worker image
-            # -------------------------
+    worker-image:
+        needs: setup
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4.1.1
+              with:
+                  fetch-depth: 1
+
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3.0.0
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3.0.0
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
+
             - name: Build and push worker image
               uses: docker/build-push-action@v5.3.0
               with:
                   context: .
                   file: docker/worker/Dockerfile
                   build-args: |
-                      NODE_VERSION=${{ steps.defaults.outputs.node_version }}
+                      NODE_VERSION=${{ needs.setup.outputs.node_version }}
                   platforms: linux/amd64,linux/arm64
                   push: true
                   tags: |
-                      flowiseai/flowise-worker:${{ steps.defaults.outputs.tag_version }}
+                      flowiseai/flowise-worker:${{ needs.setup.outputs.tag_version }}
+                  cache-from: type=gha,scope=dockerhub-worker
+                  cache-to: type=gha,mode=max,scope=dockerhub-worker

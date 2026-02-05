@@ -24,6 +24,10 @@ on:
                 required: true
                 default: 'latest'
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
 jobs:
     docker:
         runs-on: ubuntu-latest
@@ -37,6 +41,8 @@ jobs:
 
             - name: Checkout
               uses: actions/checkout@v4.1.1
+              with:
+                  fetch-depth: 1
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3.0.0
@@ -67,7 +73,9 @@ jobs:
                   platforms: linux/amd64,linux/arm64
                   push: true
                   tags: |
-                      ${{ format('{0}.dkr.ecr.{1}.amazonaws.com/flowise:{2}', 
-                          secrets.AWS_ACCOUNT_ID, 
-                          secrets.AWS_REGION, 
+                      ${{ format('{0}.dkr.ecr.{1}.amazonaws.com/flowise:{2}',
+                          secrets.AWS_ACCOUNT_ID,
+                          secrets.AWS_REGION,
                           steps.defaults.outputs.tag_version) }}
+                  cache-from: type=gha,scope=ecr-main
+                  cache-to: type=gha,mode=max,scope=ecr-main

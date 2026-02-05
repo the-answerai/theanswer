@@ -3,19 +3,42 @@ on:
     push:
         branches:
             - main
+        paths-ignore:
+            - '**.md'
+            - '.claude/**'
+            - '.alphaAgent/**'
+            - '.cursor/**'
+            - '.vscode/**'
+            - 'docker/**'
+            - 'docs/**'
+            - 'packages/docs/**'
+            - '.github/workflows/**'
+            - '!.github/workflows/main.yml'
     pull_request:
         branches:
             - '*'
+        paths-ignore:
+            - '**.md'
+            - '.claude/**'
+            - '.alphaAgent/**'
+            - '.cursor/**'
+            - '.vscode/**'
+            - 'docker/**'
+            - 'docs/**'
+            - 'packages/docs/**'
+            - '.github/workflows/**'
+            - '!.github/workflows/main.yml'
     workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 permissions:
     contents: read
 jobs:
     build:
-        strategy:
-            matrix:
-                platform: [ubuntu-latest]
-                node-version: [20.17.0]
-        runs-on: ${{ matrix.platform }}
+        runs-on: ubuntu-latest
         env:
             PUPPETEER_SKIP_DOWNLOAD: true
             BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
@@ -23,37 +46,17 @@ jobs:
             - uses: actions/checkout@v4
               with:
                   submodules: recursive
+                  fetch-depth: 1
             - uses: pnpm/action-setup@v4
               with:
                   version: 9.15.9
-            - name: Use Node.js ${{ matrix.node-version }}
+            - name: Use Node.js 20.17.0
               uses: actions/setup-node@v4
               with:
-                  node-version: ${{ matrix.node-version }}
+                  node-version: 20.17.0
                   cache: 'pnpm'
                   cache-dependency-path: 'pnpm-lock.yaml'
             - name: Setup Turbo cache
               uses: dtinth/setup-github-actions-caching-for-turbo@v1
             - run: pnpm install --frozen-lockfile
             - run: pnpm lint
-            # Build step disabled - handled by separate build workflow
-            # - run: pnpm build
-            #   env:
-            #       NODE_OPTIONS: '--max_old_space_size=4096'
-            # Cypress tests disabled temporarily
-            # - name: Cypress install
-            #   run: pnpm cypress install
-            # - name: Install dependencies (Cypress Action)
-            #   uses: cypress-io/github-action@v6
-            #   with:
-            #       working-directory: ./
-            #       runTests: false
-            # - name: Cypress test
-            #   uses: cypress-io/github-action@v6
-            #   with:
-            #       install: false
-            #       working-directory: packages/server
-            #       start: pnpm start
-            #       wait-on: 'http://localhost:3000'
-            #       wait-on-timeout: 120
-            #       browser: chrome
