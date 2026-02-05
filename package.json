@@ -31,7 +31,7 @@
         "clean": "pnpm --filter \"./packages/**\" clean",
         "nuke": "pnpm --filter \"./packages/**\" nuke && rimraf node_modules .turbo",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-        "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --ignore-pattern \"packages/embed/**\"",
+        "lint": "eslint packages packages-answers apps --ext .js,.jsx,.ts,.tsx --ignore-pattern \"packages/embed/**\"",
         "lint-fix": "pnpm lint --fix",
         "quick": "pretty-quick --staged",
         "postinstall": "sh ./scripts/bws-secure/bws-installer.sh && husky install",
