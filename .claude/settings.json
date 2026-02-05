@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "aai-core@alphaagent-team": true,
+    "aai-hooks@alphaagent-team": true,
+    "aai-docs@alphaagent-team": true
+  }
+}
