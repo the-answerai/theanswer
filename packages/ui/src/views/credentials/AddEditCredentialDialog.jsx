@@ -538,7 +538,6 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
             }
 
             const mcpData = await mcpResponse.json()
-            console.log('MCP OAuth initialized:', mcpData)
 
             // Step 2: Open OAuth popup with MCP endpoints
             const width = 500
