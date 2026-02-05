@@ -4,11 +4,34 @@ on:
     push:
         branches:
             - main
+        paths:
+            - 'Dockerfile'
+            - 'docker/**'
+            - 'packages/**'
+            - 'packages-answers/**'
+            - 'apps/**'
+            - 'pnpm-lock.yaml'
+            - 'turbo.json'
+            - '.github/workflows/test_docker_build.yml'
 
     pull_request:
         branches:
             - '*'
+        paths:
+            - 'Dockerfile'
+            - 'docker/**'
+            - 'packages/**'
+            - 'packages-answers/**'
+            - 'apps/**'
+            - 'pnpm-lock.yaml'
+            - 'turbo.json'
+            - '.github/workflows/test_docker_build.yml'
     workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -18,5 +41,17 @@ jobs:
             - uses: actions/checkout@v4
               with:
                   submodules: true
+                  fetch-depth: 1
 
-            - run: docker build --no-cache -t flowise .
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  push: false
+                  load: true
+                  tags: flowise:test
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max

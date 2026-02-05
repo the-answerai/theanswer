@@ -8,7 +8,13 @@ import {
     IServerSideEventStreamer
 } from '../../../src/Interface'
 import axios, { AxiosRequestConfig } from 'axios'
-import { getCredentialData, getCredentialParam, processTemplateVariables, parseJsonBody, applyLangfuseTraceHeaders } from '../../../src/utils'
+import {
+    getCredentialData,
+    getCredentialParam,
+    processTemplateVariables,
+    parseJsonBody,
+    applyLangfuseTraceHeaders
+} from '../../../src/utils'
 import { DataSource } from 'typeorm'
 import { BaseMessageLike } from '@langchain/core/messages'
 import { updateFlowState } from '../utils'
