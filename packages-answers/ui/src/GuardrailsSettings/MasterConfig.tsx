@@ -243,16 +243,12 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                     >
                         <Box sx={{ flex: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <IconShieldCheck size={20} aria-label="Guardrails configured" />
-                                <Typography variant='body2'>
-                                    Fiddler guardrails are active and configured for your organization.
-                                </Typography>
+                                <IconShieldCheck size={20} aria-label='Guardrails configured' />
+                                <Typography variant='body2'>Fiddler guardrails are active and configured for your organization.</Typography>
                             </Box>
                             <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block', ml: 3.5 }}>
                                 This credential is managed by another member of your organization.
-                                {config?.credentialId && (
-                                    <> (ID: {config.credentialId.slice(0, 8)}…)</>
-                                )}
+                                {config?.credentialId && <> (ID: {config.credentialId.slice(0, 8)}…)</>}
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>

@@ -9,7 +9,15 @@ import ChatInput from './ChatInput'
 import Refresh from '@mui/icons-material/Refresh'
 import CircularProgress from '@mui/material/CircularProgress'
 
-const ChatDetailWidget = ({ appSettings: _appSettings, user: _user, prompts: _prompts }: { appSettings: AppSettings; user: User; prompts?: any }) => {
+const ChatDetailWidget = ({
+    appSettings: _appSettings,
+    user: _user,
+    prompts: _prompts
+}: {
+    appSettings: AppSettings
+    user: User
+    prompts?: any
+}) => {
     const scrollRef = React.useRef<HTMLDivElement>(null)
     const inputRef = React.useRef<HTMLInputElement>(null)
 
