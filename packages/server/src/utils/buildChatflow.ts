@@ -1246,6 +1246,10 @@ export const utilBuildChatflow = async (req: Request, isInternal: boolean = fals
     const abortControllerId = `${chatflow.id}_${chatId}`
     const isTool = req.get('flowise-tool') === 'true'
 
+    // Extract parent Langfuse trace context from headers (if present from Execute Flow nodes)
+    const parentLangfuseTraceId = req.get('x-langfuse-parent-trace-id')
+    const parentLangfuseSpanId = req.get('x-langfuse-parent-span-id')
+
     await validateAndSaveChat(req, chatflow, isInternal, chatId, incomingInput, chatflowid)
 
     const isEvaluation: boolean = req.headers['X-Flowise-Evaluation'] || req.body.evaluation
@@ -1261,6 +1265,27 @@ export const utilBuildChatflow = async (req: Request, isInternal: boolean = fals
             }
         }
         chatflow.analytic = JSON.stringify(newEval)
+    }
+
+    // Inject parent Langfuse trace context into analytic config if present
+    if (parentLangfuseTraceId || parentLangfuseSpanId) {
+        let analyticConfig = {}
+        if (chatflow.analytic) {
+            try {
+                analyticConfig = typeof chatflow.analytic === 'string' ? JSON.parse(chatflow.analytic) : chatflow.analytic
+            } catch {
+                analyticConfig = {}
+            }
+        }
+
+        // Inject parent trace context so it can be used by getAnalyticCallbacks
+        analyticConfig = {
+            ...analyticConfig,
+            parentLangfuseTraceId,
+            parentLangfuseSpanId
+        }
+
+        chatflow.analytic = JSON.stringify(analyticConfig)
     }
 
     let organizationId = ''
@@ -1318,7 +1343,9 @@ export const utilBuildChatflow = async (req: Request, isInternal: boolean = fals
             orgId,
             workspaceId,
             subscriptionId,
-            productId
+            productId,
+            parentLangfuseTraceId,
+            parentLangfuseSpanId
         }
 
         if (process.env.MODE === MODE.QUEUE) {

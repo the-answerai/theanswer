@@ -564,6 +564,8 @@ export interface IExecuteFlowParams extends IPredictionQueueAppServer {
     parentExecutionId?: string
     iterationContext?: ICommonObject
     isTool?: boolean
+    parentLangfuseTraceId?: string
+    parentLangfuseSpanId?: string
 }
 
 export interface INodeOverrides {
