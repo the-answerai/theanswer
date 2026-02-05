@@ -31,24 +31,32 @@ Depending on the deployment platform (Render vs AWS Copilot), prepare the approp
 Reference: `/render.yaml`
 
 Required environment variables:
-- [ ] `AUTH0_DOMAIN` - IAS-specific Auth0 tenant
-- [ ] `AUTH0_BASE_URL` - Production URL (e.g., `https://ias.theanswer.ai`)
+- [ ] `AUTH0_DOMAIN` - IAS-specific Auth0 tenant domain (e.g., `ias-tenant.auth0.com`)
+- [ ] `AUTH0_BASE_URL` - Production application URL (e.g., `https://ias.theanswer.ai`) - used for Auth0 callbacks
 - [ ] `AUTH0_SECRET` - Secret for session management
 - [ ] `AUTH0_CLIENT_ID` - IAS Auth0 application ID
 - [ ] `AUTH0_CLIENT_SECRET` - IAS Auth0 application secret
 - [ ] `AUTH0_AUDIENCE` - IAS Auth0 API audience
-- [ ] `AUTH0_ISSUER_BASE_URL` - Auth0 issuer URL
+- [ ] `AUTH0_ISSUER_BASE_URL` - Auth0 issuer URL (typically `https://{AUTH0_DOMAIN}`)
 - [ ] `AUTH0_ORGANIZATION_ID` - IAS organization ID
 - [ ] `AUTH0_JWKS_URI` - JWKS URI for token validation
 - [ ] `FLOWISE_SECRETKEY_OVERWRITE` - **CRITICAL**: Encryption key for credentials
   - Generate with: `openssl rand -base64 32`
   - Store securely - losing this invalidates all stored credentials
+- [ ] `DATABASE_URL` - PostgreSQL connection string
+  - Format: `postgresql://{user}:{password}@{host}:{port}/{database}`
+  - For Render: Provided automatically via DATABASE_SECRET
+  - Verify after provisioning
 - [ ] `S3_STORAGE_BUCKET_NAME` - S3 bucket for file storage
+  - Bucket must be pre-created and exist in the specified region
+  - Required IAM permissions: `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`
+  - CORS configuration required (if frontend makes direct S3 requests)
 - [ ] `S3_STORAGE_ACCESS_KEY_ID` - AWS access key
 - [ ] `S3_STORAGE_SECRET_ACCESS_KEY` - AWS secret key
 - [ ] `S3_STORAGE_REGION` - AWS region
 - [ ] `AAI_DEFAULT_OPENAI_API_KEY` - OpenAI API key for AI features
 - [ ] `BILLING_STRIPE_SECRET_KEY` - Stripe key (if billing enabled)
+- [ ] `REDIS_URL` - Redis connection URL (e.g., `redis://localhost:6379`)
 
 #### Option B: AWS Copilot Deployment
 
@@ -73,8 +81,9 @@ Reference: `/copilot/` directory
 ### 3. Database Preparation
 
 - [ ] Verify database instance is provisioned
-- [ ] Run Prisma migrations: `pnpm db:deploy`
+- [ ] Run Prisma migrations: `pnpm db:deploy` (production) - runs existing migrations without generating new ones
 - [ ] Run TypeORM migrations: `pnpm migration:run`
+- [ ] Verify database connectivity: `pnpm db:healthcheck`
 - [ ] Verify pgvector extension is installed (required for vector stores)
   ```sql
   CREATE EXTENSION IF NOT EXISTS vector;
@@ -133,7 +142,10 @@ pnpm build
 # Run tests
 pnpm test:auth
 pnpm test:chatflows
+pnpm test:e2e
 ```
+
+**Important:** Deploy from `staging` branch after PR merge per git strategy conventions.
 
 ### Step 2: Deploy to Staging (if available)
 
