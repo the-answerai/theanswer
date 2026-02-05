@@ -4,24 +4,30 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 
 ## Quick Start
 
-**6 Core Commands:**
+**7 Core Commands:**
 ```bash
 /ticket-create          # Create new Linear ticket
 /ticket-start AAI-123   # Start work on ticket
 /push                   # Commit + Push + Create/Update PR
 /pr-review 456          # Review pull request
-/blog-write             # Write technical blog posts and articles
-/issue-triage 278       # Triage GitHub issues (close or create Linear tickets)
+/fleet                  # Parallel work on tickets or any goal
+/blog-write             # Write technical blog posts
+/issue-triage 278       # Triage GitHub issues
 ```
 
-**Daily Workflow:**
+**Single Ticket Workflow:**
 ```bash
 /ticket-start AAI-123   # Start work
-# ... write code ...
 /push                   # Commit, push, create PR
-# ... write more ...
-/push                   # Commit, push, update PR
 /pr-review             # Review your PR
+```
+
+**Parallel Workflow:**
+```bash
+/fleet AAI-123 AAI-456              # Work on multiple tickets
+/fleet "add logging to all routes"  # Or any goal
+/fleet                              # Check status
+/fleet push                         # Create PRs
 ```
 
 ## Architecture
@@ -31,20 +37,21 @@ Streamlined 3-layer architecture for Linear ticket management and Git workflows.
 ```
 USER
   ↓
-COMMANDS (6 core)
-  /ticket-create  /ticket-start  /push  /pr-review  /blog-write  /issue-triage
+COMMANDS (7 core)
+  /ticket-create  /ticket-start  /push  /pr-review  /fleet  /blog-write  /issue-triage
   ↓
-AGENTS (8 specialized)
-  linear-ticket-creator   linear-ticket-planner   linear-ticket-optimizer
-  git-pr-manager          git-pr-reviewer         github-issue-triager
-  integration-docs-updater  integration-validator
+AGENTS (14 specialized)
+  Ticket:  linear-ticket-creator  linear-ticket-planner  linear-ticket-optimizer
+  Git:     git-pr-manager  git-pr-reviewer  github-issue-triager
+  Fleet:   fleet-orchestrator  fleet-worker  fleet-verifier  ticket-tester  ticket-documenter
+  Docs:    integration-docs-updater  integration-validator  blog-post-writer
   ↓
-SKILLS (12 reusable patterns)
-  branch-workflow       commit-helper         git-branch
-  pr-description-gen    pr-review-workflow    ticket-planning-workflow
-  ticket-status-sync    ticket-duplicate-detection
-  theanswer-patterns    error-handling
-  linear-constants      github-issue-analysis
+SKILLS (15 reusable patterns)
+  Git:     branch-workflow  commit-helper  git-branch  pr-description-gen
+  Ticket:  ticket-planning-workflow  ticket-status-sync  ticket-duplicate-detection
+  Fleet:   worktree-management  parallel-orchestration  fleet-monitoring
+  Review:  pr-review-workflow  theanswer-patterns  error-handling
+  Config:  linear-constants  github-issue-analysis
   ↓
 RULES (3 path-specific)
   api-routes.md → packages/server/src/routes/**
@@ -149,6 +156,40 @@ Review pull requests with comprehensive checks.
 /pr-review 456
 ```
 
+### `/fleet [tickets|goal|subcommand]`
+Orchestrate parallel work with autonomous agents.
+
+**What it does:**
+- Accepts Linear tickets OR free-form goals
+- Decomposes goals into parallelizable tasks
+- Creates isolated worktrees for each task
+- Spawns autonomous agents in parallel
+- Tracks progress and handles completion
+
+**Subcommands:**
+| Usage | Action |
+|-------|--------|
+| `/fleet AAI-123 AAI-456` | Work on Linear tickets |
+| `/fleet "add logging to routes"` | Decompose goal into parallel tasks |
+| `/fleet` | Show status |
+| `/fleet test` | Add tests to completed work |
+| `/fleet verify` | Validate quality, patterns, conflicts |
+| `/fleet push` | Commit and create PRs |
+| `/fleet cleanup` | Remove worktrees |
+
+**Example:**
+```bash
+# Ticket-based
+/fleet AAI-123 AAI-456 AAI-789
+/fleet
+/fleet push
+
+# Goal-based
+/fleet "refactor error handling in all services"
+/fleet
+/fleet push
+```
+
 ### `/blog-write [topic]`
 Write technical blog posts, articles, and content.
 
@@ -205,35 +246,44 @@ Summary: 2 tickets created, 2 issues closed
 .claude/
 ├── README.md                          # This file
 ├── ARCHITECTURE.md                    # Detailed optimization plan
-├── commands/                          # 6 core user commands
+├── commands/                          # 7 core user commands
 │   ├── ticket-create.md
 │   ├── ticket-start.md
 │   ├── push.md                        # ⭐ Main workflow command
 │   ├── pr-review.md
+│   ├── fleet.md                       # 🚀 Parallel work orchestration
 │   ├── blog-write.md
-│   └── issue-triage.md                # GitHub issue triage
-├── agents/                            # 8 specialized agents
+│   └── issue-triage.md
+├── agents/                            # 13 specialized agents
 │   ├── linear-ticket-creator.md
 │   ├── linear-ticket-planner.md
 │   ├── linear-ticket-optimizer.md
 │   ├── git-pr-manager.md
 │   ├── git-pr-reviewer.md
-│   ├── github-issue-triager.md        # Autonomous issue analysis
+│   ├── github-issue-triager.md
+│   ├── fleet-orchestrator.md          # 🚀 Coordinates parallel agents
+│   ├── fleet-worker.md                # 🚀 Autonomous goal execution
+│   ├── fleet-verifier.md              # 🚀 Validates work before push
+│   ├── ticket-tester.md               # Creates tests
+│   ├── ticket-documenter.md           # Adds documentation
 │   ├── integration-docs-updater.md
 │   └── integration-validator.md
-├── skills/                            # 12 reusable patterns
-│   ├── branch-workflow.md             # Branch lifecycle
-│   ├── commit-helper.md               # Commit validation
-│   ├── git-branch.md                  # Branch creation
-│   ├── pr-description-generator.md    # PR descriptions
-│   ├── pr-review-workflow.md          # Review methodology
-│   ├── ticket-planning-workflow.md    # Ticket planning
-│   ├── ticket-status-sync.md          # Linear sync
-│   ├── ticket-duplicate-detection.md  # Duplicate detection
-│   ├── theanswer-patterns.md          # Multi-tenancy, auth patterns
-│   ├── error-handling.md              # InternalFlowiseError patterns
-│   ├── linear-constants.md            # Pre-cached Linear config
-│   └── github-issue-analysis.md       # Issue analysis methodology
+├── skills/                            # 15 reusable patterns
+│   ├── branch-workflow.md
+│   ├── commit-helper.md
+│   ├── git-branch.md
+│   ├── pr-description-generator.md
+│   ├── pr-review-workflow.md
+│   ├── ticket-planning-workflow.md
+│   ├── ticket-status-sync.md
+│   ├── ticket-duplicate-detection.md
+│   ├── theanswer-patterns.md
+│   ├── error-handling.md
+│   ├── linear-constants.md
+│   ├── github-issue-analysis.md
+│   ├── worktree-management.md         # 🚀 Git worktree patterns
+│   ├── parallel-orchestration.md      # 🚀 Agent coordination
+│   └── fleet-monitoring.md            # 🚀 Status tracking
 ├── rules/                             # 3 path-specific rules
 │   ├── api-routes.md                  # packages/server/src/routes/**
 │   ├── components.md                  # packages/components/nodes/**
@@ -337,6 +387,24 @@ All commands enforce TheAnswer requirements:
 /blog-write OAuth2 authentication  # Create technical content
 # Agent researches codebase, asks clarifying questions,
 # generates comprehensive blog post with SEO optimization
+```
+
+### Parallel Multi-Ticket Development
+```bash
+/fleet AAI-123 AAI-456 AAI-789   # Start 3 tickets in parallel
+/fleet                           # Check progress
+/fleet test                      # Add tests when done
+/fleet verify                    # Validate before push
+/fleet push                      # Create 3 PRs
+```
+
+### Goal-Based Parallel Work
+```bash
+/fleet "add input validation to all API endpoints"
+# System decomposes into parallel tasks by route group
+/fleet                           # Check progress
+/fleet verify                    # Check quality & conflicts
+/fleet push                      # Create PRs for each task
 ```
 
 ## Extending the System
