@@ -264,6 +264,20 @@ const Canvas = ({ chatflowid: chatflowId }) => {
             const flowData = JSON.stringify(rfInstanceObject)
 
             if (!chatflow.id) {
+                // Include configuration fields from imported JSON (stored in Redux)
+                const configFields = [
+                    'description',
+                    'category',
+                    'visibility',
+                    'chatbotConfig',
+                    'apiConfig',
+                    'analytic',
+                    'speechToText',
+                    'textToSpeech',
+                    'followUpPrompts',
+                    'answersConfig',
+                    'browserExtConfig'
+                ]
                 const newChatflowBody = {
                     name: chatflowName,
                     deployed: false,
@@ -271,6 +285,12 @@ const Canvas = ({ chatflowid: chatflowId }) => {
                     flowData,
                     type: isAgentCanvas ? 'MULTIAGENT' : 'CHATFLOW'
                 }
+                // Only include config fields that are defined to avoid sending undefined
+                configFields.forEach((field) => {
+                    if (chatflow[field] !== undefined) {
+                        newChatflowBody[field] = chatflow[field]
+                    }
+                })
                 createNewChatflowApi.request(newChatflowBody)
             } else {
                 setChatflowName(chatflowName)
