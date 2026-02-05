@@ -28,10 +28,7 @@ export interface EnrichSessionOptions {
  * @param options - Optional configuration
  * @returns Enriched session with merged user data
  */
-export async function enrichSessionWithFlowise(
-    session: any,
-    options: EnrichSessionOptions = {}
-): Promise<any> {
+export async function enrichSessionWithFlowise(session: any, options: EnrichSessionOptions = {}): Promise<any> {
     if (!session?.user) {
         return session
     }

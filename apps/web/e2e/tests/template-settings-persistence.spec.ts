@@ -166,9 +166,11 @@ test.describe('Template Settings Persistence (AGENT-664)', () => {
 
         // Open the chatflow configuration dialog
         // Look for the settings/configuration button in the canvas header
-        const settingsButton = page.locator(
-            'button[aria-label*="Settings"], button[aria-label*="Configuration"], button:has([data-testid="SettingsIcon"]), [data-testid="chatflow-settings"], button:has-text("Settings")'
-        ).first()
+        const settingsButton = page
+            .locator(
+                'button[aria-label*="Settings"], button[aria-label*="Configuration"], button:has([data-testid="SettingsIcon"]), [data-testid="chatflow-settings"], button:has-text("Settings")'
+            )
+            .first()
 
         // If direct settings button not found, try the more menu
         const settingsVisible = await settingsButton.isVisible({ timeout: 3000 }).catch(() => false)
@@ -198,7 +200,11 @@ test.describe('Template Settings Persistence (AGENT-664)', () => {
         }
 
         // Find the description field and update it
-        const descriptionField = page.locator('textarea[placeholder*="description" i], input[placeholder*="description" i], textarea[name*="description" i], label:has-text("Description") + textarea, label:has-text("Description") ~ textarea').first()
+        const descriptionField = page
+            .locator(
+                'textarea[placeholder*="description" i], input[placeholder*="description" i], textarea[name*="description" i], label:has-text("Description") + textarea, label:has-text("Description") ~ textarea'
+            )
+            .first()
 
         // If can't find by placeholder, try finding by label
         const descriptionFieldVisible = await descriptionField.isVisible({ timeout: 2000 }).catch(() => false)
@@ -262,9 +268,11 @@ test.describe('Template Settings Persistence (AGENT-664)', () => {
         await page.waitForTimeout(2000)
 
         // Re-open the configuration dialog
-        const settingsButtonAfterReload = page.locator(
-            'button[aria-label*="Settings"], button[aria-label*="Configuration"], button:has([data-testid="SettingsIcon"]), [data-testid="chatflow-settings"], button:has-text("Settings")'
-        ).first()
+        const settingsButtonAfterReload = page
+            .locator(
+                'button[aria-label*="Settings"], button[aria-label*="Configuration"], button:has([data-testid="SettingsIcon"]), [data-testid="chatflow-settings"], button:has-text("Settings")'
+            )
+            .first()
 
         const settingsVisibleAfterReload = await settingsButtonAfterReload.isVisible({ timeout: 3000 }).catch(() => false)
 
@@ -291,7 +299,11 @@ test.describe('Template Settings Persistence (AGENT-664)', () => {
         }
 
         // Verify the description was persisted
-        const descriptionFieldAfterReload = page.locator('textarea[placeholder*="description" i], input[placeholder*="description" i], textarea[name*="description" i], label:has-text("Description") + textarea, label:has-text("Description") ~ textarea').first()
+        const descriptionFieldAfterReload = page
+            .locator(
+                'textarea[placeholder*="description" i], input[placeholder*="description" i], textarea[name*="description" i], label:has-text("Description") + textarea, label:has-text("Description") ~ textarea'
+            )
+            .first()
 
         const descriptionFieldVisibleAfterReload = await descriptionFieldAfterReload.isVisible({ timeout: 2000 }).catch(() => false)
 

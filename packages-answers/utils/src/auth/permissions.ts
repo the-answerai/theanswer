@@ -119,8 +119,7 @@ export const createPermissionManager = (
         return requestedRoles.some((role) => hasRole(role))
     }
 
-    const hasPermission = (permission: PermissionName) =>
-        permissionSet.has('*') || permissionSet.has(permission)
+    const hasPermission = (permission: PermissionName) => permissionSet.has('*') || permissionSet.has(permission)
 
     const hasAnyPermission = (permissions: PermissionName[]) => {
         if (!permissions?.length) return false

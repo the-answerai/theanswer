@@ -238,10 +238,7 @@ describe('authenticationHandlerMiddleware', () => {
             const AppDataSource = { getRepository } as any
 
             // First call (fast path) returns mismatched org, second call (slow path) returns correct org
-            orgRepo.findOneBy
-                .mockResolvedValueOnce(mismatchedOrg)
-                .mockResolvedValueOnce(correctOrg)
-
+            orgRepo.findOneBy.mockResolvedValueOnce(mismatchedOrg).mockResolvedValueOnce(correctOrg)
             ;(findOrCreateUser as jest.Mock).mockResolvedValue(user)
 
             const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
@@ -255,9 +252,7 @@ describe('authenticationHandlerMiddleware', () => {
             await middleware(req, res, next)
             await jwtCallbackPromise
 
-            expect(warnSpy).toHaveBeenCalledWith(
-                expect.stringContaining('[Auth:Security] Org mismatch detected')
-            )
+            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[Auth:Security] Org mismatch detected'))
             expect(findOrCreateUser).toHaveBeenCalled()
 
             warnSpy.mockRestore()
@@ -271,10 +266,7 @@ describe('authenticationHandlerMiddleware', () => {
             const AppDataSource = { getRepository } as any
 
             // Fast path: org not found. Slow path: org found.
-            orgRepo.findOneBy
-                .mockResolvedValueOnce(null)
-                .mockResolvedValueOnce(makeOrg())
-
+            orgRepo.findOneBy.mockResolvedValueOnce(null).mockResolvedValueOnce(makeOrg())
             ;(findOrCreateUser as jest.Mock).mockResolvedValue(user)
 
             const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
@@ -288,9 +280,7 @@ describe('authenticationHandlerMiddleware', () => {
             await middleware(req, res, next)
             await jwtCallbackPromise
 
-            expect(warnSpy).toHaveBeenCalledWith(
-                expect.stringContaining('db_org=deleted')
-            )
+            expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('db_org=deleted'))
             expect(findOrCreateUser).toHaveBeenCalled()
 
             warnSpy.mockRestore()
