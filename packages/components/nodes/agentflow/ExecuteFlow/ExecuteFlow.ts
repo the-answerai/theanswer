@@ -8,7 +8,7 @@ import {
     IServerSideEventStreamer
 } from '../../../src/Interface'
 import axios, { AxiosRequestConfig } from 'axios'
-import { getCredentialData, getCredentialParam, processTemplateVariables, parseJsonBody } from '../../../src/utils'
+import { getCredentialData, getCredentialParam, processTemplateVariables, parseJsonBody, applyLangfuseTraceHeaders } from '../../../src/utils'
 import { DataSource } from 'typeorm'
 import { BaseMessageLike } from '@langchain/core/messages'
 import { updateFlowState } from '../utils'
@@ -191,15 +191,7 @@ class ExecuteFlow_Agentflow implements INode {
             if (chatflowApiKey) headers = { ...headers, Authorization: `Bearer ${chatflowApiKey}` }
 
             // Pass parent Langfuse trace context if available
-            const parentLangfuseTrace = options.parentLangfuseTrace || options.analytic?.parentLangfuseTrace
-            const parentLangfuseSpan = options.parentLangfuseSpan
-
-            if (parentLangfuseTrace && parentLangfuseTrace.id) {
-                headers['X-Langfuse-Parent-Trace-Id'] = parentLangfuseTrace.id
-            }
-            if (parentLangfuseSpan && parentLangfuseSpan.id) {
-                headers['X-Langfuse-Parent-Span-Id'] = parentLangfuseSpan.id
-            }
+            applyLangfuseTraceHeaders(options, headers)
 
             const finalUrl = `${baseURL}/api/v1/prediction/${selectedFlowId}`
             const requestConfig: AxiosRequestConfig = {

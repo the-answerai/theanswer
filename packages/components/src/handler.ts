@@ -759,7 +759,7 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                             // Construct span client directly to avoid sending a spurious create event.
                             // This sets observationId so the CallbackHandler nests LLM calls under the parent span.
                             handlerConfig.root = new LangfuseSpanClient(
-                                langfuseInstance as any,
+                                langfuseInstance,
                                 analytic.parentLangfuseSpanId,
                                 analytic.parentLangfuseTraceId
                             )
@@ -1172,8 +1172,10 @@ export class AnalyticHandler {
                     const analyticConfig = typeof analytic === 'string' ? JSON.parse(analytic) : analytic
                     parentLangfuseTraceId = analyticConfig.parentLangfuseTraceId
                     parentLangfuseSpanId = analyticConfig.parentLangfuseSpanId
-                } catch {
-                    // Ignore parse errors
+                } catch (err) {
+                    if (process.env.DEBUG === 'true') {
+                        console.error('Error parsing analytic config for parent trace context:', err)
+                    }
                 }
             }
 

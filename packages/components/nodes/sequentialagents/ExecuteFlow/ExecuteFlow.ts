@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm'
-import { getCredentialData, getCredentialParam, getVars, executeJavaScriptCode, createCodeExecutionSandbox } from '../../../src/utils'
+import { getCredentialData, getCredentialParam, getVars, executeJavaScriptCode, createCodeExecutionSandbox, applyLangfuseTraceHeaders } from '../../../src/utils'
 import { isValidUUID, isValidURL } from '../../../src/validator'
 import {
     ICommonObject,
@@ -189,15 +189,7 @@ class ExecuteFlow_SeqAgents implements INode {
         if (chatflowApiKey) headers = { Authorization: `Bearer ${chatflowApiKey}` }
 
         // Pass parent Langfuse trace context if available
-        const parentLangfuseTrace = options.parentLangfuseTrace || options.analytic?.parentLangfuseTrace
-        const parentLangfuseSpan = options.parentLangfuseSpan
-
-        if (parentLangfuseTrace && parentLangfuseTrace.id) {
-            headers['X-Langfuse-Parent-Trace-Id'] = parentLangfuseTrace.id
-        }
-        if (parentLangfuseSpan && parentLangfuseSpan.id) {
-            headers['X-Langfuse-Parent-Span-Id'] = parentLangfuseSpan.id
-        }
+        applyLangfuseTraceHeaders(options, headers)
 
         const chatflowId = options.chatflowid
         const sessionId = options.sessionId
