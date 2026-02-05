@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use client'
 import { useCallback, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
