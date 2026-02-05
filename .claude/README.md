@@ -40,16 +40,16 @@ USER
 COMMANDS (7 core)
   /ticket-create  /ticket-start  /push  /pr-review  /fleet  /blog-write  /issue-triage
   ↓
-AGENTS (14 specialized)
+AGENTS (9 specialized)
   Ticket:  linear-ticket-creator  linear-ticket-planner  linear-ticket-optimizer
   Git:     git-pr-manager  git-pr-reviewer  github-issue-triager
-  Fleet:   fleet-orchestrator  fleet-worker  fleet-verifier  ticket-tester  ticket-documenter
-  Docs:    integration-docs-updater  integration-validator  blog-post-writer
+  Fleet:   fleet-worker (one agent handles all parallel tasks)
+  Docs:    integration-docs-updater  integration-validator
   ↓
-SKILLS (15 reusable patterns)
+SKILLS (13 reusable patterns)
   Git:     branch-workflow  commit-helper  git-branch  pr-description-gen
   Ticket:  ticket-planning-workflow  ticket-status-sync  ticket-duplicate-detection
-  Fleet:   worktree-management  parallel-orchestration  fleet-monitoring
+  Fleet:   fleet-patterns (worktrees + monitoring + git ops)
   Review:  pr-review-workflow  theanswer-patterns  error-handling
   Config:  linear-constants  github-issue-analysis
   ↓
@@ -254,21 +254,17 @@ Summary: 2 tickets created, 2 issues closed
 │   ├── fleet.md                       # 🚀 Parallel work orchestration
 │   ├── blog-write.md
 │   └── issue-triage.md
-├── agents/                            # 13 specialized agents
+├── agents/                            # 9 specialized agents
 │   ├── linear-ticket-creator.md
 │   ├── linear-ticket-planner.md
 │   ├── linear-ticket-optimizer.md
 │   ├── git-pr-manager.md
 │   ├── git-pr-reviewer.md
 │   ├── github-issue-triager.md
-│   ├── fleet-orchestrator.md          # 🚀 Coordinates parallel agents
-│   ├── fleet-worker.md                # 🚀 Autonomous goal execution
-│   ├── fleet-verifier.md              # 🚀 Validates work before push
-│   ├── ticket-tester.md               # Creates tests
-│   ├── ticket-documenter.md           # Adds documentation
+│   ├── fleet-worker.md                # 🚀 Generic worker for any parallel task
 │   ├── integration-docs-updater.md
 │   └── integration-validator.md
-├── skills/                            # 15 reusable patterns
+├── skills/                            # 13 reusable patterns
 │   ├── branch-workflow.md
 │   ├── commit-helper.md
 │   ├── git-branch.md
@@ -281,9 +277,7 @@ Summary: 2 tickets created, 2 issues closed
 │   ├── error-handling.md
 │   ├── linear-constants.md
 │   ├── github-issue-analysis.md
-│   ├── worktree-management.md         # 🚀 Git worktree patterns
-│   ├── parallel-orchestration.md      # 🚀 Agent coordination
-│   └── fleet-monitoring.md            # 🚀 Status tracking
+│   └── fleet-patterns.md              # 🚀 Worktrees + monitoring + git ops
 ├── rules/                             # 3 path-specific rules
 │   ├── api-routes.md                  # packages/server/src/routes/**
 │   ├── components.md                  # packages/components/nodes/**

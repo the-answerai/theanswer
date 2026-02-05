@@ -1,132 +1,265 @@
 ---
-description: Orchestrate parallel work with autonomous agents - tickets, tasks, or any goal
+description: Parallel work orchestration - tickets, goals, or any task
 ---
 
-# Fleet Command
+# /fleet - Parallel Work Orchestration
 
-**YOU MUST use the `fleet-orchestrator` agent for all fleet operations.**
+You ARE the orchestrator. Do not delegate to another agent for orchestration.
 
-## Immediate Action
+## Quick Reference
 
-Based on the input, take ONE of these actions:
+```bash
+/fleet AAI-123 AAI-456          # Work on tickets in parallel
+/fleet "add logging to routes"  # Any goal, auto-decomposed
+/fleet                          # Check status
+/fleet test                     # Add tests to completed work
+/fleet push                     # Commit and create PRs
+/fleet cleanup                  # Remove worktrees
+```
 
-### Starting New Work (tickets or goal)
+---
 
-If input contains ticket IDs (AAI-###) OR a quoted goal string:
+## Handle Based on Input
 
-**MANDATORY: Launch the fleet-orchestrator agent:**
+### Input: Ticket IDs (AAI-###) or Goal String
+
+Execute this workflow directly:
+
+**Step 1: Gather Context**
+
+For tickets:
+```
+Use mcp__linear__get_issue for each ticket ID
+Extract: title, description, acceptance criteria
+```
+
+For goals:
+```
+Explore codebase to understand scope
+Decompose into 2-5 independent chunks (by file/folder/feature)
+Each chunk = one worker
+```
+
+**Step 2: Create Task Breakdown (MANDATORY)**
+
+For EACH work unit, create 5-10 tasks using TaskCreate:
+
+```
+TaskCreate(subject="[AAI-123] 1. Explore existing patterns", description="...", activeForm="Exploring patterns")
+TaskCreate(subject="[AAI-123] 2. Create service class", description="...", activeForm="Creating service")
+TaskCreate(subject="[AAI-123] 3. Add route endpoint", description="...", activeForm="Adding endpoint")
+TaskCreate(subject="[AAI-123] 4. Update controller", description="...", activeForm="Updating controller")
+TaskCreate(subject="[AAI-123] 5. Add validation", description="...", activeForm="Adding validation")
+TaskCreate(subject="[AAI-123] 6. Add error handling", description="...", activeForm="Adding errors")
+TaskCreate(subject="[AAI-123] 7. Verify patterns", description="...", activeForm="Verifying")
+```
+
+**Step 3: Show Plan & Get Approval**
+
+Display:
+```
+## Fleet Plan
+
+### AAI-123: [title]
+1. □ Explore existing patterns
+2. □ Create service class
+3. □ Add route endpoint
+...
+
+### AAI-456: [title]
+1. □ ...
+
+Proceed? (You can modify tasks first)
+```
+
+**WAIT for user approval.**
+
+**Step 4: Create Worktrees**
+
+```bash
+mkdir -p /home/max/dev/theanswer-worktrees
+git fetch origin staging
+
+# For each work unit:
+git worktree add -b feature/{id}-{slug} /home/max/dev/theanswer-worktrees/{id} origin/staging
+```
+
+**Step 5: Spawn Workers (PARALLEL)**
+
+In ONE message, spawn all workers:
 
 ```yaml
 Task:
-  subagent_type: fleet-orchestrator
-  description: "Orchestrate fleet work"
+  subagent_type: fleet-worker
+  description: "Work on AAI-123"
+  run_in_background: true
   prompt: |
-    ## Fleet Request
-    Input: {user's input}
+    ## Your Assignment
+    ID: AAI-123
+    Title: [title]
+    Worktree: /home/max/dev/theanswer-worktrees/AAI-123
 
-    ## Your Workflow (FOLLOW EXACTLY)
+    ## Tasks (update via TaskUpdate as you complete)
+    1. Explore existing patterns
+    2. Create service class
+    3. Add route endpoint
+    4. Update controller
+    5. Add validation
+    6. Add error handling
+    7. Verify patterns
 
-    ### Step 1: Analyze & Plan
-    - If tickets: Fetch each from Linear via mcp__linear__get_issue
-    - If goal: Explore codebase to understand scope and decompose into parallel chunks
+    ## Rules
+    - Work ONLY in your worktree
+    - Follow TheAnswer patterns (organizationId, enforceAbility, InternalFlowiseError)
+    - Do NOT commit
+    - End with RESULT summary
 
-    ### Step 2: Create Task Breakdown (MANDATORY)
-    For EACH work unit, create 5-10 tasks using TaskCreate:
-
-    Example for ticket AAI-123:
-    - TaskCreate: "[AAI-123] 1. Explore existing patterns"
-    - TaskCreate: "[AAI-123] 2. Create service class"
-    - TaskCreate: "[AAI-123] 3. Add route endpoint"
-    - TaskCreate: "[AAI-123] 4. Update controller"
-    - TaskCreate: "[AAI-123] 5. Add validation"
-    - TaskCreate: "[AAI-123] 6. Add error handling"
-    - TaskCreate: "[AAI-123] 7. Verify multi-tenancy"
-    - TaskCreate: "[AAI-123] 8. Final review"
-
-    ### Step 3: Show Plan & Get Approval
-    Display the task breakdown and ask: "Proceed with this plan?"
-
-    ### Step 4: Create Worktrees
-    For each work unit:
-    git worktree add -b {branch} /home/max/dev/theanswer-worktrees/{id} origin/staging
-
-    ### Step 5: Spawn Worker Agents (PARALLEL)
-    In a SINGLE message, spawn fleet-worker for each work unit:
-
-    Task 1:
-      subagent_type: fleet-worker
-      run_in_background: true
-      prompt: |
-        Work Unit: {id}
-        Worktree: /home/max/dev/theanswer-worktrees/{id}
-
-        Your tasks:
-        1. {task 1}
-        2. {task 2}
-        ...
-
-        Update tasks via TaskUpdate as you complete each.
-        Do NOT commit. Report completion with RESULT.
-
-    Task 2: (parallel)
-      ...
-
-    ### Step 6: Report Status
-    Show status table with agent IDs and output file paths.
+Task:
+  subagent_type: fleet-worker
+  description: "Work on AAI-456"
+  run_in_background: true
+  prompt: |
+    ...
 ```
 
-### Checking Status (`/fleet` or `/fleet status`)
+**Step 6: Report**
 
-Check worktrees and task list:
+```
+## Fleet Launched
+
+| ID | Worktree | Status |
+|----|----------|--------|
+| AAI-123 | .../AAI-123 | Running |
+| AAI-456 | .../AAI-456 | Running |
+
+Use `/fleet` to check progress.
+```
+
+---
+
+### Input: Nothing or "status"
+
+Check progress:
+
+1. Run `TaskList` to show task status
+2. Check worktrees:
 ```bash
-# List worktrees
-ls /home/max/dev/theanswer-worktrees/
-
-# Check git status in each
 for dir in /home/max/dev/theanswer-worktrees/*/; do
-  echo "=== $(basename $dir) ==="
-  cd "$dir" && git status --short
+  echo "$(basename $dir): $(cd $dir && git status --short | wc -l) files changed"
 done
 ```
 
-Then use TaskList to show progress.
+---
 
-### Running Subcommands
+### Input: "test"
 
-| Subcommand | Action |
-|------------|--------|
-| `test` | Spawn `ticket-tester` agents for completed worktrees |
-| `docs` | Spawn `ticket-documenter` agents for completed worktrees |
-| `verify` | Spawn `fleet-verifier` agent to validate all work |
-| `push` | Commit, push, create PRs for all worktrees |
-| `cleanup` | Remove worktrees: `git worktree remove {path}` |
+Spawn workers to add tests:
 
-For `test`, `docs`, `verify`: Launch appropriate agent with worktree context.
+1. List worktrees with changes
+2. For each, spawn fleet-worker:
+```yaml
+Task:
+  subagent_type: fleet-worker
+  prompt: |
+    ## Your Assignment
+    Goal: Add tests for the implementation
+    Worktree: /home/max/dev/theanswer-worktrees/{id}
 
-For `push`: Execute git operations directly (commit, push, gh pr create).
-
-## Usage Examples
-
-```bash
-/fleet AAI-123 AAI-456              # Work on tickets
-/fleet "refactor auth services"     # Goal-based work
-/fleet                              # Check status
-/fleet test                         # Add tests
-/fleet verify                       # Validate
-/fleet push                         # Create PRs
-/fleet cleanup                      # Clean up
+    1. Read the changed files to understand what was implemented
+    2. Find existing test patterns in the codebase
+    3. Create ONE focused test file
+    4. Do NOT commit
 ```
 
-## Key Enforcement Rules
+---
 
-1. **ALWAYS use fleet-orchestrator** for new work (tickets/goals)
-2. **ALWAYS create tasks** before spawning workers (5-10 per work unit)
-3. **ALWAYS get approval** before creating worktrees
-4. **ALWAYS spawn workers in parallel** (single message, multiple Task calls)
-5. **Workers NEVER commit** - main session handles git
+### Input: "verify"
+
+Run verification directly (no agent needed):
+
+For each worktree:
+```bash
+cd {worktree}
+
+# Check for issues
+git diff --name-only | while read file; do
+  # Check for console.log
+  grep -n "console.log" "$file" && echo "⚠️ console.log in $file"
+  # Check for TODO
+  grep -n "TODO\|FIXME" "$file" && echo "⚠️ TODO in $file"
+done
+
+# Check TheAnswer patterns in new/modified .ts files
+# - organizationId in queries
+# - enforceAbility on routes
+```
+
+Report:
+```
+## Verification
+
+| ID | Files | Issues |
+|----|-------|--------|
+| AAI-123 | 3 | ✅ None |
+| AAI-456 | 2 | ⚠️ 1 console.log |
+```
+
+---
+
+### Input: "push"
+
+Commit and create PRs directly:
+
+For each worktree with changes:
+```bash
+cd {worktree}
+BRANCH=$(git branch --show-current)
+ID=$(basename $(pwd))
+
+# Commit
+git add -A
+git commit -m "feat($ID): implement changes
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+
+# Push
+git push -u origin $BRANCH
+
+# Create PR
+gh pr create --base staging --title "feat($ID): [title]" --body "## Summary
+[description]
+
+## Linear
+$ID
+"
+```
+
+Update Linear to "In Review" via `mcp__linear__update_issue`.
+
+---
+
+### Input: "cleanup"
+
+Remove worktrees:
+```bash
+for dir in /home/max/dev/theanswer-worktrees/*/; do
+  git worktree remove "$dir" --force
+done
+rmdir /home/max/dev/theanswer-worktrees 2>/dev/null
+```
+
+---
 
 ## Worktree Location
 
 ```
 /home/max/dev/theanswer-worktrees/{work-unit-id}/
 ```
+
+## Key Rules
+
+1. **You orchestrate directly** - don't spawn an orchestrator agent
+2. **Always create tasks first** - 5-10 per work unit
+3. **Always get approval** - before creating worktrees
+4. **Spawn workers in parallel** - single message, multiple Task calls
+5. **Workers never commit** - you handle git operations
