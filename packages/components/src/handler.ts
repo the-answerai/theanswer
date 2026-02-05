@@ -1656,9 +1656,9 @@ export class AnalyticHandler {
                     }
                     if (usageMetadata) {
                         endParams.usage = {
-                            input: usageMetadata.input_tokens,
-                            output: usageMetadata.output_tokens,
-                            total: usageMetadata.total_tokens,
+                            input: usageMetadata.input_tokens ?? 0,
+                            output: usageMetadata.output_tokens ?? 0,
+                            total: usageMetadata.total_tokens ?? 0,
                             unit: 'TOKENS'
                         }
                     }
