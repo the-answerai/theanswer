@@ -1630,7 +1630,7 @@ export class AnalyticHandler {
         return returnIds
     }
 
-    async onLLMEnd(returnIds: ICommonObject, output: string) {
+    async onLLMEnd(returnIds: ICommonObject, output: string, usageMetadata?: ICommonObject) {
         if (Object.prototype.hasOwnProperty.call(this.handlers, 'langSmith')) {
             const llmRun: RunTree | undefined = this.handlers['langSmith'].llmRun[returnIds['langSmith'].llmRun]
             if (llmRun) {
@@ -1648,9 +1648,21 @@ export class AnalyticHandler {
                 const generationId = returnIds['langFuse'].generation
                 const generation: LangfuseGenerationClient | undefined = this.handlers['langFuse'].generation[generationId]
                 if (generation) {
-                    generation.end({
+                    // Build usage object for Langfuse if usage metadata is available
+                    // LangChain provides: input_tokens, output_tokens, total_tokens
+                    // Langfuse expects: input, output, total (optional), unit (optional)
+                    const endParams: ICommonObject = {
                         output: output
-                    })
+                    }
+                    if (usageMetadata) {
+                        endParams.usage = {
+                            input: usageMetadata.input_tokens,
+                            output: usageMetadata.output_tokens,
+                            total: usageMetadata.total_tokens,
+                            unit: 'TOKENS'
+                        }
+                    }
+                    generation.end(endParams)
                     delete this.handlers['langFuse'].generation[generationId]
                     // console.log(`Langfuse generation ended: ${generation.id}`)
                 }
