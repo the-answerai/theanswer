@@ -2093,6 +2093,21 @@ export class AnalyticHandler {
     }
 
     /**
+     * Get the Langfuse trace client for node-level span creation
+     * @param parentTraceIds - The parent trace IDs returned from onChainStart
+     * @returns LangfuseTraceClient if available, undefined otherwise
+     */
+    getLangfuseTrace(parentTraceIds?: ICommonObject): LangfuseTraceClient | undefined {
+        if (!parentTraceIds || !parentTraceIds['langFuse']?.trace) return undefined
+        if (!Object.prototype.hasOwnProperty.call(this.handlers, 'langFuse')) return undefined
+        try {
+            return this.handlers['langFuse']?.trace?.[parentTraceIds['langFuse'].trace]
+        } catch {
+            return undefined
+        }
+    }
+
+    /**
      * Create a Langfuse tool span for tracing tool execution
      * @param parentSpan - Parent Langfuse span to attach this tool span to
      * @param toolName - Name of the tool being executed
