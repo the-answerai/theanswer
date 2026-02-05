@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPgvectorExtension1752614575000 implements MigrationInterface {
@@ -63,11 +64,12 @@ export class AddPgvectorExtension1752614575000 implements MigrationInterface {
         }
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // Note: We don't drop the extension in down() because:
         // 1. It might be used by existing vector tables
         // 2. Other applications might depend on it
         // 3. Extensions are typically kept during rollbacks
+        // eslint-disable-next-line no-console
         console.log('ℹ️  pgvector extension not removed during migration rollback (intentional)')
     }
 }

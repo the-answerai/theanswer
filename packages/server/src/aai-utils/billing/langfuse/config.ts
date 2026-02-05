@@ -8,6 +8,7 @@ export const langfuse = new Langfuse({
     baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
 }) as unknown as LangfuseClient
 
+/* eslint-disable no-console */
 // Logger setup
 export const log = {
     error: (message: string, meta?: Record<string, any>) => console.error(`[billing:error] ${message}`, meta || ''),
@@ -15,3 +16,4 @@ export const log = {
     info: (message: string, meta?: Record<string, any>) => console.info(`[billing:info] ${message}`, meta || ''),
     debug: (message: string, meta?: Record<string, any>) => console.debug(`[billing:debug] ${message}`, meta || '')
 }
+/* eslint-enable no-console */

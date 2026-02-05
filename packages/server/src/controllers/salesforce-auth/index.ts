@@ -25,6 +25,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
             scope: 'api refresh_token'
         })(req, res, next)
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.log('Error: Salesforce authController.authenticate', error)
         next(error)
     }

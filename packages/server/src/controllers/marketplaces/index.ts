@@ -28,6 +28,7 @@ const getMarketplaceTemplate = async (req: Request, res: Response, next: NextFun
 
         // Check if the template is public (Marketplace) for unauthenticated users
         if (!req.user && !apiResponse.isPublic && !apiResponse.visibility.includes('Marketplace')) {
+            // eslint-disable-next-line no-console
             console.log('[getMarketplaceTemplate] apiResponse:', apiResponse)
             throw new InternalFlowiseError(
                 StatusCodes.UNAUTHORIZED,

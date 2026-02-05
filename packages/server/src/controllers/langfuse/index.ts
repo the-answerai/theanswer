@@ -12,7 +12,7 @@ interface HealthCheckResult {
     status: 'ok' | 'critical'
 }
 
-const getHealthCheck = async (req: Request, res: Response, next: NextFunction) => {
+const getHealthCheck = async (req: Request, res: Response, _next: NextFunction) => {
     try {
         // Set overall timeout for the entire operation (10 minutes)
         const operationTimeout = new Promise((_, reject) => {
@@ -175,6 +175,7 @@ const getHealthCheck = async (req: Request, res: Response, next: NextFunction) =
 
             // Debug logging - only when DEBUG=true environment variable is set
             if (process.env.DEBUG === 'true') {
+                // eslint-disable-next-line no-console
                 console.log('=== DEBUG INFORMATION ===', {
                     filtering: {
                         problematicConditions: [

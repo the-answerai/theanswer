@@ -72,7 +72,7 @@ function isResourceIdRequest(req: Request): boolean {
 /**
  * Creates an access filter based on user role
  */
-function createAccessFilter(user: UserInfo, isAdmin: boolean): ResourceFilter {
+function createAccessFilter(user: UserInfo, _isAdmin: boolean): ResourceFilter {
     const filter: ResourceFilter = { organizationId: user.organizationId }
     filter.userId = user.id
     return filter
@@ -97,6 +97,7 @@ async function verifyResourceAccess(resourceName: string, resourceId: string, fi
     if (isProxyResource) {
         // Proxy resources (like DataEngine*) are handled by external services
         // Skip detailed access check but auth and org filtering still applies
+        // eslint-disable-next-line no-console
         console.log(`[enforceAbility] Skipping entity check for proxy resource: ${resourceName}`)
         return
     }
@@ -124,6 +125,7 @@ async function checkResourceAccess(resourceName: string, resourceId: string, fil
     }
 
     if (!hasAccess) {
+        // eslint-disable-next-line no-console
         console.log('FORBIDDEN', { resourceName, resourceId, filter, isAdmin })
         throw new Error('Forbidden: You do not have access to this resource')
     }

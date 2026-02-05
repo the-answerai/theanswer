@@ -1289,7 +1289,7 @@ const sanitizeChunkContent = (content: string) => {
 }
 
 // Get all component nodes
-const getDocumentLoaders = async (userId?: string, organizationId?: string) => {
+const getDocumentLoaders = async (_userId?: string, _organizationId?: string) => {
     const removeDocumentLoadersWithName = ['documentStore', 'vectorStoreToDocument', 'unstructuredFolderLoader', 'folderFiles']
 
     try {
@@ -1621,7 +1621,7 @@ const _insertIntoVectorStoreWorkerThread = async (
 }
 
 // Get all component nodes - Embeddings
-const getEmbeddingProviders = async (userId: string, organizationId: string) => {
+const getEmbeddingProviders = async (_userId: string, _organizationId: string) => {
     try {
         const dbResponse = await nodesService.getAllNodesForCategory('Embeddings')
         return dbResponse.filter((node) => !node.tags?.includes('LlamaIndex'))

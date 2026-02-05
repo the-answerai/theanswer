@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource, QueryFailedError } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { Organization } from '../../database/entities/Organization'

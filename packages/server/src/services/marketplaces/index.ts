@@ -37,7 +37,7 @@ const getCategories = (fileDataObj: ITemplate) => {
 }
 
 // Get all templates for marketplaces
-const getAllTemplates = async (user: IUser | undefined) => {
+const getAllTemplates = async (_user: IUser | undefined) => {
     try {
         let marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'chatflows')
         let jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
