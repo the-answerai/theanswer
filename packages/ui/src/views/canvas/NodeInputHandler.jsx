@@ -1003,6 +1003,27 @@ const NodeInputHandler = ({
                                     data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
                                     setSelectedCredential(newValue)
                                     setSelectedCredentialData(null) // Reset credential data when credential changes
+                                    // Trigger canvas update by updating the node through ReactFlow
+                                    if (reactFlowInstance) {
+                                        reactFlowInstance.setNodes((nds) =>
+                                            nds.map((node) => {
+                                                if (node.id === data.id) {
+                                                    return {
+                                                        ...node,
+                                                        data: {
+                                                            ...node.data,
+                                                            credential: newValue,
+                                                            inputs: {
+                                                                ...node.data.inputs,
+                                                                [FLOWISE_CREDENTIAL_ID]: newValue
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                return node
+                                            })
+                                        )
+                                    }
                                 }}
                             />
                         )}
