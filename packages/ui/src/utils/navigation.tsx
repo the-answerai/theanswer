@@ -27,21 +27,25 @@ let debugConfig = DEFAULT_DEBUG_CONFIG
 const logger = {
     info: (message: string, data?: any) => {
         if (debugConfig.enabled) {
+            // eslint-disable-next-line no-console
             console.log(`${debugConfig.prefix} ${message}`, data || '')
         }
     },
     debug: (message: string, data?: any) => {
         if (debugConfig.enabled && ['debug', 'verbose'].includes(debugConfig.logLevel)) {
+            // eslint-disable-next-line no-console
             console.log(`${debugConfig.prefix} [DEBUG] ${message}`, data || '')
         }
     },
     verbose: (message: string, data?: any) => {
         if (debugConfig.enabled && debugConfig.logLevel === 'verbose') {
+            // eslint-disable-next-line no-console
             console.log(`${debugConfig.prefix} [VERBOSE] ${message}`, data || '')
         }
     },
     error: (message: string, error?: any) => {
         if (debugConfig.enabled) {
+            // eslint-disable-next-line no-console
             console.error(`${debugConfig.prefix} [ERROR] ${message}`, error || '')
         }
     }
