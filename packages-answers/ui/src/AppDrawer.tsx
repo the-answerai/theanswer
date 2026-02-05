@@ -130,7 +130,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
     const user = session?.user
     const [drawerOpen, setDrawerOpen] = useState(true) // Changed to true for open by default
     const [submenuOpen, setSubmenuOpen] = useState('')
-    const { openDialog: openSubscriptionDialog, closeDialog: closeSubscriptionDialog } = useSubscriptionDialog()
+    const { openDialog: openSubscriptionDialog, closeDialog: _closeSubscriptionDialog } = useSubscriptionDialog()
     const { mode, toggleMode } = useThemeMode()
     const pathname = usePathname()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -390,7 +390,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         const filterMenuItems = (items: MenuConfig[]) => {
             return items.map((item) => {
                 if (!item.subMenu) return item
-                const filteredSubMenu = item.subMenu.filter((subItem) => {
+                const filteredSubMenu = item.subMenu.filter((_subItem) => {
                     return canUseChatflows || canManageChatflows
                 })
                 return { ...item, subMenu: filteredSubMenu }
@@ -566,7 +566,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
         setDrawerOpen(!drawerOpen)
     }
 
-    const handleNewChat = () => {
+    const _handleNewChat = () => {
         setDrawerOpen(false)
     }
 
@@ -607,11 +607,7 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
 
     return (
         <>
-            <Drawer
-                open={drawerOpen}
-                variant='permanent'
-                className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}
-            >
+            <Drawer open={drawerOpen} variant='permanent' className={drawerOpen ? 'MuiDrawer-open' : 'MuiDrawer-closed'}>
                 <Box
                     sx={{
                         display: 'flex',
