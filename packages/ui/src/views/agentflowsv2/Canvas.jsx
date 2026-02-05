@@ -264,22 +264,29 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
                 }
                 createNewChatflowApi.request(newChatflowBody)
             } else {
+                // Only include configuration fields that are defined to avoid clearing existing data
+                const configFields = [
+                    'description',
+                    'category',
+                    'visibility',
+                    'chatbotConfig',
+                    'apiConfig',
+                    'analytic',
+                    'speechToText',
+                    'textToSpeech',
+                    'followUpPrompts',
+                    'answersConfig',
+                    'browserExtConfig'
+                ]
                 const updateBody = {
                     name: chatflowName,
-                    flowData,
-                    // Include all chatflow configuration settings that were loaded via configFieldKeys
-                    description: chatflow.description,
-                    category: chatflow.category,
-                    visibility: chatflow.visibility,
-                    chatbotConfig: chatflow.chatbotConfig,
-                    apiConfig: chatflow.apiConfig,
-                    analytic: chatflow.analytic,
-                    speechToText: chatflow.speechToText,
-                    textToSpeech: chatflow.textToSpeech,
-                    followUpPrompts: chatflow.followUpPrompts,
-                    answersConfig: chatflow.answersConfig,
-                    browserExtConfig: chatflow.browserExtConfig
+                    flowData
                 }
+                configFields.forEach((field) => {
+                    if (chatflow[field] !== undefined) {
+                        updateBody[field] = chatflow[field]
+                    }
+                })
                 updateChatflowApi.request(chatflow.id, updateBody)
             }
         }
