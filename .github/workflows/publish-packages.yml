@@ -274,7 +274,7 @@ jobs:
                   node -e "const pkg = require('./package.json'); pkg.peerDependencies['aai-embed'] = '^$EMBED_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
             - name: Install dependencies
-              run: pnpm install
+              run: pnpm install --frozen-lockfile
 
             - name: Build package
               working-directory: ./packages/embed-react

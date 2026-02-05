@@ -32,7 +32,9 @@ jobs:
                   node-version: ${{ matrix.node-version }}
                   cache: 'pnpm'
                   cache-dependency-path: 'pnpm-lock.yaml'
-            - run: pnpm install
+            - name: Setup Turbo cache
+              uses: dtinth/setup-github-actions-caching-for-turbo@v1
+            - run: pnpm install --frozen-lockfile
             - run: pnpm lint
             # Build step disabled - handled by separate build workflow
             # - run: pnpm build
