@@ -7,9 +7,7 @@ import { Box, Container } from '@mui/material'
 const View = dynamic(() => import('@/views/auth/ssoConfig'), { ssr: false })
 
 const Page = () => {
-    return (
-                <View />
-    )
+    return <View />
 }
 
 export default Page

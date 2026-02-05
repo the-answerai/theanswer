@@ -1,6 +1,6 @@
 ---
 name: fleet-patterns
-description: "Patterns for parallel work: worktrees, task tracking, and git operations"
+description: "Patterns for parallel work: worktrees, task tracking, agent teams, and git operations"
 ---
 
 # Fleet Patterns
@@ -70,7 +70,100 @@ TaskUpdate:
 TaskList
 ```
 
-## Parallel Agent Spawning
+## Agent Teams Management
+
+Use when `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is enabled and SpawnTeammate/SendMessage tools are available.
+
+### Create Fleet Team
+```
+Create an agent team called "fleet-{timestamp}".
+Team purpose: parallel ticket implementation with isolated worktrees.
+```
+
+### Spawn Teammate per Worktree
+```
+Spawn a teammate:
+- Name: worker-{id}
+- Model: Sonnet
+- Prompt: instructions including worktree path, task prefix, patterns, communication rules
+```
+
+Each teammate is a full Claude Code session that:
+- Loads CLAUDE.md and project context automatically
+- Has access to all tools
+- Can message the lead and other teammates
+- Self-claims tasks from the shared task list
+
+### Delegate Mode
+After spawning all teammates, enter delegate mode:
+- Lead only coordinates — never implements code directly
+- Lead monitors via shared task list and incoming messages
+- Lead steers teammates by messaging them if they go off track
+- Lead handles all git operations (commit, push, PR)
+
+### Teammate Communication
+
+**Lead → specific teammate** (steering):
+```
+Message worker-AAI-123: "Focus on the service layer first, the route can wait."
+```
+
+**Lead → all teammates** (broadcast):
+```
+Broadcast: "Reminder: all database queries must filter by organizationId."
+```
+Use broadcast sparingly — costs scale with team size.
+
+**Teammate → lead** (status):
+Teammates message the lead when:
+- All their tasks are complete
+- They are blocked or need clarification
+- They discover something that affects other work units
+
+**Teammate → teammate** (coordination):
+Teammates message each other when:
+- Their work overlaps (e.g., shared utility files)
+- They discover a pattern another teammate should follow
+- They need to coordinate on a shared interface
+
+### Task Self-Claiming
+
+In Agent Teams mode, teammates claim tasks from the shared pool:
+
+1. Teammate runs `TaskList` to find unclaimed tasks matching their prefix (e.g., `[AAI-123]`)
+2. Teammate runs `TaskUpdate(taskId="X", status="in_progress", owner="worker-AAI-123")` to claim
+3. Teammate completes the task and runs `TaskUpdate(taskId="X", status="completed")`
+4. Teammate checks `TaskList` again for the next unclaimed task
+5. When no unclaimed tasks remain, teammate messages the lead
+
+### Shut Down Teammates
+```
+Ask worker-AAI-123 to shut down.
+```
+Teammate can approve (exits gracefully) or reject with explanation.
+Always shut down ALL teammates before cleaning up the team.
+
+### Clean Up Team
+```
+Clean up the team.
+```
+Only the lead should run cleanup. Fails if teammates are still active.
+
+### Plan Approval (optional)
+
+For complex tickets, require teammates to plan before implementing:
+```
+Spawn worker-AAI-123 with plan approval required.
+Prompt: "Plan the implementation for ticket AAI-123 before making changes."
+```
+
+Lead reviews the plan when submitted:
+- Approve: teammate exits plan mode and implements
+- Reject with feedback: teammate revises and resubmits
+
+## Parallel Agent Spawning (Subagent Fallback)
+
+Used when Agent Teams is not available.
 
 ### Key Rule
 Spawn ALL agents in ONE message for true parallelism.
@@ -106,7 +199,7 @@ cd /home/max/dev/theanswer-worktrees/{id}
 git add -A
 git commit -m "feat({id}): description
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
 ### Push

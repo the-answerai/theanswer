@@ -20,7 +20,7 @@ import { Box } from '@mui/material'
 const drawerWidth = 400
 const CHATS_PAGE_SIZE = 20
 
-const DrawerHeader = styled('div')(({ theme }) => ({
+const _DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -29,7 +29,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     ...theme.mixins.toolbar
 }))
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
+const _Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
     position: 'relative',
     width: '100%',
     flexShrink: 0,
@@ -54,11 +54,11 @@ export interface ChatDrawerProps {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-export default function ChatDrawer({ journeys, chats, defaultOpen }: ChatDrawerProps) {
-    const router = useRouter()
+export default function ChatDrawer({ journeys: _journeys, chats: _chats, defaultOpen }: ChatDrawerProps) {
+    const _router = useRouter()
     const pathname = usePathname()
-    const [open, setOpen] = React.useState<boolean | undefined>(defaultOpen)
-    const [opened, setOpened] = React.useState<{ [key: string | number]: boolean }>({ chats: true })
+    const [_open, setOpen] = React.useState<boolean | undefined>(defaultOpen)
+    const [_opened, setOpened] = React.useState<{ [key: string | number]: boolean }>({ chats: true })
     const loadMoreRef = React.useRef<HTMLDivElement>(null)
 
     const getKey = (pageIndex: number, previousPageData: Chat[] | null) => {

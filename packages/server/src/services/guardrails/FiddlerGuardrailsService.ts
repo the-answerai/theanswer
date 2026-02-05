@@ -173,6 +173,7 @@ export class FiddlerGuardrailsService {
             const envApiUrl = process.env.FIDDLER_API_URL
 
             if (envApiKey && envApiUrl) {
+                // eslint-disable-next-line no-console
                 console.log(`Using Fiddler credentials from environment variables for workspace ${workspaceId}`)
                 return {
                     apiKey: envApiKey,

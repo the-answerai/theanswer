@@ -443,6 +443,7 @@ export class App {
             const currentDomain = req.get('host') || ''
             const encodedDomain = Buffer.from(currentDomain).toString('base64')
             const redirectURL = new URL(`${encodedDomain}${path}`, process.env.ANSWERAI_DOMAIN)
+            // eslint-disable-next-line no-console
             console.log('Redirecting to', redirectURL.toString())
             res.redirect(301, redirectURL.toString())
         })

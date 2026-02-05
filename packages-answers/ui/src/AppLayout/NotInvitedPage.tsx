@@ -6,7 +6,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-export const NotInvitedPage = ({ session }: { session: Session | undefined }) => {
+export const NotInvitedPage = ({ session: _session }: { session: Session | undefined }) => {
     return (
         <Box
             sx={{

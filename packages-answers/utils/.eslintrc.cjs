@@ -1,4 +1,7 @@
 module.exports = {
     root: true,
-    extends: ['custom']
+    extends: ['custom'],
+    rules: {
+        'no-console': 'off'
+    }
 }

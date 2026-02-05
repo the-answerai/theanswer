@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddUniqueConstraintDefaultChatflows1753000000001 implements MigrationInterface {

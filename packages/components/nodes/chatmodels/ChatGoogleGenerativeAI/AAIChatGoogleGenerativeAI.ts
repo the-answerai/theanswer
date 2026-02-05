@@ -220,10 +220,10 @@ class AAIGoogleGenerativeAI_ChatModels implements INode {
         const harmCategory = nodeData.inputs?.harmCategory as string
         const harmBlockThreshold = nodeData.inputs?.harmBlockThreshold as string
         const cache = nodeData.inputs?.cache as BaseCache
-        const contextCache = nodeData.inputs?.contextCache as FlowiseGoogleAICacheManager
+        const _contextCache = nodeData.inputs?.contextCache as FlowiseGoogleAICacheManager
         const streaming = nodeData.inputs?.streaming as boolean
         const baseUrl = nodeData.inputs?.baseUrl as string | undefined
-        const responseModalities = nodeData.inputs?.responseModalities as string
+        const _responseModalities = nodeData.inputs?.responseModalities as string
 
         const allowImageUploads = nodeData.inputs?.allowImageUploads as boolean
 

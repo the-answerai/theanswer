@@ -50,7 +50,7 @@ export const utilGetChatMessage = async ({
     messageId,
     feedback,
     feedbackTypes,
-    activeWorkspaceId,
+    activeWorkspaceId: _activeWorkspaceId,
     page = -1,
     pageSize = -1
 }: GetChatMessageParams): Promise<ChatMessage[]> => {

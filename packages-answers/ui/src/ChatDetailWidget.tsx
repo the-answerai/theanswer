@@ -9,11 +9,19 @@ import ChatInput from './ChatInput'
 import Refresh from '@mui/icons-material/Refresh'
 import CircularProgress from '@mui/material/CircularProgress'
 
-const ChatDetailWidget = ({ appSettings, user, prompts }: { appSettings: AppSettings; user: User; prompts?: any }) => {
+const ChatDetailWidget = ({
+    appSettings: _appSettings,
+    user: _user,
+    prompts: _prompts
+}: {
+    appSettings: AppSettings
+    user: User
+    prompts?: any
+}) => {
     const scrollRef = React.useRef<HTMLDivElement>(null)
     const inputRef = React.useRef<HTMLInputElement>(null)
 
-    const { setInputValue, error, chat, journey, messages, isLoading, regenerateAnswer } = useAnswers()
+    const { setInputValue: _setInputValue, error, chat, journey, messages, isLoading, regenerateAnswer } = useAnswers()
     React.useEffect(() => {
         if (messages?.length) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
         inputRef.current?.focus()

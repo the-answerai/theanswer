@@ -10,6 +10,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     try {
         passport.authenticate('atlassian-dynamic')(req, res, next)
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.log('Error: Atlassian MCP authController.authenticate', error)
         next(error)
     }

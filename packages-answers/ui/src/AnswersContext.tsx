@@ -345,7 +345,7 @@ export function AnswersProvider({
     }
     const [socketIOClientId, setSocketIOClientId] = useState('')
     const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = useState(false)
-    const [isMessageStopping, setIsMessageStopping] = useState(false)
+    const [_isMessageStopping, setIsMessageStopping] = useState(false)
 
     const updateLastMessage = (text: string) => {
         setMessages((prevMessages) => {
@@ -509,7 +509,7 @@ export function AnswersProvider({
         async ({
             content,
             sidekick,
-            gptModel,
+            gptModel: _gptModel,
             retry,
             files,
             audio,
@@ -908,10 +908,10 @@ export function AnswersProvider({
     }, [chatbotConfig])
 
     const [previews, setPreviews] = useState<any[]>([])
-    const [isDragActive, setIsDragActive] = useState(false)
+    const [_isDragActive, setIsDragActive] = useState(false)
     const fileUploadRef = useRef<HTMLInputElement>(null)
 
-    const handleDrop = async (e: React.DragEvent) => {
+    const _handleDrop = async (e: React.DragEvent) => {
         e.preventDefault()
         setIsDragActive(false)
         let files = []
@@ -950,7 +950,7 @@ export function AnswersProvider({
         }
     }
 
-    const handleDrag = (e: React.DragEvent) => {
+    const _handleDrag = (e: React.DragEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -960,7 +960,7 @@ export function AnswersProvider({
         }
     }
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const _handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const fileObj = event.target.files && event.target.files[0]
         if (!fileObj) {
             return
@@ -997,16 +997,16 @@ export function AnswersProvider({
         event.target.value = ''
     }
 
-    const handleUploadClick = () => {
+    const _handleUploadClick = () => {
         fileUploadRef.current?.click()
     }
 
-    const clearPreviews = () => {
+    const _clearPreviews = () => {
         previews.forEach((file) => URL.revokeObjectURL(file.preview))
         setPreviews([])
     }
 
-    const handleDeletePreview = (itemToDelete: any) => {
+    const _handleDeletePreview = (itemToDelete: any) => {
         if (itemToDelete.type === 'file') {
             URL.revokeObjectURL(itemToDelete.preview)
         }

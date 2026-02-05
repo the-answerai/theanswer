@@ -9,14 +9,14 @@ import Typography from '@mui/material/Typography'
 
 import { Stack, Card } from '@mui/material'
 
-type AuthFormInputs = {
+type _AuthFormInputs = {
     email: string
     password: string
 }
 interface AuthProps {
     providers: Record<string, ClientSafeProvider> | null
 }
-const Auth = ({ providers }: AuthProps) => {
+const Auth = ({ providers: _providers }: AuthProps) => {
     // Extract error message from query params
     const error = useSearchParams().get('error')
 

@@ -6,6 +6,7 @@ import organizationService from '../../services/organizations'
 const getOrganizationById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) {
+            // eslint-disable-next-line no-console
             console.log('=== INFO: No req.user found ===')
             throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Unauthorized - No user')
         }

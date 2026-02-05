@@ -38,10 +38,7 @@ export async function POST(request: NextRequest) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
             console.error('[API workspaces/switch] Failed to switch workspace:', errorData)
-            return NextResponse.json(
-                { error: errorData.message || 'Failed to switch workspace' },
-                { status: response.status }
-            )
+            return NextResponse.json({ error: errorData.message || 'Failed to switch workspace' }, { status: response.status })
         }
 
         const data = await response.json()

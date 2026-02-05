@@ -724,7 +724,7 @@ export class LangfuseProvider {
      * Get usage events from Langfuse traces
      */
     async getUsageEvents(params: GetUsageEventsParams): Promise<UsageEventsResponse> {
-        const { userId, customerId, page = 1, limit = 10, sortBy = 'timestamp', sortOrder = 'desc' } = params
+        const { userId, customerId, page = 1, limit = 10, sortBy: _sortBy = 'timestamp', sortOrder: _sortOrder = 'desc' } = params
         // TODO: Admins should be able to see all events
         try {
             // Determine time range - default to last 30 days
