@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { getUniqueNodeId, showHideInputParams } from '@/utils/genericHelper'
 import { cloneDeep, isEqual } from 'lodash'
 import { SET_DIRTY } from '@/store/actions'
+import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 
 const initialValue = {
     reactFlowInstance: null,
@@ -68,13 +69,21 @@ export const ReactFlowContext = ({ children }) => {
                     }
                 })
 
+                // Handle credential inputs: update both credential field and FLOWISE_CREDENTIAL_ID
+                const updatedData = {
+                    ...node.data,
+                    inputParams: updatedInputParams,
+                    inputs: updatedInputs
+                }
+
+                if (inputParam.type === 'credential') {
+                    updatedData.credential = newValue
+                    updatedInputs.FLOWISE_CREDENTIAL_ID = newValue
+                }
+
                 return {
                     ...node,
-                    data: {
-                        ...node.data,
-                        inputParams: updatedInputParams,
-                        inputs: updatedInputs
-                    }
+                    data: updatedData
                 }
             }
             return node

@@ -999,10 +999,10 @@ const NodeInputHandler = ({
                                 data={data}
                                 inputParam={inputParam}
                                 onSelect={(newValue) => {
-                                    data.credential = newValue
-                                    data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
                                     setSelectedCredential(newValue)
                                     setSelectedCredentialData(null) // Reset credential data when credential changes
+                                    // Use the centralized onNodeDataChange for consistent state management
+                                    onNodeDataChange({ nodeId: data.id, inputParam, newValue })
                                 }}
                             />
                         )}
