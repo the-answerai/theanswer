@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { prisma } from '../../src/client'
 
 const isDryRun = !process.argv.includes('--commit')

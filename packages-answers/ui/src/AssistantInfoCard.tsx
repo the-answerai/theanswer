@@ -78,7 +78,7 @@ const AssistantInfoCard = ({
     const [_showCopyMessage, setShowCopyMessage] = useState(false)
 
     // Get validation status from the sidekick data
-    const needsSetup = sidekick?.needsSetup || false
+    const _needsSetup = sidekick?.needsSetup || false
     const hasValidation = sidekick?.needsSetup !== undefined
 
     // Initialize favorite status from localStorage

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { S3, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { parse } from 'csv-parse/sync'
 import { AppCsvParseRuns } from '../db/generated/prisma-client'

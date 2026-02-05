@@ -9,7 +9,7 @@ async function main() {
             name: 'Test'
         }
     })
-    const chatapp = await prisma.chatApp.upsert({
+    const _chatapp = await prisma.chatApp.upsert({
         where: { id: 1 },
         update: {},
         create: {
@@ -28,7 +28,7 @@ async function main() {
             name: 'Test 2'
         }
     })
-    const chatapp2 = await prisma.chatApp.upsert({
+    const _chatapp2 = await prisma.chatApp.upsert({
         where: { id: 1 },
         update: {},
         create: {
@@ -38,7 +38,7 @@ async function main() {
             userId: testUserTwo.id
         }
     })
-    const defaultSidekick = await prisma.sidekick.upsert({
+    const _defaultSidekick = await prisma.sidekick.upsert({
         where: { id: 'default' },
         update: {},
         create: {

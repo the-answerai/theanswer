@@ -39,7 +39,7 @@ export const AppsDrawer = ({ appSettings, activeApp }: { appSettings: AppSetting
                     // )
                 }}
             >
-                {enabledServices?.map((item, idx) => (
+                {enabledServices?.map((item, _idx) => (
                     <IntegrationCard
                         appSettings={appSettings}
                         key={item?.id}

@@ -6,8 +6,8 @@ declare global {
     var prisma: PrismaClient | undefined
 }
 
-let prismaDebug = ['warn', 'error']
-if (LOG_LEVEL === 'debug') prismaDebug = [...prismaDebug, ...['query', 'info']]
+let _prismaDebug = ['warn', 'error']
+if (LOG_LEVEL === 'debug') _prismaDebug = [..._prismaDebug, ...['query', 'info']]
 
 // @ts-ignore
 export const prisma = global.prisma || new PrismaClient({ log: [] })
