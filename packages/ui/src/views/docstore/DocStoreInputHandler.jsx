@@ -154,10 +154,15 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
                                 data={getCredential()}
                                 inputParam={inputParam}
                                 onSelect={(newValue) => {
-                                    data.credential = newValue
-                                    data.inputs[FLOWISE_CREDENTIAL_ID] = newValue // in case data.credential is not updated
                                     setSelectedCredential(newValue)
                                     setSelectedCredentialData(null) // Reset credential data when credential changes
+                                    // Use centralized state handler for consistent ReactFlow state management
+                                    if (nodeDataChangeHandler) {
+                                        nodeDataChangeHandler({ nodeId: data.id, inputParam, newValue })
+                                    } else {
+                                        data.credential = newValue
+                                        data.inputs[FLOWISE_CREDENTIAL_ID] = newValue
+                                    }
                                 }}
                             />
                         )}

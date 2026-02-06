@@ -70,15 +70,15 @@ export const ReactFlowContext = ({ children }) => {
                 })
 
                 // Handle credential inputs: update both credential field and FLOWISE_CREDENTIAL_ID
+                if (inputParam.type === 'credential') {
+                    updatedInputs[FLOWISE_CREDENTIAL_ID] = newValue
+                }
+
                 const updatedData = {
                     ...node.data,
                     inputParams: updatedInputParams,
-                    inputs: updatedInputs
-                }
-
-                if (inputParam.type === 'credential') {
-                    updatedData.credential = newValue
-                    updatedInputs.FLOWISE_CREDENTIAL_ID = newValue
+                    inputs: updatedInputs,
+                    ...(inputParam.type === 'credential' && { credential: newValue })
                 }
 
                 return {
@@ -89,9 +89,13 @@ export const ReactFlowContext = ({ children }) => {
             return node
         })
 
-        // Check if any node's inputParams have changed before updating
+        // Check if any node data has changed before updating
+        const currentNodes = reactFlowInstance.getNodes()
         const hasChanges = updatedNodes.some(
-            (node, index) => !isEqual(node.data.inputParams, reactFlowInstance.getNodes()[index].data.inputParams)
+            (node, index) =>
+                !isEqual(node.data.inputParams, currentNodes[index].data.inputParams) ||
+                !isEqual(node.data.inputs, currentNodes[index].data.inputs) ||
+                node.data.credential !== currentNodes[index].data.credential
         )
 
         if (hasChanges) {

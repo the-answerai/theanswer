@@ -110,6 +110,8 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                     await updateSidekick({
                         flowData: JSON.stringify(updatedFlowData)
                     })
+                    // Notify canvas and other listeners to refresh with updated credentials
+                    window.dispatchEvent(new CustomEvent('credentials-updated', { detail: { chatflowId: sidekickId } }))
                     enqueueSnackbar({
                         message: 'Credentials saved successfully!',
                         options: { variant: 'success' }

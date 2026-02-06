@@ -152,17 +152,7 @@ test.describe('Canvas Credential Refresh (AGENT-76)', () => {
                     // 3. Verify the canvas node still exists and is visible (it wasn't reset)
                     await expect(canvasNode).toBeVisible()
 
-                    // 4. Verify ReactFlow node data actually contains the credential
-                    // This is the actual verification that the fix works
-                    const credentialSetInNode = await page
-                        .evaluate(() => {
-                            // Access ReactFlow context to verify node data was updated
-                            const nodes = (window as any).__REACT_FLOW_NODES || []
-                            return nodes.some((node: any) => node.data?.credential || node.data?.inputs?.['flowise_credential'])
-                        })
-                        .catch(() => false)
-
-                    // Even if we can't access internal state, verify the UI reflects the change
+                    // 4. Verify the UI reflects the credential change without a page reload
                     expect(updatedValue).not.toBe(initialValue)
                 } else {
                     // No existing credentials - test is inconclusive but not a failure
