@@ -676,6 +676,18 @@ const AgentflowCanvas = ({ chatflowid: chatflowId }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // Re-fetch canvas when credentials are updated via the setup modal
+    useEffect(() => {
+        const handleCredentialsUpdated = (e) => {
+            if (e.detail?.chatflowId === chatflowId) {
+                getSpecificChatflowApi.request(chatflowId)
+            }
+        }
+        window.addEventListener('credentials-updated', handleCredentialsUpdated)
+        return () => window.removeEventListener('credentials-updated', handleCredentialsUpdated)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [chatflowId])
+
     useEffect(() => {
         setCanvasDataStore(canvas)
     }, [canvas])
