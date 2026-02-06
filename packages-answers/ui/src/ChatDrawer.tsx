@@ -76,7 +76,7 @@ export default function ChatDrawer({ journeys: _journeys, chats: _chats, default
     }
 
     const { data, size, setSize, isValidating } = useSWRInfinite<Chat[]>(getKey, fetcher, {
-        fallbackData: chats ? [chats] : undefined,
+        fallbackData: _chats ? [_chats] : undefined,
         revalidateFirstPage: false
     })
 
