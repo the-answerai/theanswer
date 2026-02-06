@@ -280,7 +280,7 @@ const saveChatflow = async (
 
     // If this is a template, remove the id before saving
     if ((newChatFlow as any).isTemplate) {
-        const { id, isTemplate, ...chatflowWithoutId } = newChatFlow as any
+        const { id: _id, isTemplate: _isTemplate, ...chatflowWithoutId } = newChatFlow as any
         newChatFlow = chatflowWithoutId
     }
 
@@ -586,7 +586,7 @@ const getDefaultChatflowTemplate = async (): Promise<{ id: string; name: string 
 const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<{ updated: number; errors: string[] }> => {
     try {
         const appServer = getRunningExpressApp()
-        const { id: userId, organizationId } = user
+        const { id: _userId, organizationId } = user
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
 
         // Get default template

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import passport from 'passport'
 import { Strategy as Auth0Strategy, Profile, StrategyOptionWithRequest, ExtraVerificationParams } from 'passport-auth0'
 import { Request } from 'express'

@@ -24,7 +24,7 @@ export class BackfillDocumentStoreFileChunkUserScoping1731429600000 implements M
         `)
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // No rollback - we don't want to set these back to NULL
         // as they should have been set correctly from the start
     }

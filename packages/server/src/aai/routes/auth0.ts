@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import express, { Request, Response, NextFunction } from 'express'
 import passport from 'passport'
 import { DataSource } from 'typeorm'

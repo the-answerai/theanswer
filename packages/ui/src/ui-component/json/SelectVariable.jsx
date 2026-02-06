@@ -8,6 +8,9 @@ import diskPNG from '@/assets/images/floppy-disc.png'
 import fileAttachmentPNG from '@/assets/images/fileAttachment.png'
 import { baseURL } from '@/store/constant'
 
+// Helper to handle Next.js PNG imports that return {src, width, height} instead of URL strings
+const getImageSrc = (img) => img?.src || img || ''
+
 const sequentialStateMessagesSelection = [
     {
         primary: '$flow.state.messages',
@@ -74,7 +77,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                         objectFit: 'contain'
                                                     }}
                                                     alt='AI'
-                                                    src={robotPNG}
+                                                    src={getImageSrc(robotPNG)}
                                                 />
                                             </div>
                                         </ListItemAvatar>
@@ -109,7 +112,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                         objectFit: 'contain'
                                                     }}
                                                     alt='chatHistory'
-                                                    src={chatPNG}
+                                                    src={getImageSrc(chatPNG)}
                                                 />
                                             </div>
                                         </ListItemAvatar>
@@ -148,7 +151,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                         objectFit: 'contain'
                                                     }}
                                                     alt='fileAttachment'
-                                                    src={fileAttachmentPNG}
+                                                    src={getImageSrc(fileAttachmentPNG)}
                                                 />
                                             </div>
                                         </ListItemAvatar>
@@ -249,7 +252,7 @@ const SelectVariable = ({ availableNodesForVariable, disabled = false, onSelectA
                                                                 objectFit: 'contain'
                                                             }}
                                                             alt='state'
-                                                            src={diskPNG}
+                                                            src={getImageSrc(diskPNG)}
                                                         />
                                                     </div>
                                                 </ListItemAvatar>

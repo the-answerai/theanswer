@@ -1002,7 +1002,8 @@ class Agent_Agentflow implements INode {
                     llmWithoutToolsBind,
                     isStreamable,
                     isLastNode,
-                    iterationContext
+                    iterationContext,
+                    nodeData
                 })
 
                 response = result.response
@@ -1053,7 +1054,8 @@ class Agent_Agentflow implements INode {
                     llmNodeInstance,
                     isStreamable,
                     isLastNode,
-                    iterationContext
+                    iterationContext,
+                    nodeData
                 })
 
                 response = result.response
@@ -1174,9 +1176,9 @@ class Agent_Agentflow implements INode {
                 fileAnnotations
             )
 
-            // End analytics tracking
+            // End analytics tracking - pass usage metadata for token calculation
             if (analyticHandlers && llmIds) {
-                await analyticHandlers.onLLMEnd(llmIds, finalResponse)
+                await analyticHandlers.onLLMEnd(llmIds, finalResponse, response.usage_metadata)
             }
 
             // Send additional streaming events if needed
@@ -1706,7 +1708,8 @@ class Agent_Agentflow implements INode {
         llmNodeInstance,
         isStreamable,
         isLastNode,
-        iterationContext
+        iterationContext,
+        nodeData
     }: {
         response: AIMessageChunk
         messages: BaseMessageLike[]
@@ -1717,6 +1720,7 @@ class Agent_Agentflow implements INode {
         options: ICommonObject
         abortController: AbortController
         llmNodeInstance: BaseChatModel
+        nodeData: INodeData
         isStreamable: boolean
         isLastNode: boolean
         iterationContext: ICommonObject
@@ -1803,8 +1807,17 @@ class Agent_Agentflow implements INode {
                     return { response, usedTools, sourceDocuments, artifacts, totalTokens, isWaitingForHumanInput: true }
                 }
 
+                // Create Langfuse tool span for hierarchical tracing
+                const parentToolSpan = (options as any).parentLangfuseSpan
+                let toolSpan = options.analyticHandlers?.createToolSpan(parentToolSpan, toolCall.name, toolCall.args, {
+                    nodeId: nodeData.id,
+                    nodeLabel: nodeData.label,
+                    toolCallId: toolCall.id
+                })
+
+                // Fallback to legacy tracking if no tool span
                 let toolIds: ICommonObject | undefined
-                if (options.analyticHandlers) {
+                if (!toolSpan && options.analyticHandlers) {
                     toolIds = await options.analyticHandlers.onToolStart(toolCall.name, toolCall.args, options.parentTraceIds)
                 }
 
@@ -1812,7 +1825,14 @@ class Agent_Agentflow implements INode {
                     //@ts-ignore
                     let toolOutput = await selectedTool.call(toolCall.args, { signal: abortController?.signal }, undefined, flowConfig)
 
-                    if (options.analyticHandlers && toolIds) {
+                    // Finalize Langfuse tool span with output
+                    if (toolSpan && options.analyticHandlers) {
+                        const spanPayload: ICommonObject = {
+                            output: options.analyticHandlers.safeSerializeForTrace(toolOutput)
+                        }
+                        options.analyticHandlers.finishToolSpan(toolSpan, 'FINISHED', spanPayload)
+                        toolSpan = undefined
+                    } else if (options.analyticHandlers && toolIds) {
                         await options.analyticHandlers.onToolEnd(toolIds, toolOutput)
                     }
 
@@ -1870,7 +1890,13 @@ class Agent_Agentflow implements INode {
                         toolOutput
                     })
                 } catch (e) {
-                    if (options.analyticHandlers && toolIds) {
+                    // Finalize Langfuse tool span with error
+                    if (toolSpan && options.analyticHandlers) {
+                        options.analyticHandlers.finishToolSpan(toolSpan, 'ERROR', {
+                            error: options.analyticHandlers.safeSerializeForTrace(getErrorMessage(e))
+                        })
+                        toolSpan = undefined
+                    } else if (options.analyticHandlers && toolIds) {
                         await options.analyticHandlers.onToolEnd(toolIds, e)
                     }
 
@@ -1974,7 +2000,8 @@ class Agent_Agentflow implements INode {
                 llmNodeInstance,
                 isStreamable,
                 isLastNode,
-                iterationContext
+                iterationContext,
+                nodeData
             })
 
             // Merge results from recursive tool calls
@@ -2005,7 +2032,8 @@ class Agent_Agentflow implements INode {
         llmWithoutToolsBind,
         isStreamable,
         isLastNode,
-        iterationContext
+        iterationContext,
+        nodeData
     }: {
         humanInput: IHumanInput
         humanInputAction: Record<string, any> | undefined
@@ -2020,6 +2048,7 @@ class Agent_Agentflow implements INode {
         isStreamable: boolean
         isLastNode: boolean
         iterationContext: ICommonObject
+        nodeData: INodeData
     }): Promise<{
         response: AIMessageChunk
         usedTools: IUsedTool[]
@@ -2119,8 +2148,18 @@ class Agent_Agentflow implements INode {
                     }
                 }
                 if (humanInput.type === 'proceed') {
+                    // Create Langfuse tool span for hierarchical tracing
+                    const parentToolSpan = (options as any).parentLangfuseSpan
+                    let toolSpan = options.analyticHandlers?.createToolSpan(parentToolSpan, toolCall.name, toolCall.args, {
+                        nodeId: nodeData.id,
+                        nodeLabel: nodeData.label,
+                        toolCallId: toolCall.id,
+                        humanApproved: true
+                    })
+
+                    // Fallback to legacy tracking if no tool span
                     let toolIds: ICommonObject | undefined
-                    if (options.analyticHandlers) {
+                    if (!toolSpan && options.analyticHandlers) {
                         toolIds = await options.analyticHandlers.onToolStart(toolCall.name, toolCall.args, options.parentTraceIds)
                     }
 
@@ -2128,7 +2167,14 @@ class Agent_Agentflow implements INode {
                         //@ts-ignore
                         let toolOutput = await selectedTool.call(toolCall.args, { signal: abortController?.signal }, undefined, flowConfig)
 
-                        if (options.analyticHandlers && toolIds) {
+                        // Finalize Langfuse tool span with output
+                        if (toolSpan && options.analyticHandlers) {
+                            const spanPayload: ICommonObject = {
+                                output: options.analyticHandlers.safeSerializeForTrace(toolOutput)
+                            }
+                            options.analyticHandlers.finishToolSpan(toolSpan, 'FINISHED', spanPayload)
+                            toolSpan = undefined
+                        } else if (options.analyticHandlers && toolIds) {
                             await options.analyticHandlers.onToolEnd(toolIds, toolOutput)
                         }
 
@@ -2186,7 +2232,13 @@ class Agent_Agentflow implements INode {
                             toolOutput
                         })
                     } catch (e) {
-                        if (options.analyticHandlers && toolIds) {
+                        // Finalize Langfuse tool span with error
+                        if (toolSpan && options.analyticHandlers) {
+                            options.analyticHandlers.finishToolSpan(toolSpan, 'ERROR', {
+                                error: options.analyticHandlers.safeSerializeForTrace(getErrorMessage(e))
+                            })
+                            toolSpan = undefined
+                        } else if (options.analyticHandlers && toolIds) {
                             await options.analyticHandlers.onToolEnd(toolIds, e)
                         }
 
@@ -2293,7 +2345,8 @@ class Agent_Agentflow implements INode {
                 llmNodeInstance,
                 isStreamable,
                 isLastNode,
-                iterationContext
+                iterationContext,
+                nodeData
             })
 
             // Merge results from recursive tool calls

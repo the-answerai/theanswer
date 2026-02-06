@@ -13,6 +13,7 @@ const config = {
 export const isMultiWorkspaceSharingEnabled = () => config.enabled
 export const getSharedWorkspaceName = () => config.sharedWorkspaceName
 export const isDebugEnabled = () => config.debug
+// eslint-disable-next-line no-console
 export const debugLog = (msg: string, data?: any) => config.debug && console.log(`[AAI] ${msg}`, data ?? '')
 
 // Request context

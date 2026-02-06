@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { Workspace } from '../../enterprise/database/entities/workspace.entity'

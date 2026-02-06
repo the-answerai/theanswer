@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { decrypt, encrypt } from '../../../utils/encryption.util'
 import { LoginMethodStatus } from '../../entities/login-method.entity'

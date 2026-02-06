@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * AAI Auth Me Route
  *

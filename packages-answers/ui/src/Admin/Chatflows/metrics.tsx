@@ -33,20 +33,20 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
         negativeFeedback: 0
     })
     const [selectedMessageIndex, setSelectedMessageIndex] = useState(0)
-    const [selectedChatId, setSelectedChatId] = useState('')
+    const [_selectedChatId, setSelectedChatId] = useState('')
     const [chatTypeFilter, setChatTypeFilter] = useState<string[]>([])
     const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<string[]>([])
     const [startDate, setStartDate] = useState(new Date(new Date().setMonth(new Date().getMonth() - 1)))
     const [endDate, setEndDate] = useState(new Date())
-    const [leadEmail, setLeadEmail] = useState('')
+    const [_leadEmail, setLeadEmail] = useState('')
     const [selectedChat, setSelectedChat] = useState<ChatLog | null>(null)
-    const [isFilterExpanded, setIsFilterExpanded] = useState(true) // Default expanded for metrics
+    const [_isFilterExpanded, setIsFilterExpanded] = useState(true) // Default expanded for metrics
 
     // API hooks
     const {
         data: chatMessagesData,
         isLoading: chatMessagesLoading,
-        isError: chatMessagesError,
+        isError: _chatMessagesError,
         refresh: refreshChatMessages
     } = useApi(
         `/api/chatmessage/${chatflowId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&chatType=${chatTypeFilter.join(
@@ -64,7 +64,7 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
     const {
         data: statsData,
         isLoading: statsLoading,
-        isError: statsError,
+        isError: _statsError,
         refresh: refreshStats
     } = useApi(
         `/api/stats/${chatflowId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&chatType=${chatTypeFilter.join(
@@ -82,7 +82,7 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
     const {
         data: selectedChatMessagesData,
         isLoading: selectedChatMessagesLoading,
-        isError: selectedChatMessagesError,
+        isError: _selectedChatMessagesError,
         refresh: refreshSelectedChatMessages
     } = useApi(
         selectedChat

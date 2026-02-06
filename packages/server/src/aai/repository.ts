@@ -21,7 +21,7 @@ const WORKSPACE_ENTITIES = new Set([
 
 export function initAAI(dataSource: DataSource) {
     const originalGetRepository = dataSource.getRepository.bind(dataSource)
-    dataSource.getRepository = function <T extends ObjectLiteral>(target: any): any {
+    dataSource.getRepository = function <_T extends ObjectLiteral>(target: any): any {
         const repo = originalGetRepository(target)
         const entityName = typeof target === 'function' ? target.name : String(target)
         return createWorkspaceAwareRepository(repo, entityName)
@@ -78,7 +78,7 @@ function enhanceFindOptions<T>(options: FindManyOptions<T> | FindOptionsWhere<T>
     return 'where' in options && options.where ? { ...options, where: { ...options.where, ...filter } } : { ...options, ...filter }
 }
 
-function wrapQueryBuilder<T extends ObjectLiteral>(qb: SelectQueryBuilder<T>, alias: string): SelectQueryBuilder<T> {
+function wrapQueryBuilder<T extends ObjectLiteral>(qb: SelectQueryBuilder<T>, _alias: string): SelectQueryBuilder<T> {
     const wsIds = getWorkspaceIdsFromContext()
     if (!wsIds || wsIds.length <= 1) return qb
 

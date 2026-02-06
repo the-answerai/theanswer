@@ -8,7 +8,7 @@ import { OrganizationConfig } from '../../types/guardrails'
 import { deepMergeConfigs } from '../guardrails/config'
 
 // Get organization by ID
-const getOrganizationById = async (id: string, user?: IUser): Promise<Organization> => {
+const getOrganizationById = async (id: string, _user?: IUser): Promise<Organization> => {
     try {
         const appServer = getRunningExpressApp()
         const dbResponse = await appServer.AppDataSource.getRepository(Organization)
@@ -33,12 +33,12 @@ const getOrganizationById = async (id: string, user?: IUser): Promise<Organizati
 }
 
 // Update organization enabled integrations
-const updateOrganizationEnabledIntegrations = async (id: string, enabledIntegrations: string, user?: IUser): Promise<Organization> => {
+const updateOrganizationEnabledIntegrations = async (id: string, enabledIntegrations: string, _user?: IUser): Promise<Organization> => {
     try {
         const appServer = getRunningExpressApp()
 
         // First verify the organization exists and user has access
-        const organization = await getOrganizationById(id, user)
+        const _organization = await getOrganizationById(id, _user)
 
         // For now, we'll allow any authenticated user to update their own organization
         // In the future, this should check for admin permissions
@@ -67,7 +67,7 @@ const updateOrganizationEnabledIntegrations = async (id: string, enabledIntegrat
 }
 
 // Get organization credentials (enabled integrations)
-const getOrganizationCredentials = async (id: string, user?: IUser): Promise<{ integrations: any[] }> => {
+const getOrganizationCredentials = async (id: string, _user?: IUser): Promise<{ integrations: any[] }> => {
     try {
         const appServer = getRunningExpressApp()
         const organization = await appServer.AppDataSource.getRepository(Organization)
@@ -108,12 +108,12 @@ const getOrganizationCredentials = async (id: string, user?: IUser): Promise<{ i
 }
 
 // Update organization credentials (enabled integrations)
-const updateOrganizationCredentials = async (id: string, integrations: any[], user?: IUser): Promise<{ integrations: any[] }> => {
+const updateOrganizationCredentials = async (id: string, integrations: any[], _user?: IUser): Promise<{ integrations: any[] }> => {
     try {
         const appServer = getRunningExpressApp()
 
         // First verify the organization exists and user has access
-        const organization = await getOrganizationById(id, user)
+        const _organization = await getOrganizationById(id, _user)
 
         // Validate integrations array
         if (!Array.isArray(integrations)) {
@@ -163,7 +163,7 @@ const updateOrganizationCredentials = async (id: string, integrations: any[], us
 }
 
 // Get organization config (organizationConfig JSONB column)
-const getOrganizationConfig = async (id: string, user?: IUser): Promise<OrganizationConfig> => {
+const getOrganizationConfig = async (id: string, _user?: IUser): Promise<OrganizationConfig> => {
     try {
         const appServer = getRunningExpressApp()
         const organization = await appServer.AppDataSource.getRepository(Organization)
@@ -202,15 +202,15 @@ const getOrganizationConfig = async (id: string, user?: IUser): Promise<Organiza
 }
 
 // Update organization config (organizationConfig JSONB column)
-const updateOrganizationConfig = async (id: string, config: Partial<OrganizationConfig>, user?: IUser): Promise<OrganizationConfig> => {
+const updateOrganizationConfig = async (id: string, config: Partial<OrganizationConfig>, _user?: IUser): Promise<OrganizationConfig> => {
     try {
         const appServer = getRunningExpressApp()
 
         // First verify the organization exists and user has access
-        const organization = await getOrganizationById(id, user)
+        const _organization = await getOrganizationById(id, _user)
 
         // Get existing config
-        const existingConfig = await getOrganizationConfig(id, user)
+        const existingConfig = await getOrganizationConfig(id, _user)
 
         // Merge configs at organization level
         const mergedConfig: OrganizationConfig = { ...existingConfig, ...config }

@@ -12,7 +12,7 @@ export class Telemetry {
         // Telemetry functionality disabled
     }
 
-    async sendTelemetry(event: string, properties: Record<string, any> = {}, orgId = ''): Promise<void> {
+    async sendTelemetry(_event: string, _properties: Record<string, any> = {}, _orgId = ''): Promise<void> {
         // Telemetry disabled - PostHog removed due to Shai-Hulud-2 security vulnerability
         // No-op implementation to maintain API compatibility
     }

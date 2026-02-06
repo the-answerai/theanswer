@@ -241,7 +241,7 @@ class GoogleGenerativeAI_ChatModels implements INode {
         const _safetySettings = nodeData.inputs?.safetySettings as string
 
         const cache = nodeData.inputs?.cache as BaseCache
-        const contextCache = nodeData.inputs?.contextCache as FlowiseGoogleAICacheManager
+        const _contextCache = nodeData.inputs?.contextCache as FlowiseGoogleAICacheManager
         const streaming = nodeData.inputs?.streaming as boolean
         const baseUrl = nodeData.inputs?.baseUrl as string | undefined
         const thinkingBudget = nodeData.inputs?.thinkingBudget as string

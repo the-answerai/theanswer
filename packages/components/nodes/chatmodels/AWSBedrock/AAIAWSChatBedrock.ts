@@ -109,7 +109,7 @@ class AAIAWSChatBedrock_ChatModels implements INode {
         }
     }
 
-    async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
+    async init(nodeData: INodeData, _: string, _options: ICommonObject): Promise<any> {
         const iRegion = nodeData.inputs?.region as string
         const iModel = nodeData.inputs?.model as string
         const customModel = nodeData.inputs?.customModel as string

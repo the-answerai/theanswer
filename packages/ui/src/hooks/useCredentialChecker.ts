@@ -35,7 +35,6 @@ export const useCredentialChecker = () => {
     const checkCredentials = useCallback(
         async (sidekickId: string, onAssign: CredentialAssignmentCallback, forceShow: boolean = false): Promise<boolean> => {
             try {
-                console.log('[useCredentialChecker] checking credentials for sidekick', sidekickId)
                 const sidekick = await fetchDetails(sidekickId)
 
                 if (!sidekick) {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class LinkWorkspaceId1729130948686 implements MigrationInterface {

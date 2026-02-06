@@ -519,9 +519,9 @@ class LLM_Agentflow implements INode {
             }
             const output = this.prepareOutputObject(response, finalResponse, startTime, endTime, timeDelta, isStructuredOutput)
 
-            // End analytics tracking
+            // End analytics tracking - pass usage metadata for token calculation
             if (analyticHandlers && llmIds) {
-                await analyticHandlers.onLLMEnd(llmIds, finalResponse)
+                await analyticHandlers.onLLMEnd(llmIds, finalResponse, response.usage_metadata)
             }
 
             // Send additional streaming events if needed

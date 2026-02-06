@@ -12,8 +12,8 @@ const { nodeClass: OriginalConversationChain } = require('./ConversationChain') 
     nodeClass: ConversationChainConstructor
 }
 
-let systemMessage = `The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.`
-const inputKey = 'input'
+const _systemMessage = `The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.`
+const _inputKey = 'input'
 
 // AAI-branded clone of ConversationChain that relies on AAI default credentials
 class AAIConversationChain_Chains extends OriginalConversationChain {

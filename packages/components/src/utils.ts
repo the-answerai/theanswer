@@ -21,6 +21,23 @@ import { Sandbox } from '@e2b/code-interpreter'
 import { secureFetch, checkDenyList, secureAxiosRequest } from './httpSecurity'
 import JSON5 from 'json5'
 
+/**
+ * Apply Langfuse trace context headers to outgoing HTTP requests (e.g. Execute Flow).
+ * Extracts parent trace/span IDs from node options and sets X-Langfuse-Parent-* headers
+ * so that sub-workflows consolidate token usage under the parent trace.
+ */
+export const applyLangfuseTraceHeaders = (options: ICommonObject, headers: Record<string, string>): void => {
+    const parentLangfuseTrace = options.parentLangfuseTrace || options.analytic?.parentLangfuseTrace
+    const parentLangfuseSpan = options.parentLangfuseSpan
+
+    if (parentLangfuseTrace && parentLangfuseTrace.id) {
+        headers['X-Langfuse-Parent-Trace-Id'] = parentLangfuseTrace.id
+    }
+    if (parentLangfuseSpan && parentLangfuseSpan.id) {
+        headers['X-Langfuse-Parent-Span-Id'] = parentLangfuseSpan.id
+    }
+}
+
 export const numberOrExpressionRegex = '^(\\d+\\.?\\d*|{{.*}})$' //return true if string consists only numbers OR expression {{}}
 export const notEmptyRegex = '(.|\\s)*\\S(.|\\s)*' //return true if string is not empty or blank
 export const FLOWISE_CHATID = 'flowise_chatId'

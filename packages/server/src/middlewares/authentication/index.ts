@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
 
@@ -32,11 +33,7 @@ async function finalizeUserSetup(
     await findOrCreateWorkspacesForUser(AppDataSource, finalUser, organization.id)
     const workspaceData = await populateWorkspaceData(AppDataSource, finalUser, organization.id)
 
-    const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(
-        AppDataSource,
-        finalUser,
-        workspaceData.activeWorkspaceId
-    )
+    const defaultChatflowId = await findOrCreateDefaultChatflowsForUser(AppDataSource, finalUser, workspaceData.activeWorkspaceId)
     if (defaultChatflowId && finalUser.defaultChatflowId !== defaultChatflowId) {
         try {
             finalUser.defaultChatflowId = defaultChatflowId
@@ -78,7 +75,10 @@ const looksLikeJWT = (token: string): boolean => {
     return parts.length === 3
 }
 
-const tryApiKeyAuth = async (req: Request, AppDataSource: DataSource): Promise<{ user: User; organizationId: string | null; workspaceId: string | null } | null> => {
+const tryApiKeyAuth = async (
+    req: Request,
+    AppDataSource: DataSource
+): Promise<{ user: User; organizationId: string | null; workspaceId: string | null } | null> => {
     const authHeader = req.headers.authorization
     if (!authHeader?.startsWith('Bearer ')) {
         return null
@@ -161,7 +161,7 @@ export const authenticationHandlerMiddleware =
         }
 
         if (apiKeyResult) {
-            const { user: apiKeyUser, organizationId: apiKeyOrgId, workspaceId: apiKeyWorkspaceId } = apiKeyResult
+            const { user: apiKeyUser, organizationId: apiKeyOrgId, workspaceId: _apiKeyWorkspaceId } = apiKeyResult
 
             // Use API key's organizationId (falls back to user's org if key has no org)
             const effectiveOrgId = apiKeyOrgId || apiKeyUser.organizationId
@@ -263,8 +263,8 @@ export const authenticationHandlerMiddleware =
                             if (!existingOrg || existingOrg.auth0Id !== userOrgId) {
                                 console.warn(
                                     `[Auth:Security] Org mismatch detected — user=${auth0Id}, ` +
-                                    `jwt_org=${userOrgId}, db_org=${existingOrg?.auth0Id ?? 'deleted'}. ` +
-                                    `Action: falling to slow path for re-validation.`
+                                        `jwt_org=${userOrgId}, db_org=${existingOrg?.auth0Id ?? 'deleted'}. ` +
+                                        `Action: falling to slow path for re-validation.`
                                 )
                             } else {
                                 // Atomic profile update — save() returns the updated entity in one operation
@@ -278,13 +278,14 @@ export const authenticationHandlerMiddleware =
                                     freshUser = existingUser
                                 }
 
-                                const result = await finalizeUserSetup(
-                                    AppDataSource, freshUser, existingOrg, auth0Id, email, name, roles
-                                )
+                                const result = await finalizeUserSetup(AppDataSource, freshUser, existingOrg, auth0Id, email, name, roles)
 
                                 req.user = {
-                                    ...authUser, ...result.user, ...result.workspaceData,
-                                    roles, permissions: result.permissions
+                                    ...authUser,
+                                    ...result.user,
+                                    ...result.workspaceData,
+                                    roles,
+                                    permissions: result.permissions
                                 } as any
                                 return next()
                             }
@@ -309,13 +310,14 @@ export const authenticationHandlerMiddleware =
                             user.organizationId = organization.id
                         }
 
-                        const result = await finalizeUserSetup(
-                            AppDataSource, user, organization, auth0Id, email, name, roles
-                        )
+                        const result = await finalizeUserSetup(AppDataSource, user, organization, auth0Id, email, name, roles)
 
                         req.user = {
-                            ...authUser, ...result.user, ...result.workspaceData,
-                            roles, permissions: result.permissions
+                            ...authUser,
+                            ...result.user,
+                            ...result.workspaceData,
+                            roles,
+                            permissions: result.permissions
                         } as any
                     } else {
                         // User authenticated but from unauthorized organization - treat as anonymous user

@@ -7,11 +7,18 @@ on:
     push:
         branches:
             - staging
+        paths:
+            - 'packages/embed-react/**'
+            - 'packages/embed'
     workflow_dispatch:
         inputs:
             version_override:
                 description: 'Version override for aai-embed-react (optional, e.g., 1.2.3)'
                 required: false
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
 
 jobs:
     detect-changes:
@@ -274,7 +281,7 @@ jobs:
                   node -e "const pkg = require('./package.json'); pkg.peerDependencies['aai-embed'] = '^$EMBED_VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
             - name: Install dependencies
-              run: pnpm install
+              run: pnpm install --frozen-lockfile
 
             - name: Build package
               working-directory: ./packages/embed-react

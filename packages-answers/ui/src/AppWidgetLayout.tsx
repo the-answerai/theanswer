@@ -12,7 +12,7 @@ const AppWidgetLayout = ({
     session,
     children,
     // Layouts must accept a children prop.
-    params
+    params: _params
 }: {
     session?: Session
     children: any

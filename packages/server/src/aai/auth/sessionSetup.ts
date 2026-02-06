@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import session from 'express-session'
 import { Express } from 'express'
 import passport from 'passport'

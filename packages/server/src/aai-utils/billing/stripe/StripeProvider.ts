@@ -367,12 +367,16 @@ export class StripeProvider {
                 const batch = creditsData.slice(i, i + BATCH_SIZE)
                 const batchStartTime = Date.now()
 
-                const batchResults = await Promise.allSettled(
+                const _batchResults = await Promise.allSettled(
                     batch.map(async (data) => {
                         const originalTimestamp = data.timestampEpoch || Math.floor(new Date(data.metadata.timestamp).getTime() / 1000)
 
                         // Adjust timestamp for Stripe's 35-day limitation
-                        const { adjustedTimestamp, wasAdjusted, originalDate } = this.adjustTimestampForStripe(originalTimestamp)
+                        const {
+                            adjustedTimestamp,
+                            wasAdjusted,
+                            originalDate: _originalDate
+                        } = this.adjustTimestampForStripe(originalTimestamp)
 
                         // Ensure all unknown credit types are counted as AI tokens
                         const aiTokens = data.credits.ai_tokens + (data.credits.unknown || 0)

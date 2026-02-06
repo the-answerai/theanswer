@@ -1,5 +1,12 @@
 import { DataSource } from 'typeorm'
-import { getCredentialData, getCredentialParam, getVars, executeJavaScriptCode, createCodeExecutionSandbox } from '../../../src/utils'
+import {
+    getCredentialData,
+    getCredentialParam,
+    getVars,
+    executeJavaScriptCode,
+    createCodeExecutionSandbox,
+    applyLangfuseTraceHeaders
+} from '../../../src/utils'
 import { isValidUUID, isValidURL } from '../../../src/validator'
 import {
     ICommonObject,
@@ -185,8 +192,11 @@ class ExecuteFlow_SeqAgents implements INode {
 
         if (selectedFlowId === options.chatflowid) throw new Error('Cannot call the same agentflow!')
 
-        let headers = {}
+        let headers: Record<string, string> = {}
         if (chatflowApiKey) headers = { Authorization: `Bearer ${chatflowApiKey}` }
+
+        // Pass parent Langfuse trace context if available
+        applyLangfuseTraceHeaders(options, headers)
 
         const chatflowId = options.chatflowid
         const sessionId = options.sessionId

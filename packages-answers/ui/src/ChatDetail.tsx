@@ -59,7 +59,7 @@ export const ChatDetail = ({
         startNewChat
     } = useAnswers()
 
-    const router = useRouter()
+    const _router = useRouter()
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const [selectedDocuments, setSelectedDocuments] = React.useState<Document[] | undefined>()
