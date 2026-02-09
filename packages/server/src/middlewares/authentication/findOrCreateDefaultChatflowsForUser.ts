@@ -48,10 +48,13 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
         // If user already has this chatflow, update their defaultChatflowId if not set
         if (existingChatflow) {
             // Auto-heal: ensure chatflow is in Personal Workspace (AGENT-674)
-            const workspaceRepo = queryRunner.manager.getRepository(Workspace)
-            const personalWs = await workspaceRepo.findOne({
-                where: { organizationId: user.organizationId, name: 'Personal Workspace' }
-            })
+            const personalWs = await queryRunner.manager
+                .createQueryBuilder(Workspace, 'w')
+                .innerJoin('workspace_user', 'wu', 'w.id = wu."workspaceId"')
+                .where('w."organizationId" = :orgId', { orgId: user.organizationId })
+                .andWhere('w.name = :name', { name: 'Personal Workspace' })
+                .andWhere('(wu."userId" = :userId OR w."createdBy" = :userId)', { userId: user.id })
+                .getOne()
             if (personalWs && existingChatflow.workspaceId !== personalWs.id) {
                 await chatFlowRepo.update(existingChatflow.id, { workspaceId: personalWs.id })
             }
@@ -77,13 +80,12 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
 
         if (template) {
             // Always use Personal Workspace for default chatflows
-            const workspaceRepo = AppDataSource.getRepository(Workspace)
-            const personalWs = await workspaceRepo.findOne({
-                where: {
-                    organizationId: user.organizationId,
-                    name: 'Personal Workspace'
-                }
-            })
+            const personalWs = await AppDataSource.createQueryBuilder(Workspace, 'w')
+                .innerJoin('workspace_user', 'wu', 'w.id = wu."workspaceId"')
+                .where('w."organizationId" = :orgId', { orgId: user.organizationId })
+                .andWhere('w.name = :name', { name: 'Personal Workspace' })
+                .andWhere('(wu."userId" = :userId OR w."createdBy" = :userId)', { userId: user.id })
+                .getOne()
             const targetWorkspaceId = personalWs?.id || activeWorkspaceId
 
             const templateCopy = { ...template }
