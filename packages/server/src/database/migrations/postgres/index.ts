@@ -190,5 +190,7 @@ export const postgresMigrations = [
     AddChatFlowNameIndex1759424903973,
     UpdateFiddlerCredentialsVisibility1768413137117,
     // AAI: Backfill workspaceId - runs LAST after all feature migrations
-    AAIBackfillWorkspaceId1760000000002
+    AAIBackfillWorkspaceId1760000000002,
+    // AAI: AGENT-674 - Move default sidekick chatflows to Personal Workspaces
+    MoveDefaultChatflowsToPersonalWorkspace1770000000000
 ]
