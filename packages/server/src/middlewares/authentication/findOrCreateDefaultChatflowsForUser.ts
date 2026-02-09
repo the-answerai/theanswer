@@ -47,6 +47,15 @@ export const findOrCreateDefaultChatflowsForUser = async (AppDataSource: DataSou
 
         // If user already has this chatflow, update their defaultChatflowId if not set
         if (existingChatflow) {
+            // Auto-heal: ensure chatflow is in Personal Workspace (AGENT-674)
+            const workspaceRepo = queryRunner.manager.getRepository(Workspace)
+            const personalWs = await workspaceRepo.findOne({
+                where: { organizationId: user.organizationId, name: 'Personal Workspace' }
+            })
+            if (personalWs && existingChatflow.workspaceId !== personalWs.id) {
+                await chatFlowRepo.update(existingChatflow.id, { workspaceId: personalWs.id })
+            }
+
             // Check current database state inside transaction to avoid race conditions
             const currentUser = await userRepo.findOne({
                 where: { id: user.id },
