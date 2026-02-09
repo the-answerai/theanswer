@@ -84,11 +84,11 @@
         "@types/node-cron": "^3.0.11",
         "@types/xml2js": "^0.4.14",
         "@typescript-eslint/typescript-estree": "^7.18.0",
-        "axios": "^1.12.1",
+        "axios": "^1.13.3",
         "cursor-tools": "latest",
         "cypress": "^13.17.0",
-        "dotenv": "^17.2.2",
-        "dotenv-cli": "^10.0.0",
+        "dotenv": "^17.2.3",
+        "dotenv-cli": "^11.0.0",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^8.10.2",
         "eslint-config-react-app": "^7.0.1",
@@ -112,7 +112,7 @@
         "run-script-os": "^1.1.6",
         "turbo": "1.10.16",
         "typescript": "~5.5.4",
-        "yargs": "^17.7.2"
+        "yargs": "^18.0.0"
     },
     "dependencies": {
         "node-cron": "^3.0.3",
@@ -125,7 +125,7 @@
         ],
         "overrides": {
             "@opentelemetry/sdk-trace-base": "1.27.0",
-            "axios": "^1.12.1",
+            "axios": "^1.13.3",
             "body-parser": "2.0.2",
             "braces": "3.0.3",
             "cookie": ">=0.7.0",
