@@ -106,7 +106,7 @@
         "cors": "^2.8.5",
         "crypto-js": "^4.1.1",
         "csv-parser": "^3.0.0",
-        "dotenv": "^17.2.3",
+        "dotenv": "^17.2.4",
         "express": "^4.17.3",
         "express-basic-auth": "^1.2.1",
         "express-oauth2-jwt-bearer":"^1.7.1",
