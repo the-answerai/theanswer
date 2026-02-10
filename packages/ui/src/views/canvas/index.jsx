@@ -604,7 +604,7 @@ const Canvas = ({ chatflowid: chatflowId }) => {
     // Re-fetch canvas when credentials are updated via the setup modal
     useEffect(() => {
         const handleCredentialsUpdated = (e) => {
-            if (e.detail?.chatflowId === chatflowId) {
+            if (e.detail?.chatflowId === chatflowId && !e.detail?.skipRefetch) {
                 getSpecificChatflowApi.request(chatflowId)
             }
         }
