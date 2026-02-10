@@ -4,11 +4,16 @@ import { AxiosError } from 'axios'
 import Image from 'next/image'
 import { JsonViewer } from '@textea/json-viewer'
 import { Box, Typography, Avatar, Chip, Button, Divider, IconButton } from '@mui/material'
-import { IconTool } from '@tabler/icons-react'
+import { IconTool, IconBug } from '@tabler/icons-react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import ShieldIcon from '@mui/icons-material/Shield'
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined'
+import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined'
+import AutorenewIcon from '@mui/icons-material/Autorenew'
 
 import { useAnswers } from '../AnswersContext'
 import {
@@ -19,8 +24,6 @@ import {
 import { AppService, Document, Message } from 'types'
 import { Rating } from 'db/generated/prisma-client'
 import { getHTMLPreview, getReactPreview } from '../utils/previewUtils'
-import ThumbUpIcon from '@mui/icons-material/ThumbUp'
-import ThumbDownIcon from '@mui/icons-material/ThumbDown'
 import dynamic from 'next/dynamic'
 import { FileUpload } from '../types'
 import isArray from 'lodash/isArray'
@@ -151,6 +154,11 @@ export const MessageCard = ({
     const { hasFeature } = usePermissions()
     const isDeveloperMode = hasFeature('developer_mode')
     const { user: currentUser, sendMessageFeedback, sendMessage, appSettings, messages, sidekick } = useAnswers()
+    const [debugVisible, setDebugVisible] = useState(false)
+    const [guardrailsVisible, setGuardrailsVisible] = useState(false)
+    const [showCopied, setShowCopied] = useState(false)
+    const [showLinkCopied, setShowLinkCopied] = useState(false)
+    const showDebugIcon = isDeveloperMode && !appSettings?.chat?.hideDebugIcon
     const sourceDocuments = isArray(other.sourceDocuments) ? other.sourceDocuments : JSON.parse(other.sourceDocuments ?? '[]')
 
     // Parse guardrailsMetadata from message
@@ -305,23 +313,49 @@ export const MessageCard = ({
         navigator.clipboard.writeText(codeString)
     }
 
-    // const handleDislike = async (evt: React.MouseEvent<HTMLButtonElement>) => {
-    //     evt.stopPropagation()
-    //     evt.preventDefault()
-    //     setLastInteraction('thumbsDown')
-    //     if (id) {
-    //         try {
-    //             const feedback = await sendMessageFeedback({
-    //                 messageId: id,
-    //                 rating: 'thumbsDown'
-    //             })
-    //             setShowFeedback(true)
-    //             // Show modal to ask for added feedback } catch (err) {
-    //         } catch (err) {
-    //             setLastInteraction(undefined)
-    //         }
-    //     }
-    // }
+    const actionButtonSx = {
+        width: 28,
+        height: 28,
+        transition: 'all 0.2s ease',
+        '&:hover': {
+            transform: 'translateY(-1px)',
+            background: (theme: any) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)')
+        }
+    }
+
+    const handleCopyMessage = async () => {
+        try {
+            await navigator.clipboard.writeText(content)
+            setShowCopied(true)
+            setTimeout(() => setShowCopied(false), 2000)
+        } catch (err) {
+            console.error('Failed to copy:', err)
+        }
+    }
+
+    const handleShareMessage = async () => {
+        const link = `${window.location.origin}${window.location.pathname}#msg-${id}`
+        try {
+            await navigator.clipboard.writeText(link)
+            setShowLinkCopied(true)
+            setTimeout(() => setShowLinkCopied(false), 2000)
+        } catch (err) {
+            console.error('Failed to copy link:', err)
+        }
+    }
+
+    const handleRetry = () => {
+        if (!messages) return
+        const currentIndex = messages.findIndex((m) => m.id === id)
+        if (currentIndex <= 0) return
+        const precedingUserMessage = [...messages]
+            .slice(0, currentIndex)
+            .reverse()
+            .find((m) => m.role === 'user' || m.role === 'userMessage')
+        if (precedingUserMessage?.content) {
+            sendMessage({ content: precedingUserMessage.content, retry: true, sidekick })
+        }
+    }
 
     const getDocumentLabel = (doc: Document) => {
         if (doc.metadata?.source == 'blob' && doc.metadata?.pdf) {
@@ -400,6 +434,7 @@ export const MessageCard = ({
 
     return (
         <Box
+            id={id ? `msg-${id}` : undefined}
             data-cy='message'
             data-role={role}
             sx={{
@@ -1042,56 +1077,208 @@ export const MessageCard = ({
                     </DialogActions>
                 </Dialog>
             )}
-            {(role === 'assistant' || role === 'apiMessage') && isFeedbackAllowed && !isLoading ? (
+            {(role === 'assistant' || role === 'apiMessage') && !isLoading ? (
                 <Box
                     sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
                         display: 'flex',
-                        gap: 0.5
+                        flexWrap: 'nowrap',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        mt: 1,
+                        opacity: 0.6,
+                        transition: 'opacity 0.2s ease',
+                        '&:hover': { opacity: 1 }
                     }}
                 >
-                    {lastInteraction ? (
-                        <IconButton disabled size='small' sx={{ p: 0.5 }}>
-                            {lastInteraction == 'thumbsUp' ? (
-                                <ThumbUpIcon sx={{ fontSize: 14 }} />
-                            ) : (
-                                <ThumbDownIcon sx={{ fontSize: 14 }} />
-                            )}
+                    <Tooltip title={showCopied ? 'Copied!' : 'Copy message'}>
+                        <IconButton size='small' onClick={handleCopyMessage} sx={actionButtonSx}>
+                            <ContentCopyIcon sx={{ fontSize: 18 }} />
                         </IconButton>
-                    ) : (
+                    </Tooltip>
+                    {isFeedbackAllowed ? (
                         <>
-                            <IconButton
-                                color={lastInteraction === 'thumbsUp' ? 'secondary' : 'default'}
-                                size='small'
-                                data-cy='like-button'
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    event.preventDefault()
-                                    handleReview('thumbsUp')
-                                }}
-                                sx={{ p: 0.5 }}
-                            >
-                                <ThumbUpIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
-                            <IconButton
-                                size='small'
-                                color={lastInteraction === 'thumbsDown' ? 'secondary' : 'default'}
-                                onClick={(event) => {
-                                    event.stopPropagation()
-                                    event.preventDefault()
-                                    handleReview('thumbsDown')
-                                }}
-                                sx={{ p: 0.5 }}
-                            >
-                                <ThumbDownIcon sx={{ fontSize: 14 }} />
-                            </IconButton>
+                            <Tooltip title='Good response'>
+                                <span>
+                                    <IconButton
+                                        size='small'
+                                        data-cy='like-button'
+                                        disabled={!!lastInteraction}
+                                        color={lastInteraction === 'thumbsUp' ? 'primary' : 'default'}
+                                        onClick={(event) => {
+                                            event.stopPropagation()
+                                            event.preventDefault()
+                                            handleReview('thumbsUp')
+                                        }}
+                                        sx={actionButtonSx}
+                                    >
+                                        <ThumbUpOutlinedIcon sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                            <Tooltip title='Bad response'>
+                                <span>
+                                    <IconButton
+                                        size='small'
+                                        disabled={!!lastInteraction}
+                                        color={lastInteraction === 'thumbsDown' ? 'primary' : 'default'}
+                                        onClick={(event) => {
+                                            event.stopPropagation()
+                                            event.preventDefault()
+                                            handleReview('thumbsDown')
+                                        }}
+                                        sx={actionButtonSx}
+                                    >
+                                        <ThumbDownOutlinedIcon sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
                         </>
+                    ) : null}
+                    <Tooltip title={showLinkCopied ? 'Link copied!' : 'Share message'}>
+                        <IconButton size='small' onClick={handleShareMessage} sx={actionButtonSx}>
+                            <FileUploadOutlinedIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Retry'>
+                        <IconButton size='small' onClick={handleRetry} sx={actionButtonSx}>
+                            <AutorenewIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Tooltip>
+                    {showDebugIcon ? (
+                        <Tooltip title='Toggle debug information'>
+                            <IconButton
+                                onClick={() => setDebugVisible(!debugVisible)}
+                                aria-label='Toggle debug information'
+                                aria-expanded={debugVisible}
+                                size='small'
+                                sx={actionButtonSx}
+                            >
+                                <IconBug size={18} />
+                            </IconButton>
+                        </Tooltip>
+                    ) : null}
+                    {!isUserMessage && guardrailsStatus && (
+                        <Tooltip title='Guardrails Validation'>
+                            <IconButton
+                                size='small'
+                                onClick={() => setGuardrailsVisible(!guardrailsVisible)}
+                                aria-label='Toggle guardrails validation'
+                                aria-expanded={guardrailsVisible}
+                                sx={actionButtonSx}
+                            >
+                                <ShieldIcon sx={{ fontSize: 18, color: guardrailsStatus.color }} />
+                            </IconButton>
+                        </Tooltip>
                     )}
                 </Box>
             ) : null}
-            {isDeveloperMode ? (
+            {guardrailsVisible && guardrailsMetadata ? (
+                <Box>
+                    <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
+                        <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
+                            <Typography variant='overline'>
+                                🛡️ Guardrails Validation
+                                {guardrailsMetadata.outputValidation?.faithfulnessScore !== undefined &&
+                                    ` - Faithfulness: ${(guardrailsMetadata.outputValidation.faithfulnessScore * 1000).toFixed(2)}`}
+                            </Typography>
+                        </CustomAccordionSummary>
+                        <CustomAccordionDetails>
+                            {guardrailsMetadata.inputValidation && (
+                                <Box mb={2}>
+                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                        Input Validation
+                                    </Typography>
+                                    {guardrailsMetadata.inputValidation.blocked && (
+                                        <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>
+                                    )}
+                                    {guardrailsMetadata.inputValidation.redacted && (
+                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>
+                                    )}
+                                    {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
+                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                            Safety:{' '}
+                                            {guardrailsMetadata.inputValidation.violations.safety
+                                                .map((v) => {
+                                                    const severity = formatSafetyScore(v.score)
+                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                })
+                                                .join(', ')}
+                                        </Typography>
+                                    )}
+                                    {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
+                                        <Typography sx={{ color: '#ff9800' }}>
+                                            PII:{' '}
+                                            {guardrailsMetadata.inputValidation.violations.pii
+                                                .map(
+                                                    (p) =>
+                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
+                                                            3
+                                                        )})`
+                                                )
+                                                .join(', ')}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                            {guardrailsMetadata.outputValidation && (
+                                <Box>
+                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                        Output Validation
+                                    </Typography>
+                                    {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
+                                        <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
+                                            {(() => {
+                                                const faithful = formatFaithfulnessScore(
+                                                    guardrailsMetadata.outputValidation.faithfulnessScore
+                                                )
+                                                return (
+                                                    <>
+                                                        <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
+                                                        <Typography>
+                                                            <strong style={{ color: faithful.color }}>
+                                                                Faithfulness: {faithful.text} {faithful.icon}
+                                                            </strong>
+                                                            <span style={{ opacity: 0.7, marginLeft: '8px' }}>
+                                                                (Raw Score:{' '}
+                                                                {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
+                                                            </span>
+                                                        </Typography>
+                                                    </>
+                                                )
+                                            })()}
+                                        </Box>
+                                    )}
+                                    {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
+                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                            Safety:{' '}
+                                            {guardrailsMetadata.outputValidation.violations.safety
+                                                .map((v) => {
+                                                    const severity = formatSafetyScore(v.score)
+                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                })
+                                                .join(', ')}
+                                        </Typography>
+                                    )}
+                                    {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
+                                        <Typography sx={{ color: '#ff9800' }}>
+                                            PII:{' '}
+                                            {guardrailsMetadata.outputValidation.violations.pii
+                                                .map(
+                                                    (p) =>
+                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
+                                                            3
+                                                        )})`
+                                                )
+                                                .join(', ')}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        </CustomAccordionDetails>
+                    </CustomAccordion>
+                </Box>
+            ) : null}
+            {showDebugIcon && debugVisible ? (
                 <Box>
                     {sourceDocuments?.length ? (
                         <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
@@ -1172,120 +1359,6 @@ export const MessageCard = ({
                                     // defaultInspectDepth={0}
                                     collapseStringsAfterLength={100}
                                 />
-                            </CustomAccordionDetails>
-                        </CustomAccordion>
-                    ) : null}
-
-                    {guardrailsMetadata ? (
-                        <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
-                            <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
-                                <Typography variant='overline'>
-                                    🛡️ Guardrails Validation
-                                    {guardrailsMetadata.outputValidation?.faithfulnessScore !== undefined &&
-                                        ` - Faithfulness: ${(guardrailsMetadata.outputValidation.faithfulnessScore * 1000).toFixed(2)}`}
-                                </Typography>
-                            </CustomAccordionSummary>
-                            <CustomAccordionDetails>
-                                {/* Input Validation Section */}
-                                {guardrailsMetadata.inputValidation && (
-                                    <Box mb={2}>
-                                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                            Input Validation
-                                        </Typography>
-                                        {guardrailsMetadata.inputValidation.blocked && (
-                                            <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.redacted && (
-                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
-                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                                Safety:{' '}
-                                                {guardrailsMetadata.inputValidation.violations.safety
-                                                    .map((v) => {
-                                                        const severity = formatSafetyScore(v.score)
-                                                        return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                    })
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
-                                            <Typography sx={{ color: '#ff9800' }}>
-                                                PII:{' '}
-                                                {guardrailsMetadata.inputValidation.violations.pii
-                                                    .map(
-                                                        (p) =>
-                                                            `${p.label} (${formatPIIConfidence(
-                                                                p.score
-                                                            )} confidence - score: ${p.score.toFixed(3)})`
-                                                    )
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                )}
-
-                                {/* Output Validation Section */}
-                                {guardrailsMetadata.outputValidation && (
-                                    <Box>
-                                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                            Output Validation
-                                        </Typography>
-
-                                        {/* Faithfulness Score Display */}
-                                        {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
-                                            <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
-                                                {(() => {
-                                                    const faithful = formatFaithfulnessScore(
-                                                        guardrailsMetadata.outputValidation.faithfulnessScore
-                                                    )
-                                                    return (
-                                                        <>
-                                                            <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
-                                                            <Typography>
-                                                                <strong style={{ color: faithful.color }}>
-                                                                    Faithfulness: {faithful.text} {faithful.icon}
-                                                                </strong>
-                                                                <span style={{ opacity: 0.7, marginLeft: '8px' }}>
-                                                                    (Raw Score:{' '}
-                                                                    {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
-                                                                </span>
-                                                            </Typography>
-                                                        </>
-                                                    )
-                                                })()}
-                                            </Box>
-                                        )}
-
-                                        {/* Safety violations */}
-                                        {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
-                                            <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                                Safety:{' '}
-                                                {guardrailsMetadata.outputValidation.violations.safety
-                                                    .map((v) => {
-                                                        const severity = formatSafetyScore(v.score)
-                                                        return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                    })
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-
-                                        {/* PII detections */}
-                                        {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
-                                            <Typography sx={{ color: '#ff9800' }}>
-                                                PII:{' '}
-                                                {guardrailsMetadata.outputValidation.violations.pii
-                                                    .map(
-                                                        (p) =>
-                                                            `${p.label} (${formatPIIConfidence(
-                                                                p.score
-                                                            )} confidence - score: ${p.score.toFixed(3)})`
-                                                    )
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                )}
                             </CustomAccordionDetails>
                         </CustomAccordion>
                     ) : null}
@@ -1436,134 +1509,6 @@ export const MessageCard = ({
                             )
                         })}
                     </Box>
-                </Box>
-            )}
-            {/* Guardrails Shield Icon - Regular Users */}
-            {!isUserMessage && guardrailsStatus && (
-                <Box sx={{ mt: 1.5, mb: 1 }}>
-                    <Tooltip
-                        title={
-                            <Box sx={{ p: 1 }}>
-                                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
-                                    Guardrails Validation
-                                </Typography>
-
-                                {/* Input Validation */}
-                                {guardrailsMetadata.inputValidation && (
-                                    <Box mb={1.5}>
-                                        <Typography variant='caption' sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                                            Input:
-                                        </Typography>
-                                        {guardrailsMetadata.inputValidation.blocked && (
-                                            <Typography variant='caption' sx={{ color: '#f44336', display: 'block' }}>
-                                                ⚠️ Blocked
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.redacted && (
-                                            <Typography variant='caption' sx={{ color: '#ff9800', display: 'block' }}>
-                                                🔒 PII Redacted
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
-                                            <Typography variant='caption' sx={{ display: 'block' }}>
-                                                Safety:{' '}
-                                                {guardrailsMetadata.inputValidation.violations.safety
-                                                    .map((v) => {
-                                                        const severity = formatSafetyScore(v.score)
-                                                        return `${v.dimension.replace('fdl_', '')} (${severity.text} Risk)`
-                                                    })
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
-                                            <Typography variant='caption' sx={{ display: 'block' }}>
-                                                PII:{' '}
-                                                {guardrailsMetadata.inputValidation.violations.pii
-                                                    .map((p) => `${p.label} (${formatPIIConfidence(p.score)} confidence)`)
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                )}
-
-                                {/* Output Validation */}
-                                {guardrailsMetadata.outputValidation && (
-                                    <Box>
-                                        <Typography variant='caption' sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                                            Output:
-                                        </Typography>
-                                        {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
-                                            <Typography variant='caption' sx={{ display: 'block', mb: 0.5 }}>
-                                                {(() => {
-                                                    const faithful = formatFaithfulnessScore(
-                                                        guardrailsMetadata.outputValidation.faithfulnessScore
-                                                    )
-                                                    return (
-                                                        <>
-                                                            <strong style={{ color: faithful.color }}>
-                                                                Faithfulness: {faithful.text} {faithful.icon}
-                                                            </strong>
-                                                            <span style={{ opacity: 0.7, marginLeft: '4px' }}>
-                                                                (score: {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
-                                                            </span>
-                                                        </>
-                                                    )
-                                                })()}
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
-                                            <Typography variant='caption' sx={{ display: 'block' }}>
-                                                Safety:{' '}
-                                                {guardrailsMetadata.outputValidation.violations.safety
-                                                    .map((v) => {
-                                                        const severity = formatSafetyScore(v.score)
-                                                        return `${v.dimension.replace('fdl_', '')} (${severity.text} Risk)`
-                                                    })
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                        {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
-                                            <Typography variant='caption' sx={{ display: 'block' }}>
-                                                PII:{' '}
-                                                {guardrailsMetadata.outputValidation.violations.pii
-                                                    .map((p) => `${p.label} (${formatPIIConfidence(p.score)} confidence)`)
-                                                    .join(', ')}
-                                            </Typography>
-                                        )}
-                                        {!guardrailsMetadata.outputValidation.faithfulnessScore &&
-                                            !guardrailsMetadata.outputValidation.violations?.safety?.length &&
-                                            !guardrailsMetadata.outputValidation.violations?.pii?.length && (
-                                                <Typography variant='caption' sx={{ display: 'block', color: '#4caf50' }}>
-                                                    ✓ No issues detected
-                                                </Typography>
-                                            )}
-                                    </Box>
-                                )}
-                            </Box>
-                        }
-                        arrow
-                        placement='top'
-                    >
-                        <Box
-                            sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                cursor: 'help',
-                                transition: 'transform 0.2s',
-                                '&:hover': {
-                                    transform: 'scale(1.1)'
-                                }
-                            }}
-                        >
-                            <ShieldIcon
-                                sx={{
-                                    fontSize: 20,
-                                    color: guardrailsStatus.color,
-                                    filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.3))'
-                                }}
-                            />
-                        </Box>
-                    </Tooltip>
                 </Box>
             )}
             {/* Tools used section - Icon bubbles */}

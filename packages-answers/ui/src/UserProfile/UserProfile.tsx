@@ -39,8 +39,12 @@ import Add from '@mui/icons-material/Add'
 import Info from '@mui/icons-material/Info'
 import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
+import Switch from '@mui/material/Switch'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import { User, AppSettings, ContextField } from 'types'
 import { PlanCard } from './PlanCard'
+import useAppSettings from '../useAppSettings'
+import { usePermissions } from '../PermissionProvider'
 
 interface AssignedWorkspace {
     id: string
@@ -101,11 +105,13 @@ interface OrgInput
     [key: string]: any
 }
 
-const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSettings; user?: EnrichedUser }) => {
+const UserProfile = ({ appSettings, user }: { appSettings?: AppSettings; user?: EnrichedUser }) => {
     const router = useRouter()
     const [_loading, setLoading] = useState(false)
     const [_error, setError] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
+    const { updateAppSettings } = useAppSettings()
+    const { hasFeature } = usePermissions()
 
     const {
         handleSubmit,
@@ -526,6 +532,30 @@ const UserProfile = ({ appSettings: _appSettings, user }: { appSettings?: AppSet
                     )}
                 </CardContent>
             </Card>
+
+            {hasFeature('developer_mode') && (
+                <Card variant='outlined' sx={{ mb: 3 }}>
+                    <CardContent>
+                        <Typography variant='h6' gutterBottom>
+                            Developer Settings
+                        </Typography>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={appSettings?.chat?.hideDebugIcon ?? false}
+                                    onChange={async (e) => {
+                                        await updateAppSettings({
+                                            ...appSettings,
+                                            chat: { ...appSettings?.chat, hideDebugIcon: e.target.checked }
+                                        })
+                                    }}
+                                />
+                            }
+                            label='Hide debug icon in chat messages'
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             {/* TODO: User Variables Section - Hidden until API endpoint is implemented (AGENT-618) */}
             {/* The /api/users endpoint was never created when this feature was added.

@@ -749,7 +749,8 @@ export function AnswersProvider({
                                                 chatId: payload.data.chatId,
                                                 chatflowid: chatflowid
                                             } as any)),
-                                        ...(followUpPrompts && { followUpPrompts: followUpPrompts })
+                                        ...(followUpPrompts && { followUpPrompts: followUpPrompts }),
+                                        ...(payload.data.guardrailsMetadata && { guardrailsMetadata: payload.data.guardrailsMetadata })
                                     }
                                 })
                             })
