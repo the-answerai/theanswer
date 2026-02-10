@@ -242,6 +242,12 @@ export class SSEStreamer implements IServerSideEventStreamer {
             metadataJson['flowVariables'] =
                 typeof apiResponse.flowVariables === 'string' ? JSON.parse(apiResponse.flowVariables) : apiResponse.flowVariables
         }
+        if (apiResponse.guardrailsMetadata) {
+            metadataJson['guardrailsMetadata'] =
+                typeof apiResponse.guardrailsMetadata === 'string'
+                    ? apiResponse.guardrailsMetadata
+                    : JSON.stringify(apiResponse.guardrailsMetadata)
+        }
         if (Object.keys(metadataJson).length > 0) {
             this.streamCustomEvent(chatId, 'metadata', metadataJson)
         }
