@@ -96,7 +96,8 @@ export const AsyncDropdown = ({
     let [internalValue, setInternalValue] = useState(value ?? 'choose an option')
 
     useEffect(() => {
-        setInternalValue(value ?? 'choose an option')
+        const next = value ?? 'choose an option'
+        if (next !== internalValue) setInternalValue(next)
     }, [value])
 
     const { reactFlowInstance } = useContext(flowContext)

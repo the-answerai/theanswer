@@ -44,7 +44,8 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const { sidekick, needsSetup, credentialsToShow, updateSidekick } = useSidekickWithCredentials(sidekickId, isQuickSetup)
 
     const canvasNodes = reactFlowInstance?.getNodes() ?? []
-    const liveCredentials = canvasNodes.length > 0 ? processFlowCredentials({ nodes: canvasNodes }).credentials : credentialsToShow
+    const liveCredentials =
+        canvasNodes.length > 0 ? processFlowCredentials({ nodes: canvasNodes })?.credentials ?? credentialsToShow : credentialsToShow
 
     // Redux notification setup
     const dispatch = useDispatch()
