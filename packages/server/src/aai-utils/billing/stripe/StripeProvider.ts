@@ -567,7 +567,7 @@ export class StripeProvider {
                 log.info('Historical data: Adjusted timestamps for Stripe 35-day limitation', {
                     count: adjustedTimestampCount,
                     totalProcessed: processedCount,
-                    percentage: ((adjustedTimestampCount / processedCount) * 100).toFixed(2) + '%',
+                    percentage: processedCount > 0 ? ((adjustedTimestampCount / processedCount) * 100).toFixed(2) + '%' : 'N/A',
                     note: 'Traces older than 35 days were batched to 34 days ago with original dates preserved in metadata'
                 })
             }
@@ -695,7 +695,7 @@ export class StripeProvider {
 
         log.debug('Trace metadata updated successfully', {
             traceId: data.traceId,
-            billing_status: data.traceContext?.metadata?.billing_status,
+            billing_status: 'processed',
             meterEventId: result.identifier
         })
 
@@ -711,30 +711,6 @@ export class StripeProvider {
             rate: credits > 0 ? cost / credits : 0,
             percentage: (credits / totalCredits) * 100
         }
-    }
-
-    private processBatchResults(
-        batchResults: PromiseSettledResult<any>[],
-        batch: Array<CreditsData & { traceContext: { timestamp: string; metadata: any } }>,
-        meterEvents: Stripe.Billing.MeterEvent[],
-        failedEvents: Array<{ traceId: string; error: string }>,
-        processedTraces: string[]
-    ): void {
-        batchResults.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-                meterEvents.push(result.value.result)
-                processedTraces.push(result.value.traceId)
-            } else {
-                const error = result.reason
-                // Only add to failedEvents if it's not a resource_missing error that was handled
-                if (!(error.code === 'resource_missing' && error.param === 'payload[stripe_customer_id]')) {
-                    failedEvents.push({
-                        traceId: batch[index].traceId,
-                        error: error?.message || 'Unknown error during meter event creation'
-                    })
-                }
-            }
-        })
     }
 
     async getMeterEventSummaries(

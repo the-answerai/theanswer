@@ -33,7 +33,6 @@ export class LangfuseProvider {
         max: 5000, // Maximum delay (5 seconds)
         backoffMultiplier: 2, // Double on 429
         recoveryRate: 0.8, // Reduce by 20% after success
-        lastRateLimitTime: 0, // Track when we last hit a rate limit
         consecutiveSuccesses: 0 // Track successful calls for faster recovery
     }
 
@@ -62,7 +61,6 @@ export class LangfuseProvider {
         const newDelay =
             this.adaptiveDelay.current === 0 ? BASE_DELAY_ON_429 : this.adaptiveDelay.current * this.adaptiveDelay.backoffMultiplier
         this.adaptiveDelay.current = Math.min(this.adaptiveDelay.max, newDelay)
-        this.adaptiveDelay.lastRateLimitTime = Date.now()
         log.info('Rate limit detected, increasing delay', {
             newDelayMs: this.adaptiveDelay.current,
             maxDelayMs: this.adaptiveDelay.max
@@ -377,20 +375,30 @@ export class LangfuseProvider {
     /**
      * Convert traces to credits and sync to Stripe
      */
-    private async processAndSyncTraces(traces: Trace[]) {
+    private async processAndSyncTraces(traces: Trace[]): Promise<{
+        processedCount: number
+        failedCount: number
+        failedEvents: Array<{ traceId: string; error: string }>
+    }> {
         if (traces.length === 0) {
-            return { processedTraces: [], failedEvents: [], meterEvents: [] }
+            return { processedCount: 0, failedCount: 0, failedEvents: [] }
         }
 
         const creditsDataWithTraces = await this.convertUsageToCredits(traces)
         const stripeProvider = new StripeProvider()
 
-        return await stripeProvider.syncUsageToStripe(
+        const result = await stripeProvider.syncUsageToStripe(
             creditsDataWithTraces.map((item) => ({
                 ...item.creditsData,
                 traceContext: item.traceContext
             }))
         )
+
+        return {
+            processedCount: result.processedCount,
+            failedCount: result.failedEvents.length,
+            failedEvents: result.failedEvents
+        }
     }
 
     /**
@@ -435,9 +443,12 @@ export class LangfuseProvider {
 
                 const response = await this.processAndSyncTraces(traces)
                 return {
-                    processedTraces: response.processedTraces,
+                    processedTraces: [],
                     failedTraces: response.failedEvents,
-                    skippedTraces: []
+                    skippedTraces: [],
+                    processedCount: response.processedCount,
+                    failedCount: response.failedCount,
+                    skippedCount: 0
                 }
             }
 
@@ -506,8 +517,8 @@ export class LangfuseProvider {
                 const { billable: firstPageTraces, skippedCount: firstPageSkipped } = this.filterBillableTraces(initialResponse.data)
                 const firstPageResponse = await this.processAndSyncTraces(firstPageTraces)
 
-                processedCount += firstPageResponse.processedTraces.length
-                failedCount += firstPageResponse.failedEvents.length
+                processedCount += firstPageResponse.processedCount
+                failedCount += firstPageResponse.failedCount
                 skippedCount += firstPageSkipped
                 failedTraces.push(...firstPageResponse.failedEvents)
 
@@ -532,8 +543,8 @@ export class LangfuseProvider {
                     )
                     const response = await this.processAndSyncTraces(traces)
 
-                    processedCount += response.processedTraces.length
-                    failedCount += response.failedEvents.length
+                    processedCount += response.processedCount
+                    failedCount += response.failedCount
                     skippedCount += pageSkipped
                     failedTraces.push(...response.failedEvents)
 
@@ -684,14 +695,15 @@ export class LangfuseProvider {
                 const now = Date.now()
                 if (now - lastLogTime > 2000 || completed % 10 === 0) {
                     lastLogTime = now
-                    const elapsed = ((now - startTime) / 1000).toFixed(1)
+                    const elapsedMs = now - startTime
+                    const elapsed = (elapsedMs / 1000).toFixed(1)
                     log.info('Parallel processing progress', {
                         completed: `${completed}/${total}`,
                         success: successCount,
                         failed: failCount,
                         runningTotal: totalCredits,
                         elapsed: `${elapsed}s`,
-                        rate: `${(completed / parseFloat(elapsed)).toFixed(1)}/s`,
+                        rate: elapsedMs > 0 ? `${(completed / (elapsedMs / 1000)).toFixed(1)}/s` : 'N/A',
                         currentDelay: `${this.getAdaptiveDelay()}ms`
                     })
                 }
@@ -703,14 +715,15 @@ export class LangfuseProvider {
             (r): r is { creditsData: CreditsData; traceContext: { timestamp: string; metadata: any } } => r != null
         )
 
-        const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
+        const elapsedMs = Date.now() - startTime
+        const elapsedSec = (elapsedMs / 1000).toFixed(1)
         log.info('Parallel trace processing complete', {
             success: successCount,
             failed: failCount,
             totalCredits,
             elapsedSeconds: elapsedSec,
-            avgSecondsPerTrace: filteredData.length > 0 ? (parseFloat(elapsedSec) / filteredData.length).toFixed(2) : '0',
-            effectiveRate: `${(filteredData.length / parseFloat(elapsedSec)).toFixed(1)}/s`,
+            avgSecondsPerTrace: filteredData.length > 0 ? (elapsedMs / 1000 / filteredData.length).toFixed(2) : '0',
+            effectiveRate: elapsedMs > 0 ? `${(filteredData.length / (elapsedMs / 1000)).toFixed(1)}/s` : 'N/A',
             finalDelay: `${this.getAdaptiveDelay()}ms`
         })
 
