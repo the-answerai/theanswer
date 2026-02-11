@@ -1570,7 +1570,7 @@ const AdminChatflows = () => {
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {chatflowVersions.map((version: any) => (
                                 <Box
-                                    key={version.version}
+                                    key={`${version.version}-${version.timestamp}`}
                                     sx={{
                                         p: 2,
                                         border: version.isCurrent

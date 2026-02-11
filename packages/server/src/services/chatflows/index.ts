@@ -21,7 +21,6 @@ import logger from '../../utils/logger'
 import { updateStorageUsage } from '../../utils/quotaUsage'
 import chatflowStorageService from '../chatflow-storage'
 import { Chat } from '../../database/entities/Chat'
-import checkOwnership from '../../utils/checkOwnership'
 import { Organization } from '../../database/entities/Organization'
 export const enum ChatflowErrorMessage {
     INVALID_CHATFLOW_TYPE = 'Invalid Chatflow Type'
@@ -702,11 +701,6 @@ const getChatflowVersions = async (chatflowId: string, user: IUser): Promise<any
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
         }
 
-        // Check ownership
-        if (!(await checkOwnership(chatflow, user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
-
         // Get versions from S3
         const versions = await chatflowStorageService.listChatflowVersions(chatflowId)
 
@@ -777,11 +771,6 @@ const getChatflowVersion = async (chatflowId: string, version: number | undefine
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
         }
 
-        // Check ownership
-        if (!(await checkOwnership(chatflow, user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
-        }
-
         // Get specific version or published version from S3
         const flowData = await chatflowStorageService.getChatflowVersion(chatflowId, version)
         if (!flowData) {
@@ -809,11 +798,6 @@ const rollbackChatflowToVersion = async (chatflowId: string, version: number, us
         const chatflow = await chatFlowRepository.findOne({ where: { id: chatflowId } })
         if (!chatflow) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${chatflowId} not found`)
-        }
-
-        // Check ownership
-        if (!(await checkOwnership(chatflow, user))) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, `Unauthorized`)
         }
 
         // Get the version content from S3
