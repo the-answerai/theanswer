@@ -71,7 +71,7 @@ export default function ChatDrawer({ journeys: _journeys, chats: _chats, default
         // Get cursor from last chat of previous page
         // Chatflows API uses 'createdDate', but fallback to 'createdAt' for type compatibility
         const lastChat = previousPageData?.[previousPageData.length - 1]
-        const cursor = lastChat?.createdDate || lastChat?.createdAt
+        const cursor = (lastChat as any)?.createdDate || lastChat?.createdAt
         return `/api/chats?limit=${CHATS_PAGE_SIZE}&cursor=${cursor}`
     }
 
@@ -82,7 +82,7 @@ export default function ChatDrawer({ journeys: _journeys, chats: _chats, default
 
     const fetchedChats = React.useMemo(() => data?.flat() || [], [data])
     const getDateKey = (chat: Chat) => {
-        const date = new Date(chat.createdAt ?? chat.createdDate)
+        const date = new Date(chat.createdAt ?? (chat as any).createdDate)
         const now = new Date()
         if (date.toDateString() === now.toDateString()) return 'Today'
         if (date.toDateString() === new Date(now.setDate(now.getDate() - 1)).toDateString()) return 'Yesterday'

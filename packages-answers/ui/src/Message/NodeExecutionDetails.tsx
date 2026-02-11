@@ -13,7 +13,7 @@ interface NodeExecutionDetailsProps {
     } | null
 }
 
-const getStatusColor = (status: string): string => {
+const getStatusColor = (status: string): any => {
     switch (status) {
         case 'FINISHED':
             return 'success'

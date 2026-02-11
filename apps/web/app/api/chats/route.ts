@@ -8,7 +8,7 @@ import type { Chat } from 'types'
 const DEFAULT_PAGE_SIZE = 20
 const MAX_PAGE_SIZE = 100
 
-export async function GET(req: Request): Promise<NextResponse<Chat[]>> {
+export async function GET(req: Request): Promise<NextResponse> {
     const session = await getCachedSession()
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,7 +19,7 @@ export async function GET(req: Request): Promise<NextResponse<Chat[]>> {
     const limit = Math.min(Math.max(1, requestedLimit), MAX_PAGE_SIZE)
     const cursor = searchParams.get('cursor') || undefined
 
-    const mergedChats = await getChats(session.user, { limit, cursor })
+    const mergedChats = await getChats(session.user as any, { limit, cursor })
     return NextResponse.json(mergedChats)
 }
 

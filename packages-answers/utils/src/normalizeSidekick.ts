@@ -1,6 +1,6 @@
 import toSentenceCase from '@utils/utilities/toSentenceCase'
 import { renderTemplate } from '@utils/utilities/renderTemplate'
-import { Sidekick, SidekickListItem, User } from 'types'
+import { Sidekick, SidekickListItem, User, FlowData, ChatbotConfig, AnswersConfig } from 'types'
 
 export const normalizeSidekickListItem = (sidekick: Sidekick, user?: User): SidekickListItem => {
     let sharedWith = 'private'
@@ -34,7 +34,13 @@ export const normalizeSidekickListItem = (sidekick: Sidekick, user?: User): Side
         chatflowId: sidekick.chatflow?.id || '',
         chatflowDomain: sidekick.chatflowDomain,
         chatbotConfig: parseChatbotConfig(sidekick.chatflow?.chatbotConfig),
-        flowData: parseFlowData(sidekick.chatflow?.flowData)
+        flowData: parseFlowData(sidekick.chatflow?.flowData),
+        constraints: {
+            isSpeechToTextEnabled: false,
+            isImageUploadAllowed: false,
+            isRAGFileUploadAllowed: false,
+            uploadSizeAndTypes: []
+        }
     }
 
     return sidekickListItem
@@ -100,7 +106,7 @@ export function parseAnswersConfig(answersConfigJson?: string | null): AnswersCo
 }
 
 export const normalizeSidekickList = (sidekicks: Partial<Sidekick>[], user?: User): SidekickListItem[] => {
-    const normalizedSidekicks: SidekickListItem[] = sidekicks.map((sidekick) => normalizeSidekickListItem(sidekick, user))
+    const normalizedSidekicks: SidekickListItem[] = sidekicks.map((sidekick) => normalizeSidekickListItem(sidekick as Sidekick, user))
 
     return normalizedSidekicks
 }

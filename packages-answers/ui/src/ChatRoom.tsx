@@ -20,7 +20,7 @@ interface ChatRoomProps {
     sidekicks: Sidekick[]
     scrollRef: React.RefObject<HTMLDivElement>
     selectedSidekick?: Sidekick
-    setPreviewCode: (code: string) => void
+    setPreviewCode: (preview: any) => void
 }
 
 export const ChatRoom: React.FC<ChatRoomProps> = ({
@@ -57,7 +57,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                     transition: theme.transitions.create(['all'])
                 }}
             >
-                <AssistantInfoCard sidekick={selectedSidekick} followers={208000} onShare={() => {}} onSearch={() => {}} />
+                <AssistantInfoCard sidekick={selectedSidekick} />
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

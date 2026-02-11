@@ -18,10 +18,10 @@ const StudioLayout = async ({ children, params }: { children: React.ReactElement
             appSettings={session?.user?.appSettings!}
             // providers={providers}
             session={JSON.parse(JSON.stringify(session))}
-            params={params}
+            params={{ slug: params.encodedDomain }}
         >
             <FlowiseAppLayout apiHost={apiHost} accessToken={session?.accessToken}>
-                <MinimalLayout>{children}</MinimalLayout>
+                {(<MinimalLayout>{children as any}</MinimalLayout>) as any}
             </FlowiseAppLayout>
         </AppLayout>
     )

@@ -64,7 +64,7 @@ const BillingDashboard: React.FC = () => {
 
                 <TotalCreditsProgress usageSummary={billingData} isLoading={isLoading} isError={isError} />
                 <BillingOverview
-                    currentPlan={billingData?.currentPlan}
+                    currentPlan={billingData?.currentPlan as any}
                     billingPeriod={billingData?.billingPeriod}
                     usagePercentage={usagePercentage}
                 />

@@ -11,7 +11,7 @@ export default async function ChatUILayout({ children }: { children: React.React
     // AppLayout already wraps with AppProvider, no need to double-wrap
     return (
         <AppLayout apiHost={apiHost} accessToken={session?.accessToken}>
-            <ChatLayout>{children}</ChatLayout>
+            {(<ChatLayout>{children as any}</ChatLayout>) as any}
         </AppLayout>
     )
 }

@@ -282,9 +282,8 @@ const SidekickSelect: React.FC<SidekickSelectProps> = ({ sidekicks: defaultSidek
         handleSidekickSelect: handleSidekickSelectFromSidekickSelect,
         handleCreateNewSidekick
     } = useSidekickSelectionHandlers({
-        chat,
-        navigate,
-        enablePerformanceLogs
+        chat: chat ?? undefined,
+        navigate
     })
 
     const handleSidekickSelect = (sidekick: Sidekick) => {

@@ -53,10 +53,10 @@ const OrgCredentialsManager: React.FC = () => {
     const [organizationCredentials, setOrganizationCredentials] = useState<any[]>([])
 
     // Use the same API hooks as the existing credential system
-    const getAllComponentsCredentialsApi = useApi(credentialsApi.getAllComponentsCredentials)
-    const getAllCredentialsApi = useApi(credentialsApi.getAllCredentials)
-    const getOrgCredentialsApi = useApi(credentialsApi.getOrgCredentials)
-    const updateOrgCredentialsApi = useApi(credentialsApi.updateOrgCredentials)
+    const getAllComponentsCredentialsApi: any = useApi(credentialsApi.getAllComponentsCredentials)
+    const getAllCredentialsApi: any = useApi(credentialsApi.getAllCredentials)
+    const getOrgCredentialsApi: any = useApi(credentialsApi.getOrgCredentials)
+    const updateOrgCredentialsApi: any = useApi(credentialsApi.updateOrgCredentials)
 
     useEffect(() => {
         getOrgCredentialsApi.request()

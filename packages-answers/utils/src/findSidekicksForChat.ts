@@ -2,6 +2,7 @@ import { parseChatbotConfig, parseFlowData } from './normalizeSidekick'
 import { User } from 'types'
 import { prisma } from '@db/client'
 import auth0 from '@utils/auth/auth0'
+// @ts-ignore - @flowise/components types not available in this context
 import { INodeParams } from '@flowise/components'
 
 interface Sidekick {
@@ -133,8 +134,8 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
                 const imgUploadSizeAndTypes: any[] = []
                 let isImageUploadAllowed = false
 
-                if (nodes.some((node) => uploadAllowedNodes.includes(node.data.name))) {
-                    nodes.forEach((node) => {
+                if (nodes.some((node: any) => uploadAllowedNodes.includes(node.data.name))) {
+                    nodes.forEach((node: any) => {
                         if (uploadProcessingNodes.includes(node.data.name)) {
                             node.data.inputParams.forEach((param: INodeParams) => {
                                 if (param.name === 'allowImageUploads' && node.data.inputs?.['allowImageUploads']) {
@@ -211,7 +212,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
 }
 
 function getUniqueCategories(sidekicks: Sidekick[]) {
-    const categories = [...new Set(sidekicks.map((s) => s.category))]
+    const categories = Array.from(new Set(sidekicks.map((s) => s.category)))
         .filter(Boolean)
         .map((c) => c.trim().split(';'))
         .flat()

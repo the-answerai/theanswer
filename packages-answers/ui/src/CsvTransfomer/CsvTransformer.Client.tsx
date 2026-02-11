@@ -3,15 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
-// Type declaration for the chatflows API module
-declare module '@/api/chatflows' {
-    interface ChatflowsApi {
-        getAllChatflows: () => Promise<{ data: any[] }>
-    }
-    const chatflowsApi: ChatflowsApi
-    export default chatflowsApi
-}
 
+// @ts-ignore
 import chatflowsApi from '@/api/chatflows'
 // material-ui
 import { Container, Box, Stack, Tabs, Tab, Typography } from '@mui/material'
@@ -110,13 +103,13 @@ const CsvTransformer = () => {
                 <TabPanel currentValue={tab} value='process'>
                     <ProcessCsv
                         chatflows={chatflows}
-                        user={user}
+                        user={user as any}
                         onNavigateToHistory={navigateToHistory}
                         onRefreshChatflows={fetchChatflows}
                     />
                 </TabPanel>
                 <TabPanel currentValue={tab} value='history'>
-                    <ProcessingHistory user={user} />
+                    <ProcessingHistory user={user as any} />
                 </TabPanel>
             </Stack>
         </Container>

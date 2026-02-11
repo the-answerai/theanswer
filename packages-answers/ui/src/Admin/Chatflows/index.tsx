@@ -202,8 +202,8 @@ const AdminChatflows = () => {
             // Category filter
             if (selectedCategories.length > 0) {
                 const categories = (chatflow.category || 'Uncategorized').split(';').map((cat: string) => cat.trim())
-                const hasMatchingCategory = selectedCategories.some((selectedCat) =>
-                    categories.some((cat) => cat.toLowerCase().includes(selectedCat.toLowerCase()))
+                const hasMatchingCategory = selectedCategories.some((selectedCat: any) =>
+                    categories.some((cat: any) => cat.toLowerCase().includes(selectedCat.toLowerCase()))
                 )
                 if (!hasMatchingCategory) return false
             }
@@ -240,9 +240,9 @@ const AdminChatflows = () => {
         if (!chatflowsData) return []
 
         const categories = new Set<string>()
-        chatflowsData.forEach((chatflow) => {
+        chatflowsData.forEach((chatflow: any) => {
             const chatflowCategories = (chatflow.category || 'Uncategorized').split(';').map((cat: string) => cat.trim())
-            chatflowCategories.forEach((cat) => categories.add(cat))
+            chatflowCategories.forEach((cat: any) => categories.add(cat))
         })
 
         return Array.from(categories).sort((a, b) => a.localeCompare(b))
@@ -252,7 +252,7 @@ const AdminChatflows = () => {
         if (!chatflowsData) return []
 
         const ownersMap = new Map<string, string>()
-        chatflowsData.forEach((chatflow) => {
+        chatflowsData.forEach((chatflow: any) => {
             if (chatflow.isOwner) {
                 ownersMap.set('me', 'Me')
             } else if (chatflow.user?.name) {
@@ -979,7 +979,7 @@ const AdminChatflows = () => {
                 </Box>
 
                 {/* Bulk Update Actions */}
-                {chatflowsData && chatflowsData.some((chatflow) => chatflow.templateStatus === 'outdated') && (
+                {chatflowsData && chatflowsData.some((chatflow: any) => chatflow.templateStatus === 'outdated') && (
                     <Box
                         sx={{
                             mb: 2,
@@ -995,7 +995,7 @@ const AdminChatflows = () => {
                                     Template Updates Available
                                 </Typography>
                                 <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
-                                    {chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length} chatflows are
+                                    {chatflowsData.filter((chatflow: any) => chatflow.templateStatus === 'outdated').length} chatflows are
                                     outdated and can be updated to the latest template
                                 </Typography>
                             </Box>
@@ -1005,8 +1005,8 @@ const AdminChatflows = () => {
                                     size='small'
                                     onClick={() => {
                                         const outdatedIds = chatflowsData
-                                            .filter((chatflow) => chatflow.templateStatus === 'outdated')
-                                            .map((chatflow) => chatflow.id)
+                                            .filter((chatflow: any) => chatflow.templateStatus === 'outdated')
+                                            .map((chatflow: any) => chatflow.id)
                                         setSelectedForUpdate(selectedForUpdate.length === outdatedIds.length ? [] : outdatedIds)
                                     }}
                                     sx={{
@@ -1019,7 +1019,7 @@ const AdminChatflows = () => {
                                     }}
                                 >
                                     {selectedForUpdate.length ===
-                                    chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length
+                                    chatflowsData.filter((chatflow: any) => chatflow.templateStatus === 'outdated').length
                                         ? 'Deselect All'
                                         : 'Select All Outdated'}
                                 </Button>
@@ -1032,7 +1032,7 @@ const AdminChatflows = () => {
                                             const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate)
 
                                             // Show success message and refresh data
-                                            if (response.updated > 0) {
+                                            if ((response as any).updated > 0) {
                                                 // Refresh the chatflows data
                                                 window.location.reload() // Simple refresh for now
                                             }
@@ -1097,20 +1097,20 @@ const AdminChatflows = () => {
                                         checked={
                                             chatflowsData &&
                                             selectedForUpdate.length ===
-                                                chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length &&
-                                            chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length > 0
+                                                chatflowsData.filter((chatflow: any) => chatflow.templateStatus === 'outdated').length &&
+                                            chatflowsData.filter((chatflow: any) => chatflow.templateStatus === 'outdated').length > 0
                                         }
                                         indeterminate={
                                             selectedForUpdate.length > 0 &&
                                             chatflowsData &&
                                             selectedForUpdate.length <
-                                                chatflowsData.filter((chatflow) => chatflow.templateStatus === 'outdated').length
+                                                chatflowsData.filter((chatflow: any) => chatflow.templateStatus === 'outdated').length
                                         }
                                         onChange={(e) => {
                                             if (!chatflowsData) return
                                             const outdatedIds = chatflowsData
-                                                .filter((chatflow) => chatflow.templateStatus === 'outdated')
-                                                .map((chatflow) => chatflow.id)
+                                                .filter((chatflow: any) => chatflow.templateStatus === 'outdated')
+                                                .map((chatflow: any) => chatflow.id)
                                             setSelectedForUpdate(e.target.checked ? outdatedIds : [])
                                         }}
                                         sx={{

@@ -10,6 +10,7 @@ export interface GlassStyle {
     border: string
     boxShadow: string
     color?: string
+    transition?: string
 }
 
 export interface GlassTokens {

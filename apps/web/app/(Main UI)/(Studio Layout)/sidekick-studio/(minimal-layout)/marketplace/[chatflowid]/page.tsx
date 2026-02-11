@@ -2,7 +2,7 @@
 import React from 'react'
 import dynamic from 'next/dynamic'
 
-const View = dynamic(() => import('@/views/marketplaces/MarketplaceCanvas'), { ssr: false })
+const View = dynamic(() => import('@/views/marketplaces/MarketplaceCanvas') as any, { ssr: false }) as React.ComponentType<any>
 
 interface PageProps {
     params: {

@@ -15,6 +15,7 @@ import SidekickSetupModal from '@/components/SidekickSetupModal'
 // Local imports
 import { useAnswers } from './AnswersContext'
 import type { AppSettings, Document, Sidekick } from 'types'
+import type { FileUpload } from './types'
 
 // Dynamic imports
 const AppBar = dynamic(() => import('@mui/material/AppBar'))
@@ -239,6 +240,7 @@ export const ChatDetail = ({
                                 </Box>
                             </Box>
                         ) : displayMode === DISPLAY_MODES.MEDIA_CREATION ? (
+                            // @ts-ignore
                             <ImageCreator user={session?.user} />
                         ) : (
                             <Box

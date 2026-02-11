@@ -244,7 +244,7 @@ export function AnswersProvider({
 
             // First, try to find sidekick from existing chat context
             const existingSidekick = sidekicks.find(
-                (s) => s.id === chat?.messages?.[chat?.messages?.length - 1]?.chatflowid || s.id === chat?.chatflowId
+                (s) => s.id === (chat?.messages?.[chat?.messages?.length - 1] as any)?.chatflowid || s.id === (chat as any)?.chatflowId
             )
 
             if (existingSidekick) {
@@ -367,7 +367,7 @@ export function AnswersProvider({
             return prevMessages.map((msg, idx) => {
                 if (idx !== prevMessages.length - 1) return msg
                 // Smart replacement: Remove calledTools that have been replaced by usedTools
-                const remainingCalledTools = msg.calledTools?.filter(
+                const remainingCalledTools = (msg as any).calledTools?.filter(
                     (calledTool: any) => !usedTools.some((usedTool: any) => usedTool.tool === calledTool.tool)
                 )
                 return {
@@ -405,7 +405,9 @@ export function AnswersProvider({
             if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
             return prevMessages.map((msg, idx) => {
                 if (idx !== prevMessages.length - 1) return msg
-                const agentReasoning = msg.agentReasoning?.length ? [...msg.agentReasoning, { nextAgent }] : msg.agentReasoning
+                const agentReasoning = (msg as any).agentReasoning?.length
+                    ? [...(msg as any).agentReasoning, { nextAgent }]
+                    : (msg as any).agentReasoning
                 return { ...msg, agentReasoning }
             })
         })
@@ -459,7 +461,7 @@ export function AnswersProvider({
             return prevMessages.map((msg, idx) => {
                 if (idx !== prevMessages.length - 1) return msg
                 // Remove any remaining calledTools when the stream ends
-                if (msg.calledTools?.length && !msg.usedTools?.length) {
+                if ((msg as any).calledTools?.length && !(msg as any).usedTools?.length) {
                     return { ...msg, calledTools: undefined }
                 }
                 return msg
@@ -487,7 +489,7 @@ export function AnswersProvider({
             if (prevMessages.length === 0 || prevMessages[prevMessages.length - 1]?.role === 'user') return prevMessages
             return prevMessages.map((msg, idx) => {
                 if (idx !== prevMessages.length - 1) return msg
-                const agentReasoning = msg.agentReasoning?.filter((reasoning: { nextAgent?: any }) => !reasoning.nextAgent)
+                const agentReasoning = (msg as any).agentReasoning?.filter((reasoning: { nextAgent?: any }) => !reasoning.nextAgent)
                 return { ...msg, agentReasoning }
             })
         })
@@ -497,7 +499,7 @@ export function AnswersProvider({
         setIsMessageStopping(true)
         try {
             if (sidekick?.id && chatId) {
-                await predictionApi.abortMessage(sidekick.id, chatId)
+                await (predictionApi as any).abortMessage(sidekick.id, chatId)
             }
         } catch (error: any) {
             setIsMessageStopping(false)
@@ -788,11 +790,10 @@ export function AnswersProvider({
                     // Clean up on close
                     setIsLoading(false)
                 },
-                async onerror(err) {
+                onerror(err: any) {
                     console.error('EventSource Error: ', err)
-                    setError('Error during streaming')
+                    setError('Error during streaming' as any)
                     setIsLoading(false)
-                    throw err
                 }
             })
         } catch (error: any) {
@@ -812,7 +813,7 @@ export function AnswersProvider({
         const checkStreamingAvailability = async () => {
             try {
                 // You might need to implement this method in your API to check if streaming is available
-                const streamable = await predictionApi.checkIfChatflowIsValidForStreaming(sidekick.id)
+                const streamable = await (predictionApi as any).checkIfChatflowIsValidForStreaming(sidekick.id)
                 if (!abortController.signal.aborted) {
                     setIsChatFlowAvailableToStream(streamable?.isStreaming || false)
                 }
@@ -1045,7 +1046,7 @@ export function AnswersProvider({
                 ...sidekick,
                 ...selectedSidekickData,
                 // IMPORTANT: Preserve fetched constraints - don't let selectedSidekickData overwrite them
-                constraints: sidekick?.constraints || selectedSidekickData?.constraints
+                constraints: (sidekick as any)?.constraints || (selectedSidekickData as any)?.constraints
             },
             setSidekick,
             chatbotConfig,
@@ -1116,8 +1117,8 @@ export function AnswersProvider({
 }
 
 // Add a fallback implementation for checkIfChatflowIsValidForStreaming if it doesn't exist in predictionApi
-if (!predictionApi.checkIfChatflowIsValidForStreaming) {
-    predictionApi.checkIfChatflowIsValidForStreaming = async (chatflowId: string) => {
+if (!(predictionApi as any).checkIfChatflowIsValidForStreaming) {
+    ;(predictionApi as any).checkIfChatflowIsValidForStreaming = async (chatflowId: string) => {
         const baseURL = sessionStorage.getItem('baseURL') || ''
         try {
             const response = await axios.get(`${baseURL}/api/v1/chatflows-streaming/${chatflowId}`)

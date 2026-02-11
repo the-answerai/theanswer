@@ -353,7 +353,7 @@ export const MessageCard = ({
             .reverse()
             .find((m) => m.role === 'user' || m.role === 'userMessage')
         if (precedingUserMessage?.content) {
-            sendMessage({ content: precedingUserMessage.content, retry: true, sidekick })
+            sendMessage({ content: precedingUserMessage.content, retry: true, sidekick } as any)
         }
     }
 
@@ -633,7 +633,7 @@ export const MessageCard = ({
                                                                         }}
                                                                     >
                                                                         {Array.isArray(agentObjectMessage) &&
-                                                                            agentObjectMessage?.map((message) => {
+                                                                            agentObjectMessage?.map((message: any) => {
                                                                                 if (message.text) return message.text
 
                                                                                 if (message.type === 'tool_use' && message.name) {
@@ -1198,7 +1198,7 @@ export const MessageCard = ({
                                         <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
                                             Safety:{' '}
                                             {guardrailsMetadata.inputValidation.violations.safety
-                                                .map((v) => {
+                                                .map((v: any) => {
                                                     const severity = formatSafetyScore(v.score)
                                                     return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
                                                 })
@@ -1210,7 +1210,7 @@ export const MessageCard = ({
                                             PII:{' '}
                                             {guardrailsMetadata.inputValidation.violations.pii
                                                 .map(
-                                                    (p) =>
+                                                    (p: any) =>
                                                         `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
                                                             3
                                                         )})`
@@ -1252,7 +1252,7 @@ export const MessageCard = ({
                                         <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
                                             Safety:{' '}
                                             {guardrailsMetadata.outputValidation.violations.safety
-                                                .map((v) => {
+                                                .map((v: any) => {
                                                     const severity = formatSafetyScore(v.score)
                                                     return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
                                                 })
@@ -1264,7 +1264,7 @@ export const MessageCard = ({
                                             PII:{' '}
                                             {guardrailsMetadata.outputValidation.violations.pii
                                                 .map(
-                                                    (p) =>
+                                                    (p: any) =>
                                                         `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
                                                             3
                                                         )})`
