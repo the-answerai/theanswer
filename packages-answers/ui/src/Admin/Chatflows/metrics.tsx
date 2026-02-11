@@ -40,7 +40,7 @@ const Metrics = ({ chatflowId }: MetricsProps) => {
     const [endDate, setEndDate] = useState(new Date())
     const [_leadEmail, setLeadEmail] = useState('')
     const [selectedChat, setSelectedChat] = useState<ChatLog | null>(null)
-    const [_isFilterExpanded, setIsFilterExpanded] = useState(true) // Default expanded for metrics
+    const [isFilterExpanded, setIsFilterExpanded] = useState(true) // Default expanded for metrics
 
     // API hooks
     const {
