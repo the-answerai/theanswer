@@ -154,6 +154,9 @@ export interface AppSettings {
     models?: Models
     filters?: AnswersFilters
     chatflowDomain?: string // This should be required
+    chat?: {
+        hideDebugIcon?: boolean
+    }
 }
 
 export interface JiraFilters {

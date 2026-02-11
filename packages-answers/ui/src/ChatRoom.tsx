@@ -1,9 +1,8 @@
 import React from 'react'
-import { Box, Button, IconButton, useTheme } from '@mui/material'
+import { Box, Button, useTheme } from '@mui/material'
 import type { Message, Sidekick } from 'types'
 import ChatFeedbackContentDialog from './../../../packages/ui/src/ui-component/dialog/ChatFeedbackContentDialog'
 import { useAnswers } from './AnswersContext'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import { useSubscriptionDialog } from './SubscriptionDialogContext'
 
 import dynamic from 'next/dynamic'
@@ -118,14 +117,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                         role='status'
                         content={chatbotConfig?.welcomeMessage ?? 'Welcome! Try asking me something!'}
                     />
-                ) : null}
-
-                {!isLoading && !error && messages?.length ? (
-                    <Box sx={{ mt: -4, width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                        <IconButton onClick={regenerateAnswer} size='small'>
-                            <RefreshIcon fontSize='inherit' />
-                        </IconButton>
-                    </Box>
                 ) : null}
             </Box>
         </Box>

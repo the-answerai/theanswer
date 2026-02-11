@@ -30,13 +30,29 @@ export const findOrCreateWorkspacesForUser = async (AppDataSource: DataSource, u
         return
     }
 
-    // Get role IDs for workspace membership
-    const memberRole = await roleRepo.findOne({ where: { name: 'member' } })
-    const personalRole = await roleRepo.findOne({ where: { name: 'personal workspace' } })
+    // Get role IDs for workspace membership, creating them if missing
+    let memberRole = await roleRepo.findOne({ where: { name: 'member' } })
+    let personalRole = await roleRepo.findOne({ where: { name: 'personal workspace' } })
 
-    if (!memberRole || !personalRole) {
-        console.warn(`[Auth] Roles not found - skipping workspace creation for user ${user.id}`)
-        return
+    if (!memberRole) {
+        memberRole = roleRepo.create({
+            name: 'member',
+            description: 'Has limited control over the organization.',
+            permissions: '[]'
+        })
+        await roleRepo.save(memberRole)
+        console.log(`[Auth] Created missing 'member' role`)
+    }
+
+    if (!personalRole) {
+        personalRole = roleRepo.create({
+            name: 'personal workspace',
+            description: 'Has full control over the personal workspace',
+            permissions:
+                '[ "chatflows:view", "chatflows:create", "chatflows:update", "chatflows:duplicate", "chatflows:delete", "chatflows:export", "chatflows:import", "chatflows:config", "chatflows:domains", "agentflows:view", "agentflows:create", "agentflows:update", "agentflows:duplicate", "agentflows:delete", "agentflows:export", "agentflows:import", "agentflows:config", "agentflows:domains", "tools:view", "tools:create", "tools:update", "tools:delete", "tools:export", "assistants:view", "assistants:create", "assistants:update", "assistants:delete", "credentials:view", "credentials:create", "credentials:update", "credentials:delete", "credentials:share", "variables:view", "variables:create", "variables:update", "variables:delete", "apikeys:view", "apikeys:create", "apikeys:update", "apikeys:delete", "apikeys:import", "documentStores:view", "documentStores:create", "documentStores:update", "documentStores:delete", "documentStores:add-loader", "documentStores:delete-loader", "documentStores:preview-process", "documentStores:upsert-config", "datasets:view", "datasets:create", "datasets:update", "datasets:delete", "evaluators:view", "evaluators:create", "evaluators:update", "evaluators:delete", "evaluations:view", "evaluations:create", "evaluations:update", "evaluations:delete", "evaluations:run", "templates:marketplace", "templates:custom", "templates:custom-delete", "templates:toolexport", "templates:flowexport", "templates:custom-share", "workspace:export", "workspace:import", "executions:view", "executions:delete" ]'
+        })
+        await roleRepo.save(personalRole)
+        console.log(`[Auth] Created missing 'personal workspace' role`)
     }
 
     try {
