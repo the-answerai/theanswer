@@ -3,16 +3,17 @@ import chatflowsController from '../../controllers/chatflows'
 import documentStoreController from '../../controllers/documentstore'
 import organizationsController from '../../controllers/organizations'
 import enforceAbility from '../../middlewares/authentication/enforceAbility'
+import { checkPermission } from '../../enterprise/rbac/PermissionCheck'
 const router = express.Router()
 
 // CHATFLOWS
 // READ
 router.get('/chatflows', enforceAbility('ChatFlow'), chatflowsController.getAdminChatflows)
 router.get('/chatflows/default-template', enforceAbility('ChatFlow'), chatflowsController.getDefaultChatflowTemplate)
-router.get('/chatflows/:id/versions', enforceAbility('ChatFlow'), chatflowsController.getChatflowVersions)
+router.get('/chatflows/:id/versions', checkPermission('chatflows:view'), chatflowsController.getChatflowVersions)
 // UPDATE
 router.put('/chatflows/bulk-update', enforceAbility('ChatFlow'), chatflowsController.bulkUpdateChatflows)
-router.post('/chatflows/:id/rollback/:version', enforceAbility('ChatFlow'), chatflowsController.rollbackChatflowToVersion)
+router.post('/chatflows/:id/rollback/:version', checkPermission('chatflows:update'), chatflowsController.rollbackChatflowToVersion)
 
 // DOCUMENT STORES
 // READ
