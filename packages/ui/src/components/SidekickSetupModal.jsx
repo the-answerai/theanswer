@@ -25,6 +25,21 @@ import useConfirm from '@/hooks/useConfirm'
 const UnifiedCredentialsModal = dynamic(() => import('@/ui-component/dialog/UnifiedCredentialsModal'), { ssr: false })
 const ConfirmDialog = dynamic(() => import('@/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
+const applyCredentialToNode = (node, credentialAssignments) => {
+    if (!credentialAssignments[node.id] || !node.data) return node
+    return {
+        ...node,
+        data: {
+            ...node.data,
+            credential: credentialAssignments[node.id],
+            inputs: {
+                ...node.data.inputs,
+                [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id]
+            }
+        }
+    }
+}
+
 const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const { confirm } = useConfirm()
     const preferenceScope = sidekickId ? `sidekick:${sidekickId}` : null
@@ -103,21 +118,6 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         },
         [enqueueSnackbar, dispatch]
     )
-
-    const applyCredentialToNode = (node, credentialAssignments) => {
-        if (!credentialAssignments[node.id]) return node
-        return {
-            ...node,
-            data: {
-                ...node.data,
-                credential: credentialAssignments[node.id],
-                inputs: {
-                    ...node.data.inputs,
-                    [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id]
-                }
-            }
-        }
-    }
 
     // Handle credential assignment
     const handleModalAssign = useCallback(
