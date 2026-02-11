@@ -9,7 +9,7 @@ import PropTypes from 'prop-types'
 import Button from '@mui/material/Button'
 
 // Redux notification imports
-import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction, SET_DIRTY } from '@/store/actions'
+import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 import useNotifier from '@/utils/useNotifier'
 
 // UI components and utilities
@@ -17,7 +17,6 @@ import { IconX } from '@tabler/icons-react'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
-import { processFlowCredentials } from '@utils/processFlowCredentials'
 import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 import useConfirm from '@/hooks/useConfirm'
@@ -42,10 +41,6 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
 
     // Fetch sidekick data with credentials
     const { sidekick, needsSetup, credentialsToShow, updateSidekick } = useSidekickWithCredentials(sidekickId, isQuickSetup)
-
-    const canvasNodes = reactFlowInstance?.getNodes() ?? []
-    const liveCredentials =
-        canvasNodes.length > 0 ? processFlowCredentials({ nodes: canvasNodes })?.credentials ?? credentialsToShow : credentialsToShow
 
     // Redux notification setup
     const dispatch = useDispatch()
@@ -114,8 +109,12 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         async (credentialAssignments, options) => {
             try {
                 if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
+                    // Save credentials to backend
+                    const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
+                    await updateSidekick({ flowData: JSON.stringify(updatedFlowData) })
+
+                    // If canvas is open, apply to live nodes for immediate UI feedback
                     if (reactFlowInstance) {
-                        // Canvas path: apply credentials directly to live ReactFlow nodes
                         reactFlowInstance.setNodes((nodes) =>
                             nodes.map((node) => {
                                 if (credentialAssignments[node.id]) {
@@ -134,28 +133,18 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                                 return node
                             })
                         )
-                        dispatch({ type: SET_DIRTY })
-                        window.dispatchEvent(
-                            new CustomEvent('credentials-updated', {
-                                detail: { chatflowId: sidekickId, skipRefetch: true }
-                            })
-                        )
-                        enqueueSnackbar({
-                            message: 'Credentials applied — save to persist',
-                            options: { variant: 'success' }
-                        })
-                    } else {
-                        // Non-canvas path: save to backend via API
-                        const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
-                        await updateSidekick({
-                            flowData: JSON.stringify(updatedFlowData)
-                        })
-                        window.dispatchEvent(new CustomEvent('credentials-updated', { detail: { chatflowId: sidekickId } }))
-                        enqueueSnackbar({
-                            message: 'Credentials saved successfully!',
-                            options: { variant: 'success' }
-                        })
                     }
+
+                    // Skip refetch on canvas to preserve unsaved changes
+                    window.dispatchEvent(
+                        new CustomEvent('credentials-updated', {
+                            detail: { chatflowId: sidekickId, skipRefetch: !!reactFlowInstance }
+                        })
+                    )
+                    enqueueSnackbar({
+                        message: 'Credentials saved successfully!',
+                        options: { variant: 'success' }
+                    })
                 }
                 persistDismissPreference(options)
                 handleURLCleanup()
@@ -168,7 +157,6 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
             sidekick,
             reactFlowInstance,
             updateSidekick,
-            dispatch,
             enqueueSnackbar,
             sidekickId,
             handleURLCleanup,
@@ -211,7 +199,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         if (isQuickSetup) return false
         if (hasSkipped) return true
         if (isSuppressed) return true
-        return reactFlowInstance ? liveCredentials.length === 0 : !needsSetup
+        return !needsSetup
     }
 
     if (shouldHideModal()) {
@@ -223,7 +211,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
             <ConfirmDialog />
             <UnifiedCredentialsModal
                 show={true}
-                missingCredentials={liveCredentials}
+                missingCredentials={credentialsToShow}
                 onAssign={handleModalAssign}
                 onSkip={handleModalSkip}
                 onCancel={handleModalCancel}
