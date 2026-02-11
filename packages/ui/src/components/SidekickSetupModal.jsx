@@ -17,7 +17,7 @@ import { IconX } from '@tabler/icons-react'
 import { flowContext } from '@/store/context/ReactFlowContext'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
-import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
+import { extractAllCredentials, updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 import useConfirm from '@/hooks/useConfirm'
 
@@ -109,11 +109,29 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         async (credentialAssignments, options) => {
             try {
                 if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
-                    // Save credentials to backend
-                    const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
-                    await updateSidekick({ flowData: JSON.stringify(updatedFlowData) })
+                    let flowDataForSave
+                    if (reactFlowInstance) {
+                        const rfObject = reactFlowInstance.toObject()
+                        rfObject.nodes = rfObject.nodes.map((node) => {
+                            if (credentialAssignments[node.id]) {
+                                return {
+                                    ...node,
+                                    data: {
+                                        ...node.data,
+                                        credential: credentialAssignments[node.id],
+                                        inputs: { ...node.data.inputs, [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id] }
+                                    }
+                                }
+                            }
+                            return node
+                        })
+                        flowDataForSave = JSON.stringify(rfObject)
+                    } else {
+                        const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
+                        flowDataForSave = JSON.stringify(updatedFlowData)
+                    }
+                    await updateSidekick({ flowData: flowDataForSave })
 
-                    // If canvas is open, apply to live nodes for immediate UI feedback
                     if (reactFlowInstance) {
                         reactFlowInstance.setNodes((nodes) =>
                             nodes.map((node) => {
@@ -206,12 +224,23 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         return null
     }
 
+    // When canvas is open, use live nodes for credentials. Otherwise fall back to SWR data.
+    let effectiveCredentials = credentialsToShow
+    try {
+        if (reactFlowInstance) {
+            const { allCredentials } = extractAllCredentials(reactFlowInstance.toObject())
+            if (allCredentials?.length) effectiveCredentials = allCredentials
+        }
+    } catch (_e) {
+        /* fall back to SWR data */
+    }
+
     return (
         <>
             <ConfirmDialog />
             <UnifiedCredentialsModal
                 show={true}
-                missingCredentials={credentialsToShow}
+                missingCredentials={effectiveCredentials}
                 onAssign={handleModalAssign}
                 onSkip={handleModalSkip}
                 onCancel={handleModalCancel}

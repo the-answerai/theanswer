@@ -95,6 +95,14 @@ const CredentialInputHandler = ({ inputParam, data, onSelect, disabled = false }
         setCredentialId(data?.credential || (data?.inputs && data.inputs[FLOWISE_CREDENTIAL_ID]) || '')
     }, [data])
 
+    useEffect(() => {
+        const handleCredentialsUpdated = () => {
+            setReloadTimestamp(Date.now().toString())
+        }
+        window.addEventListener('credentials-updated', handleCredentialsUpdated)
+        return () => window.removeEventListener('credentials-updated', handleCredentialsUpdated)
+    }, [])
+
     return (
         <div ref={ref}>
             {inputParam && (
