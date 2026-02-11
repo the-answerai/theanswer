@@ -104,6 +104,21 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         [enqueueSnackbar, dispatch]
     )
 
+    const applyCredentialToNode = (node, credentialAssignments) => {
+        if (!credentialAssignments[node.id]) return node
+        return {
+            ...node,
+            data: {
+                ...node.data,
+                credential: credentialAssignments[node.id],
+                inputs: {
+                    ...node.data.inputs,
+                    [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id]
+                }
+            }
+        }
+    }
+
     // Handle credential assignment
     const handleModalAssign = useCallback(
         async (credentialAssignments, options) => {
@@ -112,19 +127,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                     let flowDataForSave
                     if (reactFlowInstance) {
                         const rfObject = reactFlowInstance.toObject()
-                        rfObject.nodes = rfObject.nodes.map((node) => {
-                            if (credentialAssignments[node.id]) {
-                                return {
-                                    ...node,
-                                    data: {
-                                        ...node.data,
-                                        credential: credentialAssignments[node.id],
-                                        inputs: { ...node.data.inputs, [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id] }
-                                    }
-                                }
-                            }
-                            return node
-                        })
+                        rfObject.nodes = rfObject.nodes.map((node) => applyCredentialToNode(node, credentialAssignments))
                         flowDataForSave = JSON.stringify(rfObject)
                     } else {
                         const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
@@ -133,24 +136,7 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                     await updateSidekick({ flowData: flowDataForSave })
 
                     if (reactFlowInstance) {
-                        reactFlowInstance.setNodes((nodes) =>
-                            nodes.map((node) => {
-                                if (credentialAssignments[node.id]) {
-                                    return {
-                                        ...node,
-                                        data: {
-                                            ...node.data,
-                                            credential: credentialAssignments[node.id],
-                                            inputs: {
-                                                ...node.data.inputs,
-                                                [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id]
-                                            }
-                                        }
-                                    }
-                                }
-                                return node
-                            })
-                        )
+                        reactFlowInstance.setNodes((nodes) => nodes.map((node) => applyCredentialToNode(node, credentialAssignments)))
                     }
 
                     // Skip refetch on canvas to preserve unsaved changes
