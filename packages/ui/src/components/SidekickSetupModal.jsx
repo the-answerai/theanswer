@@ -231,8 +231,8 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
             const { allCredentials } = extractAllCredentials(reactFlowInstance.toObject())
             if (allCredentials?.length) effectiveCredentials = allCredentials
         }
-    } catch (_e) {
-        /* fall back to SWR data */
+    } catch (error) {
+        console.error('[SidekickSetupModal] Failed to extract credentials from canvas:', error)
     }
 
     return (
