@@ -128,7 +128,7 @@
         "lodash": "^4.17.21",
         "lunary": "^0.7.12",
         "mailparser": "^3.9.0",
-        "mammoth": "^1.5.1",
+        "mammoth": "^1.11.0",
         "meilisearch": "^0.41.0",
         "moment": "^2.29.3",
         "mongodb": "6.3.0",

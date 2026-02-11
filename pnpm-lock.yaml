@@ -46,6 +46,7 @@ overrides:
   webpack-dev-middleware: 7.4.2
   ws: 8.18.3
   xlsx: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+  mammoth: '>=1.11.0'
 
 importers:
 
@@ -746,7 +747,7 @@ importers:
         specifier: ^0.2.20
         version: 0.2.20(94cd56d71a81b512a5556bc1c8c68416)
       mammoth:
-        specifier: ^1.11.0
+        specifier: '>=1.11.0'
         version: 1.11.0
       natural:
         specifier: ^6.12.0
@@ -1195,7 +1196,7 @@ importers:
         specifier: ^3.9.0
         version: 3.9.0
       mammoth:
-        specifier: ^1.5.1
+        specifier: '>=1.11.0'
         version: 1.11.0
       meilisearch:
         specifier: ^0.41.0
@@ -6097,7 +6098,7 @@ packages:
       llmonitor: ^0.5.9
       lodash: ^4.17.21
       lunary: ^0.7.10
-      mammoth: ^1.6.0
+      mammoth: '>=1.11.0'
       mariadb: ^3.4.0
       mem0ai: ^2.1.8
       mongodb: ^6.17.0
@@ -17034,7 +17035,7 @@ packages:
       ignore: '*'
       ioredis: '*'
       jsdom: '*'
-      mammoth: '*'
+      mammoth: '>=1.11.0'
       mongodb: '*'
       node-llama-cpp: '*'
       notion-to-md: '*'
@@ -29101,7 +29102,7 @@ snapshots:
       '@babel/preset-env': 7.29.0(@babel/core@7.29.0)
       '@babel/preset-react': 7.27.1(@babel/core@7.29.0)
       '@babel/preset-typescript': 7.27.1(@babel/core@7.29.0)
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       '@babel/runtime-corejs3': 7.28.4
       '@babel/traverse': 7.28.4
       '@docusaurus/logger': 3.8.1
@@ -36570,7 +36571,7 @@ snapshots:
   '@testing-library/dom@9.3.4':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       '@types/aria-query': 5.0.4
       aria-query: 5.1.3
       chalk: 4.1.2
@@ -39106,7 +39107,7 @@ snapshots:
       '@babel/preset-env': 7.29.0(@babel/core@7.29.0)
       '@babel/preset-react': 7.27.1(@babel/core@7.29.0)
       '@babel/preset-typescript': 7.21.4(@babel/core@7.29.0)
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       babel-plugin-macros: 3.1.0
       babel-plugin-transform-react-remove-prop-types: 0.4.24
     transitivePeerDependencies:
@@ -51743,7 +51744,7 @@ snapshots:
 
   react-loadable-ssr-addon-v5-slorber@1.0.1(@docusaurus/react-loadable@6.0.0(react@18.3.1))(webpack@5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.17))):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       react-loadable: '@docusaurus/react-loadable@6.0.0(react@18.3.1)'
       webpack: 5.101.3(@swc/core@1.13.5(@swc/helpers@0.5.17))
 
@@ -51886,13 +51887,13 @@ snapshots:
 
   react-router-config@5.1.1(react-router@5.3.4(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       react: 18.3.1
       react-router: 5.3.4(react@18.3.1)
 
   react-router-dom@5.3.4(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       history: 4.10.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -51910,7 +51911,7 @@ snapshots:
 
   react-router@5.3.4(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       history: 4.10.1
       hoist-non-react-statics: 3.3.2
       loose-envify: 1.4.0
@@ -52044,7 +52045,7 @@ snapshots:
 
   react-textarea-autosize@8.5.9(@types/react@19.2.2)(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.28.6
       react: 18.3.1
       use-composed-ref: 1.4.0(@types/react@19.2.2)(react@18.3.1)
       use-latest: 1.3.0(@types/react@19.2.2)(react@18.3.1)
