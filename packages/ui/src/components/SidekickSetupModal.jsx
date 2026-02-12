@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useContext } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 import dynamic from 'next/dynamic'
@@ -14,8 +14,10 @@ import useNotifier from '@/utils/useNotifier'
 
 // UI components and utilities
 import { IconX } from '@tabler/icons-react'
+import { flowContext } from '@/store/context/ReactFlowContext'
+import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { useSidekickWithCredentials } from '@/hooks/useSidekickWithCredentials'
-import { updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
+import { extractAllCredentials, updateFlowDataWithCredentials } from '@/utils/flowCredentialsHelper'
 import { getCredentialModalDismissed, setCredentialModalDismissed } from '@/utils/credentialModalPreference'
 import useConfirm from '@/hooks/useConfirm'
 
@@ -23,9 +25,25 @@ import useConfirm from '@/hooks/useConfirm'
 const UnifiedCredentialsModal = dynamic(() => import('@/ui-component/dialog/UnifiedCredentialsModal'), { ssr: false })
 const ConfirmDialog = dynamic(() => import('@/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
+const applyCredentialToNode = (node, credentialAssignments) => {
+    if (!credentialAssignments[node.id] || !node.data) return node
+    return {
+        ...node,
+        data: {
+            ...node.data,
+            credential: credentialAssignments[node.id],
+            inputs: {
+                ...node.data.inputs,
+                [FLOWISE_CREDENTIAL_ID]: credentialAssignments[node.id]
+            }
+        }
+    }
+}
+
 const SidekickSetupModal = ({ sidekickId, onComplete }) => {
     const { confirm } = useConfirm()
     const preferenceScope = sidekickId ? `sidekick:${sidekickId}` : null
+    const { reactFlowInstance } = useContext(flowContext)
 
     // Local state to track if user has skipped setup for this instance
     const [hasSkipped, setHasSkipped] = useState(false)
@@ -106,12 +124,27 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         async (credentialAssignments, options) => {
             try {
                 if (credentialAssignments && Object.keys(credentialAssignments).length > 0) {
-                    const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
-                    await updateSidekick({
-                        flowData: JSON.stringify(updatedFlowData)
-                    })
-                    // Notify canvas and other listeners to refresh with updated credentials
-                    window.dispatchEvent(new CustomEvent('credentials-updated', { detail: { chatflowId: sidekickId } }))
+                    let flowDataForSave
+                    if (reactFlowInstance) {
+                        const rfObject = reactFlowInstance.toObject()
+                        rfObject.nodes = rfObject.nodes.map((node) => applyCredentialToNode(node, credentialAssignments))
+                        flowDataForSave = JSON.stringify(rfObject)
+                    } else {
+                        const updatedFlowData = updateFlowDataWithCredentials(sidekick.flowData, credentialAssignments)
+                        flowDataForSave = JSON.stringify(updatedFlowData)
+                    }
+                    await updateSidekick({ flowData: flowDataForSave })
+
+                    if (reactFlowInstance) {
+                        reactFlowInstance.setNodes((nodes) => nodes.map((node) => applyCredentialToNode(node, credentialAssignments)))
+                    }
+
+                    // Skip refetch on canvas to preserve unsaved changes
+                    window.dispatchEvent(
+                        new CustomEvent('credentials-updated', {
+                            detail: { chatflowId: sidekickId, skipRefetch: !!reactFlowInstance }
+                        })
+                    )
                     enqueueSnackbar({
                         message: 'Credentials saved successfully!',
                         options: { variant: 'success' }
@@ -124,7 +157,16 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
                 handleModalError('Error assigning credentials. Please try again.')
             }
         },
-        [sidekick, updateSidekick, enqueueSnackbar, handleURLCleanup, handleModalError, persistDismissPreference]
+        [
+            sidekick,
+            reactFlowInstance,
+            updateSidekick,
+            enqueueSnackbar,
+            sidekickId,
+            handleURLCleanup,
+            handleModalError,
+            persistDismissPreference
+        ]
     )
 
     const handleModalSkip = useCallback(
@@ -168,12 +210,23 @@ const SidekickSetupModal = ({ sidekickId, onComplete }) => {
         return null
     }
 
+    // When canvas is open, use live nodes for credentials. Otherwise fall back to SWR data.
+    let effectiveCredentials = credentialsToShow
+    try {
+        if (reactFlowInstance) {
+            const { allCredentials } = extractAllCredentials(reactFlowInstance.toObject())
+            if (allCredentials?.length) effectiveCredentials = allCredentials
+        }
+    } catch (error) {
+        console.error('[SidekickSetupModal] Failed to extract credentials from canvas:', error)
+    }
+
     return (
         <>
             <ConfirmDialog />
             <UnifiedCredentialsModal
                 show={true}
-                missingCredentials={credentialsToShow}
+                missingCredentials={effectiveCredentials}
                 onAssign={handleModalAssign}
                 onSkip={handleModalSkip}
                 onCancel={handleModalCancel}

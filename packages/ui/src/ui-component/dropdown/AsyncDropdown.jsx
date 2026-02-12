@@ -93,7 +93,12 @@ export const AsyncDropdown = ({
     }
     const getDefaultOptionValue = () => (multiple ? [] : '')
     const addNewOption = [{ label: '- Create New -', name: '-create-' }]
-    let [internalValue, setInternalValue] = useState(value ?? 'choose an option')
+    const [internalValue, setInternalValue] = useState(value ?? 'choose an option')
+
+    useEffect(() => {
+        setInternalValue(value ?? 'choose an option')
+    }, [value])
+
     const { reactFlowInstance } = useContext(flowContext)
 
     const fetchCredentialList = async () => {
