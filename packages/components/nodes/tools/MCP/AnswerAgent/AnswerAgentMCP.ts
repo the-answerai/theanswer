@@ -7,8 +7,8 @@
  * - Implements INode interface
  * - Sets tags = ['AAI'] for UI Answer tab integration
  * - Sets category = 'Tools (MCP)'
- * - Automatically uses user's API key from database (no manual credential setup required)
- * - Uses API_HOST environment variable for base URL
+ * - Uses standard Flowise credential pattern (answerAgentApi)
+ * - Supports connecting to any AnswerAgent instance via credential domain config
  * - Exposes available actions via mcpActions input
  * - Registers the node as module.exports = { nodeClass: AnswerAgent_MCP }
  *
@@ -17,7 +17,7 @@
  */
 import { Tool } from '@langchain/core/tools'
 import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../../src/Interface'
-import { getNodeModulesPackagePath } from '../../../../src/utils'
+import { getCredentialData, getCredentialParam, getNodeModulesPackagePath } from '../../../../src/utils'
 import { MCPToolkit } from '../core'
 
 class AnswerAgent_MCP implements INode {
@@ -30,19 +30,26 @@ class AnswerAgent_MCP implements INode {
     category: string
     baseClasses: string[]
     documentation: string
+    credential: INodeParams
     inputs: INodeParams[]
     tags: string[]
 
     constructor() {
         this.label = 'AnswerAgent MCP'
         this.name = 'answerAgentMCP'
-        this.version = 1.0
+        this.version = 2.0
         this.type = 'AnswerAgent MCP Tool'
         this.icon = 'answerai-square-black.png'
         this.category = 'Tools (MCP)'
         this.tags = ['AAI']
-        this.description = 'MCP server that integrates with AnswerAgent API • Zero configuration required'
+        this.description = 'MCP server that integrates with AnswerAgent API'
         this.documentation = 'https://www.npmjs.com/package/@answerai/answeragent-mcp'
+        this.credential = {
+            label: 'Connect Credential',
+            name: 'credential',
+            type: 'credential',
+            credentialNames: ['answerAgentApi']
+        }
         this.inputs = [
             {
                 label: 'Available Actions',
@@ -100,17 +107,20 @@ class AnswerAgent_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
-        // Get API host from environment variable
-        const apiHost = options.user?.chatflowDomain
-        if (!apiHost) {
-            console.error('AnswerAgent MCP: API_HOST environment variable is not set')
+        // Get API key and optional instance domain from credential
+        const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+        const apiKey = getCredentialParam('apiKey', credentialData, nodeData)
+        const instanceDomain = getCredentialParam('instanceDomain', credentialData, nodeData)
+
+        if (!apiKey) {
+            console.error('AnswerAgent MCP: Missing AnswerAgent API Key')
             return []
         }
 
-        // Get user's API key from database
-        const apiKey = await this.getUserApiKey(nodeData, options)
-        if (!apiKey) {
-            console.error('AnswerAgent MCP: Unable to retrieve user API key from database')
+        // Use instance domain from credential, fall back to current instance domain or env var
+        const apiHost = instanceDomain || options.user?.chatflowDomain || process.env.API_HOST || process.env.FLOWISE_DOMAIN
+        if (!apiHost) {
+            console.error('AnswerAgent MCP: No instance domain configured and API_HOST is not set')
             return []
         }
 
@@ -121,7 +131,7 @@ class AnswerAgent_MCP implements INode {
             command: process.execPath,
             args: [packagePath],
             env: {
-                ANSWERAGENT_AI_API_HOST: apiHost,
+                ANSWERAGENT_AI_API_BASE_URL: apiHost,
                 ANSWERAGENT_AI_API_TOKEN: apiKey
             }
         }
@@ -133,72 +143,6 @@ class AnswerAgent_MCP implements INode {
         const tools = toolkit.tools ?? []
 
         return tools
-    }
-
-    /**
-     * Retrieve the user's API key from the database
-     * This automatically uses the user's default API key, eliminating the need for manual credential setup
-     */
-    private async getUserApiKey(nodeData: INodeData, options: ICommonObject): Promise<string | null> {
-        try {
-            // Get database connection from options
-            const appDataSource = options.appDataSource
-            if (!appDataSource) {
-                console.error('No database connection available')
-                return null
-            }
-
-            // Get user ID - handle both contexts:
-            // 1. Load method context: options.userId
-            // 2. Workflow execution context: options.user.id
-            const userId = options.userId || options.user?.id
-            if (!userId) {
-                console.error('No user ID available in options')
-                return null
-            }
-
-            // Get organization ID - handle both contexts:
-            // 1. Load method context: options.organizationId
-            // 2. Workflow execution context: options.user.organizationId
-            const organizationId = options.organizationId || options.user?.organizationId
-            if (!organizationId) {
-                console.error('No organization ID available')
-                return null
-            }
-
-            // Fallback to ApiKey table
-            const databaseEntities = options.databaseEntities
-            if (!databaseEntities || !databaseEntities['ApiKey']) {
-                console.error('ApiKey entity not available in databaseEntities')
-                return null
-            }
-
-            // Query the database for the user's API keys using the entity from databaseEntities
-
-            const apiKeys = await appDataSource.getRepository(databaseEntities['ApiKey']).find({
-                where: {
-                    userId: userId,
-                    organizationId: organizationId,
-                    isActive: true
-                },
-                order: {
-                    updatedDate: 'DESC' // Get the most recently updated key
-                }
-            })
-
-            if (apiKeys.length === 0) {
-                console.error('No active API keys found for user')
-                return null
-            }
-
-            // Return the first (most recent) API key
-            const selectedApiKey = apiKeys[0].apiKey
-
-            return selectedApiKey
-        } catch (error) {
-            console.error('Error retrieving user API key:', error)
-            return null
-        }
     }
 }
 
