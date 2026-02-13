@@ -63,7 +63,7 @@ let nextConfig = withBundleAnalyzer({
         serverComponentsExternalPackages: ['canvas', '@aws-sdk/client-s3', '@aws-sdk/signature-v4-crt', '@aws-sdk/s3-request-presigner']
     },
     typescript: {
-        ignoreBuildErrors: true
+        ignoreBuildErrors: false
     },
 
     reactStrictMode: true,

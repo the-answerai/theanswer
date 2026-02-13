@@ -1,6 +1,7 @@
 import { parseChatbotConfig, parseFlowData } from './normalizeSidekick'
 import { User } from 'types'
 import auth0 from '@utils/auth/auth0'
+// @ts-ignore - @flowise/components types not available in this context
 import { INodeParams } from '@flowise/components'
 import { extractAllCredentials } from './extractAllCredentials'
 
@@ -63,8 +64,8 @@ export async function findSidekickById(user: User, id: string) {
     const imgUploadSizeAndTypes: any[] = []
     let isImageUploadAllowed = false
 
-    if (nodes.some((node) => uploadAllowedNodes.includes(node.data.name))) {
-        nodes.forEach((node) => {
+    if (nodes.some((node: any) => uploadAllowedNodes.includes(node.data.name))) {
+        nodes.forEach((node: any) => {
             if (uploadProcessingNodes.includes(node.data.name)) {
                 node.data.inputParams.forEach((param: INodeParams) => {
                     if (param.name === 'allowImageUploads' && node.data.inputs?.['allowImageUploads']) {
@@ -87,7 +88,9 @@ export async function findSidekickById(user: User, id: string) {
     // Add permission properties to the chatflow object
     const enhancedChatflow = {
         ...chatflow,
-        canEdit: (chatflow.isOwner && user.permissions?.includes('chatflow:manage')) || user.permissions?.includes('org:manage')
+        canEdit:
+            (chatflow.isOwner && (user as any).permissions?.includes('chatflow:manage')) ||
+            (user as any).permissions?.includes('org:manage')
     }
     const { allCredentials } = extractAllCredentials(chatflow.flowData)
     const needsSetup = allCredentials.some((cred) => !cred.isAssigned)

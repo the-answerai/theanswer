@@ -22,7 +22,7 @@ export const useSidekickFavorites = () => {
     // Save favorites to localStorage whenever they change
     useEffect(() => {
         if (favorites.size > 0) {
-            localStorage.setItem('favoriteSidekicks', JSON.stringify([...favorites]))
+            localStorage.setItem('favoriteSidekicks', JSON.stringify(Array.from(favorites)))
         } else {
             localStorage.setItem('favoriteSidekicks', '[]')
         }

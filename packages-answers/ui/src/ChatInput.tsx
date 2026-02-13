@@ -141,7 +141,7 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
 
         sendMessage({
             content: inputValue,
-            files: fileUploads,
+            files: fileUploads as any,
             sidekick,
             gptModel
         })
@@ -440,7 +440,7 @@ const ChatInput = ({ uploadedFiles, setUploadedFiles }: ChatInputProps) => {
 
                         sendMessage({
                             content: inputValue,
-                            files: [...uploadedFiles, audioUpload],
+                            files: [...uploadedFiles, audioUpload] as any,
                             sidekick,
                             gptModel
                         })

@@ -38,7 +38,7 @@ declare module '@mui/material/styles' {
 
 // Get Flowise theme for backward compatibility
 const studioThemeDark = studioTheme({ isDarkMode: true })
-const { background, paper, ...studioPalette } = studioThemeDark.palette
+const { background, paper, ...studioPalette } = studioThemeDark.palette as any
 
 // Helper to create theme for a specific mode
 const createUnifiedTheme = (mode: 'light' | 'dark') => {

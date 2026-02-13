@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react'
 import { UserProfile } from '@auth0/nextjs-auth0/client'
 import { Sidekick } from '../SidekickSelect.types'
-import { NavigateFunction } from 'react-router-dom'
+type NavigateFunction = (to: string | number, options?: any) => void
 import SidekickSearchPanel from '../SidekickSearchPanel'
 import SidekickCategoryList from '../SidekickCategoryList'
 import dynamic from 'next/dynamic'
@@ -88,7 +88,6 @@ const SidekickDialogContent: React.FC<SidekickDialogContentProps> = ({
                     <SidekickSearchPanel
                         sidekicks={combinedSidekicks}
                         isLoading={isLoading}
-                        user={user}
                         favorites={favorites}
                         toggleFavorite={toggleFavorite}
                         handleSidekickSelect={handleSidekickSelect}

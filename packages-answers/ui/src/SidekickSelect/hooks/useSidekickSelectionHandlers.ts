@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sidekick } from '../SidekickSelect.types'
 import { useAnswers } from '../../AnswersContext'
-import { Chat, SidekickListItem } from 'types'
+import { Chat } from 'types'
 
 export type NavigateFn = (url: string | number, options?: { state?: any; replace?: boolean }) => void
 
@@ -41,8 +41,8 @@ const useSidekickSelectionHandlers = ({ chat, navigate }: UseSidekickSelectionHa
                 localStorage.setItem('sidekickHistory', JSON.stringify(sidekickHistory))
 
                 // Update context
-                setSelectedSidekick(sidekick as unknown as SidekickListItem)
-                setSidekick(sidekick as unknown as SidekickListItem)
+                setSelectedSidekick(sidekick as any)
+                setSidekick(sidekick as any)
 
                 setIsMarketplaceDialogOpen(false)
                 router.push(`/chat/${sidekick.id}`)

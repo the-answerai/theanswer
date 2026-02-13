@@ -30,7 +30,7 @@ const SourcesWeb: React.FC<{ isJourney?: boolean }> = ({ isJourney }) => {
         domainSources: (DocumentFilter & { count: number })[]
     }
 
-    const { data, mutate } = useSWR<Data>(url, (urlVal) =>
+    const { data, mutate } = useSWR<Data>(url, (urlVal: string) =>
         Promise.all([
             fetch(`/api/sources/web/url?url=${urlVal}`)
                 .then((res) => res.json())

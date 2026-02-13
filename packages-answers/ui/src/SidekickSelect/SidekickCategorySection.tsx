@@ -1,6 +1,6 @@
 import { Grid, Box, Typography } from '@mui/material'
 import { useCallback } from 'react'
-import { Sidekick } from 'types'
+import { Sidekick } from './SidekickSelect.types'
 import SidekickCard from './SidekickCard'
 import {
     CategorySectionContainer,
@@ -24,7 +24,7 @@ export const CategoryFilter = ({
     parentCategory: string
     availableCategories: string[]
     activeFilterCategory: Record<string, string>
-    setActiveFilterCategory: (filter: Record<string, string>) => void
+    setActiveFilterCategory: (filter: any) => void
     sidekicksByCategoryCache: any
 }) => {
     const handleFilterChange = useCallback(

@@ -37,7 +37,6 @@ const JourneyDetailPage = async ({ params }: any) => {
         }
     })
     const [journey, sidekicks] = await Promise.all([journeyPromise, sidekicksPromise])
-    // @ts-expect-error Async Server Component
     return <Chat {...params} journey={journey} sidekicks={sidekicks} />
 }
 

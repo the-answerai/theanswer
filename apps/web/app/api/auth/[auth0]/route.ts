@@ -40,7 +40,7 @@ export const GET = Auth0.handleAuth({
         } catch (error: any) {
             console.error('[auth/me] Error:', error.message)
             // Fallback to default profile handler
-            return Auth0.handleProfile()(req)
+            return (Auth0.handleProfile() as any)(req)
         }
     },
     onError(req: Request, error: Error) {

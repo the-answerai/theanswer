@@ -16,10 +16,9 @@ const AppLayoutServer = (props: {
 }) => {
     return (
         <AppLayoutClient
-            {...props}
+            {...(props as any)}
             chatList={
                 <Suspense fallback=''>
-                    {/* @ts-expect-error Server Component */}
                     <ChatDrawer />
                 </Suspense>
             }

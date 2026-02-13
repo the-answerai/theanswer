@@ -86,7 +86,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
         const allCats = [
             ...chatflowCategories.top,
             ...chatflowCategories.more,
-            ...new Set(allSidekicks.flatMap((s: Sidekick) => s.categories))
+            ...Array.from(new Set(allSidekicks.flatMap((s: Sidekick) => s.categories)))
         ].filter(Boolean)
 
         // Count executable sidekicks per category
@@ -118,7 +118,7 @@ const useSidekickData = ({ defaultSidekicks = [], enablePerformanceLogs = false 
         // Get unique categories and sort them by:
         // 1. Number of executable sidekicks (descending)
         // 2. Alphabetically (ascending)
-        const uniqueCats = [...uniqueCatsSet].sort((a, b) => {
+        const uniqueCats = Array.from(uniqueCatsSet).sort((a, b) => {
             const countDiff = executableCountByCategory[b] - executableCountByCategory[a]
             return countDiff !== 0 ? countDiff : a.localeCompare(b)
         })

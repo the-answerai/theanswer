@@ -95,7 +95,7 @@ async function getMessages(chat: Partial<ChatType>, user: User) {
     }
 
     // The chatflowId is required in the URL path - get it from the chat object
-    const chatflowId = chat?.chatflowId || chat?.sidekickId
+    const chatflowId = (chat as any)?.chatflowId || (chat as any)?.sidekickId
     if (!chatflowId) {
         console.error('[getMessages] No chatflowId found in chat object:', chat)
         return []
@@ -182,7 +182,7 @@ const ChatDetailPage = async ({ params }: { params: { chatId: string } }) => {
     } catch (error) {
         console.error('Error loading chat:', error)
         // Even if there's an error, still pass the sidekicks if we have them
-        return <Chat {...params} />
+        return <Chat />
     }
 }
 

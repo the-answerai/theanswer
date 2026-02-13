@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify user has access to this workspace
-        const assignedWorkspaces = session.user.assignedWorkspaces || []
+        const assignedWorkspaces = (session.user as any).assignedWorkspaces || []
         const hasAccess = assignedWorkspaces.some((ws: { id: string }) => ws.id === workspaceId)
 
         if (!hasAccess) {

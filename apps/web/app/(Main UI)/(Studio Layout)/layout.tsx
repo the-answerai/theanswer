@@ -16,7 +16,7 @@ const StudioLayout = async ({ children }: { children: React.ReactElement }) => {
     return (
         <AAIAuthProvider user={session.user}>
             <AppLayout apiHost={apiHost} accessToken={session.accessToken}>
-                {children}
+                {children as any}
             </AppLayout>
         </AAIAuthProvider>
     )

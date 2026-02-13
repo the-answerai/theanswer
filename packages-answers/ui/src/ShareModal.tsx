@@ -121,125 +121,127 @@ const ShareModal: React.FC<ModalProps> = ({ title, onSave, onClose, source = 'fi
 
     return (
         <Modal open={open} onClose={handleClose}>
-            <Paper
-                sx={{
-                    width: '100%',
-                    maxWidth: 500,
-                    padding: 2,
-                    backgroundColor: 'background.paper',
-                    margin: 'auto',
-                    outline: 'none',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
-                <Box
-                    component='form'
-                    onSubmit={handleSubmit(onSubmit)}
-                    sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}
+            <>
+                <Paper
+                    sx={{
+                        width: '100%',
+                        maxWidth: 500,
+                        padding: 2,
+                        backgroundColor: 'background.paper',
+                        margin: 'auto',
+                        outline: 'none',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}
                 >
-                    <Box>
-                        <Typography variant='h5' component='h3'>
-                            Share this chat
-                        </Typography>
-                        <Typography>Invite teammates to collaborate together</Typography>
-                        <IconButton sx={{ position: 'absolute', top: 8, right: 8 }} onClick={onClose}>
-                            <CloseIcon />
-                        </IconButton>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Controller
-                            control={control}
-                            rules={{
-                                required: 'Enter at least one email.'
-                            }}
-                            name='email'
-                            render={({ formState: { errors }, field: { onBlur, value, ref } }) => (
-                                <Autocomplete
-                                    options={[]}
-                                    multiple
-                                    freeSolo
-                                    fullWidth
-                                    placeholder='Email, comma separated'
-                                    onBlur={onBlur}
-                                    value={value ?? []}
-                                    ref={ref}
-                                    onChange={(event, value) => {
-                                        if (value.some((email: string) => !/\S+@\S+\.\S+/.test(email))) {
-                                            setError('email', { message: 'Enter valid emails' })
-                                        } else {
-                                            clearErrors('email')
-                                        }
-
-                                        setValue('email', value, { shouldDirty: true })
-                                    }}
-                                    renderInput={({ inputProps: { ...inputProps }, ...params }) => (
-                                        <TextField
-                                            {...params}
-                                            inputProps={inputProps}
-                                            label='Email'
-                                            error={Boolean(errors.email)}
-                                            helperText={errors.email?.message}
-                                        />
-                                    )}
-                                />
-                            )}
-                        />
-
-                        <Button variant='contained' disabled={!isValid} type='submit' sx={{ maxHeight: 50 }}>
-                            Invite
-                        </Button>
-                    </Box>
-
-                    {templateId && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant='body2'>Share marketplace link:</Typography>
-                            <IconButton onClick={handleCopyMarketplaceLink} size='small'>
-                                <ContentCopyIcon fontSize='small' />
+                    <Box
+                        component='form'
+                        onSubmit={handleSubmit(onSubmit)}
+                        sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}
+                    >
+                        <Box>
+                            <Typography variant='h5' component='h3'>
+                                Share this chat
+                            </Typography>
+                            <Typography>Invite teammates to collaborate together</Typography>
+                            <IconButton sx={{ position: 'absolute', top: 8, right: 8 }} onClick={onClose}>
+                                <CloseIcon />
                             </IconButton>
                         </Box>
-                    )}
 
-                    <Box>
-                        <List dense>
-                            {chat?.users?.map((user) => (
-                                <ListItem
-                                    key={user?.id}
-                                    disablePadding
-                                    secondaryAction={
-                                        chat.ownerId !== user.id ? (
-                                            <IconButton edge='end' aria-label='delete' onClick={() => onDelete(user.email!)}>
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        ) : (
-                                            <Typography variant='overline'>owner</Typography>
-                                        )
-                                    }
-                                >
-                                    <ListItemAvatar>
-                                        <Avatar src={user?.image!} />
-                                    </ListItemAvatar>
-                                    <ListItemText primary={user?.name} secondary={user?.email} />
-                                </ListItem>
-                            ))}
-                        </List>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Controller
+                                control={control}
+                                rules={{
+                                    required: 'Enter at least one email.'
+                                }}
+                                name='email'
+                                render={({ formState: { errors }, field: { onBlur, value, ref } }) => (
+                                    <Autocomplete
+                                        options={[]}
+                                        multiple
+                                        freeSolo
+                                        fullWidth
+                                        placeholder='Email, comma separated'
+                                        onBlur={onBlur}
+                                        value={value ?? []}
+                                        ref={ref}
+                                        onChange={(event, value) => {
+                                            if (value.some((email: string) => !/\S+@\S+\.\S+/.test(email))) {
+                                                setError('email', { message: 'Enter valid emails' })
+                                            } else {
+                                                clearErrors('email')
+                                            }
+
+                                            setValue('email', value, { shouldDirty: true })
+                                        }}
+                                        renderInput={({ inputProps: { ...inputProps }, ...params }) => (
+                                            <TextField
+                                                {...params}
+                                                inputProps={inputProps}
+                                                label='Email'
+                                                error={Boolean(errors.email)}
+                                                helperText={errors.email?.message}
+                                            />
+                                        )}
+                                    />
+                                )}
+                            />
+
+                            <Button variant='contained' disabled={!isValid} type='submit' sx={{ maxHeight: 50 }}>
+                                Invite
+                            </Button>
+                        </Box>
+
+                        {templateId && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant='body2'>Share marketplace link:</Typography>
+                                <IconButton onClick={handleCopyMarketplaceLink} size='small'>
+                                    <ContentCopyIcon fontSize='small' />
+                                </IconButton>
+                            </Box>
+                        )}
+
+                        <Box>
+                            <List dense>
+                                {chat?.users?.map((user) => (
+                                    <ListItem
+                                        key={user?.id}
+                                        disablePadding
+                                        secondaryAction={
+                                            chat.ownerId !== user.id ? (
+                                                <IconButton edge='end' aria-label='delete' onClick={() => onDelete(user.email!)}>
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            ) : (
+                                                <Typography variant='overline'>owner</Typography>
+                                            )
+                                        }
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar src={user?.image!} />
+                                        </ListItemAvatar>
+                                        <ListItemText primary={user?.name} secondary={user?.email} />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
                     </Box>
-                </Box>
 
-                {loading ? <LinearProgress variant='query' sx={{ position: 'absolute', bottom: 0, left: 0, width: '100%' }} /> : null}
-            </Paper>
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
-                message={snackbarMessage}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            />
+                    {loading ? <LinearProgress variant='query' sx={{ position: 'absolute', bottom: 0, left: 0, width: '100%' }} /> : null}
+                </Paper>
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={3000}
+                    onClose={handleSnackbarClose}
+                    message={snackbarMessage}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                />
+            </>
         </Modal>
     )
 }

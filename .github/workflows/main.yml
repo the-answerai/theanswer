@@ -60,3 +60,5 @@ jobs:
               uses: dtinth/setup-github-actions-caching-for-turbo@v1
             - run: pnpm install --frozen-lockfile
             - run: pnpm lint
+            - name: TypeScript type-check
+              run: pnpm --filter web tsc --noEmit

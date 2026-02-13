@@ -207,7 +207,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
     const isReadOnlyMode = hasConfiguredCredential && !userCanAccessCredential && !loadingCredentials
 
     return (
-        <Box variant='outlined' sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
             {/* Enable/Disable Toggle */}
             <FormControlLabel
                 control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' />}
@@ -422,6 +422,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
             </Box>
 
             {/* Credential Modal - uses core dialog with defaultVisibility enhancement */}
+            {/* @ts-ignore */}
             <AddEditCredentialDialog
                 show={showCredentialDialog}
                 dialogProps={credentialDialogProps}

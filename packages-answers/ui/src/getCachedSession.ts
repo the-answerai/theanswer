@@ -106,7 +106,8 @@ const getCachedSession = cache(async (req?: any, res: any = new Response()): Pro
                 cache: 'no-store' // Don't cache auth data
             })
             if (response.ok) {
-                const { user: enrichedUser } = await response.json()
+                const responseData = await response.json()
+                const enrichedUser = responseData?.user
                 if (enrichedUser) {
                     // Merge enriched data into session.user (Flowise data takes priority)
                     session.user = { ...session.user, ...enrichedUser }

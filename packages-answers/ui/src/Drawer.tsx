@@ -8,7 +8,7 @@ const drawerWidth = '45vw'
 
 const Drawer = styled(MuiDrawer, {
     shouldForwardProp: (prop) => prop !== 'open'
-})(({ theme, open }: { open: boolean }) => ({
+})(({ theme, open }: { theme: any; open: boolean }) => ({
     position: 'relative',
     width: drawerWidth,
     flexShrink: 0,
@@ -16,8 +16,8 @@ const Drawer = styled(MuiDrawer, {
     boxSizing: 'border-box',
 
     ...(open && {
-        ...openedMixin({ theme, width: drawerWidth }),
-        '& .MuiDrawer-paper': openedMixin({ theme, width: drawerWidth })
+        ...openedMixin({ theme, width: drawerWidth as any }),
+        '& .MuiDrawer-paper': openedMixin({ theme, width: drawerWidth as any })
     }),
 
     ...(!open && {

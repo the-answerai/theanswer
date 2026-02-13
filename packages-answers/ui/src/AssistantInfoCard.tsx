@@ -323,7 +323,7 @@ const AssistantInfoCard = ({
                         {sidekick?.isExecutable && hasValidation && (
                             <ConnectedToolsIndicator
                                 credentials={sidekick?.credentialsToShow || []}
-                                flowData={sidekick?.flowData}
+                                flowData={sidekick?.flowData as any}
                                 onClick={() => {
                                     const searchParams = new URLSearchParams(window.location.search)
                                     searchParams.set('QuickSetup', 'true')

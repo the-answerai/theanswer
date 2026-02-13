@@ -84,7 +84,8 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
     const hasOrgData =
         !isLoading &&
         usageSummary?.usageDashboard &&
-        (usageSummary.usageDashboard.organizationTotalChats > 0 || usageSummary.usageDashboard.organizationTotalMessages > 0)
+        ((usageSummary.usageDashboard as any).organizationTotalChats > 0 ||
+            (usageSummary.usageDashboard as any).organizationTotalMessages > 0)
 
     return (
         <Box
@@ -170,7 +171,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                             <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Chats</Typography>
                             <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                {usageSummary?.usageDashboard?.totalChats || 0}
+                                {(usageSummary?.usageDashboard as any)?.totalChats || 0}
                             </Typography>
                         </Box>
                     </Grid>
@@ -178,7 +179,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                             <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Messages</Typography>
                             <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                {usageSummary?.usageDashboard?.totalMessages || 0}
+                                {(usageSummary?.usageDashboard as any)?.totalMessages || 0}
                             </Typography>
                         </Box>
                     </Grid>
@@ -186,7 +187,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                             <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Messages Sent</Typography>
                             <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                {usageSummary?.usageDashboard?.totalMessagesSent || 0}
+                                {(usageSummary?.usageDashboard as any)?.totalMessagesSent || 0}
                             </Typography>
                         </Box>
                     </Grid>
@@ -194,7 +195,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                         <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                             <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Answers</Typography>
                             <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                {usageSummary?.usageDashboard?.totalMessagesGenerated || 0}
+                                {(usageSummary?.usageDashboard as any)?.totalMessagesGenerated || 0}
                             </Typography>
                         </Box>
                     </Grid>
@@ -218,7 +219,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                             <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                                 <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Chats</Typography>
                                 <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                    {usageSummary?.usageDashboard?.organizationTotalChats || 0}
+                                    {(usageSummary?.usageDashboard as any)?.organizationTotalChats || 0}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -226,7 +227,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                             <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                                 <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Total Messages</Typography>
                                 <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                    {usageSummary?.usageDashboard?.organizationTotalMessages || 0}
+                                    {(usageSummary?.usageDashboard as any)?.organizationTotalMessages || 0}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -234,7 +235,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                             <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                                 <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Messages Sent</Typography>
                                 <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                    {usageSummary?.usageDashboard?.organizationTotalMessagesSent || 0}
+                                    {(usageSummary?.usageDashboard as any)?.organizationTotalMessagesSent || 0}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -242,7 +243,7 @@ const TotalCreditsProgress: React.FC<TotalCreditsProgressProps> = ({ usageSummar
                             <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.05), p: 2, borderRadius: '8px' }}>
                                 <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}>Answers</Typography>
                                 <Typography sx={{ color: theme.palette.text.primary, fontWeight: 600 }}>
-                                    {usageSummary?.usageDashboard?.organizationTotalMessagesGenerated || 0}
+                                    {(usageSummary?.usageDashboard as any)?.organizationTotalMessagesGenerated || 0}
                                 </Typography>
                             </Box>
                         </Grid>
