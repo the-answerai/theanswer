@@ -60,7 +60,7 @@ class GoogleDrive_DocumentLoaders implements INode {
             name: 'credential',
             type: 'credential',
             description: 'Google Drive OAuth2 Credential',
-            credentialNames: ['googleDriveOAuth2', 'googleOAuth']
+            credentialNames: ['googleDriveOAuth2']
         }
         this.inputs = [
             {
@@ -205,7 +205,7 @@ class GoogleDrive_DocumentLoaders implements INode {
             try {
                 let credentialData = await getCredentialData(nodeData.credential ?? '', options)
                 credentialData = await refreshOAuth2Token(nodeData.credential ?? '', credentialData, options)
-                const accessToken = getCredentialParam('access_token', credentialData, nodeData) || credentialData.googleAccessToken
+                const accessToken = getCredentialParam('access_token', credentialData, nodeData)
 
                 if (!accessToken) {
                     return returnData
