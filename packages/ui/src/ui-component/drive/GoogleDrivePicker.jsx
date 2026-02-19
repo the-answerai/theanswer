@@ -311,7 +311,28 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
         try {
             setIsRefreshing(true)
-            await oauth2Api.refresh(credentialId)
+            try {
+                const response = await oauth2Api.refresh(credentialId)
+                const oauth2Message = response?.data?.message || ''
+                const oauth2Failed = response?.data?.success === false
+                const isMissingOauthConfig = oauth2Message.includes('Missing required OAuth configuration')
+
+                if (oauth2Failed && isMissingOauthConfig) {
+                    await credentialsApi.refreshAccessToken({ credentialId })
+                } else if (oauth2Failed) {
+                    throw new Error(oauth2Message || 'Error refreshing access token')
+                }
+            } catch (error) {
+                const errorMessage = error.response?.data?.message || error.message || ''
+                const isMissingOauthConfig = errorMessage.includes('Missing required OAuth configuration')
+
+                if (!isMissingOauthConfig) {
+                    throw error
+                }
+
+                await credentialsApi.refreshAccessToken({ credentialId })
+            }
+
             getCredentialDataApi.request(credentialId)
             setIsTokenExpired(false)
             setIsReauthRequired(false)
