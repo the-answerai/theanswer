@@ -3,9 +3,18 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { Button, List, ListItem, ListItemAvatar, ListItemText, Avatar, IconButton, Stack, Alert } from '@mui/material'
 import useApi from '@/hooks/useApi'
 import credentialsApi from '@/api/credentials'
+import oauth2Api from '@/api/oauth2'
 import { IconX, IconTrash } from '@tabler/icons-react'
 import { useDispatch } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
+
+// Extract token fields from credential data — handles both googleOAuth (v1) and googleDriveOAuth2 (v2)
+const getTokenFields = (plainDataObj) => {
+    const token = plainDataObj.googleAccessToken || plainDataObj.access_token || ''
+    const expiryStr = plainDataObj.expiresAt || plainDataObj.expires_at
+    const isV2 = !!plainDataObj.access_token && !plainDataObj.googleAccessToken
+    return { token, expiryStr, isV2 }
+}
 
 export const SUPPORTED_MIME_TYPES = [
     'application/vnd.google-apps.document',
@@ -176,6 +185,8 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
     const [accessToken, setAccessToken] = useState(null)
     const [isTokenExpired, setIsTokenExpired] = useState(false)
     const [isRefreshing, setIsRefreshing] = useState(false)
+    const [isV2Credential, setIsV2Credential] = useState(false)
+    const [isReauthRequired, setIsReauthRequired] = useState(false)
 
     const enqueueSnackbar = useCallback((...args) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
     const closeSnackbar = useCallback((...args) => dispatch(closeSnackbarAction(...args)), [dispatch])
@@ -210,30 +221,30 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
             // Reset token state
             setAccessToken(null)
             setIsTokenExpired(false)
+            setIsV2Credential(false)
+            setIsReauthRequired(false)
         }
     }, [credentialId])
 
     // Handle credential data from prop
     useEffect(() => {
         if (credentialData?.plainDataObj) {
-            const expiresAt = new Date(credentialData.plainDataObj.expiresAt)
-            const now = new Date()
-            const isExpired = expiresAt < now
-
+            const { token, expiryStr, isV2 } = getTokenFields(credentialData.plainDataObj)
+            const isExpired = expiryStr ? new Date(expiryStr) < new Date() : false
+            setIsV2Credential(isV2)
             setIsTokenExpired(isExpired)
-            setAccessToken(credentialData.plainDataObj.googleAccessToken ?? '')
+            setAccessToken(token)
         }
     }, [credentialData])
 
     // Handle credential data from API
     useEffect(() => {
         if (getCredentialDataApi.data) {
-            const expiresAt = new Date(getCredentialDataApi.data?.plainDataObj.expiresAt)
-            const now = new Date()
-            const isExpired = expiresAt < now
-
+            const { token, expiryStr, isV2 } = getTokenFields(getCredentialDataApi.data?.plainDataObj)
+            const isExpired = expiryStr ? new Date(expiryStr) < new Date() : false
+            setIsV2Credential(isV2)
             setIsTokenExpired(isExpired)
-            setAccessToken(getCredentialDataApi.data?.plainDataObj.googleAccessToken ?? '')
+            setAccessToken(token)
             handleCredentialDataChange?.(getCredentialDataApi.data)
         }
     }, [getCredentialDataApi.data, handleCredentialDataChange])
@@ -301,35 +312,70 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
         try {
             setIsRefreshing(true)
-            // console.log('🔄 [FRONTEND] Iniciando refresh para credential:', credentialId)
 
-            // Obtener token actual antes del refresh
-            // const currentCred = await credentialsApi.getSpecificCredential(credentialId)
-            // const oldToken = currentCred?.data?.plainDataObj?.googleAccessToken?.substring(0, 20)
-            // console.log('🔄 [FRONTEND] Token actual:', oldToken + '...')
-
-            const response = await credentialsApi.refreshAccessToken({ credentialId })
-
-            if (response.status === 200) {
-                getCredentialDataApi.request(credentialId)
-
-                // Verificar que el token cambió
-                setTimeout(async () => {
-                    // const newCred = await credentialsApi.getSpecificCredential(credentialId)
-                    // const newToken = newCred?.data?.plainDataObj?.googleAccessToken?.substring(0, 20)
-                    // console.log('✅ [FRONTEND] Token nuevo:', newToken + '...')
-                    // console.log('🔍 [FRONTEND] ¿Token cambió?', oldToken !== newToken)
-                }, 1000)
-
-                setIsTokenExpired(false)
-                showSnackbar('Successfully refreshed access token', 'success')
+            if (isV2Credential) {
+                // googleDriveOAuth2 (v2) — use the generic OAuth2 refresh endpoint
+                await oauth2Api.refresh(credentialId)
+            } else {
+                // googleOAuth (v1) — use the legacy refresh endpoint
+                await credentialsApi.refreshAccessToken({ credentialId })
             }
+
+            getCredentialDataApi.request(credentialId)
+            setIsTokenExpired(false)
+            setIsReauthRequired(false)
+            showSnackbar('Successfully refreshed access token', 'success')
         } catch (error) {
-            console.error('❌ [FRONTEND] Error refreshing access token:', error)
-            const errorMessage = error.response?.data?.message || 'Error refreshing access token'
-            showSnackbar(errorMessage, 'error')
+            const status = error.response?.status
+            const errorMessage = error.response?.data?.message || error.message || 'Error refreshing access token'
+
+            if (status === 401 || errorMessage.includes('REAUTH_REQUIRED') || errorMessage.includes('re-authenticate')) {
+                // Refresh token is revoked — full re-auth needed via OAuth popup
+                setIsReauthRequired(true)
+                showSnackbar('Re-authentication required. Please click "Re-authenticate with Google".', 'warning')
+            } else {
+                showSnackbar(errorMessage, 'error')
+            }
         } finally {
             setIsRefreshing(false)
+        }
+    }, [credentialId, isV2Credential, getCredentialDataApi, showSnackbar])
+
+    const handleReauthenticate = useCallback(async () => {
+        if (!credentialId) return
+
+        try {
+            const authResponse = await oauth2Api.authorize(credentialId)
+
+            if (authResponse.data?.authorizationUrl) {
+                const authWindow = window.open(
+                    authResponse.data.authorizationUrl,
+                    '_blank',
+                    'width=600,height=700,scrollbars=yes,resizable=yes'
+                )
+
+                if (!authWindow) {
+                    showSnackbar('Popup blocked. Please allow popups for this site and try again.', 'error')
+                    return
+                }
+
+                const handleMessage = (event) => {
+                    if (event.data?.type === 'OAUTH2_SUCCESS') {
+                        window.removeEventListener('message', handleMessage)
+                        getCredentialDataApi.request(credentialId)
+                        setIsTokenExpired(false)
+                        setIsReauthRequired(false)
+                        showSnackbar('Successfully re-authenticated with Google', 'success')
+                    } else if (event.data?.type === 'OAUTH2_ERROR') {
+                        window.removeEventListener('message', handleMessage)
+                        showSnackbar(event.data.error || 'Re-authentication failed', 'error')
+                    }
+                }
+
+                window.addEventListener('message', handleMessage)
+            }
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to start re-authentication', 'error')
         }
     }, [credentialId, getCredentialDataApi, showSnackbar])
 
@@ -359,7 +405,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
                     </Button>
                 )}
 
-                {isTokenExpired && (
+                {isTokenExpired && !isReauthRequired && (
                     <Button
                         variant='outlined'
                         onClick={handleRefreshAccessToken}
@@ -374,11 +420,23 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
                         {isRefreshing ? 'Refreshing...' : 'Refresh Access Token'}
                     </Button>
                 )}
+
+                {isReauthRequired && (
+                    <Button variant='outlined' color='warning' onClick={handleReauthenticate} disabled={!credentialId}>
+                        Re-authenticate with Google
+                    </Button>
+                )}
             </Stack>
 
-            {isTokenExpired && (
+            {isTokenExpired && !isReauthRequired && (
                 <Alert severity='warning' sx={{ mb: 1 }}>
-                    Access token has expired. Please re-authenticate or refresh the access token.
+                    Access token has expired. Click &quot;Refresh Access Token&quot; to renew it.
+                </Alert>
+            )}
+
+            {isReauthRequired && (
+                <Alert severity='error' sx={{ mb: 1 }}>
+                    Google authorization has expired or been revoked. Click &quot;Re-authenticate with Google&quot; to reconnect.
                 </Alert>
             )}
 
