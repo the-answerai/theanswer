@@ -130,7 +130,7 @@ const useGooglePicker = (accessToken, onFilesSelected) => {
     const createPicker = useCallback(async () => {
         if (!accessToken || !window.google?.picker) {
             console.error('Google Picker not available or no access token')
-            return
+            return false
         }
 
         try {
@@ -149,8 +149,10 @@ const useGooglePicker = (accessToken, onFilesSelected) => {
 
             picker.setVisible(true)
             setPickerInstance(picker)
+            return true
         } catch (error) {
             console.error('Error creating picker:', error)
+            return false
         }
     }, [accessToken, createPickerView, pickerCallback])
 
@@ -184,6 +186,17 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
     const getCredentialDataApi = useApi(credentialsApi.getSpecificCredential)
     const scriptsLoaded = useGoogleAPILoader(accessToken)
+
+    const getTokenStateFromCredential = useCallback((plainDataObj = {}) => {
+        const token = plainDataObj.access_token || plainDataObj.googleAccessToken || ''
+        const expiresAt = plainDataObj.expires_at || plainDataObj.expiresAt
+        const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false
+
+        return {
+            token,
+            isExpired
+        }
+    }, [])
 
     // Handle new files selection from picker
     const handleFilesSelected = useCallback(
@@ -219,23 +232,21 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
     // Handle credential data from prop
     useEffect(() => {
         if (credentialData?.plainDataObj) {
-            const { access_token, expires_at } = credentialData.plainDataObj
-            const isExpired = expires_at ? new Date(expires_at) < new Date() : false
+            const { token, isExpired } = getTokenStateFromCredential(credentialData.plainDataObj)
             setIsTokenExpired(isExpired)
-            setAccessToken(access_token ?? '')
+            setAccessToken(token)
         }
-    }, [credentialData])
+    }, [credentialData, getTokenStateFromCredential])
 
     // Handle credential data from API
     useEffect(() => {
         if (getCredentialDataApi.data) {
-            const { access_token, expires_at } = getCredentialDataApi.data?.plainDataObj
-            const isExpired = expires_at ? new Date(expires_at) < new Date() : false
+            const { token, isExpired } = getTokenStateFromCredential(getCredentialDataApi.data?.plainDataObj)
             setIsTokenExpired(isExpired)
-            setAccessToken(access_token ?? '')
+            setAccessToken(token)
             handleCredentialDataChange?.(getCredentialDataApi.data)
         }
-    }, [getCredentialDataApi.data, handleCredentialDataChange])
+    }, [getCredentialDataApi.data, getTokenStateFromCredential, handleCredentialDataChange])
 
     // Handle outside clicks and keyboard events for picker
     useEffect(() => {
@@ -320,6 +331,32 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
         }
     }, [credentialId, getCredentialDataApi, showSnackbar])
 
+    const handleOpenPicker = useCallback(async () => {
+        const opened = await createPicker()
+        if (opened) return
+
+        if (!credentialId) {
+            showSnackbar('Select a credential before opening Google Drive.', 'warning')
+            return
+        }
+
+        if (!accessToken) {
+            showSnackbar('No access token available. Refresh or re-authenticate to load files.', 'error')
+            return
+        }
+
+        if (!scriptsLoaded) {
+            showSnackbar('Google picker is still loading. Try again in a moment.', 'info')
+            return
+        }
+
+        if (isTokenExpired) {
+            showSnackbar('Access token expired. Refresh or re-authenticate before selecting files.', 'warning')
+        } else {
+            showSnackbar('Unable to open Google Drive picker. Please try again.', 'error')
+        }
+    }, [accessToken, createPicker, credentialId, isTokenExpired, scriptsLoaded, showSnackbar])
+
     const handleReauthenticate = useCallback(async () => {
         if (!credentialId) return
 
@@ -358,7 +395,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
         }
     }, [credentialId, getCredentialDataApi, showSnackbar])
 
-    const isPickerReady = scriptsLoaded && !disabled && !isTokenExpired
+    const isPickerReady = !disabled
     const hasSelectedFiles = selectedFiles.length > 0
 
     return (
@@ -366,7 +403,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
             <Stack direction='column' spacing={2} sx={{ mb: 2 }}>
                 <Button
                     variant='outlined'
-                    onClick={createPicker}
+                    onClick={handleOpenPicker}
                     disabled={!isPickerReady}
                     sx={{
                         '&.Mui-disabled': {
