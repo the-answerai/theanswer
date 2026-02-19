@@ -179,7 +179,6 @@ const LoaderConfigPreviewChunks = () => {
         if (checkMandatoryFields()) {
             setLoading(true)
             const config = prepareConfig()
-            config.loaderId === 'googleDrive' && (config.credential = selectedCredential)
             config.previewChunkCount = previewChunkCount
 
             try {
@@ -214,7 +213,6 @@ const LoaderConfigPreviewChunks = () => {
         if (checkMandatoryFields()) {
             setLoading(true)
             const config = prepareConfig()
-            config.loaderId === 'googleDrive' && (config.credential = selectedCredential)
             try {
                 const saveResp = await documentStoreApi.saveProcessingLoader(config)
                 setLoading(false)
@@ -290,8 +288,10 @@ const LoaderConfigPreviewChunks = () => {
             if (textSplitter) config.splitterName = textSplitter.label
         }
 
-        if (selectedDocumentLoader.credential) {
-            config.credential = selectedDocumentLoader.credential
+        // Use credential from state, or fall back to inputs.credential (set when user selects in UI)
+        const credentialId = selectedDocumentLoader.credential || selectedDocumentLoader.inputs?.credential
+        if (credentialId) {
+            config.credential = credentialId
         }
 
         return config
@@ -314,6 +314,7 @@ const LoaderConfigPreviewChunks = () => {
             // If this is a document store edit config, set the existing input values
             if (existingLoaderFromDocStoreTable && existingLoaderFromDocStoreTable.loaderConfig) {
                 nodeData.inputs = existingLoaderFromDocStoreTable.loaderConfig
+                nodeData.credential = existingLoaderFromDocStoreTable.credential
                 setLoaderName(existingLoaderFromDocStoreTable.loaderName)
             }
             setSelectedDocumentLoader(nodeData)
