@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 // material-ui
 import { Container, Stack, Typography, Card, CardContent, CardActions, Button, Box } from '@mui/material'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import { usePermissions } from '../PermissionProvider'
 
 const AdminDashboard = () => {

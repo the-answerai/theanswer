@@ -1,5 +1,5 @@
 // utils/auth0.js
-import { initAuth0 } from '@auth0/nextjs-auth0'
+import { initAuth0 } from './aaiAuth0Server'
 
 // Debug logging helper with safety
 const debugLog = (message: string, data?: any) => {

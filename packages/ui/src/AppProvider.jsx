@@ -2,7 +2,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { store } from '@/store'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { UserProvider } from '@utils/auth/aaiAuth0Client'
 
 // style + assets
 import '@/assets/scss/style.scss'

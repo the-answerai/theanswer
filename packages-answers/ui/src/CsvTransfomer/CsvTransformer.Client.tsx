@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 // Type declaration for the chatflows API module
 declare module '@/api/chatflows' {
     interface ChatflowsApi {

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import { createPermissionManager, PermissionManager } from 'utils/src/auth/permissions'
 import { User } from 'types'
 
