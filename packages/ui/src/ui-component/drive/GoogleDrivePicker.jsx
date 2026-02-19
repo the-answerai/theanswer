@@ -178,6 +178,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
     const [isTokenExpired, setIsTokenExpired] = useState(false)
     const [isRefreshing, setIsRefreshing] = useState(false)
     const [isReauthRequired, setIsReauthRequired] = useState(false)
+    const [isReauthenticating, setIsReauthenticating] = useState(false)
 
     const enqueueSnackbar = useCallback((...args) => dispatch(enqueueSnackbarAction(...args)), [dispatch])
     const closeSnackbar = useCallback((...args) => dispatch(closeSnackbarAction(...args)), [dispatch])
@@ -223,6 +224,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
             const isExpired = expires_at ? new Date(expires_at) < new Date() : false
             setIsTokenExpired(isExpired)
             setAccessToken(access_token ?? '')
+            if (!isExpired) setIsReauthRequired(false)
         }
     }, [credentialData])
 
@@ -233,6 +235,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
             const isExpired = expires_at ? new Date(expires_at) < new Date() : false
             setIsTokenExpired(isExpired)
             setAccessToken(access_token ?? '')
+            if (!isExpired) setIsReauthRequired(false)
             handleCredentialDataChange?.(getCredentialDataApi.data)
         }
     }, [getCredentialDataApi.data, handleCredentialDataChange])
@@ -324,6 +327,7 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
         if (!credentialId) return
 
         try {
+            setIsReauthenticating(true)
             const authResponse = await oauth2Api.authorize(credentialId)
 
             if (authResponse.data?.authorizationUrl) {
@@ -335,25 +339,45 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
                 if (!authWindow) {
                     showSnackbar('Popup blocked. Please allow popups for this site and try again.', 'error')
+                    setIsReauthenticating(false)
                     return
                 }
 
-                const handleMessage = (event) => {
+                const trustedOrigin = window.location.origin
+                let messageListener = null
+                let closedPoller = null
+
+                const cleanup = () => {
+                    if (messageListener) window.removeEventListener('message', messageListener)
+                    if (closedPoller) clearInterval(closedPoller)
+                    setIsReauthenticating(false)
+                }
+
+                messageListener = (event) => {
+                    if (event.origin !== trustedOrigin) return
                     if (event.data?.type === 'OAUTH2_SUCCESS') {
-                        window.removeEventListener('message', handleMessage)
+                        cleanup()
                         getCredentialDataApi.request(credentialId)
                         setIsTokenExpired(false)
                         setIsReauthRequired(false)
                         showSnackbar('Successfully re-authenticated with Google', 'success')
                     } else if (event.data?.type === 'OAUTH2_ERROR') {
-                        window.removeEventListener('message', handleMessage)
+                        cleanup()
                         showSnackbar(event.data.error || 'Re-authentication failed', 'error')
                     }
                 }
 
-                window.addEventListener('message', handleMessage)
+                // Detect popup closed by user without completing auth
+                closedPoller = setInterval(() => {
+                    if (authWindow.closed) cleanup()
+                }, 500)
+
+                window.addEventListener('message', messageListener)
+            } else {
+                setIsReauthenticating(false)
             }
         } catch (error) {
+            setIsReauthenticating(false)
             showSnackbar(error.response?.data?.message || 'Failed to start re-authentication', 'error')
         }
     }, [credentialId, getCredentialDataApi, showSnackbar])
@@ -401,8 +425,13 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
                 )}
 
                 {isReauthRequired && (
-                    <Button variant='outlined' color='warning' onClick={handleReauthenticate} disabled={!credentialId}>
-                        Re-authenticate with Google
+                    <Button
+                        variant='outlined'
+                        color='warning'
+                        onClick={handleReauthenticate}
+                        disabled={!credentialId || isReauthenticating}
+                    >
+                        {isReauthenticating ? 'Opening Google sign-in...' : 'Re-authenticate with Google'}
                     </Button>
                 )}
             </Stack>

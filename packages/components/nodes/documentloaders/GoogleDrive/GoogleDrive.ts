@@ -297,7 +297,7 @@ class GoogleDrive_DocumentLoaders implements INode {
 
         let credentialData = await getCredentialData(nodeData.credential ?? '', options)
         credentialData = await refreshOAuth2Token(nodeData.credential ?? '', credentialData, options)
-        const accessToken = getCredentialParam('access_token', credentialData, nodeData) || credentialData.googleAccessToken
+        const accessToken = getCredentialParam('access_token', credentialData, nodeData)
 
         if (!accessToken) {
             throw new Error('No access token found in credential')
