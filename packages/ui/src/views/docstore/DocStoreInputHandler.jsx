@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { useState, useContext, useCallback } from 'react'
+import { useState, useContext, useCallback, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 
 // material-ui
@@ -42,8 +42,15 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
     const [showManageScrapedLinksDialog, setShowManageScrapedLinksDialog] = useState(false)
     const [manageScrapedLinksDialogProps, setManageScrapedLinksDialogProps] = useState({})
     const [reloadTimestamp, setReloadTimestamp] = useState(Date.now().toString())
-    const [selectedCredential, setSelectedCredential] = useState(data.credential || null)
+    const [selectedCredential, setSelectedCredential] = useState(
+        data.credential || data.inputs?.credential || data.inputs?.[FLOWISE_CREDENTIAL_ID] || null
+    )
     const [selectedCredentialData, setSelectedCredentialData] = useState(null)
+
+    useEffect(() => {
+        const credentialFromData = data.credential || data.inputs?.credential || data.inputs?.[FLOWISE_CREDENTIAL_ID] || null
+        setSelectedCredential((prevCredential) => (prevCredential === credentialFromData ? prevCredential : credentialFromData))
+    }, [data.credential, data.inputs?.credential, data.inputs?.[FLOWISE_CREDENTIAL_ID]])
 
     const handleCredentialDataChange = useCallback((credData) => {
         setSelectedCredentialData(credData)
@@ -275,37 +282,38 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
                                 value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
                             />
                         )}
-                        {(inputParam.type === 'asyncOptions' || inputParam.type === 'asyncMultiOptions') && (
-                            <>
-                                {data.inputParams?.length === 1 && <div style={{ marginTop: 10 }} />}
-                                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                    <div key={reloadTimestamp} style={{ flex: 1 }}>
-                                        <AsyncDropdown
-                                            key={JSON.stringify(inputParam)}
-                                            disabled={disabled}
-                                            name={inputParam.name}
-                                            nodeData={data}
-                                            freeSolo={inputParam.freeSolo}
-                                            multiple={inputParam.type === 'asyncMultiOptions'}
-                                            value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
-                                            onSelect={(newValue) => handleDataChange({ inputParam, newValue })}
-                                            onCreateNew={() => addAsyncOption(inputParam.name)}
-                                            fullWidth={true}
-                                        />
+                        {(inputParam.type === 'asyncOptions' || inputParam.type === 'asyncMultiOptions') &&
+                            !(data.name === 'googleDrive' && inputParam.name === 'selectedFiles') && (
+                                <>
+                                    {data.inputParams?.length === 1 && <div style={{ marginTop: 10 }} />}
+                                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                        <div key={reloadTimestamp} style={{ flex: 1 }}>
+                                            <AsyncDropdown
+                                                key={JSON.stringify(inputParam)}
+                                                disabled={disabled}
+                                                name={inputParam.name}
+                                                nodeData={data}
+                                                freeSolo={inputParam.freeSolo}
+                                                multiple={inputParam.type === 'asyncMultiOptions'}
+                                                value={data.inputs[inputParam.name] ?? inputParam.default ?? 'choose an option'}
+                                                onSelect={(newValue) => handleDataChange({ inputParam, newValue })}
+                                                onCreateNew={() => addAsyncOption(inputParam.name)}
+                                                fullWidth={true}
+                                            />
+                                        </div>
+                                        {inputParam.refresh && (
+                                            <IconButton
+                                                title='Refresh'
+                                                color='primary'
+                                                size='small'
+                                                onClick={() => setReloadTimestamp(Date.now().toString())}
+                                            >
+                                                <IconRefresh />
+                                            </IconButton>
+                                        )}
                                     </div>
-                                    {inputParam.refresh && (
-                                        <IconButton
-                                            title='Refresh'
-                                            color='primary'
-                                            size='small'
-                                            onClick={() => setReloadTimestamp(Date.now().toString())}
-                                        >
-                                            <IconRefresh />
-                                        </IconButton>
-                                    )}
-                                </div>
-                            </>
-                        )}
+                                </>
+                            )}
                         {inputParam.type === 'array' && (
                             <ArrayRenderer inputParam={inputParam} data={data} disabled={disabled} isDocStore={true} />
                         )}
