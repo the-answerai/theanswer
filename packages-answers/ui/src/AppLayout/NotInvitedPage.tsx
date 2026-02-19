@@ -1,6 +1,6 @@
 'use client'
 import { signOut } from 'next-auth/react'
-import { Session } from '@auth0/nextjs-auth0'
+import type { Session } from '@utils/auth/aaiAuth0Server'
 
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'

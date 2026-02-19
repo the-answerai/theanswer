@@ -1,5 +1,5 @@
 'use client'
-import { Session } from '@auth0/nextjs-auth0'
+import type { Session } from '@utils/auth/aaiAuth0Server'
 import React, { useEffect } from 'react'
 
 import CssBaseline from '@mui/material/CssBaseline'
@@ -8,7 +8,7 @@ import { UnifiedThemeProvider } from '../theme'
 import GlobalStyles from '../GlobalStyles'
 
 import { AppSettings } from 'types'
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { UserProvider } from '@utils/auth/aaiAuth0Client'
 import { Auth0Setup } from '@/hooks/useAuth0Setup'
 // @ts-ignore
 import { ErrorProvider } from '@/store/context/ErrorContext'

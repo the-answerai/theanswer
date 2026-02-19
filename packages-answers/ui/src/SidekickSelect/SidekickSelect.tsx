@@ -23,7 +23,7 @@ import {
     StarBorder as StarBorderIcon,
     ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import { useAnswers } from '../AnswersContext'
 import { useNavigate } from 'react-router-dom'
 import dynamic from 'next/dynamic'

@@ -18,7 +18,7 @@ import {
 import { useTheme, alpha } from '@mui/material/styles'
 import { useUsageEvents } from './hooks/useUsageEvents'
 import { format } from 'date-fns'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 
 // Skeleton row component for loading state

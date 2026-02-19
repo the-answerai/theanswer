@@ -1,4 +1,4 @@
-import { Session } from '@auth0/nextjs-auth0'
+import type { Session } from '@utils/auth/aaiAuth0Server'
 import AppLayoutClient from './AppLayout.Client'
 import { AppSettings } from 'types'
 import { Suspense } from 'react'

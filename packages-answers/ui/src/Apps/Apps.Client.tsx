@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import NextLink from 'next/link'
 import Image from 'next/image'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'

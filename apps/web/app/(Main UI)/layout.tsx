@@ -1,5 +1,5 @@
 import React from 'react'
-import { Session } from '@auth0/nextjs-auth0'
+import type { Session } from '@utils/auth/aaiAuth0Server'
 import AppLayout from '@ui/AppLayout'
 
 import getCachedSession from '@ui/getCachedSession'

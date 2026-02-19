@@ -3,7 +3,7 @@ import React from 'react'
 import { Box } from '@mui/material'
 import { ChevronRight as ChevronRightIcon } from '@mui/icons-material'
 import { Sidekick } from '../SidekickSelect.types'
-import { UserProfile } from '@auth0/nextjs-auth0/client'
+import { UserProfile } from '@utils/auth/aaiAuth0Client'
 import {
     SkeletonItem,
     CategorySectionContainer,
