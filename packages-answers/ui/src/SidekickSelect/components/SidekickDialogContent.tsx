@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo } from 'react'
-import { UserProfile } from '@auth0/nextjs-auth0/client'
+import { UserProfile } from '@utils/auth/aaiAuth0Client'
 import { Sidekick } from '../SidekickSelect.types'
 import { NavigateFunction } from 'react-router-dom'
 import SidekickSearchPanel from '../SidekickSearchPanel'

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import clientApi from '@/api/auth'
 
 const useRedirectToDefaultChatflow = () => {

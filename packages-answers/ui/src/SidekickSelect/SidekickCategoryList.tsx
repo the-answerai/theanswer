@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { Box, Typography, Button } from '@mui/material'
-import { UserProfile } from '@auth0/nextjs-auth0/client'
+import { UserProfile } from '@utils/auth/aaiAuth0Client'
 import { Sidekick } from './SidekickSelect.types'
 import { CategorySectionn } from './SidekickCategorySection'
 

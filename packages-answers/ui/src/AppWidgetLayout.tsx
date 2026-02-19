@@ -1,5 +1,5 @@
 'use client'
-import { Session } from '@auth0/nextjs-auth0'
+import type { Session } from '@utils/auth/aaiAuth0Server'
 
 import CssBaseline from '@mui/material/CssBaseline'
 import ThemeProvider from '@mui/material/styles/ThemeProvider'

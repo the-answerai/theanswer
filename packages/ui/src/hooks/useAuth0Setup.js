@@ -9,7 +9,7 @@
  * Type definitions: packages-answers/ui/src/types/user.ts
  */
 import { useState, useEffect } from 'react'
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@utils/auth/aaiAuth0Client'
 import PropTypes from 'prop-types'
 
 import { setBaseURL } from '../store/constant'
