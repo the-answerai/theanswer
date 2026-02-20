@@ -310,14 +310,7 @@ class GoogleDrive_DocumentLoaders implements INode {
 
             if (selectedFiles) {
                 // Load selected files (selectedFiles can be a single ID or comma-separated IDs)
-                let ids: string[] = []
-                if (typeof selectedFiles === 'string' && selectedFiles.startsWith('[') && selectedFiles.endsWith(']')) {
-                    ids = convertMultiOptionsToStringArray(selectedFiles)
-                } else if (typeof selectedFiles === 'string') {
-                    ids = [selectedFiles]
-                } else if (Array.isArray(selectedFiles)) {
-                    ids = selectedFiles
-                }
+                const ids = this.normalizeSelectedFileIds(selectedFiles)
                 for (const id of ids) {
                     const fileInfo = await this.getFileInfo(id, accessToken, includeSharedDrives)
                     if (fileInfo && this.shouldProcessFile(fileInfo, fileTypes)) {
@@ -398,6 +391,44 @@ class GoogleDrive_DocumentLoaders implements INode {
             }
             return handleEscapeCharacters(finaltext, false)
         }
+    }
+
+    private normalizeSelectedFileIds(selectedFiles: unknown): string[] {
+        if (!selectedFiles) return []
+
+        let rawItems: unknown[] = []
+
+        if (typeof selectedFiles === 'string') {
+            const trimmed = selectedFiles.trim()
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                try {
+                    rawItems = JSON.parse(trimmed)
+                } catch (error) {
+                    rawItems = []
+                }
+            } else if (trimmed.includes(',')) {
+                rawItems = trimmed.split(',').map((item) => item.trim())
+            } else {
+                rawItems = [trimmed]
+            }
+        } else if (Array.isArray(selectedFiles)) {
+            rawItems = selectedFiles
+        } else {
+            rawItems = [selectedFiles]
+        }
+
+        const normalized = rawItems
+            .map((item) => {
+                if (typeof item === 'string') return item
+                if (item && typeof item === 'object') {
+                    const maybeItem = item as { fileId?: string; id?: string }
+                    return maybeItem.fileId || maybeItem.id
+                }
+                return undefined
+            })
+            .filter((value): value is string => Boolean(value))
+
+        return Array.from(new Set(normalized))
     }
 
     private async getFileInfo(fileId: string, accessToken: string, includeSharedDrives: boolean): Promise<any> {
