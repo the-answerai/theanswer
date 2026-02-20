@@ -176,7 +176,7 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
                         {inputParam && data.name === 'gmail' && inputParam.name === 'selectedLabels' && (
                             <GmailLabelPicker
                                 disabled={disabled}
-                                onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
+                                onChange={(newValue) => handleDataChange({ inputParam, newValue })}
                                 value={data.inputs[inputParam.name] ?? '[]'}
                                 credentialId={selectedCredential}
                                 credentialData={selectedCredentialData}
@@ -186,7 +186,7 @@ const DocStoreInputHandler = ({ inputParam, data, disabled = false, onNodeDataCh
                         {inputParam && data.name === 'googleDrive' && inputParam.name === 'selectedFiles' && (
                             <GoogleDrivePicker
                                 disabled={disabled}
-                                onChange={(newValue) => (data.inputs[inputParam.name] = newValue)}
+                                onChange={(newValue) => handleDataChange({ inputParam, newValue })}
                                 value={data.inputs[inputParam.name] ?? '[]'}
                                 credentialId={selectedCredential}
                                 credentialData={selectedCredentialData}

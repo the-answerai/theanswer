@@ -168,6 +168,7 @@ const useGooglePicker = (accessToken, onFilesSelected) => {
 
 export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, credentialData, handleCredentialDataChange }) => {
     const dispatch = useDispatch()
+    const previousCredentialIdRef = useRef(null)
     const [selectedFiles, setSelectedFiles] = useState(() => {
         try {
             return value ? JSON.parse(value) : []
@@ -213,21 +214,39 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
     const { createPicker, closePicker, pickerInstance } = useGooglePicker(accessToken, handleFilesSelected)
 
-    // Load credential data on mount and clear files when credential changes
+    // Load credential data on mount and clear files only when credential changes
     useEffect(() => {
         if (credentialId) {
             getCredentialDataApi.request(credentialId)
 
-            // Clear selected files when credential changes
-            setSelectedFiles([])
-            onChange(JSON.stringify([]))
+            const previousCredentialId = previousCredentialIdRef.current
+            if (previousCredentialId && previousCredentialId !== credentialId) {
+                // Clear selected files when credential changes
+                setSelectedFiles([])
+                onChange(JSON.stringify([]))
 
-            // Reset token state
-            setAccessToken(null)
-            setIsTokenExpired(false)
-            setIsReauthRequired(false)
+                // Reset token state
+                setAccessToken(null)
+                setIsTokenExpired(false)
+                setIsReauthRequired(false)
+            }
+
+            previousCredentialIdRef.current = credentialId
         }
     }, [credentialId])
+
+    // Sync local selections when value prop changes
+    useEffect(() => {
+        if (value === undefined) return
+        try {
+            const parsedValue = typeof value === 'string' ? JSON.parse(value) : value
+            if (Array.isArray(parsedValue)) {
+                setSelectedFiles(parsedValue)
+            }
+        } catch (error) {
+            console.error('Error parsing selected files value:', error)
+        }
+    }, [value])
 
     // Handle credential data from prop
     useEffect(() => {
@@ -311,7 +330,28 @@ export const GoogleDrivePicker = ({ onChange, value, disabled, credentialId, cre
 
         try {
             setIsRefreshing(true)
-            await oauth2Api.refresh(credentialId)
+            try {
+                const response = await oauth2Api.refresh(credentialId)
+                const oauth2Message = response?.data?.message || ''
+                const oauth2Failed = response?.data?.success === false
+                const isMissingOauthConfig = oauth2Message.includes('Missing required OAuth configuration')
+
+                if (oauth2Failed && isMissingOauthConfig) {
+                    await credentialsApi.refreshAccessToken({ credentialId })
+                } else if (oauth2Failed) {
+                    throw new Error(oauth2Message || 'Error refreshing access token')
+                }
+            } catch (error) {
+                const errorMessage = error.response?.data?.message || error.message || ''
+                const isMissingOauthConfig = errorMessage.includes('Missing required OAuth configuration')
+
+                if (!isMissingOauthConfig) {
+                    throw error
+                }
+
+                await credentialsApi.refreshAccessToken({ credentialId })
+            }
+
             getCredentialDataApi.request(credentialId)
             setIsTokenExpired(false)
             setIsReauthRequired(false)
