@@ -14,7 +14,7 @@ import { AbortControllerPool } from './AbortControllerPool'
 import { RateLimiterManager } from './utils/rateLimit'
 import { getAllowedIframeOrigins, getCorsOptions, sanitizeMiddleware } from './utils/XSS'
 import { Telemetry } from './utils/telemetry'
-import flowiseApiV1Router, { createAuth0Router, createAuthMeRouter } from './routes'
+import flowiseApiV1Router, { createAuth0Router, createAuthMeRouter, createInternalProvisionRouter } from './routes'
 import errorHandlerMiddleware from './middlewares/errors'
 import { initCronJobs } from './utils/cron'
 import { WHITELIST_URLS } from './utils/constants'
@@ -419,6 +419,9 @@ export class App {
 
         // AAI Auth Me route - provides enriched user data for session management
         this.app.use('/api/v1/auth', createAuthMeRouter(this.AppDataSource))
+
+        // Internal provisioning route - called by Alpha Agent M2M to provision API keys
+        this.app.use('/api/v1/internal', createInternalProvisionRouter(this.AppDataSource))
 
         // ----------------------------------------
         // Configure number of proxies in Host Environment

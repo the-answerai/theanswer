@@ -26,6 +26,7 @@ export const WHITELIST_URLS = [
     '/api/v1/metrics',
     '/api/v1/nvidia-nim',
     '/api/v1/auth/me',
+    '/api/v1/internal/provision-apikey',
     '/api/v1/auth/resolve',
     '/api/v1/auth/login',
     '/api/v1/auth/refreshToken',
