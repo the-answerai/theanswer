@@ -331,7 +331,11 @@ const saveChatflow = async (
         dbResponse.currentVersion = 1
         dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
         await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
-        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
+        try {
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
+        } catch (s3Error) {
+            logger.error(`Failed to save initial chatflow ${dbResponse.id} version to storage: ${getErrorMessage(s3Error)}`)
+        }
     } else {
         // Handle marketplace template IDs - capture as templateId before clearing parentChatflowId
         if (
@@ -351,7 +355,11 @@ const saveChatflow = async (
         dbResponse.s3Location = `ChatFlows/${dbResponse.id}/`
         dbResponse.currentVersion = 1
         await appServer.AppDataSource.getRepository(ChatFlow).save(dbResponse)
-        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
+        try {
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion, dbResponse)
+        } catch (s3Error) {
+            logger.error(`Failed to save initial chatflow ${dbResponse.id} version to storage: ${getErrorMessage(s3Error)}`)
+        }
     }
 
     const productId = await appServer.identityManager.getProductIdFromSubscription(subscriptionId)
@@ -401,23 +409,31 @@ const updateChatflow = async (
         updateChatFlow.type = chatflow.type
     }
     const newDbChatflow = appServer.AppDataSource.getRepository(ChatFlow).merge(chatflow, updateChatFlow)
+    if (updateChatFlow.flowData) {
+        newDbChatflow.currentVersion = (chatflow.currentVersion || 1) + 1
+    }
     await _checkAndUpdateDocumentStoreUsage(newDbChatflow, chatflow.workspaceId)
     const dbResponse = await appServer.AppDataSource.getRepository(ChatFlow).save(newDbChatflow)
 
     // Save new version to S3 if flowData was updated
     if (updateChatFlow.flowData) {
-        // Create version record with the actual user who made the change
-        const versionRecord = {
-            ...dbResponse,
-            // Override userId to track who actually made this change
-            versionMetadata: {
-                originalUserId: dbResponse.userId // Preserve original owner
-                // editedByUserId: user.id, // Track who made this change
-                // editedByName: user.name || 'Unknown User',
-                // editedByEmail: user.email
+        try {
+            // Create version record with the actual user who made the change
+            const versionRecord = {
+                ...dbResponse,
+                // Override userId to track who actually made this change
+                versionMetadata: {
+                    originalUserId: dbResponse.userId // Preserve original owner
+                    // editedByUserId: user.id, // Track who made this change
+                    // editedByName: user.name || 'Unknown User',
+                    // editedByEmail: user.email
+                }
             }
+            await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion || 1, versionRecord)
+        } catch (s3Error) {
+            // Log S3 errors but don't fail the update - DB is already saved
+            logger.error(`Failed to save chatflow ${dbResponse.id} version to storage: ${getErrorMessage(s3Error)}`)
         }
-        await chatflowStorageService.saveVersionedChatflow(dbResponse.id, dbResponse.currentVersion || 1, versionRecord)
     }
 
     return dbResponse
@@ -814,7 +830,12 @@ const rollbackChatflowToVersion = async (chatflowId: string, version: number, us
         const dbResponse = await chatFlowRepository.save(chatflow)
 
         // Save to S3 as new version (this creates a new version with the rollback content)
-        await chatflowStorageService.rollbackToVersion(chatflowId, version, user)
+        try {
+            await chatflowStorageService.rollbackToVersion(chatflowId, version, newVersion, user)
+        } catch (s3Error) {
+            // Log S3 errors but don't fail the rollback - DB is already saved
+            logger.error(`Failed to save chatflow ${chatflowId} rollback version to storage: ${getErrorMessage(s3Error)}`)
+        }
 
         return dbResponse
     } catch (error) {
