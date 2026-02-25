@@ -30,7 +30,7 @@ import documentStoreApi from '@/api/documentstore'
 import documentsApi from '@/api/documentstore'
 
 // Const
-import { baseURL, gridSpacing } from '@/store/constant'
+import { baseURL, gridSpacing, FLOWISE_CREDENTIAL_ID } from '@/store/constant'
 import { closeSnackbar as closeSnackbarAction, enqueueSnackbar as enqueueSnackbarAction } from '@/store/actions'
 import { useError } from '@/store/context/ErrorContext'
 
@@ -145,7 +145,7 @@ const LoaderConfigPreviewChunks = () => {
                 if (
                     inputParam.type === 'credential' &&
                     !selectedDocumentLoader.credential &&
-                    !selectedDocumentLoader.inputs['FLOWISE_CREDENTIAL_ID']
+                    !selectedDocumentLoader.inputs[FLOWISE_CREDENTIAL_ID]
                 ) {
                     canSubmit = false
                     missingFields.push(inputParam.label || inputParam.name)
@@ -312,12 +312,17 @@ const LoaderConfigPreviewChunks = () => {
                 nodeData.inputs = existingLoaderFromDocStoreTable.loaderConfig
                 setLoaderName(existingLoaderFromDocStoreTable.loaderName)
             }
-            // Restore credential from the separate credential field (fixes AGENT-710:
-            // credential-gated loaders failing on process/preview despite being authorized)
+            // Restore credential from the separate `credential` field on the loader entity.
+            // This block intentionally runs outside the loaderConfig guard above because
+            // `loader.credential` is persisted as its own DB column — independent of
+            // loaderConfig — and may be the *only* place the credential ID is stored for
+            // loaders created before FLOWISE_CREDENTIAL_ID was written into inputs.
+            // Without this, checkMandatoryFields and prepareConfig both miss the credential,
+            // causing a false "Connect Credential" validation error on process/preview.
             if (existingLoaderFromDocStoreTable?.credential) {
                 nodeData.credential = existingLoaderFromDocStoreTable.credential
                 if (!nodeData.inputs) nodeData.inputs = {}
-                nodeData.inputs['FLOWISE_CREDENTIAL_ID'] = existingLoaderFromDocStoreTable.credential
+                nodeData.inputs[FLOWISE_CREDENTIAL_ID] = existingLoaderFromDocStoreTable.credential
             }
             setSelectedDocumentLoader(nodeData)
 
