@@ -312,6 +312,13 @@ const LoaderConfigPreviewChunks = () => {
                 nodeData.inputs = existingLoaderFromDocStoreTable.loaderConfig
                 setLoaderName(existingLoaderFromDocStoreTable.loaderName)
             }
+            // Restore credential from the separate credential field (fixes AGENT-710:
+            // credential-gated loaders failing on process/preview despite being authorized)
+            if (existingLoaderFromDocStoreTable?.credential) {
+                nodeData.credential = existingLoaderFromDocStoreTable.credential
+                if (!nodeData.inputs) nodeData.inputs = {}
+                nodeData.inputs['FLOWISE_CREDENTIAL_ID'] = existingLoaderFromDocStoreTable.credential
+            }
             setSelectedDocumentLoader(nodeData)
 
             // Check if the loader has a text splitter, if yes, get the text splitter nodes
