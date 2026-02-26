@@ -303,7 +303,7 @@ class ChatFlowStorageService {
         }
     }
 
-    async rollbackToVersion(chatflowId: string, version: number, user?: any): Promise<void> {
+    async rollbackToVersion(chatflowId: string, version: number, newVersion: number, user?: any): Promise<void> {
         try {
             const versionContent = await this.getChatflowVersion(chatflowId, version)
             if (!versionContent) {
@@ -314,7 +314,6 @@ class ChatFlowStorageService {
             const recordData = versionContent
 
             // Create a new version with the rollback content
-            const newVersion = (recordData.currentVersion || 1) + 1
             recordData.currentVersion = newVersion
 
             // Add rollback metadata if user is provided
