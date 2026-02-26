@@ -104,6 +104,11 @@ const LoaderConfigPreviewChunks = () => {
         setSelectedDocumentLoader((prevData) => {
             const updatedData = { ...prevData }
             updatedData.inputs[inputParam.name] = newValue
+            // Also sync credential to top-level and FLOWISE_CREDENTIAL_ID for preview API
+            if (inputParam.type === 'credential') {
+                updatedData.credential = newValue
+                updatedData.inputs[FLOWISE_CREDENTIAL_ID] = newValue
+            }
             updatedData.inputParams = showHideInputParams(updatedData)
             return updatedData
         })
