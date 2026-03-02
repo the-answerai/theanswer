@@ -30,12 +30,13 @@ interface Sidekick {
 
 interface FindSidekicksOptions {
     lightweight?: boolean
+    workspaceIds?: string[]
 }
 
 export async function findSidekicksForChat(user: User, options: FindSidekicksOptions = {}) {
-    const { lightweight = false } = options
+    const { lightweight = false, workspaceIds } = options
 
-    let token
+    let token: string | undefined
     try {
         const { accessToken } = await auth0.getAccessToken({
             authorizationParams: { organization: user.org_name }
@@ -50,12 +51,12 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
     try {
         // Apply proper visibility filter to only get user's own chatflows and approved public ones
         const filterParams = `?filter=${encodeURIComponent(JSON.stringify({ visibility: 'AnswerAI,Organization' }))}`
+        const workspaceIdsParam = workspaceIds && workspaceIds.length > 0 ? `&workspaceIds=${workspaceIds.join(',')}` : ''
 
-        const response = await fetch(`${chatflowDomain}/api/v1/chatflows${filterParams}`, {
+        const response = await fetch(`${chatflowDomain}/api/v1/chatflows${filterParams}${workspaceIdsParam}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'x-request-from': 'aai',
                 Authorization: `Bearer ${token}`
             }
         })
@@ -201,7 +202,7 @@ export async function findSidekicksForChat(user: User, options: FindSidekicksOpt
         } else {
             const result = await response.json()
             console.error('Chatflow error:', { result })
-            if (result.statusCode == 401) throw new Error('Unauthorized')
+            if (result.statusCode === 401) throw new Error('Unauthorized')
             return { sidekicks: [], categories: { top: [], more: [] } }
         }
     } catch (err) {
