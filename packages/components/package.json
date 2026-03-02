@@ -145,7 +145,7 @@
         "pdf-parse": "^1.1.1",
         "pdfjs-dist": "^5.3.93",
         "pg": "^8.11.2",
-        "playwright": "^1.35.0",
+        "playwright": "^1.58.2",
         "puppeteer": "^20.7.1",
         "pyodide": ">=0.21.0-alpha.2",
         "redis": "^4.6.7",
