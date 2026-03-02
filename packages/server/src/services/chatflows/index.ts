@@ -144,7 +144,13 @@ const deleteChatflow = async (chatflowId: string, orgId: string, workspaceId: st
     }
 }
 
-const getAllChatflows = async (type?: ChatflowType, workspaceId?: string, page: number = -1, limit: number = -1) => {
+const getAllChatflows = async (
+    type?: ChatflowType,
+    workspaceId?: string,
+    page: number = -1,
+    limit: number = -1,
+    workspaceIds?: string[]
+) => {
     try {
         const appServer = getRunningExpressApp()
 
@@ -166,7 +172,11 @@ const getAllChatflows = async (type?: ChatflowType, workspaceId?: string, page: 
             // fetch all chatflows that are not agentflow
             queryBuilder.andWhere('chat_flow.type = :type', { type: 'CHATFLOW' })
         }
-        if (workspaceId) queryBuilder.andWhere('chat_flow.workspaceId = :workspaceId', { workspaceId })
+        if (workspaceIds && workspaceIds.length > 0) {
+            queryBuilder.andWhere('chat_flow.workspaceId IN (:...workspaceIds)', { workspaceIds })
+        } else if (workspaceId) {
+            queryBuilder.andWhere('chat_flow.workspaceId = :workspaceId', { workspaceId })
+        }
         const [data, total] = await queryBuilder.getManyAndCount()
         if (page > 0 && limit > 0) {
             return { data, total }
