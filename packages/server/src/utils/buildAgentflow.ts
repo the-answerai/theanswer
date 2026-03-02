@@ -2234,9 +2234,28 @@ export const executeAgentFlow = async ({
     logger.debug(`\n🏁 Flow execution completed`)
     logger.debug(`   Status: ${status}`)
 
-    // check if last agentFlowExecutedData.data.output contains the key "content"
-    const lastNodeOutput = agentFlowExecutedData[agentFlowExecutedData.length - 1].data?.output as ICommonObject | undefined
-    const content = (lastNodeOutput?.content as string) ?? ' '
+    // Extract final output — agent outputs vary: string, {text:...}, {content:...}, {json:...}
+    const lastNodeOutput = agentFlowExecutedData.length > 0
+        ? agentFlowExecutedData[agentFlowExecutedData.length - 1].data?.output as ICommonObject | undefined
+        : undefined
+
+    let content: string
+    if (typeof lastNodeOutput === 'string') {
+        content = lastNodeOutput
+    } else if (lastNodeOutput && typeof lastNodeOutput === 'object') {
+        const outputObj = lastNodeOutput as ICommonObject
+        if (typeof outputObj.text === 'string') {
+            content = outputObj.text
+        } else if (typeof outputObj.content === 'string') {
+            content = outputObj.content
+        } else if (outputObj.json !== undefined) {
+            content = typeof outputObj.json === 'string' ? outputObj.json : JSON.stringify(outputObj.json)
+        } else {
+            content = JSON.stringify(outputObj)
+        }
+    } else {
+        content = ''
+    }
 
     // remove credentialId from agentFlowExecutedData
     agentFlowExecutedData = agentFlowExecutedData.map((data) => _removeCredentialId(data))
