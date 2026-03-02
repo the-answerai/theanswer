@@ -73,8 +73,15 @@ const getAllChatflows = async (req: Request, res: Response, next: NextFunction) 
     try {
         const { page, limit } = getPageAndLimitParams(req)
 
+        const requestSource = req.headers['x-request-from']
+        const isSidekickRequest = Array.isArray(requestSource)
+            ? requestSource.includes('aai')
+            : requestSource === 'aai'
         const assignedWorkspaces = (req.user as any)?.assignedWorkspaces as Array<{ id: string }> | undefined
-        const workspaceIds = assignedWorkspaces && assignedWorkspaces.length > 0 ? assignedWorkspaces.map((ws) => ws.id) : undefined
+        const workspaceIds =
+            isSidekickRequest && assignedWorkspaces && assignedWorkspaces.length > 0
+                ? assignedWorkspaces.map((ws) => ws.id)
+                : undefined
         const workspaceId = workspaceIds ? undefined : req.user?.activeWorkspaceId
 
         const apiResponse = await chatflowsService.getAllChatflows(
