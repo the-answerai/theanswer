@@ -54,9 +54,13 @@
         "LANGFUSE_HOST",
         "SALESFORCE_CLIENT_ID",
         "SALESFORCE_CLIENT_SECRET",
-        "SALESFORCE_INSTANCE_URL"
+        "SALESFORCE_INSTANCE_URL",
+        "COREPACK_HOME"
     ],
 
+"globalPassThroughEnv": [
+    "COREPACK_HOME"
+],
     "pipeline": {
         "//#dev-docker": {
             "cache": false
