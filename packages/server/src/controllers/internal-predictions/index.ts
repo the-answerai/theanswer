@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
@@ -10,10 +10,17 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 // Send input message and get prediction result (Internal)
 const createInternalPrediction = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const workspaceId = req.user?.activeWorkspaceId
-
-        const chatflow = await chatflowService.getChatflowById(req.params.id, workspaceId)
+        const chatflow = await chatflowService.getChatflowById(req.params.id)
         if (!chatflow) {
+            throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${req.params.id} not found`)
+        }
+
+        const assignedWorkspaces =
+            (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
+        const hasWorkspaceAccess = chatflow.workspaceId
+            ? assignedWorkspaces.some((ws: { id: string }) => ws.id === chatflow.workspaceId)
+            : false
+        if (!hasWorkspaceAccess) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${req.params.id} not found`)
         }
 
