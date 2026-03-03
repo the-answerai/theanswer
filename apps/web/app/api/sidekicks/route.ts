@@ -24,7 +24,8 @@ export async function GET(req: Request) {
     const user = session?.user
     if (!session?.user?.email) return respond401()
     try {
-        const data = await findSidekicksForChat(user, { lightweight })
+        const workspaceIds = user?.assignedWorkspaces?.map((workspace) => workspace.id) ?? []
+        const data = await findSidekicksForChat(user, { lightweight, workspaceIds })
         const sidekicksWithCloneInfo: SidekickSummary[] = data.sidekicks.map((sidekick) => ({
             ...sidekick,
             isExecutable: true
