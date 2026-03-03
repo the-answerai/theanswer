@@ -73,8 +73,8 @@ const getAllChatflows = async (req: Request, res: Response, next: NextFunction) 
     try {
         const { page, limit } = getPageAndLimitParams(req)
 
-        const assignedWorkspaces = (req.user as any)?.assignedWorkspaces as Array<{ id: string }> | undefined
-        const workspaceIds = assignedWorkspaces && assignedWorkspaces.length > 0 ? assignedWorkspaces.map((ws) => ws.id) : undefined
+        const workspaceIdsQuery = req.query?.workspaceIds as string | undefined
+        const workspaceIds = workspaceIdsQuery ? workspaceIdsQuery.split(',').filter(Boolean) : undefined
         const workspaceId = workspaceIds ? undefined : req.user?.activeWorkspaceId
 
         const apiResponse = await chatflowsService.getAllChatflows(
@@ -134,14 +134,18 @@ const getChatflowById = async (req: Request, res: Response, next: NextFunction) 
         if (typeof req.params === 'undefined' || !req.params.id) {
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.getChatflowById - id not provided!`)
         }
-        const workspaceId = req.user?.activeWorkspaceId
-        if (!workspaceId) {
+        const apiResponse = await chatflowsService.getChatflowById(req.params.id)
+        const assignedWorkspaces =
+            (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
+        const hasWorkspaceAccess = apiResponse.workspaceId
+            ? assignedWorkspaces.some((ws: { id: string }) => ws.id === apiResponse.workspaceId)
+            : false
+        if (!hasWorkspaceAccess) {
             throw new InternalFlowiseError(
                 StatusCodes.NOT_FOUND,
-                `Error: chatflowsController.getChatflowById - workspace ${workspaceId} not found!`
+                `Error: chatflowsController.getChatflowById - chatflow ${req.params.id} not found!`
             )
         }
-        const apiResponse = await chatflowsService.getChatflowById(req.params.id, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
