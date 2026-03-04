@@ -103,8 +103,12 @@ class Jira_MCP implements INode {
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
         console.log('[JIRA MCP DEBUG] ========== getTools START ==========')
         console.log('[JIRA MCP DEBUG] Timestamp:', new Date().toISOString())
-        console.log('[JIRA MCP DEBUG] nodeData.credential ID:', nodeData.credential)
-        console.log('[JIRA MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        console.log('[JIRA MCP DEBUG] nodeData.credential ID:', nodeData?.credential || 'NONE')
+        try {
+            console.log('[JIRA MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        } catch (e) {
+            console.log('[JIRA MCP DEBUG] options keys: ERROR -', String(e))
+        }
         
         console.time('[JIRA MCP DEBUG] getCredentialData')
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
