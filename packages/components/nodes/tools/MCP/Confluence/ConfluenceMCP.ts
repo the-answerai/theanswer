@@ -101,11 +101,28 @@ class Confluence_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
+        console.log('[CONFLUENCE MCP DEBUG] ========== getTools START ==========')
+        console.log('[CONFLUENCE MCP DEBUG] Timestamp:', new Date().toISOString())
+        console.log('[CONFLUENCE MCP DEBUG] nodeData.credential ID:', nodeData.credential)
+        console.log('[CONFLUENCE MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        
+        console.time('[CONFLUENCE MCP DEBUG] getCredentialData')
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+        console.timeEnd('[CONFLUENCE MCP DEBUG] getCredentialData')
+        
+        console.log('[CONFLUENCE MCP DEBUG] credentialData keys:', Object.keys(credentialData || {}).join(', '))
         const confluenceApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const confluenceApiEmail = getCredentialParam('username', credentialData, nodeData)
         const confluenceUrl = getCredentialParam('baseURL', credentialData, nodeData)
+        
+        console.log('[CONFLUENCE MCP DEBUG] Credentials loaded:')
+        console.log('[CONFLUENCE MCP DEBUG]   - apiKey exists:', !!confluenceApiKey, '(length:', confluenceApiKey?.length || 0, ')')
+        console.log('[CONFLUENCE MCP DEBUG]   - email exists:', !!confluenceApiEmail, '(value:', confluenceApiEmail || 'MISSING', ')')
+        console.log('[CONFLUENCE MCP DEBUG]   - url exists:', !!confluenceUrl, '(value:', confluenceUrl || 'MISSING', ')')
+        
         const packagePath = getNodeModulesPackagePath('@answerai/confluence-mcp/build/index.js')
+        console.log('[CONFLUENCE MCP DEBUG] Package path:', packagePath)
+        
         const serverParams = {
             command: process.execPath,
             args: [packagePath],
@@ -116,10 +133,18 @@ class Confluence_MCP implements INode {
             }
         }
 
+        console.log('[CONFLUENCE MCP DEBUG] Creating MCPToolkit with command:', serverParams.command)
         const toolkit = new MCPToolkit(serverParams, 'stdio')
+        
+        console.time('[CONFLUENCE MCP DEBUG] toolkit.initialize')
+        console.log('[CONFLUENCE MCP DEBUG] Calling toolkit.initialize() at', new Date().toISOString())
         await toolkit.initialize()
+        console.timeEnd('[CONFLUENCE MCP DEBUG] toolkit.initialize')
+        console.log('[CONFLUENCE MCP DEBUG] toolkit.initialize() completed at', new Date().toISOString())
 
         const tools = toolkit.tools ?? []
+        console.log('[CONFLUENCE MCP DEBUG] Tools loaded:', tools.length)
+        console.log('[CONFLUENCE MCP DEBUG] ========== getTools END ==========')
 
         return tools
     }
