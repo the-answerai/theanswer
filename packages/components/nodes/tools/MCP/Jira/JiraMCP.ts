@@ -46,7 +46,7 @@ class Jira_MCP implements INode {
             label: 'Connect Credential',
             name: 'credential',
             type: 'credential',
-            credentialNames: ['JiraApi']
+            credentialNames: ['jiraApi']
         }
         this.inputs = [
             {
