@@ -103,8 +103,12 @@ class Confluence_MCP implements INode {
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
         console.log('[CONFLUENCE MCP DEBUG] ========== getTools START ==========')
         console.log('[CONFLUENCE MCP DEBUG] Timestamp:', new Date().toISOString())
-        console.log('[CONFLUENCE MCP DEBUG] nodeData.credential ID:', nodeData.credential)
-        console.log('[CONFLUENCE MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        console.log('[CONFLUENCE MCP DEBUG] nodeData.credential ID:', nodeData?.credential || 'NONE')
+        try {
+            console.log('[CONFLUENCE MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        } catch (e) {
+            console.log('[CONFLUENCE MCP DEBUG] options keys: ERROR -', String(e))
+        }
         
         console.time('[CONFLUENCE MCP DEBUG] getCredentialData')
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)

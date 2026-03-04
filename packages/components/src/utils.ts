@@ -658,8 +658,8 @@ export const getCredentialData = async (selectedCredentialId: string, options: I
             return {}
         }
         
-        console.log('[getCredentialData DEBUG] Credential found, name:', credential.name)
-        console.log('[getCredentialData DEBUG] Credential workspaceId:', credential.workspaceId)
+        console.log('[getCredentialData DEBUG] Credential found, name:', credential?.name || 'N/A')
+        console.log('[getCredentialData DEBUG] Credential workspaceId:', credential?.workspaceId || 'N/A')
 
         // Decrypt credentialData
         console.time('[getCredentialData DEBUG] Decrypt credential')

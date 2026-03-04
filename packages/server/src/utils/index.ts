@@ -646,11 +646,15 @@ export const buildFlow = async ({
             ) {
                 initializedNodes.add(nodeId)
             } else {
-                console.log(`[NODE INIT DEBUG] ========== Starting node initialization ==========`)
-                console.log(`[NODE INIT DEBUG] Node: ${reactFlowNode.data.label} (${reactFlowNode.data.name})`)
-                console.log(`[NODE INIT DEBUG] Node ID: ${reactFlowNode.data.id}`)
-                console.log(`[NODE INIT DEBUG] Has credential: ${!!reactFlowNode.data.credential}`)
-                console.log(`[NODE INIT DEBUG] Timestamp: ${new Date().toISOString()}`)
+                try {
+                    console.log(`[NODE INIT DEBUG] ========== Starting node initialization ==========`)
+                    console.log(`[NODE INIT DEBUG] Node: ${reactFlowNode?.data?.label || 'UNKNOWN'} (${reactFlowNode?.data?.name || 'UNKNOWN'})`)
+                    console.log(`[NODE INIT DEBUG] Node ID: ${reactFlowNode?.data?.id || 'UNKNOWN'}`)
+                    console.log(`[NODE INIT DEBUG] Has credential: ${!!reactFlowNode?.data?.credential}`)
+                    console.log(`[NODE INIT DEBUG] Timestamp: ${new Date().toISOString()}`)
+                } catch (e) {
+                    console.log('[NODE INIT DEBUG] Error logging node info:', String(e))
+                }
                 
                 // Check and refresh credentials before node initialization if needed
                 console.time(`[NODE INIT DEBUG] checkAndRefreshCredentialsBeforeInit`)
@@ -2122,8 +2126,12 @@ export const needsCredentialRefresh = async (credentialId: string, options: { ap
  * This ensures tokens are fresh before the node tries to use them
  */
 export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReactFlowNode, options: ICommonObject): Promise<void> => {
-    console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Called for node:', reactFlowNode.data.name, reactFlowNode.data.id)
-    console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Timestamp:', new Date().toISOString())
+    try {
+        console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Called for node:', reactFlowNode?.data?.name || 'UNKNOWN', reactFlowNode?.data?.id || 'UNKNOWN')
+        console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Timestamp:', new Date().toISOString())
+    } catch (e) {
+        console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Error logging:', String(e))
+    }
     
     try {
         // Check if this node requires OAuth refresh and has credentials
