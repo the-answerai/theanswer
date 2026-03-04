@@ -646,7 +646,11 @@ export const buildFlow = async ({
             ) {
                 initializedNodes.add(nodeId)
             } else {
+                const nodeName = reactFlowNode?.data?.name || 'UNKNOWN'
+                console.time(`[NODE] ${nodeName} TOTAL`)
+                
                 // Check and refresh credentials before node initialization if needed
+                console.time(`[NODE] ${nodeName} credRefresh`)
                 await checkAndRefreshCredentialsBeforeInit(reactFlowNode, {
                     chatId,
                     sessionId,
@@ -657,9 +661,12 @@ export const buildFlow = async ({
                     userId: user?.id,
                     organizationId: user?.organizationId
                 })
+                console.timeEnd(`[NODE] ${nodeName} credRefresh`)
 
                 logger.debug(`[server]: [${orgId}]: Initializing ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
                 const finalQuestion = uploadedFilesContent ? `${uploadedFilesContent}\n\n${question}` : question
+                
+                console.time(`[NODE] ${nodeName} init`)
                 let outputResult = await newNodeInstance.init(reactFlowNodeData, finalQuestion, {
                     orgId,
                     workspaceId,
@@ -683,6 +690,8 @@ export const buildFlow = async ({
                     updateStorageUsage,
                     checkStorage
                 })
+                console.timeEnd(`[NODE] ${nodeName} init`)
+                console.timeEnd(`[NODE] ${nodeName} TOTAL`)
 
                 // Save dynamic variables
                 if (reactFlowNode.data.name === 'setVariable') {

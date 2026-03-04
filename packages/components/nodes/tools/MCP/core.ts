@@ -89,16 +89,25 @@ export class MCPToolkit extends BaseToolkit {
 
     async initialize() {
         if (this._tools === null) {
+            console.time('[MCP] initialize TOTAL')
             try {
+                console.time('[MCP] createClient')
                 this.client = await this.createClient()
+                console.timeEnd('[MCP] createClient')
 
+                console.time('[MCP] tools/list RPC')
                 this._tools = await this.client.request({ method: 'tools/list' }, ListToolsResultSchema)
+                console.timeEnd('[MCP] tools/list RPC')
 
+                console.time('[MCP] get_tools')
                 this.tools = await this.get_tools()
+                console.timeEnd('[MCP] get_tools')
 
                 // Close the initial client after initialization
                 await this.client.close()
+                console.timeEnd('[MCP] initialize TOTAL')
             } catch (error) {
+                console.timeEnd('[MCP] initialize TOTAL')
                 console.error('MCP Toolkit: Failed to initialize, setting empty tools:', error)
                 this._tools = { tools: [] }
                 this.tools = []

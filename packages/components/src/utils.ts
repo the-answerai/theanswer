@@ -635,25 +635,36 @@ const decryptCredentialData = async (encryptedData: string): Promise<ICommonObje
  * @returns {Promise<ICommonObject>}
  */
 export const getCredentialData = async (selectedCredentialId: string, options: ICommonObject): Promise<ICommonObject> => {
+    console.time('[CRED] getCredentialData TOTAL')
     const appDataSource = options.appDataSource as DataSource
     const databaseEntities = options.databaseEntities as IDatabaseEntity
 
     try {
         if (!selectedCredentialId) {
+            console.timeEnd('[CRED] getCredentialData TOTAL')
             return {}
         }
 
+        console.time('[CRED] DB query')
         const credential = await appDataSource.getRepository(databaseEntities['Credential']).findOneBy({
             id: selectedCredentialId
         })
+        console.timeEnd('[CRED] DB query')
 
-        if (!credential) return {}
+        if (!credential) {
+            console.timeEnd('[CRED] getCredentialData TOTAL')
+            return {}
+        }
 
         // Decrypt credentialData
+        console.time('[CRED] decrypt')
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
-
+        console.timeEnd('[CRED] decrypt')
+        
+        console.timeEnd('[CRED] getCredentialData TOTAL')
         return decryptedCredentialData
     } catch (e) {
+        console.timeEnd('[CRED] getCredentialData TOTAL')
         throw new Error(e)
     }
 }
