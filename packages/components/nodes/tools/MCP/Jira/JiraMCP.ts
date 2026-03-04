@@ -101,11 +101,22 @@ class Jira_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
+        console.log('[JIRA MCP] getTools called')
+        console.log('[JIRA MCP] credential ID:', nodeData.credential || 'MISSING')
+        
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+        console.log('[JIRA MCP] credentialData loaded:', !!credentialData)
+        
         const jiraApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const jiraApiEmail = getCredentialParam('username', credentialData, nodeData)
         const jiraUrl = getCredentialParam('host', credentialData, nodeData)
+        
+        console.log('[JIRA MCP] apiKey exists:', !!jiraApiKey, 'length:', jiraApiKey?.length || 0)
+        console.log('[JIRA MCP] email exists:', !!jiraApiEmail, 'value:', jiraApiEmail || 'MISSING')
+        console.log('[JIRA MCP] url exists:', !!jiraUrl, 'value:', jiraUrl || 'MISSING')
+        
         const packagePath = getNodeModulesPackagePath('@answerai/jira-mcp/build/index.js')
+        console.log('[JIRA MCP] packagePath:', packagePath)
 
         const serverParams = {
             command: process.execPath,
@@ -117,10 +128,12 @@ class Jira_MCP implements INode {
             }
         }
 
+        console.log('[JIRA MCP] Calling MCPToolkit.initialize()')
         const toolkit = new MCPToolkit(serverParams, 'stdio')
         await toolkit.initialize()
 
         const tools = toolkit.tools ?? []
+        console.log('[JIRA MCP] Tools loaded:', tools.length)
 
         return tools
     }

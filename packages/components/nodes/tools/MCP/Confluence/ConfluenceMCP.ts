@@ -101,11 +101,23 @@ class Confluence_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
+        console.log('[CONFLUENCE MCP] getTools called')
+        console.log('[CONFLUENCE MCP] credential ID:', nodeData.credential || 'MISSING')
+        
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+        console.log('[CONFLUENCE MCP] credentialData loaded:', !!credentialData)
+        
         const confluenceApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const confluenceApiEmail = getCredentialParam('username', credentialData, nodeData)
         const confluenceUrl = getCredentialParam('baseURL', credentialData, nodeData)
+        
+        console.log('[CONFLUENCE MCP] apiKey exists:', !!confluenceApiKey, 'length:', confluenceApiKey?.length || 0)
+        console.log('[CONFLUENCE MCP] email exists:', !!confluenceApiEmail, 'value:', confluenceApiEmail || 'MISSING')
+        console.log('[CONFLUENCE MCP] url exists:', !!confluenceUrl, 'value:', confluenceUrl || 'MISSING')
+        
         const packagePath = getNodeModulesPackagePath('@answerai/confluence-mcp/build/index.js')
+        console.log('[CONFLUENCE MCP] packagePath:', packagePath)
+        
         const serverParams = {
             command: process.execPath,
             args: [packagePath],
@@ -116,10 +128,12 @@ class Confluence_MCP implements INode {
             }
         }
 
+        console.log('[CONFLUENCE MCP] Calling MCPToolkit.initialize()')
         const toolkit = new MCPToolkit(serverParams, 'stdio')
         await toolkit.initialize()
 
         const tools = toolkit.tools ?? []
+        console.log('[CONFLUENCE MCP] Tools loaded:', tools.length)
 
         return tools
     }
