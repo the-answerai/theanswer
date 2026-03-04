@@ -589,7 +589,12 @@ export const buildFlow = async ({
         if (!reactFlowNode || reactFlowNode === undefined || nodeIndex < 0) continue
 
         try {
-            const nodeInstanceFilePath = componentNodes[reactFlowNode.data.name].filePath as string
+            const componentNode = componentNodes[reactFlowNode.data.name]
+            if (!componentNode) {
+                logger.error(`[buildFlow] Component node not found in pool: ${reactFlowNode.data.name} (id: ${reactFlowNode.id})`)
+                continue
+            }
+            const nodeInstanceFilePath = componentNode.filePath as string
             const nodeModule = await import(nodeInstanceFilePath)
             const newNodeInstance = new nodeModule.nodeClass()
 
@@ -824,7 +829,12 @@ export const clearSessionMemory = async (
         // Only clear specific session memory from View Message Dialog UI
         if (isClearFromViewMessageDialog && memoryType && node.data.label !== memoryType) continue
 
-        const nodeInstanceFilePath = componentNodes[node.data.name].filePath as string
+        const componentNode = componentNodes[node.data.name]
+        if (!componentNode) {
+            logger.warn(`[clearSessionMemory] Component node not found: ${node.data.name}`)
+            continue
+        }
+        const nodeInstanceFilePath = componentNode.filePath as string
         const nodeModule = await import(nodeInstanceFilePath)
         const newNodeInstance = new nodeModule.nodeClass()
         const options: ICommonObject = {
@@ -1831,7 +1841,12 @@ export const getSessionChatHistory = async (
     logger: any,
     prependMessages?: IMessage[]
 ): Promise<IMessage[]> => {
-    const nodeInstanceFilePath = componentNodes[memoryNode.data.name].filePath as string
+    const componentNode = componentNodes[memoryNode.data.name]
+    if (!componentNode) {
+        logger.error(`[getSessionChatHistory] Component node not found: ${memoryNode.data.name}`)
+        return []
+    }
+    const nodeInstanceFilePath = componentNode.filePath as string
     const nodeModule = await import(nodeInstanceFilePath)
     const newNodeInstance = new nodeModule.nodeClass()
 
