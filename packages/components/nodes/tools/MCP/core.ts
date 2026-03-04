@@ -90,11 +90,18 @@ export class MCPToolkit extends BaseToolkit {
     async initialize() {
         if (this._tools === null) {
             try {
+                const startTime = Date.now()
+                console.log('[MCP] initialize START')
+                
                 this.client = await this.createClient()
+                console.log(`[MCP] createClient completed in ${Date.now() - startTime}ms`)
 
+                const rpcStart = Date.now()
                 this._tools = await this.client.request({ method: 'tools/list' }, ListToolsResultSchema)
+                console.log(`[MCP] tools/list RPC completed in ${Date.now() - rpcStart}ms`)
 
                 this.tools = await this.get_tools()
+                console.log(`[MCP] initialize TOTAL: ${Date.now() - startTime}ms`)
 
                 // Close the initial client after initialization
                 await this.client.close()
