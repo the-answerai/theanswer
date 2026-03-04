@@ -101,11 +101,27 @@ class Jira_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
+        console.log('[JIRA MCP DEBUG] ========== getTools START ==========')
+        console.log('[JIRA MCP DEBUG] Timestamp:', new Date().toISOString())
+        console.log('[JIRA MCP DEBUG] nodeData.credential ID:', nodeData.credential)
+        console.log('[JIRA MCP DEBUG] options keys:', Object.keys(options || {}).join(', '))
+        
+        console.time('[JIRA MCP DEBUG] getCredentialData')
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+        console.timeEnd('[JIRA MCP DEBUG] getCredentialData')
+        
+        console.log('[JIRA MCP DEBUG] credentialData keys:', Object.keys(credentialData || {}).join(', '))
         const jiraApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const jiraApiEmail = getCredentialParam('username', credentialData, nodeData)
         const jiraUrl = getCredentialParam('host', credentialData, nodeData)
+        
+        console.log('[JIRA MCP DEBUG] Credentials loaded:')
+        console.log('[JIRA MCP DEBUG]   - apiKey exists:', !!jiraApiKey, '(length:', jiraApiKey?.length || 0, ')')
+        console.log('[JIRA MCP DEBUG]   - email exists:', !!jiraApiEmail, '(value:', jiraApiEmail || 'MISSING', ')')
+        console.log('[JIRA MCP DEBUG]   - url exists:', !!jiraUrl, '(value:', jiraUrl || 'MISSING', ')')
+        
         const packagePath = getNodeModulesPackagePath('@answerai/jira-mcp/build/index.js')
+        console.log('[JIRA MCP DEBUG] Package path:', packagePath)
 
         const serverParams = {
             command: process.execPath,
@@ -117,10 +133,18 @@ class Jira_MCP implements INode {
             }
         }
 
+        console.log('[JIRA MCP DEBUG] Creating MCPToolkit with command:', serverParams.command)
         const toolkit = new MCPToolkit(serverParams, 'stdio')
+        
+        console.time('[JIRA MCP DEBUG] toolkit.initialize')
+        console.log('[JIRA MCP DEBUG] Calling toolkit.initialize() at', new Date().toISOString())
         await toolkit.initialize()
+        console.timeEnd('[JIRA MCP DEBUG] toolkit.initialize')
+        console.log('[JIRA MCP DEBUG] toolkit.initialize() completed at', new Date().toISOString())
 
         const tools = toolkit.tools ?? []
+        console.log('[JIRA MCP DEBUG] Tools loaded:', tools.length)
+        console.log('[JIRA MCP DEBUG] ========== getTools END ==========')
 
         return tools
     }
