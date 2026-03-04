@@ -51,7 +51,7 @@ COPY --from=pruner /app/out/json/ .
 COPY scripts/ ./scripts/
 
 # First install the dependencies (as they change less often)
-RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store pnpm install 
+RUN --mount=type=cache,id=pnpm,target=/root/.pnpm-store pnpm install --frozen-lockfile 
 
 # Copy the rest of the source files into the image.
 COPY --from=pruner /app/out/full/ .
