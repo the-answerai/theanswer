@@ -169,9 +169,13 @@ export async function MCPTool({
     
     return tool(
         async (input): Promise<string> => {
-            console.log(`[MCP TOOL CALL] Tool: ${name}`)
-            console.log(`[MCP TOOL CALL] Input keys: ${Object.keys(input || {}).join(', ')}`)
-            console.log(`[MCP TOOL CALL] Input:`, JSON.stringify(input, null, 2))
+            try {
+                console.log(`[MCP TOOL CALL] Tool: ${name}`)
+                console.log(`[MCP TOOL CALL] Input keys: ${Object.keys(input || {}).join(', ')}`)
+                console.log(`[MCP TOOL CALL] Input:`, JSON.stringify(input, null, 2))
+            } catch (logErr) {
+                console.log(`[MCP TOOL CALL] Tool: ${name} (logging error)`)
+            }
             
             // Create a new client for this request
             const client = await toolkit.createClient()
@@ -180,9 +184,13 @@ export async function MCPTool({
                 const req: CallToolRequest = { method: 'tools/call', params: { name: name, arguments: input as any } }
                 const res = await client.request(req, CallToolResultSchema)
                 
-                console.log(`[MCP TOOL CALL] Result status:`, res.isError ? 'ERROR' : 'SUCCESS')
-                if (res.isError) {
-                    console.log(`[MCP TOOL CALL] Error:`, JSON.stringify(res.content, null, 2))
+                try {
+                    console.log(`[MCP TOOL CALL] Result status:`, res.isError ? 'ERROR' : 'SUCCESS')
+                    if (res.isError) {
+                        console.log(`[MCP TOOL CALL] Error:`, JSON.stringify(res.content, null, 2))
+                    }
+                } catch (logErr) {
+                    console.log(`[MCP TOOL CALL] Result: (logging error)`)
                 }
                 const content = res.content
                 const contentString = JSON.stringify(content)
