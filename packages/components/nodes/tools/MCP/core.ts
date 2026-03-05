@@ -159,14 +159,31 @@ export async function MCPTool({
     description: string
     argsSchema: any
 }): Promise<Tool> {
+    console.log(`[MCP TOOL SCHEMA] Tool: ${name}`)
+    console.log(`[MCP TOOL SCHEMA] Description: ${description}`)
+    try {
+        console.log(`[MCP TOOL SCHEMA] Schema:`, JSON.stringify(argsSchema, null, 2))
+    } catch (e) {
+        console.log(`[MCP TOOL SCHEMA] Schema: (could not stringify)`)
+    }
+    
     return tool(
         async (input): Promise<string> => {
+            console.log(`[MCP TOOL CALL] Tool: ${name}`)
+            console.log(`[MCP TOOL CALL] Input keys: ${Object.keys(input || {}).join(', ')}`)
+            console.log(`[MCP TOOL CALL] Input:`, JSON.stringify(input, null, 2))
+            
             // Create a new client for this request
             const client = await toolkit.createClient()
 
             try {
                 const req: CallToolRequest = { method: 'tools/call', params: { name: name, arguments: input as any } }
                 const res = await client.request(req, CallToolResultSchema)
+                
+                console.log(`[MCP TOOL CALL] Result status:`, res.isError ? 'ERROR' : 'SUCCESS')
+                if (res.isError) {
+                    console.log(`[MCP TOOL CALL] Error:`, JSON.stringify(res.content, null, 2))
+                }
                 const content = res.content
                 const contentString = JSON.stringify(content)
                 return contentString
