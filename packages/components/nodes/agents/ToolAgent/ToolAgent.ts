@@ -275,7 +275,25 @@ const prepareAgent = async (
     const memory = nodeData.inputs?.memory as FlowiseMemory
     let systemMessage = nodeData.inputs?.systemMessage as string
     let tools = nodeData.inputs?.tools
+    
+    console.log(`[TOOL AGENT] Tools received (before flatten): ${JSON.stringify(tools?.map?.((t: any) => t?.name || 'unnamed') || 'NOT_ARRAY')}`)
+    console.log(`[TOOL AGENT] Tools count (before flatten): ${Array.isArray(tools) ? tools.length : 'NOT_ARRAY'}`)
+    
     tools = flatten(tools)
+    
+    console.log(`[TOOL AGENT] Tools count (after flatten): ${tools.length}`)
+    console.log(`[TOOL AGENT] Tool names (after flatten): ${tools.map((t: any) => t.name).join(', ')}`)
+    
+    const toolNameCounts = new Map()
+    tools.forEach((t: any) => {
+        const count = toolNameCounts.get(t.name) || 0
+        toolNameCounts.set(t.name, count + 1)
+    })
+    const duplicates = Array.from(toolNameCounts.entries()).filter(([_, count]) => count > 1)
+    if (duplicates.length > 0) {
+        console.log(`[TOOL AGENT] ⚠️ DUPLICATE TOOLS DETECTED:`, JSON.stringify(duplicates.map(([name, count]) => `${name}(${count}x)`)))
+    }
+    
     const memoryKey = memory.memoryKey ? memory.memoryKey : 'chat_history'
     const inputKey = memory.inputKey ? memory.inputKey : 'input'
     const prependMessages = options?.prependMessages
