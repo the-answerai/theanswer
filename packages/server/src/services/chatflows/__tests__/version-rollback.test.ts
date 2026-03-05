@@ -13,6 +13,7 @@ jest.mock('../../../utils/getRunningExpressApp', () => ({
     getRunningExpressApp: jest.fn()
 }))
 jest.mock('../../chatflow-storage', () => ({
+    __esModule: true,
     default: {
         saveVersionedChatflow: jest.fn(),
         rollbackToVersion: jest.fn(),
@@ -27,7 +28,7 @@ jest.mock('../../../utils', () => ({
     getTelemetryFlowObj: jest.fn(),
     isFlowValidForStream: jest.fn()
 }))
-jest.mock('../../../services/documentstore', () => ({ default: {} }))
+jest.mock('../../../services/documentstore', () => ({ __esModule: true, default: { updateDocumentStoreUsage: jest.fn() } }))
 jest.mock('../../../utils/fileRepository', () => ({
     containsBase64File: jest.fn().mockReturnValue(false),
     updateFlowDataWithFilePaths: jest.fn()
@@ -161,13 +162,12 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
             const existingChatflow = {
                 id: 'cf-789',
                 currentVersion: 2,
-                flowData: 'old-flow',
-                type: 'chatbot'
+                flowData: '{"nodes":[],"edges":[]}',
+                type: 'CHATFLOW'
             }
 
             const updateData = {
-                flowData: 'new-flow-data',
-                type: 'chatbot'
+                flowData: '{"nodes":[],"edges":[]}'
             }
 
             const mergedChatflow = {
@@ -203,12 +203,12 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
             const existingChatflow = {
                 id: 'cf-999',
                 currentVersion: 2,
-                flowData: 'existing-flow',
-                type: 'chatbot'
+                flowData: '{"nodes":[],"edges":[]}',
+                type: 'CHATFLOW'
             }
 
             const updateData = {
-                type: 'assistant' // Only type changes, no flowData
+                name: 'Updated Name' // Only name changes, no flowData
             }
 
             const mergedChatflow = {
@@ -240,12 +240,12 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
             const existingChatflow = {
                 id: 'cf-new',
                 currentVersion: null, // No version yet
-                flowData: 'initial-flow',
-                type: 'chatbot'
+                flowData: '{"nodes":[],"edges":[]}',
+                type: 'CHATFLOW'
             }
 
             const updateData = {
-                flowData: 'updated-flow'
+                flowData: '{"nodes":[],"edges":[]}'
             }
 
             const mergedChatflow = {
@@ -256,7 +256,7 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
 
             const savedChatflow = {
                 ...mergedChatflow,
-                currentVersion: 2 // (1 || 1) + 1 = 2
+                currentVersion: 2 // (null || 1) + 1 = 2
             }
 
             mockRepository.merge.mockReturnValue(mergedChatflow)
@@ -275,31 +275,27 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
 
     describe('Compound scenario: version numbers increment correctly across pipeline', () => {
         it('should handle multiple updates with version increments', async () => {
-            // Arrange: Simulate a sequence of operations
             const chatflowId = 'cf-compound'
 
-            // Step 1: Create (v1)
             const created = {
                 id: chatflowId,
                 currentVersion: 1,
-                flowData: 'v1-flow',
-                type: 'chatbot'
+                flowData: '{"nodes":[],"edges":[]}',
+                type: 'CHATFLOW'
             }
 
-            // Step 2: Update with flowData (v2)
-            const update1Data = { flowData: 'v2-flow' }
-            const afterUpdate1 = { ...created, currentVersion: 2, flowData: 'v2-flow' }
+            const update1Data = { flowData: '{"nodes":[{"id":"n1","data":{"name":"test"}}],"edges":[]}' }
+            const afterUpdate1 = { ...created, currentVersion: 2, flowData: update1Data.flowData }
 
-            // Step 3: Update with flowData (v3)
-            const update2Data = { flowData: 'v3-flow' }
-            const afterUpdate2 = { ...afterUpdate1, currentVersion: 3, flowData: 'v3-flow' }
+            const update2Data = {
+                flowData: '{"nodes":[{"id":"n1","data":{"name":"test"}},{"id":"n2","data":{"name":"test2"}}],"edges":[]}'
+            }
+            const afterUpdate2 = { ...afterUpdate1, currentVersion: 3, flowData: update2Data.flowData }
 
-            // Step 4: Rollback to v1 (v4)
-            const afterRollback = { ...afterUpdate2, currentVersion: 4, flowData: 'v1-flow' }
+            const afterRollback = { ...afterUpdate2, currentVersion: 4, flowData: '{"nodes":[],"edges":[]}' }
 
-            // Step 5: Update with flowData (v5)
-            const update3Data = { flowData: 'v5-flow' }
-            const afterUpdate3 = { ...afterRollback, currentVersion: 5, flowData: 'v5-flow' }
+            const update3Data = { flowData: '{"nodes":[{"id":"n3","data":{"name":"test3"}}],"edges":[]}' }
+            const afterUpdate3 = { ...afterRollback, currentVersion: 5, flowData: update3Data.flowData }
 
             // Setup mocks for update sequence
             mockRepository.merge.mockImplementation((existing: any, update: any) => ({
@@ -372,21 +368,22 @@ describe('Chatflow Version Rollback - Bug Fixes (AGENT-466)', () => {
             )
             expect(rolledBack.currentVersion).toBe(6)
 
-            // Act: Update after rollback
+            const v6FlowData = '{"nodes":[{"id":"n6","data":{"name":"updated"}}],"edges":[]}'
+
             mockRepository.merge.mockReturnValue({
                 ...rolledBack,
-                flowData: 'v6-updated-flow'
+                flowData: v6FlowData
             })
 
             mockRepository.save.mockResolvedValue({
                 ...rolledBack,
                 currentVersion: 7,
-                flowData: 'v6-updated-flow'
+                flowData: v6FlowData
             })
 
             const updated = await chatflowsService.updateChatflow(
                 rolledBack,
-                { flowData: 'v6-updated-flow' } as any,
+                { flowData: v6FlowData } as any,
                 'org-123',
                 'ws-123',
                 'sub-123'
