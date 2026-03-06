@@ -712,7 +712,8 @@ const refreshDocStoreMiddleware = async (req: Request, res: Response, next: Next
             )
         }
         const subscriptionId = req.user?.activeOrganizationSubscriptionId || ''
-        const body = req.body
+        const body = req.body || {}
+        body.user = req.user
         const apiResponse = await documentStoreService.refreshDocStoreMiddleware(
             req.params.id,
             body,
