@@ -109,21 +109,21 @@ class Jira_MCP implements INode {
         } catch (e) {
             console.log('[JIRA MCP DEBUG] options keys: ERROR -', String(e))
         }
-        
+
         console.time('[JIRA MCP DEBUG] getCredentialData')
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         console.timeEnd('[JIRA MCP DEBUG] getCredentialData')
-        
+
         console.log('[JIRA MCP DEBUG] credentialData keys:', Object.keys(credentialData || {}).join(', '))
         const jiraApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const jiraApiEmail = getCredentialParam('username', credentialData, nodeData)
         const jiraUrl = getCredentialParam('host', credentialData, nodeData)
-        
+
         console.log('[JIRA MCP DEBUG] Credentials loaded:')
         console.log('[JIRA MCP DEBUG]   - apiKey exists:', !!jiraApiKey, '(length:', jiraApiKey?.length || 0, ')')
         console.log('[JIRA MCP DEBUG]   - email exists:', !!jiraApiEmail, '(value:', jiraApiEmail || 'MISSING', ')')
         console.log('[JIRA MCP DEBUG]   - url exists:', !!jiraUrl, '(value:', jiraUrl || 'MISSING', ')')
-        
+
         const packagePath = getNodeModulesPackagePath('@answerai/jira-mcp/build/index.js')
         console.log('[JIRA MCP DEBUG] Package path:', packagePath)
 
@@ -139,7 +139,7 @@ class Jira_MCP implements INode {
 
         console.log('[JIRA MCP DEBUG] Creating MCPToolkit with command:', serverParams.command)
         const toolkit = new MCPToolkit(serverParams, 'stdio')
-        
+
         console.time('[JIRA MCP DEBUG] toolkit.initialize')
         console.log('[JIRA MCP DEBUG] Calling toolkit.initialize() at', new Date().toISOString())
         await toolkit.initialize()
