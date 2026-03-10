@@ -129,8 +129,7 @@ const getChatflowById = async (req: Request, res: Response, next: NextFunction) 
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.getChatflowById - id not provided!`)
         }
         const apiResponse = await chatflowsService.getChatflowById(req.params.id)
-        const assignedWorkspaces =
-            (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
+        const assignedWorkspaces = (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
         const hasWorkspaceAccess = apiResponse.workspaceId
             ? assignedWorkspaces.some((ws: { id: string }) => ws.id === apiResponse.workspaceId)
             : false
