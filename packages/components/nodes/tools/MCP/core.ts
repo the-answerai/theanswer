@@ -94,7 +94,7 @@ export class MCPToolkit extends BaseToolkit {
             console.log('[MCP TOOLKIT DEBUG] Transport type:', this.transportType)
             console.log('[MCP TOOLKIT DEBUG] Server params command:', this.serverParams.command)
             console.log('[MCP TOOLKIT DEBUG] Server params env keys:', Object.keys(this.serverParams.env || {}).join(', '))
-            
+
             try {
                 console.time('[MCP TOOLKIT DEBUG] createClient')
                 console.log('[MCP TOOLKIT DEBUG] Creating client at', new Date().toISOString())
@@ -158,7 +158,7 @@ export class MCPToolkit extends BaseToolkit {
         if (errors.length !== 0) {
             console.error('MCP Tools failed to be resolved', errors)
         }
-        const successes = res.filter((r:any) => r.status === 'fulfilled').map((r:any    ) => r.value)
+        const successes = res.filter((r: any) => r.status === 'fulfilled').map((r: any) => r.value)
         return successes
     }
 }

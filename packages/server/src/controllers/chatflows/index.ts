@@ -77,13 +77,7 @@ const getAllChatflows = async (req: Request, res: Response, next: NextFunction) 
         const workspaceIds = workspaceIdsQuery ? workspaceIdsQuery.split(',').filter(Boolean) : undefined
         const workspaceId = workspaceIds ? undefined : req.user?.activeWorkspaceId
 
-        const apiResponse = await chatflowsService.getAllChatflows(
-            req.query?.type as ChatflowType,
-            workspaceId,
-            page,
-            limit,
-            workspaceIds
-        )
+        const apiResponse = await chatflowsService.getAllChatflows(req.query?.type as ChatflowType, workspaceId, page, limit, workspaceIds)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
