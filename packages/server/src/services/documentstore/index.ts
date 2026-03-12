@@ -1576,7 +1576,9 @@ const _insertIntoVectorStoreWorkerThread = async (
             filterOptions['docId'] = data.docId
         }
         const UPSERT_BATCH_SIZE = 500
-        const isFullCleanup = recordManagerObj && data.recordManagerConfig && JSON.parse(data.recordManagerConfig)?.cleanup === 'full'
+        const recordManagerConfig =
+            typeof data.recordManagerConfig === 'string' ? JSON.parse(data.recordManagerConfig) : data.recordManagerConfig
+        const isFullCleanup = recordManagerObj && recordManagerConfig?.cleanup === 'full'
 
         let indexResult: ICommonObject | undefined
         if (isFullCleanup) {
@@ -1603,7 +1605,7 @@ const _insertIntoVectorStoreWorkerThread = async (
                     where: filterOptions,
                     skip,
                     take: UPSERT_BATCH_SIZE,
-                    order: { chunkNo: 'ASC' }
+                    order: { chunkNo: 'ASC', id: 'ASC' }
                 })
                 const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
                     return new Document({
