@@ -273,36 +273,13 @@ class AAIDomains_DocumentLoaders implements INode {
         }
 
         // Apply metadata
-        if (metadata) {
-            const parsedMetadata = typeof metadata === 'object' ? metadata : JSON.parse(metadata)
-            docs = docs.map((doc) => ({
-                ...doc,
-                metadata:
-                    _omitMetadataKeys === '*'
-                        ? {
-                              ...parsedMetadata
-                          }
-                        : omit(
-                              {
-                                  ...doc.metadata,
-                                  ...parsedMetadata
-                              },
-                              omitMetadataKeys
-                          )
-            }))
-        } else {
-            docs = docs.map((doc) => ({
-                ...doc,
-                metadata:
-                    _omitMetadataKeys === '*'
-                        ? {}
-                        : omit(
-                              {
-                                  ...doc.metadata
-                              },
-                              omitMetadataKeys
-                          )
-            }))
+        const parsedMetadata = metadata ? (typeof metadata === 'object' ? metadata : JSON.parse(metadata)) : null
+        for (const doc of docs) {
+            if (_omitMetadataKeys === '*') {
+                doc.metadata = parsedMetadata ? { ...parsedMetadata } : {}
+            } else {
+                doc.metadata = omit({ ...doc.metadata, ...(parsedMetadata || {}) }, omitMetadataKeys)
+            }
         }
 
         if (output === 'text') {
@@ -375,7 +352,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
         // Use larger page size since we're only selecting essential fields
         const pageSize = Math.min(this.limit, 100)
-        let allDomains: any[] = []
+        let allDocs: IDocument[] = []
         let currentPage = 0
 
         console.info('[AAIDomains] Starting load with params:', {
@@ -388,8 +365,8 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             hasAnalysis: this.hasAnalysis
         })
 
-        while (allDomains.length < this.limit) {
-            const remainingItems = this.limit - allDomains.length
+        while (allDocs.length < this.limit) {
+            const remainingItems = this.limit - allDocs.length
             const currentPageSize = Math.min(pageSize, remainingItems)
 
             console.info(`[AAIDomains] Fetching page ${currentPage}, size ${currentPageSize}`)
@@ -513,23 +490,23 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         break
                     }
 
-                    // Transform domain_tags array to flat tags array
-                    const domainsWithTags = data.map((domain: any) => ({
-                        ...domain,
-                        tags: domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
-                    }))
-
-                    // Apply tag filtering if specified
-                    let filteredDomains = domainsWithTags
-                    if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
-                        filteredDomains = this.filterByTags(domainsWithTags)
+                    // Transform domain_tags array to flat tags array (in-place mutation)
+                    for (const domain of data as any[]) {
+                        domain.tags = domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
                     }
 
-                    allDomains.push(...filteredDomains)
+                    // Apply tag filtering if specified
+                    let filteredDomains: any[] = data as any[]
+                    if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
+                        filteredDomains = this.filterByTags(data as any[])
+                    }
+
+                    const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
+                    allDocs.push(...pageDocs)
                     currentPage++
 
                     // Stop if we've fetched enough
-                    if (allDomains.length >= this.limit || data.length < currentPageSize) {
+                    if (allDocs.length >= this.limit || data.length < currentPageSize) {
                         shouldStopPagination = true
                         break
                     }
@@ -563,14 +540,14 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.info(`[AAIDomains] Load complete. Total domains: ${allDomains.length}`)
+        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}`)
 
         // Truncate to exact limit
-        if (allDomains.length > this.limit) {
-            allDomains = allDomains.slice(0, this.limit)
+        if (allDocs.length > this.limit) {
+            allDocs = allDocs.slice(0, this.limit)
         }
 
-        return allDomains.map((domain) => this.createDocumentFromDomain(domain))
+        return allDocs
     }
 
     private filterByTags(domains: any[]): any[] {
