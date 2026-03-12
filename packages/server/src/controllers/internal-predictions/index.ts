@@ -15,8 +15,7 @@ const createInternalPrediction = async (req: Request, res: Response, next: NextF
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${req.params.id} not found`)
         }
 
-        const assignedWorkspaces =
-            (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
+        const assignedWorkspaces = (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
         const hasWorkspaceAccess = chatflow.workspaceId
             ? assignedWorkspaces.some((ws: { id: string }) => ws.id === chatflow.workspaceId)
             : false

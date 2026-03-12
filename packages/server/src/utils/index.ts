@@ -653,14 +653,16 @@ export const buildFlow = async ({
             } else {
                 try {
                     console.log(`[NODE INIT DEBUG] ========== Starting node initialization ==========`)
-                    console.log(`[NODE INIT DEBUG] Node: ${reactFlowNode?.data?.label || 'UNKNOWN'} (${reactFlowNode?.data?.name || 'UNKNOWN'})`)
+                    console.log(
+                        `[NODE INIT DEBUG] Node: ${reactFlowNode?.data?.label || 'UNKNOWN'} (${reactFlowNode?.data?.name || 'UNKNOWN'})`
+                    )
                     console.log(`[NODE INIT DEBUG] Node ID: ${reactFlowNode?.data?.id || 'UNKNOWN'}`)
                     console.log(`[NODE INIT DEBUG] Has credential: ${!!reactFlowNode?.data?.credential}`)
                     console.log(`[NODE INIT DEBUG] Timestamp: ${new Date().toISOString()}`)
                 } catch (e) {
                     console.log('[NODE INIT DEBUG] Error logging node info:', String(e))
                 }
-                
+
                 // Check and refresh credentials before node initialization if needed
                 console.time(`[NODE INIT DEBUG] checkAndRefreshCredentialsBeforeInit`)
                 await checkAndRefreshCredentialsBeforeInit(reactFlowNode, {
@@ -677,7 +679,7 @@ export const buildFlow = async ({
 
                 logger.debug(`[server]: [${orgId}]: Initializing ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
                 const finalQuestion = uploadedFilesContent ? `${uploadedFilesContent}\n\n${question}` : question
-                
+
                 console.time(`[NODE INIT DEBUG] ${reactFlowNode.data.name}.init()`)
                 console.log(`[NODE INIT DEBUG] Calling ${reactFlowNode.data.name}.init() at ${new Date().toISOString()}`)
                 let outputResult = await newNodeInstance.init(reactFlowNodeData, finalQuestion, {
@@ -2142,19 +2144,23 @@ export const needsCredentialRefresh = async (credentialId: string, options: { ap
  */
 export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReactFlowNode, options: ICommonObject): Promise<void> => {
     try {
-        console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Called for node:', reactFlowNode?.data?.name || 'UNKNOWN', reactFlowNode?.data?.id || 'UNKNOWN')
+        console.log(
+            '[checkAndRefreshCredentialsBeforeInit DEBUG] Called for node:',
+            reactFlowNode?.data?.name || 'UNKNOWN',
+            reactFlowNode?.data?.id || 'UNKNOWN'
+        )
         console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Timestamp:', new Date().toISOString())
     } catch (e) {
         console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Error logging:', String(e))
     }
-    
+
     try {
         // Check if this node requires OAuth refresh and has credentials
         if (!reactFlowNode.data.credential) {
             console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] No credential, returning early')
             return
         }
-        
+
         console.log('[checkAndRefreshCredentialsBeforeInit DEBUG] Credential ID:', reactFlowNode.data.credential)
 
         // Get the node instance to check if it requires OAuth refresh
@@ -2183,7 +2189,7 @@ export const checkAndRefreshCredentialsBeforeInit = async (reactFlowNode: IReact
         console.time('[checkAndRefreshCredentialsBeforeInit DEBUG] refreshStoredCredentialTokens')
         const refreshSuccess = await refreshStoredCredentialTokens(credentialId, refreshOptions.appDataSource)
         console.timeEnd('[checkAndRefreshCredentialsBeforeInit DEBUG] refreshStoredCredentialTokens')
-        
+
         if (!refreshSuccess) {
             logger.warn(`[CREDENTIAL REFRESH]: Failed to refresh credential for node ${reactFlowNode.data.id}`)
         } else {

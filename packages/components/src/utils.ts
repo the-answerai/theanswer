@@ -637,7 +637,7 @@ const decryptCredentialData = async (encryptedData: string): Promise<ICommonObje
 export const getCredentialData = async (selectedCredentialId: string, options: ICommonObject): Promise<ICommonObject> => {
     console.log('[getCredentialData DEBUG] Called with ID:', selectedCredentialId)
     console.log('[getCredentialData DEBUG] Timestamp:', new Date().toISOString())
-    
+
     const appDataSource = options.appDataSource as DataSource
     const databaseEntities = options.databaseEntities as IDatabaseEntity
 
@@ -657,7 +657,7 @@ export const getCredentialData = async (selectedCredentialId: string, options: I
             console.log('[getCredentialData DEBUG] Credential not found in database for ID:', selectedCredentialId)
             return {}
         }
-        
+
         console.log('[getCredentialData DEBUG] Credential found, name:', credential?.name || 'N/A')
         console.log('[getCredentialData DEBUG] Credential workspaceId:', credential?.workspaceId || 'N/A')
 
@@ -665,7 +665,7 @@ export const getCredentialData = async (selectedCredentialId: string, options: I
         console.time('[getCredentialData DEBUG] Decrypt credential')
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
         console.timeEnd('[getCredentialData DEBUG] Decrypt credential')
-        
+
         console.log('[getCredentialData DEBUG] Decrypted data keys:', Object.keys(decryptedCredentialData).join(', '))
         console.log('[getCredentialData DEBUG] Returning credential data')
 

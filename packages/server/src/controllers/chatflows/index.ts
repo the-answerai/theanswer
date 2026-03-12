@@ -77,13 +77,7 @@ const getAllChatflows = async (req: Request, res: Response, next: NextFunction) 
         const workspaceIds = workspaceIdsQuery ? workspaceIdsQuery.split(',').filter(Boolean) : undefined
         const workspaceId = workspaceIds ? undefined : req.user?.activeWorkspaceId
 
-        const apiResponse = await chatflowsService.getAllChatflows(
-            req.query?.type as ChatflowType,
-            workspaceId,
-            page,
-            limit,
-            workspaceIds
-        )
+        const apiResponse = await chatflowsService.getAllChatflows(req.query?.type as ChatflowType, workspaceId, page, limit, workspaceIds)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -135,8 +129,7 @@ const getChatflowById = async (req: Request, res: Response, next: NextFunction) 
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.getChatflowById - id not provided!`)
         }
         const apiResponse = await chatflowsService.getChatflowById(req.params.id)
-        const assignedWorkspaces =
-            (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
+        const assignedWorkspaces = (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
         const hasWorkspaceAccess = apiResponse.workspaceId
             ? assignedWorkspaces.some((ws: { id: string }) => ws.id === apiResponse.workspaceId)
             : false
