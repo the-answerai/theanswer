@@ -490,15 +490,16 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         break
                     }
 
-                    // Transform domain_tags array to flat tags array (in-place mutation)
-                    for (const domain of data as any[]) {
-                        domain.tags = domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
-                    }
+                    // Transform domain_tags array to flat tags array (non-mutating)
+                    const domainsWithTags = (data as any[]).map((domain: any) => ({
+                        ...domain,
+                        tags: domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
+                    }))
 
                     // Apply tag filtering if specified
-                    let filteredDomains: any[] = data as any[]
+                    let filteredDomains: any[] = domainsWithTags
                     if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
-                        filteredDomains = this.filterByTags(data as any[])
+                        filteredDomains = this.filterByTags(domainsWithTags)
                     }
 
                     const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
