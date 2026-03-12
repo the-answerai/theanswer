@@ -1576,8 +1576,7 @@ const _insertIntoVectorStoreWorkerThread = async (
             filterOptions['docId'] = data.docId
         }
         const UPSERT_BATCH_SIZE = 500
-        const isFullCleanup = recordManagerObj && data.recordManagerConfig &&
-            JSON.parse(data.recordManagerConfig)?.cleanup === 'full'
+        const isFullCleanup = recordManagerObj && data.recordManagerConfig && JSON.parse(data.recordManagerConfig)?.cleanup === 'full'
 
         let indexResult: any
         if (isFullCleanup) {
