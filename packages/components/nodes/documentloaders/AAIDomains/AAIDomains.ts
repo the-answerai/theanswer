@@ -273,18 +273,13 @@ class AAIDomains_DocumentLoaders implements INode {
         }
 
         // Apply metadata (mutate in-place to avoid copy)
-        const parsedMetadata = metadata
-            ? (typeof metadata === 'object' ? metadata : JSON.parse(metadata))
-            : null
+        const parsedMetadata = metadata ? (typeof metadata === 'object' ? metadata : JSON.parse(metadata)) : null
 
         for (const doc of docs) {
             if (_omitMetadataKeys === '*') {
                 doc.metadata = parsedMetadata ? { ...parsedMetadata } : {}
             } else {
-                doc.metadata = omit(
-                    { ...doc.metadata, ...(parsedMetadata || {}) },
-                    omitMetadataKeys
-                )
+                doc.metadata = omit({ ...doc.metadata, ...(parsedMetadata || {}) }, omitMetadataKeys)
             }
         }
 
