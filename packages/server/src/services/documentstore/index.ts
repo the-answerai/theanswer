@@ -15,7 +15,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { cloneDeep, omit } from 'lodash'
 import * as path from 'path'
-import { DataSource, In } from 'typeorm'
+import { DataSource, In, MoreThan } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import {
     addLoaderSource,
@@ -1582,31 +1582,44 @@ const _insertIntoVectorStoreWorkerThread = async (
 
         let indexResult: ICommonObject | undefined
         if (isFullCleanup) {
-            const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
-                where: filterOptions
-            })
-            const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
-                return new Document({
-                    pageContent: chunk.pageContent,
-                    metadata: JSON.parse(chunk.metadata)
+            const docs: Document[] = []
+            let lastId = ''
+            while (true) {
+                const batchFilter: ICommonObject = lastId
+                    ? { ...filterOptions, id: MoreThan(lastId) }
+                    : { ...filterOptions }
+                const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
+                    where: batchFilter,
+                    take: UPSERT_BATCH_SIZE,
+                    order: { id: 'ASC' }
                 })
-            })
+                if (chunks.length === 0) break
+                for (const chunk of chunks) {
+                    docs.push(new Document({
+                        pageContent: chunk.pageContent,
+                        metadata: JSON.parse(chunk.metadata)
+                    }))
+                }
+                if (chunks.length < UPSERT_BATCH_SIZE) break
+                lastId = chunks[chunks.length - 1].id
+            }
             vStoreNodeData.inputs.document = docs
 
             const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
             indexResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
         } else {
-            const totalCount = await appDataSource.getRepository(DocumentStoreFileChunk).count({
-                where: filterOptions
-            })
             const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
-            for (let skip = 0; skip < totalCount; skip += UPSERT_BATCH_SIZE) {
+            let lastId = ''
+            while (true) {
+                const batchFilter: ICommonObject = lastId
+                    ? { ...filterOptions, id: MoreThan(lastId) }
+                    : { ...filterOptions }
                 const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
-                    where: filterOptions,
-                    skip,
+                    where: batchFilter,
                     take: UPSERT_BATCH_SIZE,
-                    order: { chunkNo: 'ASC', id: 'ASC' }
+                    order: { id: 'ASC' }
                 })
+                if (chunks.length === 0) break
                 const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
                     return new Document({
                         pageContent: chunk.pageContent,
@@ -1616,19 +1629,21 @@ const _insertIntoVectorStoreWorkerThread = async (
                 vStoreNodeData.inputs.document = docs
 
                 const batchResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
-                if (!batchResult) continue
-
-                if (!indexResult) {
-                    indexResult = { ...batchResult, addedDocs: batchResult.addedDocs ?? [] }
-                    continue
+                if (batchResult) {
+                    if (!indexResult) {
+                        indexResult = { ...batchResult, addedDocs: batchResult.addedDocs ?? [] }
+                    } else {
+                        indexResult.numAdded = (indexResult.numAdded ?? 0) + (batchResult.numAdded ?? 0)
+                        indexResult.numDeleted = (indexResult.numDeleted ?? 0) + (batchResult.numDeleted ?? 0)
+                        indexResult.numUpdated = (indexResult.numUpdated ?? 0) + (batchResult.numUpdated ?? 0)
+                        indexResult.numSkipped = (indexResult.numSkipped ?? 0) + (batchResult.numSkipped ?? 0)
+                        indexResult.totalKeys = batchResult.totalKeys ?? indexResult.totalKeys
+                        indexResult.addedDocs = batchResult.addedDocs ?? []
+                    }
                 }
 
-                indexResult.numAdded = (indexResult.numAdded ?? 0) + (batchResult.numAdded ?? 0)
-                indexResult.numDeleted = (indexResult.numDeleted ?? 0) + (batchResult.numDeleted ?? 0)
-                indexResult.numUpdated = (indexResult.numUpdated ?? 0) + (batchResult.numUpdated ?? 0)
-                indexResult.numSkipped = (indexResult.numSkipped ?? 0) + (batchResult.numSkipped ?? 0)
-                indexResult.totalKeys = batchResult.totalKeys ?? indexResult.totalKeys
-                indexResult.addedDocs = batchResult.addedDocs ?? []
+                if (chunks.length < UPSERT_BATCH_SIZE) break
+                lastId = chunks[chunks.length - 1].id
             }
         }
 
