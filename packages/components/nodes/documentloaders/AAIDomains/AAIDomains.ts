@@ -499,7 +499,6 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                     // Transform domain_tags in-place (avoids full object copy)
                     for (const domain of data as any[]) {
                         domain.tags = domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
-                        delete domain.domain_tags
                     }
 
                     // Apply tag filtering if specified
