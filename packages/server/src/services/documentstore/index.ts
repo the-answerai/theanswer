@@ -1237,34 +1237,29 @@ const _saveChunksToStorage = async (
                 }
                 return acc
             }, 0)
-            const SAVE_BATCH_SIZE = 500
-            for (let i = 0; i < response.chunks.length; i += SAVE_BATCH_SIZE) {
-                const batch = response.chunks.slice(i, i + SAVE_BATCH_SIZE)
-                await Promise.all(
-                    batch.map(async (chunk: IDocument, localIndex: number) => {
-                        try {
-                            const globalIndex = i + localIndex
-                            const docChunk: DocumentStoreFileChunk = {
-                                docId: newLoaderId,
-                                storeId: data.storeId || '',
-                                id: uuidv4(),
-                                chunkNo: globalIndex + 1,
-                                pageContent: sanitizeChunkContent(chunk.pageContent),
-                                metadata: JSON.stringify(chunk.metadata),
-                                userId: data.userId,
-                                organizationId: data.organizationId
-                            }
-                            const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                            await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
-                        } catch (chunkError) {
-                            throw new InternalFlowiseError(
-                                StatusCodes.INTERNAL_SERVER_ERROR,
-                                `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
-                            )
+            await Promise.all(
+                response.chunks.map(async (chunk: IDocument, index: number) => {
+                    try {
+                        const docChunk: DocumentStoreFileChunk = {
+                            docId: newLoaderId,
+                            storeId: data.storeId || '',
+                            id: uuidv4(),
+                            chunkNo: index + 1,
+                            pageContent: sanitizeChunkContent(chunk.pageContent),
+                            metadata: JSON.stringify(chunk.metadata),
+                            userId: data.userId,
+                            organizationId: data.organizationId
                         }
-                    })
-                )
-            }
+                        const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
+                        await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                    } catch (chunkError) {
+                        throw new InternalFlowiseError(
+                            StatusCodes.INTERNAL_SERVER_ERROR,
+                            `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
+                        )
+                    }
+                })
+            )
             // update the loader with the new metrics
             loader.totalChunks = response.totalChunks
             loader.totalChars = totalChars
@@ -1575,47 +1570,20 @@ const _insertIntoVectorStoreWorkerThread = async (
         if (data.docId) {
             filterOptions['docId'] = data.docId
         }
-        const UPSERT_BATCH_SIZE = 500
-        const isFullCleanup = recordManagerObj && data.recordManagerConfig && JSON.parse(data.recordManagerConfig)?.cleanup === 'full'
+        const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
+            where: filterOptions
+        })
+        const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
+            return new Document({
+                pageContent: chunk.pageContent,
+                metadata: JSON.parse(chunk.metadata)
+            })
+        })
+        vStoreNodeData.inputs.document = docs
 
-        let indexResult: any
-        if (isFullCleanup) {
-            // RecordManager with cleanup:"full" — cannot batch, load all at once (original behavior)
-            const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
-                where: filterOptions
-            })
-            const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
-                return new Document({
-                    pageContent: chunk.pageContent,
-                    metadata: JSON.parse(chunk.metadata)
-                })
-            })
-            vStoreNodeData.inputs.document = docs
-            const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
-            indexResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
-        } else {
-            // Batch upsert — process in chunks to prevent OOM
-            const totalCount = await appDataSource.getRepository(DocumentStoreFileChunk).count({
-                where: filterOptions
-            })
-            for (let skip = 0; skip < totalCount; skip += UPSERT_BATCH_SIZE) {
-                const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
-                    where: filterOptions,
-                    skip,
-                    take: UPSERT_BATCH_SIZE,
-                    order: { chunkNo: 'ASC' }
-                })
-                const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
-                    return new Document({
-                        pageContent: chunk.pageContent,
-                        metadata: JSON.parse(chunk.metadata)
-                    })
-                })
-                vStoreNodeData.inputs.document = docs
-                const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
-                indexResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
-            }
-        }
+        // Get Vector Store Instance
+        const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
+        const indexResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
 
         // Save to DB
         if (indexResult) {
