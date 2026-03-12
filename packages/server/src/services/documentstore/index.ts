@@ -1237,29 +1237,34 @@ const _saveChunksToStorage = async (
                 }
                 return acc
             }, 0)
-            await Promise.all(
-                response.chunks.map(async (chunk: IDocument, index: number) => {
-                    try {
-                        const docChunk: DocumentStoreFileChunk = {
-                            docId: newLoaderId,
-                            storeId: data.storeId || '',
-                            id: uuidv4(),
-                            chunkNo: index + 1,
-                            pageContent: sanitizeChunkContent(chunk.pageContent),
-                            metadata: JSON.stringify(chunk.metadata),
-                            userId: data.userId,
-                            organizationId: data.organizationId
+            const SAVE_BATCH_SIZE = 500
+            for (let i = 0; i < response.chunks.length; i += SAVE_BATCH_SIZE) {
+                const batch = response.chunks.slice(i, i + SAVE_BATCH_SIZE)
+                await Promise.all(
+                    batch.map(async (chunk: IDocument, localIndex: number) => {
+                        try {
+                            const globalIndex = i + localIndex
+                            const docChunk: DocumentStoreFileChunk = {
+                                docId: newLoaderId,
+                                storeId: data.storeId || '',
+                                id: uuidv4(),
+                                chunkNo: globalIndex + 1,
+                                pageContent: sanitizeChunkContent(chunk.pageContent),
+                                metadata: JSON.stringify(chunk.metadata),
+                                userId: data.userId,
+                                organizationId: data.organizationId
+                            }
+                            const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
+                            await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                        } catch (chunkError) {
+                            throw new InternalFlowiseError(
+                                StatusCodes.INTERNAL_SERVER_ERROR,
+                                `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
+                            )
                         }
-                        const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                        await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
-                    } catch (chunkError) {
-                        throw new InternalFlowiseError(
-                            StatusCodes.INTERNAL_SERVER_ERROR,
-                            `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
-                        )
-                    }
-                })
-            )
+                    })
+                )
+            }
             // update the loader with the new metrics
             loader.totalChunks = response.totalChunks
             loader.totalChars = totalChars
