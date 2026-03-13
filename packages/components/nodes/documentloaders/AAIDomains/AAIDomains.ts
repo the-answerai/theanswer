@@ -247,11 +247,17 @@ class AAIDomains_DocumentLoaders implements INode {
 
         // Convert 'all' to null for RPC function (per API spec)
         const isValidFilter = isValid === 'all' ? null : isValid
+        const requestedLimit = limit || 100
+        const envConfiguredLimit = Number(process.env.AAIDOMAINS_LIMIT ?? process.env.AAI_DOMAINS_MAX_LIMIT ?? 0)
+        const effectiveLimit =
+            Number.isFinite(envConfiguredLimit) && envConfiguredLimit > 0
+                ? Math.min(requestedLimit, Math.floor(envConfiguredLimit))
+                : requestedLimit
 
         const loaderOptions: AAIDomainsLoaderParams = {
             supabaseUrl,
             supabaseKey,
-            limit: limit || 100,
+            limit: effectiveLimit,
             searchTerm: searchTerm || null,
             includeTags: includeTags ? includeTags.split(',').map((t) => t.trim()) : [],
             includeTagsLogic,
