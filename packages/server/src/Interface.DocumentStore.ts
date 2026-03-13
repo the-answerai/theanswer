@@ -79,6 +79,7 @@ export interface IDocumentStoreLoaderForPreview extends IDocumentStoreLoader {
     rehydrated?: boolean
     preview?: boolean
     previewChunkCount?: number
+    previewChunkOffset?: number
     user: IUser
 }
 

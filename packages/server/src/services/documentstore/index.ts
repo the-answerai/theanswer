@@ -921,14 +921,25 @@ export const previewChunks = async ({ appDataSource, componentNodes, data, orgId
         }
         let docs = await _splitIntoChunks(appDataSource, componentNodes, data, data.userId, data.organizationId)
         const totalChunks = docs.length
+        const previewChunkOffset = Math.max(0, data.previewChunkOffset || 0)
+
         // if -1, return all chunks
         if (data.previewChunkCount === -1) data.previewChunkCount = totalChunks
         // return all docs if the user ask for more than we have
         if (totalChunks <= (data.previewChunkCount || 0)) data.previewChunkCount = totalChunks
-        // return only the first n chunks
-        if (totalChunks > (data.previewChunkCount || 0)) docs = docs.slice(0, data.previewChunkCount)
+        const previewChunkCount = Math.max(0, data.previewChunkCount || 0)
+        if (previewChunkCount > 0) {
+            docs = docs.slice(previewChunkOffset, previewChunkOffset + previewChunkCount)
+        } else {
+            docs = []
+        }
 
-        return { chunks: docs, totalChunks: totalChunks, previewChunkCount: data.previewChunkCount }
+        return {
+            chunks: docs,
+            totalChunks: totalChunks,
+            previewChunkCount: previewChunkCount,
+            previewChunkOffset: previewChunkOffset
+        }
     } catch (error) {
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
