@@ -442,6 +442,17 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
         entity.loaders = JSON.stringify(loaders)
         await appServer.AppDataSource.getRepository(DocumentStore).save(entity)
 
+        const chunkRepository = appServer.AppDataSource.getRepository(DocumentStoreFileChunk)
+        const existingChunkIds = (
+            await chunkRepository.find({
+                where: {
+                    docId: fileId,
+                    userId,
+                    organizationId
+                }
+            })
+        ).map((chunk) => chunk.id)
+
         // Get fresh documents from Google Drive
         const docs = await _splitIntoChunks(appServer.AppDataSource, componentNodes, data, userId, organizationId)
 
@@ -466,8 +477,8 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
                             pageContent: chunk.pageContent,
                             metadata: JSON.stringify(chunk.metadata)
                         }
-                        const dChunk = appServer.AppDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                        await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                        const dChunk = chunkRepository.create(docChunk)
+                        await chunkRepository.save(dChunk)
                     })
                 )
                 persistedChunks += batch.length
@@ -480,11 +491,9 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
 
         if (!saveFailed) {
             // Delete old chunks only after all new chunks are confirmed saved
-            await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).delete({
-                docId: fileId,
-                userId,
-                organizationId
-            })
+            if (existingChunkIds.length > 0) {
+                await chunkRepository.delete({ id: In(existingChunkIds) })
+            }
             loader.totalChunks = persistedChunks
             loader.totalChars = persistedChars
             loader.status = DocumentStoreStatus.SYNC
@@ -1272,6 +1281,17 @@ const _saveChunksToStorage = async (
             existingLoaders.push(loader)
         }
 
+        const chunkRepository = appDataSource.getRepository(DocumentStoreFileChunk)
+        const existingChunkIds = (
+            await chunkRepository.find({
+                where: {
+                    docId: newLoaderId,
+                    userId: data.userId,
+                    organizationId: data.organizationId
+                }
+            })
+        ).map((chunk) => chunk.id)
+
         if (response.chunks) {
             //step 7: save new chunks first (safe delete timing — delete AFTER all saved)
             let persistedChunks = 0
@@ -1294,8 +1314,8 @@ const _saveChunksToStorage = async (
                                 userId: data.userId,
                                 organizationId: data.organizationId
                             }
-                            const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                            await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                            const dChunk = chunkRepository.create(docChunk)
+                            await chunkRepository.save(dChunk)
                         })
                     )
                     persistedChunks += batch.length
@@ -1308,7 +1328,9 @@ const _saveChunksToStorage = async (
 
             if (!saveFailed) {
                 //step 8: delete old chunks only after all new chunks are confirmed saved
-                await appDataSource.getRepository(DocumentStoreFileChunk).delete({ docId: newLoaderId })
+                if (existingChunkIds.length > 0) {
+                    await chunkRepository.delete({ id: In(existingChunkIds) })
+                }
                 loader.totalChunks = persistedChunks
                 loader.totalChars = persistedChars
                 loader.status = 'SYNC'

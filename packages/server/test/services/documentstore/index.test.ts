@@ -247,7 +247,7 @@ describe('_saveChunksToStorage durability contract', () => {
         mockChunkSave.mockResolvedValue(undefined)
         mockChunkDelete.mockResolvedValue(undefined)
         mockChunkCount.mockResolvedValue(0)
-        mockChunkFind.mockResolvedValue([])
+        mockChunkFind.mockResolvedValue([{ id: 'existing-chunk-1' }])
     })
 
     describe('happy path', () => {
@@ -280,6 +280,8 @@ describe('_saveChunksToStorage durability contract', () => {
 
             const expectedChars = chunks.reduce((acc, c) => acc + c.pageContent.length, 0)
             expect(loaders[0].totalChars).toBe(expectedChars)
+            expect(mockChunkDelete).toHaveBeenCalledTimes(1)
+            expect(mockChunkDelete).not.toHaveBeenCalledWith({ docId: LOADER_ID })
         })
     })
 
@@ -415,7 +417,7 @@ describe('_saveChunksToStorage durability contract', () => {
             mockChunkSave.mockResolvedValue(undefined)
             mockChunkDelete.mockResolvedValue(undefined)
             mockChunkCount.mockResolvedValue(0)
-            mockChunkFind.mockResolvedValue([])
+            mockChunkFind.mockResolvedValue([{ id: 'existing-chunk-2' }])
 
             await processLoader({
                 appDataSource,
