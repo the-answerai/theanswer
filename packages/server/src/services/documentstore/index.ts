@@ -57,6 +57,9 @@ import { checkStorage, updateStorageUsage } from '../../utils/quotaUsage'
 import { Telemetry } from '../../utils/telemetry'
 import nodesService from '../nodes'
 
+const CHUNK_SAVE_BATCH_SIZE = 100
+const VECTOR_UPSERT_PAGE_SIZE = 500
+
 const createDocumentStore = async (newDocumentStore: DocumentStore, orgId: string) => {
     try {
         const appServer = getRunningExpressApp()
@@ -1228,7 +1231,8 @@ const _saveChunksToStorage = async (
         }
 
         //step 7: remove all previous chunks
-        await appDataSource.getRepository(DocumentStoreFileChunk).delete({ docId: newLoaderId })
+        const chunkRepository = appDataSource.getRepository(DocumentStoreFileChunk)
+        await chunkRepository.delete({ docId: newLoaderId })
         if (response.chunks) {
             //step 8: now save the new chunks
             const totalChars = response.chunks.reduce((acc, chunk) => {
@@ -1237,29 +1241,35 @@ const _saveChunksToStorage = async (
                 }
                 return acc
             }, 0)
-            await Promise.all(
-                response.chunks.map(async (chunk: IDocument, index: number) => {
-                    try {
-                        const docChunk: DocumentStoreFileChunk = {
-                            docId: newLoaderId,
-                            storeId: data.storeId || '',
-                            id: uuidv4(),
-                            chunkNo: index + 1,
-                            pageContent: sanitizeChunkContent(chunk.pageContent),
-                            metadata: JSON.stringify(chunk.metadata),
-                            userId: data.userId,
-                            organizationId: data.organizationId
+
+            for (let offset = 0; offset < response.chunks.length; offset += CHUNK_SAVE_BATCH_SIZE) {
+                const chunkBatch = response.chunks.slice(offset, offset + CHUNK_SAVE_BATCH_SIZE)
+
+                await Promise.all(
+                    chunkBatch.map(async (chunk: IDocument, batchIndex: number) => {
+                        try {
+                            const docChunk: DocumentStoreFileChunk = {
+                                docId: newLoaderId,
+                                storeId: data.storeId || '',
+                                id: uuidv4(),
+                                chunkNo: offset + batchIndex + 1,
+                                pageContent: sanitizeChunkContent(chunk.pageContent),
+                                metadata: JSON.stringify(chunk.metadata),
+                                userId: data.userId,
+                                organizationId: data.organizationId
+                            }
+                            const dChunk = chunkRepository.create(docChunk)
+                            await chunkRepository.save(dChunk)
+                        } catch (chunkError) {
+                            throw new InternalFlowiseError(
+                                StatusCodes.INTERNAL_SERVER_ERROR,
+                                `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
+                            )
                         }
-                        const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-                        await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
-                    } catch (chunkError) {
-                        throw new InternalFlowiseError(
-                            StatusCodes.INTERNAL_SERVER_ERROR,
-                            `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
-                        )
-                    }
-                })
-            )
+                    })
+                )
+            }
+
             // update the loader with the new metrics
             loader.totalChunks = response.totalChunks
             loader.totalChars = totalChars
@@ -1570,20 +1580,78 @@ const _insertIntoVectorStoreWorkerThread = async (
         if (data.docId) {
             filterOptions['docId'] = data.docId
         }
-        const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
-            where: filterOptions
-        })
-        const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
-            return new Document({
-                pageContent: chunk.pageContent,
-                metadata: JSON.parse(chunk.metadata)
-            })
-        })
-        vStoreNodeData.inputs.document = docs
+        const chunkRepository = appDataSource.getRepository(DocumentStoreFileChunk)
+        const indexResult: ICommonObject = {
+            numAdded: 0,
+            numDeleted: 0,
+            numUpdated: 0,
+            numSkipped: 0,
+            totalKeys: 0,
+            addedDocs: [],
+            result: {}
+        }
+        const numericKeysToAccumulate = ['numAdded', 'numDeleted', 'numUpdated', 'numSkipped', 'totalKeys']
 
-        // Get Vector Store Instance
-        const vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
-        const indexResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
+        let vectorStoreObj: any
+        let offset = 0
+        let hasUpsertedDocs = false
+
+        while (true) {
+            const chunks = await chunkRepository.find({
+                where: filterOptions,
+                order: { chunkNo: 'ASC' },
+                skip: offset,
+                take: VECTOR_UPSERT_PAGE_SIZE
+            })
+
+            if (!chunks.length) {
+                break
+            }
+
+            const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
+                return new Document({
+                    pageContent: chunk.pageContent,
+                    metadata: JSON.parse(chunk.metadata)
+                })
+            })
+
+            vStoreNodeData.inputs.document = docs
+
+            if (!vectorStoreObj) {
+                vectorStoreObj = await _createVectorStoreObject(componentNodes, data, vStoreNodeData, upsertHistory)
+            }
+
+            const batchResult = await vectorStoreObj.vectorStoreMethods.upsert(vStoreNodeData, options)
+
+            if (batchResult) {
+                hasUpsertedDocs = true
+
+                for (const key of numericKeysToAccumulate) {
+                    const currentValue = Number(indexResult[key] ?? 0)
+                    const batchValue = Number(batchResult[key] ?? 0)
+                    indexResult[key] = currentValue + (Number.isFinite(batchValue) ? batchValue : 0)
+                }
+
+                if (batchResult.addedDocs !== undefined) {
+                    indexResult.addedDocs = batchResult.addedDocs
+                }
+                if (batchResult.result !== undefined) {
+                    indexResult.result = batchResult.result
+                }
+
+                for (const key in batchResult) {
+                    if (!(key in indexResult)) {
+                        indexResult[key] = batchResult[key]
+                    }
+                }
+            }
+
+            offset += chunks.length
+        }
+
+        if (!hasUpsertedDocs) {
+            indexResult.result = {}
+        }
 
         // Save to DB
         if (indexResult) {
