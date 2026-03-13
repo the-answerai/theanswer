@@ -113,6 +113,7 @@
         "express-mysql-session": "^3.0.3",
         "express-rate-limit": "^6.9.0",
         "express-session": "^1.18.1",
+        "@langchain/core": "0.3.61",
         "flowise-components": "workspace:^",
         "flowise-nim-container-manager": "^1.0.11",
         "flowise-ui": "workspace:^",
