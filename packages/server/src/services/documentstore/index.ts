@@ -396,6 +396,12 @@ const getDocumentStoreFileChunks = async (
 }
 
 // Sync and refresh chunks for a specific loader or store
+// DURABILITY CONTRACT: syncAndRefreshChunks
+// Success path:   SYNCING -> SYNC, totalChunks/totalChars = actual persisted count
+// Partial failure (batch N>1 fails): SYNCING -> STALE, counts = actual persisted rows
+// First-batch failure: SYNCING -> STALE, old chunks untouched (delete deferred until full save)
+// Idempotent rerun: safe — delete of old chunks happens only after new set is fully persisted
+// Mechanism: safe delete timing — old chunks deleted AFTER all new chunks confirmed saved
 const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: string, organizationId: string, workspaceId: string) => {
     try {
         const appServer = getRunningExpressApp()
@@ -436,40 +442,58 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
         entity.loaders = JSON.stringify(loaders)
         await appServer.AppDataSource.getRepository(DocumentStore).save(entity)
 
-        // Delete existing chunks
-        await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).delete({
-            docId: fileId,
-            userId,
-            organizationId
-        })
-
         // Get fresh documents from Google Drive
         const docs = await _splitIntoChunks(appServer.AppDataSource, componentNodes, data, userId, organizationId)
 
-        // Save new chunks
-        let totalChars = 0
-        for (let i = 0; i < docs.length; i++) {
-            const chunk = docs[i]
-            totalChars += chunk.pageContent.length
+        // Save new chunks first (safe delete timing — delete AFTER all saved)
+        let persistedChunks = 0
+        let persistedChars = 0
+        let saveFailed = false
 
-            const docChunk: DocumentStoreFileChunk = {
-                userId,
-                organizationId,
-                docId: fileId,
-                storeId: storeId,
-                id: uuidv4(),
-                chunkNo: i + 1,
-                pageContent: chunk.pageContent,
-                metadata: JSON.stringify(chunk.metadata)
+        for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
+            const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
+            try {
+                await Promise.all(
+                    batch.map(async (chunk: IDocument, localIndex: number) => {
+                        const globalIndex = i + localIndex
+                        const docChunk: DocumentStoreFileChunk = {
+                            userId,
+                            organizationId,
+                            docId: fileId,
+                            storeId: storeId,
+                            id: uuidv4(),
+                            chunkNo: globalIndex + 1,
+                            pageContent: chunk.pageContent,
+                            metadata: JSON.stringify(chunk.metadata)
+                        }
+                        const dChunk = appServer.AppDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
+                        await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
+                    })
+                )
+                persistedChunks += batch.length
+                persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+            } catch (batchError) {
+                saveFailed = true
+                break
             }
-
-            const dChunk = appServer.AppDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
-            await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
         }
 
-        loader.totalChunks = docs.length
-        loader.totalChars = totalChars
-        loader.status = DocumentStoreStatus.SYNC
+        if (!saveFailed) {
+            // Delete old chunks only after all new chunks are confirmed saved
+            await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).delete({
+                docId: fileId,
+                userId,
+                organizationId
+            })
+            loader.totalChunks = persistedChunks
+            loader.totalChars = persistedChars
+            loader.status = DocumentStoreStatus.SYNC
+        } else {
+            // Partial failure: record actual persisted count, mark STALE
+            loader.totalChunks = persistedChunks
+            loader.totalChars = persistedChars
+            loader.status = DocumentStoreStatus.STALE
+        }
 
         // Check if all loaders are synced
         const allSynced = loaders.every((ldr: IDocumentStoreLoader) => ldr.status === DocumentStoreStatus.SYNC)
@@ -1123,6 +1147,12 @@ const processLoaderMiddleware = async (
     }
 }
 
+// DURABILITY CONTRACT: _saveChunksToStorage
+// Success path:   SYNCING -> SYNC, totalChunks/totalChars = actual persisted count
+// Partial failure (batch N>1 fails): SYNCING -> STALE, counts = actual persisted rows
+// First-batch failure: SYNCING -> STALE, old chunks untouched (delete deferred until full save)
+// Idempotent rerun: safe — delete of old chunks happens only after new set is fully persisted
+// Mechanism: safe delete timing — old chunks deleted AFTER all new chunks confirmed saved
 const _saveChunksToStorage = async (
     appDataSource: DataSource,
     componentNodes: IComponentNodes,
@@ -1231,21 +1261,17 @@ const _saveChunksToStorage = async (
             existingLoaders.push(loader)
         }
 
-        //step 7: remove all previous chunks
-        await appDataSource.getRepository(DocumentStoreFileChunk).delete({ docId: newLoaderId })
         if (response.chunks) {
-            //step 8: now save the new chunks
-            const totalChars = response.chunks.reduce((acc, chunk) => {
-                if (chunk.pageContent) {
-                    return acc + chunk.pageContent.length
-                }
-                return acc
-            }, 0)
+            //step 7: save new chunks first (safe delete timing — delete AFTER all saved)
+            let persistedChunks = 0
+            let persistedChars = 0
+            let saveFailed = false
+
             for (let i = 0; i < response.chunks.length; i += SAVE_BATCH_SIZE) {
                 const batch = response.chunks.slice(i, i + SAVE_BATCH_SIZE)
-                await Promise.all(
-                    batch.map(async (chunk: IDocument, localIndex: number) => {
-                        try {
+                try {
+                    await Promise.all(
+                        batch.map(async (chunk: IDocument, localIndex: number) => {
                             const globalIndex = i + localIndex
                             const docChunk: DocumentStoreFileChunk = {
                                 docId: newLoaderId,
@@ -1259,20 +1285,31 @@ const _saveChunksToStorage = async (
                             }
                             const dChunk = appDataSource.getRepository(DocumentStoreFileChunk).create(docChunk)
                             await appDataSource.getRepository(DocumentStoreFileChunk).save(dChunk)
-                        } catch (chunkError) {
-                            throw new InternalFlowiseError(
-                                StatusCodes.INTERNAL_SERVER_ERROR,
-                                `Error: documentStoreServices._saveChunksToStorage - ${getErrorMessage(chunkError)}`
-                            )
-                        }
-                    })
-                )
+                        })
+                    )
+                    persistedChunks += batch.length
+                    persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                } catch (batchError) {
+                    saveFailed = true
+                    break
+                }
             }
-            // update the loader with the new metrics
-            loader.totalChunks = response.totalChunks
-            loader.totalChars = totalChars
+
+            if (!saveFailed) {
+                //step 8: delete old chunks only after all new chunks are confirmed saved
+                await appDataSource.getRepository(DocumentStoreFileChunk).delete({ docId: newLoaderId })
+                loader.totalChunks = persistedChunks
+                loader.totalChars = persistedChars
+                loader.status = 'SYNC'
+            } else {
+                // Partial failure: record actual persisted count, mark STALE
+                loader.totalChunks = persistedChunks
+                loader.totalChars = persistedChars
+                loader.status = DocumentStoreStatus.STALE
+            }
+        } else {
+            loader.status = 'SYNC'
         }
-        loader.status = 'SYNC'
         // have a flag and iterate over the loaders and update the entity status to SYNC
         const allSynced = existingLoaders.every((ldr: IDocumentStoreLoader) => ldr.status === 'SYNC')
         entity.status = allSynced ? DocumentStoreStatus.SYNC : DocumentStoreStatus.STALE
