@@ -2,13 +2,17 @@
 
 let mockReturnChunks: any[] = []
 
-jest.mock('/virtual/test/mock-loader', () => ({
-    nodeClass: class MockLoader {
-        async init() {
-            return mockReturnChunks
+jest.mock(
+    '/virtual/test/mock-loader',
+    () => ({
+        nodeClass: class MockLoader {
+            async init() {
+                return mockReturnChunks
+            }
         }
-    }
-}), { virtual: true })
+    }),
+    { virtual: true }
+)
 
 const mockChunkSave = jest.fn()
 const mockChunkCreate = jest.fn((data: any) => data)
@@ -165,20 +169,22 @@ const makeEntity = () => ({
     id: STORE_ID,
     name: 'Test Store',
     description: 'test',
-    loaders: JSON.stringify([{
-        id: LOADER_ID,
-        loaderId: 'mockLoader',
-        loaderName: 'Mock Loader',
-        loaderConfig: { text: 'hello' },
-        splitterId: '',
-        splitterConfig: {},
-        credential: '',
-        status: 'SYNCING',
-        totalChunks: 0,
-        totalChars: 0,
-        files: [],
-        source: ''
-    }]),
+    loaders: JSON.stringify([
+        {
+            id: LOADER_ID,
+            loaderId: 'mockLoader',
+            loaderName: 'Mock Loader',
+            loaderConfig: { text: 'hello' },
+            splitterId: '',
+            splitterConfig: {},
+            credential: '',
+            status: 'SYNCING',
+            totalChunks: 0,
+            totalChars: 0,
+            files: [],
+            source: ''
+        }
+    ]),
     whereUsed: '[]',
     status: 'SYNCING',
     vectorStoreConfig: null,

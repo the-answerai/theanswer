@@ -1652,6 +1652,13 @@ const _insertIntoVectorStoreWorkerThread = async (
         const recordManagerConfig =
             typeof data.recordManagerConfig === 'string' ? JSON.parse(data.recordManagerConfig) : data.recordManagerConfig
         const isFullCleanup = recordManagerObj && recordManagerConfig?.cleanup === 'full'
+        const parseChunkMetadata = (metadata?: string) => {
+            try {
+                return metadata ? JSON.parse(metadata) : {}
+            } catch {
+                return {}
+            }
+        }
 
         let indexResult: ICommonObject | undefined
         // IMPORTANT: Full-cleanup mode must call upsert() exactly once with ALL docs accumulated.
@@ -1665,23 +1672,30 @@ const _insertIntoVectorStoreWorkerThread = async (
             // stable during this worker iteration — no concurrent chunk writes are expected.
             // If concurrent writes are introduced in future, migrate to a monotonic sequence cursor.
             let lastId = ''
-            while (true) {
-                const batchFilter: ICommonObject = lastId
-                    ? { ...filterOptions, id: MoreThan(lastId) }
-                    : { ...filterOptions }
+            let hasMore = true
+            while (hasMore) {
+                const batchFilter: ICommonObject = lastId ? { ...filterOptions, id: MoreThan(lastId) } : { ...filterOptions }
                 const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
                     where: batchFilter,
                     take: UPSERT_BATCH_SIZE,
                     order: { id: 'ASC' }
                 })
-                if (chunks.length === 0) break
-                for (const chunk of chunks) {
-                    docs.push(new Document({
-                        pageContent: chunk.pageContent,
-                        metadata: (() => { try { return chunk.metadata ? JSON.parse(chunk.metadata) : {} } catch { return {} } })()
-                    }))
+                if (chunks.length === 0) {
+                    hasMore = false
+                    continue
                 }
-                if (chunks.length < UPSERT_BATCH_SIZE) break
+                for (const chunk of chunks) {
+                    docs.push(
+                        new Document({
+                            pageContent: chunk.pageContent,
+                            metadata: parseChunkMetadata(chunk.metadata)
+                        })
+                    )
+                }
+                if (chunks.length < UPSERT_BATCH_SIZE) {
+                    hasMore = false
+                    continue
+                }
                 lastId = chunks[chunks.length - 1].id
             }
             vStoreNodeData.inputs.document = docs
@@ -1694,20 +1708,22 @@ const _insertIntoVectorStoreWorkerThread = async (
             // stable during this worker iteration — no concurrent chunk writes are expected.
             // If concurrent writes are introduced in future, migrate to a monotonic sequence cursor.
             let lastId = ''
-            while (true) {
-                const batchFilter: ICommonObject = lastId
-                    ? { ...filterOptions, id: MoreThan(lastId) }
-                    : { ...filterOptions }
+            let hasMore = true
+            while (hasMore) {
+                const batchFilter: ICommonObject = lastId ? { ...filterOptions, id: MoreThan(lastId) } : { ...filterOptions }
                 const chunks = await appDataSource.getRepository(DocumentStoreFileChunk).find({
                     where: batchFilter,
                     take: UPSERT_BATCH_SIZE,
                     order: { id: 'ASC' }
                 })
-                if (chunks.length === 0) break
+                if (chunks.length === 0) {
+                    hasMore = false
+                    continue
+                }
                 const docs: Document[] = chunks.map((chunk: DocumentStoreFileChunk) => {
                     return new Document({
                         pageContent: chunk.pageContent,
-                        metadata: (() => { try { return chunk.metadata ? JSON.parse(chunk.metadata) : {} } catch { return {} } })()
+                        metadata: parseChunkMetadata(chunk.metadata)
                     })
                 })
                 vStoreNodeData.inputs.document = docs
@@ -1726,7 +1742,10 @@ const _insertIntoVectorStoreWorkerThread = async (
                     }
                 }
 
-                if (chunks.length < UPSERT_BATCH_SIZE) break
+                if (chunks.length < UPSERT_BATCH_SIZE) {
+                    hasMore = false
+                    continue
+                }
                 lastId = chunks[chunks.length - 1].id
             }
         }
