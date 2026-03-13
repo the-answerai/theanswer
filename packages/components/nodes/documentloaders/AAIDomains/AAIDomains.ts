@@ -248,15 +248,10 @@ class AAIDomains_DocumentLoaders implements INode {
         // Convert 'all' to null for RPC function (per API spec)
         const isValidFilter = isValid === 'all' ? null : isValid
 
-        const maxLimitFromEnv = Number(process.env.AAI_DOMAINS_MAX_LIMIT || 5000)
-        const requestedLimit = limit || 100
-        const maxSafeLimit = Number.isFinite(maxLimitFromEnv) && maxLimitFromEnv > 0 ? Math.floor(maxLimitFromEnv) : 5000
-        const effectiveLimit = Math.min(requestedLimit, maxSafeLimit)
-
         const loaderOptions: AAIDomainsLoaderParams = {
             supabaseUrl,
             supabaseKey,
-            limit: effectiveLimit,
+            limit: limit || 100,
             searchTerm: searchTerm || null,
             includeTags: includeTags ? includeTags.split(',').map((t) => t.trim()) : [],
             includeTagsLogic,
@@ -380,7 +375,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
         // Use larger page size since we're only selecting essential fields
         const pageSize = Math.min(this.limit, 100)
-        let allDomains: any[] = []
+        const docs: IDocument[] = []
         let currentPage = 0
 
         console.info('[AAIDomains] Starting load with params:', {
@@ -393,8 +388,8 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             hasAnalysis: this.hasAnalysis
         })
 
-        while (allDomains.length < this.limit) {
-            const remainingItems = this.limit - allDomains.length
+        while (docs.length < this.limit) {
+            const remainingItems = this.limit - docs.length
             const currentPageSize = Math.min(pageSize, remainingItems)
 
             console.info(`[AAIDomains] Fetching page ${currentPage}, size ${currentPageSize}`)
@@ -530,11 +525,16 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         filteredDomains = this.filterByTags(domainsWithTags)
                     }
 
-                    allDomains.push(...filteredDomains)
+                    for (const domain of filteredDomains) {
+                        docs.push(this.createDocumentFromDomain(domain))
+                        if (docs.length >= this.limit) {
+                            break
+                        }
+                    }
+
                     currentPage++
 
-                    // Stop if we've fetched enough
-                    if (allDomains.length >= this.limit || data.length < currentPageSize) {
+                    if (docs.length >= this.limit || data.length < currentPageSize) {
                         shouldStopPagination = true
                         break
                     }
@@ -568,14 +568,9 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.info(`[AAIDomains] Load complete. Total domains: ${allDomains.length}`)
+        console.info(`[AAIDomains] Load complete. Total domains: ${docs.length}`)
 
-        // Truncate to exact limit
-        if (allDomains.length > this.limit) {
-            allDomains = allDomains.slice(0, this.limit)
-        }
-
-        return allDomains.map((domain) => this.createDocumentFromDomain(domain))
+        return docs
     }
 
     private filterByTags(domains: any[]): any[] {
