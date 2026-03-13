@@ -89,38 +89,14 @@ export class MCPToolkit extends BaseToolkit {
 
     async initialize() {
         if (this._tools === null) {
-            console.log('[MCP TOOLKIT DEBUG] ========== initialize START ==========')
-            console.log('[MCP TOOLKIT DEBUG] Timestamp:', new Date().toISOString())
-            console.log('[MCP TOOLKIT DEBUG] Transport type:', this.transportType)
-            console.log('[MCP TOOLKIT DEBUG] Server params command:', this.serverParams.command)
-            console.log('[MCP TOOLKIT DEBUG] Server params env keys:', Object.keys(this.serverParams.env || {}).join(', '))
-            
             try {
-                console.time('[MCP TOOLKIT DEBUG] createClient')
-                console.log('[MCP TOOLKIT DEBUG] Creating client at', new Date().toISOString())
                 this.client = await this.createClient()
-                console.timeEnd('[MCP TOOLKIT DEBUG] createClient')
-                console.log('[MCP TOOLKIT DEBUG] Client created successfully at', new Date().toISOString())
-
-                console.time('[MCP TOOLKIT DEBUG] tools/list request')
-                console.log('[MCP TOOLKIT DEBUG] Requesting tools/list at', new Date().toISOString())
                 this._tools = await this.client.request({ method: 'tools/list' }, ListToolsResultSchema)
-                console.timeEnd('[MCP TOOLKIT DEBUG] tools/list request')
-                console.log('[MCP TOOLKIT DEBUG] tools/list received at', new Date().toISOString())
-                console.log('[MCP TOOLKIT DEBUG] Received', this._tools.tools?.length || 0, 'tools')
-
-                console.time('[MCP TOOLKIT DEBUG] get_tools')
                 this.tools = await this.get_tools()
-                console.timeEnd('[MCP TOOLKIT DEBUG] get_tools')
 
                 // Close the initial client after initialization
-                console.log('[MCP TOOLKIT DEBUG] Closing client at', new Date().toISOString())
                 await this.client.close()
-                console.log('[MCP TOOLKIT DEBUG] Client closed at', new Date().toISOString())
-                console.log('[MCP TOOLKIT DEBUG] ========== initialize SUCCESS ==========')
             } catch (error) {
-                console.error('[MCP TOOLKIT DEBUG] ========== initialize FAILED ==========')
-                console.error('[MCP TOOLKIT DEBUG] Error timestamp:', new Date().toISOString())
                 console.error('MCP Toolkit: Failed to initialize, setting empty tools:', error)
                 this._tools = { tools: [] }
                 this.tools = []
@@ -132,8 +108,6 @@ export class MCPToolkit extends BaseToolkit {
                     }
                 }
             }
-        } else {
-            console.log('[MCP TOOLKIT DEBUG] initialize called but _tools already set, skipping')
         }
     }
 
@@ -154,11 +128,11 @@ export class MCPToolkit extends BaseToolkit {
             })
         })
         const res = await Promise.allSettled(toolsPromises)
-        const errors = res.filter((r:any) => r.status === 'rejected')
+        const errors = res.filter((r: any) => r.status === 'rejected')
         if (errors.length !== 0) {
             console.error('MCP Tools failed to be resolved', errors)
         }
-        const successes = res.filter((r:any) => r.status === 'fulfilled').map((r:any    ) => r.value)
+        const successes = res.filter((r: any) => r.status === 'fulfilled').map((r: any) => r.value)
         return successes
     }
 }

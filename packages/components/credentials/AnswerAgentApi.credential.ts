@@ -11,8 +11,7 @@ class AnswerAgentApi implements INodeCredential {
         this.label = 'AnswerAgent API'
         this.name = 'answerAgentApi'
         this.version = 1.0
-        this.description =
-            'You can find your API key in <a target="_blank" href="/sidekick-studio/apikey">API Keys</a> settings'
+        this.description = 'You can find your API key in <a target="_blank" href="/sidekick-studio/apikey">API Keys</a> settings'
         this.inputs = [
             {
                 label: 'API Key',

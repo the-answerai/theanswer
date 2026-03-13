@@ -635,43 +635,27 @@ const decryptCredentialData = async (encryptedData: string): Promise<ICommonObje
  * @returns {Promise<ICommonObject>}
  */
 export const getCredentialData = async (selectedCredentialId: string, options: ICommonObject): Promise<ICommonObject> => {
-    console.log('[getCredentialData DEBUG] Called with ID:', selectedCredentialId)
-    console.log('[getCredentialData DEBUG] Timestamp:', new Date().toISOString())
-    
     const appDataSource = options.appDataSource as DataSource
     const databaseEntities = options.databaseEntities as IDatabaseEntity
 
     try {
         if (!selectedCredentialId) {
-            console.log('[getCredentialData DEBUG] No credential ID provided, returning empty')
             return {}
         }
 
-        console.time('[getCredentialData DEBUG] Database query')
         const credential = await appDataSource.getRepository(databaseEntities['Credential']).findOneBy({
             id: selectedCredentialId
         })
-        console.timeEnd('[getCredentialData DEBUG] Database query')
 
         if (!credential) {
-            console.log('[getCredentialData DEBUG] Credential not found in database for ID:', selectedCredentialId)
             return {}
         }
-        
-        console.log('[getCredentialData DEBUG] Credential found, name:', credential?.name || 'N/A')
-        console.log('[getCredentialData DEBUG] Credential workspaceId:', credential?.workspaceId || 'N/A')
 
         // Decrypt credentialData
-        console.time('[getCredentialData DEBUG] Decrypt credential')
         const decryptedCredentialData = await decryptCredentialData(credential.encryptedData)
-        console.timeEnd('[getCredentialData DEBUG] Decrypt credential')
-        
-        console.log('[getCredentialData DEBUG] Decrypted data keys:', Object.keys(decryptedCredentialData).join(', '))
-        console.log('[getCredentialData DEBUG] Returning credential data')
 
         return decryptedCredentialData
     } catch (e) {
-        console.error('[getCredentialData DEBUG] ERROR:', e)
         throw new Error(e)
     }
 }
