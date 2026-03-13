@@ -23,4 +23,4 @@ Yes! Sharing how you use AnswerAgentAI is a way of contribution. Export your cha
 
 ## 🐞 Report Bugs
 
-Found an issue? [Report it](https://airtable.com/appIQM0aGhytwZPAO/pagWTeVKuMvGPcK2F/form).
+Found an issue? [Report it](https://github.com/the-answerai/theanswer/issues).

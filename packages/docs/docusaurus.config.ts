@@ -725,10 +725,6 @@ const config: Config = {
                         {
                             to: '/docs/community',
                             label: 'Help Center'
-                        },
-                        {
-                            label: 'Contact Support',
-                            href: 'https://calendly.com/lastrev/answeragent-demo'
                         }
                     ]
                 },
