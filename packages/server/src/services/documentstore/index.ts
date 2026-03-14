@@ -483,6 +483,10 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
                 )
                 persistedChunks += batch.length
                 persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                // Free memory: allow GC to reclaim saved chunks
+                for (let j = i; j < i + batch.length; j++) {
+                    docs[j] = null as any
+                }
             } catch (batchError) {
                 saveFailed = true
                 break
@@ -959,19 +963,24 @@ export const previewChunks = async ({ appDataSource, componentNodes, data, orgId
 
         // if -1, return all chunks
         if (data.previewChunkCount === -1) data.previewChunkCount = totalChunks
-        // return all docs if the user ask for more than we have
+        // return all docs if the user asks for more than we have
         if (totalChunks <= (data.previewChunkCount || 0)) data.previewChunkCount = totalChunks
-        const previewChunkCount = Math.max(0, data.previewChunkCount || 0)
-        if (previewChunkCount > 0) {
-            docs = docs.slice(previewChunkOffset, previewChunkOffset + previewChunkCount)
-        } else {
+
+        // Apply pagination only when previewChunkCount is explicitly set
+        // undefined/null → return all docs (original behavior, needed by save path)
+        if (data.previewChunkCount != null && data.previewChunkCount > 0) {
+            docs = docs.slice(previewChunkOffset, previewChunkOffset + data.previewChunkCount)
+        } else if (data.previewChunkCount != null && data.previewChunkCount === 0) {
             docs = []
         }
+        // else: previewChunkCount is undefined → return all docs
+
+        const effectiveCount = data.previewChunkCount ?? totalChunks
 
         return {
             chunks: docs,
             totalChunks: totalChunks,
-            previewChunkCount: previewChunkCount,
+            previewChunkCount: effectiveCount,
             previewChunkOffset: previewChunkOffset
         }
     } catch (error) {
@@ -1196,18 +1205,8 @@ const _saveChunksToStorage = async (
         //step 1: restore the full paths, if any
         await _normalizeFilePaths(appDataSource, data, entity, orgId)
 
-        //step 2: split the file into chunks
-        const response = await previewChunks({
-            appDataSource,
-            componentNodes,
-            data,
-            isPreviewOnly: false,
-            user: data.user,
-            orgId,
-            workspaceId,
-            subscriptionId,
-            usageCacheManager
-        })
+        //step 2: split the file into chunks (call _splitIntoChunks directly, not previewChunks)
+        const docs = await _splitIntoChunks(appDataSource, componentNodes, data, data.userId, data.organizationId)
 
         //step 3: remove all files associated with the loader
         const existingLoaders = JSON.parse(entity.loaders)
@@ -1292,14 +1291,14 @@ const _saveChunksToStorage = async (
             })
         ).map((chunk) => chunk.id)
 
-        if (response.chunks) {
+        if (docs.length > 0) {
             //step 7: save new chunks first (safe delete timing — delete AFTER all saved)
             let persistedChunks = 0
             let persistedChars = 0
             let saveFailed = false
 
-            for (let i = 0; i < response.chunks.length; i += SAVE_BATCH_SIZE) {
-                const batch = response.chunks.slice(i, i + SAVE_BATCH_SIZE)
+            for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
+                const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
                 try {
                     await Promise.all(
                         batch.map(async (chunk: IDocument, localIndex: number) => {
@@ -1320,6 +1319,10 @@ const _saveChunksToStorage = async (
                     )
                     persistedChunks += batch.length
                     persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                    // Free memory: allow GC to reclaim saved chunks
+                    for (let j = i; j < i + batch.length; j++) {
+                        docs[j] = null as any
+                    }
                 } catch (batchError) {
                     saveFailed = true
                     break
