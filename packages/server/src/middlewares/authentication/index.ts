@@ -2,9 +2,11 @@
 import { NextFunction, Request, Response } from 'express'
 import { auth } from 'express-oauth2-jwt-bearer'
 
-import { DataSource } from 'typeorm'
+import { DataSource, IsNull } from 'typeorm'
 import { User } from '../../database/entities/User'
 import { Organization } from '../../database/entities/Organization'
+import { Role, GeneralRole } from '../../enterprise/database/entities/role.entity'
+import { ENTERPRISE_FEATURE_FLAGS } from '../../utils/quotaUsage'
 import apikeyService from '../../services/apikey'
 import { findOrCreateOrganization } from './findOrCreateOrganization'
 import { findOrCreateUser, updateUserOrganization } from './findOrCreateUser'
@@ -182,10 +184,48 @@ export const authenticationHandlerMiddleware =
             // Populate workspace data for API key users (same as JWT users)
             const workspaceData = organization ? await populateWorkspaceData(AppDataSource, apiKeyUser, organization.id) : {}
 
-            // Store API key user with workspace data and additional auth0 org info
+            // Load permissions from user's workspace role (mirrors JWT flow in verifyAAIToken)
+            let permissions: string[] = []
+            let features: Record<string, string> = {}
+            try {
+                if (workspaceData.isOrganizationAdmin) {
+                    // Org admins get owner role permissions
+                    const ownerRole = await AppDataSource.getRepository(Role).findOne({
+                        where: { name: GeneralRole.OWNER, organizationId: IsNull() }
+                    })
+                    if (ownerRole?.permissions) {
+                        permissions = JSON.parse(ownerRole.permissions)
+                    }
+                    if (!permissions.includes('org:manage')) {
+                        permissions.push('org:manage')
+                    }
+                    // Org admins get all features enabled
+                    ENTERPRISE_FEATURE_FLAGS.forEach((flag) => {
+                        features[flag] = 'true'
+                    })
+                } else if ((workspaceData as WorkspaceData).roleId) {
+                    // Non-admin users get permissions from their workspace role
+                    const role = await AppDataSource.getRepository(Role).findOne({
+                        where: { id: (workspaceData as WorkspaceData).roleId }
+                    })
+                    if (role?.permissions) {
+                        permissions = JSON.parse(role.permissions)
+                    }
+                }
+            } catch (error) {
+                console.error('[Auth] Error loading permissions for API key user:', error)
+                // Fallback: if org admin, grant full access
+                if (workspaceData.isOrganizationAdmin) {
+                    permissions = ['*', 'org:manage']
+                }
+            }
+
+            // Store API key user with workspace data, permissions, and features (mirrors JWT user shape)
             req.user = {
                 ...apiKeyUser,
                 ...workspaceData,
+                permissions,
+                features,
                 auth0OrgId: organization?.auth0Id
             } as any
 
