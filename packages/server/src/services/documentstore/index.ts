@@ -449,6 +449,7 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
         const chunkRepository = appServer.AppDataSource.getRepository(DocumentStoreFileChunk)
         const existingChunkIds = (
             await chunkRepository.find({
+                select: { id: true },
                 where: {
                     docId: fileId,
                     userId,
@@ -1360,6 +1361,7 @@ const _saveChunksToStorage = async (
         const chunkRepository = appDataSource.getRepository(DocumentStoreFileChunk)
         const existingChunkIds = (
             await chunkRepository.find({
+                select: { id: true },
                 where: {
                     docId: newLoaderId,
                     userId: data.userId,
