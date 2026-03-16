@@ -60,6 +60,7 @@ import nodesService from '../nodes'
 // Batch sizes for chunk DB operations and vector store upsert
 const SAVE_BATCH_SIZE = 500
 const UPSERT_BATCH_SIZE = 500
+const DELETE_BATCH_SIZE = 1000
 
 const createDocumentStore = async (newDocumentStore: DocumentStore, orgId: string) => {
     try {
@@ -496,7 +497,9 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
         if (!saveFailed) {
             // Delete old chunks only after all new chunks are confirmed saved
             if (existingChunkIds.length > 0) {
-                await chunkRepository.delete({ id: In(existingChunkIds) })
+                for (let i = 0; i < existingChunkIds.length; i += DELETE_BATCH_SIZE) {
+                    await chunkRepository.delete({ id: In(existingChunkIds.slice(i, i + DELETE_BATCH_SIZE)) })
+                }
             }
             loader.totalChunks = persistedChunks
             loader.totalChars = persistedChars
@@ -1332,7 +1335,9 @@ const _saveChunksToStorage = async (
             if (!saveFailed) {
                 //step 8: delete old chunks only after all new chunks are confirmed saved
                 if (existingChunkIds.length > 0) {
-                    await chunkRepository.delete({ id: In(existingChunkIds) })
+                    for (let i = 0; i < existingChunkIds.length; i += DELETE_BATCH_SIZE) {
+                        await chunkRepository.delete({ id: In(existingChunkIds.slice(i, i + DELETE_BATCH_SIZE)) })
+                    }
                 }
                 loader.totalChunks = persistedChunks
                 loader.totalChars = persistedChars
