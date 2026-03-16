@@ -442,6 +442,8 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             let lastError: any = null
             let shouldStopPagination = false
 
+            // Fetch page from Supabase with retry on transient errors only
+            let pageData: any[] | null = null
             while (retryCount < maxRetries) {
                 try {
                     let selectFields: string
@@ -542,61 +544,59 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         domainsCount: data?.length || 0
                     })
 
-                    if (!data || data.length === 0) {
-                        console.info('[AAIDomains] No more data, stopping pagination')
-                        shouldStopPagination = true
-                        break
-                    }
-
-                    const domainsWithTags = (data as any[]).map((domain: any) => ({
-                        ...domain,
-                        tags: domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
-                    }))
-
-                    let filteredDomains: any[] = domainsWithTags
-                    if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
-                        filteredDomains = this.filterByTags(domainsWithTags)
-                    }
-
-                    fetchedDomainCount += filteredDomains.length
-
-                    const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
-
-                    const pageOutput = this.textSplitter
-                        ? await this.textSplitter.splitDocuments(pageDocs)
-                        : pageDocs
-
-                    await onPage(pageOutput)
-
-                    // Advance cursor only after onPage callback succeeds
-                    lastId = (data as any[])[data.length - 1].id
-                    pageNum++
-
-                    if (fetchedDomainCount >= this.limit || data.length < currentPageSize) {
-                        shouldStopPagination = true
-                        break
-                    }
-
+                    pageData = data
                     break
-                } catch (error: any) {
-                    lastError = error
+                } catch (fetchError: any) {
+                    lastError = fetchError
                     retryCount++
 
                     if (retryCount < maxRetries) {
                         const delayMs = Math.min(1000 * Math.pow(2, retryCount), 10000)
                         console.warn(
-                            `[AAIDomains] Request failed (attempt ${retryCount}/${maxRetries}), retrying in ${delayMs}ms...`,
-                            error.message
+                            `[AAIDomains] Fetch failed (attempt ${retryCount}/${maxRetries}), retrying in ${delayMs}ms...`,
+                            fetchError.message
                         )
                         await new Promise((resolve) => setTimeout(resolve, delayMs))
                     } else {
-                        console.error(`[AAIDomains] All ${maxRetries} retry attempts failed`)
+                        console.error(`[AAIDomains] All ${maxRetries} fetch attempts failed`)
                         throw lastError
                     }
                 }
             }
 
-            if (shouldStopPagination || retryCount >= maxRetries) {
+            if (retryCount >= maxRetries) break
+
+            if (!pageData || pageData.length === 0) {
+                console.info('[AAIDomains] No more data, stopping pagination')
+                shouldStopPagination = true
+            } else {
+                // Process page and invoke callback — errors propagate up, not retried
+                const domainsWithTags = (pageData as any[]).map((domain: any) => ({
+                    ...domain,
+                    tags: domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
+                }))
+
+                let filteredDomains: any[] = domainsWithTags
+                if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
+                    filteredDomains = this.filterByTags(domainsWithTags)
+                }
+
+                fetchedDomainCount += filteredDomains.length
+
+                const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
+                const pageOutput = this.textSplitter ? await this.textSplitter.splitDocuments(pageDocs) : pageDocs
+
+                await onPage(pageOutput)
+
+                lastId = (pageData as any[])[pageData.length - 1].id
+                pageNum++
+
+                if (fetchedDomainCount >= this.limit || pageData.length < currentPageSize) {
+                    shouldStopPagination = true
+                }
+            }
+
+            if (shouldStopPagination) {
                 break
             }
 
