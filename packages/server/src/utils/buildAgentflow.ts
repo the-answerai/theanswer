@@ -1981,6 +1981,11 @@ export const executeAgentFlow = async ({
     let parentTraceIds: ICommonObject | undefined
     let parentLangfuseTrace: LangfuseTraceClient | undefined
 
+    // Compute billing Stripe customer ID before analytics init
+    const billedUserId = user?.id || chatflow.userId
+    const billedUser = await appDataSource.getRepository(User).findOne({ where: { id: billedUserId } })
+    const billingStripeCustomerId = OVERRIDE_CUSTOMER_ID ? DEFAULT_CUSTOMER_ID : billedUser?.stripeCustomerId
+
     try {
         if (isAnalyticsEnabled(chatflow.analytic)) {
             // Override config analytics
@@ -1997,7 +2002,15 @@ export const executeAgentFlow = async ({
                 databaseEntities,
                 componentNodes,
                 analytic: chatflow.analytic,
-                chatId
+                chatId,
+                chatflowid: chatflow.id,
+                chatflowId: chatflow.id,
+                chatflowName: chatflow.name,
+                user,
+                sessionId,
+                messageId: apiMessageId,
+                billingStripeCustomerId,
+                trackingMetadata: incomingInput.trackingMetadata
             })
             await analyticHandlers.init()
             parentTraceIds = await analyticHandlers.onChainStart(
@@ -2009,6 +2022,7 @@ export const executeAgentFlow = async ({
         }
     } catch (error) {
         logger.error(`[server]: Error initializing analytic handlers: ${getErrorMessage(error)}`)
+        logger.error(`[server]: Analytics stack trace:`, error)
     }
 
     while (nodeExecutionQueue.length > 0 && status === 'INPROGRESS') {
