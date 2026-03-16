@@ -285,6 +285,76 @@ class AAIDomains_DocumentLoaders implements INode {
 
         return docs
     }
+
+    async loadStream(
+        nodeData: INodeData,
+        _: string,
+        __: ICommonObject,
+        onBatch: (docs: IDocument[]) => Promise<void>
+    ): Promise<void> {
+        const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
+        const limit = nodeData.inputs?.limit ? Number(nodeData.inputs.limit) : undefined
+        const searchTerm = nodeData.inputs?.searchTerm as string
+        const includeTags = nodeData.inputs?.includeTags as string
+        const includeTagsLogic = (nodeData.inputs?.includeTagsLogic as string) || 'OR'
+        const excludeTags = nodeData.inputs?.excludeTags as string
+        const isValid = (nodeData.inputs?.isValid as string) || 'all'
+        const hasAnalysis = (nodeData.inputs?.hasAnalysis as string) || 'all'
+        const contentFields = nodeData.inputs?.contentFields as string
+        const metadata = nodeData.inputs?.metadata
+        const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
+
+        let omitMetadataKeys: string[] = []
+        if (_omitMetadataKeys) {
+            omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
+        }
+
+        let parsedContentFields: string[] | null = null
+        if (contentFields && contentFields.trim()) {
+            parsedContentFields = contentFields
+                .split(',')
+                .map((f) => f.trim())
+                .filter((f) => f.length > 0)
+        }
+
+        const supabaseUrl = process.env.AAI_DATASTORE_SUPABASE_URL
+        const supabaseKey = process.env.AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY
+
+        if (!supabaseUrl || !supabaseKey) {
+            throw new Error(
+                'AAI Datastore configuration missing. Please set AAI_DATASTORE_SUPABASE_URL and AAI_DATASTORE_SUPABASE_SERVICE_ROLE_KEY environment variables.'
+            )
+        }
+
+        const isValidFilter = isValid === 'all' ? null : isValid
+        const parsedMetadata = metadata ? (typeof metadata === 'object' ? metadata : JSON.parse(metadata)) : null
+
+        const loaderOptions: AAIDomainsLoaderParams = {
+            supabaseUrl,
+            supabaseKey,
+            limit: limit || 100,
+            searchTerm: searchTerm || null,
+            includeTags: includeTags ? includeTags.split(',').map((t) => t.trim()) : [],
+            includeTagsLogic,
+            excludeTags: excludeTags ? excludeTags.split(',').map((t) => t.trim()) : [],
+            isValid: isValidFilter,
+            hasAnalysis,
+            contentFields: parsedContentFields
+        }
+
+        const loader = new AAIDomainsLoader({ ...loaderOptions, textSplitter: textSplitter || null })
+
+        await loader.loadStream(async (pageDocs) => {
+            for (const doc of pageDocs) {
+                if (_omitMetadataKeys === '*') {
+                    doc.metadata = parsedMetadata ? { ...parsedMetadata } : {}
+                } else {
+                    doc.metadata = omit({ ...doc.metadata, ...(parsedMetadata || {}) }, omitMetadataKeys)
+                }
+            }
+            await onBatch(pageDocs)
+        })
+    }
 }
 
 interface AAIDomainsLoaderParams {
@@ -329,25 +399,24 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         this.textSplitter = params.textSplitter ?? null
     }
 
-    public async load(): Promise<IDocument[]> {
-        const supabase: SupabaseClient = createClient(this.supabaseUrl, this.supabaseKey, {
+    private _createSupabaseClient(): SupabaseClient {
+        return createClient(this.supabaseUrl, this.supabaseKey, {
             global: {
                 fetch: (...args) => {
                     const [resource, config] = args
-                    // Set 60 second timeout for RPC calls
                     const controller = new AbortController()
                     const timeoutId = setTimeout(() => controller.abort(), 60000)
-
-                    return fetch(resource, {
-                        ...config,
-                        signal: controller.signal
-                    }).finally(() => clearTimeout(timeoutId))
+                    return fetch(resource, { ...config, signal: controller.signal }).finally(() => clearTimeout(timeoutId))
                 }
             }
         })
+    }
 
+    private async _executeLoad(
+        supabase: SupabaseClient,
+        onPage: (pageDocs: IDocument[]) => Promise<void>
+    ): Promise<{ fetchedDomainCount: number }> {
         const pageSize = Math.min(this.limit, 100)
-        let allDocs: IDocument[] = []
         let fetchedDomainCount = 0
         let lastId: string | null = null
         let pageNum = 0
@@ -368,7 +437,6 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
             console.info(`[AAIDomains] Fetching page ${pageNum}, size ${currentPageSize}`)
 
-            // Retry logic with exponential backoff
             let retryCount = 0
             const maxRetries = 3
             let lastError: any = null
@@ -376,29 +444,23 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
             while (retryCount < maxRetries) {
                 try {
-                    // Build query - dynamic based on contentFields
                     let selectFields: string
 
                     if (this.contentFields && this.contentFields.length > 0) {
-                        // User specified fields - build dynamic select
                         const baseFields = new Set(['id', 'domain_name', 'created_at', 'updated_at'])
                         const requestedFields = new Set<string>()
 
-                        // Parse contentFields to determine which top-level fields we need
                         for (const field of this.contentFields) {
                             const topLevelField = field.split('.')[0]
                             requestedFields.add(topLevelField)
                         }
 
-                        // Always include base fields + requested fields
                         const fieldsToFetch = [...baseFields, ...requestedFields]
 
-                        // Add tags if not already included
                         if (!fieldsToFetch.includes('domain_tags')) {
                             fieldsToFetch.push('domain_tags')
                         }
 
-                        // Build select string with tags relation
                         const fieldsList = fieldsToFetch.filter((f) => f !== 'domain_tags').join(',\n                            ')
                         selectFields = `
                             ${fieldsList},
@@ -408,18 +470,14 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                             )
                         `
 
-                        // Warn about heavy fields
                         const heavyFields = ['ai_analysis_history', 'ai_analysis_overrides', 'override_metadata', 'source_metadata']
                         const requestedHeavy = heavyFields.filter((f) => requestedFields.has(f))
                         if (requestedHeavy.length > 0) {
                             console.warn(
-                                `[AAIDomains] Warning: Fetching heavy JSONB fields: ${requestedHeavy.join(
-                                    ', '
-                                )}. This may impact performance.`
+                                `[AAIDomains] Warning: Fetching heavy JSONB fields: ${requestedHeavy.join(', ')}. This may impact performance.`
                             )
                         }
                     } else {
-                        // Default behavior - only lightweight fields
                         selectFields = `
                             id,
                             domain_name,
@@ -450,7 +508,6 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         query = query.gt('id', lastId)
                     }
 
-                    // Apply filters
                     if (this.searchTerm) {
                         query = query.or(
                             `domain_name.ilike.%${this.searchTerm}%,meta_title.ilike.%${this.searchTerm}%,meta_description.ilike.%${this.searchTerm}%`
@@ -491,13 +548,11 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         break
                     }
 
-                    // Transform domain_tags array to flat tags array (non-mutating)
                     const domainsWithTags = (data as any[]).map((domain: any) => ({
                         ...domain,
                         tags: domain.domain_tags?.map((dt: any) => dt.tags).filter(Boolean) || []
                     }))
 
-                    // Apply tag filtering if specified
                     let filteredDomains: any[] = domainsWithTags
                     if (this.includeTags.length > 0 || this.excludeTags.length > 0) {
                         filteredDomains = this.filterByTags(domainsWithTags)
@@ -507,14 +562,13 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
                     const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
 
-                    if (this.textSplitter) {
-                        const pageChunks = await this.textSplitter.splitDocuments(pageDocs)
-                        allDocs.push(...pageChunks)
-                    } else {
-                        allDocs.push(...pageDocs)
-                    }
+                    const pageOutput = this.textSplitter
+                        ? await this.textSplitter.splitDocuments(pageDocs)
+                        : pageDocs
 
-                    // Advance cursor only after docs are successfully pushed
+                    await onPage(pageOutput)
+
+                    // Advance cursor only after onPage callback succeeds
                     lastId = (data as any[])[data.length - 1].id
                     pageNum++
 
@@ -542,18 +596,30 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                 }
             }
 
-            // If we got no data, hit the limit, or all retries failed, break out of pagination loop
             if (shouldStopPagination || retryCount >= maxRetries) {
                 break
             }
 
-            // Add small delay between successful pages to avoid overwhelming the server
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}, source domains fetched: ${fetchedDomainCount}`)
+        return { fetchedDomainCount }
+    }
 
+    public async load(): Promise<IDocument[]> {
+        const supabase = this._createSupabaseClient()
+        const allDocs: IDocument[] = []
+        const { fetchedDomainCount } = await this._executeLoad(supabase, async (pageDocs) => {
+            allDocs.push(...pageDocs)
+        })
+        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}, source domains fetched: ${fetchedDomainCount}`)
         return allDocs
+    }
+
+    public async loadStream(onBatch: (docs: IDocument[]) => Promise<void>): Promise<void> {
+        const supabase = this._createSupabaseClient()
+        const { fetchedDomainCount } = await this._executeLoad(supabase, onBatch)
+        console.info(`[AAIDomains] Stream complete. Source domains fetched: ${fetchedDomainCount}`)
     }
 
     private filterByTags(domains: any[]): any[] {
