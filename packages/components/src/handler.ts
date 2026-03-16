@@ -715,7 +715,12 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         metadata: metadata,
                         userId: options?.user?.id,
                         sessionId: options.sessionId,
-                        tags: [`Name:${chatflow.name}`],
+                        tags: [
+                            `Name:${chatflow.name}`,
+                            `chatflow_id:${options.chatflowid}`,
+                            `chat_id:${options.chatId}`,
+                            ...(options.messageId ? [`chatmessage_id:${options.messageId}`] : [])
+                        ],
                         version: chatflow.updatedDate
                         // TODO: This is still causing an error
                         // This works to keep the root trace name and have everything else update on the root trace
@@ -731,7 +736,12 @@ export const additionalCallbacks = async (nodeData: INodeData, options: ICommonO
                         try {
                             if (parentLangfuseTrace) {
                                 parentLangfuseTrace.update({
-                                    tags: [`Name:${chatflow.name}`],
+                                    tags: [
+                                        `Name:${chatflow.name}`,
+                                        `chatflow_id:${options.chatflowid}`,
+                                        `chat_id:${options.chatId}`,
+                                        ...(options.messageId ? [`chatmessage_id:${options.messageId}`] : [])
+                                    ],
                                     metadata,
                                     userId: options?.user?.id,
                                     sessionId: options.sessionId,
@@ -1193,18 +1203,50 @@ export class AnalyticHandler {
                         // If fetching parent fails, create a new trace
                         console.warn(`Failed to fetch parent Langfuse trace ${parentLangfuseTraceId}, creating new trace:`, error)
                         langfuseTraceClient = langfuse.trace({
-                            name,
+                            name: this.options.chatflowName || name,
                             sessionId: this.options.chatId,
-                            metadata: { tags: ['openai-assistant'] },
+                            userId: this.options.user?.id,
+                            metadata: {
+                                chatflowid: this.options.chatflowid || this.options.chatflowId,
+                                chatflowName: this.options.chatflowName,
+                                chatId: this.options.chatId,
+                                userId: this.options.user?.id,
+                                organizationId: this.options.user?.organizationId,
+                                messageId: this.options.messageId,
+                                sessionId: this.options.sessionId || this.options.chatId,
+                                stripeCustomerId: this.options.billingStripeCustomerId || this.options.user?.stripeCustomerId
+                            },
+                            tags: [
+                                ...(this.options.chatflowName ? [`Name:${this.options.chatflowName}`] : []),
+                                ...(this.options.chatflowid ? [`chatflow_id:${this.options.chatflowid}`] : []),
+                                ...(this.options.chatId ? [`chat_id:${this.options.chatId}`] : []),
+                                ...(this.options.messageId ? [`chatmessage_id:${this.options.messageId}`] : [])
+                            ].filter(Boolean),
                             ...this.nodeData?.inputs?.analytics?.langFuse
                         })
                     }
                 } else {
                     // No parent trace context, create a new independent trace
                     langfuseTraceClient = langfuse.trace({
-                        name,
+                        name: this.options.chatflowName || name,
                         sessionId: this.options.chatId,
-                        metadata: { tags: ['openai-assistant'] },
+                        userId: this.options.user?.id,
+                        metadata: {
+                            chatflowid: this.options.chatflowid || this.options.chatflowId,
+                            chatflowName: this.options.chatflowName,
+                            chatId: this.options.chatId,
+                            userId: this.options.user?.id,
+                            organizationId: this.options.user?.organizationId,
+                            messageId: this.options.messageId,
+                            sessionId: this.options.sessionId || this.options.chatId,
+                            stripeCustomerId: this.options.billingStripeCustomerId || this.options.user?.stripeCustomerId
+                        },
+                        tags: [
+                            ...(this.options.chatflowName ? [`Name:${this.options.chatflowName}`] : []),
+                            ...(this.options.chatflowid ? [`chatflow_id:${this.options.chatflowid}`] : []),
+                            ...(this.options.chatId ? [`chat_id:${this.options.chatId}`] : []),
+                            ...(this.options.messageId ? [`chatmessage_id:${this.options.messageId}`] : [])
+                        ].filter(Boolean),
                         ...this.nodeData?.inputs?.analytics?.langFuse
                     })
                 }
