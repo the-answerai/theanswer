@@ -464,23 +464,17 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
         for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
             const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
             try {
-                await Promise.all(
-                    batch.map(async (chunk: IDocument, localIndex: number) => {
-                        const globalIndex = i + localIndex
-                        const docChunk: DocumentStoreFileChunk = {
-                            userId,
-                            organizationId,
-                            docId: fileId,
-                            storeId: storeId,
-                            id: uuidv4(),
-                            chunkNo: globalIndex + 1,
-                            pageContent: chunk.pageContent,
-                            metadata: JSON.stringify(chunk.metadata)
-                        }
-                        const dChunk = chunkRepository.create(docChunk)
-                        await chunkRepository.save(dChunk)
-                    })
-                )
+                const entities = batch.map((chunk: IDocument, localIndex: number) => ({
+                    userId,
+                    organizationId,
+                    docId: fileId,
+                    storeId: storeId,
+                    id: uuidv4(),
+                    chunkNo: i + localIndex + 1,
+                    pageContent: sanitizeChunkContent(chunk.pageContent),
+                    metadata: JSON.stringify(chunk.metadata)
+                }))
+                await chunkRepository.insert(entities)
                 persistedChunks += batch.length
                 persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
                 // Free memory: allow GC to reclaim saved chunks
@@ -1300,26 +1294,19 @@ const _saveChunksToStorage = async (
             for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
                 const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
                 try {
-                    await Promise.all(
-                        batch.map(async (chunk: IDocument, localIndex: number) => {
-                            const globalIndex = i + localIndex
-                            const docChunk: DocumentStoreFileChunk = {
-                                docId: newLoaderId,
-                                storeId: data.storeId || '',
-                                id: uuidv4(),
-                                chunkNo: globalIndex + 1,
-                                pageContent: sanitizeChunkContent(chunk.pageContent),
-                                metadata: JSON.stringify(chunk.metadata),
-                                userId: data.userId,
-                                organizationId: data.organizationId
-                            }
-                            const dChunk = chunkRepository.create(docChunk)
-                            await chunkRepository.save(dChunk)
-                        })
-                    )
+                    const entities = batch.map((chunk: IDocument, localIndex: number) => ({
+                        docId: newLoaderId,
+                        storeId: data.storeId || '',
+                        id: uuidv4(),
+                        chunkNo: i + localIndex + 1,
+                        pageContent: sanitizeChunkContent(chunk.pageContent),
+                        metadata: JSON.stringify(chunk.metadata),
+                        userId: data.userId,
+                        organizationId: data.organizationId
+                    }))
+                    await chunkRepository.insert(entities)
                     persistedChunks += batch.length
                     persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
-                    // Free memory: allow GC to reclaim saved chunks
                     for (let j = i; j < i + batch.length; j++) {
                         docs[j] = null as any
                     }
