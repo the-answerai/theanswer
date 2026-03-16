@@ -348,6 +348,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
 
         const pageSize = Math.min(this.limit, 100)
         let allDocs: IDocument[] = []
+        let fetchedDomainCount = 0
         let lastId: string | null = null
         let pageNum = 0
 
@@ -361,8 +362,8 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             hasAnalysis: this.hasAnalysis
         })
 
-        while (allDocs.length < this.limit) {
-            const remainingItems = this.limit - allDocs.length
+        while (fetchedDomainCount < this.limit) {
+            const remainingItems = this.limit - fetchedDomainCount
             const currentPageSize = Math.min(pageSize, remainingItems)
 
             console.info(`[AAIDomains] Fetching page ${pageNum}, size ${currentPageSize}`)
@@ -490,9 +491,6 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         break
                     }
 
-                    lastId = (data as any[])[data.length - 1].id
-                    pageNum++
-
                     // Transform domain_tags array to flat tags array (non-mutating)
                     const domainsWithTags = (data as any[]).map((domain: any) => ({
                         ...domain,
@@ -505,6 +503,8 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         filteredDomains = this.filterByTags(domainsWithTags)
                     }
 
+                    fetchedDomainCount += filteredDomains.length
+
                     const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
 
                     if (this.textSplitter) {
@@ -514,7 +514,11 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         allDocs.push(...pageDocs)
                     }
 
-                    if (allDocs.length >= this.limit || data.length < currentPageSize) {
+                    // Advance cursor only after docs are successfully pushed
+                    lastId = (data as any[])[data.length - 1].id
+                    pageNum++
+
+                    if (fetchedDomainCount >= this.limit || data.length < currentPageSize) {
                         shouldStopPagination = true
                         break
                     }
@@ -547,12 +551,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}`)
-
-        // Truncate to exact limit
-        if (allDocs.length > this.limit) {
-            allDocs = allDocs.slice(0, this.limit)
-        }
+        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}, source domains fetched: ${fetchedDomainCount}`)
 
         return allDocs
     }

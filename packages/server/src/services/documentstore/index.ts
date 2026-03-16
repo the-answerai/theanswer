@@ -477,7 +477,7 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
                     pageContent: sanitizeChunkContent(chunk.pageContent),
                     metadata: JSON.stringify(chunk.metadata)
                 }))
-                await chunkRepository.insert(entities)
+                await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
                 persistedChunks += batch.length
                 persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
                 // Free memory: allow GC to reclaim saved chunks
@@ -1307,7 +1307,7 @@ const _saveChunksToStorage = async (
                         userId: data.userId,
                         organizationId: data.organizationId
                     }))
-                    await chunkRepository.insert(entities)
+                    await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
                     persistedChunks += batch.length
                     persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
                     for (let j = i; j < i + batch.length; j++) {
