@@ -457,37 +457,88 @@ const syncAndRefreshChunks = async (storeId: string, fileId: string, userId: str
             })
         ).map((chunk) => chunk.id)
 
-        // Get fresh documents from Google Drive
-        const docs = await _splitIntoChunks(appServer.AppDataSource, componentNodes, data, userId, organizationId)
+        // Prepare loader node — streaming if supported, batch otherwise
+        const nodeInstanceFilePath = componentNodes[data.loaderId].filePath as string
+        const nodeModule = await import(nodeInstanceFilePath)
+        const docNodeInstance = new nodeModule.nodeClass()
 
-        // Save new chunks first (safe delete timing — delete AFTER all saved)
+        let splitterInstance = null
+        if (data.splitterId && data.splitterConfig && Object.keys(data.splitterConfig).length > 0) {
+            const splitterNodeFilePath = componentNodes[data.splitterId].filePath as string
+            const splitterModule = await import(splitterNodeFilePath)
+            const splitterNodeInstance = new splitterModule.nodeClass()
+            splitterInstance = await splitterNodeInstance.init({ inputs: { ...data.splitterConfig }, id: 'splitter_0' })
+        }
+
+        const loaderNodeData = {
+            credential: data.credential || data.loaderConfig['FLOWISE_CREDENTIAL_ID'] || undefined,
+            inputs: { ...data.loaderConfig, textSplitter: splitterInstance },
+            outputs: { output: 'document' }
+        }
+        const loaderOptions: ICommonObject = {
+            chatflowid: data.storeId ?? uuidv4(),
+            userId,
+            organizationId,
+            appDataSource: appServer.AppDataSource,
+            databaseEntities,
+            logger,
+            processRaw: true
+        }
+
         let persistedChunks = 0
         let persistedChars = 0
         let saveFailed = false
 
-        for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
-            const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
+        if (typeof docNodeInstance.loadStream === 'function') {
+            let chunkOffset = 0
             try {
-                const entities = batch.map((chunk: IDocument, localIndex: number) => ({
-                    userId,
-                    organizationId,
-                    docId: fileId,
-                    storeId: storeId,
-                    id: uuidv4(),
-                    chunkNo: i + localIndex + 1,
-                    pageContent: sanitizeChunkContent(chunk.pageContent),
-                    metadata: JSON.stringify(chunk.metadata)
-                }))
-                await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
-                persistedChunks += batch.length
-                persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
-                // Free memory: allow GC to reclaim saved chunks
-                for (let j = i; j < i + batch.length; j++) {
-                    docs[j] = null as any
-                }
-            } catch (batchError) {
+                await docNodeInstance.loadStream(loaderNodeData, '', loaderOptions, async (pageDocs: IDocument[]) => {
+                    for (let i = 0; i < pageDocs.length; i += SAVE_BATCH_SIZE) {
+                        const batch = pageDocs.slice(i, i + SAVE_BATCH_SIZE)
+                        const entities = batch.map((chunk: IDocument, localIndex: number) => ({
+                            userId,
+                            organizationId,
+                            docId: fileId,
+                            storeId: storeId,
+                            id: uuidv4(),
+                            chunkNo: chunkOffset + i + localIndex + 1,
+                            pageContent: sanitizeChunkContent(chunk.pageContent),
+                            metadata: JSON.stringify(chunk.metadata)
+                        }))
+                        await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
+                        persistedChunks += batch.length
+                        persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                    }
+                    chunkOffset += pageDocs.length
+                })
+            } catch (streamError) {
                 saveFailed = true
-                break
+            }
+        } else {
+            const docs = await _splitIntoChunks(appServer.AppDataSource, componentNodes, data, userId, organizationId)
+            for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
+                const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
+                try {
+                    const entities = batch.map((chunk: IDocument, localIndex: number) => ({
+                        userId,
+                        organizationId,
+                        docId: fileId,
+                        storeId: storeId,
+                        id: uuidv4(),
+                        chunkNo: i + localIndex + 1,
+                        pageContent: sanitizeChunkContent(chunk.pageContent),
+                        metadata: JSON.stringify(chunk.metadata)
+                    }))
+                    await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
+                    persistedChunks += batch.length
+                    persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                    for (let j = i; j < i + batch.length; j++) {
+                        docs[j] = null as any
+                    }
+                } catch (batchError) {
+                    saveFailed = true
+                    break
+                }
             }
         }
 
