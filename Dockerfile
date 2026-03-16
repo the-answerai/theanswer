@@ -29,7 +29,7 @@ RUN pnpm config set store-dir /root/.pnpm-store
 
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-ENV NODE_OPTIONS=--max-old-space-size=8192
+ENV NODE_OPTIONS=--max-old-space-size=4096
 ################################################################################
 
 # Prune projects 
