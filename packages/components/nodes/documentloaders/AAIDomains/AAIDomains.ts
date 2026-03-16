@@ -261,16 +261,9 @@ class AAIDomains_DocumentLoaders implements INode {
             contentFields: parsedContentFields
         }
 
-        const loader = new AAIDomainsLoader(loaderOptions)
+        const loader = new AAIDomainsLoader({ ...loaderOptions, textSplitter: textSplitter || null })
 
-        let docs: IDocument[] = []
-
-        if (textSplitter) {
-            docs = await loader.load()
-            docs = await textSplitter.splitDocuments(docs)
-        } else {
-            docs = await loader.load()
-        }
+        const docs = await loader.load()
 
         // Apply metadata
         const parsedMetadata = metadata ? (typeof metadata === 'object' ? metadata : JSON.parse(metadata)) : null
@@ -305,6 +298,7 @@ interface AAIDomainsLoaderParams {
     isValid: string | null
     hasAnalysis: string
     contentFields: string[] | null
+    textSplitter?: TextSplitter | null
 }
 
 class AAIDomainsLoader extends BaseDocumentLoader {
@@ -318,6 +312,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
     private isValid: string | null
     private hasAnalysis: string
     private contentFields: string[] | null
+    private textSplitter: TextSplitter | null
 
     constructor(params: AAIDomainsLoaderParams) {
         super()
@@ -331,6 +326,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
         this.isValid = params.isValid
         this.hasAnalysis = params.hasAnalysis
         this.contentFields = params.contentFields
+        this.textSplitter = params.textSplitter ?? null
     }
 
     public async load(): Promise<IDocument[]> {
@@ -350,10 +346,11 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             }
         })
 
-        // Use larger page size since we're only selecting essential fields
         const pageSize = Math.min(this.limit, 100)
         let allDocs: IDocument[] = []
-        let currentPage = 0
+        let fetchedDomainCount = 0
+        let lastId: string | null = null
+        let pageNum = 0
 
         console.info('[AAIDomains] Starting load with params:', {
             limit: this.limit,
@@ -365,11 +362,11 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             hasAnalysis: this.hasAnalysis
         })
 
-        while (allDocs.length < this.limit) {
-            const remainingItems = this.limit - allDocs.length
+        while (fetchedDomainCount < this.limit) {
+            const remainingItems = this.limit - fetchedDomainCount
             const currentPageSize = Math.min(pageSize, remainingItems)
 
-            console.info(`[AAIDomains] Fetching page ${currentPage}, size ${currentPageSize}`)
+            console.info(`[AAIDomains] Fetching page ${pageNum}, size ${currentPageSize}`)
 
             // Retry logic with exponential backoff
             let retryCount = 0
@@ -446,8 +443,12 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                     let query = supabase
                         .from('domains')
                         .select(selectFields)
-                        .order('updated_at', { ascending: false })
-                        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
+                        .order('id', { ascending: true })
+                        .limit(currentPageSize)
+
+                    if (lastId) {
+                        query = query.gt('id', lastId)
+                    }
 
                     // Apply filters
                     if (this.searchTerm) {
@@ -479,7 +480,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         throw new Error(`Failed to fetch domains from AAI Datastore: ${error.message}`)
                     }
 
-                    console.info(`[AAIDomains] Page ${currentPage} response:`, {
+                    console.info(`[AAIDomains] Page ${pageNum} response:`, {
                         hasData: !!data,
                         domainsCount: data?.length || 0
                     })
@@ -502,17 +503,26 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         filteredDomains = this.filterByTags(domainsWithTags)
                     }
 
-                    const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
-                    allDocs.push(...pageDocs)
-                    currentPage++
+                    fetchedDomainCount += filteredDomains.length
 
-                    // Stop if we've fetched enough
-                    if (allDocs.length >= this.limit || data.length < currentPageSize) {
+                    const pageDocs = filteredDomains.map((d: any) => this.createDocumentFromDomain(d))
+
+                    if (this.textSplitter) {
+                        const pageChunks = await this.textSplitter.splitDocuments(pageDocs)
+                        allDocs.push(...pageChunks)
+                    } else {
+                        allDocs.push(...pageDocs)
+                    }
+
+                    // Advance cursor only after docs are successfully pushed
+                    lastId = (data as any[])[data.length - 1].id
+                    pageNum++
+
+                    if (fetchedDomainCount >= this.limit || data.length < currentPageSize) {
                         shouldStopPagination = true
                         break
                     }
 
-                    // Success - break out of retry loop
                     break
                 } catch (error: any) {
                     lastError = error
@@ -541,12 +551,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
             await new Promise((resolve) => setTimeout(resolve, 200))
         }
 
-        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}`)
-
-        // Truncate to exact limit
-        if (allDocs.length > this.limit) {
-            allDocs = allDocs.slice(0, this.limit)
-        }
+        console.info(`[AAIDomains] Load complete. Total documents: ${allDocs.length}, source domains fetched: ${fetchedDomainCount}`)
 
         return allDocs
     }
