@@ -58,6 +58,9 @@ import { Telemetry } from '../../utils/telemetry'
 import nodesService from '../nodes'
 
 // Batch sizes for chunk DB operations and vector store upsert
+// PostgreSQL parameter limit is 65535. DocumentStoreFileChunk has 8 columns, so
+// SAVE_BATCH_SIZE=500 uses 4000 parameters (6% of limit) — safe headroom.
+// If the entity gains columns or this value is raised, recalculate: rows × columns < 65535.
 const SAVE_BATCH_SIZE = 500
 const UPSERT_BATCH_SIZE = 500
 
