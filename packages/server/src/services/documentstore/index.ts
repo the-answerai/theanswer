@@ -1205,8 +1205,34 @@ const _saveChunksToStorage = async (
         //step 1: restore the full paths, if any
         await _normalizeFilePaths(appDataSource, data, entity, orgId)
 
-        //step 2: split the file into chunks (call _splitIntoChunks directly, not previewChunks)
-        const docs = await _splitIntoChunks(appDataSource, componentNodes, data, data.userId, data.organizationId)
+        //step 2: prepare loader node — streaming if supported, batch otherwise
+        if (!data.loaderId) return
+        const nodeInstanceFilePath = componentNodes[data.loaderId].filePath as string
+        const nodeModule = await import(nodeInstanceFilePath)
+        const docNodeInstance = new nodeModule.nodeClass()
+
+        let splitterInstance = null
+        if (data.splitterId && data.splitterConfig && Object.keys(data.splitterConfig).length > 0) {
+            const splitterNodeFilePath = componentNodes[data.splitterId].filePath as string
+            const splitterModule = await import(splitterNodeFilePath)
+            const splitterNodeInstance = new splitterModule.nodeClass()
+            splitterInstance = await splitterNodeInstance.init({ inputs: { ...data.splitterConfig }, id: 'splitter_0' })
+        }
+
+        const loaderNodeData = {
+            credential: data.credential || data.loaderConfig['FLOWISE_CREDENTIAL_ID'] || undefined,
+            inputs: { ...data.loaderConfig, textSplitter: splitterInstance },
+            outputs: { output: 'document' }
+        }
+        const loaderOptions: ICommonObject = {
+            chatflowid: data.storeId ?? uuidv4(),
+            userId: data.userId,
+            organizationId: data.organizationId,
+            appDataSource,
+            databaseEntities,
+            logger,
+            processRaw: true
+        }
 
         //step 3: remove all files associated with the loader
         const existingLoaders = JSON.parse(entity.loaders)
@@ -1291,12 +1317,38 @@ const _saveChunksToStorage = async (
             })
         ).map((chunk) => chunk.id)
 
-        if (docs.length > 0) {
-            //step 7: save new chunks first (safe delete timing — delete AFTER all saved)
-            let persistedChunks = 0
-            let persistedChars = 0
-            let saveFailed = false
+        //step 7: save chunks — streaming per page if loader supports it, batch otherwise
+        let persistedChunks = 0
+        let persistedChars = 0
+        let saveFailed = false
 
+        if (typeof docNodeInstance.loadStream === 'function') {
+            let chunkOffset = 0
+            try {
+                await docNodeInstance.loadStream(loaderNodeData, '', loaderOptions, async (pageDocs: IDocument[]) => {
+                    for (let i = 0; i < pageDocs.length; i += SAVE_BATCH_SIZE) {
+                        const batch = pageDocs.slice(i, i + SAVE_BATCH_SIZE)
+                        const entities = batch.map((chunk: IDocument, localIndex: number) => ({
+                            docId: newLoaderId,
+                            storeId: data.storeId || '',
+                            id: uuidv4(),
+                            chunkNo: chunkOffset + i + localIndex + 1,
+                            pageContent: sanitizeChunkContent(chunk.pageContent),
+                            metadata: JSON.stringify(chunk.metadata),
+                            userId: data.userId,
+                            organizationId: data.organizationId
+                        }))
+                        await chunkRepository.insert(entities) // insert() skips TypeORM lifecycle hooks — safe: DocumentStoreFileChunk has none
+                        persistedChunks += batch.length
+                        persistedChars += batch.reduce((acc: number, chunk: IDocument) => acc + (chunk.pageContent?.length ?? 0), 0)
+                    }
+                    chunkOffset += pageDocs.length
+                })
+            } catch (streamError) {
+                saveFailed = true
+            }
+        } else {
+            const docs: IDocument[] = await docNodeInstance.init(loaderNodeData, '', loaderOptions)
             for (let i = 0; i < docs.length; i += SAVE_BATCH_SIZE) {
                 const batch = docs.slice(i, i + SAVE_BATCH_SIZE)
                 try {
@@ -1321,25 +1373,22 @@ const _saveChunksToStorage = async (
                     break
                 }
             }
+        }
 
-            if (!saveFailed) {
-                //step 8: delete old chunks only after all new chunks are confirmed saved
-                if (existingChunkIds.length > 0) {
-                    for (let i = 0; i < existingChunkIds.length; i += DELETE_BATCH_SIZE) {
-                        await chunkRepository.delete({ id: In(existingChunkIds.slice(i, i + DELETE_BATCH_SIZE)) })
-                    }
+        //step 8: delete old chunks only after all new chunks are confirmed saved
+        if (!saveFailed) {
+            if (existingChunkIds.length > 0) {
+                for (let i = 0; i < existingChunkIds.length; i += DELETE_BATCH_SIZE) {
+                    await chunkRepository.delete({ id: In(existingChunkIds.slice(i, i + DELETE_BATCH_SIZE)) })
                 }
-                loader.totalChunks = persistedChunks
-                loader.totalChars = persistedChars
-                loader.status = 'SYNC'
-            } else {
-                // Partial failure: record actual persisted count, mark STALE
-                loader.totalChunks = persistedChunks
-                loader.totalChars = persistedChars
-                loader.status = DocumentStoreStatus.STALE
             }
-        } else {
+            loader.totalChunks = persistedChunks
+            loader.totalChars = persistedChars
             loader.status = 'SYNC'
+        } else {
+            loader.totalChunks = persistedChunks
+            loader.totalChars = persistedChars
+            loader.status = DocumentStoreStatus.STALE
         }
         // have a flag and iterate over the loaders and update the entity status to SYNC
         const allSynced = existingLoaders.every((ldr: IDocumentStoreLoader) => ldr.status === 'SYNC')
