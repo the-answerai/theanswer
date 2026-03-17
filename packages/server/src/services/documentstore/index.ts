@@ -1838,7 +1838,6 @@ const _insertIntoVectorStoreWorkerThread = async (
                         indexResult.numUpdated = (indexResult.numUpdated ?? 0) + (batchResult.numUpdated ?? 0)
                         indexResult.numSkipped = (indexResult.numSkipped ?? 0) + (batchResult.numSkipped ?? 0)
                         indexResult.totalKeys = batchResult.totalKeys ?? indexResult.totalKeys
-                        indexResult.addedDocs = [...(indexResult.addedDocs ?? []), ...(batchResult.addedDocs ?? [])]
                     }
                 }
 
