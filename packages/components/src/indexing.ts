@@ -298,11 +298,16 @@ export async function index(args: IndexArgs): Promise<IndexingResult> {
 
         if (docsToIndex.length > 0) {
             await vectorStore.addDocuments(docsToIndex, { ids: uids })
-            const newDocs = docsToIndex.map((docs) => ({
-                pageContent: docs.pageContent,
-                metadata: docs.metadata
-            }))
-            addedDocs.push(...newDocs)
+            // Only keep first 4 docs as preview samples — accumulating all docs
+            // causes OOM on large stores (95k+ chunks = ~475MB just for addedDocs)
+            if (addedDocs.length < 4) {
+                const remaining = 4 - addedDocs.length
+                const sampleDocs = docsToIndex.slice(0, remaining).map((docs) => ({
+                    pageContent: docs.pageContent,
+                    metadata: docs.metadata
+                }))
+                addedDocs.push(...sampleDocs)
+            }
             numAdded += docsToIndex.length - seenDocs.size
             numUpdated += seenDocs.size
         }
@@ -342,7 +347,7 @@ export async function index(args: IndexArgs): Promise<IndexingResult> {
         }
     }
 
-    totalKeys = (await recordManager.listKeys({})).length
+    totalKeys = numAdded + numSkipped + numUpdated - numDeleted
 
     return {
         numAdded,
