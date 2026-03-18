@@ -5,6 +5,7 @@ import { utilUpdateChatMessageFeedback } from '../../utils/updateChatMessageFeed
 import { IChatMessageFeedback } from '../../Interface'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
+import logger from '../../utils/logger'
 
 // Get all chatmessage feedback from chatflowid
 const getAllChatMessageFeedback = async (
@@ -31,14 +32,11 @@ const createChatMessageFeedbackForChatflow = async (requestBody: Partial<IChatMe
         const dbResponse = await utilAddChatMessageFeedback(requestBody)
         return dbResponse
     } catch (error) {
-        console.log('[FEEDBACK DEBUG] feedbackService.createChatMessageFeedbackForChatflow error:', JSON.stringify({
+        logger.error('[FEEDBACK DEBUG] feedbackService.createChatMessageFeedbackForChatflow error', {
             code: (error as any).code,
             constraint: (error as any).constraint,
-            message: getErrorMessage(error),
-            messageId: (requestBody as any).messageId,
-            chatId: (requestBody as any).chatId,
-            rating: (requestBody as any).rating
-        }, null, 2))
+            messageId: (requestBody as any).messageId
+        })
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: feedbackService.createChatMessageFeedbackForChatflow - ${getErrorMessage(error)}`
