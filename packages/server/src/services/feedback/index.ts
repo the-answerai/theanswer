@@ -31,6 +31,14 @@ const createChatMessageFeedbackForChatflow = async (requestBody: Partial<IChatMe
         const dbResponse = await utilAddChatMessageFeedback(requestBody)
         return dbResponse
     } catch (error) {
+        console.log('[FEEDBACK DEBUG] feedbackService.createChatMessageFeedbackForChatflow error:', JSON.stringify({
+            code: (error as any).code,
+            constraint: (error as any).constraint,
+            message: getErrorMessage(error),
+            messageId: (requestBody as any).messageId,
+            chatId: (requestBody as any).chatId,
+            rating: (requestBody as any).rating
+        }, null, 2))
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: feedbackService.createChatMessageFeedbackForChatflow - ${getErrorMessage(error)}`
