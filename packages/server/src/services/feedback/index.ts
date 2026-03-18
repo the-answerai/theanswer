@@ -33,8 +33,8 @@ const createChatMessageFeedbackForChatflow = async (requestBody: Partial<IChatMe
         return dbResponse
     } catch (error) {
         logger.error('[FEEDBACK DEBUG] feedbackService.createChatMessageFeedbackForChatflow error', {
-            code: (error as any).code,
-            constraint: (error as any).constraint,
+            code: (error as any).driverError?.code,
+            constraint: (error as any).driverError?.constraint,
             messageId: (requestBody as any).messageId
         })
         throw new InternalFlowiseError(

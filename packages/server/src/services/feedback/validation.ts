@@ -46,7 +46,7 @@ export const validateFeedbackExists = async (feedbackId: string): Promise<ChatMe
  */
 export const validateFeedbackForCreation = async (feedback: Partial<IChatMessageFeedback>): Promise<Partial<IChatMessageFeedback>> => {
     // [DEBUG-TEMP] Log incoming payload
-    logger.info('[FEEDBACK DEBUG] Incoming feedback payload', {
+    logger.debug('[FEEDBACK DEBUG] Incoming feedback payload', {
         messageId: feedback.messageId,
         chatId: feedback.chatId,
         chatflowid: feedback.chatflowid,
@@ -63,7 +63,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
     }
 
     // [DEBUG-TEMP] Log what the DB has for this message
-    logger.info('[FEEDBACK DEBUG] Message found in DB', { id: message.id, chatId: message.chatId, chatflowid: message.chatflowid })
+    logger.debug('[FEEDBACK DEBUG] Message found in DB', { id: message.id, chatId: message.chatId, chatflowid: message.chatflowid })
 
     // If chatId is provided, validate it matches the message's chatId
     if (feedback.chatId) {
@@ -76,7 +76,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         }
     } else {
         // If not provided, use the message's chatId
-        logger.info('[FEEDBACK DEBUG] chatId not provided, using message chatId', { chatId: message.chatId })
+        logger.debug('[FEEDBACK DEBUG] chatId not provided, using message chatId', { chatId: message.chatId })
         feedback.chatId = message.chatId
     }
 
@@ -91,7 +91,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         }
     } else {
         // If not provided, use the message's chatflowid
-        logger.info('[FEEDBACK DEBUG] chatflowid not provided, using message chatflowid', { chatflowid: message.chatflowid })
+        logger.debug('[FEEDBACK DEBUG] chatflowid not provided, using message chatflowid', { chatflowid: message.chatflowid })
         feedback.chatflowid = message.chatflowid
     }
 
@@ -103,7 +103,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         feedback.organizationId = message.organizationId
     }
 
-    logger.info('[FEEDBACK DEBUG] Validation PASSED')
+    logger.debug('[FEEDBACK DEBUG] Validation PASSED')
     return feedback
 }
 

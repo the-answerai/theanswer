@@ -34,9 +34,11 @@ const createChatMessageFeedbackForChatflow = async (req: Request, res: Response,
             )
         }
         logger.info('[FEEDBACK DEBUG] Incoming feedback request', {
-            body: req.body,
+            messageId: req.body?.messageId,
+            chatId: req.body?.chatId,
+            chatflowid: req.body?.chatflowid,
+            rating: req.body?.rating,
             contentType: req.headers['content-type'],
-            userAgent: req.headers['user-agent'],
             hasAuth: !!req.headers['authorization']
         })
         await validateFeedbackForCreation(req.body)
