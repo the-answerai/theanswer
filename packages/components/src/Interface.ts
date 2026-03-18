@@ -478,7 +478,7 @@ export enum FollowUpPromptProvider {
 }
 
 export type FollowUpPromptProviderConfig = {
-    [key in FollowUpPromptProvider]: {
+    [_key in FollowUpPromptProvider]: {
         credentialId: string
         modelName: string
         baseUrl: string
