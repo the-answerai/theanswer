@@ -286,12 +286,7 @@ class AAIDomains_DocumentLoaders implements INode {
         return docs
     }
 
-    async loadStream(
-        nodeData: INodeData,
-        _: string,
-        __: ICommonObject,
-        onBatch: (docs: IDocument[]) => Promise<void>
-    ): Promise<void> {
+    async loadStream(nodeData: INodeData, _: string, __: ICommonObject, onBatch: (docs: IDocument[]) => Promise<void>): Promise<void> {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
         const limit = nodeData.inputs?.limit ? Number(nodeData.inputs.limit) : undefined
         const searchTerm = nodeData.inputs?.searchTerm as string
@@ -476,7 +471,9 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         const requestedHeavy = heavyFields.filter((f) => requestedFields.has(f))
                         if (requestedHeavy.length > 0) {
                             console.warn(
-                                `[AAIDomains] Warning: Fetching heavy JSONB fields: ${requestedHeavy.join(', ')}. This may impact performance.`
+                                `[AAIDomains] Warning: Fetching heavy JSONB fields: ${requestedHeavy.join(
+                                    ', '
+                                )}. This may impact performance.`
                             )
                         }
                     } else {
@@ -500,11 +497,7 @@ class AAIDomainsLoader extends BaseDocumentLoader {
                         `
                     }
 
-                    let query = supabase
-                        .from('domains')
-                        .select(selectFields)
-                        .order('id', { ascending: true })
-                        .limit(currentPageSize)
+                    let query = supabase.from('domains').select(selectFields).order('id', { ascending: true }).limit(currentPageSize)
 
                     if (lastId) {
                         query = query.gt('id', lastId)
