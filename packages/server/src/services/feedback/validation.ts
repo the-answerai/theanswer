@@ -4,6 +4,7 @@ import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { ChatMessage } from '../../database/entities/ChatMessage'
 import { ChatMessageFeedback } from '../../database/entities/ChatMessageFeedback'
+import logger from '../../utils/logger'
 
 /**
  * Validates that the message ID exists
@@ -44,17 +45,30 @@ export const validateFeedbackExists = async (feedbackId: string): Promise<ChatMe
  * @param {Partial<IChatMessageFeedback>} feedback
  */
 export const validateFeedbackForCreation = async (feedback: Partial<IChatMessageFeedback>): Promise<Partial<IChatMessageFeedback>> => {
+    // [DEBUG-TEMP] Log incoming payload
+    logger.info('[FEEDBACK DEBUG] Incoming feedback payload', {
+        messageId: feedback.messageId,
+        chatId: feedback.chatId,
+        chatflowid: feedback.chatflowid,
+        rating: feedback.rating
+    })
+
     // If messageId is provided, validate it exists and get the message
     let message: ChatMessage | null = null
     if (feedback.messageId) {
         message = await validateMessageExists(feedback.messageId)
     } else {
+        logger.error('[FEEDBACK DEBUG] FAIL: messageId is missing in payload')
         throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Message ID is required')
     }
+
+    // [DEBUG-TEMP] Log what the DB has for this message
+    logger.info('[FEEDBACK DEBUG] Message found in DB', { id: message.id, chatId: message.chatId, chatflowid: message.chatflowid })
 
     // If chatId is provided, validate it matches the message's chatId
     if (feedback.chatId) {
         if (message.chatId !== feedback.chatId) {
+            logger.error('[FEEDBACK DEBUG] FAIL chatId mismatch', { incoming: feedback.chatId, inDB: message.chatId })
             throw new InternalFlowiseError(
                 StatusCodes.BAD_REQUEST,
                 `Inconsistent chat ID: message with ID ${message.id} does not belong to chat with ID ${feedback.chatId}`
@@ -62,12 +76,14 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         }
     } else {
         // If not provided, use the message's chatId
+        logger.info('[FEEDBACK DEBUG] chatId not provided, using message chatId', { chatId: message.chatId })
         feedback.chatId = message.chatId
     }
 
     // If chatflowid is provided, validate it matches the message's chatflowid
     if (feedback.chatflowid) {
         if (message.chatflowid !== feedback.chatflowid) {
+            logger.error('[FEEDBACK DEBUG] FAIL chatflowid mismatch', { incoming: feedback.chatflowid, inDB: message.chatflowid })
             throw new InternalFlowiseError(
                 StatusCodes.BAD_REQUEST,
                 `Inconsistent chatflow ID: message with ID ${message.id} does not belong to chatflow with ID ${feedback.chatflowid}`
@@ -75,6 +91,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         }
     } else {
         // If not provided, use the message's chatflowid
+        logger.info('[FEEDBACK DEBUG] chatflowid not provided, using message chatflowid', { chatflowid: message.chatflowid })
         feedback.chatflowid = message.chatflowid
     }
 
@@ -86,6 +103,7 @@ export const validateFeedbackForCreation = async (feedback: Partial<IChatMessage
         feedback.organizationId = message.organizationId
     }
 
+    logger.info('[FEEDBACK DEBUG] Validation PASSED')
     return feedback
 }
 
