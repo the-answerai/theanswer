@@ -259,6 +259,8 @@ class ConditionAgent_Agentflow implements INode {
             if (!model) {
                 throw new Error('Model is required')
             }
+            const modelName = modelConfig?.model ?? modelConfig?.modelName
+
             // Setup analytics tracing options and attach to options object for easy access
             const callbacks = await additionalCallbacks(nodeData, {
                 ...options,
@@ -387,13 +389,20 @@ class ConditionAgent_Agentflow implements INode {
             const endTime = Date.now()
             const timeDelta = endTime - startTime
 
-            // End analytics tracking - pass usage metadata for token calculation
+            // End analytics tracking (pass structured output with usage metadata)
             if (analyticHandlers && llmIds) {
-                await analyticHandlers.onLLMEnd(
-                    llmIds,
-                    typeof response.content === 'string' ? response.content : JSON.stringify(response.content),
-                    response.usage_metadata
-                )
+                const analyticsOutput: any = {
+                    content: typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
+                }
+                // Include usage metadata if available
+                if (response.usage_metadata) {
+                    analyticsOutput.usageMetadata = response.usage_metadata
+                }
+                // Include response metadata (contains model name) if available
+                if (response.response_metadata) {
+                    analyticsOutput.responseMetadata = response.response_metadata
+                }
+                await analyticHandlers.onLLMEnd(llmIds, analyticsOutput, { model: modelName, provider: model })
             }
 
             let calledOutputName: string

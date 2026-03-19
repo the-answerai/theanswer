@@ -557,6 +557,7 @@ class Agent_Agentflow implements INode {
             if (!model) {
                 throw new Error('Model is required')
             }
+            const modelName = modelConfig?.model ?? modelConfig?.modelName
 
             // Extract tools
             const tools = nodeData.inputs?.agentTools as ITool[]
@@ -1178,7 +1179,7 @@ class Agent_Agentflow implements INode {
 
             // End analytics tracking - pass usage metadata for token calculation
             if (analyticHandlers && llmIds) {
-                await analyticHandlers.onLLMEnd(llmIds, finalResponse, response.usage_metadata)
+                await analyticHandlers.onLLMEnd(llmIds, output, { model: modelName, provider: model })
             }
 
             // Send additional streaming events if needed

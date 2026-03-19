@@ -2013,8 +2013,9 @@ export const executeAgentFlow = async ({
                 trackingMetadata: incomingInput.trackingMetadata
             })
             await analyticHandlers.init()
+            const flowName = chatflow.name || 'Agentflow'
             parentTraceIds = await analyticHandlers.onChainStart(
-                'Agentflow',
+                flowName,
                 form && Object.keys(form).length > 0 ? JSON.stringify(form) : question || ''
             )
             // Get Langfuse trace for node-level span creation
