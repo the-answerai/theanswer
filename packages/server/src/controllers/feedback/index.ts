@@ -3,6 +3,7 @@ import feedbackService from '../../services/feedback'
 import { validateFeedbackForCreation, validateFeedbackForUpdate } from '../../services/feedback/validation'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
+import logger from '../../utils/logger'
 
 const getAllChatMessageFeedback = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,6 +33,14 @@ const createChatMessageFeedbackForChatflow = async (req: Request, res: Response,
                 `Error: feedbackController.createChatMessageFeedbackForChatflow - body not provided!`
             )
         }
+        logger.info('[FEEDBACK DEBUG] Incoming feedback request', {
+            messageId: req.body?.messageId,
+            chatId: req.body?.chatId,
+            chatflowid: req.body?.chatflowid,
+            rating: req.body?.rating,
+            contentType: req.headers['content-type'],
+            hasAuth: !!req.headers['authorization']
+        })
         await validateFeedbackForCreation(req.body)
         const apiResponse = await feedbackService.createChatMessageFeedbackForChatflow(req.body)
         return res.json(apiResponse)
