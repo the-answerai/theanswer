@@ -665,7 +665,7 @@ export const buildFlow = async ({
 
                 logger.debug(`[server]: [${orgId}]: Initializing ${reactFlowNode.data.label} (${reactFlowNode.data.id})`)
                 const finalQuestion = uploadedFilesContent ? `${uploadedFilesContent}\n\n${question}` : question
-
+                
                 let outputResult = await newNodeInstance.init(reactFlowNodeData, finalQuestion, {
                     orgId,
                     workspaceId,
