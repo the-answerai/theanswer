@@ -32,7 +32,7 @@ const mergeUsers = (initialUser?: Partial<User>, runtimeUser?: Partial<User> | n
 
             // Don't overwrite server-enriched auth fields
             if (preservedFields.includes(key) && merged[key] !== undefined) {
-                return  // Keep server value
+                return // Keep server value
             }
 
             // Allow runtime updates for non-auth fields (name, email, picture, etc.)
