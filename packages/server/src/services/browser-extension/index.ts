@@ -73,8 +73,25 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
         const appServer = getRunningExpressApp()
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
 
-        // Find the chatflow
-        const chatflow = await chatFlowRepository.findOneBy({ id: chatflowId })
+        if (!user.activeWorkspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: browserExtensionService.updateBrowserExtensionVisibility - activeWorkspaceId is required'
+            )
+        }
+
+        if (!user.organizationId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: browserExtensionService.updateBrowserExtensionVisibility - organizationId is required'
+            )
+        }
+
+        const chatflow = await chatFlowRepository.findOneBy({
+            id: chatflowId,
+            workspaceId: user.activeWorkspaceId,
+            organizationId: user.organizationId
+        })
 
         if (!chatflow) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow with ID ${chatflowId} not found`)
