@@ -7,7 +7,8 @@ export enum ChatflowVisibility {
     PUBLIC = 'Public',
     ORGANIZATION = 'Organization',
     ANSWERAI = 'AnswerAI',
-    MARKETPLACE = 'Marketplace'
+    MARKETPLACE = 'Marketplace',
+    BROWSER_EXTENSION = 'Browser Extension'
 }
 
 export enum EnumChatflowType {
