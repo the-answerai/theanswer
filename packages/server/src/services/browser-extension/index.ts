@@ -26,10 +26,18 @@ const getBrowserExtensionChatflows = async (user: IUser): Promise<ChatFlow[]> =>
 
         // Query chatflows that:
         // 1. Belong to the user, scoped to their active workspace, with Browser Extension visibility
+        if (!user.activeWorkspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: browserExtensionService.getBrowserExtensionChatflows - activeWorkspaceId is required'
+            )
+        }
+
         const queryBuilder = chatFlowRepository
             .createQueryBuilder('chatflow')
             .where('chatflow.userId = :userId', { userId: user.id })
             .andWhere('chatflow.workspaceId = :workspaceId', { workspaceId: user.activeWorkspaceId })
+            .andWhere('chatflow.organizationId = :organizationId', { organizationId: user.organizationId })
             .andWhere('chatflow.visibility LIKE :ext', { ext: '%Browser Extension%' })
 
         // Return the complete chatflow objects with all fields
@@ -45,6 +53,7 @@ const getBrowserExtensionChatflows = async (user: IUser): Promise<ChatFlow[]> =>
         // Return the chatflows with the default flag
         return chatflowsWithDefaultFlag
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: browserExtensionService.getBrowserExtensionChatflows - ${getErrorMessage(error)}`
@@ -100,6 +109,7 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
 
         return updatedChatflow
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: browserExtensionService.updateBrowserExtensionVisibility - ${getErrorMessage(error)}`
