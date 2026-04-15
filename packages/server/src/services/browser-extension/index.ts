@@ -35,10 +35,12 @@ const getBrowserExtensionChatflows = async (user: IUser): Promise<ChatFlow[]> =>
 
         const queryBuilder = chatFlowRepository
             .createQueryBuilder('chatflow')
-            .where('chatflow.userId = :userId', { userId: user.id })
-            .andWhere('chatflow.workspaceId = :workspaceId', { workspaceId: user.activeWorkspaceId })
-            .andWhere('chatflow.organizationId = :organizationId', { organizationId: user.organizationId })
+            .where('chatflow.workspaceId = :workspaceId', { workspaceId: user.activeWorkspaceId })
             .andWhere('chatflow.visibility LIKE :ext', { ext: '%Browser Extension%' })
+            .andWhere('(chatflow.userId = :userId OR chatflow.visibility LIKE :org)', {
+                userId: user.id,
+                org: '%Organization%'
+            })
 
         // Return the complete chatflow objects with all fields
         const dbResponse = await queryBuilder.getMany()
@@ -80,17 +82,9 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
             )
         }
 
-        if (!user.organizationId) {
-            throw new InternalFlowiseError(
-                StatusCodes.PRECONDITION_FAILED,
-                'Error: browserExtensionService.updateBrowserExtensionVisibility - organizationId is required'
-            )
-        }
-
         const chatflow = await chatFlowRepository.findOneBy({
             id: chatflowId,
-            workspaceId: user.activeWorkspaceId,
-            organizationId: user.organizationId
+            workspaceId: user.activeWorkspaceId
         })
 
         if (!chatflow) {
