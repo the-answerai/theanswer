@@ -1,14 +1,11 @@
 import { StatusCodes } from 'http-status-codes'
-import { ChatFlow } from '../../database/entities/ChatFlow'
+import { ChatFlow, ChatflowVisibility } from '../../database/entities/ChatFlow'
 import { User } from '../../database/entities/User'
 import { IUser } from '../../Interface'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { getErrorMessage } from '../../errors/utils'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import checkOwnership from '../../utils/checkOwnership'
-
-// Browser Extension visibility constant
-const BROWSER_EXTENSION = 'Browser Extension'
 
 /**
  * Get all public chatflows that are available for the browser extension
@@ -28,8 +25,22 @@ const getBrowserExtensionChatflows = async (user: IUser): Promise<ChatFlow[]> =>
         }
 
         // Query chatflows that:
-        // 1. Belong to the user or their organization
-        const queryBuilder = chatFlowRepository.createQueryBuilder('chatflow').where('chatflow.userId = :userId', { userId: user.id })
+        // 1. Belong to the user, scoped to their active workspace, with Browser Extension visibility
+        if (!user.activeWorkspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: browserExtensionService.getBrowserExtensionChatflows - activeWorkspaceId is required'
+            )
+        }
+
+        const queryBuilder = chatFlowRepository
+            .createQueryBuilder('chatflow')
+            .where('chatflow.workspaceId = :workspaceId', { workspaceId: user.activeWorkspaceId })
+            .andWhere('chatflow.visibility LIKE :ext', { ext: '%Browser Extension%' })
+            .andWhere('(chatflow.userId = :userId OR chatflow.visibility LIKE :org)', {
+                userId: user.id,
+                org: '%Organization%'
+            })
 
         // Return the complete chatflow objects with all fields
         const dbResponse = await queryBuilder.getMany()
@@ -44,6 +55,7 @@ const getBrowserExtensionChatflows = async (user: IUser): Promise<ChatFlow[]> =>
         // Return the chatflows with the default flag
         return chatflowsWithDefaultFlag
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: browserExtensionService.getBrowserExtensionChatflows - ${getErrorMessage(error)}`
@@ -63,8 +75,17 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
         const appServer = getRunningExpressApp()
         const chatFlowRepository = appServer.AppDataSource.getRepository(ChatFlow)
 
-        // Find the chatflow
-        const chatflow = await chatFlowRepository.findOneBy({ id: chatflowId })
+        if (!user.activeWorkspaceId) {
+            throw new InternalFlowiseError(
+                StatusCodes.PRECONDITION_FAILED,
+                'Error: browserExtensionService.updateBrowserExtensionVisibility - activeWorkspaceId is required'
+            )
+        }
+
+        const chatflow = await chatFlowRepository.findOneBy({
+            id: chatflowId,
+            workspaceId: user.activeWorkspaceId
+        })
 
         if (!chatflow) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow with ID ${chatflowId} not found`)
@@ -83,11 +104,11 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
             : []
 
         // Add or remove "Browser Extension" from visibility
-        if (enabled && !visibilityArray.includes(BROWSER_EXTENSION as any)) {
-            visibilityArray.push(BROWSER_EXTENSION as any)
+        if (enabled && !visibilityArray.includes(ChatflowVisibility.BROWSER_EXTENSION)) {
+            visibilityArray.push(ChatflowVisibility.BROWSER_EXTENSION)
         } else if (!enabled) {
             // Filter out Browser Extension if it exists
-            const index = visibilityArray.findIndex((v) => String(v) === BROWSER_EXTENSION)
+            const index = visibilityArray.findIndex((v) => v === ChatflowVisibility.BROWSER_EXTENSION)
             if (index >= 0) {
                 visibilityArray.splice(index, 1)
             }
@@ -99,6 +120,7 @@ const updateBrowserExtensionVisibility = async (chatflowId: string, enabled: boo
 
         return updatedChatflow
     } catch (error) {
+        if (error instanceof InternalFlowiseError) throw error
         throw new InternalFlowiseError(
             StatusCodes.INTERNAL_SERVER_ERROR,
             `Error: browserExtensionService.updateBrowserExtensionVisibility - ${getErrorMessage(error)}`
