@@ -261,6 +261,45 @@ export const validateCommandInjection = (args: string[]): void => {
     }
 }
 
+/**
+ * Security hardening for CVE-2026-40933 (Flowise MCP stdio RCE).
+ *
+ * The CVE exploits the fact that allowlisted commands (npx, node, python, python3)
+ * all support "inline code execution" flags that accept an arbitrary string and
+ * execute it as code or as a shell command. The existing shell-metacharacter check
+ * in validateCommandInjection does not trigger on a payload like:
+ *
+ *   { "command": "npx", "args": ["-c", "touch /tmp/pwn"] }
+ *
+ * because "-c" and "touch /tmp/pwn" each contain no metacharacters on their own.
+ * npx then interprets -c/--call as "execute the following string as a shell command",
+ * resulting in RCE.
+ *
+ * This validator rejects any argument list that contains one of these inline-exec
+ * flags as a standalone argument, which is the only way these flags can be invoked.
+ * Legitimate MCP server configs (e.g. `npx -y @modelcontextprotocol/server-filesystem`)
+ * do not use any of these flags, so this is non-breaking for normal usage.
+ *
+ * Flags blocked:
+ *   -c / --call   : npx, python, python3 (execute string as code/shell)
+ *   -e / --eval   : node (evaluate string as JavaScript)
+ *   -p / --print  : node (evaluate and print - equivalent to --eval for RCE)
+ *   --exec        : docker exec-style (defense-in-depth)
+ */
+export const validateInlineExecFlags = (args: string[]): void => {
+    const forbiddenFlags = new Set(['-c', '--call', '-e', '--eval', '-p', '--print', '--exec'])
+
+    for (const arg of args) {
+        if (typeof arg !== 'string') continue
+
+        if (forbiddenFlags.has(arg.toLowerCase())) {
+            throw new Error(
+                `Argument "${arg}" is an inline code-execution flag and is not permitted in MCP server configurations (CVE-2026-40933 mitigation).`
+            )
+        }
+    }
+}
+
 export const validateEnvironmentVariables = (env: Record<string, any>): void => {
     const dangerousEnvVars = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']
 
@@ -292,6 +331,9 @@ export const validateMCPServerConfig = (serverParams: any): void => {
     if (serverParams.args && Array.isArray(serverParams.args)) {
         validateArgsForLocalFileAccess(serverParams.args)
         validateCommandInjection(serverParams.args)
+        // CVE-2026-40933: reject inline code-execution flags (-c, --call, -e, --eval, -p, --print, --exec)
+        // that bypass the shell-metacharacter check by wrapping arbitrary code in a separate argument.
+        validateInlineExecFlags(serverParams.args)
     }
 
     // Validate environment variables
