@@ -50,7 +50,115 @@ There are two main ways to get started with TheAnswer: local development setup a
     cd theanswer
     ```
 
-3. Open [http://localhost:3000](http://localhost:3000)
+    **Alternative:** If you already cloned without submodules:
+
+    ```bash
+    git clone https://github.com/the-answerai/theanswer.git
+    cd theanswer
+    git submodule update --init
+    ```
+
+2. **Set up environment variables:**
+
+    - Create a `.env` file in the root directory
+    - If `.env.example` files are not available, contact The AnswerAI team for required environment variables
+    - Use `API_HOST` to specify your API server host. All API requests automatically include the `/api/v1` prefix.
+    - `API_BASE_URL` is deprecated and should not be used.
+    - **Note:** For local development, you'll need Auth0 development team access (Member role or above)
+
+3. **Verify submodules are initialized:**
+
+    ```bash
+    git submodule status
+    ```
+
+    You should see output like:
+
+    ```
+    +050ca236891420946884c68ff8d74cbeb0cbe7ef packages/embed (aai-embed@3.0.3-23-g050ca23)
+    ```
+
+    **If submodules are not initialized** (empty directories or missing files), or if you need to update to the correct version, run:
+
+    ```bash
+    # This will initialize, update, and force reset submodules to the correct commits
+    pnpm submodule:init
+    ```
+
+    **For a complete reset** (if you're having persistent issues):
+
+    ```bash
+    # Remove and reinitialize all submodules
+    pnpm submodule:reset
+    ```
+
+    **Note:** This repository uses git submodules. The `packages/embed` submodule contains the chat embed functionality. See [CONTRIBUTING.md](CONTRIBUTING.md#git-submodules) for detailed submodule management instructions.
+
+4. **Install dependencies:**
+
+    ```bash
+    pnpm install
+    ```
+
+5. **Install Docker Desktop:**
+
+    - Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    - Ensure Docker is running before proceeding
+
+6. **Set up database and redis locally:**
+
+    ```bash
+    pnpm dev-docker
+    ```
+
+7. **Optional: Install database tool**
+
+    - Install [DBeaver](https://dbeaver.io/) for database management
+    - Connect to PostgreSQL: localhost, example_user, example_password
+
+8. **Build and migrate the initial database:**
+
+    ```bash
+    pnpm build && pnpm db:migrate
+    ```
+
+9. **Run the application:**
+
+    ```bash
+    pnpm start
+    ```
+
+10. **Access TheAnswer:**
+
+    - After the build completes and the app starts, you should see logs stating that the server started on 'http://localhost:3000'
+    - Open [http://localhost:3000](http://localhost:3000) in your browser
+    - Verify you can login and access the application
+
+11. **For development:**
+    - After initial setup, you can fast reload to test your changes using:
+    ```bash
+    pnpm dev
+    ```
+
+### Deploy on Render (Recommended for Easy Setup)
+
+For a quick and easy setup, we recommend deploying TheAnswer on Render:
+
+1. Click the "Deploy to Render" button below:
+
+    [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/the-answerai/theanswer)
+
+2. Follow the prompts on Render to complete the deployment process.
+
+3. Once deployed, you'll receive a URL to access your TheAnswer instance.
+
+For detailed instructions on both local development and Render deployment, please refer to our [documentation](https://docs.theanswer.ai/).
+
+Note: The standalone TheAnswer CLI tool is currently under development. Stay tuned for updates on its release and installation process.
+
+Note: The TheAnswer package is currently under development and not yet published to npm. Stay tuned for updates on when it will be available as a standalone CLI tool.
+
+4. Open [http://localhost:3000](http://localhost:3000)
 
 ## 🐳 Docker
 
