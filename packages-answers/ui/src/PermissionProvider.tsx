@@ -13,21 +13,33 @@ const PermissionContext = React.createContext<PermissionContextValue | undefined
 
 const mergeUsers = (initialUser?: Partial<User>, runtimeUser?: Partial<User> | null): Partial<User> => {
     const merged: Record<string, unknown> = {}
+
+    // Start with initialUser (server-enriched data from /api/v1/auth/me)
     if (initialUser) {
         Object.entries(initialUser).forEach(([key, value]) => {
             if (value !== undefined) merged[key] = value
         })
     }
+
+    // Merge runtimeUser but preserve critical auth fields from server
     if (runtimeUser) {
+        // Fields that MUST come from server enrichment, never from client
+        // These are set by the backend based on Auth0 roles and should not be overwritten
+        const preservedFields = ['roles', 'permissions', 'features', 'org_id', 'organizationId']
+
         Object.entries(runtimeUser).forEach(([key, value]) => {
             if (value === undefined) return
-            if (key === 'roles' && Array.isArray(merged[key]) && Array.isArray(value)) {
-                merged[key] = Array.from(new Set([...(merged[key] as unknown[]), ...value]))
-                return
+
+            // Don't overwrite server-enriched auth fields
+            if (preservedFields.includes(key) && merged[key] !== undefined) {
+                return // Keep server value
             }
+
+            // Allow runtime updates for non-auth fields (name, email, picture, etc.)
             merged[key] = value
         })
     }
+
     return merged as Partial<User>
 }
 

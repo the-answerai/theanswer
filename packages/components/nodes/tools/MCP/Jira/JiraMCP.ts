@@ -46,7 +46,7 @@ class Jira_MCP implements INode {
             label: 'Connect Credential',
             name: 'credential',
             type: 'credential',
-            credentialNames: ['JiraApi']
+            credentialNames: ['jiraApi']
         }
         this.inputs = [
             {
@@ -101,13 +101,14 @@ class Jira_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
+        
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
+       
         const jiraApiKey = getCredentialParam('accessToken', credentialData, nodeData)
         const jiraApiEmail = getCredentialParam('username', credentialData, nodeData)
         const jiraUrl = getCredentialParam('host', credentialData, nodeData)
-
         const packagePath = getNodeModulesPackagePath('@answerai/jira-mcp/build/index.js')
-
+      
         const serverParams = {
             command: process.execPath,
             args: [packagePath],
@@ -122,7 +123,7 @@ class Jira_MCP implements INode {
         await toolkit.initialize()
 
         const tools = toolkit.tools ?? []
-
+      
         return tools
     }
 }

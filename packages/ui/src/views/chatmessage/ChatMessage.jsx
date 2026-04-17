@@ -1362,7 +1362,8 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
                         setFormDescription(startNode.data.inputs?.formDescription)
                     }
 
-                    getAllExecutionsApi.request({ agentflowId: chatflowid })
+                    const storedSessionId = getLocalStorageChatflow(chatflowid)?.chatId
+                    getAllExecutionsApi.request({ agentflowId: chatflowid, ...(storedSessionId && { sessionId: storedSessionId }) })
                 }
             }
 
@@ -1468,8 +1469,10 @@ const ChatMessage = ({ open, chatflowid, isAgentCanvas, isDialog, previews, setP
 
     useEffect(() => {
         if (open && chatflowid) {
-            // API request
-            getChatmessageApi.request(chatflowid)
+            const storedChatId = getLocalStorageChatflow(chatflowid)?.chatId
+            if (storedChatId) {
+                getChatmessageApi.request(chatflowid, { chatId: storedChatId })
+            }
             getIsChatflowStreamingApi.request(chatflowid)
             getAllowChatFlowUploads.request(chatflowid)
             getChatflowConfig.request(chatflowid)

@@ -89,8 +89,18 @@ export async function enrichSessionWithFlowise(session: any, options: EnrichSess
             const enrichedUser = data.user || data
 
             if (enrichedUser) {
+                // Save Auth0 roles before merge — the ID token carries https://theanswer.ai/roles
+                // but the access token (used by Flowise) often does not, so Flowise returns roles: []
+                const auth0Roles = session.user?.['https://theanswer.ai/roles']
+
                 // Merge Auth0 user with Flowise enriched data (Flowise takes priority)
                 session.user = { ...session.user, ...enrichedUser }
+
+                // Restore Auth0 roles if Flowise couldn't extract them from the access token
+                if (auth0Roles?.length && (!session.user.roles || session.user.roles.length === 0)) {
+                    session.user.roles = Array.isArray(auth0Roles) ? auth0Roles : [auth0Roles]
+                }
+
                 console.debug('[AAI enrichSession] User enriched successfully with fields:', Object.keys(enrichedUser).join(', '))
             }
         } else {

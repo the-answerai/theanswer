@@ -133,7 +133,7 @@ class ChatPromptTemplate_Prompts implements INode {
                     libraries: ['axios', '@langchain/core']
                 })
 
-                const parsedResponse = JSON.parse(response)
+                const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response
 
                 if (!Array.isArray(parsedResponse)) {
                     throw new Error('Returned message history must be an array')

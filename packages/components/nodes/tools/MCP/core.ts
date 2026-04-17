@@ -261,6 +261,88 @@ export const validateCommandInjection = (args: string[]): void => {
     }
 }
 
+/**
+ * Security hardening for CVE-2026-40933 (Flowise MCP stdio RCE).
+ *
+ * The CVE exploits the fact that several allowlisted interpreters (npx, node,
+ * python, python3) support "inline code execution" flags that accept an arbitrary
+ * string and execute it as code or as a shell command. The existing
+ * shell-metacharacter check in validateCommandInjection does not trigger on a
+ * payload like:
+ *
+ *   { "command": "npx", "args": ["-c", "touch /tmp/pwn"] }
+ *
+ * because "-c" and "touch /tmp/pwn" each contain no metacharacters on their
+ * own. npx then interprets -c/--call as "execute the following string as a
+ * shell command", resulting in RCE.
+ *
+ * This validator rejects any argument list that contains an inline-exec flag
+ * in any of the common argv forms (the CLIs we care about accept all three):
+ *
+ *   -c cmd             // separate-argument form
+ *   -ccmd              // adjacent value (short flag only)
+ *   --call=cmd         // attached value (long flag)
+ *   --call cmd         // separate-argument long form (caught by exact match)
+ *
+ * The blocklist is keyed by command, because the same short flag has very
+ * different semantics in different CLIs. For example, `-e` is a code-eval
+ * flag for node but is the standard env-var flag for docker (`docker run -e
+ * API_TOKEN`). Blocking -e globally would break legitimate docker-based MCP
+ * configs, including the documented CustomMCP example.
+ *
+ * Per-command inline-exec flags:
+ *   node            : -e / --eval, -p / --print
+ *   npx             : -c / --call
+ *   python, python3 : -c
+ *   docker          : (none at the docker CLI level)
+ *
+ * Legitimate MCP server configs (e.g. `npx -y @modelcontextprotocol/server-filesystem`,
+ * `docker run -i --rm -e API_TOKEN image`) do not use any of the blocked flags,
+ * so this is non-breaking for normal usage.
+ */
+export const validateInlineExecFlags = (command: string | undefined, args: string[]): void => {
+    const inlineExecFlagsByCommand: Record<string, string[]> = {
+        node: ['-e', '--eval', '-p', '--print'],
+        npx: ['-c', '--call'],
+        python: ['-c'],
+        python3: ['-c']
+    }
+
+    const forbiddenFlags = inlineExecFlagsByCommand[command ?? '']
+    if (!forbiddenFlags || forbiddenFlags.length === 0) return
+
+    const matchesFlag = (arg: string, flag: string): boolean => {
+        const lower = arg.toLowerCase()
+
+        // Exact match: "-c" or "--call"
+        if (lower === flag) return true
+
+        // Attached value with "=": "--call=evil" or "-c=evil"
+        if (lower.startsWith(flag + '=')) return true
+
+        // Adjacent value on a short flag (no space/equals): "-ccmd", "-ecode"
+        // Only applies to single-char short flags to avoid false positives on
+        // long flags such as "--eval-something" (not a real flag but safer).
+        if (flag.length === 2 && flag.startsWith('-') && !flag.startsWith('--')) {
+            if (lower.startsWith(flag) && lower.length > flag.length) return true
+        }
+
+        return false
+    }
+
+    for (const arg of args) {
+        if (typeof arg !== 'string') continue
+
+        for (const flag of forbiddenFlags) {
+            if (matchesFlag(arg, flag)) {
+                throw new Error(
+                    `Argument "${arg}" is an inline code-execution flag for "${command}" and is not permitted in MCP server configurations (CVE-2026-40933 mitigation).`
+                )
+            }
+        }
+    }
+}
+
 export const validateEnvironmentVariables = (env: Record<string, any>): void => {
     const dangerousEnvVars = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']
 
@@ -292,6 +374,11 @@ export const validateMCPServerConfig = (serverParams: any): void => {
     if (serverParams.args && Array.isArray(serverParams.args)) {
         validateArgsForLocalFileAccess(serverParams.args)
         validateCommandInjection(serverParams.args)
+        // CVE-2026-40933: reject inline code-execution flags (-c / --call / -e / --eval / -p / --print
+        // and their --flag=value / -fvalue variants) that bypass the shell-metacharacter check by
+        // wrapping arbitrary code in a separate or attached argument. Command-aware so docker's -e
+        // (env var) flag and other legitimate uses are not falsely blocked.
+        validateInlineExecFlags(serverParams.command, serverParams.args)
     }
 
     // Validate environment variables

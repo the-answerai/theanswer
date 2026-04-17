@@ -1,9 +1,9 @@
-import { useAuth0 } from '@auth0/auth0-react'
+import { useSelector } from 'react-redux'
 import { useMemo } from 'react'
 import { createPermissionManager } from 'utils/src/auth/permissions'
 
 export const usePermissions = () => {
-    const { user } = useAuth0()
+    const user = useSelector((state) => state.auth.user)
     return useMemo(() => createPermissionManager(user ?? {}), [user])
 }
 
