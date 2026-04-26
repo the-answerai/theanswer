@@ -48,7 +48,9 @@ Error: chatflowService.getChatflowById - Chatflow abc123 not found
 // Service errors
 'Error: chatflowService.getChatflowById - Chatflow abc123 not found'
 'Error: resourceService.createResource - Failed to save resource'
-'Error: FiddlerGuardrailsService.post - Connection failed'
+// Note: FiddlerGuardrailsService now throws typed FiddlerError subclasses
+// (FiddlerAuthError, FiddlerUpstreamError, etc.) rather than InternalFlowiseError —
+// see Section 9 for the rationale.
 ```
 
 ## 3. Complete StatusCodes Reference
@@ -201,74 +203,90 @@ try {
 }
 ```
 
-## 8. Fail-Open Pattern
+## 8. Configurable Fail-Open / Fail-Closed Pattern
 
-Returns null/default on error, allowing main request to complete. Used for optional features:
+> **Updated 2026-04-24 (Phase 7, issue #1059):** The original "fail-open at all costs" pattern was a defect, not a feature — it converted enforcement layers into telemetry under any dependency failure. The correct pattern below classifies failures with typed errors, threads a `status` field through every evaluation, and lets each call site (or the resolved org/chatflow `failureMode`) decide whether to allow or block.
+
+**Service-level resolution returns a structured report, not just null:**
 
 ```typescript
 // Location: FiddlerGuardrailsService
-public static async initialize(user: IUser): Promise<FiddlerGuardrailsService | null> {
+public static async resolveFromContext(
+    chatflowId: string,
+    workspaceId: string,
+    organizationId?: string
+): Promise<{
+    service: FiddlerGuardrailsService | null
+    config: GuardrailsConfig
+    credentialSource: FiddlerCredentialSource
+    reason: 'ok' | 'disabled' | 'no_credentials' | 'unexpected'
+    error?: Error
+}> {
+    let config: GuardrailsConfig
     try {
-        const config = await this.loadConfig(user.organizationId!)
-        if (!config.enabled) {
-            return null
-        }
-
-        const credentials = await this.loadCredentials(user.organizationId!, config)
-        if (!credentials) {
-            console.warn(`Guardrails enabled but no credentials found`)
-            return null
-        }
-
-        return new FiddlerGuardrailsService(credentials, config)
+        config = await getGuardrailsConfig(chatflowId, organizationId)
     } catch (error) {
-        // Fail-open: log error but don't throw
-        console.error('Error initializing Fiddler Guardrails (fail-open):', error)
-        return null
+        logger.error('[Guardrails] Failed to load config', { error, chatflowId, workspaceId })
+        return { service: null, config: { enabled: false } as GuardrailsConfig, credentialSource: 'none', reason: 'unexpected', error: error as Error }
     }
+
+    if (!config.enabled) {
+        return { service: null, config, credentialSource: 'none', reason: 'disabled' }
+    }
+
+    const { credentials, source } = await this.loadCredentials(workspaceId, organizationId, config)
+    if (!credentials) {
+        logger.warn('[Guardrails] Enabled but no credentials could be resolved', { chatflowId, workspaceId, organizationId })
+        return { service: null, config, credentialSource: 'none', reason: 'no_credentials' }
+    }
+
+    return { service: new FiddlerGuardrailsService(credentials, config), config, credentialSource: source, reason: 'ok' }
 }
 ```
 
-**Input validation fail-open:**
+**Validate methods return `{result, status}` instead of swallowing errors:**
+
 ```typescript
 public async validateInput(text: string): Promise<InputValidationResult> {
-    try {
-        const [safetyResult, piiResult] = await Promise.all([
-            this.evaluateSafety(text),
-            this.detectPII(text)
-        ])
-        // ... process results
-    } catch (error) {
-        // Fail-open: on error, allow the input to pass through
-        return {
-            safetyResult: { dimensions: [], violations: [], isUnsafe: false },
-            piiResult: { detections: [], hasPII: false },
-            blocked: false,
-            redacted: false,
-            violations: {}
-        }
+    const [safety, pii] = await Promise.all([this.evaluateSafety(text), this.detectPII(text)])
+
+    return {
+        safetyResult: safety.result,
+        piiResult: pii.result,
+        blocked: /* per-dimension/per-type block actions */,
+        redacted: pii.result.redactedText !== undefined,
+        violations: { safety: safety.result.violations, pii: pii.result.detections },
+        // status.degraded === true when ANY sub-stage could not reach Fiddler.
+        // Caller (runStage) decides fail-open vs fail-closed based on resolved config.
+        status: mergeStageStatus([safety.status, pii.status])
     }
 }
 ```
 
-## 9. Circuit Breaker Pattern
-
-Prevents cascading failures with external services:
+**Caller uses a shared `runStage` helper to apply the policy:**
 
 ```typescript
-private async executeWithCircuitBreaker<T>(
-    operation: () => Promise<T>,
-    fallback?: () => T
-): Promise<T> {
-    // Check if circuit allows execution
+// Location: services/guardrails/runStage.ts
+const stage = await runInputStage(question, { chatflowId, workspaceId, organizationId, chatId })
+
+if (stage.kind === 'blocked_degraded') {
+    // failureMode === 'closed' AND something degraded
+    throw buildFailClosedError(stage.reason)  // HTTP 503
+}
+if (stage.kind === 'blocked_violation') {
+    throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, stage.message)  // real 400
+}
+// kind === 'ok' — request continues. stage.health.degraded surfaces in chat banner if true.
+```
+
+## 9. Circuit Breaker Pattern (with typed errors)
+
+> **Updated 2026-04-24 (Phase 7, issue #1059):** The original implementation accepted a `fallback` parameter that returned fake-safe results (zero scores, empty PII detections). This made "API down" indistinguishable from "API said safe". The current pattern throws typed `FiddlerError` subclasses; callers catch them and record a `degraded` status with a stable machine-readable `reason` enum.
+
+```typescript
+private async executeWithCircuitBreaker<T>(operation: () => Promise<T>): Promise<T> {
     if (!this.circuitBreaker.canExecute()) {
-        if (fallback) {
-            return fallback()
-        }
-        throw new InternalFlowiseError(
-            StatusCodes.SERVICE_UNAVAILABLE,
-            'Error: FiddlerGuardrailsService - Circuit breaker is open'
-        )
+        throw new FiddlerCircuitOpenError()  // reason: 'circuit_open'
     }
 
     try {
@@ -277,27 +295,31 @@ private async executeWithCircuitBreaker<T>(
         return result
     } catch (error) {
         this.circuitBreaker.recordFailure()
-
-        // Use fallback if available
-        if (fallback) {
-            return fallback()
-        }
-        throw error
+        throw toFiddlerError(error)  // classifies into auth_error | api_error | timeout | network_error
     }
 }
 ```
 
-**Usage with fallback:**
+**Caller catches the typed error and produces a `degraded` status:**
+
 ```typescript
-const apiResponse = await this.executeWithCircuitBreaker(
-    async () => {
-        return await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', data)
-    },
-    (): SafetyAPIResponse => {
-        // Fallback returns safe defaults
-        return { fdl_harmful: 0, fdl_violent: 0 /* ... */ }
+public async evaluateSafety(text: string): Promise<{ result: ...; status: GuardrailStageStatus }> {
+    if (!this.config.safety.enabled) {
+        return { result: { ... }, status: DISABLED_STATUS }
     }
-)
+    const startedAt = Date.now()
+    try {
+        const apiResponse = await this.executeWithCircuitBreaker(async () => {
+            return await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', { data: { input: text } })
+        })
+        return { result: { ...apiResponse, violations, isUnsafe: violations.length > 0 }, status: { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt } }
+    } catch (error) {
+        const fiddlerErr = error instanceof FiddlerError ? error : toFiddlerError(error)
+        // Honest fallback: no violations *because we could not evaluate*, NOT because content was safe.
+        // Caller must consult status.degraded before trusting result.
+        return { result: { dimensions: [], violations: [], isUnsafe: false }, status: toStatus(fiddlerErr, startedAt) }
+    }
+}
 ```
 
 ## 10. Promise.all Error Handling

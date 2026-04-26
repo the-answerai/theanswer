@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Features
+
+* **guardrails:** add configurable fail-open / fail-closed failure semantics with full env → org → chatflow hierarchy, defaulting to `open` for backward compatibility ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** add observability-only (shadow) mode that records real Fiddler violations without blocking, for safe pilot rollouts ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** add `GET /api/v1/guardrails/selftest` diagnostic endpoint that reports resolved config, credential source, live `healthCheck` latency/status, and circuit-breaker state ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** add Failure Mode toggle and Observability-Only switch to admin Guardrails Settings; add per-chatflow Failure Mode override in chatflow guardrails dialog ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** simple presets (Strict / Balanced / Lenient) now set `failureMode` and `observabilityOnly` so degraded-outage behavior matches preset intent; per-chatflow **Observability-only (override)** switch mirrors org admin controls ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** add amber degraded-state banner above chat messages when safety checks could not be evaluated, with plain-English reason text and an in-accordion Health detail block (mode, per-stage reason, HTTP status, latency) ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** add output validation parity for AgentFlow V2 chatflows (was missing entirely; previously only chain and legacy multi-agent flows ran output validation) ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+
+### Bug Fixes
+
+* **guardrails:** correctly resolve credentials with `Organization` or `Platform` visibility; previously the runtime filtered strictly by `workspaceId` so a single org-visible credential was invisible to chatflows running in a sibling workspace, silently disabling guardrails ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** stop returning fake-safe results on circuit-open / API errors; previously every failure was indistinguishable from "content was safe", which silently degraded enforcement to telemetry under any dependency failure. Failures now surface as a `degraded` health status that callers act on per `failureMode`. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** replace all `console.warn` / `console.error` calls in the guardrails service with structured `logger.*` so failures appear in Datadog/log aggregation streams ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** admin and chatflow guardrails UIs no longer drop `failureMode` / `observabilityOnly` in React state on partial saves: org page applies the merged config returned by the API; Simple/Advanced saves merge onto existing config; chatflow saves merge partial updates and re-read `chatbotConfig` from the save response ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+
+### Internal
+
+* **guardrails:** typed errors (`FiddlerAuthError`, `FiddlerUpstreamError`, `FiddlerTimeoutError`, `FiddlerNetworkError`, `FiddlerCircuitOpenError`) replace silent fallbacks; new shared `runStage` helper centralizes fail-open/fail-closed branching across all 5 input/output call sites
+* **guardrails:** new env vars `FIDDLER_FAILURE_MODE`, `FIDDLER_OBSERVABILITY_ONLY` (registered in `.alphaAgent/spec/env-vars.json`)
+* **guardrails:** new `health` field on `chat_message.guardrails_metadata` JSON column (no DB migration; reuses existing TEXT column)
+
+---
+
 ## [2.2.9](https://github.com/the-answerai/theanswer/compare/v2.2.8...v2.2.9) (2026-02-04)
 
 ### Bug Fixes

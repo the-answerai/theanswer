@@ -625,11 +625,46 @@
       "category": "integrations"
     },
     {
+      "name": "FIDDLER_API_KEY",
+      "description": "Fiddler Guardrails API key (priority-3 fallback when no workspace/org credential is configured)",
+      "required": false,
+      "example": "fiddler_api_key_...",
+      "sensitive": true,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_API_URL",
+      "description": "Fiddler Guardrails API base URL (used together with FIDDLER_API_KEY env fallback)",
+      "required": false,
+      "default": "https://guardrails.cloud.fiddler.ai",
+      "example": "https://guardrails.cloud.fiddler.ai",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
       "name": "FIDDLER_GUARDRAILS_ENABLED",
       "description": "Enable Fiddler AI guardrails for LLM safety",
       "required": false,
       "default": "true",
       "example": "true",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_FAILURE_MODE",
+      "description": "Default failure posture when guardrails cannot be evaluated. 'open' allows the request and surfaces a degraded-state banner; 'closed' returns HTTP 503. Org/chatflow config can override.",
+      "required": false,
+      "default": "open",
+      "example": "open",
+      "sensitive": false,
+      "category": "guardrails"
+    },
+    {
+      "name": "FIDDLER_OBSERVABILITY_ONLY",
+      "description": "Shadow/pilot mode. When 'true', real violations are recorded in metadata but never block (use to calibrate thresholds before flipping enforcement on in production).",
+      "required": false,
+      "default": "false",
+      "example": "false",
       "sensitive": false,
       "category": "guardrails"
     },

@@ -46,7 +46,6 @@ import { ChatFlow } from '../database/entities/ChatFlow'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Variable } from '../database/entities/Variable'
 import { getRunningExpressApp } from '../utils/getRunningExpressApp'
-import { FiddlerGuardrailsService } from '../services/guardrails/FiddlerGuardrailsService'
 import {
     isFlowValidForStream,
     buildFlow,
@@ -81,6 +80,8 @@ import { BillingService } from '../aai-utils/billing'
 import { executeAgentFlow } from './buildAgentflow'
 import { Workspace } from '../enterprise/database/entities/workspace.entity'
 import { Organization } from '../enterprise/database/entities/organization.entity'
+import { runInputStage, runOutputStage, buildFailClosedError } from '../services/guardrails/runStage'
+import { extractTextFromSourceDocuments } from '../services/guardrails/extractContext'
 
 const shouldAutoPlayTTS = (textToSpeechConfig: string | undefined | null): boolean => {
     if (!textToSpeechConfig) return false
@@ -348,56 +349,39 @@ export const executeFlow = async ({
     const userMessageDateTime = new Date()
     const chatflowid = chatflow.id
 
-    /* Input validation with Fiddler Guardrails
+    /* Input validation with Fiddler Guardrails (see runInputStage for full policy).
      * - Safety checks (11 dimensions)
      * - PII detection and redaction
      * - Actions: block, redact, warn, continue
+     * - Failure semantics: fail-open emits a banner; fail-closed returns 503.
      */
     let guardrailsMetadata: Partial<GuardrailsMetadata> | undefined
-    if (workspaceId) {
-        try {
-            const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
+    {
+        const stage = await runInputStage(question, {
+            chatflowId: chatflowid,
+            workspaceId,
+            organizationId: orgId,
+            chatId
+        })
 
-            if (guardrailsService) {
-                const validationResult = await guardrailsService.validateInput(question)
+        guardrailsMetadata = {
+            health: { mode: stage.failureMode, anyDegraded: stage.health.degraded, input: stage.health }
+        }
 
-                // Build metadata for client and database
-                if (validationResult) {
-                    guardrailsMetadata = {
-                        inputValidation: validationResult
-                    }
+        if (stage.kind === 'blocked_degraded') {
+            throw buildFailClosedError(stage.reason)
+        }
 
-                    // Enhanced structured logging
-                    logger.info({
-                        message: '[Guardrails] Input validation triggered',
-                        chatflowId: chatflowid,
-                        chatId,
-                        userId: user?.id,
-                        organizationId: user?.organizationId,
-                        blocked: validationResult.blocked,
-                        redacted: validationResult.redacted,
-                        safetyViolations: validationResult.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
-                        piiDetections: validationResult.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
-                    })
-                }
+        if (stage.kind === 'blocked_violation') {
+            guardrailsMetadata.inputValidation = stage.inputResult
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, stage.message)
+        }
 
-                // Handle blocking
-                if (validationResult.blocked) {
-                    throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, validationResult.message || 'Content blocked by guardrails')
-                }
-
-                // Handle redaction
-                if (validationResult.redacted && validationResult.redactedText) {
-                    question = validationResult.redactedText
-                }
+        if (stage.inputResult) {
+            guardrailsMetadata.inputValidation = stage.inputResult
+            if (stage.inputResult.redacted && stage.inputResult.redactedText) {
+                question = stage.inputResult.redactedText
             }
-        } catch (error) {
-            // Fail-open by default: log error but continue processing
-            if (error instanceof InternalFlowiseError && error.statusCode === StatusCodes.BAD_REQUEST) {
-                // Re-throw blocking errors
-                throw error
-            }
-            logger.error('[Guardrails] Validation error (fail-open)', { error, chatflowId: chatflowid, chatId })
         }
     }
 
@@ -563,7 +547,8 @@ export const executeFlow = async ({
             orgId,
             workspaceId,
             subscriptionId,
-            productId
+            productId,
+            guardrailsMetadata
         })
     }
 
@@ -712,62 +697,55 @@ export const executeFlow = async ({
             }
             await utilAddChatMessage(userMessage, appDataSource)
 
-            /* Output validation with Fiddler Guardrails (Agent Flow)
-             * - Safety checks
-             * - PII detection
-             * - Faithfulness checks (RAG hallucination detection)
-             * - Always fails open (never blocks output)
+            /* Output validation with Fiddler Guardrails (Agent Flow).
+             * Never blocks content already streamed; on fail-closed + degraded,
+             * emits a trailing SSE error event so the client UI can surface it.
              */
-            if (workspaceId && guardrailsMetadata) {
-                try {
-                    const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
+            {
+                const context = sourceDocuments?.length ? extractTextFromSourceDocuments(sourceDocuments) : undefined
+                const outStage = await runOutputStage(finalResult, context, {
+                    chatflowId: chatflowid,
+                    workspaceId,
+                    organizationId: orgId,
+                    chatId
+                })
 
-                    if (guardrailsService) {
-                        // Extract context from sourceDocuments for faithfulness checking
-                        const context = sourceDocuments?.length ? extractTextFromSourceDocuments(sourceDocuments) : undefined
-
-                        // Validate output (faithfulness check only runs if context exists)
-                        const outputValidation = await guardrailsService.validateOutput(finalResult, context)
-
-                        // Merge with existing guardrailsMetadata
-                        guardrailsMetadata = {
-                            ...guardrailsMetadata,
-                            outputValidation: {
-                                blocked: false, // Output validation never blocks
-                                redacted: outputValidation.redacted,
-                                faithfulnessScore: outputValidation.violations.faithfulness?.score,
-                                violations: {
-                                    safety: outputValidation.violations.safety,
-                                    pii: outputValidation.violations.pii
-                                }
-                            }
-                        }
-
-                        // Enhanced structured logging
-                        logger.info({
-                            message: '[Guardrails] Output validation triggered (agent flow)',
-                            chatflowId: chatflowid,
-                            chatId,
-                            userId: user?.id,
-                            organizationId: user?.organizationId,
-                            replaced: outputValidation.replaced,
-                            redacted: outputValidation.redacted,
-                            faithfulnessScore: outputValidation.violations.faithfulness?.score,
-                            faithfulnessThreshold: outputValidation.violations.faithfulness?.threshold,
-                            faithful: outputValidation.violations.faithfulness
-                                ? outputValidation.violations.faithfulness.score >= outputValidation.violations.faithfulness.threshold
-                                : undefined,
-                            safetyViolations: outputValidation.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
-                            piiDetections: outputValidation.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
-                        })
-
-                        // Note: We do NOT replace output text in Phase 5
-                        // Streaming clients have already received the original text
-                        // Output validation is for monitoring and display only
+                const existingHealth = guardrailsMetadata?.health
+                guardrailsMetadata = {
+                    ...guardrailsMetadata,
+                    health: {
+                        mode: outStage.failureMode,
+                        anyDegraded: (existingHealth?.anyDegraded ?? false) || outStage.health.degraded,
+                        input: existingHealth?.input,
+                        output: outStage.health
                     }
-                } catch (error) {
-                    // Fail-open: Log error but continue with original output
-                    logger.error('[Guardrails] Output validation error (fail-open) - agent flow', { error, chatflowId: chatflowid, chatId })
+                }
+
+                if (outStage.kind === 'ok' && outStage.outputResult) {
+                    guardrailsMetadata.outputValidation = {
+                        blocked: false,
+                        redacted: outStage.outputResult.redacted,
+                        faithfulnessScore: outStage.outputResult.violations.faithfulness?.score,
+                        violations: {
+                            safety: outStage.outputResult.violations.safety,
+                            pii: outStage.outputResult.violations.pii
+                        }
+                    }
+                }
+
+                if (outStage.kind === 'blocked_degraded') {
+                    // Streaming clients already received the LLM output. We cannot un-ring
+                    // that bell. Emit a trailing error so the client renders the fail-closed
+                    // banner, but persist the apiMessage below so the audit trail is complete.
+                    sseStreamer?.streamErrorEvent(
+                        chatId,
+                        `Safety checks were unavailable (reason: ${outStage.reason}). This response bypassed guardrail enforcement.`
+                    )
+                    logger.error('[Guardrails] Agent output degraded fail-closed (streaming)', {
+                        chatflowId: chatflowid,
+                        chatId,
+                        reason: outStage.reason
+                    })
                 }
             }
 
@@ -1020,62 +998,56 @@ export const executeFlow = async ({
         } else if (result.json) resultText = '```json\n' + JSON.stringify(result.json, null, 2)
         else resultText = JSON.stringify(result, null, 2)
 
-        /* Output validation with Fiddler Guardrails
-         * - Safety checks
-         * - PII detection
-         * - Faithfulness checks (RAG hallucination detection)
-         * - Always fails open (never blocks output)
+        /* Output validation with Fiddler Guardrails (chain path).
+         * - Safety checks, PII detection, Faithfulness checks (RAG)
+         * - Never blocks content already generated; fail-closed + degraded emits
+         *   a trailing error event and records health metadata for audit.
          */
-        if (workspaceId && guardrailsMetadata) {
-            try {
-                const guardrailsService = await FiddlerGuardrailsService.createFromContext(chatflowid, workspaceId, orgId)
+        {
+            const context = result.sourceDocuments ? extractTextFromSourceDocuments(result.sourceDocuments) : undefined
+            const outStage = await runOutputStage(resultText, context, {
+                chatflowId: chatflowid,
+                workspaceId,
+                organizationId: orgId,
+                chatId
+            })
 
-                if (guardrailsService) {
-                    // Extract context from sourceDocuments for faithfulness checking
-                    const context = result.sourceDocuments ? extractTextFromSourceDocuments(result.sourceDocuments) : undefined
-
-                    // Validate output (faithfulness check only runs if context exists)
-                    const outputValidation = await guardrailsService.validateOutput(resultText, context)
-
-                    // Merge with existing guardrailsMetadata
-                    guardrailsMetadata = {
-                        ...guardrailsMetadata,
-                        outputValidation: {
-                            blocked: false, // Output validation never blocks
-                            redacted: outputValidation.redacted,
-                            faithfulnessScore: outputValidation.violations.faithfulness?.score,
-                            violations: {
-                                safety: outputValidation.violations.safety,
-                                pii: outputValidation.violations.pii
-                            }
-                        }
-                    }
-
-                    // Enhanced structured logging
-                    logger.info({
-                        message: '[Guardrails] Output validation triggered',
-                        chatflowId: chatflowid,
-                        chatId,
-                        userId: user?.id,
-                        organizationId: user?.organizationId,
-                        replaced: outputValidation.replaced,
-                        redacted: outputValidation.redacted,
-                        faithfulnessScore: outputValidation.violations.faithfulness?.score,
-                        faithfulnessThreshold: outputValidation.violations.faithfulness?.threshold,
-                        faithful: outputValidation.violations.faithfulness
-                            ? outputValidation.violations.faithfulness.score >= outputValidation.violations.faithfulness.threshold
-                            : undefined,
-                        safetyViolations: outputValidation.violations.safety?.map((v) => `${v.dimension}(${v.score.toFixed(2)})`),
-                        piiDetections: outputValidation.violations.pii?.map((p) => `${p.label}(${p.score.toFixed(2)})`)
-                    })
-
-                    // Note: We do NOT replace output text in Phase 5
-                    // Streaming clients have already received the original text
-                    // Output validation is for monitoring and display only
+            const existingHealth = guardrailsMetadata?.health
+            guardrailsMetadata = {
+                ...guardrailsMetadata,
+                health: {
+                    mode: outStage.failureMode,
+                    anyDegraded: (existingHealth?.anyDegraded ?? false) || outStage.health.degraded,
+                    input: existingHealth?.input,
+                    output: outStage.health
                 }
-            } catch (error) {
-                // Fail-open: Log error but continue with original output
-                logger.error('[Guardrails] Output validation error (fail-open)', { error, chatflowId: chatflowid, chatId })
+            }
+
+            if (outStage.kind === 'ok' && outStage.outputResult) {
+                guardrailsMetadata.outputValidation = {
+                    blocked: false,
+                    redacted: outStage.outputResult.redacted,
+                    faithfulnessScore: outStage.outputResult.violations.faithfulness?.score,
+                    violations: {
+                        safety: outStage.outputResult.violations.safety,
+                        pii: outStage.outputResult.violations.pii
+                    }
+                }
+            }
+
+            if (outStage.kind === 'blocked_degraded') {
+                if (isStreamValid && sseStreamer) {
+                    sseStreamer.streamErrorEvent(
+                        chatId,
+                        `Safety checks were unavailable (reason: ${outStage.reason}). This response bypassed guardrail enforcement.`
+                    )
+                }
+                logger.error('[Guardrails] Output degraded fail-closed', {
+                    chatflowId: chatflowid,
+                    chatId,
+                    reason: outStage.reason,
+                    streaming: isStreamValid
+                })
             }
         }
 
@@ -1533,40 +1505,6 @@ const incrementFailedMetricCounter = (metricsProvider: IMetricsProvider, isInter
             isInternal ? FLOWISE_METRIC_COUNTERS.CHATFLOW_PREDICTION_INTERNAL : FLOWISE_METRIC_COUNTERS.CHATFLOW_PREDICTION_EXTERNAL,
             { status: FLOWISE_COUNTER_STATUS.FAILURE }
         )
-    }
-}
-
-/**
- * Extract text from source documents for faithfulness checking
- * Handles both JSON string and parsed array formats
- *
- * @param {any} sourceDocuments - Source documents from RAG retrieval
- * @returns {string | undefined} - Concatenated text from all documents or undefined if none found
- */
-const extractTextFromSourceDocuments = (sourceDocuments: any): string | undefined => {
-    try {
-        // Handle both JSON string and already-parsed array
-        const docs = typeof sourceDocuments === 'string' ? JSON.parse(sourceDocuments) : sourceDocuments
-
-        // Ensure it's an array with content
-        if (!Array.isArray(docs) || docs.length === 0) {
-            return undefined
-        }
-
-        // Extract pageContent from each document and filter out empty strings
-        const textChunks = docs.map((doc) => doc.pageContent || '').filter((text) => text.length > 0)
-
-        // Return undefined if no valid text found
-        if (textChunks.length === 0) {
-            return undefined
-        }
-
-        // Join all chunks with double newline separator
-        return textChunks.join('\n\n')
-    } catch (error) {
-        // Fail gracefully - log warning and return undefined
-        logger.warn('[Guardrails] Failed to extract text from sourceDocuments', { error })
-        return undefined
     }
 }
 

@@ -150,7 +150,8 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
             }
         }
 
-        await onSave(newConfig)
+        // Merge onto existing config so failureMode, observabilityOnly, and other untouched fields are preserved (esp. chatflow overrides)
+        await onSave({ ...config, ...newConfig })
         setHasChanges(false)
     }
 

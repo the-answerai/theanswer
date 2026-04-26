@@ -10,6 +10,8 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
@@ -24,6 +26,8 @@ const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
 interface GuardrailConfig {
     enabled?: boolean
     credentialId?: string
+    failureMode?: 'open' | 'closed'
+    observabilityOnly?: boolean
 }
 
 interface CredentialDialogProps {
@@ -50,6 +54,8 @@ interface Credential {
 export default function MasterConfig({ config, onConfigChange, onSave }: MasterConfigProps) {
     const [enabled, setEnabled] = useState<boolean>(config?.enabled ?? false)
     const [selectedCredential, setSelectedCredential] = useState<string>(config?.credentialId ?? '')
+    const [failureMode, setFailureMode] = useState<'open' | 'closed'>(config?.failureMode ?? 'open')
+    const [observabilityOnly, setObservabilityOnly] = useState<boolean>(config?.observabilityOnly ?? false)
     const [credentials, setCredentials] = useState<Credential[]>([])
     const [loadingCredentials, setLoadingCredentials] = useState(true)
 
@@ -89,6 +95,8 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
     useEffect(() => {
         setEnabled(config?.enabled ?? false)
         setSelectedCredential(config?.credentialId ?? '')
+        setFailureMode(config?.failureMode ?? 'open')
+        setObservabilityOnly(config?.observabilityOnly ?? false)
     }, [config])
 
     const loadCredentials = async () => {
@@ -108,6 +116,20 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
         const newEnabled = event.target.checked
         setEnabled(newEnabled)
         onConfigChange({ enabled: newEnabled })
+    }
+
+    const handleFailureModeChange = (_: unknown, value: 'open' | 'closed' | null) => {
+        if (!value) return
+        setFailureMode(value)
+        onConfigChange({ failureMode: value })
+        onSave({ ...config, failureMode: value })
+    }
+
+    const handleObservabilityOnlyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const next = event.target.checked
+        setObservabilityOnly(next)
+        onConfigChange({ observabilityOnly: next })
+        onSave({ ...config, observabilityOnly: next })
     }
 
     const handleCreateCredential = async () => {
@@ -419,6 +441,56 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                         </Box>
                     </Box>
                 )}
+            </Box>
+
+            {/* Failure Mode — how the runtime behaves when Fiddler cannot be evaluated.
+                Fail-open: request proceeds, chat shows a banner, operators get a log line.
+                Fail-closed: request is stopped cold with HTTP 503 so content cannot bypass checks. */}
+            <Box sx={{ mt: 3 }}>
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                    When Fiddler is unavailable
+                </Typography>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+                    Failure mode
+                </Typography>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
+                    What happens when safety checks cannot be evaluated (bad API key, Fiddler outage, timeout)? This is separate from
+                    threshold strictness in presets below.
+                </Typography>
+                <ToggleButtonGroup
+                    color='primary'
+                    value={failureMode}
+                    exclusive
+                    onChange={handleFailureModeChange}
+                    disabled={!enabled}
+                    aria-label='Failure mode'
+                >
+                    <ToggleButton value='open' aria-label='Fail open'>
+                        Fail Open (allow, warn)
+                    </ToggleButton>
+                    <ToggleButton value='closed' aria-label='Fail closed'>
+                        Fail Closed (block, 503)
+                    </ToggleButton>
+                </ToggleButtonGroup>
+                <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
+                    {failureMode === 'closed'
+                        ? 'Fail closed: block the request with an error when checks cannot be run. Higher safety, lower availability.'
+                        : 'Fail open: deliver the message with a warning when checks cannot be run. Higher availability, lower safety.'}
+                </Typography>
+            </Box>
+
+            {/* Observability-only mode (shadow pilot). Violations recorded, never blocked. */}
+            <Box sx={{ mt: 3 }}>
+                <FormControlLabel
+                    control={
+                        <Switch checked={observabilityOnly} onChange={handleObservabilityOnlyChange} color='primary' disabled={!enabled} />
+                    }
+                    label='Observability-only (shadow mode)'
+                />
+                <Typography variant='caption' color='text.secondary' sx={{ display: 'block', ml: 4, mt: -0.5 }}>
+                    When on, real violations are recorded in message metadata but never block the request. Use before flipping enforcement
+                    on in production.
+                </Typography>
             </Box>
 
             {/* Credential Modal - uses core dialog with defaultVisibility enhancement */}

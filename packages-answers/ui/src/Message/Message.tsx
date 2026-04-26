@@ -177,9 +177,10 @@ export const MessageCard = ({
 
         const hasInputValidation = guardrailsMetadata.inputValidation
         const hasOutputValidation = guardrailsMetadata.outputValidation
+        const health = (guardrailsMetadata as any).health
 
-        // If no validations were run, don't show anything
-        if (!hasInputValidation && !hasOutputValidation) return null
+        // If no validations were run AND no health signal, don't show anything
+        if (!hasInputValidation && !hasOutputValidation && !health) return null
 
         let status: 'good' | 'warning' | 'error' = 'good'
 
@@ -208,6 +209,11 @@ export const MessageCard = ({
             }
         }
 
+        // Degraded guardrail stage (couldn't reach Fiddler / auth error / circuit open)
+        // in fail-open mode still wants the shield icon to turn amber so admins can
+        // see at a glance that this message bypassed protection.
+        if (health?.anyDegraded && status !== 'error') status = 'warning'
+
         const colors = {
             good: '#4caf50', // Green
             warning: '#ff9800', // Orange
@@ -218,6 +224,41 @@ export const MessageCard = ({
     }
 
     const guardrailsStatus = getGuardrailsStatus()
+
+    // Human-friendly explanations for each degraded reason so the banner doesn't
+    // dump raw enum strings at the user. Admin-mode (debugVisible) reveals the
+    // full reason/http/message detail via the accordion.
+    const describeDegradedReason = (reason: string): string => {
+        switch (reason) {
+            case 'auth_error':
+                return 'The guardrails API key was rejected. The response was generated without safety checks.'
+            case 'no_credentials':
+                return 'No guardrail credentials are configured. The response was generated without safety checks.'
+            case 'timeout':
+                return 'The guardrails service timed out. The response was generated without safety checks.'
+            case 'circuit_open':
+                return 'The guardrails service is temporarily unavailable (too many recent failures). The response was generated without safety checks.'
+            case 'network_error':
+                return 'Could not reach the guardrails service. The response was generated without safety checks.'
+            case 'api_error':
+                return 'The guardrails service returned an error. The response was generated without safety checks.'
+            default:
+                return 'Safety checks could not run for this message. The response was generated without safety checks.'
+        }
+    }
+
+    // Pick the most informative degraded reason across input/output stages.
+    const degradedReason: { stage: 'input' | 'output'; reason: string; httpStatus?: number } | null = React.useMemo(() => {
+        const health = (guardrailsMetadata as any)?.health
+        if (!health?.anyDegraded) return null
+        if (health.input?.degraded) {
+            return { stage: 'input', reason: health.input.reason, httpStatus: health.input.httpStatus }
+        }
+        if (health.output?.degraded) {
+            return { stage: 'output', reason: health.output.reason, httpStatus: health.output.httpStatus }
+        }
+        return null
+    }, [guardrailsMetadata])
 
     // Helper functions for score display
     const formatFaithfulnessScore = (score: number) => {
@@ -1172,17 +1213,79 @@ export const MessageCard = ({
                     )}
                 </Box>
             ) : null}
+            {!isUserMessage && degradedReason ? (
+                <Box
+                    sx={{
+                        mt: 1,
+                        mb: 1,
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: '#ff9800',
+                        bgcolor: 'rgba(255, 152, 0, 0.08)',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1
+                    }}
+                    role='status'
+                    aria-live='polite'
+                >
+                    <Typography sx={{ fontSize: 18, lineHeight: 1 }}>⚠️</Typography>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant='body2' sx={{ color: '#ff9800', fontWeight: 600 }}>
+                            Safety checks {degradedReason.stage === 'input' ? 'on your message' : 'on this response'} were unavailable
+                        </Typography>
+                        <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+                            {describeDegradedReason(degradedReason.reason)}
+                            {degradedReason.httpStatus ? ` (HTTP ${degradedReason.httpStatus})` : ''}
+                        </Typography>
+                    </Box>
+                </Box>
+            ) : null}
             {guardrailsVisible && guardrailsMetadata ? (
                 <Box>
                     <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
                         <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
                             <Typography variant='overline'>
                                 🛡️ Guardrails Validation
+                                {(guardrailsMetadata as any).health?.anyDegraded ? ' — Degraded' : ''}
                                 {guardrailsMetadata.outputValidation?.faithfulnessScore !== undefined &&
                                     ` - Faithfulness: ${(guardrailsMetadata.outputValidation.faithfulnessScore * 1000).toFixed(2)}`}
                             </Typography>
                         </CustomAccordionSummary>
                         <CustomAccordionDetails>
+                            {(guardrailsMetadata as any).health ? (
+                                <Box mb={2}>
+                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                        Health
+                                    </Typography>
+                                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                        Failure mode: <strong>{(guardrailsMetadata as any).health.mode}</strong>
+                                    </Typography>
+                                    {(guardrailsMetadata as any).health.input && (
+                                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                            Input: {(guardrailsMetadata as any).health.input.reason}
+                                            {(guardrailsMetadata as any).health.input.httpStatus
+                                                ? ` (HTTP ${(guardrailsMetadata as any).health.input.httpStatus})`
+                                                : ''}
+                                            {(guardrailsMetadata as any).health.input.latencyMs !== undefined
+                                                ? ` · ${(guardrailsMetadata as any).health.input.latencyMs}ms`
+                                                : ''}
+                                        </Typography>
+                                    )}
+                                    {(guardrailsMetadata as any).health.output && (
+                                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                            Output: {(guardrailsMetadata as any).health.output.reason}
+                                            {(guardrailsMetadata as any).health.output.httpStatus
+                                                ? ` (HTTP ${(guardrailsMetadata as any).health.output.httpStatus})`
+                                                : ''}
+                                            {(guardrailsMetadata as any).health.output.latencyMs !== undefined
+                                                ? ` · ${(guardrailsMetadata as any).health.output.latencyMs}ms`
+                                                : ''}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ) : null}
                             {guardrailsMetadata.inputValidation && (
                                 <Box mb={2}>
                                     <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>

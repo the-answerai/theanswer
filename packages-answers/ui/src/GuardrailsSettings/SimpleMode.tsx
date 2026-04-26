@@ -64,10 +64,12 @@ export default function SimpleMode({ config, onSave, saving, error, success, onC
     const handleSave = async () => {
         const presetConfig = getPresetConfig(selectedPreset)
         if (presetConfig) {
+            // Merge preset onto current config so failureMode, observabilityOnly, and chatflow-only fields are not dropped
             await onSave({
+                ...config,
                 ...presetConfig,
                 enabled: config?.enabled ?? true,
-                credentialId: config?.credentialId // Preserve credential from master config
+                credentialId: config?.credentialId
             })
             setHasChanges(false)
         }

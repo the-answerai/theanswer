@@ -41,7 +41,10 @@ With this integration, you can:
 -   **Prevent hallucinations** in RAG systems with faithfulness validation
 -   **Enforce compliance** with HIPAA, GDPR, financial regulations, and industry standards
 -   **Customize thresholds** per dimension and PII type for fine-grained control
--   **Fail-open reliability** with circuit breakers and &lt;150ms latency
+-   **Configurable failure semantics** with explicit fail-open or fail-closed posture per organization or chatflow
+-   **Diagnose wiring at any time** via the `/api/v1/guardrails/selftest` admin endpoint
+-   **Pilot enforcement safely** with observability-only shadow mode that records violations without blocking
+-   **Resilient by design** with circuit breakers, connection pooling, and &lt;150ms latency
 
 Fiddler's guardrails run in real-time as part of your AI workflows, automatically blocking unsafe content, redacting sensitive information, and flagging potential hallucinations before they reach users. This makes it ideal for customer-facing chatbots, internal knowledge bases, content moderation systems, and any AI application where safety and compliance are critical.
 
@@ -218,6 +221,111 @@ This integration provides three core guardrail endpoints:
 -   Document Q&A systems
 -   Customer support automation
 -   Legal/medical AI applications
+
+## Failure Semantics
+
+<div style={{ margin: '1rem 0' }}>
+    <AskAlphaButton
+        variant='chip'
+        size='small'
+        context={{
+            page: 'integration-fiddler',
+            section: 'failure-semantics',
+            integration: 'Fiddler',
+            question: 'Can I answer any questions about Fiddler failure modes and what happens when the API is unavailable?'
+        }}
+    />
+</div>
+
+Guardrails that silently bypass enforcement when something goes wrong are not guardrails — they are telemetry. AnswerAgentAI exposes the failure posture as a first-class configuration so an admin can choose how the platform reacts when Fiddler cannot be evaluated (bad API key, network outage, upstream timeout, circuit open, no credential resolved).
+
+### Fail-Open vs Fail-Closed
+
+| Failure scenario | Fail-Open (default) | Fail-Closed |
+|---|---|---|
+| Real safety violation (200 + score) | Block with HTTP 400 | Block with HTTP 400 |
+| Bad API key (401 from Fiddler) | Request continues, amber banner in chat, structured error log | Request returns HTTP 503, no LLM call made |
+| Missing credential | Request continues, amber banner, structured warn log | Request returns HTTP 503 |
+| Fiddler timeout / 5xx | Request continues, amber banner | Request returns HTTP 503 |
+| Circuit breaker open | Request continues, amber banner | Request returns HTTP 503 |
+| Guardrails disabled by config | Request continues, no banner | Request continues, no banner |
+
+**Default is `open`** so existing deployments see no behavior change until an operator explicitly opts in to strict mode.
+
+### Configuration Hierarchy
+
+`failureMode` follows the standard env → organization → chatflow hierarchy:
+
+1. **Environment variable** — `FIDDLER_FAILURE_MODE=open|closed` (default `open`)
+2. **Organization config** — set in the admin Guardrails Settings page (`organizationConfig.guardrails.failureMode`)
+3. **Chatflow override** — set in the per-chatflow Guardrails tab (`chatbotConfig.guardrails.failureMode`)
+
+Each layer overrides the previous. A single sensitive chatflow can be `closed` while the rest of the organization is `open`.
+
+### What End Users See
+
+-   **Fail-open + degraded:** an amber banner above the chat response: _"Safety checks were unavailable for this message. The response was generated without safety checks."_ Health detail (reason, HTTP status, latency) is shown in the existing 🛡️ Guardrails Validation accordion.
+-   **Fail-closed + degraded:** the prediction returns HTTP 503 with the body `Safety checks are temporarily unavailable (reason: …). Please try again in a moment.` No partial LLM output is delivered.
+-   **Healthy or skipped (disabled):** unchanged from before — the green 🛡️ Guardrails Validation accordion appears for healthy validations and nothing renders when guardrails are disabled.
+
+### Observability-Only (Shadow) Mode
+
+For a safe pilot before flipping enforcement on in production:
+
+-   Toggle **Observability-Only** in the admin Guardrails Settings page, or set `FIDDLER_OBSERVABILITY_ONLY=true`.
+-   When enabled, even **real** Fiddler 200-OK violations are downgraded from `block` to `warn`. Violations are still recorded in `chat_message.guardrails_metadata` for analytics, dashboards, and Langfuse traces, but no request is blocked.
+-   Use this to measure violation volume, calibrate thresholds, and confirm zero false-positives before going hot.
+
+### Diagnostic Selftest Endpoint
+
+Operators can verify the entire pipeline (config resolution, credential lookup, live Fiddler reachability, circuit state) without sending a real chat:
+
+```bash
+curl -H "Authorization: Bearer $YOUR_API_KEY" \
+  "https://your-deployment/api/v1/guardrails/selftest?chatflowId=<id>"
+```
+
+**Response shape:**
+
+```json
+{
+  "resolved": {
+    "chatflowId": "abc-123",
+    "workspaceId": "ws-456",
+    "organizationId": "org-789"
+  },
+  "config": {
+    "enabled": true,
+    "failureMode": "open",
+    "observabilityOnly": false,
+    "safety": { "enabled": true, "threshold": 0.1, "action": "block" },
+    "pii": { "enabled": true, "confidenceThreshold": 0.8, "action": "redact" },
+    "faithfulness": { "enabled": false, "threshold": 0.005, "action": "warn" }
+  },
+  "credentialSource": "organization",
+  "healthCheck": {
+    "ok": true,
+    "degraded": false,
+    "reason": "ok",
+    "latencyMs": 287
+  },
+  "circuitState": "CLOSED",
+  "notes": []
+}
+```
+
+`credentialSource` will be one of `config_credential_id`, `workspace`, `organization`, `env`, or `none`. `healthCheck.reason` is a stable enum (`ok`, `disabled`, `no_credentials`, `auth_error`, `api_error`, `timeout`, `circuit_open`, `network_error`, `unexpected`) suitable for alerting.
+
+### Credential Visibility
+
+Guardrail credentials are saved with `Organization` visibility by default. The runtime now correctly resolves credentials in this priority order:
+
+1. Explicit `credentialId` referenced in the chatflow or organization config (workspace-owned OR Organization/Platform-visible)
+2. Any `fiddlerApi` credential owned by the chatflow's workspace
+3. Any `fiddlerApi` credential with `Organization` or `Platform` visibility in the chatflow's organization
+4. `FIDDLER_API_KEY` + `FIDDLER_API_URL` environment variables
+
+Multi-workspace organizations are now correctly served by a single org-visible credential.
 
 ## Use Cases
 

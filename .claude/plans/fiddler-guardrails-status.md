@@ -1,9 +1,9 @@
 # Fiddler Guardrails - Implementation Status
 
 **Linear:** AGENT-139
-**Last Updated:** 2025-11-11
-**Branch:** `feature/AGENT-139-phase-3-api-simple-ui`
-**PR:** #686 (staging)
+**Last Updated:** 2026-04-24
+**Branch:** `1059-fiddler-guardrails-fail-semantics` (Phase 7)
+**Issue:** [the-answerai/theanswer#1059](https://github.com/the-answerai/theanswer/issues/1059)
 
 > **📋 Document Purpose:** Track implementation progress, critical gaps, and time to completion.
 > **📖 For Technical Details:** See [fiddler-guardrails-spec.md](fiddler-guardrails-spec.md) for requirements and schemas.
@@ -19,26 +19,21 @@
 | **Phase 2: Input Validation** | ✅ COMPLETE | 8/8 (100%) | _(in Phase 1)_ | 5/5 |
 | **Phase 3: API & Simple UI** | ✅ COMPLETE | 8/8 (100%) | 171 | 4/5 |
 | **Phase 4: Advanced Config** | ✅ COMPLETE | 6/6 (100%) | 1,104 | 3/5 |
-| **Phase 5: Output Validation** | ⏸️ DEPRIORITIZED | 0/7 (0%) | 0 | 3/5 |
+| **Phase 5: Output Validation** | ✅ COMPLETE | 7/7 (100%) | _(folded into Phase 7)_ | 3/5 |
 | **Phase 6: Chatflow Overrides** | ✅ COMPLETE | 2/2 (100%) | 312 | 2/5 |
+| **Phase 7: Failure Semantics & Diagnostics** | ✅ COMPLETE | 13/13 (100%) | ~1,500 | 4/5 |
 
 **MVP Progress:** 30/30 tasks (100%) - Phases 1-4, 6 complete
-**Total Progress (with Phase 5):** 32/37 tasks (86.5%)
-**Code Verified:** 3,028 lines core implementation + ~1,800 supporting code
+**Total Progress:** 52/52 tasks (100%)
+**Code Verified:** 3,028 lines core implementation + ~1,800 supporting code + Phase 7 additions
 
 ---
 
 ## 🔴 Remaining Issues (Non-Blocking)
 
-### 1. **Credential Fallback Missing** - Priority: HIGH
+### 1. **Credential Fallback Missing** — ✅ RESOLVED in Phase 7
 
-**Location:** `packages/server/src/utils/buildChatflow.ts:286-294`
-
-**Problem:** No fallback to `FIDDLER_API_KEY` env var when org credential not configured
-
-**Fix:** Add env var check before skipping validation
-
-**Estimated Effort:** 30 minutes
+**Resolution (2026-04-24):** `FiddlerGuardrailsService.loadCredentials` now resolves credentials in a 4-tier priority order ending with the `FIDDLER_API_KEY`/`FIDDLER_API_URL` env vars. Also fixed a separate bug where `Organization`/`Platform`-visible credentials were not resolved across workspaces in the same org.
 
 ---
 
@@ -54,26 +49,29 @@
 
 ---
 
-### 3. **Logging Not Comprehensive** - Priority: MEDIUM
-- ✅ Has: Basic console.warn
-- ❌ Missing: Structured logging with dimension scores, PII types, actions taken
+### 3. **Logging Not Comprehensive** — ✅ RESOLVED in Phase 7
 
-**Estimated Effort:** 1 hour
+**Resolution (2026-04-24):** All `console.warn`/`console.error` calls in `FiddlerGuardrailsService` and the new shared `runStage` helper replaced with structured `logger.*`. Per-stage `[Guardrails] Stage degraded`, `[Guardrails] Stage unavailable`, and `[Guardrails] Input validation passed`/`Output validation completed` log lines include dimension scores, PII types, `reason`, `httpStatus`, `latencyMs`, and `failureMode` for downstream alerting.
 
 ---
 
 ### 4. **No Unit Tests** - Priority: LOW
 - ❌ 0% test coverage
-- ❌ Missing tests for: FiddlerGuardrailsService, config hierarchy, CircuitBreaker
+- ❌ Missing tests for: FiddlerGuardrailsService, config hierarchy, CircuitBreaker, runStage, selftest endpoint
 
 **Estimated Effort:** 8-10 hours (post-launch acceptable)
 
 ---
 
-### 5. **Environment Variables Incomplete** - Priority: LOW
-- ❌ Missing in `.env.template`: Circuit breaker config, cache config
+### 5. **Environment Variables Incomplete** — ✅ RESOLVED in Phase 7
 
-**Estimated Effort:** 15 minutes
+**Resolution (2026-04-24):** `.alphaAgent/spec/env-vars.json` now registers `FIDDLER_API_KEY`, `FIDDLER_API_URL`, `FIDDLER_FAILURE_MODE`, and `FIDDLER_OBSERVABILITY_ONLY`. Pre-existing entries (circuit breaker, cache, thresholds, actions) were already present and verified.
+
+---
+
+### 6. **Langfuse Span Attachment** — DEFERRED
+
+The Phase 7 implementation emits structured `logger.*` calls and persists health metadata on `chat_message.guardrails_metadata`, but does not yet attach `guardrails.input` / `guardrails.output` spans to the parent Langfuse trace. Tracked as a follow-up to Phase 7; low effort once existing analytic-handlers integration is touched again.
 
 ---
 
@@ -291,5 +289,53 @@ try {
 
 ---
 
-**Status:** MVP Ready (100% of required features complete, Phase 5 output validation deprioritized)
-**Next Review:** Post-launch feedback
+**Status:** Phase 7 complete — failure semantics, observability surfaces, and AgentFlow V2 output parity all shipped on branch `1059-fiddler-guardrails-fail-semantics`. MVP plus enterprise-grade enforcement posture.
+
+**Next Review:** Post-merge soak in staging; Langfuse span attachment as follow-up.
+
+---
+
+## Phase 7: Failure Semantics & Diagnostics
+
+**Trigger:** Audit finding (issue [#1059](https://github.com/the-answerai/theanswer/issues/1059)) — every failure path in the existing implementation produced behavior indistinguishable from "content was safe", silently degrading enforcement to telemetry whenever Fiddler was unreachable, the API key was rotated, the circuit was open, or an org was multi-workspace.
+
+**Scope:**
+
+1. Make failure posture configurable per environment / org / chatflow (`failureMode: 'open' | 'closed'`).
+2. Replace silent fallbacks in `FiddlerGuardrailsService` with typed errors so callers can distinguish "API said safe" from "API could not be evaluated".
+3. Add operator-visible degraded-state surfaces: amber chat banner, structured logs, in-accordion Health detail, Langfuse-ready metadata shape.
+4. Close the AgentFlow V2 output-validation gap (was previously zero coverage).
+5. Add a diagnostic `/api/v1/guardrails/selftest` admin endpoint.
+6. Add observability-only shadow mode for safe pilot rollouts.
+7. Fix multi-workspace credential resolution (Organization/Platform visibility).
+
+**Files added:**
+
+- `packages/server/src/services/guardrails/errors.ts` — typed error classes + `toFiddlerError` classifier
+- `packages/server/src/services/guardrails/runStage.ts` — shared input/output stage helper owning fail-open/closed branching
+- `packages/server/src/services/guardrails/extractContext.ts` — RAG source-doc extraction (lifted out of buildChatflow.ts so AgentFlow V2 can share)
+- `packages/server/src/services/guardrails/selftest.ts` — diagnostic report builder
+- `packages/server/src/controllers/guardrails/index.ts` — selftest controller
+- `packages/server/src/routes/guardrails/index.ts` — `/api/v1/guardrails/selftest` mount
+
+**Files modified:**
+
+- `packages/server/src/types/guardrails.ts` — `failureMode`, `observabilityOnly`, `GuardrailStageStatus`, `GuardrailHealthReason`, `status` field on validation results
+- `packages/server/src/Interface.ts` — `health` block on `GuardrailsMetadata`; `guardrailsMetadata` propagated through `IExecuteFlowParams`
+- `packages/components/src/Interface.ts` — `streamErrorEvent` added to `IServerSideEventStreamer` interface
+- `packages/server/src/services/guardrails/config.ts` — `FIDDLER_FAILURE_MODE`, `FIDDLER_OBSERVABILITY_ONLY` env support; merged in `deepMergeConfigs`
+- `packages/server/src/services/guardrails/FiddlerGuardrailsService.ts` — full refactor (typed errors, structured logger, honest fallbacks, status threading, visibility-aware credential resolution)
+- `packages/server/src/services/guardrails/index.ts` — barrel re-exports
+- `packages/server/src/utils/buildChatflow.ts` — three call sites converted to `runStage`; fail-closed throws 503 via `buildFailClosedError`
+- `packages/server/src/utils/buildAgentflow.ts` — output validation added to `executeAgentFlow` (V2 parity)
+- `packages-answers/ui/src/Message/Message.tsx` — amber degraded banner + Health section in accordion + shield-icon warning state
+- `packages-answers/ui/src/GuardrailsSettings/MasterConfig.tsx` — Failure Mode `ToggleButtonGroup` + Observability-Only switch
+- `packages/ui/src/ui-component/extended/ChatflowGuardrails.jsx` — per-chatflow Failure Mode override (empty inherits org)
+
+**Backward compatibility:**
+
+- `failureMode` defaults to `'open'`; existing deployments see no behavior change
+- No DB migration; reuses existing `chat_message.guardrails_metadata` TEXT column
+- Public service methods (`createFromContext`, `validateInput`, `validateOutput`) keep their existing signatures; new `status` field is additive
+
+**Code verified:** ~1,500 lines across 6 new files + 12 modified files. Server `tsc --noEmit` clean. All ReadLints clean.

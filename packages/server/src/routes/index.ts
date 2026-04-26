@@ -90,6 +90,7 @@ import { createAuthMeRouter } from '../aai/routes/auth-me'
 import { createCredentialsRefreshRouter } from '../aai/routes/credentials-refresh'
 
 import organizationsRouter from './organizations'
+import guardrailsRouter from './guardrails'
 
 const router = express.Router()
 
@@ -184,6 +185,7 @@ router.use('/admin', adminRouter)
 router.use('/settings', settingsRouter)
 router.use('/pricing', pricingRouter)
 router.use('/organizations', organizationsRouter)
+router.use('/guardrails', guardrailsRouter)
 
 export default router
 
