@@ -1318,97 +1318,145 @@ export const MessageCard = ({
                                     )}
                                 </Box>
                             ) : null}
-                            {guardrailsMetadata.inputValidation && (
-                                <Box mb={2}>
-                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                        Input Validation
-                                    </Typography>
-                                    {guardrailsMetadata.inputValidation.blocked && (
-                                        <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>
-                                    )}
-                                    {guardrailsMetadata.inputValidation.redacted && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>
-                                    )}
-                                    {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                            Safety:{' '}
-                                            {guardrailsMetadata.inputValidation.violations.safety
-                                                .map((v) => {
-                                                    const severity = formatSafetyScore(v.score)
-                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                })
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                    {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800' }}>
-                                            PII:{' '}
-                                            {guardrailsMetadata.inputValidation.violations.pii
-                                                .map(
-                                                    (p) =>
-                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
-                                                            3
-                                                        )})`
-                                                )
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            )}
-                            {guardrailsMetadata.outputValidation && (
-                                <Box>
-                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                        Output Validation
-                                    </Typography>
-                                    {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
-                                        <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
-                                            {(() => {
-                                                const faithful = formatFaithfulnessScore(
-                                                    guardrailsMetadata.outputValidation.faithfulnessScore
-                                                )
-                                                return (
-                                                    <>
-                                                        <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
-                                                        <Typography>
-                                                            <strong style={{ color: faithful.color }}>
-                                                                Faithfulness: {faithful.text} {faithful.icon}
-                                                            </strong>
-                                                            <span style={{ opacity: 0.7, marginLeft: '8px' }}>
-                                                                (Raw Score:{' '}
-                                                                {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
-                                                            </span>
-                                                        </Typography>
-                                                    </>
-                                                )
-                                            })()}
+                            {guardrailsMetadata.inputValidation &&
+                                (() => {
+                                    const iv = guardrailsMetadata.inputValidation
+                                    const safetyCount = iv.violations?.safety?.length ?? 0
+                                    const piiCount = iv.violations?.pii?.length ?? 0
+                                    const hasDetail = !!iv.blocked || !!iv.redacted || safetyCount > 0 || piiCount > 0
+
+                                    if (!hasDetail) {
+                                        return (
+                                            <Box mb={2} display='flex' alignItems='center' gap={1} flexWrap='wrap'>
+                                                <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0' }}>
+                                                    Input Validation
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: '#66bb6a', fontWeight: 500 }}>
+                                                    ✓ Clean
+                                                </Typography>
+                                                <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                                                    no safety violations, no PII detected
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
+
+                                    return (
+                                        <Box mb={2}>
+                                            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                                Input Validation
+                                            </Typography>
+                                            {iv.blocked && <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>}
+                                            {iv.redacted && <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>}
+                                            {safetyCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                    Safety:{' '}
+                                                    {iv.violations.safety
+                                                        .map((v) => {
+                                                            const severity = formatSafetyScore(v.score)
+                                                            return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                        })
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                            {piiCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800' }}>
+                                                    PII:{' '}
+                                                    {iv.violations.pii
+                                                        .map(
+                                                            (p) =>
+                                                                `${p.label} (${formatPIIConfidence(
+                                                                    p.score
+                                                                )} confidence - score: ${p.score.toFixed(3)})`
+                                                        )
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
                                         </Box>
-                                    )}
-                                    {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                            Safety:{' '}
-                                            {guardrailsMetadata.outputValidation.violations.safety
-                                                .map((v) => {
-                                                    const severity = formatSafetyScore(v.score)
-                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                })
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                    {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800' }}>
-                                            PII:{' '}
-                                            {guardrailsMetadata.outputValidation.violations.pii
-                                                .map(
-                                                    (p) =>
-                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
-                                                            3
-                                                        )})`
-                                                )
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            )}
+                                    )
+                                })()}
+                            {guardrailsMetadata.outputValidation &&
+                                (() => {
+                                    const ov = guardrailsMetadata.outputValidation
+                                    const safetyCount = ov.violations?.safety?.length ?? 0
+                                    const piiCount = ov.violations?.pii?.length ?? 0
+                                    const hasFaithfulness = ov.faithfulnessScore !== undefined
+                                    const hasViolation = safetyCount > 0 || piiCount > 0
+                                    const hasDetail = hasFaithfulness || hasViolation
+
+                                    if (!hasDetail) {
+                                        return (
+                                            <Box display='flex' alignItems='center' gap={1} flexWrap='wrap'>
+                                                <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0' }}>
+                                                    Output Validation
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: '#66bb6a', fontWeight: 500 }}>
+                                                    ✓ Clean
+                                                </Typography>
+                                                <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                                                    no safety violations, no PII detected
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
+
+                                    return (
+                                        <Box>
+                                            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                                Output Validation
+                                            </Typography>
+                                            {hasFaithfulness && (
+                                                <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
+                                                    {(() => {
+                                                        const faithful = formatFaithfulnessScore(ov.faithfulnessScore as number)
+                                                        return (
+                                                            <>
+                                                                <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
+                                                                <Typography>
+                                                                    <strong style={{ color: faithful.color }}>
+                                                                        Faithfulness: {faithful.text} {faithful.icon}
+                                                                    </strong>
+                                                                    <span style={{ opacity: 0.7, marginLeft: '8px' }}>
+                                                                        (Raw Score: {(ov.faithfulnessScore as number).toFixed(4)})
+                                                                    </span>
+                                                                </Typography>
+                                                            </>
+                                                        )
+                                                    })()}
+                                                </Box>
+                                            )}
+                                            {!hasViolation && hasFaithfulness && (
+                                                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                                                    No safety violations, no PII detected.
+                                                </Typography>
+                                            )}
+                                            {safetyCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                    Safety:{' '}
+                                                    {ov.violations.safety
+                                                        .map((v) => {
+                                                            const severity = formatSafetyScore(v.score)
+                                                            return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                        })
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                            {piiCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800' }}>
+                                                    PII:{' '}
+                                                    {ov.violations.pii
+                                                        .map(
+                                                            (p) =>
+                                                                `${p.label} (${formatPIIConfidence(
+                                                                    p.score
+                                                                )} confidence - score: ${p.score.toFixed(3)})`
+                                                        )
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    )
+                                })()}
                         </CustomAccordionDetails>
                     </CustomAccordion>
                 </Box>
