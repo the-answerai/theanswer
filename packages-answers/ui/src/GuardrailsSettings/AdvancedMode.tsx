@@ -71,6 +71,95 @@ const PII_TYPES = [
     { key: 'AGE', label: 'Age Information', confidenceRec: '0.85-0.95', actionRec: 'warn' }
 ] as const
 
+// Shared sx for the inner Simple/Per-Dimension and Simple/Per-Type tabs.
+// The AnswerAI dark theme has `primary.main` defined as a translucent white,
+// so MUI's default Tab indicator (`bgcolor: primary.main`) renders invisible.
+// We override the indicator + selected text to use `text.primary` for clear
+// visibility in both modes.
+const innerTabsSx = {
+    mb: 2,
+    borderBottom: 1,
+    borderColor: 'divider',
+    minHeight: 36,
+    '& .MuiTabs-indicator': {
+        backgroundColor: 'text.primary',
+        height: 2
+    },
+    '& .MuiTab-root': {
+        textTransform: 'none' as const,
+        fontWeight: 500,
+        minHeight: 36,
+        color: 'text.secondary',
+        '&.Mui-selected': {
+            color: 'text.primary',
+            fontWeight: 600
+        },
+        '&:hover': {
+            color: 'text.primary'
+        }
+    }
+}
+
+// Shared sx for sliders. Default MUI Slider uses `primary.main` for the rail,
+// track and thumb — all invisible in the AnswerAI dark theme. Anchor on
+// `text.primary` so the slider track is visible regardless of mode.
+const sliderSx = {
+    color: 'text.primary',
+    '& .MuiSlider-rail': {
+        opacity: 0.32
+    },
+    '& .MuiSlider-track': {
+        border: 'none'
+    },
+    '& .MuiSlider-thumb': {
+        boxShadow: 'none',
+        '&:hover, &.Mui-focusVisible': {
+            boxShadow: '0 0 0 6px rgba(127, 127, 127, 0.16)'
+        }
+    },
+    '& .MuiSlider-mark': {
+        backgroundColor: 'text.secondary',
+        opacity: 0.6
+    },
+    '& .MuiSlider-markLabel': {
+        color: 'text.secondary',
+        fontSize: 12
+    }
+}
+
+// Shared sx for the per-section Enable switches (Safety, PII, Faithfulness).
+// The default MUI Switch reads as grey-on-grey in the AnswerAI dark theme
+// because the active state resolves to translucent `primary.main`. Anchor
+// checked thumb + track on `info.main` (Material Blue, shared across modes)
+// so "on" is unmistakable and consistent with the page-level switches.
+const sectionSwitchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': {
+        color: 'info.main',
+        '& + .MuiSwitch-track': {
+            backgroundColor: 'info.main',
+            opacity: 0.5
+        }
+    },
+    '& .MuiSwitch-switchBase.Mui-checked:hover': {
+        backgroundColor: 'rgba(33, 150, 243, 0.08)'
+    }
+}
+
+// Shared sx for the AccordionSummary section heads ("Input Validation",
+// "Output Validation", "Advanced Settings"). Aligns with the subtitle2 +
+// fontWeight 600 rhythm used elsewhere on the page and gives the summary a
+// subtle hover affordance that works in both themes.
+const sectionSummarySx = {
+    px: 1,
+    borderRadius: 1,
+    '&:hover': {
+        bgcolor: 'action.hover'
+    },
+    '& .MuiAccordionSummary-content': {
+        my: 1.5
+    }
+}
+
 export default function AdvancedMode({ config, onSave, saving, error, success, onClearError }: AdvancedModeProps) {
     // State for all configuration
     const [enabled, setEnabled] = useState<boolean>(config?.enabled ?? false)
@@ -264,8 +353,10 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
             <>
                 {/* Input Validation */}
                 <Accordion defaultExpanded>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ p: 0 }}>
-                        <Typography variant='h6'>Input Validation</Typography>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={sectionSummarySx}>
+                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            Input Validation
+                        </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         {/* Safety Check */}
@@ -283,6 +374,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setSafetyEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
+                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -291,11 +383,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
 
                                 {safetyEnabled && (
                                     <>
-                                        <Tabs
-                                            value={safetyView}
-                                            onChange={(e, value) => setSafetyView(value)}
-                                            sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-                                        >
+                                        <Tabs value={safetyView} onChange={(e, value) => setSafetyView(value)} sx={innerTabsSx}>
                                             <Tab label='Simple' value='simple' />
                                             <Tab label='Per-Dimension' value='per-dimension' />
                                         </Tabs>
@@ -325,6 +413,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                             { value: 1, label: '1.0' }
                                                         ]}
                                                         valueLabelDisplay='auto'
+                                                        sx={sliderSx}
                                                     />
                                                 </Box>
                                                 <Box>
@@ -416,6 +505,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                                             step={0.01}
                                                                             valueLabelDisplay='auto'
                                                                             size='small'
+                                                                            sx={sliderSx}
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell>
@@ -467,6 +557,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setPiiEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
+                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -475,11 +566,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
 
                                 {piiEnabled && (
                                     <>
-                                        <Tabs
-                                            value={piiView}
-                                            onChange={(e, value) => setPiiView(value)}
-                                            sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-                                        >
+                                        <Tabs value={piiView} onChange={(e, value) => setPiiView(value)} sx={innerTabsSx}>
                                             <Tab label='Simple' value='simple' />
                                             <Tab label='Per-Type' value='per-type' />
                                         </Tabs>
@@ -508,6 +595,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                             { value: 1, label: '1.0' }
                                                         ]}
                                                         valueLabelDisplay='auto'
+                                                        sx={sliderSx}
                                                     />
                                                 </Box>
                                                 <Box>
@@ -603,6 +691,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                                             step={0.01}
                                                                             valueLabelDisplay='auto'
                                                                             size='small'
+                                                                            sx={sliderSx}
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell>
@@ -654,8 +743,10 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
 
                 {/* Output Validation */}
                 <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ p: 0 }}>
-                        <Typography variant='h6'>Output Validation</Typography>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={sectionSummarySx}>
+                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            Output Validation
+                        </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <Alert severity='info' sx={{ mt: 2, mb: 2 }}>
@@ -678,6 +769,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setFaithfulnessEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
+                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -708,6 +800,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     { value: 0.1, label: '0.1' }
                                                 ]}
                                                 valueLabelDisplay='auto'
+                                                sx={sliderSx}
                                             />
                                         </Box>
                                         <Box sx={{ mt: 2 }}>
@@ -739,8 +832,10 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
 
                 {/* Advanced Settings */}
                 <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ p: 0 }}>
-                        <Typography variant='h6'>Advanced Settings</Typography>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={sectionSummarySx}>
+                        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            Advanced Settings
+                        </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <Card variant='outlined' sx={{ mt: 2 }}>
@@ -766,6 +861,7 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                         step={1}
                                         marks
                                         valueLabelDisplay='auto'
+                                        sx={sliderSx}
                                     />
                                 </Box>
                             </CardContent>
@@ -776,7 +872,28 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
 
             {/* Actions */}
             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                <Button variant='contained' color='primary' onClick={handleSave} disabled={saving || !hasChanges}>
+                {/* Save uses a local sx override to force a solid disabled background.
+                    The global theme applies a gradient `background` to all contained
+                    buttons; MUI's default disabled state only resets `backgroundColor`,
+                    which leaves the gradient bleeding through at low contrast in both
+                    modes. We zero out `background` + `boxShadow` on disabled here so
+                    the button reads unmistakably as disabled. */}
+                <Button
+                    variant='contained'
+                    color='primary'
+                    onClick={handleSave}
+                    disabled={saving || !hasChanges}
+                    sx={(theme) => ({
+                        minWidth: 180,
+                        fontWeight: 600,
+                        '&.Mui-disabled': {
+                            background: 'none',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                            color: theme.palette.text.disabled,
+                            boxShadow: 'none'
+                        }
+                    })}
+                >
                     {saving ? 'Saving...' : 'Save Configuration'}
                 </Button>
                 {hasChanges && (

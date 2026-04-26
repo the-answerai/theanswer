@@ -18,13 +18,42 @@ import credentialsApi from 'flowise-ui/src/api/credentials'
 import guardrailsApi from 'flowise-ui/src/api/guardrails'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconX, IconUnlink, IconEdit, IconShieldCheck, IconRefresh } from '@tabler/icons-react'
+import {
+    IconX,
+    IconUnlink,
+    IconEdit,
+    IconShieldCheck,
+    IconRefresh,
+    IconCheck,
+    IconMinus,
+    IconAlertTriangle,
+    IconCircleDot,
+    IconLock
+} from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
 const ConfirmDialog = dynamic(() => import('flowise-ui/src/ui-component/dialog/ConfirmDialog'), { ssr: false })
 
 const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
+
+// Shared sx for the page switches ("Enable Guardrails", "Observability-only").
+// The default MUI `color='primary'` resolves to translucent white in the
+// AnswerAI dark theme, making the on-state nearly invisible. Anchor the
+// checked state on `info.main` (Material Blue, shared across light/dark) so
+// the on-state reads unambiguously in both modes.
+const pageSwitchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': {
+        color: 'info.main',
+        '& + .MuiSwitch-track': {
+            backgroundColor: 'info.main',
+            opacity: 0.5
+        }
+    },
+    '& .MuiSwitch-switchBase.Mui-checked:hover': {
+        backgroundColor: 'rgba(33, 150, 243, 0.08)'
+    }
+}
 
 interface GuardrailConfig {
     enabled?: boolean
@@ -297,7 +326,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
         <Box variant='outlined' sx={{ mb: 3 }}>
             {/* Enable/Disable Toggle */}
             <FormControlLabel
-                control={<Switch checked={enabled} onChange={handleEnabledChange} color='primary' />}
+                control={<Switch checked={enabled} onChange={handleEnabledChange} sx={pageSwitchSx} />}
                 label='Enable Guardrails'
                 sx={{ mb: 2 }}
             />
@@ -351,12 +380,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             </Button>
                             {/* Show Change when user owns any credentials they could switch to */}
                             {credentials.length > 0 && (
-                                <Button
-                                    variant='contained'
-                                    color='secondary'
-                                    size='small'
-                                    onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
-                                >
+                                <Button variant='outlined' size='small' onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}>
                                     Change
                                 </Button>
                             )}
@@ -436,8 +460,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             {/* > 1 because the currently selected credential doesn't count as an alternative */}
                             {credentials.length > 1 && (
                                 <Button
-                                    variant='contained'
-                                    color='secondary'
+                                    variant='outlined'
                                     size='small'
                                     disabled={!enabled}
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
@@ -492,7 +515,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             </Typography>
                             <Button
                                 size='small'
-                                variant='text'
+                                variant='outlined'
                                 onClick={loadCapabilities}
                                 disabled={loadingCapabilities}
                                 startIcon={loadingCapabilities ? <CircularProgress size={14} /> : <IconRefresh size={14} />}
@@ -510,19 +533,19 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                     const status = capabilities[key]
                                     const label = key === 'pii' ? 'PII' : key.charAt(0).toUpperCase() + key.slice(1)
                                     let color: 'success' | 'warning' | 'error' | 'default' = 'default'
-                                    let glyph = '•'
+                                    let Icon = IconCircleDot
                                     let tooltip: string = `Reason: ${status?.reason || 'unknown'}`
                                     if (status?.reason === 'ok') {
                                         color = 'success'
-                                        glyph = '✓'
+                                        Icon = IconCheck
                                         tooltip = `Available · ${status.latencyMs ?? 0}ms`
                                     } else if (status?.reason === 'unsupported') {
                                         color = 'warning'
-                                        glyph = '−'
+                                        Icon = IconMinus
                                         tooltip = 'Not included in your Fiddler plan; runtime will skip silently.'
                                     } else if (status?.degraded) {
                                         color = 'error'
-                                        glyph = '!'
+                                        Icon = IconAlertTriangle
                                         tooltip = `${status.reason}${status.httpStatus ? ` · HTTP ${status.httpStatus}` : ''}${
                                             status.message ? ` · ${status.message}` : ''
                                         }`
@@ -532,8 +555,20 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                             <Chip
                                                 size='small'
                                                 color={color === 'default' ? undefined : color}
-                                                label={`${glyph}  ${label}`}
-                                                variant={color === 'default' ? 'outlined' : 'filled'}
+                                                variant='outlined'
+                                                icon={<Icon size={14} />}
+                                                label={label}
+                                                sx={(theme) => {
+                                                    if (color === 'default') return {}
+                                                    const palette = theme.palette[color]
+                                                    return {
+                                                        fontWeight: 500,
+                                                        borderColor: palette.main,
+                                                        color: palette.main,
+                                                        bgcolor: theme.palette.mode === 'dark' ? `${palette.main}1A` : `${palette.main}14`,
+                                                        '& .MuiChip-icon': { color: palette.main }
+                                                    }
+                                                }}
                                             />
                                         </Tooltip>
                                     )
@@ -554,8 +589,8 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                         {capabilities &&
                             (capabilities.pii.reason === 'unsupported' || capabilities.faithfulness.reason === 'unsupported') && (
                                 <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
-                                    Endpoints marked <strong>−</strong> are not included in your Fiddler plan and will be skipped silently
-                                    at runtime — no per-message warning banners.
+                                    Amber endpoints are not included in your Fiddler plan and will be skipped silently at runtime — no
+                                    per-message warning banners.
                                 </Typography>
                             )}
                     </Box>
@@ -598,55 +633,112 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                 )}
             </Box>
 
-            {/* Failure Mode — how the runtime behaves when Fiddler cannot be evaluated.
-                Fail-open: request proceeds, chat shows a banner, operators get a log line.
-                Fail-closed: request is stopped cold with HTTP 503 so content cannot bypass checks. */}
-            <Box sx={{ mt: 3 }}>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+            {/* Failure behavior — runtime semantics when Fiddler is unavailable
+                or when an admin wants pilot-mode visibility before enforcing.
+                Wrapped in a single card so the failure-mode + observability
+                controls feel like one logical group, matching the credential
+                card and capability card above for a consistent visual rhythm. */}
+            <Card
+                variant='outlined'
+                sx={{
+                    p: 2.5,
+                    mt: 3,
+                    borderRadius: 1.5,
+                    bgcolor: 'background.default',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    ...(!enabled ? { opacity: 0.6 } : {})
+                }}
+            >
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 0.5 }}>
+                    Failure behavior
+                </Typography>
+                <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                    What the runtime does when Fiddler can&apos;t be reached (bad key, outage, timeout) and how violations are surfaced.
+                    Separate from threshold strictness in presets below.
+                </Typography>
+
+                {/* Fail-open vs fail-closed switch */}
+                <Typography variant='caption' sx={{ fontWeight: 600, color: 'text.primary', display: 'block', mb: 1 }}>
                     When Fiddler is unavailable
                 </Typography>
-                <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
-                    Failure mode
-                </Typography>
-                <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
-                    What happens when safety checks cannot be evaluated (bad API key, Fiddler outage, timeout)? This is separate from
-                    threshold strictness in presets below.
-                </Typography>
                 <ToggleButtonGroup
-                    color='primary'
                     value={failureMode}
                     exclusive
                     onChange={handleFailureModeChange}
                     disabled={!enabled}
                     aria-label='Failure mode'
+                    size='small'
+                    sx={(theme) => {
+                        // The AnswerAI theme defines `primary.{main,light,dark}` as
+                        // translucent whites/slates rather than a vivid color, so anchoring
+                        // the selected state on `primary.*` produced ghosted text in dark
+                        // mode. We use MUI's mode-balanced `action.selected` token + a
+                        // visible border + `text.primary` for guaranteed contrast in both
+                        // modes — same pattern used for menu/table selection across the app.
+                        const isDark = theme.palette.mode === 'dark'
+                        return {
+                            '& .MuiToggleButton-root': {
+                                color: 'text.primary',
+                                borderColor: 'divider',
+                                textTransform: 'none',
+                                fontWeight: 500,
+                                px: 1.5,
+                                transition: 'background-color 120ms ease, border-color 120ms ease'
+                            },
+                            '& .MuiToggleButton-root:hover': {
+                                bgcolor: 'action.hover'
+                            },
+                            '& .MuiToggleButton-root.Mui-selected': {
+                                bgcolor: 'action.selected',
+                                color: 'text.primary',
+                                fontWeight: 600,
+                                borderColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(15, 23, 42, 0.5)',
+                                '&:hover': {
+                                    bgcolor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(15, 23, 42, 0.12)'
+                                }
+                            }
+                        }
+                    }}
                 >
                     <ToggleButton value='open' aria-label='Fail open'>
-                        Fail Open (allow, warn)
+                        <IconAlertTriangle size={14} style={{ marginRight: 6 }} />
+                        Fail open (allow, warn)
                     </ToggleButton>
                     <ToggleButton value='closed' aria-label='Fail closed'>
-                        Fail Closed (block, 503)
+                        <IconLock size={14} style={{ marginRight: 6 }} />
+                        Fail closed (block, 503)
                     </ToggleButton>
                 </ToggleButtonGroup>
                 <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
                     {failureMode === 'closed'
-                        ? 'Fail closed: block the request with an error when checks cannot be run. Higher safety, lower availability.'
-                        : 'Fail open: deliver the message with a warning when checks cannot be run. Higher availability, lower safety.'}
+                        ? 'Block the request with HTTP 503 when checks can\u2019t be run. Higher safety, lower availability.'
+                        : 'Deliver the message with a warning banner when checks can\u2019t be run. Higher availability, lower safety.'}
                 </Typography>
-            </Box>
 
-            {/* Observability-only mode (shadow pilot). Violations recorded, never blocked. */}
-            <Box sx={{ mt: 3 }}>
-                <FormControlLabel
-                    control={
-                        <Switch checked={observabilityOnly} onChange={handleObservabilityOnlyChange} color='primary' disabled={!enabled} />
-                    }
-                    label='Observability-only (shadow mode)'
-                />
-                <Typography variant='caption' color='text.secondary' sx={{ display: 'block', ml: 4, mt: -0.5 }}>
-                    When on, real violations are recorded in message metadata but never block the request. Use before flipping enforcement
-                    on in production.
-                </Typography>
-            </Box>
+                {/* Shadow pilot toggle. Violations are recorded but never block. */}
+                <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={observabilityOnly}
+                                onChange={handleObservabilityOnlyChange}
+                                disabled={!enabled}
+                                sx={pageSwitchSx}
+                            />
+                        }
+                        label={
+                            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                Observability-only (shadow mode)
+                            </Typography>
+                        }
+                    />
+                    <Typography variant='caption' color='text.secondary' sx={{ display: 'block', ml: 5.5, mt: -0.5 }}>
+                        Real violations are recorded in message metadata but never block the request. Use before flipping enforcement on in
+                        production.
+                    </Typography>
+                </Box>
+            </Card>
 
             {/* Credential Modal - uses core dialog with defaultVisibility enhancement */}
             <AddEditCredentialDialog
