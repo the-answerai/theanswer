@@ -2326,7 +2326,8 @@ export const executeAgentFlow = async ({
             chatflowId: chatflowid,
             workspaceId,
             organizationId: orgId,
-            chatId
+            chatId,
+            prompt: finalUserInput
         })
 
         const existingHealth = guardrailsMetadata?.health

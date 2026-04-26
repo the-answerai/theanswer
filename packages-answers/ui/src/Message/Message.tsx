@@ -247,6 +247,38 @@ export const MessageCard = ({
         }
     }
 
+    // Friendlier labels for the (admin-visible) accordion Health row. `unsupported`
+    // is a permanent plan-tier capability gap rather than an outage, so it's
+    // explicitly labeled differently — no banner, no shield change, just info.
+    const describeHealthReason = (reason: string): string => {
+        switch (reason) {
+            case 'ok':
+                return 'OK'
+            case 'disabled':
+                return 'Disabled'
+            case 'disabled_stage':
+                return 'Stage disabled'
+            case 'no_credentials':
+                return 'No credentials'
+            case 'auth_error':
+                return 'Auth error'
+            case 'api_error':
+                return 'API error'
+            case 'timeout':
+                return 'Timeout'
+            case 'circuit_open':
+                return 'Circuit open'
+            case 'network_error':
+                return 'Network error'
+            case 'unsupported':
+                return 'Not included in Fiddler plan (skipped silently)'
+            case 'unexpected':
+                return 'Unexpected error'
+            default:
+                return reason
+        }
+    }
+
     // Pick the most informative degraded reason across input/output stages.
     const degradedReason: { stage: 'input' | 'output'; reason: string; httpStatus?: number } | null = React.useMemo(() => {
         const health = (guardrailsMetadata as any)?.health
@@ -1264,7 +1296,7 @@ export const MessageCard = ({
                                     </Typography>
                                     {(guardrailsMetadata as any).health.input && (
                                         <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                                            Input: {(guardrailsMetadata as any).health.input.reason}
+                                            Input: {describeHealthReason((guardrailsMetadata as any).health.input.reason)}
                                             {(guardrailsMetadata as any).health.input.httpStatus
                                                 ? ` (HTTP ${(guardrailsMetadata as any).health.input.httpStatus})`
                                                 : ''}
@@ -1275,7 +1307,7 @@ export const MessageCard = ({
                                     )}
                                     {(guardrailsMetadata as any).health.output && (
                                         <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                                            Output: {(guardrailsMetadata as any).health.output.reason}
+                                            Output: {describeHealthReason((guardrailsMetadata as any).health.output.reason)}
                                             {(guardrailsMetadata as any).health.output.httpStatus
                                                 ? ` (HTTP ${(guardrailsMetadata as any).health.output.httpStatus})`
                                                 : ''}

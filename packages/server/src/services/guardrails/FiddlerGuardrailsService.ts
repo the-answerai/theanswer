@@ -10,6 +10,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios'
+import { createHash } from 'crypto'
 import { In } from 'typeorm'
 import { CircuitBreaker } from './CircuitBreaker'
 import { getGuardrailsConfig } from './config'
@@ -17,7 +18,7 @@ import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Credential, CredentialVisibility } from '../../database/entities/Credential'
 import { decryptCredentialData } from '../../utils'
 import logger from '../../utils/logger'
-import { FiddlerCircuitOpenError, FiddlerError, toFiddlerError } from './errors'
+import { FiddlerCircuitOpenError, FiddlerError, FiddlerUnsupportedError, toFiddlerError } from './errors'
 import {
     GuardrailsConfig,
     GuardrailAction,
@@ -38,17 +39,25 @@ const HEALTHY_STATUS: GuardrailStageStatus = { ok: true, degraded: false, reason
 const DISABLED_STATUS: GuardrailStageStatus = { ok: true, degraded: false, reason: 'disabled_stage' }
 
 /**
- * Build a degraded status from a FiddlerError. Keeps a stable, machine-readable
- * reason so alerting rules and UI banners can branch on it.
+ * Build a status from a FiddlerError. Keeps a stable, machine-readable reason
+ * so alerting rules and UI banners can branch on it.
+ *
+ * Note: `unsupported` (plan-tier capability gap) is NOT degraded — Fiddler
+ * answered, just told us the endpoint isn't available on this plan. Treating
+ * it as degraded would surface a per-message banner for a permanent config
+ * issue. Surfaced once to admins via the selftest capability matrix instead.
  */
-const toStatus = (err: FiddlerError, startedAt: number): GuardrailStageStatus => ({
-    ok: false,
-    degraded: true,
-    reason: err.reason,
-    httpStatus: err.httpStatus,
-    message: err.message,
-    latencyMs: Date.now() - startedAt
-})
+const toStatus = (err: FiddlerError, startedAt: number): GuardrailStageStatus => {
+    const isUnsupported = err instanceof FiddlerUnsupportedError
+    return {
+        ok: isUnsupported,
+        degraded: !isUnsupported,
+        reason: err.reason,
+        httpStatus: err.httpStatus,
+        message: err.message,
+        latencyMs: Date.now() - startedAt
+    }
+}
 
 /**
  * Provenance of resolved credentials. Surfaced by the selftest endpoint so
@@ -61,13 +70,32 @@ export interface FiddlerCredentials {
     apiUrl: string
 }
 
+/**
+ * Process-wide cache of (apiKeyHash + endpoint) → unsupported. Once Fiddler
+ * tells us a guardrail isn't included in the caller's plan tier, we record
+ * it here so subsequent calls short-circuit without hammering the API or
+ * tripping the circuit breaker on a 404 that will never resolve.
+ *
+ * Keyed on a hash of the API key (not the key itself) so that:
+ *   - different orgs with different keys/plan tiers don't pollute each other
+ *   - we never log or persist raw credentials
+ * Lives for the process lifetime; restart clears it.
+ */
+const unsupportedEndpoints: Set<string> = new Set()
+
+const apiKeyHash = (apiKey: string): string => createHash('sha1').update(apiKey).digest('hex').slice(0, 12)
+
+const unsupportedCacheKey = (keyHash: string, endpoint: string): string => `${keyHash}|${endpoint}`
+
 export class FiddlerGuardrailsService {
     private client: AxiosInstance
     private circuitBreaker: CircuitBreaker
     private config: GuardrailsConfig
+    private apiKeyHash: string
 
     constructor(credentials: FiddlerCredentials, config: GuardrailsConfig) {
         this.config = config
+        this.apiKeyHash = apiKeyHash(credentials.apiKey)
 
         // Initialize HTTP client with connection pooling
         this.client = axios.create({
@@ -297,6 +325,11 @@ export class FiddlerGuardrailsService {
      * Throws typed `FiddlerError` subclasses on any failure (including open
      * circuit) so callers can classify and record a degraded status. No silent
      * fallbacks — "API down" must be distinguishable from "API said safe".
+     *
+     * `FiddlerUnsupportedError` is treated as a circuit-breaker SUCCESS: the
+     * API responded normally, the caller's plan just doesn't include the
+     * endpoint. Penalizing the breaker on these would trip it and break the
+     * other (working) endpoints on the same Fiddler account.
      */
     private async executeWithCircuitBreaker<T>(operation: () => Promise<T>): Promise<T> {
         if (!this.circuitBreaker.canExecute()) {
@@ -308,21 +341,62 @@ export class FiddlerGuardrailsService {
             this.circuitBreaker.recordSuccess()
             return result
         } catch (error) {
-            this.circuitBreaker.recordFailure()
-            throw toFiddlerError(error)
+            const fiddlerErr = toFiddlerError(error)
+            if (fiddlerErr instanceof FiddlerUnsupportedError) {
+                this.circuitBreaker.recordSuccess()
+            } else {
+                this.circuitBreaker.recordFailure()
+            }
+            throw fiddlerErr
         }
     }
 
     /**
      * Make POST request to Fiddler API. Throws typed `FiddlerError`.
+     *
+     * Short-circuits with `FiddlerUnsupportedError` if a previous call to this
+     * (apiKey, endpoint) pair was rejected with a plan-tier 404 — avoids
+     * repeatedly calling an endpoint Fiddler has already told us is unavailable.
      */
     private async post<T>(endpoint: string, data: any): Promise<T> {
+        const cacheKey = unsupportedCacheKey(this.apiKeyHash, endpoint)
+        if (unsupportedEndpoints.has(cacheKey)) {
+            throw new FiddlerUnsupportedError(`Endpoint ${endpoint} is not included in your Fiddler plan.`, endpoint)
+        }
         try {
             const response = await this.client.post<T>(endpoint, data)
             return response.data
         } catch (error) {
-            throw toFiddlerError(error)
+            const fiddlerErr = toFiddlerError(error)
+            if (fiddlerErr instanceof FiddlerUnsupportedError) {
+                unsupportedEndpoints.add(cacheKey)
+                logger.warn('[Guardrails] Fiddler endpoint not included in plan; caching as unsupported', {
+                    endpoint,
+                    httpStatus: fiddlerErr.httpStatus,
+                    message: fiddlerErr.message
+                })
+            }
+            throw fiddlerErr
         }
+    }
+
+    /**
+     * Public capability probe. True if a previous call to this endpoint on
+     * this API key was rejected as plan-tier-unsupported. Used by the admin
+     * selftest endpoint to render a capability matrix without making a live
+     * call (which would itself be cached as unsupported).
+     */
+    public isEndpointUnsupported(endpoint: string): boolean {
+        return unsupportedEndpoints.has(unsupportedCacheKey(this.apiKeyHash, endpoint))
+    }
+
+    /**
+     * Test-only: clear the process-wide unsupported cache. Not part of the
+     * public contract.
+     * @internal
+     */
+    public static __resetUnsupportedCacheForTests(): void {
+        unsupportedEndpoints.clear()
     }
 
     /**
@@ -511,19 +585,27 @@ export class FiddlerGuardrailsService {
 
     /**
      * Evaluate faithfulness (RAG hallucination detection)
-     * Uses Fiddler's Fast Faithfulness model to detect hallucinations
+     * Uses Fiddler's Fast Faithfulness model to detect hallucinations.
      *
      * Note: Fiddler faithfulness score uses inverted scale:
      * - Score < 0.005 = unfaithful (hallucination/inaccuracy)
      * - Score ≥ 0.005 = faithful (accurate response)
      *
-     * @param text - AI-generated response to evaluate
-     * @param context - Source context/documents to compare against
+     * Wire format (verified against /v3/guardrails/ftl-response-faithfulness):
+     *   `{ data: { prompt, response, context } }`
+     * Previously sent `{ data: { input, output } }`, which Fiddler rejected
+     * with HTTP 400 "Input is invalid". The model needs all three fields to
+     * decide whether the response is grounded in the context for the prompt.
+     *
+     * @param response - AI-generated response to evaluate
+     * @param context  - Source context/documents to compare against
+     * @param prompt   - Original user prompt that produced `response`
      * @returns Faithfulness evaluation with score and action
      */
     public async evaluateFaithfulness(
-        text: string,
-        context: string
+        response: string,
+        context: string,
+        prompt: string
     ): Promise<{
         result: {
             score: number
@@ -547,7 +629,7 @@ export class FiddlerGuardrailsService {
         try {
             const api = await this.executeWithCircuitBreaker(async () => {
                 return await this.post<{ fdl_faithful_score: number }>('/v3/guardrails/ftl-response-faithfulness', {
-                    data: { input: context, output: text }
+                    data: { prompt, response, context }
                 })
             })
 
@@ -576,21 +658,23 @@ export class FiddlerGuardrailsService {
 
     /**
      * Validate output text (safety + PII + faithfulness checks in parallel)
-     * Returns combined validation result
+     * Returns combined validation result.
      *
      * Key Differences from Input Validation:
      * - Never blocks (always fail-open)
-     * - Includes faithfulness check (if context provided)
+     * - Includes faithfulness check (if context AND prompt provided)
      * - Default action is 'warn' instead of 'block'
      *
-     * @param text - AI-generated output to validate
+     * @param text    - AI-generated output to validate
      * @param context - Optional RAG context for faithfulness checking
+     * @param prompt  - Optional originating user prompt (required by Fiddler's
+     *                  faithfulness endpoint; if omitted faithfulness is skipped)
      * @returns Output validation result with all violations
      */
-    public async validateOutput(text: string, context?: string): Promise<OutputValidationResult> {
+    public async validateOutput(text: string, context?: string, prompt?: string): Promise<OutputValidationResult> {
         const promises: Promise<any>[] = [this.evaluateSafety(text), this.detectPII(text)]
-        if (context && this.config.faithfulness.enabled) {
-            promises.push(this.evaluateFaithfulness(text, context))
+        if (context && prompt && this.config.faithfulness.enabled) {
+            promises.push(this.evaluateFaithfulness(text, context, prompt))
         }
 
         const results = await Promise.all(promises)
@@ -648,7 +732,8 @@ export class FiddlerGuardrailsService {
 
     /**
      * Structured health check. Returns a normalized status suitable for display
-     * in the admin selftest endpoint.
+     * in the admin selftest endpoint. Probes only the safety endpoint —
+     * call `capabilityMatrix()` for a per-endpoint plan-tier report.
      */
     public async healthCheck(): Promise<GuardrailStageStatus> {
         const startedAt = Date.now()
@@ -659,6 +744,43 @@ export class FiddlerGuardrailsService {
             const err = error instanceof FiddlerError ? error : toFiddlerError(error)
             return toStatus(err, startedAt)
         }
+    }
+
+    /**
+     * Live probe of all three guardrail endpoints, classifying each as `ok`,
+     * `unsupported` (plan-tier 404), or degraded (with reason). Used by the
+     * selftest endpoint and admin UI to render a capability matrix so admins
+     * can see at a glance which guardrails their Fiddler plan actually
+     * supports — instead of toggling them on and finding out later via a
+     * per-message banner.
+     *
+     * Faithfulness uses minimal valid inputs Fiddler accepts (200 OK or 504
+     * "service busy"); we treat 504 here as inconclusive but capable.
+     */
+    public async capabilityMatrix(): Promise<{
+        safety: GuardrailStageStatus
+        pii: GuardrailStageStatus
+        faithfulness: GuardrailStageStatus
+    }> {
+        const probe = async (endpoint: string, payload: any): Promise<GuardrailStageStatus> => {
+            const startedAt = Date.now()
+            try {
+                await this.post(endpoint, payload)
+                return { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
+            } catch (error) {
+                const err = error instanceof FiddlerError ? error : toFiddlerError(error)
+                return toStatus(err, startedAt)
+            }
+        }
+
+        // Run sequentially so a 401/network failure short-circuits the breaker
+        // before we hammer Fiddler with three failing requests in parallel.
+        const safety = await probe('/v3/guardrails/ftl-safety', { data: { input: 'ping' } })
+        const pii = await probe('/v3/guardrails/sensitive-information', { data: { input: 'ping' } })
+        const faithfulness = await probe('/v3/guardrails/ftl-response-faithfulness', {
+            data: { prompt: 'ping', response: 'ping', context: 'ping' }
+        })
+        return { safety, pii, faithfulness }
     }
 
     /**

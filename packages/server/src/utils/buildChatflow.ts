@@ -707,7 +707,8 @@ export const executeFlow = async ({
                     chatflowId: chatflowid,
                     workspaceId,
                     organizationId: orgId,
-                    chatId
+                    chatId,
+                    prompt: incomingInput.question
                 })
 
                 const existingHealth = guardrailsMetadata?.health
@@ -1009,7 +1010,8 @@ export const executeFlow = async ({
                 chatflowId: chatflowid,
                 workspaceId,
                 organizationId: orgId,
-                chatId
+                chatId,
+                prompt: incomingInput.question
             })
 
             const existingHealth = guardrailsMetadata?.health

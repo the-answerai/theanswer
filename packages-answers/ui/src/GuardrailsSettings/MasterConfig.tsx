@@ -51,6 +51,24 @@ interface Credential {
     credentialName: string
 }
 
+interface CapabilityStatus {
+    ok: boolean
+    degraded: boolean
+    reason: string
+    httpStatus?: number
+    message?: string
+    latencyMs?: number
+}
+
+interface SelftestReport {
+    capabilities?: {
+        safety: CapabilityStatus
+        pii: CapabilityStatus
+        faithfulness: CapabilityStatus
+    }
+    notes?: string[]
+}
+
 export default function MasterConfig({ config, onConfigChange, onSave }: MasterConfigProps) {
     const [enabled, setEnabled] = useState<boolean>(config?.enabled ?? false)
     const [selectedCredential, setSelectedCredential] = useState<string>(config?.credentialId ?? '')
@@ -58,6 +76,13 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
     const [observabilityOnly, setObservabilityOnly] = useState<boolean>(config?.observabilityOnly ?? false)
     const [credentials, setCredentials] = useState<Credential[]>([])
     const [loadingCredentials, setLoadingCredentials] = useState(true)
+
+    // Capability matrix from /api/v1/guardrails/selftest. Tells the admin which
+    // guardrail endpoints their Fiddler plan tier actually includes so they
+    // don't enable e.g. PII and then see "(HTTP 404)" banners on every chat.
+    const [capabilities, setCapabilities] = useState<SelftestReport['capabilities'] | null>(null)
+    const [loadingCapabilities, setLoadingCapabilities] = useState(false)
+    const [capabilityError, setCapabilityError] = useState<string | null>(null)
 
     // Credential modal state
     const [showCredentialDialog, setShowCredentialDialog] = useState(false)
@@ -111,6 +136,43 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
             setLoadingCredentials(false)
         }
     }
+
+    /**
+     * Fetch the per-endpoint capability matrix. Only meaningful when guardrails
+     * are enabled and a credential is connected — otherwise the server returns
+     * `disabled` / `no_credentials` and the UI hides the section.
+     */
+    const loadCapabilities = async () => {
+        try {
+            setLoadingCapabilities(true)
+            setCapabilityError(null)
+            const response = await guardrailsApi.getSelftest()
+            setCapabilities(response?.data?.capabilities || null)
+        } catch (error: any) {
+            setCapabilityError(error?.response?.data?.message || error?.message || 'Could not run capability check')
+            setCapabilities(null)
+        } finally {
+            setLoadingCapabilities(false)
+        }
+    }
+
+    // Run the capability probe whenever the connected credential or the
+    // enabled flag changes. A new credential could be on a different Fiddler
+    // plan tier; a disable/enable transition resets the status.
+    useEffect(() => {
+        if (!enabled) {
+            setCapabilities(null)
+            setCapabilityError(null)
+            return
+        }
+        if (!config?.credentialId) {
+            setCapabilities(null)
+            setCapabilityError(null)
+            return
+        }
+        loadCapabilities()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [enabled, config?.credentialId])
 
     const handleEnabledChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newEnabled = event.target.checked
@@ -403,6 +465,96 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                 </Button>
                             )}
                         </Box>
+                    </Box>
+                )}
+
+                {/* Plan capability matrix.
+                    Surfaces which guardrails the connected Fiddler key actually
+                    supports so admins don't enable e.g. PII detection on a
+                    freemium plan and then see (HTTP 404) banners on every chat. */}
+                {enabled && config?.credentialId && (
+                    <Box
+                        sx={{
+                            mt: 1.5,
+                            p: 1.5,
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'background.default'
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                                Plan capabilities
+                            </Typography>
+                            <Button
+                                size='small'
+                                variant='text'
+                                onClick={loadCapabilities}
+                                disabled={loadingCapabilities}
+                                startIcon={loadingCapabilities ? <CircularProgress size={14} /> : <IconRefresh size={14} />}
+                            >
+                                Recheck
+                            </Button>
+                        </Box>
+                        {capabilityError ? (
+                            <Alert severity='warning' sx={{ py: 0.5 }}>
+                                {capabilityError}
+                            </Alert>
+                        ) : capabilities ? (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {(['safety', 'pii', 'faithfulness'] as const).map((key) => {
+                                    const status = capabilities[key]
+                                    const label = key === 'pii' ? 'PII' : key.charAt(0).toUpperCase() + key.slice(1)
+                                    let color: 'success' | 'warning' | 'error' | 'default' = 'default'
+                                    let glyph = '•'
+                                    let tooltip: string = `Reason: ${status?.reason || 'unknown'}`
+                                    if (status?.reason === 'ok') {
+                                        color = 'success'
+                                        glyph = '✓'
+                                        tooltip = `Available · ${status.latencyMs ?? 0}ms`
+                                    } else if (status?.reason === 'unsupported') {
+                                        color = 'warning'
+                                        glyph = '−'
+                                        tooltip = 'Not included in your Fiddler plan; runtime will skip silently.'
+                                    } else if (status?.degraded) {
+                                        color = 'error'
+                                        glyph = '!'
+                                        tooltip = `${status.reason}${status.httpStatus ? ` · HTTP ${status.httpStatus}` : ''}${
+                                            status.message ? ` · ${status.message}` : ''
+                                        }`
+                                    }
+                                    return (
+                                        <Tooltip key={key} title={tooltip} arrow>
+                                            <Chip
+                                                size='small'
+                                                color={color === 'default' ? undefined : color}
+                                                label={`${glyph}  ${label}`}
+                                                variant={color === 'default' ? 'outlined' : 'filled'}
+                                            />
+                                        </Tooltip>
+                                    )
+                                })}
+                            </Box>
+                        ) : loadingCapabilities ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CircularProgress size={14} />
+                                <Typography variant='caption' color='text.secondary'>
+                                    Probing Fiddler endpoints…
+                                </Typography>
+                            </Box>
+                        ) : (
+                            <Typography variant='caption' color='text.secondary'>
+                                Capability check has not run yet.
+                            </Typography>
+                        )}
+                        {capabilities &&
+                            (capabilities.pii.reason === 'unsupported' || capabilities.faithfulness.reason === 'unsupported') && (
+                                <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
+                                    Endpoints marked <strong>−</strong> are not included in your Fiddler plan and will be skipped silently
+                                    at runtime — no per-message warning banners.
+                                </Typography>
+                            )}
                     </Box>
                 )}
 

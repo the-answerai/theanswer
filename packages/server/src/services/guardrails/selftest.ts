@@ -27,6 +27,16 @@ export interface GuardrailsSelftestReport {
     config: GuardrailsConfig
     credentialSource: FiddlerCredentialSource
     healthCheck: GuardrailStageStatus | { ok: false; degraded: true; reason: 'disabled' | 'no_credentials' | 'unexpected' }
+    /**
+     * Per-endpoint capability matrix. Lets admins see which guardrails their
+     * Fiddler plan tier actually supports without trial-and-error from the
+     * chat UI. Populated only when a live service could be constructed.
+     */
+    capabilities?: {
+        safety: GuardrailStageStatus
+        pii: GuardrailStageStatus
+        faithfulness: GuardrailStageStatus
+    }
     circuitState?: 'CLOSED' | 'OPEN' | 'HALF_OPEN'
     notes: string[]
 }
@@ -95,18 +105,35 @@ export async function runGuardrailsSelftest(options: {
         }
     }
 
-    // Instantiate a throwaway service + run a live healthCheck. We intentionally
-    // reconstruct here rather than using createFromContext so we can capture the
-    // credential source for the report.
+    // Instantiate a throwaway service + run a live capability matrix. We
+    // intentionally reconstruct here rather than using createFromContext so we
+    // can capture the credential source for the report. Capability matrix
+    // probes all three guardrail endpoints so admins can see which guardrails
+    // their Fiddler plan tier supports.
     const service = new FiddlerGuardrailsService(credentials, config)
-    const healthCheck = await service.healthCheck()
+    const capabilities = await service.capabilityMatrix()
+    // Backwards-compat: top-level healthCheck mirrors safety status (the
+    // canonical "is Fiddler reachable at all?" signal).
+    const healthCheck = capabilities.safety
     const circuitState = service.getCircuitStatus().state
+
+    if (capabilities.pii.reason === 'unsupported') {
+        notes.push(
+            'PII detection (sensitive-information) is not included in this Fiddler plan tier; PII checks will be skipped silently at runtime.'
+        )
+    }
+    if (capabilities.faithfulness.reason === 'unsupported') {
+        notes.push(
+            'Faithfulness (ftl-response-faithfulness) is not included in this Fiddler plan tier; RAG hallucination checks will be skipped silently at runtime.'
+        )
+    }
 
     return {
         resolved: { chatflowId: options.chatflowId, workspaceId, organizationId: options.organizationId },
         config,
         credentialSource: source,
         healthCheck,
+        capabilities,
         circuitState,
         notes
     }

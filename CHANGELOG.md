@@ -32,6 +32,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **guardrails:** new env vars `FIDDLER_FAILURE_MODE`, `FIDDLER_OBSERVABILITY_ONLY` (registered in `.alphaAgent/spec/env-vars.json`)
 * **guardrails:** new `health` field on `chat_message.guardrails_metadata` JSON column (no DB migration; reuses existing TEXT column)
 
+### Plan-Tier Awareness (Freemium vs Paid Fiddler)
+
+* **guardrails:** new `FiddlerUnsupportedError` distinguishes "Fiddler API said this guardrail is not in your plan" (HTTP 404 + `not supported by the freemium guardrails API`) from a real outage. Plan-tier 404s are now classified `reason: "unsupported"` and treated as `ok: true, degraded: false` — they do not block requests, do not show a degraded banner to end users, and do not trip the circuit breaker. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** unsupported endpoints are cached process-wide per `(sha256(apiKey), endpoint)` so a freemium account does not pay a network round-trip per chat for an endpoint Fiddler will never serve. Cache is keyed by hashed API key so flipping a credential to a paid plan invalidates the prior decision automatically. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** `FiddlerGuardrailsService.capabilityMatrix()` probes safety, PII, and faithfulness independently and returns per-endpoint `GuardrailStageStatus`. The `/api/v1/guardrails/selftest` response now exposes a `capabilities` block plus human-readable `notes` when PII or faithfulness are unavailable on the connected plan. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** admin Guardrails Settings page renders a "Plan capabilities" chip row under the connected credential card (Safety / PII / Faithfulness — green available, amber not-included, red degraded) with a Recheck button. Operators see plan limitations once, up front, instead of via a recurring per-chat banner. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** validation accordion on chat messages now describes `reason: "unsupported"` as "Not included in Fiddler plan (skipped silently)" instead of generic `api_error`. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+
+### Bug Fixes (continued)
+
+* **guardrails:** fix Fiddler faithfulness 400 Bad Request — payload was being sent as `{data: {input, context}}`. Fiddler's `/v3/guardrails/ftl-response-faithfulness` requires `{data: {prompt, response, context}}`. Plumbed user prompt through `runOutputStage` from both `buildChatflow.ts` and `buildAgentflow.ts`. Faithfulness checks are now skipped (rather than thrown) when no prompt is available. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+* **guardrails:** stop showing an amber "Safety checks were unavailable (HTTP 404)" banner to end users on freemium Fiddler plans. The 404 was a plan-tier capability gap, not a runtime outage; runtime now treats it as `unsupported` and keeps the chat banner-free. ([#1059](https://github.com/the-answerai/theanswer/issues/1059))
+
 ---
 
 ## [2.2.9](https://github.com/the-answerai/theanswer/compare/v2.2.8...v2.2.9) (2026-02-04)

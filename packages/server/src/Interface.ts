@@ -83,6 +83,7 @@ export interface GuardrailsHealthEntry {
         | 'timeout'
         | 'circuit_open'
         | 'network_error'
+        | 'unsupported'
         | 'unexpected'
     httpStatus?: number
     message?: string

@@ -36,6 +36,26 @@ export class FiddlerUpstreamError extends FiddlerError {
     }
 }
 
+/**
+ * Thrown when Fiddler responds with HTTP 404 + a body indicating that the
+ * requested guardrail endpoint is not included in the caller's plan tier
+ * (e.g. PII detection on the freemium API). This is a stable capability
+ * gap — the API responded normally, it just told us we don't have access.
+ *
+ * Treated as `ok=true, degraded=false` upstream (per-message) so end users
+ * are not spammed with a banner on every chat for a config-level constraint.
+ * The admin UI surfaces this once via the selftest capability matrix.
+ */
+export class FiddlerUnsupportedError extends FiddlerError {
+    public readonly endpoint: string
+
+    constructor(message: string, endpoint: string, httpStatus: number = 404) {
+        super('unsupported', message, httpStatus)
+        this.name = 'FiddlerUnsupportedError'
+        this.endpoint = endpoint
+    }
+}
+
 export class FiddlerTimeoutError extends FiddlerError {
     constructor(message: string = 'Fiddler request timed out') {
         super('timeout', message)
@@ -68,7 +88,11 @@ export const toFiddlerError = (err: unknown): FiddlerError => {
     const axiosLike = err as any
     if (axiosLike?.isAxiosError) {
         const status: number | undefined = axiosLike.response?.status
-        const message: string = axiosLike.response?.data?.error?.message || axiosLike.message || 'Fiddler upstream error'
+        const body = axiosLike.response?.data
+        const message: string = body?.error?.message || axiosLike.message || 'Fiddler upstream error'
+        const errorReason: string | undefined = body?.error?.errors?.[0]?.reason
+        const requestPath: string = axiosLike.config?.url || ''
+
         if (axiosLike.code === 'ECONNABORTED' || axiosLike.code === 'ETIMEDOUT') {
             return new FiddlerTimeoutError(message)
         }
@@ -77,6 +101,13 @@ export const toFiddlerError = (err: unknown): FiddlerError => {
         }
         if (status === 401 || status === 403) {
             return new FiddlerAuthError(message, status)
+        }
+        // Plan-tier capability gap: Fiddler returns 404 with a "not supported"
+        // body for endpoints the caller's plan doesn't include (e.g. freemium
+        // PII detection). Distinguish from generic 4xx so we can short-circuit
+        // future calls and avoid spamming users with degraded banners.
+        if (status === 404 && (errorReason === 'NotFound' || /not supported/i.test(message))) {
+            return new FiddlerUnsupportedError(message, requestPath, status)
         }
         if (status !== undefined) {
             return new FiddlerUpstreamError(message, status)

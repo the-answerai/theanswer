@@ -215,13 +215,18 @@ export async function runInputStage(text: string, ctx: RunStageContext): Promise
 
 /**
  * Runs the output stage. `text` is the LLM response, `context` is optional RAG
- * source material for faithfulness checking.
+ * source material for faithfulness checking, and `prompt` is the originating
+ * user question (required by Fiddler's faithfulness endpoint).
  *
  * Output validation does not block real violations (warn-only posture for
  * content already generated), but fail-closed on a degraded upstream still
  * returns `blocked_degraded` so callers can emit a trailing 503/error event.
  */
-export async function runOutputStage(text: string, context: string | undefined, ctx: RunStageContext): Promise<RunStageResult> {
+export async function runOutputStage(
+    text: string,
+    context: string | undefined,
+    ctx: RunStageContext & { prompt?: string }
+): Promise<RunStageResult> {
     const { chatflowId, workspaceId, organizationId, chatId } = ctx
 
     if (!workspaceId) {
@@ -256,7 +261,7 @@ export async function runOutputStage(text: string, context: string | undefined, 
     }
 
     try {
-        const result = await service.validateOutput(text, context)
+        const result = await service.validateOutput(text, context, ctx.prompt)
         const health = toHealthEntry(result.status)
 
         if (result.status.degraded) {

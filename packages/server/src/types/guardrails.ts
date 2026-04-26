@@ -77,6 +77,7 @@ export type GuardrailHealthReason =
     | 'timeout' // request exceeded timeout
     | 'circuit_open' // circuit breaker rejected call
     | 'network_error' // connection failure
+    | 'unsupported' // Fiddler plan tier does not include this guardrail (404 NotFound)
     | 'unexpected' // unhandled throw; bug-class
 
 export interface GuardrailStageStatus {
