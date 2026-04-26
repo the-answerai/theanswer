@@ -12,10 +12,12 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Chip from '@mui/material/Chip'
+import Tooltip from '@mui/material/Tooltip'
 import credentialsApi from 'flowise-ui/src/api/credentials'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from 'flowise-ui/src/store/actions'
 import useConfirm from 'flowise-ui/src/hooks/useConfirm'
-import { IconX, IconUnlink, IconEdit, IconShieldCheck } from '@tabler/icons-react'
+import { IconX, IconUnlink, IconEdit, IconShieldCheck, IconRefresh } from '@tabler/icons-react'
 
 // Use core Flowise dialog with defaultVisibility prop for org-wide credentials
 const AddEditCredentialDialog = dynamic(() => import('flowise-ui/src/views/credentials/AddEditCredentialDialog'), { ssr: false })
