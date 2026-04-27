@@ -79,10 +79,32 @@ export interface FiddlerCredentials {
  * Keyed on a hash of the API key (not the key itself) so that:
  *   - different orgs with different keys/plan tiers don't pollute each other
  *   - we never log or persist raw credentials
+ *   - rotating an API key on an existing credential row produces a new
+ *     fingerprint, which auto-invalidates prior plan-tier decisions for the
+ *     rotated key (a property a credential-ID-keyed cache would lose without
+ *     extra invalidation plumbing — important when admins upgrade from a
+ *     freemium key to a paid key on the same credential)
+ *
  * Lives for the process lifetime; restart clears it.
  */
 const unsupportedEndpoints: Set<string> = new Set()
 
+/**
+ * 64-bit fingerprint used solely as a namespace key for `unsupportedEndpoints`
+ * above. NOT a password hash and NOT a security boundary:
+ *
+ *   - never persisted (no DB, log, file, or wire)
+ *   - never compared against another value to grant access
+ *   - not derived for storage or offline verification
+ *
+ * CWE-916 (use of password hash with insufficient computational effort) does
+ * not apply: there is no offline attack surface for this value. KDFs like
+ * bcrypt / scrypt / argon2 / PBKDF2 would add per-request latency without
+ * improving the threat model. The CodeQL rule `js/insufficient-password-hash`
+ * fires here on data-flow alone (the variable is named `apiKey` and reaches
+ * `crypto.createHash`) and is a false positive in this context. Documented
+ * and dismissed in GHAS — see PR #1060 / alerts #318, #319.
+ */
 const apiKeyHash = (apiKey: string): string => createHash('sha256').update(apiKey).digest('hex').slice(0, 16)
 
 const unsupportedCacheKey = (keyHash: string, endpoint: string): string => `${keyHash}|${endpoint}`
