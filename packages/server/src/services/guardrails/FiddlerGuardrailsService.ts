@@ -83,7 +83,7 @@ export interface FiddlerCredentials {
  */
 const unsupportedEndpoints: Set<string> = new Set()
 
-const apiKeyHash = (apiKey: string): string => createHash('sha1').update(apiKey).digest('hex').slice(0, 12)
+const apiKeyHash = (apiKey: string): string => createHash('sha256').update(apiKey).digest('hex').slice(0, 16)
 
 const unsupportedCacheKey = (keyHash: string, endpoint: string): string => `${keyHash}|${endpoint}`
 
