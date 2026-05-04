@@ -50,6 +50,46 @@ export type PIIType =
 export type GuardrailAction = 'block' | 'redact' | 'replace' | 'warn' | 'continue'
 
 // ============================================================================
+// Failure Semantics
+// ============================================================================
+
+/**
+ * How the runtime should react when a guardrail stage cannot be evaluated
+ * (missing credential, upstream outage, auth error, timeout, circuit open).
+ *
+ * - 'open'   = continue to the LLM, annotate response metadata with degraded=true.
+ *              Admins/users see an amber banner; ops sees structured logs + Langfuse spans.
+ * - 'closed' = stop the request cold (503) so the chat cannot proceed unprotected.
+ */
+export type GuardrailFailureMode = 'open' | 'closed'
+
+/**
+ * Machine-readable reason why a guardrail stage was (or wasn't) evaluated.
+ * Stable enum so alerting rules and UI banners can switch on it.
+ */
+export type GuardrailHealthReason =
+    | 'ok' // evaluated successfully
+    | 'disabled' // config.enabled === false
+    | 'disabled_stage' // stage-level disabled (safety/pii/faithfulness)
+    | 'no_credentials' // no API key resolvable
+    | 'auth_error' // upstream 401/403
+    | 'api_error' // upstream non-auth error (4xx/5xx)
+    | 'timeout' // request exceeded timeout
+    | 'circuit_open' // circuit breaker rejected call
+    | 'network_error' // connection failure
+    | 'unsupported' // Fiddler plan tier does not include this guardrail (404 NotFound)
+    | 'unexpected' // unhandled throw; bug-class
+
+export interface GuardrailStageStatus {
+    ok: boolean
+    degraded: boolean
+    reason: GuardrailHealthReason
+    httpStatus?: number
+    message?: string
+    latencyMs?: number
+}
+
+// ============================================================================
 // Safety Configuration
 // ============================================================================
 
@@ -217,6 +257,20 @@ export interface GuardrailsConfig {
     credentialId?: string
 
     /**
+     * Failure policy when guardrails cannot be evaluated.
+     * @default 'open'
+     */
+    failureMode: GuardrailFailureMode
+
+    /**
+     * Observability-only mode: when true, violations are recorded in metadata
+     * but never block the request (even 200-OK violations from Fiddler).
+     * Intended for shadow/canary rollouts before flipping enforcement on.
+     * @default false
+     */
+    observabilityOnly?: boolean
+
+    /**
      * Safety checks configuration
      */
     safety: SafetyConfig
@@ -347,6 +401,11 @@ export interface InputValidationResult {
         safety?: SafetyViolation[]
         pii?: PIIDetection[]
     }
+    /**
+     * Per-stage health for this evaluation.
+     * If any sub-stage (safety/pii) degraded, status.degraded=true.
+     */
+    status: GuardrailStageStatus
 }
 
 export interface OutputValidationResult {
@@ -363,6 +422,7 @@ export interface OutputValidationResult {
             threshold: number
         }
     }
+    status: GuardrailStageStatus
 }
 
 // ============================================================================
@@ -371,6 +431,8 @@ export interface OutputValidationResult {
 
 export const DEFAULT_GUARDRAILS_CONFIG: GuardrailsConfig = {
     enabled: true,
+    failureMode: 'open',
+    observabilityOnly: false,
     safety: {
         enabled: true,
         threshold: 0.1,

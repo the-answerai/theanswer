@@ -455,6 +455,7 @@ export interface IServerSideEventStreamer {
     streamActionEvent(chatId: string, data: any): void
     streamArtifactsEvent(chatId: string, data: any): void
     streamAbortEvent(chatId: string): void
+    streamErrorEvent(chatId: string, msg: string): void
     streamEndEvent(chatId: string): void
     streamUsageMetadataEvent(chatId: string, data: any): void
     streamTTSStartEvent(chatId: string, chatMessageId: string, format: string): void

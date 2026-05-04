@@ -12,9 +12,11 @@ export const GUARDRAILS_PRESETS: GuardrailsPreset[] = [
         id: 'strict',
         name: 'Strict (Recommended for External Bots)',
         description:
-            'Blocks unsafe content (threshold: 0.05), redacts all PII (confidence: 0.8), detects hallucinations (threshold: 0.005), fail-closed mode',
+            'Blocks unsafe content (threshold: 0.05), redacts all PII (confidence: 0.8), detects hallucinations (threshold: 0.005). Sets failure mode to fail closed when Fiddler is unavailable.',
         config: {
             enabled: true,
+            failureMode: 'closed',
+            observabilityOnly: false,
             safety: {
                 enabled: true,
                 threshold: 0.05,
@@ -41,9 +43,11 @@ export const GUARDRAILS_PRESETS: GuardrailsPreset[] = [
         id: 'balanced',
         name: 'Balanced (General Purpose)',
         description:
-            'Blocks unsafe content (threshold: 0.1), redacts PII (confidence: 0.8), detects hallucinations (threshold: 0.005), fail-open mode',
+            'Blocks unsafe content (threshold: 0.1), redacts PII (confidence: 0.8), detects hallucinations (threshold: 0.005). Sets failure mode to fail open when Fiddler is unavailable.',
         config: {
             enabled: true,
+            failureMode: 'open',
+            observabilityOnly: false,
             safety: {
                 enabled: true,
                 threshold: 0.1,
@@ -70,9 +74,11 @@ export const GUARDRAILS_PRESETS: GuardrailsPreset[] = [
         id: 'lenient',
         name: 'Lenient (Internal Tools)',
         description:
-            'Warns on unsafe content (threshold: 0.15), warns on PII (confidence: 0.85), no hallucination detection, fail-open mode',
+            'Warns on unsafe content (threshold: 0.15), warns on PII (confidence: 0.85), no hallucination detection. Sets failure mode to fail open when Fiddler is unavailable.',
         config: {
             enabled: true,
+            failureMode: 'open',
+            observabilityOnly: false,
             safety: {
                 enabled: true,
                 threshold: 0.15,

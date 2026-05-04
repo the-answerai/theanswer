@@ -177,9 +177,10 @@ export const MessageCard = ({
 
         const hasInputValidation = guardrailsMetadata.inputValidation
         const hasOutputValidation = guardrailsMetadata.outputValidation
+        const health = (guardrailsMetadata as any).health
 
-        // If no validations were run, don't show anything
-        if (!hasInputValidation && !hasOutputValidation) return null
+        // If no validations were run AND no health signal, don't show anything
+        if (!hasInputValidation && !hasOutputValidation && !health) return null
 
         let status: 'good' | 'warning' | 'error' = 'good'
 
@@ -208,6 +209,11 @@ export const MessageCard = ({
             }
         }
 
+        // Degraded guardrail stage (couldn't reach Fiddler / auth error / circuit open)
+        // in fail-open mode still wants the shield icon to turn amber so admins can
+        // see at a glance that this message bypassed protection.
+        if (health?.anyDegraded && status !== 'error') status = 'warning'
+
         const colors = {
             good: '#4caf50', // Green
             warning: '#ff9800', // Orange
@@ -218,6 +224,73 @@ export const MessageCard = ({
     }
 
     const guardrailsStatus = getGuardrailsStatus()
+
+    // Human-friendly explanations for each degraded reason so the banner doesn't
+    // dump raw enum strings at the user. Admin-mode (debugVisible) reveals the
+    // full reason/http/message detail via the accordion.
+    const describeDegradedReason = (reason: string): string => {
+        switch (reason) {
+            case 'auth_error':
+                return 'The guardrails API key was rejected. The response was generated without safety checks.'
+            case 'no_credentials':
+                return 'No guardrail credentials are configured. The response was generated without safety checks.'
+            case 'timeout':
+                return 'The guardrails service timed out. The response was generated without safety checks.'
+            case 'circuit_open':
+                return 'The guardrails service is temporarily unavailable (too many recent failures). The response was generated without safety checks.'
+            case 'network_error':
+                return 'Could not reach the guardrails service. The response was generated without safety checks.'
+            case 'api_error':
+                return 'The guardrails service returned an error. The response was generated without safety checks.'
+            default:
+                return 'Safety checks could not run for this message. The response was generated without safety checks.'
+        }
+    }
+
+    // Friendlier labels for the (admin-visible) accordion Health row. `unsupported`
+    // is a permanent plan-tier capability gap rather than an outage, so it's
+    // explicitly labeled differently — no banner, no shield change, just info.
+    const describeHealthReason = (reason: string): string => {
+        switch (reason) {
+            case 'ok':
+                return 'OK'
+            case 'disabled':
+                return 'Disabled'
+            case 'disabled_stage':
+                return 'Stage disabled'
+            case 'no_credentials':
+                return 'No credentials'
+            case 'auth_error':
+                return 'Auth error'
+            case 'api_error':
+                return 'API error'
+            case 'timeout':
+                return 'Timeout'
+            case 'circuit_open':
+                return 'Circuit open'
+            case 'network_error':
+                return 'Network error'
+            case 'unsupported':
+                return 'Not included in Fiddler plan (skipped silently)'
+            case 'unexpected':
+                return 'Unexpected error'
+            default:
+                return reason
+        }
+    }
+
+    // Pick the most informative degraded reason across input/output stages.
+    const degradedReason: { stage: 'input' | 'output'; reason: string; httpStatus?: number } | null = React.useMemo(() => {
+        const health = (guardrailsMetadata as any)?.health
+        if (!health?.anyDegraded) return null
+        if (health.input?.degraded) {
+            return { stage: 'input', reason: health.input.reason, httpStatus: health.input.httpStatus }
+        }
+        if (health.output?.degraded) {
+            return { stage: 'output', reason: health.output.reason, httpStatus: health.output.httpStatus }
+        }
+        return null
+    }, [guardrailsMetadata])
 
     // Helper functions for score display
     const formatFaithfulnessScore = (score: number) => {
@@ -1172,108 +1245,218 @@ export const MessageCard = ({
                     )}
                 </Box>
             ) : null}
+            {!isUserMessage && degradedReason ? (
+                <Box
+                    sx={{
+                        mt: 1,
+                        mb: 1,
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: '#ff9800',
+                        bgcolor: 'rgba(255, 152, 0, 0.08)',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1
+                    }}
+                    role='status'
+                    aria-live='polite'
+                >
+                    <Typography sx={{ fontSize: 18, lineHeight: 1 }}>⚠️</Typography>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant='body2' sx={{ color: '#ff9800', fontWeight: 600 }}>
+                            Safety checks {degradedReason.stage === 'input' ? 'on your message' : 'on this response'} were unavailable
+                        </Typography>
+                        <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+                            {describeDegradedReason(degradedReason.reason)}
+                            {degradedReason.httpStatus ? ` (HTTP ${degradedReason.httpStatus})` : ''}
+                        </Typography>
+                    </Box>
+                </Box>
+            ) : null}
             {guardrailsVisible && guardrailsMetadata ? (
                 <Box>
                     <CustomAccordion TransitionProps={{ unmountOnExit: true }}>
                         <CustomAccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls='panel1a-content' id='panel1a-header'>
                             <Typography variant='overline'>
                                 🛡️ Guardrails Validation
+                                {(guardrailsMetadata as any).health?.anyDegraded ? ' — Degraded' : ''}
                                 {guardrailsMetadata.outputValidation?.faithfulnessScore !== undefined &&
                                     ` - Faithfulness: ${(guardrailsMetadata.outputValidation.faithfulnessScore * 1000).toFixed(2)}`}
                             </Typography>
                         </CustomAccordionSummary>
                         <CustomAccordionDetails>
-                            {guardrailsMetadata.inputValidation && (
+                            {(guardrailsMetadata as any).health ? (
                                 <Box mb={2}>
                                     <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                        Input Validation
+                                        Health
                                     </Typography>
-                                    {guardrailsMetadata.inputValidation.blocked && (
-                                        <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>
-                                    )}
-                                    {guardrailsMetadata.inputValidation.redacted && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>
-                                    )}
-                                    {guardrailsMetadata.inputValidation.violations?.safety?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                            Safety:{' '}
-                                            {guardrailsMetadata.inputValidation.violations.safety
-                                                .map((v) => {
-                                                    const severity = formatSafetyScore(v.score)
-                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                })
-                                                .join(', ')}
+                                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                        Failure mode: <strong>{(guardrailsMetadata as any).health.mode}</strong>
+                                    </Typography>
+                                    {(guardrailsMetadata as any).health.input && (
+                                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                            Input: {describeHealthReason((guardrailsMetadata as any).health.input.reason)}
+                                            {(guardrailsMetadata as any).health.input.httpStatus
+                                                ? ` (HTTP ${(guardrailsMetadata as any).health.input.httpStatus})`
+                                                : ''}
+                                            {(guardrailsMetadata as any).health.input.latencyMs !== undefined
+                                                ? ` · ${(guardrailsMetadata as any).health.input.latencyMs}ms`
+                                                : ''}
                                         </Typography>
                                     )}
-                                    {guardrailsMetadata.inputValidation.violations?.pii?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800' }}>
-                                            PII:{' '}
-                                            {guardrailsMetadata.inputValidation.violations.pii
-                                                .map(
-                                                    (p) =>
-                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
-                                                            3
-                                                        )})`
-                                                )
-                                                .join(', ')}
+                                    {(guardrailsMetadata as any).health.output && (
+                                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                                            Output: {describeHealthReason((guardrailsMetadata as any).health.output.reason)}
+                                            {(guardrailsMetadata as any).health.output.httpStatus
+                                                ? ` (HTTP ${(guardrailsMetadata as any).health.output.httpStatus})`
+                                                : ''}
+                                            {(guardrailsMetadata as any).health.output.latencyMs !== undefined
+                                                ? ` · ${(guardrailsMetadata as any).health.output.latencyMs}ms`
+                                                : ''}
                                         </Typography>
                                     )}
                                 </Box>
-                            )}
-                            {guardrailsMetadata.outputValidation && (
-                                <Box>
-                                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
-                                        Output Validation
-                                    </Typography>
-                                    {guardrailsMetadata.outputValidation.faithfulnessScore !== undefined && (
-                                        <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
-                                            {(() => {
-                                                const faithful = formatFaithfulnessScore(
-                                                    guardrailsMetadata.outputValidation.faithfulnessScore
-                                                )
-                                                return (
-                                                    <>
-                                                        <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
-                                                        <Typography>
-                                                            <strong style={{ color: faithful.color }}>
-                                                                Faithfulness: {faithful.text} {faithful.icon}
-                                                            </strong>
-                                                            <span style={{ opacity: 0.7, marginLeft: '8px' }}>
-                                                                (Raw Score:{' '}
-                                                                {guardrailsMetadata.outputValidation.faithfulnessScore.toFixed(4)})
-                                                            </span>
-                                                        </Typography>
-                                                    </>
-                                                )
-                                            })()}
+                            ) : null}
+                            {guardrailsMetadata.inputValidation &&
+                                (() => {
+                                    const iv = guardrailsMetadata.inputValidation
+                                    const safetyCount = iv.violations?.safety?.length ?? 0
+                                    const piiCount = iv.violations?.pii?.length ?? 0
+                                    const hasDetail = !!iv.blocked || !!iv.redacted || safetyCount > 0 || piiCount > 0
+
+                                    if (!hasDetail) {
+                                        return (
+                                            <Box mb={2} display='flex' alignItems='center' gap={1} flexWrap='wrap'>
+                                                <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0' }}>
+                                                    Input Validation
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: '#66bb6a', fontWeight: 500 }}>
+                                                    ✓ Clean
+                                                </Typography>
+                                                <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                                                    no safety violations, no PII detected
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
+
+                                    return (
+                                        <Box mb={2}>
+                                            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                                Input Validation
+                                            </Typography>
+                                            {iv.blocked && <Typography sx={{ color: '#f44336', mb: 0.5 }}>⚠️ Input was blocked</Typography>}
+                                            {iv.redacted && <Typography sx={{ color: '#ff9800', mb: 0.5 }}>🔒 PII was redacted</Typography>}
+                                            {safetyCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                    Safety:{' '}
+                                                    {iv.violations.safety
+                                                        .map((v) => {
+                                                            const severity = formatSafetyScore(v.score)
+                                                            return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                        })
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                            {piiCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800' }}>
+                                                    PII:{' '}
+                                                    {iv.violations.pii
+                                                        .map(
+                                                            (p) =>
+                                                                `${p.label} (${formatPIIConfidence(
+                                                                    p.score
+                                                                )} confidence - score: ${p.score.toFixed(3)})`
+                                                        )
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
                                         </Box>
-                                    )}
-                                    {guardrailsMetadata.outputValidation.violations?.safety?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
-                                            Safety:{' '}
-                                            {guardrailsMetadata.outputValidation.violations.safety
-                                                .map((v) => {
-                                                    const severity = formatSafetyScore(v.score)
-                                                    return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
-                                                })
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                    {guardrailsMetadata.outputValidation.violations?.pii?.length > 0 && (
-                                        <Typography sx={{ color: '#ff9800' }}>
-                                            PII:{' '}
-                                            {guardrailsMetadata.outputValidation.violations.pii
-                                                .map(
-                                                    (p) =>
-                                                        `${p.label} (${formatPIIConfidence(p.score)} confidence - score: ${p.score.toFixed(
-                                                            3
-                                                        )})`
-                                                )
-                                                .join(', ')}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            )}
+                                    )
+                                })()}
+                            {guardrailsMetadata.outputValidation &&
+                                (() => {
+                                    const ov = guardrailsMetadata.outputValidation
+                                    const safetyCount = ov.violations?.safety?.length ?? 0
+                                    const piiCount = ov.violations?.pii?.length ?? 0
+                                    const hasFaithfulness = ov.faithfulnessScore !== undefined
+                                    const hasViolation = safetyCount > 0 || piiCount > 0
+                                    const hasDetail = hasFaithfulness || hasViolation
+
+                                    if (!hasDetail) {
+                                        return (
+                                            <Box display='flex' alignItems='center' gap={1} flexWrap='wrap'>
+                                                <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0' }}>
+                                                    Output Validation
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: '#66bb6a', fontWeight: 500 }}>
+                                                    ✓ Clean
+                                                </Typography>
+                                                <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                                                    no safety violations, no PII detected
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
+
+                                    return (
+                                        <Box>
+                                            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: '#e0e0e0', mb: 1 }}>
+                                                Output Validation
+                                            </Typography>
+                                            {hasFaithfulness && (
+                                                <Box display='flex' alignItems='center' gap={1} mt={1} mb={1}>
+                                                    {(() => {
+                                                        const faithful = formatFaithfulnessScore(ov.faithfulnessScore as number)
+                                                        return (
+                                                            <>
+                                                                <VerifiedUserIcon sx={{ color: faithful.color, fontSize: 20 }} />
+                                                                <Typography>
+                                                                    <strong style={{ color: faithful.color }}>
+                                                                        Faithfulness: {faithful.text} {faithful.icon}
+                                                                    </strong>
+                                                                    <span style={{ opacity: 0.7, marginLeft: '8px' }}>
+                                                                        (Raw Score: {(ov.faithfulnessScore as number).toFixed(4)})
+                                                                    </span>
+                                                                </Typography>
+                                                            </>
+                                                        )
+                                                    })()}
+                                                </Box>
+                                            )}
+                                            {!hasViolation && hasFaithfulness && (
+                                                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                                                    No safety violations, no PII detected.
+                                                </Typography>
+                                            )}
+                                            {safetyCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800', mb: 0.5 }}>
+                                                    Safety:{' '}
+                                                    {ov.violations.safety
+                                                        .map((v) => {
+                                                            const severity = formatSafetyScore(v.score)
+                                                            return `${v.dimension} (${severity.text} Risk - score: ${v.score.toFixed(3)})`
+                                                        })
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                            {piiCount > 0 && (
+                                                <Typography sx={{ color: '#ff9800' }}>
+                                                    PII:{' '}
+                                                    {ov.violations.pii
+                                                        .map(
+                                                            (p) =>
+                                                                `${p.label} (${formatPIIConfidence(
+                                                                    p.score
+                                                                )} confidence - score: ${p.score.toFixed(3)})`
+                                                        )
+                                                        .join(', ')}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    )
+                                })()}
                         </CustomAccordionDetails>
                     </CustomAccordion>
                 </Box>
