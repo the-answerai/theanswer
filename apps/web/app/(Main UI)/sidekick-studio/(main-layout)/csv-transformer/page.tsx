@@ -1,12 +1,12 @@
 import React from 'react'
-import dynamic from 'next/dynamic'
-
-const View = dynamic(() => import('@ui/CsvTransfomer'), { ssr: false })
+import CsvTransformerClient from './CsvTransformerClient'
 
 const Page = () => {
+    const cronEnabled = process.env.ENABLE_CSV_RUN_CRON === 'true'
+
     return (
         <>
-            <View />
+            <CsvTransformerClient cronEnabled={cronEnabled} />
         </>
     )
 }

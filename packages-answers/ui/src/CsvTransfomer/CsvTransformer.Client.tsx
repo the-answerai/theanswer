@@ -19,6 +19,10 @@ import { Container, Box, Stack, Tabs, Tab, Typography } from '@mui/material'
 import ProcessCsv from './ProcessCsv'
 import ProcessingHistory from './ProcessingHistory'
 
+interface CsvTransformerProps {
+    cronEnabled?: boolean
+}
+
 function TabPanel(props: any) {
     const { children, currentValue, value, ...other } = props
     return (
@@ -34,7 +38,7 @@ function TabPanel(props: any) {
     )
 }
 
-const CsvTransformer = () => {
+const CsvTransformer = ({ cronEnabled = false }: CsvTransformerProps) => {
     const { user, isLoading } = useUser()
     const [chatflows, setChatflows] = useState([])
     const searchParams = useSearchParams()
@@ -96,6 +100,18 @@ const CsvTransformer = () => {
                 <Typography variant='h2' component='h1'>
                     AI CSV Transformer
                 </Typography>
+                {cronEnabled ? (
+                    <Alert severity='success' variant='outlined'>
+                        <AlertTitle>Background processing is enabled</AlertTitle>
+                        Submitted CSVs will be picked up by the cron worker on this environment.
+                    </Alert>
+                ) : (
+                    <Alert severity='warning' variant='outlined'>
+                        <AlertTitle>Background processing is disabled</AlertTitle>
+                        CSV runs can be created but they will not be processed until <code>ENABLE_CSV_RUN_CRON=true</code> is set on the
+                        server (then the worker is restarted).
+                    </Alert>
+                )}
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs value={tab} aria-label='admin tabs'>
                         <Tab label='Process CSV' value='process' component={Link} href='/sidekick-studio/csv-transformer?tab=process' />
