@@ -12,33 +12,47 @@ const s3 = new S3({
     }
 })
 
+function collectAllColumnKeys(rows: Array<Record<string, unknown>>): string[] {
+    const seen = new Set<string>()
+    const ordered: string[] = []
+    for (const row of rows) {
+        if (!row || typeof row !== 'object') continue
+        for (const key of Object.keys(row)) {
+            if (!seen.has(key)) {
+                seen.add(key)
+                ordered.push(key)
+            }
+        }
+    }
+    return ordered
+}
+
 function convertToCSV<T extends object>(data: T[]): string {
     if (data.length === 0) {
         return ''
     }
 
-    // Extract the keys from the first object to use as CSV headers
-    const keys = Object.keys(data[0])
+    const records = data as Array<Record<string, unknown>>
+    const keys = collectAllColumnKeys(records)
+    if (keys.length === 0) {
+        return ''
+    }
 
-    // Create the CSV header row
     const header = keys.join(',')
 
-    // Create rows by mapping through the array of objects
-    const rows = data.map((row) => {
+    const lines = records.map((row) => {
         return keys
             .map((key) => {
-                // Convert undefined or null to empty strings
-                const value = (row as Record<string, unknown>)[key] ?? ''
-                // Escape quotes by replacing " with ""
-                // Wrap fields containing commas or quotes in double quotes
+                const value = row[key] ?? ''
                 const stringValue = String(value).replace(/"/g, '""')
-                return stringValue.includes(',') || stringValue.includes('"') ? `"${stringValue}"` : stringValue
+                const needsQuotes =
+                    stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')
+                return needsQuotes ? `"${stringValue}"` : stringValue
             })
             .join(',')
     })
 
-    // Combine header and rows
-    return [header, ...rows].join('\n')
+    return [header, ...lines].join('\n')
 }
 
 const generateCsv = async (csvParseRun: AppCsvParseRuns) => {
