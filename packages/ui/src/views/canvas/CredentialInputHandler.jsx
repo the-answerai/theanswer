@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types'
 import { useEffect, useRef, useState } from 'react'
+import { useDispatch } from 'react-redux'
 
 // material-ui
-import { IconButton } from '@mui/material'
-import { IconEdit } from '@tabler/icons-react'
+import { Button, IconButton } from '@mui/material'
+import { IconEdit, IconX } from '@tabler/icons-react'
 
 // project import
 import { AsyncDropdown } from '@/ui-component/dropdown/AsyncDropdown'
@@ -14,11 +15,13 @@ import CredentialListDialog from '@/views/credentials/CredentialListDialog'
 import credentialsApi from '@/api/credentials'
 import { useAuth } from '@/hooks/useAuth'
 import { FLOWISE_CREDENTIAL_ID } from '@/store/constant'
+import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction } from '@/store/actions'
 
 // ===========================|| CredentialInputHandler ||=========================== //
 
 const CredentialInputHandler = ({ inputParam, data, onSelect, disabled = false }) => {
     const ref = useRef(null)
+    const dispatch = useDispatch()
     const [credentialId, setCredentialId] = useState(data?.credential || (data?.inputs && data.inputs[FLOWISE_CREDENTIAL_ID]) || '')
     const [showCredentialListDialog, setShowCredentialListDialog] = useState(false)
     const [credentialListDialogProps, setCredentialListDialogProps] = useState({})
@@ -26,6 +29,37 @@ const CredentialInputHandler = ({ inputParam, data, onSelect, disabled = false }
     const [specificCredentialDialogProps, setSpecificCredentialDialogProps] = useState({})
     const [reloadTimestamp, setReloadTimestamp] = useState(Date.now().toString())
     const { hasPermission } = useAuth()
+
+    const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
+    const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
+
+    // Resolve possibly-legacy credentialNames (e.g. saved chatflow has 'JiraApi' but
+    // the live pool now uses 'jiraApi') against the current canonical list. Old chatflow
+    // JSON can outlive credential renames, so we normalize before issuing lookups.
+    const resolveCanonicalCredentialNames = async (requestedNames) => {
+        try {
+            const allComponentsResp = await credentialsApi.getAllComponentsCredentials()
+            const liveNames = Array.isArray(allComponentsResp?.data) ? allComponentsResp.data.map((c) => c.name) : []
+            const liveByLower = new Map(liveNames.map((n) => [n.toLowerCase(), n]))
+
+            const resolved = []
+            const unresolved = []
+            for (const requested of requestedNames) {
+                const canonical = liveByLower.get(String(requested).toLowerCase())
+                if (canonical) {
+                    resolved.push(canonical)
+                } else {
+                    unresolved.push(requested)
+                }
+            }
+            return { resolved, unresolved }
+        } catch (error) {
+            // If we can't fetch the list (network/auth issue) just fall back to the raw input
+            // so the original behavior is preserved.
+            console.error('Failed to resolve canonical credential names:', error)
+            return { resolved: [...requestedNames], unresolved: [] }
+        }
+    }
 
     const editCredential = (credentialId) => {
         const dialogProp = {
@@ -38,14 +72,48 @@ const CredentialInputHandler = ({ inputParam, data, onSelect, disabled = false }
         setShowSpecificCredentialDialog(true)
     }
 
+    const showCredentialErrorToast = (message) => {
+        enqueueSnackbar({
+            message,
+            options: {
+                key: new Date().getTime() + Math.random(),
+                variant: 'error',
+                persist: true,
+                action: (key) => (
+                    <Button style={{ color: 'white' }} onClick={() => closeSnackbar(key)}>
+                        <IconX />
+                    </Button>
+                )
+            }
+        })
+    }
+
     const addAsyncOption = async () => {
         try {
-            let names = ''
-            if (inputParam.credentialNames.length > 1) {
-                names = inputParam.credentialNames.join('&')
-            } else {
-                names = inputParam.credentialNames[0]
+            const requestedNames = Array.isArray(inputParam.credentialNames) ? inputParam.credentialNames : []
+            if (!requestedNames.length) {
+                showCredentialErrorToast('No credential type configured for this input.')
+                return
             }
+
+            // Heal stale chatflow JSON: the saved node may reference a legacy credential
+            // name (e.g. `JiraApi`) that has since been renamed (e.g. `jiraApi`). Map each
+            // requested name to its current canonical key before we ask the server for it.
+            const { resolved, unresolved } = await resolveCanonicalCredentialNames(requestedNames)
+
+            if (unresolved.length) {
+                showCredentialErrorToast(
+                    `Could not find credential type${unresolved.length > 1 ? 's' : ''}: ${unresolved.join(
+                        ', '
+                    )}. The chatflow may reference an outdated integration.`
+                )
+            }
+
+            if (!resolved.length) {
+                return
+            }
+
+            const names = resolved.length > 1 ? resolved.join('&') : resolved[0]
             const componentCredentialsResp = await credentialsApi.getSpecificComponentCredential(names)
             if (componentCredentialsResp.data) {
                 if (Array.isArray(componentCredentialsResp.data)) {
@@ -68,6 +136,9 @@ const CredentialInputHandler = ({ inputParam, data, onSelect, disabled = false }
             }
         } catch (error) {
             console.error(error)
+            const apiMessage =
+                typeof error?.response?.data === 'object' ? error.response.data.message : error?.response?.data || error?.message
+            showCredentialErrorToast(`Failed to load credential type: ${apiMessage || 'Unknown error'}`)
         }
     }
 
