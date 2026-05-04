@@ -82,15 +82,20 @@ const ChatflowGuardrails = ({ dialogProps }) => {
             setError(null)
             setSuccess(false)
 
+            const mergedGuardrails = newConfig == null ? undefined : { ...(guardrailsConfig || organizationConfig || {}), ...newConfig }
+
             // Update chatbotConfig with guardrails
             const updatedChatbotConfig = {
                 ...chatbotConfig,
-                guardrails: overrideEnabled ? newConfig : undefined
+                guardrails: overrideEnabled ? mergedGuardrails : undefined
             }
 
             if (!dialogProps.chatflow.id && dialogProps.handleSaveFlow) {
                 return dialogProps.handleSaveFlow(dialogProps.chatflow.name, {
-                    chatbotConfig: JSON.stringify(updatedChatbotConfig)
+                    chatbotConfig: JSON.stringify({
+                        ...chatbotConfig,
+                        guardrails: overrideEnabled ? mergedGuardrails : undefined
+                    })
                 })
             }
 
@@ -99,7 +104,18 @@ const ChatflowGuardrails = ({ dialogProps }) => {
             })
 
             if (saveResp.data) {
-                setGuardrailsConfig(overrideEnabled ? newConfig : null)
+                let parsed = {}
+                try {
+                    parsed = saveResp.data.chatbotConfig ? JSON.parse(saveResp.data.chatbotConfig) : {}
+                } catch (e) {
+                    parsed = {}
+                }
+                setChatbotConfig(parsed)
+                if (overrideEnabled) {
+                    setGuardrailsConfig(parsed.guardrails != null ? parsed.guardrails : mergedGuardrails)
+                } else {
+                    setGuardrailsConfig(null)
+                }
                 setSuccess(true)
                 enqueueSnackbar({
                     message: 'Guardrails Configuration Saved',
@@ -260,6 +276,70 @@ const ChatflowGuardrails = ({ dialogProps }) => {
             {/* Configuration UI (only shown when override is enabled) */}
             {overrideEnabled && (
                 <Box>
+                    {/* Per-chatflow failure-mode override. Leaving this untouched means the
+                        chatflow inherits the organization-level failureMode. */}
+                    <Card variant='outlined' sx={{ mb: 2, p: 2 }}>
+                        <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                            Failure Mode (override)
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
+                            Organization default: <strong>{organizationConfig?.failureMode || 'open'}</strong>. Override below to change how
+                            THIS chatflow reacts when guardrails cannot be evaluated.
+                        </Typography>
+                        <ToggleButtonGroup
+                            color='primary'
+                            value={guardrailsConfig?.failureMode ?? organizationConfig?.failureMode ?? 'open'}
+                            exclusive
+                            onChange={(_, value) => {
+                                if (!value) return
+                                const next = { ...(guardrailsConfig || {}), failureMode: value }
+                                setGuardrailsConfig(next)
+                                handleSave(next)
+                            }}
+                            aria-label='Chatflow failure mode'
+                        >
+                            <ToggleButton value='open'>Fail Open</ToggleButton>
+                            <ToggleButton value='closed'>Fail Closed</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Card>
+
+                    <Card variant='outlined' sx={{ mb: 2, p: 2 }}>
+                        <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                            Observability-only / shadow (override)
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
+                            Organization default: <strong>{organizationConfig?.observabilityOnly ? 'On' : 'Off'}</strong>. When on,
+                            violations are recorded but never block. Use the switch to pin a value for this chatflow, or keep it aligned
+                            with the org (inherit).
+                        </Typography>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    color='primary'
+                                    checked={
+                                        guardrailsConfig?.observabilityOnly !== undefined
+                                            ? guardrailsConfig.observabilityOnly
+                                            : organizationConfig?.observabilityOnly ?? false
+                                    }
+                                    onChange={(e) => {
+                                        const next = { ...(guardrailsConfig || {}), observabilityOnly: e.target.checked }
+                                        setGuardrailsConfig(next)
+                                        handleSave(next)
+                                    }}
+                                />
+                            }
+                            label={
+                                <Box>
+                                    <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                                        {guardrailsConfig?.observabilityOnly !== undefined
+                                            ? 'Custom value for this chatflow'
+                                            : 'Following organization default (toggle to override)'}
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Card>
+
                     {/* Mode Tabs */}
                     <Tabs
                         value={selectedTab}

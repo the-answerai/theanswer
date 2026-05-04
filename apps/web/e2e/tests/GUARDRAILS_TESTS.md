@@ -331,12 +331,54 @@ jobs:
 
 ---
 
+## Pending Test Coverage (Phase 7)
+
+The Phase 7 work (issue [#1059](https://github.com/the-answerai/theanswer/issues/1059)) added new behavior that is **not yet covered** by E2E tests. When extending this spec file, add coverage for:
+
+### Failure Mode (fail-open vs fail-closed)
+- ✅ Admin can toggle Failure Mode in Master Config (Fail Open / Fail Closed)
+- ✅ Toggle round-trips through `PUT /api/v1/organizations/:id/config/guardrails` and persists `failureMode`
+- ✅ Per-chatflow Failure Mode override appears in Chatflow Configuration > Guardrails tab when override is enabled
+- ✅ Per-chatflow override correctly inherits org default when left untouched
+
+### Observability-Only Mode
+- ✅ Admin can toggle Observability-Only switch
+- ✅ When enabled, real Fiddler block-action violations show up in `guardrailsMetadata` but the chat still completes (no 400)
+
+### Diagnostic Selftest Endpoint
+- ✅ `GET /api/v1/guardrails/selftest` returns 200 with `healthCheck.ok=true` when guardrails healthy
+- ✅ Returns 200 with `healthCheck.degraded=true, reason='no_credentials'` when no credential resolves
+- ✅ Returns 200 with `healthCheck.reason='auth_error'` when credential is rejected by Fiddler
+- ✅ Returns 200 with `healthCheck.reason='disabled'` when guardrails are disabled by config
+- ✅ `credentialSource` reflects actual provenance (`workspace`, `organization`, `env`, etc.)
+
+### Degraded-State UI
+- ✅ Amber "Safety checks were unavailable for this message" banner renders above chat response when `health.anyDegraded=true`
+- ✅ Banner does NOT render for healthy validations
+- ✅ Shield icon turns amber (warning state) when degraded
+- ✅ Accordion shows new "Health" section with `mode`, per-stage `reason`, `httpStatus`, `latencyMs`
+- ✅ `[BUG] Jira-style` integration: simulated upstream 401 produces both the chat banner AND a `logger.error('[Guardrails] Stage degraded ...')` line in server logs
+
+### Fail-Closed Blocking
+- ✅ With `failureMode='closed'` and a known-bad API key, prediction returns HTTP 503 with body `Safety checks are temporarily unavailable (reason: auth_error). Please try again in a moment.`
+- ✅ Streaming chatflow on fail-closed + degraded emits a trailing SSE `error` event so client UI can surface it
+
+### AgentFlow V2 Parity
+- ✅ AgentFlow V2 chatflow (`type === 'AGENTFLOW'`) emits the same `guardrailsMetadata` shape as chain chatflows (input + output + health)
+- ✅ AgentFlow V2 input violation produces the same 400 block as chain path
+
+### Credential Visibility
+- ✅ `Organization`-visible `fiddlerApi` credential created in workspace A is correctly resolved by chatflows running in workspace B of the same org (was a bug, now fixed)
+
+---
+
 ## Related Documentation
 
 - **Implementation Plan:** `.claude/plans/fiddler-guardrails-implementation.md`
-- **Progress Tracking:** `.claude/plans/fiddler-guardrails-progress.md`
+- **Progress Tracking:** `.claude/plans/fiddler-guardrails-status.md`
 - **Backend API:** `packages/server/CLAUDE.md`
 - **Frontend Components:** `packages-answers/ui/src/GuardrailsSettings.tsx`
+- **Issue:** [the-answerai/theanswer#1059](https://github.com/the-answerai/theanswer/issues/1059) — Phase 7 failure semantics + diagnostics
 - **Playwright Docs:** https://playwright.dev/
 
 ---

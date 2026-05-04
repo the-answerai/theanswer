@@ -9,18 +9,20 @@
  * - Fail-open by default
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios'
-import { StatusCodes } from 'http-status-codes'
-import { InternalFlowiseError } from '../../errors/internalFlowiseError'
-import { getErrorMessage } from '../../errors/utils'
+import axios, { AxiosInstance } from 'axios'
+import { createHash } from 'crypto'
+import { In } from 'typeorm'
 import { CircuitBreaker } from './CircuitBreaker'
 import { getGuardrailsConfig } from './config'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
-import { Credential } from '../../database/entities/Credential'
+import { Credential, CredentialVisibility } from '../../database/entities/Credential'
 import { decryptCredentialData } from '../../utils'
+import logger from '../../utils/logger'
+import { FiddlerCircuitOpenError, FiddlerError, FiddlerUnsupportedError, toFiddlerError } from './errors'
 import {
     GuardrailsConfig,
     GuardrailAction,
+    GuardrailStageStatus,
     SafetyAPIResponse,
     SafetyEvaluationResult,
     SafetyViolation,
@@ -33,18 +35,89 @@ import {
     OutputValidationResult
 } from '../../types/guardrails'
 
+const HEALTHY_STATUS: GuardrailStageStatus = { ok: true, degraded: false, reason: 'ok' }
+const DISABLED_STATUS: GuardrailStageStatus = { ok: true, degraded: false, reason: 'disabled_stage' }
+
+/**
+ * Build a status from a FiddlerError. Keeps a stable, machine-readable reason
+ * so alerting rules and UI banners can branch on it.
+ *
+ * Note: `unsupported` (plan-tier capability gap) is NOT degraded — Fiddler
+ * answered, just told us the endpoint isn't available on this plan. Treating
+ * it as degraded would surface a per-message banner for a permanent config
+ * issue. Surfaced once to admins via the selftest capability matrix instead.
+ */
+const toStatus = (err: FiddlerError, startedAt: number): GuardrailStageStatus => {
+    const isUnsupported = err instanceof FiddlerUnsupportedError
+    return {
+        ok: isUnsupported,
+        degraded: !isUnsupported,
+        reason: err.reason,
+        httpStatus: err.httpStatus,
+        message: err.message,
+        latencyMs: Date.now() - startedAt
+    }
+}
+
+/**
+ * Provenance of resolved credentials. Surfaced by the selftest endpoint so
+ * operators can tell where the key is actually coming from.
+ */
+export type FiddlerCredentialSource = 'config_credential_id' | 'workspace' | 'organization' | 'env' | 'none'
+
 export interface FiddlerCredentials {
     apiKey: string
     apiUrl: string
 }
 
+/**
+ * Process-wide cache of (apiKeyHash + endpoint) → unsupported. Once Fiddler
+ * tells us a guardrail isn't included in the caller's plan tier, we record
+ * it here so subsequent calls short-circuit without hammering the API or
+ * tripping the circuit breaker on a 404 that will never resolve.
+ *
+ * Keyed on a hash of the API key (not the key itself) so that:
+ *   - different orgs with different keys/plan tiers don't pollute each other
+ *   - we never log or persist raw credentials
+ *   - rotating an API key on an existing credential row produces a new
+ *     fingerprint, which auto-invalidates prior plan-tier decisions for the
+ *     rotated key (a property a credential-ID-keyed cache would lose without
+ *     extra invalidation plumbing — important when admins upgrade from a
+ *     freemium key to a paid key on the same credential)
+ *
+ * Lives for the process lifetime; restart clears it.
+ */
+const unsupportedEndpoints: Set<string> = new Set()
+
+/**
+ * 64-bit fingerprint used solely as a namespace key for `unsupportedEndpoints`
+ * above. NOT a password hash and NOT a security boundary:
+ *
+ *   - never persisted (no DB, log, file, or wire)
+ *   - never compared against another value to grant access
+ *   - not derived for storage or offline verification
+ *
+ * CWE-916 (use of password hash with insufficient computational effort) does
+ * not apply: there is no offline attack surface for this value. KDFs like
+ * bcrypt / scrypt / argon2 / PBKDF2 would add per-request latency without
+ * improving the threat model. The CodeQL rule `js/insufficient-password-hash`
+ * fires here on data-flow alone (the variable is named `apiKey` and reaches
+ * `crypto.createHash`) and is a false positive in this context. Documented
+ * and dismissed in GHAS — see PR #1060 / alerts #318, #319.
+ */
+const apiKeyHash = (apiKey: string): string => createHash('sha256').update(apiKey).digest('hex').slice(0, 16)
+
+const unsupportedCacheKey = (keyHash: string, endpoint: string): string => `${keyHash}|${endpoint}`
+
 export class FiddlerGuardrailsService {
     private client: AxiosInstance
     private circuitBreaker: CircuitBreaker
     private config: GuardrailsConfig
+    private apiKeyHash: string
 
     constructor(credentials: FiddlerCredentials, config: GuardrailsConfig) {
         this.config = config
+        this.apiKeyHash = apiKeyHash(credentials.apiKey)
 
         // Initialize HTTP client with connection pooling
         this.client = axios.create({
@@ -96,112 +169,193 @@ export class FiddlerGuardrailsService {
         workspaceId: string,
         organizationId?: string
     ): Promise<FiddlerGuardrailsService | null> {
+        const resolution = await this.resolveFromContext(chatflowId, workspaceId, organizationId)
+        return resolution.service
+    }
+
+    /**
+     * Resolve context into a diagnostic report describing whether a service
+     * could be built and, if not, why. Callers that need to react to degraded
+     * states (render a banner, fail-closed, etc.) use this richer return.
+     *
+     * `service` is non-null ONLY when config is enabled and credentials were
+     * resolved. All other outcomes set `service` to null and populate `reason`.
+     */
+    public static async resolveFromContext(
+        chatflowId: string,
+        workspaceId: string,
+        organizationId?: string
+    ): Promise<{
+        service: FiddlerGuardrailsService | null
+        config: GuardrailsConfig
+        credentialSource: FiddlerCredentialSource
+        reason: 'ok' | 'disabled' | 'no_credentials' | 'unexpected'
+        error?: Error
+    }> {
+        let config: GuardrailsConfig
         try {
-            // 1. Load configuration (env → org → chatflow)
-            const config = await getGuardrailsConfig(chatflowId, organizationId)
-
-            // 2. Check if guardrails are enabled
-            if (!config.enabled) {
-                return null
-            }
-
-            // 3. Load credentials with fallback chain (using workspaceId since credentials are workspace-scoped)
-            const credentials = await this.loadCredentials(workspaceId, config)
-            if (!credentials) {
-                console.warn(`Guardrails enabled but no credentials found for workspace ${workspaceId}`)
-                return null
-            }
-
-            // 4. Initialize and return service
-            return new FiddlerGuardrailsService(credentials, config)
+            config = await getGuardrailsConfig(chatflowId, organizationId)
         } catch (error) {
-            // Fail-open: log error but don't throw
-            console.error('Error initializing Fiddler Guardrails service (fail-open):', error)
-            return null
+            logger.error('[Guardrails] Failed to load config (fail-safe)', {
+                error: (error as Error).message,
+                chatflowId,
+                workspaceId,
+                organizationId
+            })
+            // Return a minimal-disabled config so the caller's health/fail-mode logic still works
+            return {
+                service: null,
+                config: { enabled: false } as GuardrailsConfig,
+                credentialSource: 'none',
+                reason: 'unexpected',
+                error: error as Error
+            }
+        }
+
+        if (!config.enabled) {
+            return { service: null, config, credentialSource: 'none', reason: 'disabled' }
+        }
+
+        try {
+            const { credentials, source } = await this.loadCredentials(workspaceId, organizationId, config)
+            if (!credentials) {
+                logger.warn('[Guardrails] Enabled but no credentials could be resolved', {
+                    chatflowId,
+                    workspaceId,
+                    organizationId,
+                    credentialId: config.credentialId
+                })
+                return { service: null, config, credentialSource: 'none', reason: 'no_credentials' }
+            }
+            return {
+                service: new FiddlerGuardrailsService(credentials, config),
+                config,
+                credentialSource: source,
+                reason: 'ok'
+            }
+        } catch (error) {
+            logger.error('[Guardrails] Unexpected error resolving service', {
+                error: (error as Error).message,
+                chatflowId,
+                workspaceId,
+                organizationId
+            })
+            return { service: null, config, credentialSource: 'none', reason: 'unexpected', error: error as Error }
         }
     }
 
     /**
-     * Load Fiddler credentials with multi-tier fallback
-     * Priority: Config credentialId → Workspace credential by name → Environment variables
+     * Load Fiddler credentials with visibility-aware multi-tier lookup.
      *
-     * @param workspaceId - Workspace ID for credential scoping (credentials are workspace-scoped)
-     * @param config - Guardrails configuration
-     * @returns Credentials or null if not found
+     * Priority:
+     *   1. Config `credentialId` (chatflow/org override) — owned by workspace OR visible to org
+     *   2. Any `fiddlerApi` credential owned by workspace OR visible to org (Organization/Platform visibility)
+     *   3. Environment variables (`FIDDLER_API_KEY` + `FIDDLER_API_URL`)
+     *
+     * Previously this filtered by `workspaceId` only. Because the admin UI saves
+     * guardrail credentials with `visibility: ['Organization']`, a credential
+     * created under workspace A was invisible to a chatflow executing under
+     * workspace B of the same org, silently disabling guardrails.
      */
-    private static async loadCredentials(workspaceId: string, config: GuardrailsConfig): Promise<FiddlerCredentials | null> {
+    public static async loadCredentials(
+        workspaceId: string,
+        organizationId: string | undefined,
+        config: GuardrailsConfig
+    ): Promise<{ credentials: FiddlerCredentials | null; source: FiddlerCredentialSource }> {
         try {
             const appServer = getRunningExpressApp()
             const credentialRepository = appServer.AppDataSource.getRepository(Credential)
 
-            // Priority 1: Use credentialId from config (chatflow/org override)
+            // Build visibility-aware where-clause: match by workspace OR (org AND visible to org).
+            const orgVisibilityClause = organizationId
+                ? [
+                      {
+                          organizationId,
+                          visibility: In([CredentialVisibility.ORGANIZATION, CredentialVisibility.PLATFORM])
+                      }
+                  ]
+                : []
+
+            // Priority 1: Explicit credentialId from config
             if (config.credentialId) {
                 const credential = await credentialRepository.findOne({
-                    where: {
-                        id: config.credentialId,
-                        workspaceId
-                    }
+                    where: [
+                        { id: config.credentialId, workspaceId },
+                        ...orgVisibilityClause.map((c) => ({ id: config.credentialId, ...c }))
+                    ]
                 })
 
                 if (credential) {
-                    const credentialData = await decryptCredentialData(credential.encryptedData)
+                    const data = await decryptCredentialData(credential.encryptedData)
                     return {
-                        apiKey: credentialData.fiddlerApiKey,
-                        apiUrl: credentialData.fiddlerApiUrl
+                        credentials: { apiKey: data.fiddlerApiKey, apiUrl: data.fiddlerApiUrl },
+                        source: 'config_credential_id'
                     }
                 }
             }
 
-            // Priority 2: Find workspace's Fiddler credential by name
-            const credentials = await credentialRepository.find({
-                where: {
-                    credentialName: 'fiddlerApi',
-                    workspaceId
-                }
+            // Priority 2: fiddlerApi credential owned by workspace
+            const workspaceCred = await credentialRepository.findOne({
+                where: { credentialName: 'fiddlerApi', workspaceId },
+                order: { updatedDate: 'DESC' }
             })
-
-            if (credentials && credentials.length > 0) {
-                const credentialData = await decryptCredentialData(credentials[0].encryptedData)
+            if (workspaceCred) {
+                const data = await decryptCredentialData(workspaceCred.encryptedData)
                 return {
-                    apiKey: credentialData.fiddlerApiKey,
-                    apiUrl: credentialData.fiddlerApiUrl
+                    credentials: { apiKey: data.fiddlerApiKey, apiUrl: data.fiddlerApiUrl },
+                    source: 'workspace'
                 }
             }
 
-            // Priority 3: Fallback to environment variables
+            // Priority 2b: fiddlerApi credential visible across the organization
+            if (organizationId) {
+                const orgCred = await credentialRepository.findOne({
+                    where: orgVisibilityClause.map((c) => ({ credentialName: 'fiddlerApi', ...c })),
+                    order: { updatedDate: 'DESC' }
+                })
+                if (orgCred) {
+                    const data = await decryptCredentialData(orgCred.encryptedData)
+                    return {
+                        credentials: { apiKey: data.fiddlerApiKey, apiUrl: data.fiddlerApiUrl },
+                        source: 'organization'
+                    }
+                }
+            }
+
+            // Priority 3: Environment variables
             const envApiKey = process.env.FIDDLER_API_KEY
             const envApiUrl = process.env.FIDDLER_API_URL
-
             if (envApiKey && envApiUrl) {
-                // eslint-disable-next-line no-console
-                console.log(`Using Fiddler credentials from environment variables for workspace ${workspaceId}`)
-                return {
-                    apiKey: envApiKey,
-                    apiUrl: envApiUrl
-                }
+                logger.info('[Guardrails] Using credentials from environment variables', { workspaceId, organizationId })
+                return { credentials: { apiKey: envApiKey, apiUrl: envApiUrl }, source: 'env' }
             }
 
-            // No credentials found
-            return null
+            return { credentials: null, source: 'none' }
         } catch (error) {
-            console.error('Error loading Fiddler credentials:', error)
-            return null
+            logger.error('[Guardrails] Error loading Fiddler credentials', {
+                error: (error as Error).message,
+                workspaceId,
+                organizationId
+            })
+            return { credentials: null, source: 'none' }
         }
     }
 
     /**
-     * Execute request with circuit breaker protection
+     * Execute a Fiddler API call with circuit breaker protection.
+     *
+     * Throws typed `FiddlerError` subclasses on any failure (including open
+     * circuit) so callers can classify and record a degraded status. No silent
+     * fallbacks — "API down" must be distinguishable from "API said safe".
+     *
+     * `FiddlerUnsupportedError` is treated as a circuit-breaker SUCCESS: the
+     * API responded normally, the caller's plan just doesn't include the
+     * endpoint. Penalizing the breaker on these would trip it and break the
+     * other (working) endpoints on the same Fiddler account.
      */
-    private async executeWithCircuitBreaker<T>(operation: () => Promise<T>, fallback?: () => T): Promise<T> {
-        // Check if circuit allows execution
+    private async executeWithCircuitBreaker<T>(operation: () => Promise<T>): Promise<T> {
         if (!this.circuitBreaker.canExecute()) {
-            if (fallback) {
-                return fallback()
-            }
-            throw new InternalFlowiseError(
-                StatusCodes.SERVICE_UNAVAILABLE,
-                'Error: FiddlerGuardrailsService - Circuit breaker is open (service unavailable)'
-            )
+            throw new FiddlerCircuitOpenError()
         }
 
         try {
@@ -209,150 +363,142 @@ export class FiddlerGuardrailsService {
             this.circuitBreaker.recordSuccess()
             return result
         } catch (error) {
-            this.circuitBreaker.recordFailure()
-
-            // If we have a fallback, use it instead of throwing
-            if (fallback) {
-                return fallback()
+            const fiddlerErr = toFiddlerError(error)
+            if (fiddlerErr instanceof FiddlerUnsupportedError) {
+                this.circuitBreaker.recordSuccess()
+            } else {
+                this.circuitBreaker.recordFailure()
             }
-
-            throw error
+            throw fiddlerErr
         }
     }
 
     /**
-     * Make POST request to Fiddler API
+     * Make POST request to Fiddler API. Throws typed `FiddlerError`.
+     *
+     * Short-circuits with `FiddlerUnsupportedError` if a previous call to this
+     * (apiKey, endpoint) pair was rejected with a plan-tier 404 — avoids
+     * repeatedly calling an endpoint Fiddler has already told us is unavailable.
      */
     private async post<T>(endpoint: string, data: any): Promise<T> {
+        const cacheKey = unsupportedCacheKey(this.apiKeyHash, endpoint)
+        if (unsupportedEndpoints.has(cacheKey)) {
+            throw new FiddlerUnsupportedError(`Endpoint ${endpoint} is not included in your Fiddler plan.`, endpoint)
+        }
         try {
             const response = await this.client.post<T>(endpoint, data)
             return response.data
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const axiosError = error as AxiosError
-                throw new InternalFlowiseError(
-                    axiosError.response?.status || StatusCodes.INTERNAL_SERVER_ERROR,
-                    `Error: FiddlerGuardrailsService.post - ${getErrorMessage(error)}`
-                )
+            const fiddlerErr = toFiddlerError(error)
+            if (fiddlerErr instanceof FiddlerUnsupportedError) {
+                unsupportedEndpoints.add(cacheKey)
+                logger.warn('[Guardrails] Fiddler endpoint not included in plan; caching as unsupported', {
+                    endpoint,
+                    httpStatus: fiddlerErr.httpStatus,
+                    message: fiddlerErr.message
+                })
             }
-            throw new InternalFlowiseError(
-                StatusCodes.INTERNAL_SERVER_ERROR,
-                `Error: FiddlerGuardrailsService.post - ${getErrorMessage(error)}`
-            )
+            throw fiddlerErr
         }
     }
 
     /**
-     * Evaluate safety (11 dimensions)
-     * Returns violations for dimensions exceeding threshold
+     * Public capability probe. True if a previous call to this endpoint on
+     * this API key was rejected as plan-tier-unsupported. Used by the admin
+     * selftest endpoint to render a capability matrix without making a live
+     * call (which would itself be cached as unsupported).
      */
-    public async evaluateSafety(text: string): Promise<Partial<SafetyEvaluationResult>> {
+    public isEndpointUnsupported(endpoint: string): boolean {
+        return unsupportedEndpoints.has(unsupportedCacheKey(this.apiKeyHash, endpoint))
+    }
+
+    /**
+     * Test-only: clear the process-wide unsupported cache. Not part of the
+     * public contract.
+     * @internal
+     */
+    public static __resetUnsupportedCacheForTests(): void {
+        unsupportedEndpoints.clear()
+    }
+
+    /**
+     * Evaluate safety (11 dimensions). Returns both the evaluation result and a
+     * stage health status. Throws nothing — errors are reflected in status.
+     */
+    public async evaluateSafety(text: string): Promise<{
+        result: Partial<SafetyEvaluationResult>
+        status: GuardrailStageStatus
+    }> {
         if (!this.config.safety.enabled) {
-            return { dimensions: [], violations: [], isUnsafe: false }
+            return {
+                result: { dimensions: [], violations: [], isUnsafe: false },
+                status: DISABLED_STATUS
+            }
         }
 
+        const startedAt = Date.now()
         try {
-            const apiResponse = await this.executeWithCircuitBreaker(
-                async () => {
-                    const response = await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', {
-                        data: { input: text }
-                    })
-                    return response
-                },
-                (): SafetyAPIResponse => {
-                    // Return empty scores for all dimensions
-                    return {
-                        fdl_harmful: 0,
-                        fdl_violent: 0,
-                        fdl_unethical: 0,
-                        fdl_illegal: 0,
-                        fdl_sexual: 0,
-                        fdl_racist: 0,
-                        fdl_jailbreaking: 0,
-                        fdl_harassing: 0,
-                        fdl_hateful: 0,
-                        fdl_sexist: 0,
-                        fdl_roleplaying: 0
-                    }
-                }
-            )
+            const apiResponse = await this.executeWithCircuitBreaker(async () => {
+                return await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', {
+                    data: { input: text }
+                })
+            })
 
-            // Parse API response and evaluate per-dimension thresholds
             const violations: SafetyViolation[] = []
             const dimensions = Object.keys(apiResponse) as SafetyDimension[]
 
             for (const dimension of dimensions) {
                 const score = apiResponse[dimension]
-
-                // Get threshold: per-dimension override or global threshold
                 const threshold = this.config.safety.dimensionThresholds?.[dimension] ?? this.config.safety.threshold
 
                 if (score > threshold) {
-                    // Get action: per-dimension override or global action
                     const action = this.config.safety.dimensionActions?.[dimension] ?? this.config.safety.action
-
-                    violations.push({
-                        dimension,
-                        score,
-                        threshold,
-                        action
-                    })
+                    violations.push({ dimension, score, threshold, action })
                 }
             }
 
             return {
-                ...apiResponse,
-                violations,
-                isUnsafe: violations.length > 0
-            } as SafetyEvaluationResult
+                result: { ...apiResponse, violations, isUnsafe: violations.length > 0 } as SafetyEvaluationResult,
+                status: { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
+            }
         } catch (error) {
-            // Fail-open: return no violations on error
-            return { dimensions: [], violations: [], isUnsafe: false }
+            const fiddlerErr = error instanceof FiddlerError ? error : toFiddlerError(error)
+            return {
+                // Honest fallback: no violations detected because we could not evaluate,
+                // NOT because content was safe. Caller must consult `status.degraded`.
+                result: { dimensions: [], violations: [], isUnsafe: false },
+                status: toStatus(fiddlerErr, startedAt)
+            }
         }
     }
 
     /**
-     * Detect PII (15+ types) with per-type filtering and redaction
-     * Returns filtered detections and optionally redacted text
+     * Detect PII (15+ types) with per-type filtering and redaction. Returns
+     * both the evaluation result and a stage health status. Throws nothing.
      */
-    public async detectPII(text: string): Promise<PIIDetectionResult> {
+    public async detectPII(text: string): Promise<{ result: PIIDetectionResult; status: GuardrailStageStatus }> {
         if (!this.config.pii.enabled) {
-            return { detections: [], hasPII: false }
+            return { result: { detections: [], hasPII: false }, status: DISABLED_STATUS }
         }
 
+        const startedAt = Date.now()
         try {
-            const apiResponse = await this.executeWithCircuitBreaker(
-                async () => {
-                    const response = await this.post<PIIAPIResponse>('/v3/guardrails/sensitive-information', {
-                        data: { input: text }
-                    })
-                    return response
-                },
-                (): PIIAPIResponse => {
-                    return { fdl_sensitive_information_scores: [] }
-                }
-            )
+            const apiResponse = await this.executeWithCircuitBreaker(async () => {
+                return await this.post<PIIAPIResponse>('/v3/guardrails/sensitive-information', {
+                    data: { input: text }
+                })
+            })
 
-            // Filter detections by per-type confidence thresholds and enabled types
             const rawDetections = apiResponse.fdl_sensitive_information_scores || []
             const filteredDetections: PIIDetection[] = []
 
             for (const entity of rawDetections) {
                 const entityLabel = entity.label as PIIType
+                if (this.config.pii.enabledTypes && !this.config.pii.enabledTypes.includes(entityLabel)) continue
 
-                // Check if type is enabled (if enabledTypes is specified)
-                if (this.config.pii.enabledTypes && !this.config.pii.enabledTypes.includes(entityLabel)) {
-                    continue
-                }
-
-                // Get confidence threshold: per-type override or global threshold
                 const threshold = this.config.pii.typeConfidenceThresholds?.[entityLabel] ?? this.config.pii.confidenceThreshold
-
-                // Filter by confidence
                 if (entity.score >= threshold) {
-                    // Get action: per-type override or global action
                     const action = this.config.pii.typeActions?.[entityLabel] ?? this.config.pii.action
-
                     filteredDetections.push({
                         label: entityLabel,
                         score: entity.score,
@@ -364,10 +510,8 @@ export class FiddlerGuardrailsService {
                 }
             }
 
-            // Generate redacted text if any redact actions
             let redactedText: string | undefined
             const hasRedactActions = filteredDetections.some((d) => d.action === 'redact' || d.action === 'replace')
-
             if (hasRedactActions) {
                 redactedText = this.redactPII(
                     text,
@@ -376,14 +520,20 @@ export class FiddlerGuardrailsService {
             }
 
             return {
-                ...apiResponse,
-                detections: filteredDetections,
-                hasPII: filteredDetections.length > 0,
-                redactedText
+                result: {
+                    ...apiResponse,
+                    detections: filteredDetections,
+                    hasPII: filteredDetections.length > 0,
+                    redactedText
+                },
+                status: { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
             }
         } catch (error) {
-            // Fail-open: return no detections on error
-            return { detections: [], hasPII: false }
+            const fiddlerErr = error instanceof FiddlerError ? error : toFiddlerError(error)
+            return {
+                result: { detections: [], hasPII: false },
+                status: toStatus(fiddlerErr, startedAt)
+            }
         }
     }
 
@@ -405,184 +555,187 @@ export class FiddlerGuardrailsService {
     }
 
     /**
-     * Validate input text (safety + PII checks in parallel)
-     * Returns combined validation result with blocking/redaction logic
+     * Validate input text (safety + PII checks in parallel). Always resolves;
+     * per-stage failures are reflected in `result.status.degraded`/`reason`.
+     *
+     * Observability-only mode: if `config.observabilityOnly === true`, even
+     * real 'block' actions are downgraded to warnings so the request continues
+     * to the LLM while violations are still recorded for analytics.
      */
     public async validateInput(text: string): Promise<InputValidationResult> {
-        try {
-            // Run safety and PII checks in parallel for best performance
-            const [safetyResult, piiResult] = await Promise.all([this.evaluateSafety(text), this.detectPII(text)])
+        const [safety, pii] = await Promise.all([this.evaluateSafety(text), this.detectPII(text)])
 
-            // Determine if input should be blocked
-            const shouldBlock =
-                safetyResult.violations?.some((v) => v.action === 'block') || piiResult.detections.some((d) => d.action === 'block')
+        const safetyResult = safety.result
+        const piiResult = pii.result
 
-            // Determine if input should be redacted
-            const shouldRedact = piiResult.redactedText !== undefined
+        const obsOnly = this.config.observabilityOnly === true
+        const shouldBlock =
+            !obsOnly &&
+            ((safetyResult.violations || []).some((v) => v.action === 'block') ||
+                (piiResult.detections || []).some((d) => d.action === 'block'))
+        const shouldRedact = piiResult.redactedText !== undefined
 
-            // Build result
-            const result: InputValidationResult = {
-                safetyResult,
-                piiResult,
-                blocked: shouldBlock,
-                redacted: shouldRedact,
-                redactedText: piiResult.redactedText,
-                violations: {
-                    safety: safetyResult.violations,
-                    pii: piiResult.detections
-                }
-            }
-
-            // Add block message if blocked (combine both safety and PII)
-            if (shouldBlock) {
-                const safetyBlocks = safetyResult.violations?.filter((v) => v.action === 'block')
-                const piiBlocks = piiResult.detections.filter((d) => d.action === 'block')
-
-                const messages: string[] = []
-                if (safetyBlocks && safetyBlocks.length > 0) {
-                    messages.push(`Safety: ${safetyBlocks?.map((v) => v.dimension).join(', ')}`)
-                }
-                if (piiBlocks && piiBlocks.length > 0) {
-                    messages.push(`PII: ${piiBlocks.map((d) => d.label).join(', ')}`)
-                }
-
-                result.message = `Content blocked - ${messages.join('; ')}`
-            }
-
-            return result
-        } catch (error) {
-            // Fail-open: on error, allow the input to pass through
-            return {
-                safetyResult: { dimensions: [], violations: [], isUnsafe: false },
-                piiResult: { detections: [], hasPII: false },
-                blocked: false,
-                redacted: false,
-                violations: {}
-            }
+        const result: InputValidationResult = {
+            safetyResult,
+            piiResult,
+            blocked: shouldBlock,
+            redacted: shouldRedact,
+            redactedText: piiResult.redactedText,
+            violations: {
+                safety: safetyResult.violations,
+                pii: piiResult.detections
+            },
+            status: mergeStageStatus([safety.status, pii.status])
         }
+
+        if (shouldBlock) {
+            const safetyBlocks = safetyResult.violations?.filter((v) => v.action === 'block')
+            const piiBlocks = (piiResult.detections || []).filter((d) => d.action === 'block')
+
+            const messages: string[] = []
+            if (safetyBlocks && safetyBlocks.length > 0) {
+                messages.push(`Safety: ${safetyBlocks.map((v) => v.dimension).join(', ')}`)
+            }
+            if (piiBlocks.length > 0) {
+                messages.push(`PII: ${piiBlocks.map((d) => d.label).join(', ')}`)
+            }
+            result.message = `Content blocked - ${messages.join('; ')}`
+        }
+
+        return result
     }
 
     /**
      * Evaluate faithfulness (RAG hallucination detection)
-     * Uses Fiddler's Fast Faithfulness model to detect hallucinations
+     * Uses Fiddler's Fast Faithfulness model to detect hallucinations.
      *
      * Note: Fiddler faithfulness score uses inverted scale:
      * - Score < 0.005 = unfaithful (hallucination/inaccuracy)
      * - Score ≥ 0.005 = faithful (accurate response)
      *
-     * @param text - AI-generated response to evaluate
-     * @param context - Source context/documents to compare against
+     * Wire format (verified against /v3/guardrails/ftl-response-faithfulness):
+     *   `{ data: { prompt, response, context } }`
+     * Previously sent `{ data: { input, output } }`, which Fiddler rejected
+     * with HTTP 400 "Input is invalid". The model needs all three fields to
+     * decide whether the response is grounded in the context for the prompt.
+     *
+     * @param response - AI-generated response to evaluate
+     * @param context  - Source context/documents to compare against
+     * @param prompt   - Original user prompt that produced `response`
      * @returns Faithfulness evaluation with score and action
      */
     public async evaluateFaithfulness(
-        text: string,
-        context: string
+        response: string,
+        context: string,
+        prompt: string
     ): Promise<{
-        score: number
-        threshold: number
-        action: GuardrailAction
+        result: {
+            score: number
+            threshold: number
+            action: GuardrailAction
+        }
+        status: GuardrailStageStatus
     }> {
         if (!this.config.faithfulness.enabled) {
             return {
-                score: 1.0,
-                threshold: this.config.faithfulness.threshold,
-                action: 'warn'
+                result: {
+                    score: 1.0,
+                    threshold: this.config.faithfulness.threshold,
+                    action: 'warn'
+                },
+                status: DISABLED_STATUS
             }
         }
 
+        const startedAt = Date.now()
         try {
-            const result = await this.executeWithCircuitBreaker(
-                async () => {
-                    const response = await this.post<{ fdl_faithful_score: number }>('/v3/guardrails/ftl-response-faithfulness', {
-                        data: {
-                            input: context,
-                            output: text
-                        }
-                    })
-                    return response
-                },
-                () => ({
-                    fdl_faithful_score: 1.0 // Fail-open: assume faithful
+            const api = await this.executeWithCircuitBreaker(async () => {
+                return await this.post<{ fdl_faithful_score: number }>('/v3/guardrails/ftl-response-faithfulness', {
+                    data: { prompt, response, context }
                 })
-            )
-
-            const score = result.fdl_faithful_score
-            const threshold = this.config.faithfulness.threshold
+            })
 
             return {
-                score,
-                threshold,
-                action: this.config.faithfulness.action
+                result: {
+                    score: api.fdl_faithful_score,
+                    threshold: this.config.faithfulness.threshold,
+                    action: this.config.faithfulness.action
+                },
+                status: { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
             }
         } catch (error) {
-            // Fail-open: return high faithfulness score on error
+            const fiddlerErr = error instanceof FiddlerError ? error : toFiddlerError(error)
             return {
-                score: 1.0,
-                threshold: this.config.faithfulness.threshold,
-                action: 'warn'
+                // Honest fallback: no score — caller must consult status.degraded
+                // before interpreting. We still supply 1.0 so legacy consumers don't NaN.
+                result: {
+                    score: 1.0,
+                    threshold: this.config.faithfulness.threshold,
+                    action: 'warn'
+                },
+                status: toStatus(fiddlerErr, startedAt)
             }
         }
     }
 
     /**
      * Validate output text (safety + PII + faithfulness checks in parallel)
-     * Returns combined validation result
+     * Returns combined validation result.
      *
      * Key Differences from Input Validation:
      * - Never blocks (always fail-open)
-     * - Includes faithfulness check (if context provided)
+     * - Includes faithfulness check (if context AND prompt provided)
      * - Default action is 'warn' instead of 'block'
      *
-     * @param text - AI-generated output to validate
+     * @param text    - AI-generated output to validate
      * @param context - Optional RAG context for faithfulness checking
+     * @param prompt  - Optional originating user prompt (required by Fiddler's
+     *                  faithfulness endpoint; if omitted faithfulness is skipped)
      * @returns Output validation result with all violations
      */
-    public async validateOutput(text: string, context?: string): Promise<OutputValidationResult> {
-        try {
-            // Build array of check promises
-            const checks: Promise<any>[] = [this.evaluateSafety(text), this.detectPII(text)]
+    public async validateOutput(text: string, context?: string, prompt?: string): Promise<OutputValidationResult> {
+        const promises: Promise<any>[] = [this.evaluateSafety(text), this.detectPII(text)]
+        if (context && prompt && this.config.faithfulness.enabled) {
+            promises.push(this.evaluateFaithfulness(text, context, prompt))
+        }
 
-            // Only add faithfulness check if context is provided
-            if (context && this.config.faithfulness.enabled) {
-                checks.push(this.evaluateFaithfulness(text, context))
-            }
+        const results = await Promise.all(promises)
+        const [safety, pii, faith] = results as [
+            { result: Partial<SafetyEvaluationResult>; status: GuardrailStageStatus },
+            { result: PIIDetectionResult; status: GuardrailStageStatus },
+            (
+                | {
+                      result: { score: number; threshold: number; action: GuardrailAction }
+                      status: GuardrailStageStatus
+                  }
+                | undefined
+            )
+        ]
 
-            // Run all checks in parallel for performance
-            const results = await Promise.all(checks)
-            const [safetyResult, piiResult, faithfulnessResult] = results
+        const safetyResult = safety.result
+        const piiResult = pii.result
 
-            // Output validation never replaces (Phase 5: warn only)
-            const shouldReplace = false
-            const shouldRedact = piiResult.redactedText !== undefined
+        const shouldRedact = piiResult.redactedText !== undefined
 
-            // Build result
-            const result: OutputValidationResult = {
-                replaced: shouldReplace,
-                redacted: shouldRedact,
-                redactedText: piiResult.redactedText,
-                violations: {
-                    safety: safetyResult.violations,
-                    pii: piiResult.detections
-                }
-            }
+        const result: OutputValidationResult = {
+            replaced: false, // Output validation never replaces (warn-only posture)
+            redacted: shouldRedact,
+            redactedText: piiResult.redactedText,
+            violations: {
+                safety: safetyResult.violations,
+                pii: piiResult.detections
+            },
+            status: mergeStageStatus([safety.status, pii.status, faith?.status].filter(Boolean) as GuardrailStageStatus[])
+        }
 
-            // Add faithfulness violations if checked
-            if (faithfulnessResult) {
-                result.violations.faithfulness = {
-                    score: faithfulnessResult.score,
-                    threshold: faithfulnessResult.threshold
-                }
-            }
-
-            return result
-        } catch (error) {
-            // Fail-open: on error, allow the output unchanged
-            return {
-                replaced: false,
-                redacted: false,
-                violations: {}
+        if (faith) {
+            result.violations.faithfulness = {
+                score: faith.result.score,
+                threshold: faith.result.threshold
             }
         }
+
+        return result
     }
 
     /**
@@ -600,17 +753,79 @@ export class FiddlerGuardrailsService {
     }
 
     /**
-     * Health check
+     * Structured health check. Returns a normalized status suitable for display
+     * in the admin selftest endpoint. Probes only the safety endpoint —
+     * call `capabilityMatrix()` for a per-endpoint plan-tier report.
      */
-    public async healthCheck(): Promise<boolean> {
+    public async healthCheck(): Promise<GuardrailStageStatus> {
+        const startedAt = Date.now()
         try {
-            // Simple test call to verify API connectivity
-            await this.post('/v3/guardrails/ftl-safety', {
-                prompt: 'test'
-            })
-            return true
+            await this.post<SafetyAPIResponse>('/v3/guardrails/ftl-safety', { data: { input: 'ping' } })
+            return { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
         } catch (error) {
-            return false
+            const err = error instanceof FiddlerError ? error : toFiddlerError(error)
+            return toStatus(err, startedAt)
         }
     }
+
+    /**
+     * Live probe of all three guardrail endpoints, classifying each as `ok`,
+     * `unsupported` (plan-tier 404), or degraded (with reason). Used by the
+     * selftest endpoint and admin UI to render a capability matrix so admins
+     * can see at a glance which guardrails their Fiddler plan actually
+     * supports — instead of toggling them on and finding out later via a
+     * per-message banner.
+     *
+     * Faithfulness uses minimal valid inputs Fiddler accepts (200 OK or 504
+     * "service busy"); we treat 504 here as inconclusive but capable.
+     */
+    public async capabilityMatrix(): Promise<{
+        safety: GuardrailStageStatus
+        pii: GuardrailStageStatus
+        faithfulness: GuardrailStageStatus
+    }> {
+        const probe = async (endpoint: string, payload: any): Promise<GuardrailStageStatus> => {
+            const startedAt = Date.now()
+            try {
+                await this.post(endpoint, payload)
+                return { ...HEALTHY_STATUS, latencyMs: Date.now() - startedAt }
+            } catch (error) {
+                const err = error instanceof FiddlerError ? error : toFiddlerError(error)
+                return toStatus(err, startedAt)
+            }
+        }
+
+        // Run sequentially so a 401/network failure short-circuits the breaker
+        // before we hammer Fiddler with three failing requests in parallel.
+        const safety = await probe('/v3/guardrails/ftl-safety', { data: { input: 'ping' } })
+        const pii = await probe('/v3/guardrails/sensitive-information', { data: { input: 'ping' } })
+        const faithfulness = await probe('/v3/guardrails/ftl-response-faithfulness', {
+            data: { prompt: 'ping', response: 'ping', context: 'ping' }
+        })
+        return { safety, pii, faithfulness }
+    }
+
+    /**
+     * Expose resolved config for diagnostic endpoints.
+     */
+    public getConfig(): GuardrailsConfig {
+        return this.config
+    }
+}
+
+/**
+ * Merge multiple stage statuses into a single summary status.
+ * Any degraded sub-stage marks the whole stage as degraded, and the first
+ * non-ok reason wins (preserves specificity over generic 'ok').
+ */
+function mergeStageStatus(statuses: GuardrailStageStatus[]): GuardrailStageStatus {
+    if (statuses.length === 0) return HEALTHY_STATUS
+
+    const degraded = statuses.find((s) => s.degraded)
+    if (degraded) return degraded
+
+    // Prefer the first non-disabled_stage status so UI shows a concrete reason
+    const concrete = statuses.find((s) => s.reason === 'ok') || statuses[0]
+    const totalLatency = statuses.reduce((sum, s) => sum + (s.latencyMs || 0), 0)
+    return { ...concrete, latencyMs: totalLatency || concrete.latencyMs }
 }

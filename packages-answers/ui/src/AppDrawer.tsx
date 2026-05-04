@@ -318,6 +318,12 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                         icon: <PasswordIcon color='primary' />
                     },
                     {
+                        id: 'csv-transformer',
+                        text: 'CSV Transformer',
+                        link: '/sidekick-studio/csv-transformer',
+                        icon: <AnalyticsIcon color='primary' />
+                    },
+                    {
                         id: 'datasets',
                         text: 'Datasets',
                         link: '/sidekick-studio/datasets',
@@ -507,6 +513,12 @@ export const AppDrawer = ({ session }: AppDrawerProps) => {
                                   text: 'Credentials',
                                   link: '/sidekick-studio/credentials',
                                   icon: <PasswordIcon color='primary' />
+                              },
+                              {
+                                  id: 'csv-transformer',
+                                  text: 'CSV Transformer',
+                                  link: '/sidekick-studio/csv-transformer',
+                                  icon: <AnalyticsIcon color='primary' />
                               },
                               {
                                   id: 'datasets',

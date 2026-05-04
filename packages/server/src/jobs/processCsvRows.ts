@@ -50,6 +50,22 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
     const { config: csvConfig } = safeParseCsvConfiguration(csvParseRun.configuration)
     const additionalContext = csvConfig?.context || ''
     const combinedQuestion = `### ${JSON.stringify(row.rowData)} ### ${additionalContext}`.trim()
+
+    // Cron synthesizes its own request context (no req.user.activeWorkspaceId),
+    // so we must derive workspace/org from durable sources or executeFlow's
+    // workspace-scoped queries (e.g. getWorkspaceSearchOptions) will throw
+    // `Workspace ID is required` and the row will silently fail.
+    const workspaceId = chatflow.workspaceId || (user as any).activeWorkspaceId || ''
+    if (!workspaceId) {
+        throw new Error(
+            `Cannot run CSV row ${row.id}: chatflow ${chatflow.id} has no workspaceId and user ${user.id} has no activeWorkspaceId.`
+        )
+    }
+    const orgId = user.organizationId || chatflow.organizationId || ''
+    if (!orgId) {
+        throw new Error(`Cannot run CSV row ${row.id}: neither user ${user.id} nor chatflow ${chatflow.id} has an organizationId.`)
+    }
+
     const response = await executeFlow({
         user: user as any,
         incomingInput: {
@@ -66,8 +82,8 @@ const runChatFlow = async (row: IAppCsvParseRows, chatflowChatId: string) => {
         telemetry: appServer.telemetry,
         cachePool: appServer.cachePool,
         usageCacheManager: appServer.usageCacheManager,
-        orgId: user.organizationId || '',
-        workspaceId: '',
+        orgId,
+        workspaceId,
         subscriptionId: '',
         productId: ''
     })
@@ -209,9 +225,12 @@ const parseCsvRun = async (csvParseRun: IAppCsvParseRuns): Promise<any> => {
 
             results.forEach((result, index) => {
                 if (result.status === 'fulfilled') {
-                    logger.info(`Row ${rows[index].id} completed`)
+                    // processRow swallows row-level errors and only marks the row
+                    // COMPLETE_WITH_ERRORS, so a fulfilled promise here does not
+                    // necessarily mean success — keep the message neutral.
+                    logger.info(`Row ${rows[index].id} processed`)
                 } else {
-                    logger.error(`Row ${rows[index].id} failed`)
+                    logger.error(`Row ${rows[index].id} failed`, result.reason)
                 }
             })
         }

@@ -13,7 +13,22 @@
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { Organization } from '../../database/entities/Organization'
 import { ChatFlow } from '../../database/entities/ChatFlow'
-import { GuardrailsConfig, DEFAULT_GUARDRAILS_CONFIG, OrganizationConfig, ChatflowConfig, GuardrailAction } from '../../types/guardrails'
+import {
+    GuardrailsConfig,
+    DEFAULT_GUARDRAILS_CONFIG,
+    OrganizationConfig,
+    ChatflowConfig,
+    GuardrailAction,
+    GuardrailFailureMode
+} from '../../types/guardrails'
+
+const parseFailureMode = (raw: string | undefined): GuardrailFailureMode | undefined => {
+    if (!raw) return undefined
+    const v = raw.trim().toLowerCase()
+    if (v === 'closed' || v === 'fail-closed' || v === 'fail_closed') return 'closed'
+    if (v === 'open' || v === 'fail-open' || v === 'fail_open') return 'open'
+    return undefined
+}
 
 /**
  * Load configuration from environment variables
@@ -24,9 +39,13 @@ export function getEnvironmentConfig(): Partial<GuardrailsConfig> {
     const piiThreshold = parseFloat(process.env.FIDDLER_PII_THRESHOLD || '0.8')
     // Fiddler faithfulness uses inverted scale: < 0.005 = unfaithful
     const faithfulnessThreshold = parseFloat(process.env.FIDDLER_FAITHFULNESS_THRESHOLD || '0.005')
+    const failureMode = parseFailureMode(process.env.FIDDLER_FAILURE_MODE) || 'open'
+    const observabilityOnly = process.env.FIDDLER_OBSERVABILITY_ONLY === 'true'
 
     return {
         enabled,
+        failureMode,
+        observabilityOnly,
         safety: {
             enabled: process.env.FIDDLER_SAFETY_ENABLED !== 'false',
             threshold: safetyThreshold,
@@ -121,6 +140,16 @@ export function deepMergeConfigs(base: Partial<GuardrailsConfig>, override: Part
     // Merge credentialId
     if (override.credentialId !== undefined) {
         merged.credentialId = override.credentialId
+    }
+
+    // Merge failure policy
+    if (override.failureMode !== undefined) {
+        merged.failureMode = override.failureMode
+    }
+
+    // Merge observability-only shadow mode
+    if (override.observabilityOnly !== undefined) {
+        merged.observabilityOnly = override.observabilityOnly
     }
 
     // Merge safety config

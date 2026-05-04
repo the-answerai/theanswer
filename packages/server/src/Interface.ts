@@ -70,6 +70,26 @@ export enum UserPlan {
  * Guardrails Metadata
  * Captures validation results from Fiddler Guardrails for audit and client display
  */
+export interface GuardrailsHealthEntry {
+    ok: boolean
+    degraded: boolean
+    reason:
+        | 'ok'
+        | 'disabled'
+        | 'disabled_stage'
+        | 'no_credentials'
+        | 'auth_error'
+        | 'api_error'
+        | 'timeout'
+        | 'circuit_open'
+        | 'network_error'
+        | 'unsupported'
+        | 'unexpected'
+    httpStatus?: number
+    message?: string
+    latencyMs?: number
+}
+
 export interface GuardrailsMetadata {
     inputValidation?: InputValidationResult & {
         blocked: boolean
@@ -105,6 +125,17 @@ export interface GuardrailsMetadata {
                 action: string
             }>
         }
+    }
+    /**
+     * Health/failure posture for this request. Present on every prediction that
+     * reaches the guardrail layer (including short-circuits like disabled/no-creds).
+     * Callers that pre-date this field will see it as undefined.
+     */
+    health?: {
+        mode: 'open' | 'closed'
+        anyDegraded: boolean
+        input?: GuardrailsHealthEntry
+        output?: GuardrailsHealthEntry
     }
 }
 
@@ -561,6 +592,12 @@ export interface IExecuteFlowParams extends IPredictionQueueAppServer {
     isUpsert?: boolean
     user?: IUser
     isRecursive?: boolean
+    /**
+     * Guardrails metadata carried in from an upstream input-validation stage.
+     * Agentflow V2 merges its output-stage result into this object so the
+     * persisted ChatMessage has a single coherent `health` + validation record.
+     */
+    guardrailsMetadata?: Partial<GuardrailsMetadata>
     parentExecutionId?: string
     iterationContext?: ICommonObject
     isTool?: boolean
