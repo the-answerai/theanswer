@@ -2,10 +2,13 @@
 
 **Linear**: AGENT-139
 **Last Updated**: 2025-11-11
+**Phase 7 Amendment**: 2026-04-24 — see "Phase 7 Amendment" section below for current failure semantics
 
 > **📖 Document Purpose:** Technical requirements, API formats, schemas, and acceptance criteria (source of truth for WHAT to build).
 > **📊 For Implementation Status:** See [fiddler-guardrails-status.md](fiddler-guardrails-status.md) for progress, gaps, and completion time.
 > **🔨 For Build Instructions:** See [fiddler-guardrails-implementation.md](fiddler-guardrails-implementation.md) for step-by-step implementation guide.
+
+> **⚠️ Phase 7 Amendment (2026-04-24, issue [#1059](https://github.com/the-answerai/theanswer/issues/1059)):** The original "Fail-open by default" design principle was correct as a default, but the implementation made every failure indistinguishable from "content was safe" with no admin signal — silently degrading enforcement to telemetry under any dependency failure. The current implementation makes failure posture configurable as `failureMode: 'open' | 'closed'` (env → org → chatflow hierarchy, default `'open'`), surfaces degraded states in chat UI + structured logs + metadata, exposes a diagnostic `/api/v1/guardrails/selftest` endpoint, adds AgentFlow V2 output parity, and adds an `observabilityOnly` shadow mode for safe pilots. Full details in [fiddler-guardrails-status.md → Phase 7](fiddler-guardrails-status.md#phase-7-failure-semantics--diagnostics).
 
 ---
 
@@ -21,7 +24,7 @@ Integrate Fiddler AI Guardrails into AnswerAgent to automatically validate LLM i
 **Key Design Principles**:
 - **3-tier configuration**: environment → organization → chatflow (deep merge with per-dimension/per-type overrides)
 - **Performance**: <150ms p95 latency with caching (<10ms on cache hit)
-- **Reliability**: Fail-open by default, circuit breaker protection
+- **Reliability**: Configurable failure posture (default fail-open, opt-in fail-closed), circuit breaker protection — see Phase 7 Amendment above
 - **Multi-tenancy**: Organization-scoped credentials and configurations
 - **Flexibility**: Per-dimension safety thresholds, per-type PII confidence and actions
 

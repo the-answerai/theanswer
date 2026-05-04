@@ -67,8 +67,9 @@ export default function GuardrailsSettings({ organizationId }: { organizationId:
         try {
             setSaving(true)
             setError(null)
-            await guardrailsApi.updateGuardrailsConfig(organizationId, newConfig)
-            setConfig(newConfig)
+            const response = await guardrailsApi.updateGuardrailsConfig(organizationId, newConfig)
+            // API returns the deep-merged guardrails payload; use it so failureMode / observabilityOnly are not lost in UI after partial saves
+            setConfig(response?.data != null ? response.data : newConfig)
             setSuccess(true)
             setTimeout(() => setSuccess(false), 3000)
             router.refresh()

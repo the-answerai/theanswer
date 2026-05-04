@@ -459,11 +459,20 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
         },
 
         // TABS
+        // Indicator and selected-tab color anchor on `text.primary` rather than
+        // MUI's default `primary.main`. In dark mode our `primary.main` is a
+        // deliberately-translucent white (rgba(255, 255, 255, 0.12)) for the
+        // glass-button look, which renders the indicator and selected label
+        // nearly invisible. `text.primary` is high contrast in both modes.
         MuiTabs: {
             styleOverrides: {
                 root: {
                     ...glass.glassSubtle,
                     borderRadius: 8
+                },
+                indicator: {
+                    backgroundColor: colors.text.primary,
+                    height: 2
                 }
             }
         },
@@ -472,8 +481,15 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
             styleOverrides: {
                 root: {
                     textTransform: 'none',
+                    fontWeight: 500,
                     transition: glass.transition,
+                    color: colors.text.secondary,
+                    '&.Mui-selected': {
+                        color: colors.text.primary,
+                        fontWeight: 600
+                    },
                     '&:hover': {
+                        color: colors.text.primary,
                         ...glass.glassHover
                     }
                 }

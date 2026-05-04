@@ -32,7 +32,8 @@ import {
     INodeOverrides,
     IVariableOverride,
     INodeDirectedGraph,
-    IUser
+    IUser,
+    GuardrailsMetadata
 } from '../Interface'
 import {
     RUNTIME_MESSAGES_LENGTH_VAR_PREFIX,
@@ -62,6 +63,8 @@ import { CachePool } from '../CachePool'
 import { ChatMessage } from '../database/entities/ChatMessage'
 import { Telemetry } from './telemetry'
 import { DEFAULT_CUSTOMER_ID, OVERRIDE_CUSTOMER_ID } from '../aai-utils/billing/config'
+import { runOutputStage } from '../services/guardrails/runStage'
+import { extractTextFromSourceDocuments } from '../services/guardrails/extractContext'
 import { getWorkspaceSearchOptions } from '../enterprise/utils/ControllerServiceUtils'
 import { UsageCacheManager } from '../UsageCacheManager'
 import { generateTTSForResponseStream, shouldAutoPlayTTS } from './buildChatflow'
@@ -1603,7 +1606,8 @@ export const executeAgentFlow = async ({
     orgId,
     workspaceId,
     subscriptionId,
-    productId
+    productId,
+    guardrailsMetadata: incomingGuardrailsMetadata
 }: IExecuteAgentFlowParams) => {
     logger.debug('\n🚀 Starting flow execution')
 
@@ -2309,6 +2313,59 @@ export const executeAgentFlow = async ({
         }
     }
 
+    /* Output validation with Fiddler Guardrails (AgentFlow V2).
+     * Agentflow V2 previously had zero output-side guardrail coverage. We run
+     * the output stage here and merge into any inputValidation metadata that
+     * upstream executeFlow carried in. Fail-closed on degraded upstream still
+     * emits a trailing SSE error; content already streamed cannot be un-streamed.
+     */
+    let guardrailsMetadata: Partial<GuardrailsMetadata> | undefined = incomingGuardrailsMetadata
+    {
+        const outputContext = lastNodeOutput?.sourceDocuments ? extractTextFromSourceDocuments(lastNodeOutput.sourceDocuments) : undefined
+        const outStage = await runOutputStage(content, outputContext, {
+            chatflowId: chatflowid,
+            workspaceId,
+            organizationId: orgId,
+            chatId,
+            prompt: finalUserInput
+        })
+
+        const existingHealth = guardrailsMetadata?.health
+        guardrailsMetadata = {
+            ...guardrailsMetadata,
+            health: {
+                mode: outStage.failureMode,
+                anyDegraded: (existingHealth?.anyDegraded ?? false) || outStage.health.degraded,
+                input: existingHealth?.input,
+                output: outStage.health
+            }
+        }
+
+        if (outStage.kind === 'ok' && outStage.outputResult) {
+            guardrailsMetadata.outputValidation = {
+                blocked: false,
+                redacted: outStage.outputResult.redacted,
+                faithfulnessScore: outStage.outputResult.violations.faithfulness?.score,
+                violations: {
+                    safety: outStage.outputResult.violations.safety,
+                    pii: outStage.outputResult.violations.pii
+                }
+            }
+        }
+
+        if (outStage.kind === 'blocked_degraded') {
+            sseStreamer?.streamErrorEvent(
+                chatId,
+                `Safety checks were unavailable (reason: ${outStage.reason}). This response bypassed guardrail enforcement.`
+            )
+            logger.error('[Guardrails] Agentflow v2 output degraded fail-closed', {
+                chatflowId: chatflowid,
+                chatId,
+                reason: outStage.reason
+            })
+        }
+    }
+
     const userMessage: Omit<IChatMessage, 'id'> = {
         role: 'userMessage',
         content: finalUserInput,
@@ -2319,7 +2376,8 @@ export const executeAgentFlow = async ({
         createdDate: userMessageDateTime,
         fileUploads: uploads ? JSON.stringify(fileUploads) : undefined,
         leadEmail: incomingInput.leadEmail,
-        executionId: newExecution.id
+        executionId: newExecution.id,
+        guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined
     }
     await utilAddChatMessage(userMessage, appDataSource)
 
@@ -2331,7 +2389,8 @@ export const executeAgentFlow = async ({
         chatType: evaluationRunId ? ChatType.EVALUATION : isInternal ? ChatType.INTERNAL : ChatType.EXTERNAL,
         chatId,
         sessionId,
-        executionId: newExecution.id
+        executionId: newExecution.id,
+        guardrailsMetadata: guardrailsMetadata ? JSON.stringify(guardrailsMetadata) : undefined
     }
     if (lastNodeOutput?.sourceDocuments) apiMessage.sourceDocuments = JSON.stringify(lastNodeOutput.sourceDocuments)
     if (lastNodeOutput?.usedTools) apiMessage.usedTools = JSON.stringify(lastNodeOutput.usedTools)
@@ -2397,6 +2456,8 @@ export const executeAgentFlow = async ({
     result.followUpPrompts = JSON.stringify(apiMessage.followUpPrompts)
     result.executionId = newExecution.id
     result.agentFlowExecutedData = agentFlowExecutedData
+
+    if (guardrailsMetadata) result.guardrailsMetadata = guardrailsMetadata
 
     if (sessionId) result.sessionId = sessionId
 
