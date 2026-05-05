@@ -831,7 +831,7 @@ const ProcessCsv = ({
                                                                         onChange(selected.filter((col: string) => col !== header))
                                                                     }
                                                                 }}
-                                                                sx={{
+                                                                sx={(t) => ({
                                                                     cursor: 'pointer',
                                                                     ...(isSelected
                                                                         ? {
@@ -841,16 +841,30 @@ const ProcessCsv = ({
                                                                               '&:hover': { bgcolor: '#1976d2', borderColor: '#1976d2' }
                                                                           }
                                                                         : {
-                                                                              bgcolor: 'transparent',
+                                                                              bgcolor:
+                                                                                  t.palette.mode === 'light'
+                                                                                      ? 'rgba(15,23,42,0.25)'
+                                                                                      : 'rgba(255,255,255,0.12)',
                                                                               border: '1px solid',
-                                                                              borderColor: 'divider',
-                                                                              '& .MuiChip-label': { color: 'text.primary' },
+                                                                              borderColor:
+                                                                                  t.palette.mode === 'light'
+                                                                                      ? 'rgba(15,23,42,0.25)'
+                                                                                      : 'rgba(255,255,255,0.22)',
+                                                                              '& .MuiChip-label': {
+                                                                                  color: t.palette.text.primary
+                                                                              },
                                                                               '&:hover': {
-                                                                                  bgcolor: 'action.hover',
-                                                                                  borderColor: 'text.secondary'
+                                                                                  bgcolor:
+                                                                                      t.palette.mode === 'light'
+                                                                                          ? 'rgba(15,23,42,0.15)'
+                                                                                          : 'rgba(255,255,255,0.2)',
+                                                                                  borderColor:
+                                                                                      t.palette.mode === 'light'
+                                                                                          ? 'rgba(15,23,42,0.45)'
+                                                                                          : 'rgba(255,255,255,0.4)'
                                                                               }
                                                                           })
-                                                                }}
+                                                                })}
                                                             />
                                                         )
                                                     })}
@@ -924,7 +938,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName ? 'pointer' : 'default',
@@ -947,7 +961,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName ? 'pointer' : 'default',
@@ -984,7 +998,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName && activeStep >= 1 ? 'pointer' : 'default',
@@ -1013,7 +1027,12 @@ const ProcessCsv = ({
                                                         label={display.length > 20 ? `${display.substring(0, 20)}…` : display}
                                                         title={display}
                                                         size='small'
-                                                        sx={{ maxWidth: '150px' }}
+                                                        sx={{
+                                                            maxWidth: '150px',
+                                                            bgcolor: '#2196f3',
+                                                            border: '1px solid #2196f3',
+                                                            '& .MuiChip-label': { color: '#fff' }
+                                                        }}
                                                     />
                                                 )
                                             })}
@@ -1021,7 +1040,14 @@ const ProcessCsv = ({
                                                 <Chip
                                                     label={`+${watchedValues.sourceColumns.length - 3} more`}
                                                     size='small'
-                                                    variant='outlined'
+                                                    sx={(t) => ({
+                                                        bgcolor:
+                                                            t.palette.mode === 'light' ? 'rgba(15,23,42,0.06)' : 'rgba(255,255,255,0.25)',
+                                                        border: '1px solid',
+                                                        borderColor:
+                                                            t.palette.mode === 'light' ? 'rgba(15,23,42,0.2)' : 'rgba(255,255,255,0.18)',
+                                                        '& .MuiChip-label': { color: t.palette.text.secondary }
+                                                    })}
                                                 />
                                             )}
                                         </Box>
@@ -1038,7 +1064,7 @@ const ProcessCsv = ({
                     <Box>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName && activeStep >= 2 ? 'pointer' : 'default',
@@ -1250,7 +1276,7 @@ const ProcessCsv = ({
                 <Box sx={{ flex: '1 1 auto' }} />
                 {activeStep === 3 ? (
                     <Button
-                        variant='contained'
+                        variant='outlined'
                         startIcon={<DownloadOutlined sx={{ background: 'transparent' }} />}
                         onClick={handleSubmit(handleProcessCsv)}
                         type='button'
@@ -1258,7 +1284,7 @@ const ProcessCsv = ({
                         Process and Download AI-Enhanced CSV
                     </Button>
                 ) : (
-                    <Button variant='contained' onClick={handleNext} disabled={!isStepValid(activeStep)}>
+                    <Button variant='outlined' onClick={handleNext} disabled={!isStepValid(activeStep)}>
                         Next
                     </Button>
                 )}

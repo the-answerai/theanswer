@@ -266,14 +266,20 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                     WebkitBackdropFilter: 'none'
                 },
                 contained: {
-                    // Use solid gradients in light mode for better contrast
+                    // Solid blue gradient in light mode; solid blue in dark mode.
+                    // glassPrimary in dark = rgba(0,0,0,0.6) — near-black and invisible
+                    // against a dark page surface.
                     ...(mode === 'light'
                         ? {
                               background: 'linear-gradient(135deg, rgb(30, 58, 138) 0%, rgb(59, 130, 246) 100%)',
                               border: 'none',
                               boxShadow: '0 4px 12px 0 rgba(59, 130, 246, 0.3)'
                           }
-                        : glass.glassPrimary),
+                        : {
+                              background: '#2196f3',
+                              border: 'none',
+                              boxShadow: '0 4px 12px 0 rgba(33, 150, 243, 0.35)'
+                          }),
                     color: '#ffffff',
                     '&:hover': {
                         ...(mode === 'light'
@@ -283,8 +289,9 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                                   transform: 'translateY(-2px)'
                               }
                             : {
-                                  ...glass.glassHover,
-                                  background: 'rgba(0, 0, 0, 0.8)'
+                                  background: '#1976d2',
+                                  boxShadow: '0 6px 20px 0 rgba(33, 150, 243, 0.45)',
+                                  transform: 'translateY(-2px)'
                               })
                     },
                     // The light-mode `contained` button uses a gradient via the
@@ -472,19 +479,19 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                     // color variant (default chips). Colored variants (primary, success, etc.)
                     // keep MUI's own palette-based bg so they work correctly everywhere.
                     '&:not([class*="MuiChip-color"])': {
-                        background: mode === 'light' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.08)',
-                        border: `1px solid ${mode === 'light' ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)'}`,
+                        background: mode === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.12)',
+                        border: `1px solid ${mode === 'light' ? 'rgba(15, 23, 42, 0.25)' : 'rgba(255, 255, 255, 0.22)'}`,
                         color: colors.text.primary,
                         '& .MuiChip-label': {
                             color: colors.text.primary
                         },
                         '&:hover': {
-                            background: mode === 'light' ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.14)',
-                            borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.3)'
+                            background: mode === 'light' ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.2)',
+                            borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.4)'
                         }
                     },
-                    // Ensure labels on all colored chips remain white for contrast.
-                    '&[class*="MuiChip-color"] .MuiChip-label': {
+                    // Ensure labels on explicitly colored chips (not default) remain white for contrast.
+                    '&[class*="MuiChip-color"]:not(.MuiChip-colorDefault) .MuiChip-label': {
                         color: '#fff'
                     }
                 }
