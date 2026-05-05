@@ -150,10 +150,6 @@ class LLMChain_Chains implements INode {
         }
         promptValues = injectOutputParser(this.outputParser, chain, promptValues)
         const res = await runPrediction(inputVariables, chain, input, promptValues, options, nodeData)
-        // eslint-disable-next-line no-console
-        console.log('\x1b[93m\x1b[1m\n*****FINAL RESULT*****\n\x1b[0m\x1b[0m')
-        // eslint-disable-next-line no-console
-        console.log(res)
         return res
     }
 }
