@@ -490,8 +490,9 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
                             borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.4)'
                         }
                     },
-                    // Ensure labels on explicitly colored chips (not default) remain white for contrast.
-                    '&[class*="MuiChip-color"]:not(.MuiChip-colorDefault) .MuiChip-label': {
+                    // Ensure labels on filled colored chips remain white for contrast.
+                    // Outlined colored chips use the palette color for text — don't override.
+                    '&[class*="MuiChip-color"]:not(.MuiChip-colorDefault).MuiChip-filled .MuiChip-label': {
                         color: '#fff'
                     }
                 }
