@@ -824,14 +824,32 @@ const ProcessCsv = ({
                                                                 key={`csv-col-${index}`}
                                                                 label={visible}
                                                                 size='small'
-                                                                color={isSelected ? 'primary' : 'default'}
-                                                                variant={isSelected ? 'filled' : 'outlined'}
                                                                 onClick={() => {
                                                                     if (!isSelected) {
                                                                         onChange([...selected, header])
                                                                     } else {
                                                                         onChange(selected.filter((col: string) => col !== header))
                                                                     }
+                                                                }}
+                                                                sx={{
+                                                                    cursor: 'pointer',
+                                                                    ...(isSelected
+                                                                        ? {
+                                                                              bgcolor: '#2196f3',
+                                                                              border: '1px solid #2196f3',
+                                                                              '& .MuiChip-label': { color: '#fff' },
+                                                                              '&:hover': { bgcolor: '#1976d2', borderColor: '#1976d2' }
+                                                                          }
+                                                                        : {
+                                                                              bgcolor: 'transparent',
+                                                                              border: '1px solid',
+                                                                              borderColor: 'divider',
+                                                                              '& .MuiChip-label': { color: 'text.primary' },
+                                                                              '&:hover': {
+                                                                                  bgcolor: 'action.hover',
+                                                                                  borderColor: 'text.secondary'
+                                                                              }
+                                                                          })
                                                                 }}
                                                             />
                                                         )

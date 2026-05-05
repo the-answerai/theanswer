@@ -465,31 +465,28 @@ export const muiComponentOverrides = (mode: 'light' | 'dark'): Components<Omit<T
         MuiChip: {
             styleOverrides: {
                 root: {
-                    // glassSubtle gives a near-transparent or near-white background depending on mode.
-                    // Without explicit label color the chip text is invisible in one or both themes.
-                    // Keep the subtle glass border/shadow, but swap to a readable solid surface +
-                    // explicit label color so chips work out of the box in light AND dark mode.
                     backdropFilter: 'none',
                     WebkitBackdropFilter: 'none',
-                    border: `1px solid ${mode === 'light' ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)'}`,
-                    background: mode === 'light' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.08)',
-                    color: colors.text.primary,
                     transition: glass.transition,
-                    '& .MuiChip-label': {
-                        color: colors.text.primary
-                    },
-                    '&:hover': {
-                        background: mode === 'light' ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.14)',
-                        borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.3)'
-                    },
-                    // Filled color chips (e.g. color="primary") override bg — let MUI handle that,
-                    // but ensure the label remains white for contrast on a colored surface.
-                    '&.MuiChip-colorPrimary, &.MuiChip-colorSecondary, &.MuiChip-colorSuccess, &.MuiChip-colorWarning, &.MuiChip-colorError, &.MuiChip-colorInfo':
-                        {
-                            '& .MuiChip-label': {
-                                color: '#fff'
-                            }
+                    // Only apply the custom base surface to chips that have NO explicit MUI
+                    // color variant (default chips). Colored variants (primary, success, etc.)
+                    // keep MUI's own palette-based bg so they work correctly everywhere.
+                    '&:not([class*="MuiChip-color"])': {
+                        background: mode === 'light' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.08)',
+                        border: `1px solid ${mode === 'light' ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)'}`,
+                        color: colors.text.primary,
+                        '& .MuiChip-label': {
+                            color: colors.text.primary
+                        },
+                        '&:hover': {
+                            background: mode === 'light' ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.14)',
+                            borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.3)'
                         }
+                    },
+                    // Ensure labels on all colored chips remain white for contrast.
+                    '&[class*="MuiChip-color"] .MuiChip-label': {
+                        color: '#fff'
+                    }
                 }
             }
         },
