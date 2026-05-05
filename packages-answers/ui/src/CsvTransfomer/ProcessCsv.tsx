@@ -2,9 +2,12 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
-import { InputLabel, Select, MenuItem } from '@mui/material'
-
 import {
+    InputLabel,
+    Select,
+    MenuItem,
+    Divider,
+    ListItemIcon,
     Stack,
     Box,
     Button,
@@ -30,10 +33,19 @@ import { User } from 'types'
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
 import FilePresentOutlined from '@mui/icons-material/FilePresentOutlined'
+import AddIcon from '@mui/icons-material/Add'
 
 import CsvNoticeCard from './CsvNoticeCard'
 import SnackMessage from '../SnackMessage'
-import { parseCsvWithHeaders, parseCsvWithoutHeaders } from './parseCsv'
+import { parseCsvWithHeaders, parseCsvWithoutHeaders, formatCsvHeaderForUi } from './parseCsv'
+
+/** Sentinel Select value — opens CSV marketplace; never stored as processorId. */
+const CREATE_NEW_CSV_PROCESSOR_VALUE = '__aai_csv_create_new__'
+
+function openCsvProcessorMarketplace() {
+    localStorage.setItem('answerai.csv.install-intent', 'true')
+    window.open('/sidekick-studio/marketplaces?usecase=CSV', '_blank', 'noopener,noreferrer')
+}
 
 interface ChatFlow {
     id: string
@@ -143,6 +155,34 @@ const ProcessCsv = ({
     onRefreshChatflows?: () => Promise<void>
 }) => {
     const theme = useTheme()
+
+    /** Avoid full-screen blurred modal backdrop from global MuiBackdrop — keep a normal dropdown feel. */
+    const csvProcessorSelectMenuProps = useMemo(
+        () => ({
+            disableScrollLock: true,
+            BackdropProps: {
+                sx: {
+                    backdropFilter: 'none',
+                    WebkitBackdropFilter: 'none',
+                    backgroundColor: 'transparent'
+                }
+            },
+            PaperProps: {
+                sx: {
+                    backdropFilter: 'none',
+                    WebkitBackdropFilter: 'none',
+                    backgroundImage: 'none',
+                    bgcolor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    boxShadow: theme.shadows[8],
+                    maxHeight: 360
+                }
+            }
+        }),
+        [theme.shadows]
+    )
+
     const [headers, setHeaders] = useState<string[]>([])
     const [rows, setRows] = useState<string[][]>([])
     const [file, setFile] = useState<string | null>(null)
@@ -385,14 +425,19 @@ const ProcessCsv = ({
         () => ({
             ...{
                 ...baseStyle,
-                backgroundColor: theme.palette.grey[50],
-                borderColor: theme.palette.primary.main,
-                color: theme.palette.primary.main,
+                // Theme-aware tokens so the dropzone reads correctly in both
+                // light and dark mode. Hardcoding `grey[50]` produced a bright
+                // white surface in dark mode, and `primary.main` resolves to a
+                // translucent white in the AnswerAI dark theme — leaving the
+                // border + text effectively invisible.
+                backgroundColor: theme.palette.action.hover,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
                 padding: theme.spacing(4),
                 cursor: 'pointer'
             },
             ...(isFocused ? { borderColor: theme.palette.secondary.main } : {}),
-            ...(isDragAccept ? { borderColor: theme.palette.primary.main } : {}),
+            ...(isDragAccept ? { borderColor: theme.palette.success.main } : {}),
             ...(isDragReject ? { borderColor: theme.palette.error.main } : {})
         }),
         [isFocused, isDragAccept, isDragReject, theme]
@@ -529,7 +574,7 @@ const ProcessCsv = ({
                                     </IconButton>
                                 </Stack>
                             ) : (
-                                <Typography>{'Drag &apos;n&apos; drop a CSV file here, or click to select a file'}</Typography>
+                                <Typography>Drag and drop a CSV file here, or click to select a file</Typography>
                             )}
                         </Box>
                     </Stack>
@@ -586,26 +631,49 @@ const ProcessCsv = ({
                                                     label='AI Processor'
                                                     required
                                                     error={!!errors.processorId}
-                                                    disabled={chatflows.length === 0}
                                                     fullWidth
+                                                    displayEmpty
+                                                    MenuProps={csvProcessorSelectMenuProps}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value as string
+                                                        if (v === CREATE_NEW_CSV_PROCESSOR_VALUE) {
+                                                            openCsvProcessorMarketplace()
+                                                            return
+                                                        }
+                                                        field.onChange(e)
+                                                    }}
+                                                    renderValue={(selected) => {
+                                                        if (!selected) {
+                                                            return (
+                                                                <Typography variant='body2' color='text.secondary' component='span'>
+                                                                    {chatflows.length === 0
+                                                                        ? 'Select or create a CSV processor'
+                                                                        : 'Select an AI processor'}
+                                                                </Typography>
+                                                            )
+                                                        }
+                                                        const cf = chatflows.find((c) => c.id === selected)
+                                                        return cf?.name ?? selected
+                                                    }}
                                                 >
-                                                    {chatflows.length === 0 ? (
-                                                        <MenuItem disabled value=''>
-                                                            No CSV processors available
+                                                    {chatflows.map((chatflow) => (
+                                                        <MenuItem key={chatflow.id} value={chatflow.id}>
+                                                            {chatflow.name}
                                                         </MenuItem>
-                                                    ) : (
-                                                        chatflows.map((chatflow) => (
-                                                            <MenuItem key={chatflow.id} value={chatflow.id}>
-                                                                {chatflow.name}
-                                                            </MenuItem>
-                                                        ))
-                                                    )}
+                                                    ))}
+                                                    {chatflows.length > 0 && <Divider sx={{ my: 0.5 }} />}
+                                                    <MenuItem value={CREATE_NEW_CSV_PROCESSOR_VALUE}>
+                                                        <ListItemIcon sx={{ minWidth: 36 }}>
+                                                            <AddIcon fontSize='small' />
+                                                        </ListItemIcon>
+                                                        Create new processor…
+                                                    </MenuItem>
                                                 </Select>
                                                 <FormHelperText>
                                                     {errors.processorId?.message ||
                                                         (chatflows.length === 0
-                                                            ? 'Install a CSV processor from the marketplace below to continue'
-                                                            : 'Select the AI model to process your CSV')}
+                                                            ? 'Choose Create new processor or use the card below, then refresh.'
+                                                            : 'Pick a processor above, or use Create new processor to open CSV templates in a new tab—install one, then refresh.')}
                                                 </FormHelperText>
                                             </>
                                         )}
@@ -736,43 +804,74 @@ const ProcessCsv = ({
                                 <Controller
                                     name='sourceColumns'
                                     control={control}
-                                    render={({ field: { value, onChange } }) => (
-                                        <FormControl sx={{ flex: 1 }} component='fieldset' variant='standard'>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    flexWrap: 'wrap',
-                                                    gap: 1,
-                                                    mt: 1
-                                                }}
-                                            >
-                                                {headers.map((header) => {
-                                                    const isSelected = value.includes(header)
-                                                    return (
-                                                        <Chip
-                                                            key={header}
-                                                            label={header}
-                                                            size='small'
-                                                            onClick={() => {
-                                                                if (!isSelected) {
-                                                                    onChange([...value, header])
-                                                                } else {
-                                                                    onChange(value.filter((col: string) => col !== header))
-                                                                }
-                                                            }}
-                                                            color={isSelected ? 'primary' : 'default'}
-                                                            variant={isSelected ? 'filled' : 'outlined'}
-                                                            sx={{
-                                                                '&:hover': {
-                                                                    backgroundColor: isSelected ? 'primary.main' : 'action.hover'
-                                                                }
-                                                            }}
-                                                        />
-                                                    )
-                                                })}
-                                            </Box>
-                                        </FormControl>
-                                    )}
+                                    render={({ field: { value, onChange } }) => {
+                                        const selected = Array.isArray(value) ? value : []
+                                        return (
+                                            <FormControl sx={{ flex: 1 }} component='fieldset' variant='standard'>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: 1,
+                                                        mt: 1
+                                                    }}
+                                                >
+                                                    {headers.map((header, index) => {
+                                                        const visible = formatCsvHeaderForUi(header, index)
+                                                        const isSelected = selected.includes(header)
+                                                        return (
+                                                            <Chip
+                                                                key={`csv-col-${index}`}
+                                                                label={visible}
+                                                                size='small'
+                                                                onClick={() => {
+                                                                    if (!isSelected) {
+                                                                        onChange([...selected, header])
+                                                                    } else {
+                                                                        onChange(selected.filter((col: string) => col !== header))
+                                                                    }
+                                                                }}
+                                                                sx={(t) => ({
+                                                                    cursor: 'pointer',
+                                                                    ...(isSelected
+                                                                        ? {
+                                                                              bgcolor: '#2196f3',
+                                                                              border: '1px solid #2196f3',
+                                                                              '& .MuiChip-label': { color: '#fff' },
+                                                                              '&:hover': { bgcolor: '#1976d2', borderColor: '#1976d2' }
+                                                                          }
+                                                                        : {
+                                                                              bgcolor:
+                                                                                  t.palette.mode === 'light'
+                                                                                      ? 'rgba(15,23,42,0.25)'
+                                                                                      : 'rgba(255,255,255,0.12)',
+                                                                              border: '1px solid',
+                                                                              borderColor:
+                                                                                  t.palette.mode === 'light'
+                                                                                      ? 'rgba(15,23,42,0.25)'
+                                                                                      : 'rgba(255,255,255,0.22)',
+                                                                              '& .MuiChip-label': {
+                                                                                  color: t.palette.text.primary
+                                                                              },
+                                                                              '&:hover': {
+                                                                                  bgcolor:
+                                                                                      t.palette.mode === 'light'
+                                                                                          ? 'rgba(15,23,42,0.15)'
+                                                                                          : 'rgba(255,255,255,0.2)',
+                                                                                  borderColor:
+                                                                                      t.palette.mode === 'light'
+                                                                                          ? 'rgba(15,23,42,0.45)'
+                                                                                          : 'rgba(255,255,255,0.4)'
+                                                                              }
+                                                                          })
+                                                                })}
+                                                            />
+                                                        )
+                                                    })}
+                                                </Box>
+                                            </FormControl>
+                                        )
+                                    }}
                                 />
                             </Stack>
                         </Card>
@@ -839,7 +938,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName ? 'pointer' : 'default',
@@ -862,7 +961,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName ? 'pointer' : 'default',
@@ -899,7 +998,7 @@ const ProcessCsv = ({
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName && activeStep >= 1 ? 'pointer' : 'default',
@@ -920,20 +1019,35 @@ const ProcessCsv = ({
                                             <strong>Selected columns:</strong> {watchedValues.sourceColumns.length}
                                         </Typography>
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {watchedValues.sourceColumns.slice(0, 3).map((col) => (
-                                                <Chip
-                                                    key={col}
-                                                    label={col.length > 20 ? `${col.substring(0, 20)}...` : col}
-                                                    title={col} // Full text on hover
-                                                    size='small'
-                                                    sx={{ maxWidth: '150px' }}
-                                                />
-                                            ))}
+                                            {watchedValues.sourceColumns.slice(0, 3).map((col, i) => {
+                                                const display = formatCsvHeaderForUi(col, i)
+                                                return (
+                                                    <Chip
+                                                        key={`ov-col-${i}-${display}`}
+                                                        label={display.length > 20 ? `${display.substring(0, 20)}…` : display}
+                                                        title={display}
+                                                        size='small'
+                                                        sx={{
+                                                            maxWidth: '150px',
+                                                            bgcolor: '#2196f3',
+                                                            border: '1px solid #2196f3',
+                                                            '& .MuiChip-label': { color: '#fff' }
+                                                        }}
+                                                    />
+                                                )
+                                            })}
                                             {watchedValues.sourceColumns.length > 3 && (
                                                 <Chip
                                                     label={`+${watchedValues.sourceColumns.length - 3} more`}
                                                     size='small'
-                                                    variant='outlined'
+                                                    sx={(t) => ({
+                                                        bgcolor:
+                                                            t.palette.mode === 'light' ? 'rgba(15,23,42,0.06)' : 'rgba(255,255,255,0.25)',
+                                                        border: '1px solid',
+                                                        borderColor:
+                                                            t.palette.mode === 'light' ? 'rgba(15,23,42,0.2)' : 'rgba(255,255,255,0.18)',
+                                                        '& .MuiChip-label': { color: t.palette.text.secondary }
+                                                    })}
                                                 />
                                             )}
                                         </Box>
@@ -950,7 +1064,7 @@ const ProcessCsv = ({
                     <Box>
                         <Typography
                             variant='subtitle1'
-                            color={fileName ? 'primary' : 'textSecondary'}
+                            color={fileName ? 'text.primary' : 'text.secondary'}
                             sx={{
                                 fontWeight: 'bold',
                                 cursor: fileName && activeStep >= 2 ? 'pointer' : 'default',
@@ -1162,7 +1276,7 @@ const ProcessCsv = ({
                 <Box sx={{ flex: '1 1 auto' }} />
                 {activeStep === 3 ? (
                     <Button
-                        variant='contained'
+                        variant='outlined'
                         startIcon={<DownloadOutlined sx={{ background: 'transparent' }} />}
                         onClick={handleSubmit(handleProcessCsv)}
                         type='button'
@@ -1170,7 +1284,7 @@ const ProcessCsv = ({
                         Process and Download AI-Enhanced CSV
                     </Button>
                 ) : (
-                    <Button variant='contained' onClick={handleNext} disabled={!isStepValid(activeStep)}>
+                    <Button variant='outlined' onClick={handleNext} disabled={!isStepValid(activeStep)}>
                         Next
                     </Button>
                 )}

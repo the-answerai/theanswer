@@ -96,6 +96,7 @@ import { AddOrganizationConfig1753200000001 } from './aai/1753200000001-AddOrgan
 import { AddGuardrailsMetadataToChatMessage1753200000002 } from './aai/1753200000002-AddGuardrailsMetadataToChatMessage'
 import { UpdateFiddlerCredentialsVisibility1768413137117 } from './aai/1768413137117-UpdateFiddlerCredentialsVisibility'
 import { MoveDefaultChatflowsToPersonalWorkspace1770000000000 } from './aai/1770000000000-MoveDefaultChatflowsToPersonalWorkspace'
+import { NormalizeLegacyCredentialNames1770000000001 } from './aai/1770000000001-NormalizeLegacyCredentialNames'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -193,5 +194,7 @@ export const postgresMigrations = [
     // AAI: Backfill workspaceId - runs LAST after all feature migrations
     AAIBackfillWorkspaceId1760000000002,
     // AAI: AGENT-674 - Move default sidekick chatflows to Personal Workspaces
-    MoveDefaultChatflowsToPersonalWorkspace1770000000000
+    MoveDefaultChatflowsToPersonalWorkspace1770000000000,
+    // AAI: Normalize legacy credential names in chat_flow.flowData and credential rows (e.g. JiraApi -> jiraApi)
+    NormalizeLegacyCredentialNames1770000000001
 ]

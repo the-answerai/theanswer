@@ -294,20 +294,35 @@ const ProcessingHistory = ({ user }: { user: User }) => {
                         )
                     }}
                     sx={{
+                        borderColor: 'divider',
                         '& .super-app-theme--header': {
                             fontWeight: 'bold',
                             fontSize: '0.875rem',
-                            color: 'white'
+                            color: 'text.primary'
                         },
                         '& .MuiDataGrid-cell': {
                             fontSize: '0.825rem',
-                            color: 'white'
+                            color: 'text.primary'
                         },
                         '& .MuiDataGrid-columnHeaders': {
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            color: 'text.primary',
+                            borderBottomColor: 'divider'
+                        },
+                        '& .MuiDataGrid-columnHeaderTitle': {
+                            fontWeight: 700,
+                            color: 'text.primary'
+                        },
+                        '& .MuiDataGrid-row': {
+                            '&:hover': {
+                                bgcolor: 'action.hover'
+                            }
                         },
                         '& .MuiTablePagination-root': {
-                            color: 'white'
+                            color: 'text.primary',
+                            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                                color: 'text.secondary'
+                            }
                         }
                     }}
                 />

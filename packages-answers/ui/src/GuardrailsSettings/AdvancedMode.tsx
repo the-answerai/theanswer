@@ -100,51 +100,6 @@ const innerTabsSx = {
     }
 }
 
-// Shared sx for sliders. Default MUI Slider uses `primary.main` for the rail,
-// track and thumb — all invisible in the AnswerAI dark theme. Anchor on
-// `text.primary` so the slider track is visible regardless of mode.
-const sliderSx = {
-    color: 'text.primary',
-    '& .MuiSlider-rail': {
-        opacity: 0.32
-    },
-    '& .MuiSlider-track': {
-        border: 'none'
-    },
-    '& .MuiSlider-thumb': {
-        boxShadow: 'none',
-        '&:hover, &.Mui-focusVisible': {
-            boxShadow: '0 0 0 6px rgba(127, 127, 127, 0.16)'
-        }
-    },
-    '& .MuiSlider-mark': {
-        backgroundColor: 'text.secondary',
-        opacity: 0.6
-    },
-    '& .MuiSlider-markLabel': {
-        color: 'text.secondary',
-        fontSize: 12
-    }
-}
-
-// Shared sx for the per-section Enable switches (Safety, PII, Faithfulness).
-// The default MUI Switch reads as grey-on-grey in the AnswerAI dark theme
-// because the active state resolves to translucent `primary.main`. Anchor
-// checked thumb + track on `info.main` (Material Blue, shared across modes)
-// so "on" is unmistakable and consistent with the page-level switches.
-const sectionSwitchSx = {
-    '& .MuiSwitch-switchBase.Mui-checked': {
-        color: 'info.main',
-        '& + .MuiSwitch-track': {
-            backgroundColor: 'info.main',
-            opacity: 0.5
-        }
-    },
-    '& .MuiSwitch-switchBase.Mui-checked:hover': {
-        backgroundColor: 'rgba(33, 150, 243, 0.08)'
-    }
-}
-
 // Shared sx for the AccordionSummary section heads ("Input Validation",
 // "Output Validation", "Advanced Settings"). Aligns with the subtitle2 +
 // fontWeight 600 rhythm used elsewhere on the page and gives the summary a
@@ -374,7 +329,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setSafetyEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
-                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -413,7 +367,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                             { value: 1, label: '1.0' }
                                                         ]}
                                                         valueLabelDisplay='auto'
-                                                        sx={sliderSx}
                                                     />
                                                 </Box>
                                                 <Box>
@@ -505,7 +458,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                                             step={0.01}
                                                                             valueLabelDisplay='auto'
                                                                             size='small'
-                                                                            sx={sliderSx}
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell>
@@ -557,7 +509,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setPiiEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
-                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -595,7 +546,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                             { value: 1, label: '1.0' }
                                                         ]}
                                                         valueLabelDisplay='auto'
-                                                        sx={sliderSx}
                                                     />
                                                 </Box>
                                                 <Box>
@@ -691,7 +641,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                                             step={0.01}
                                                                             valueLabelDisplay='auto'
                                                                             size='small'
-                                                                            sx={sliderSx}
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell>
@@ -769,7 +718,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     setFaithfulnessEnabled(e.target.checked)
                                                     markChanged()
                                                 }}
-                                                sx={sectionSwitchSx}
                                             />
                                         }
                                         label='Enable'
@@ -800,7 +748,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                                     { value: 0.1, label: '0.1' }
                                                 ]}
                                                 valueLabelDisplay='auto'
-                                                sx={sliderSx}
                                             />
                                         </Box>
                                         <Box sx={{ mt: 2 }}>
@@ -861,7 +808,6 @@ export default function AdvancedMode({ config, onSave, saving, error, success, o
                                         step={1}
                                         marks
                                         valueLabelDisplay='auto'
-                                        sx={sliderSx}
                                     />
                                 </Box>
                             </CardContent>

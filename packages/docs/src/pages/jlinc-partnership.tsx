@@ -172,21 +172,21 @@ function ProblemSection() {
         {
             icon: FileText,
             title: 'Where did this come from?',
-            pain: 'AI generates earnings reports mixing data from 15 sources. Auditor asks: &quot;Prove these numbers came from approved systems.&quot;',
+            pain: 'AI generates earnings reports mixing data from 15 sources. Auditor asks: "Prove these numbers came from approved systems."',
             reality: 'Screenshots, log files, trust',
             problem: 'Not sufficient for SOX compliance'
         },
         {
             icon: Eye,
             title: 'What exactly did the AI see?',
-            pain: 'Agent analyzes confidential merger docs. Legal asks: &quot;Show us exactly what context the AI had.&quot;',
+            pain: 'Agent analyzes confidential merger docs. Legal asks: "Show us exactly what context the AI had."',
             reality: 'Best-effort prompt logs, often incomplete',
             problem: 'Not admissible as evidence'
         },
         {
             icon: PenLine,
             title: 'Who made the final decision?',
-            pain: 'AI drafts SEC filing, three executives review it. Board asks: &quot;Who signed off on what?&quot;',
+            pain: 'AI drafts SEC filing, three executives review it. Board asks: "Who signed off on what?"',
             reality: 'Email threads, comments in Google Docs',
             problem: 'Not audit-ready, no cryptographic proof'
         }

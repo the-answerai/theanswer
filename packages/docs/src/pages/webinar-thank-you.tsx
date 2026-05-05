@@ -543,7 +543,7 @@ function ProgressiveProfileForm() {
                                             size={18}
                                             style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }}
                                         />
-                                        Got it! We&#39;ll tailor the workshop follow-ups to your goals.
+                                        Got it! We'll tailor the workshop follow-ups to your goals.
                                     </div>
                                 )}
 
