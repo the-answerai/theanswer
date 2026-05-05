@@ -15,6 +15,23 @@ function generateColumnName(index: number): string {
 }
 
 /**
+ * Strip BOM, zero-width, and format chars so headers are not visually blank in the UI.
+ */
+function sanitizeHeaderLabel(raw: string): string {
+    return String(raw ?? '')
+        .replace(/^\uFEFF/, '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim()
+}
+
+/** Readable label for chips and UI (handles invisible-only header cells). */
+export function formatCsvHeaderForUi(raw: string, columnIndex?: number): string {
+    const v = sanitizeHeaderLabel(String(raw ?? ''))
+    if (v) return v
+    return typeof columnIndex === 'number' ? generateColumnName(columnIndex) : 'Column'
+}
+
+/**
  * Parse CSV content using RFC 4180 compliant parser with headers
  */
 export function parseCsvWithHeaders(input: string): ParsedCsvResult {
@@ -32,11 +49,22 @@ export function parseCsvWithoutHeaders(input: string): ParsedCsvResult {
  * Parse CSV with headers
  */
 function parseWithHeaders(input: string): ParsedCsvResult {
+    const headerCounts = new Map<string, number>()
+
     const result = Papa.parse<Record<string, string>>(input.trim(), {
         header: true,
         skipEmptyLines: true,
         comments: '#',
-        transformHeader: (header) => header.trim() // Clean up header names
+        transformHeader: (header, index) => {
+            const colIndex = typeof index === 'number' ? index : 0
+            let base = sanitizeHeaderLabel(String(header ?? ''))
+            if (!base) {
+                base = generateColumnName(colIndex)
+            }
+            const n = (headerCounts.get(base) ?? 0) + 1
+            headerCounts.set(base, n)
+            return n === 1 ? base : `${base} (${n})`
+        }
     })
 
     // Be very lenient with errors - Papa Parse can handle most cases
@@ -56,8 +84,8 @@ function parseWithHeaders(input: string): ParsedCsvResult {
         throw new Error('CSV has no header row or headers could not be determined.')
     }
 
-    // Filter out empty header names
-    const cleanHeaders = headers.filter((header) => header && header.trim() !== '')
+    // After transformHeader, names should be non-empty; keep only real labels
+    const cleanHeaders = headers.filter((h) => sanitizeHeaderLabel(h) !== '')
     if (cleanHeaders.length === 0) {
         throw new Error('CSV has no valid header names.')
     }

@@ -175,27 +175,12 @@ export default function SimpleMode({ config, onSave, saving, error, success, onC
             </FormControl>
 
             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                {/* Save uses a local sx override to force a solid disabled background.
-                    The global theme applies a gradient `background` to all contained
-                    buttons; MUI's default disabled state only resets `backgroundColor`,
-                    which leaves the gradient bleeding through at low contrast in both
-                    modes. We zero out `background` + `boxShadow` on disabled here so
-                    the button reads unmistakably as disabled when no preset is chosen. */}
                 <Button
                     variant='contained'
                     color='primary'
                     onClick={handleSave}
                     disabled={saving || !hasChanges || !selectedPreset}
-                    sx={(theme) => ({
-                        minWidth: 180,
-                        fontWeight: 600,
-                        '&.Mui-disabled': {
-                            background: 'none',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-                            color: theme.palette.text.disabled,
-                            boxShadow: 'none'
-                        }
-                    })}
+                    sx={{ minWidth: 180, fontWeight: 600 }}
                 >
                     {saving ? 'Saving...' : 'Save Configuration'}
                 </Button>
