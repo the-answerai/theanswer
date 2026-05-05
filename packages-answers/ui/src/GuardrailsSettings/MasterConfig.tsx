@@ -37,40 +37,6 @@ const ConfirmDialog = dynamic(() => import('flowise-ui/src/ui-component/dialog/C
 
 const FIDDLER_CREDENTIAL_NAME = 'fiddlerApi'
 
-// Shared sx for "neutral" outlined action buttons (Edit, Change, Recheck).
-// MUI's default outlined Button anchors text + border on `primary.main`,
-// which in the AnswerAI dark theme resolves to rgba(255,255,255,0.12) —
-// translucent white. The buttons end up reading as if they were disabled
-// even when fully enabled. Anchor on `text.primary` + `divider` so they
-// have clear contrast in both modes; the actual `disabled` state is left
-// to MUI's default treatment so it still reads as inert when applicable.
-const outlinedActionSx = {
-    color: 'text.primary',
-    borderColor: 'divider',
-    '&:hover': {
-        borderColor: 'text.primary',
-        bgcolor: 'action.hover'
-    }
-}
-
-// Shared sx for the page switches ("Enable Guardrails", "Observability-only").
-// The default MUI `color='primary'` resolves to translucent white in the
-// AnswerAI dark theme, making the on-state nearly invisible. Anchor the
-// checked state on `info.main` (Material Blue, shared across light/dark) so
-// the on-state reads unambiguously in both modes.
-const pageSwitchSx = {
-    '& .MuiSwitch-switchBase.Mui-checked': {
-        color: 'info.main',
-        '& + .MuiSwitch-track': {
-            backgroundColor: 'info.main',
-            opacity: 0.5
-        }
-    },
-    '& .MuiSwitch-switchBase.Mui-checked:hover': {
-        backgroundColor: 'rgba(33, 150, 243, 0.08)'
-    }
-}
-
 interface GuardrailConfig {
     enabled?: boolean
     credentialId?: string
@@ -356,7 +322,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
         <Box variant='outlined' sx={{ mb: 3 }}>
             {/* Enable/Disable Toggle */}
             <FormControlLabel
-                control={<Switch checked={enabled} onChange={handleEnabledChange} sx={pageSwitchSx} />}
+                control={<Switch checked={enabled} onChange={handleEnabledChange} />}
                 label='Enable Guardrails'
                 sx={{ mb: 2 }}
             />
@@ -410,12 +376,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                             </Button>
                             {/* Show Change when user owns any credentials they could switch to */}
                             {credentials.length > 0 && (
-                                <Button
-                                    variant='outlined'
-                                    size='small'
-                                    onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
-                                    sx={outlinedActionSx}
-                                >
+                                <Button variant='outlined' size='small' onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}>
                                     Change
                                 </Button>
                             )}
@@ -480,7 +441,6 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                 disabled={!enabled || editLoading}
                                 onClick={handleEditCredential}
                                 startIcon={editLoading ? <CircularProgress size={16} /> : <IconEdit size={16} />}
-                                sx={outlinedActionSx}
                             >
                                 Edit
                             </Button>
@@ -500,7 +460,6 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                     size='small'
                                     disabled={!enabled}
                                     onClick={() => setShowCredentialDropdown(!showCredentialDropdown)}
-                                    sx={outlinedActionSx}
                                 >
                                     Change
                                 </Button>
@@ -556,7 +515,6 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                                 onClick={loadCapabilities}
                                 disabled={loadingCapabilities}
                                 startIcon={loadingCapabilities ? <CircularProgress size={14} /> : <IconRefresh size={14} />}
-                                sx={outlinedActionSx}
                             >
                                 Recheck
                             </Button>
@@ -742,43 +700,12 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                     disabled={!enabled}
                     aria-label='Failure mode'
                     size='small'
-                    sx={(theme) => {
-                        // The AnswerAI theme defines `primary.{main,light,dark}` as
-                        // translucent whites/slates rather than a vivid color, so anchoring
-                        // the selected state on `primary.*` produced ghosted text in dark
-                        // mode. We use MUI's mode-balanced `action.selected` token + a
-                        // visible border + `text.primary` for guaranteed contrast in both
-                        // modes — same pattern used for menu/table selection across the app.
-                        const isDark = theme.palette.mode === 'dark'
-                        return {
-                            '& .MuiToggleButton-root': {
-                                color: 'text.primary',
-                                borderColor: 'divider',
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                px: 1.5,
-                                transition: 'background-color 120ms ease, border-color 120ms ease'
-                            },
-                            '& .MuiToggleButton-root:hover': {
-                                bgcolor: 'action.hover'
-                            },
-                            '& .MuiToggleButton-root.Mui-selected': {
-                                bgcolor: 'action.selected',
-                                color: 'text.primary',
-                                fontWeight: 600,
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(15, 23, 42, 0.5)',
-                                '&:hover': {
-                                    bgcolor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(15, 23, 42, 0.12)'
-                                }
-                            }
-                        }
-                    }}
                 >
-                    <ToggleButton value='open' aria-label='Fail open'>
+                    <ToggleButton value='open' aria-label='Fail open' sx={{ px: 1.5 }}>
                         <IconAlertTriangle size={14} style={{ marginRight: 6 }} />
                         Fail open (allow, warn)
                     </ToggleButton>
-                    <ToggleButton value='closed' aria-label='Fail closed'>
+                    <ToggleButton value='closed' aria-label='Fail closed' sx={{ px: 1.5 }}>
                         <IconLock size={14} style={{ marginRight: 6 }} />
                         Fail closed (block, 503)
                     </ToggleButton>
@@ -792,14 +719,7 @@ export default function MasterConfig({ config, onConfigChange, onSave }: MasterC
                 {/* Shadow pilot toggle. Violations are recorded but never block. */}
                 <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                     <FormControlLabel
-                        control={
-                            <Switch
-                                checked={observabilityOnly}
-                                onChange={handleObservabilityOnlyChange}
-                                disabled={!enabled}
-                                sx={pageSwitchSx}
-                            />
-                        }
+                        control={<Switch checked={observabilityOnly} onChange={handleObservabilityOnlyChange} disabled={!enabled} />}
                         label={
                             <Typography variant='body2' sx={{ fontWeight: 500 }}>
                                 Observability-only (shadow mode)

@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import axios from 'axios'
 import logger from './logger'
+import { isCsvRunCronEnabled } from './isCsvRunCronEnabled'
 import initCsvRun from '../jobs/initCsvRun'
 import processCsvRows from '../jobs/processCsvRows'
 import generateCsv from '../jobs/generateCsv'
@@ -22,7 +23,6 @@ const API_HOST = process.env.API_HOST || `http://localhost:${process.env.PORT ||
  * Default: true
  */
 const ENABLE_BILLING_SYNC_CRON = process.env.ENABLE_BILLING_SYNC_CRON !== 'false'
-const ENABLE_CSV_RUN_CRON = process.env.ENABLE_CSV_RUN_CRON === 'true'
 
 /**
  * Initialize cron jobs
@@ -51,7 +51,7 @@ export function initCronJobs() {
         logger.info('📅 [cron]: Billing usage sync cron job is disabled')
     }
 
-    if (ENABLE_CSV_RUN_CRON) {
+    if (isCsvRunCronEnabled()) {
         logger.info('📅 [cron]: Initializing csv run cron job')
         initCsvRun()
         processCsvRows()

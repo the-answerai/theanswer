@@ -3,6 +3,7 @@ import csvParserService from '../../services/csv-parser'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
 import { CreateCsvParseRunRequest } from '../../types/csvTypes'
+import { isCsvRunCronEnabled } from '../../utils/isCsvRunCronEnabled'
 
 const getAllCsvParseRuns = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -76,6 +77,17 @@ const createCsvParseRun = async (req: Request, res: Response, next: NextFunction
     }
 }
 
+const getWorkerStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: csvParserController.getWorkerStatus - Unauthorized')
+        }
+        return res.json({ workerEnabled: isCsvRunCronEnabled() })
+    } catch (error) {
+        next(error)
+    }
+}
+
 const getProcessedCsvSignedUrl = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) {
@@ -96,6 +108,7 @@ const getProcessedCsvSignedUrl = async (req: Request, res: Response, next: NextF
 
 export default {
     getAllCsvParseRuns,
+    getWorkerStatus,
     getCsvParseRunById,
     createCsvParseRun,
     getProcessedCsvSignedUrl

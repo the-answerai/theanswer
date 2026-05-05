@@ -19,9 +19,7 @@ import { Container, Box, Stack, Tabs, Tab, Typography, Alert, AlertTitle } from 
 import ProcessCsv from './ProcessCsv'
 import ProcessingHistory from './ProcessingHistory'
 
-interface CsvTransformerProps {
-    cronEnabled?: boolean
-}
+type WorkerBannerState = 'loading' | 'enabled' | 'disabled' | 'error'
 
 function TabPanel(props: any) {
     const { children, currentValue, value, ...other } = props
@@ -38,9 +36,10 @@ function TabPanel(props: any) {
     )
 }
 
-const CsvTransformer = ({ cronEnabled = false }: CsvTransformerProps) => {
+const CsvTransformer = () => {
     const { user, isLoading } = useUser()
     const [chatflows, setChatflows] = useState([])
+    const [workerBanner, setWorkerBanner] = useState<WorkerBannerState>('loading')
     const searchParams = useSearchParams()
     const router = useRouter()
     const tab = searchParams.get('tab') ?? 'process'
@@ -64,6 +63,41 @@ const CsvTransformer = ({ cronEnabled = false }: CsvTransformerProps) => {
     useEffect(() => {
         fetchChatflows()
     }, [fetchChatflows])
+
+    useEffect(() => {
+        if (isLoading) return
+        if (!user) {
+            setWorkerBanner('error')
+            return
+        }
+        let cancelled = false
+        const loadWorkerStatus = async () => {
+            const baseURL = sessionStorage.getItem('baseURL') || ''
+            const token = sessionStorage.getItem('access_token')
+            if (!baseURL || !token) {
+                if (!cancelled) setWorkerBanner('error')
+                return
+            }
+            try {
+                const response = await fetch(`${baseURL}/api/v1/csv-parser/worker-status`, {
+                    headers: {
+                        'x-request-from': 'aai',
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                if (!response.ok) throw new Error('worker-status failed')
+                const data = (await response.json()) as { workerEnabled?: boolean }
+                if (cancelled) return
+                setWorkerBanner(data.workerEnabled ? 'enabled' : 'disabled')
+            } catch {
+                if (!cancelled) setWorkerBanner('error')
+            }
+        }
+        loadWorkerStatus()
+        return () => {
+            cancelled = true
+        }
+    }, [isLoading, user])
 
     // Auto-refresh when user returns from marketplace (only if no CSV chatflows currently)
     useEffect(() => {
@@ -100,16 +134,30 @@ const CsvTransformer = ({ cronEnabled = false }: CsvTransformerProps) => {
                 <Typography variant='h2' component='h1'>
                     AI CSV Transformer
                 </Typography>
-                {cronEnabled ? (
+                {workerBanner === 'loading' && (
+                    <Alert severity='info' variant='outlined'>
+                        <AlertTitle>Checking worker status</AlertTitle>
+                        Loading background CSV processing status from the API server…
+                    </Alert>
+                )}
+                {workerBanner === 'enabled' && (
                     <Alert severity='success' variant='outlined'>
                         <AlertTitle>Background processing is enabled</AlertTitle>
-                        Submitted CSVs will be picked up by the cron worker on this environment.
+                        Submitted CSVs will be picked up by the cron worker on the Flowise/API server (status from API).
                     </Alert>
-                ) : (
+                )}
+                {workerBanner === 'disabled' && (
                     <Alert severity='warning' variant='outlined'>
                         <AlertTitle>Background processing is disabled</AlertTitle>
-                        CSV runs can be created but they will not be processed until <code>ENABLE_CSV_RUN_CRON=true</code> is set on the
-                        server (then the worker is restarted).
+                        CSV runs can be created but will not be processed until <code>ENABLE_CSV_RUN_CRON=true</code> is set on the
+                        Flowise/API server and that process is restarted.
+                    </Alert>
+                )}
+                {workerBanner === 'error' && (
+                    <Alert severity='warning' variant='outlined'>
+                        <AlertTitle>Could not load worker status</AlertTitle>
+                        The UI could not read CSV worker status from the API (session, network, or server error). Background processing may
+                        still be enabled on the server.
                     </Alert>
                 )}
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
