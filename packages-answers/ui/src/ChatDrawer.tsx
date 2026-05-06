@@ -154,7 +154,16 @@ export default function ChatDrawer({ journeys: _journeys, chats: _chats, default
                                 <ListItemButton selected={pathname === `/chat/${chat.id}`} href={`/chat/${chat.id}`} component={NextLink}>
                                     <ListItemText
                                         secondary={chat.title}
-                                        sx={pathname === `/chat/${chat.id}` ? { '.MuiListItemText-secondary': { color: 'white' } } : {}}
+                                        sx={{
+                                            overflow: 'hidden',
+                                            '.MuiListItemText-secondary': {
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                display: 'block',
+                                                ...(pathname === `/chat/${chat.id}` ? { color: 'white' } : {})
+                                            }
+                                        }}
                                     />
                                 </ListItemButton>
                             </ListItem>
