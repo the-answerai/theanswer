@@ -31,6 +31,8 @@ const VisibilitySettings = ({ dialogProps }) => {
 
     const dispatch = useDispatch()
     const chatflow = useSelector((state) => state?.canvas?.chatflow) || dialogProps.chatflow
+    const user = useSelector((state) => state.auth?.user)
+    const isOwner = user?.id && chatflow?.userId && user.id === chatflow.userId
 
     useNotifier()
 
@@ -111,8 +113,8 @@ const VisibilitySettings = ({ dialogProps }) => {
                     {visibilityOptions.map(({ name, description }) => {
                         const isDisabled =
                             name === 'Private' ||
-                            (name === 'Browser Extension' && !canManageOrg) ||
-                            (name === 'Organization' && !canManageOrg) ||
+                            (name === 'Browser Extension' && !canManageOrg && !isOwner) ||
+                            (name === 'Organization' && !canManageOrg && !isOwner) ||
                             (name === 'Marketplace' && !canShareInternally)
                         return (
                             <Box key={name} display='flex' alignItems='center'>
