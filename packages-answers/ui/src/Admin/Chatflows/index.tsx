@@ -88,6 +88,10 @@ const AdminChatflows = () => {
     const [templateStatusFilter, setTemplateStatusFilter] = useState<string[]>([])
     const [selectedForUpdate, setSelectedForUpdate] = useState<string[]>([])
 
+    // Bulk update confirmation dialog state
+    const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false)
+    const [bulkUpdateIncludeName, setBulkUpdateIncludeName] = useState(false)
+
     // Versioning state
     const [versionModalOpen, setVersionModalOpen] = useState(false)
     const [selectedChatflowForVersions, setSelectedChatflowForVersions] = useState<string>('')
@@ -1027,22 +1031,9 @@ const AdminChatflows = () => {
                                     variant='contained'
                                     size='small'
                                     disabled={selectedForUpdate.length === 0}
-                                    onClick={async () => {
-                                        try {
-                                            const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate)
-
-                                            // Show success message and refresh data
-                                            if (response.updated > 0) {
-                                                // Refresh the chatflows data
-                                                window.location.reload() // Simple refresh for now
-                                            }
-
-                                            // Clear selections
-                                            setSelectedForUpdate([])
-                                        } catch (error) {
-                                            console.error('Bulk update failed:', error)
-                                            // TODO: Show error message to user
-                                        }
+                                    onClick={() => {
+                                        setBulkUpdateIncludeName(false)
+                                        setBulkUpdateDialogOpen(true)
                                     }}
                                     sx={{
                                         bgcolor: alpha(theme.palette.warning.main, 0.8),
@@ -1061,6 +1052,66 @@ const AdminChatflows = () => {
                             </Box>
                         </Box>
 
+                        {/* Bulk update confirmation dialog */}
+                        <Dialog open={bulkUpdateDialogOpen} onClose={() => setBulkUpdateDialogOpen(false)} maxWidth='sm' fullWidth>
+                            <DialogTitle sx={{ fontWeight: 600 }}>Confirm Template Update</DialogTitle>
+                            <DialogContent>
+                                <Typography variant='body2' sx={{ mb: 2, color: theme.palette.text.secondary }}>
+                                    You are about to push the latest template to <strong>{selectedForUpdate.length}</strong> chatflow
+                                    {selectedForUpdate.length !== 1 ? 's' : ''}. This will overwrite their flow configuration with the
+                                    current template version.
+                                </Typography>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={bulkUpdateIncludeName}
+                                            onChange={(e) => setBulkUpdateIncludeName(e.target.checked)}
+                                            color='warning'
+                                        />
+                                    }
+                                    label={
+                                        <Box>
+                                            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                                Also update chatflow name to match template
+                                            </Typography>
+                                            <Typography variant='caption' sx={{ color: theme.palette.text.secondary }}>
+                                                Overwrites each user&apos;s chatflow name with the template name
+                                            </Typography>
+                                        </Box>
+                                    }
+                                />
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+                                <Button variant='outlined' onClick={() => setBulkUpdateDialogOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant='contained'
+                                    onClick={async () => {
+                                        setBulkUpdateDialogOpen(false)
+                                        try {
+                                            const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate, {
+                                                updateName: bulkUpdateIncludeName
+                                            })
+                                            if (response.updated > 0) {
+                                                window.location.reload()
+                                            }
+                                            setSelectedForUpdate([])
+                                        } catch (error) {
+                                            console.error('Bulk update failed:', error)
+                                        }
+                                    }}
+                                    sx={{
+                                        bgcolor: alpha(theme.palette.warning.main, 0.8),
+                                        color: theme.palette.common.white,
+                                        '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.9) }
+                                    }}
+                                >
+                                    Update {selectedForUpdate.length} Chatflow{selectedForUpdate.length !== 1 ? 's' : ''}
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
+
                         {selectedForUpdate.length > 0 && (
                             <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: '4px' }}>
                                 <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontWeight: 600, mb: 1 }}>
@@ -1071,7 +1122,9 @@ const AdminChatflows = () => {
                                     <br />
                                     • API settings, starter prompts, and system configuration will be updated
                                     <br />
-                                    • Name, description, owner, and organization will remain unchanged
+                                    • Description, owner, workspace, and organization will remain unchanged
+                                    <br />
+                                    • Chatflow name is preserved unless &quot;Also update name&quot; is checked
                                     <br />• User customizations in flow logic may be overwritten
                                 </Typography>
                             </Box>
