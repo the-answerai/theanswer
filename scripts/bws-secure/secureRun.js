@@ -19,6 +19,15 @@ import {
   log
 } from './project-selector.js';
 import { execBwsCommandWithRetrySync } from './bws-retry-utils.js';
+import {
+  parseProjectIds,
+  parseProjectIdsDetailed,
+  parseEnvironmentOutput,
+  serializeEnvRecordToPlaintext
+} from './bws-env-utils.js';
+
+/** Encrypted `.env.secure.*` files written by secureRun / loadBwsProjectSecrets use serializeEnvRecordToPlaintext. */
+const PARSE_SECURE_FILE = { stripSerializedContinuationSpace: true };
 // Import functions from project-selector module
 
 // Get the directory name in ESM
@@ -46,37 +55,39 @@ if (SUPPRESS_ALL) {
   console.debug = () => {};
 }
 
-// Helper function to properly parse multiline environment variables from BWS output
-function parseEnvironmentOutput(output) {
-  const result = {};
-  const lines = output.split('\n');
-  let currentKey = null;
-  let currentValue = '';
+const multiProjectFailFast =
+  process.env.BWS_MULTI_PROJECT_FAIL_FAST === 'true' ||
+  process.env.BWS_MULTI_PROJECT_FAIL_ON_PARTIAL === 'true';
 
-  for (const line of lines) {
-    // Check if this line starts a new variable (has = and doesn't start with whitespace)
-    if (line.includes('=') && !line.startsWith(' ') && !line.startsWith('\t')) {
-      // Save previous variable if exists
-      if (currentKey !== null) {
-        result[currentKey] = currentValue;
-      }
-
-      // Start new variable
-      const equalIndex = line.indexOf('=');
-      currentKey = line.substring(0, equalIndex).trim();
-      currentValue = line.substring(equalIndex + 1);
-    } else if (currentKey !== null && line.trim() !== '') {
-      // This is a continuation line for the current variable
-      currentValue += '\n' + line;
-    }
+function logParsedProjectIds(context, raw) {
+  const d = parseProjectIdsDetailed(raw);
+  if (d.skippedInvalid.length) {
+    log('warn', `[${context}] Skipped non-UUID segments: ${d.skippedInvalid.join(', ')}`);
   }
-
-  // Don't forget the last variable
-  if (currentKey !== null) {
-    result[currentKey] = currentValue;
+  if (d.skippedDuplicates.length) {
+    log('warn', `[${context}] Skipped duplicate UUIDs: ${d.skippedDuplicates.join(', ')}`);
   }
+  if (d.ids.length) {
+    log('debug', `[${context}] Parsed ${d.ids.length} project ID(s)`);
+  }
+  return d.ids;
+}
 
-  return result;
+/** After CLI env restore, child processes get a single primary UUID in BWS_PROJECT_ID; full list in BWS_PROJECT_IDS when multi. */
+function normalizeBwsProjectIdForChild() {
+  const raw = process.env.BWS_PROJECT_ID;
+  if (!raw) {
+    delete process.env.BWS_PROJECT_IDS;
+    return;
+  }
+  const ids = parseProjectIdsDetailed(raw).ids;
+  if (ids.length === 0) return;
+  process.env.BWS_PROJECT_ID = ids[0];
+  if (ids.length > 1) {
+    process.env.BWS_PROJECT_IDS = ids.join(',');
+  } else {
+    delete process.env.BWS_PROJECT_IDS;
+  }
 }
 
 // Helper function to get BWS organization ID with fallback
@@ -504,7 +515,12 @@ function printEnvironmentSummary() {
     process.exit(1);
   }
 
-  const projectId = process.env.BWS_PROJECT_ID || 'none';
+  const idInfo = parseProjectIdsDetailed(process.env.BWS_PROJECT_ID || '');
+  let projectId = process.env.BWS_PROJECT_ID || 'none';
+  if (idInfo.ids.length === 1) projectId = idInfo.ids[0];
+  else if (idInfo.ids.length > 1) {
+    projectId = `${idInfo.ids[0]} (+${idInfo.ids.length - 1} more)`;
+  }
 
   // Cyan color code
   const cyan = '\x1b[36m';
@@ -534,7 +550,8 @@ function printEnvironmentSummary() {
 const originalEnvironment = { ...process.env };
 let originalEnvironmentFileContent = ''; // Store original .env file content
 
-// Helper function to get project ID with fallback to first available
+// Helper function to get project ID(s) with fallback to first available
+// Returns comma-separated string to maintain backward compatibility
 function getProjectIdWithFallback(project, environment) {
   let projectId = project.bwsProjectIds?.[environment];
 
@@ -550,6 +567,7 @@ function getProjectIdWithFallback(project, environment) {
     }
   }
 
+  // Return as-is (supports both single UUID and comma-separated UUIDs)
   return projectId;
 }
 
@@ -578,17 +596,17 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
     process.env.BWS_EPHEMERAL_KEY = crypto.randomBytes(32).toString('hex');
   }
 
-  // Direct BWS_PROJECT_ID bypass - if a valid UUID is provided, use it directly
-  if (
-    process.env.BWS_PROJECT_ID &&
-    process.env.BWS_PROJECT_ID.match(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    )
-  ) {
-    log('info', `Using direct BWS_PROJECT_ID: ${process.env.BWS_PROJECT_ID}`);
+  // Direct BWS_PROJECT_ID bypass - if valid UUID(s) provided, use them directly
+  const directProjectIds = process.env.BWS_PROJECT_ID
+    ? logParsedProjectIds('direct BWS_PROJECT_ID', process.env.BWS_PROJECT_ID)
+    : [];
 
-    // Load secrets directly using the provided project ID
-    const projectId = process.env.BWS_PROJECT_ID;
+  if (directProjectIds.length > 0) {
+    const isMultiple = directProjectIds.length > 1;
+    log(
+      'info',
+      `Using direct BWS_PROJECT_ID${isMultiple ? 's' : ''}: ${directProjectIds.join(', ')}`
+    );
 
     // Enable progress mode to suppress console interference
     enableProgressMode();
@@ -600,27 +618,84 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
     showSecureRunProgress('Environment Setup', 4.3, 6, `Connecting to BWS...`);
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    await loadEnvironmentSecrets(projectId, projectId);
+    // Load secrets from all project IDs with overlay strategy (later IDs win)
+    const allDecryptedVariables = {};
+    const directLoadFailures = [];
 
-    showSecureRunProgress('Environment Setup', 4.7, 6, `Processing environment variables...`);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    loadedProjectIds.add(projectId);
+    for (const [index, projectId] of directProjectIds.entries()) {
+      const progressLabel = isMultiple ? `[${index + 1}/${directProjectIds.length}]` : '';
+      showSecureRunProgress(
+        'Environment Setup',
+        4.3 + (0.4 * (index + 1)) / directProjectIds.length,
+        6,
+        `${progressLabel} Loading secrets from project ${index + 1}`
+      );
 
-    // Load the variables into process.env
-    const sourceFile = `.env.secure.${projectId}`;
-    if (fs.existsSync(sourceFile)) {
-      const content = fs.readFileSync(sourceFile, 'utf8');
-      const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
-      const decryptedVariables = parseEnvironmentOutput(decrypted);
-
-      for (const key of Object.keys(decryptedVariables)) {
-        if (!(key in process.env)) {
-          process.env[key] = decryptedVariables[key];
+      const ok = await loadBwsProjectSecrets(projectId);
+      if (ok) {
+        loadedProjectIds.add(projectId);
+        log('info', `${progressLabel} Successfully loaded BWS project ${projectId}`);
+      } else {
+        directLoadFailures.push(projectId);
+        log('error', `${progressLabel} Failed to load secrets for project ${projectId}`);
+        if (isMultiple && multiProjectFailFast) {
+          process.exit(1);
         }
       }
 
-      log('debug', `Loaded environment from direct BWS_PROJECT_ID: ${projectId}`);
+      const sourceFile = `.env.secure.${projectId}`;
+      if (fs.existsSync(sourceFile)) {
+        const content = fs.readFileSync(sourceFile, 'utf8');
+        const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+        const decryptedVariables = parseEnvironmentOutput(decrypted, PARSE_SECURE_FILE);
+        Object.assign(allDecryptedVariables, decryptedVariables);
+
+        log(
+          'debug',
+          `${progressLabel} Merged ${
+            Object.keys(decryptedVariables).length
+          } keys from project ${projectId}`
+        );
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
+
+    if (directLoadFailures.length > 0 && isMultiple && !multiProjectFailFast) {
+      log(
+        'warn',
+        `Multi-project: ${
+          directLoadFailures.length
+        } project load(s) failed (${directLoadFailures.join(
+          ', '
+        )}). Overlay may be incomplete. Set BWS_MULTI_PROJECT_FAIL_FAST=true to abort on first failure.`
+      );
+    }
+
+    const envLabelDirect = process.env.BWS_ENV || 'local';
+    if (isMultiple && Object.keys(allDecryptedVariables).length > 0) {
+      const mergedPlain = serializeEnvRecordToPlaintext(allDecryptedVariables);
+      fs.writeFileSync(
+        `.env.secure.${envLabelDirect}`,
+        encryptContent(mergedPlain, process.env.BWS_EPHEMERAL_KEY),
+        { encoding: 'utf-8' }
+      );
+      log('debug', `Wrote merged .env.secure.${envLabelDirect} for multi-project mapping`);
+    }
+
+    // Apply merged variables (do not override existing process.env)
+    for (const [key, value] of Object.entries(allDecryptedVariables)) {
+      if (!(key in process.env)) {
+        process.env[key] = value ?? '';
+      }
+    }
+
+    log(
+      'debug',
+      `Total merged keys from direct BWS_PROJECT_ID${isMultiple ? 's' : ''}: ${
+        Object.keys(allDecryptedVariables).length
+      }`
+    );
 
     // Always show incremental progress to 100%, regardless of additional environments
     showSecureRunProgress('Environment Setup', 5.0, 6, `Configuring environment variables...`);
@@ -636,9 +711,14 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
         const project = config.projects.find((p) => p.projectName === process.env.BWS_PROJECT);
         if (project) {
           const currentEnv = process.env.BWS_ENV || 'local';
-          const additionalProjectIds = Object.entries(project.bwsProjectIds).filter(
-            ([env, id]) => env !== currentEnv && id && !loadedProjectIds.has(id)
-          );
+
+          // Parse comma-separated project IDs and filter out already loaded ones
+          const additionalProjectIds = Object.entries(project.bwsProjectIds)
+            .filter(([env, projectIdString]) => env !== currentEnv && projectIdString)
+            .flatMap(([env, projectIdString]) => {
+              const projectIds = parseProjectIds(projectIdString);
+              return projectIds.filter((id) => !loadedProjectIds.has(id)).map((id) => [env, id]);
+            });
 
           if (additionalProjectIds.length > 0) {
             let processedCount = 0;
@@ -654,8 +734,8 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
               );
 
               if (!loadedProjectIds.has(additionalProjectId)) {
-                await loadEnvironmentSecrets(additionalProjectId, additionalProjectId);
-                loadedProjectIds.add(additionalProjectId);
+                const ok = await loadBwsProjectSecrets(additionalProjectId);
+                if (ok) loadedProjectIds.add(additionalProjectId);
               }
               await new Promise((resolve) => setTimeout(resolve, 100));
             }
@@ -789,7 +869,9 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
     );
     if (selectedProjectConfig && selectedProjectConfig.bwsProjectIds) {
       Object.values(selectedProjectConfig.bwsProjectIds).forEach((id) => {
-        if (id) projectIdsToLoad.add(id);
+        if (id) {
+          parseProjectIds(id).forEach((pid) => projectIdsToLoad.add(pid));
+        }
       });
       log('debug', `Will load secrets for project IDs: ${[...projectIdsToLoad].join(', ')}`);
     }
@@ -895,41 +977,82 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
         // Track if any secrets were successfully loaded
         let secretsLoaded = false;
 
-        // Only load and create environment files that don't already exist
-        const environmentsToLoad = Object.entries(environmentMappings).filter(
-          ([_, projectId]) => projectId
-        );
+        // Parse and expand comma-separated project IDs for each environment
+        const environmentsToLoad = Object.entries(environmentMappings)
+          .filter(([_, projectIdString]) => projectIdString)
+          .flatMap(([env, projectIdString]) => {
+            const projectIds = parseProjectIds(projectIdString);
+            return projectIds.map((id) => [env, id]);
+          });
+
         let envProcessedCount = 0;
 
+        // Group by environment to merge secrets properly
+        const envGroups = {};
         for (const [environment_, projectId] of environmentsToLoad) {
+          if (!envGroups[environment_]) {
+            envGroups[environment_] = [];
+          }
+          envGroups[environment_].push({ projectId });
+        }
+
+        for (const [environment_, envData] of Object.entries(envGroups)) {
           envProcessedCount++;
           // Calculate incremental progress from 4.0 (67%) towards 6.0 (100%)
-          const progressStep = 4 + (2 * envProcessedCount) / environmentsToLoad.length; // 4.0 to 6.0
+          const progressStep = 4 + (2 * envProcessedCount) / Object.keys(envGroups).length;
           showSecureRunProgress(
             'Environment Setup',
             progressStep,
             6,
-            `Loading project secrets ${envProcessedCount}/${environmentsToLoad.length} (${environment_})`
+            `Loading project secrets ${envProcessedCount}/${
+              Object.keys(envGroups).length
+            } (${environment_})`
           );
 
-          // Only load this project ID if we haven't already
-          if (!loadedProjectIds.has(projectId)) {
-            const success = await loadEnvironmentSecrets(projectId, projectId);
-            if (success) {
+          // Load all project IDs for this environment with overlay strategy
+          const mergedVariables = {};
+          for (const { projectId } of envData) {
+            // Only load this project ID if we haven't already
+            if (!loadedProjectIds.has(projectId)) {
+              const success = await loadBwsProjectSecrets(projectId);
+              if (success) {
+                secretsLoaded = true;
+                loadedProjectIds.add(projectId);
+              } else {
+                log(
+                  'error',
+                  `Failed to load secrets for project ${projectId} (environment ${environment_})`
+                );
+                if (multiProjectFailFast && envData.length > 1) {
+                  process.exit(1);
+                }
+              }
+            } else {
               secretsLoaded = true;
-              loadedProjectIds.add(projectId);
             }
-          } else {
-            // If we already loaded this ID, consider it a success
-            secretsLoaded = true;
+
+            // Merge secrets with overlay strategy
+            const sourceFile = `.env.secure.${projectId}`;
+            if (fs.existsSync(sourceFile)) {
+              const content = fs.readFileSync(sourceFile, 'utf8');
+              const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+              const decryptedVariables = parseEnvironmentOutput(decrypted, PARSE_SECURE_FILE);
+
+              // Later project IDs override earlier ones
+              Object.assign(mergedVariables, decryptedVariables);
+            }
           }
 
-          // Create symlink or copy the file as needed
-          const sourceFile = `.env.secure.${projectId}`;
-          const targetFile = `.env.secure.${environment_}`;
-          if (fs.existsSync(sourceFile)) {
-            fs.copyFileSync(sourceFile, targetFile);
-            log('debug', `Created ${targetFile} from ${sourceFile}`);
+          // Write merged environment file (safe for multiline values)
+          if (Object.keys(mergedVariables).length > 0) {
+            const mergedContent = serializeEnvRecordToPlaintext(mergedVariables);
+            const cipherText = encryptContent(mergedContent, process.env.BWS_EPHEMERAL_KEY);
+            const targetFile = `.env.secure.${environment_}`;
+            fs.writeFileSync(targetFile, cipherText);
+            log(
+              'debug',
+              `Created ${targetFile} with ${Object.keys(mergedVariables).length} merged secrets`
+            );
           }
         }
 
@@ -996,32 +1119,52 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
             (p) => p.projectName === originalEnvironment_.BWS_PROJECT
           );
           if (project) {
-            let projectId = project.bwsProjectIds[originalEnvironment_.BWS_ENV];
+            let projectIdString = project.bwsProjectIds[originalEnvironment_.BWS_ENV];
 
             // If no project ID found for the specific environment, fall back to first available
-            if (!projectId && project.bwsProjectIds) {
+            if (!projectIdString && project.bwsProjectIds) {
               const availableProjectIds = Object.values(project.bwsProjectIds).filter((id) => id);
               if (availableProjectIds.length > 0) {
-                projectId = availableProjectIds[0];
+                projectIdString = availableProjectIds[0];
                 log(
                   'info',
-                  `No project ID found for environment '${originalEnvironment_.BWS_ENV}', using fallback: ${projectId}`
+                  `No project ID found for environment '${originalEnvironment_.BWS_ENV}', using fallback: ${projectIdString}`
                 );
               }
             }
 
-            if (projectId) {
-              process.env.BWS_PROJECT_ID = projectId;
-              const sourceFile = `.env.secure.${projectId}`;
-              if (fs.existsSync(sourceFile)) {
-                const content = fs.readFileSync(sourceFile, 'utf8');
-                const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
-                Object.assign(process.env, dotenv.parse(decrypted));
-                log(
-                  'info',
-                  `Restored environment from ${sourceFile} for ${originalEnvironment_.BWS_ENV} environment`
-                );
+            if (projectIdString) {
+              const projectIds = parseProjectIds(projectIdString);
+              const mergedVariables = {};
+
+              for (const projectId of projectIds) {
+                const sourceFile = `.env.secure.${projectId}`;
+                if (fs.existsSync(sourceFile)) {
+                  const content = fs.readFileSync(sourceFile, 'utf8');
+                  const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+                  Object.assign(
+                    mergedVariables,
+                    parseEnvironmentOutput(decrypted, PARSE_SECURE_FILE)
+                  );
+                }
               }
+
+              Object.assign(process.env, mergedVariables);
+              if (projectIds.length > 0) {
+                process.env.BWS_PROJECT_ID = projectIds[0];
+                if (projectIds.length > 1) {
+                  process.env.BWS_PROJECT_IDS = projectIds.join(',');
+                } else {
+                  delete process.env.BWS_PROJECT_IDS;
+                }
+              }
+
+              log(
+                'info',
+                `Restored ${Object.keys(mergedVariables).length} variables for ${
+                  originalEnvironment_.BWS_ENV
+                } environment`
+              );
             }
           }
         }
@@ -1060,9 +1203,16 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
 
       // For local development, prioritize loading the current environment first
       const environment = process.env.BWS_ENV || 'local';
-      const currentProjectId = getProjectIdWithFallback(project, environment);
+      const currentProjectIdString = getProjectIdWithFallback(project, environment);
 
-      if (currentProjectId) {
+      if (currentProjectIdString) {
+        const currentProjectIds = logParsedProjectIds(
+          `bwsProjectIds[${environment}]`,
+          currentProjectIdString
+        );
+        const isMultiple = currentProjectIds.length > 1;
+        const localLoadFailures = [];
+
         // Enable progress mode to suppress console interference
         enableProgressMode();
 
@@ -1076,41 +1226,97 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
 
         log(
           'debug',
-          `Loading secrets for current environment: ${environment} (project ID: ${currentProjectId})`
+          `Loading secrets for current environment: ${environment} (project ID${
+            isMultiple ? 's' : ''
+          }: ${currentProjectIds.join(', ')})`
         );
-        if (!loadedProjectIds.has(currentProjectId)) {
-          await loadEnvironmentSecrets(currentProjectId, currentProjectId);
-          loadedProjectIds.add(currentProjectId);
-        }
 
-        // Set the project ID in process.env
-        process.env.BWS_PROJECT_ID = currentProjectId;
+        const allDecryptedVariables = {};
 
-        // Load the active environment variables into process.env
-        const sourceFile = `.env.secure.${currentProjectId}`;
-        if (fs.existsSync(sourceFile)) {
-          const content = fs.readFileSync(sourceFile, 'utf8');
-          const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+        for (const [index, projectId] of currentProjectIds.entries()) {
+          if (!loadedProjectIds.has(projectId)) {
+            const progressLabel = isMultiple ? `[${index + 1}/${currentProjectIds.length}]` : '';
+            log('debug', `${progressLabel} Loading secrets from project ${projectId}`);
 
-          // Parse decrypted content but don't override existing env vars
-          const decryptedVariables = parseEnvironmentOutput(decrypted);
-          for (const key of Object.keys(decryptedVariables)) {
-            // Only set if not already defined in process.env
-            if (!(key in process.env)) {
-              process.env[key] = decryptedVariables[key];
+            const ok = await loadBwsProjectSecrets(projectId);
+            if (ok) {
+              loadedProjectIds.add(projectId);
+            } else {
+              localLoadFailures.push(projectId);
+              log('error', `${progressLabel} Failed to load secrets for project ${projectId}`);
+              if (isMultiple && multiProjectFailFast) {
+                process.exit(1);
+              }
             }
           }
 
-          log('debug', `Loaded environment from ${sourceFile} for local development`);
+          const sourceFile = `.env.secure.${projectId}`;
+          if (fs.existsSync(sourceFile)) {
+            const content = fs.readFileSync(sourceFile, 'utf8');
+            const decrypted = decryptContent(content, process.env.BWS_EPHEMERAL_KEY);
+            Object.assign(
+              allDecryptedVariables,
+              parseEnvironmentOutput(decrypted, PARSE_SECURE_FILE)
+            );
+          }
         }
+
+        if (localLoadFailures.length > 0 && isMultiple && !multiProjectFailFast) {
+          log(
+            'warn',
+            `Multi-project: ${
+              localLoadFailures.length
+            } project load(s) failed (${localLoadFailures.join(
+              ', '
+            )}). Overlay may be incomplete. Set BWS_MULTI_PROJECT_FAIL_FAST=true to abort.`
+          );
+        }
+
+        if (isMultiple && Object.keys(allDecryptedVariables).length > 0) {
+          fs.writeFileSync(
+            `.env.secure.${environment}`,
+            encryptContent(
+              serializeEnvRecordToPlaintext(allDecryptedVariables),
+              process.env.BWS_EPHEMERAL_KEY
+            ),
+            { encoding: 'utf-8' }
+          );
+          log('debug', `Wrote merged .env.secure.${environment} for multi-project mapping`);
+        }
+
+        if (currentProjectIds.length > 0) {
+          process.env.BWS_PROJECT_ID = currentProjectIds[0];
+          if (currentProjectIds.length > 1) {
+            process.env.BWS_PROJECT_IDS = currentProjectIds.join(',');
+          } else {
+            delete process.env.BWS_PROJECT_IDS;
+          }
+        }
+
+        for (const [key, value] of Object.entries(allDecryptedVariables)) {
+          if (!(key in process.env)) {
+            process.env[key] = value ?? '';
+          }
+        }
+
+        log(
+          'debug',
+          `Loaded ${
+            Object.keys(allDecryptedVariables).length
+          } total keys for local development (merged)`
+        );
       } else {
         log('warn', `No project ID found for environment ${environment} and no fallback available`);
       }
 
       // Then load any other project IDs that might be needed
-      const additionalProjectIds = Object.entries(project.bwsProjectIds).filter(
-        ([env, projectId]) => env !== environment && projectId && !loadedProjectIds.has(projectId)
-      );
+      // Parse each projectId string to handle comma-separated values
+      const additionalProjectIds = Object.entries(project.bwsProjectIds)
+        .filter(([env, projectIdString]) => env !== environment && projectIdString)
+        .flatMap(([env, projectIdString]) => {
+          const projectIds = parseProjectIds(projectIdString);
+          return projectIds.filter((id) => !loadedProjectIds.has(id)).map((id) => [env, id]);
+        });
 
       if (additionalProjectIds.length > 0) {
         let processedCount = 0;
@@ -1134,8 +1340,8 @@ async function setupEnvironment(options = { isPlatformBuild: false }) {
             'debug',
             `Loading additional secrets for ${projectName} (${env}) project ID: ${projectId}`
           );
-          await loadEnvironmentSecrets(projectId, projectId);
-          loadedProjectIds.add(projectId);
+          const ok = await loadBwsProjectSecrets(projectId);
+          if (ok) loadedProjectIds.add(projectId);
         }
       }
 
@@ -1212,10 +1418,10 @@ function encryptContent(content, encryptionKey) {
   return `${nonce.toString('base64')}:${authTag.toString('base64')}:${encrypted}`;
 }
 
-// New function to handle environment-specific secrets
-async function loadEnvironmentSecrets(environment, projectId) {
-  if (!projectId || !environment) {
-    log('error', 'Critical Error: Missing projectId or environment name');
+/** Fetch secrets for one BWS project UUID and write `.env.secure.<projectId>` (encrypted). */
+async function loadBwsProjectSecrets(projectId) {
+  if (!projectId) {
+    log('error', 'Critical Error: Missing projectId');
     return false;
   }
 
@@ -1225,10 +1431,8 @@ async function loadEnvironmentSecrets(environment, projectId) {
   }
 
   try {
-    // More concise logging
-    log('debug', `Loading secrets for ${projectId}...`);
+    log('debug', `Loading secrets for project ${projectId}...`);
 
-    // Use retry logic for BWS secret list command
     const output = execBwsCommandWithRetrySync(
       `${getBwsCommand()} secret list -t ${
         process.env.BWS_ACCESS_TOKEN
@@ -1240,31 +1444,26 @@ async function loadEnvironmentSecrets(environment, projectId) {
     let bwsSecrets;
     try {
       bwsSecrets = JSON.parse(output || '[]');
-      // Validate that we actually got secrets back
       if (!Array.isArray(bwsSecrets) || bwsSecrets.length === 0) {
-        log(
-          'error',
-          `Critical Error: No secrets found for projectId ${projectId} (${environment})`
-        );
+        log('error', `Critical Error: No secrets found for projectId ${projectId}`);
         return false;
       }
     } catch (parseError) {
-      log(
-        'error',
-        `Critical Error: Invalid secrets data for ${environment}: ${parseError.message}`
-      );
+      log('error', `Critical Error: Invalid secrets JSON for ${projectId}: ${parseError.message}`);
       return false;
     }
 
-    // Create the secure file
-    const environmentContent = bwsSecrets.map(({ key, value }) => `${key}=${value}`).join('\n');
+    const record = Object.fromEntries(
+      bwsSecrets.map(({ key, value }) => [key, value === undefined || value === null ? '' : value])
+    );
+    const environmentContent = serializeEnvRecordToPlaintext(record);
+
     if (process.env.BWS_EPHEMERAL_KEY && environmentContent) {
       const cipherText = encryptContent(environmentContent, process.env.BWS_EPHEMERAL_KEY);
       fs.writeFileSync(`.env.secure.${projectId}`, cipherText, {
         encoding: 'utf-8'
       });
 
-      // Only show detailed counts in debug mode
       if (process.env.DEBUG === 'true') {
         log('debug', `Created .env.secure.${projectId} with ${bwsSecrets.length} secrets`);
       }
@@ -1277,14 +1476,11 @@ async function loadEnvironmentSecrets(environment, projectId) {
     return false;
   } catch (error) {
     if (error?.message?.includes('404 Not Found')) {
-      log(
-        'error',
-        `Critical Error: Project ${projectId} (${environment}): no secrets found or no access`
-      );
+      log('error', `Critical Error: Project ${projectId}: not found or no access`);
       return false;
     }
 
-    log('error', `Critical Error: Failed to load secrets for ${environment}: ${error.message}`);
+    log('error', `Critical Error: Failed to load secrets for ${projectId}: ${error.message}`);
     if (process.env.DEBUG === 'true') {
       if (error?.stdout) {
         log('debug', 'stdout:', error.stdout.toString());
@@ -1307,10 +1503,10 @@ function loadSecureEnvironment(environment) {
     const decrypted = decryptContent(encryptedText, process.env.BWS_EPHEMERAL_KEY);
 
     // Load decrypted vars into process.env
-    const parsedVariables = parseEnvironmentOutput(decrypted);
+    const parsedVariables = parseEnvironmentOutput(decrypted, PARSE_SECURE_FILE);
     for (const [key, value] of Object.entries(parsedVariables)) {
-      if (key && value !== undefined) {
-        process.env[key.trim()] = value;
+      if (key) {
+        process.env[key.trim()] = value ?? '';
       }
     }
     log('debug', `${environment} environment secrets loaded into process.env`);
@@ -1322,7 +1518,7 @@ function loadSecureEnvironment(environment) {
 // Move cleanup function to top level
 function cleanupSecureFiles(verbose = false) {
   try {
-    // Clean up all .env.secure.* files and .env.secure
+    // Clean up all .env.secure.* files and .env.secure (encrypted artifacts in consumer repo cwd)
     const files = fs.readdirSync(process.cwd());
     for (const file of files) {
       if (file === '.env.secure' || file.startsWith('.env.secure.')) {
@@ -1337,6 +1533,24 @@ function cleanupSecureFiles(verbose = false) {
       log('warn', `Error during cleanup: ${error.message}`);
     }
   }
+}
+
+/**
+ * Remove transient `.env.secure` / `.env.secure.*` files after secrets are in process.env.
+ * Nested secure-run (child) skips — parent owns cleanup.
+ * Set BWS_KEEP_SECURE_FILES=true to leave files for debugging (not recommended in CI).
+ */
+function finalizeBwsSecureArtifactsCleanup(verbose = false) {
+  if (isNestedExecution) {
+    return;
+  }
+  if (process.env.BWS_KEEP_SECURE_FILES === 'true') {
+    if (process.env.DEBUG === 'true') {
+      log('debug', 'BWS_KEEP_SECURE_FILES=true — skipping removal of .env.secure* files');
+    }
+    return;
+  }
+  cleanupSecureFiles(verbose);
 }
 
 // Add function to restore original .env file content
@@ -1554,6 +1768,8 @@ async function handleUploadCommand() {
         process.env[key] = value;
       }
 
+      normalizeBwsProjectIdForChild();
+
       // Restore original .env file content (silently)
       await restoreOriginalEnvironmentFile();
     } else {
@@ -1575,6 +1791,7 @@ async function handleUploadCommand() {
     const command = process.argv.slice(2);
     if (command.length === 0) {
       log('warn', 'No command provided to execute');
+      finalizeBwsSecureArtifactsCleanup();
       process.exit(0);
     }
 
@@ -1590,6 +1807,7 @@ async function handleUploadCommand() {
       shell: true
     });
 
+    finalizeBwsSecureArtifactsCleanup();
     process.exit(result.status);
   } catch (error) {
     // Always show critical errors even when suppressed
@@ -1599,42 +1817,25 @@ async function handleUploadCommand() {
   }
 })();
 
-// Comment out cleanup registrations
+// Backup cleanup if the process exits without going through finalizeBwsSecureArtifactsCleanup (e.g. early process.exit)
 process.on('exit', () => {
-  // Only clean up if this is the root execution
-  if (!isNestedExecution) {
-    // Clean up without verbose output (silent cleanup)
-    cleanupSecureFiles(false);
-
-    // We don't want to restore the original .env file as it would remove the project selection
-    // Instead, the BWS_ENV is handled by restoreOriginalEnvironmentFile() which preserves project options
-    if (originalEnvironmentFileContent && process.env.DEBUG === 'true') {
-      log('debug', 'Skipping complete .env restoration to preserve BWS project selection');
-    }
+  finalizeBwsSecureArtifactsCleanup(false);
+  if (originalEnvironmentFileContent && process.env.DEBUG === 'true') {
+    log('debug', 'Skipping complete .env restoration to preserve BWS project selection');
   }
 });
 
 process.on('SIGINT', async () => {
-  // Only clean up if this is the root execution
+  finalizeBwsSecureArtifactsCleanup(false);
   if (!isNestedExecution) {
-    // Clean up without verbose output (silent cleanup)
-    cleanupSecureFiles(false);
-
-    // We don't want to restore the entire original .env file
-    // The restoreOriginalEnvironmentFile function will only restore the BWS_ENV value if needed
     await restoreOriginalEnvironmentFile();
   }
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  // Only clean up if this is the root execution
+  finalizeBwsSecureArtifactsCleanup(false);
   if (!isNestedExecution) {
-    // Clean up without verbose output (silent cleanup)
-    cleanupSecureFiles(false);
-
-    // We don't want to restore the entire original .env file
-    // The restoreOriginalEnvironmentFile function will only restore the BWS_ENV value if needed
     await restoreOriginalEnvironmentFile();
   }
   process.exit(0);
@@ -1646,13 +1847,8 @@ process.on('uncaughtException', async (error) => {
   disableProgressMode();
   console.error('Uncaught Exception:', error);
 
-  // Only clean up if this is the root execution
+  finalizeBwsSecureArtifactsCleanup(false);
   if (!isNestedExecution) {
-    // Clean up without verbose output (silent cleanup)
-    cleanupSecureFiles(false);
-
-    // We don't want to restore the entire original .env file
-    // The restoreOriginalEnvironmentFile function will only restore the BWS_ENV value if needed
     await restoreOriginalEnvironmentFile();
   }
   process.exit(1);

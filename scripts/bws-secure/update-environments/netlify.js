@@ -32,6 +32,23 @@ const __dirname = path.dirname(__filename);
 const netlifyEnvironmentCache = new Map();
 
 /**
+ * Pro+ only: per-scope env vars (Netlify OpenAPI: granular scopes require Pro and above).
+ * Free accounts must omit `scopes` so Netlify applies "All scopes" (same as UI default).
+ * @see https://open-api.netlify.com/ — createEnvVars
+ */
+const NETLIFY_ENV_VAR_SCOPES_GRANULAR = ['builds', 'functions', 'runtime'];
+
+function netlifyEnvVarsWithoutScopes(variablesArray) {
+  return variablesArray.map(({ scopes: _omit, ...rest }) => rest);
+}
+
+/** HTTP statuses where retrying without granular scopes may fix Free-tier / plan limits */
+function shouldRetryNetlifyEnvBatchWithoutScopes(error) {
+  const status = error.response?.status;
+  return status === 400 || status === 403 || status === 422;
+}
+
+/**
  * Helper function to handle API rate limiting with exponential backoff
  *
  * @param {Function} apiCall - The function that makes the API call
@@ -209,7 +226,7 @@ async function updateNetlifyEnvironmentVariables(project) {
       // For now, we are setting is_secret to false for all variables.
       variablesToUpdate.push({
         key,
-        scopes: ['builds', 'functions', 'runtime'],
+        scopes: NETLIFY_ENV_VAR_SCOPES_GRANULAR,
         values: contexts,
         is_secret: false
       });
@@ -259,20 +276,44 @@ async function updateNetlifyEnvironmentVariables(project) {
 }
 
 /**
- * batchUpdateNetlifyEnvVars performs a single API call to update/create multiple environment variables.
- * For large batches, it splits them into smaller chunks to avoid rate limiting.
+ * batchUpdateNetlifyEnvVars POSTs createEnvVars payloads. Large batches are chunked.
+ * On 400/403/422 with granular `scopes`, retries once with `scopes` omitted (Free tier "All scopes").
  */
 async function batchUpdateNetlifyEnvironmentVariables(site, netlifyToken, variablesArray) {
-  try {
-    const url = `https://api.netlify.com/api/v1/accounts/${site.account_id}/env`;
+  const url = `https://api.netlify.com/api/v1/accounts/${site.account_id}/env`;
+  const maxBatchSize = 20;
 
-    // Split into smaller batches if the array is large
-    const maxBatchSize = 20; // Maximum number of variables to update in a single API call
-
-    if (variablesArray.length <= maxBatchSize) {
-      // Small enough batch, process normally
+  async function postBatches(payload) {
+    if (payload.length <= maxBatchSize) {
       await withRateLimitRetry(async () => {
-        await axios.post(url, variablesArray, {
+        await axios.post(url, payload, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': netlifyToken
+          },
+          params: { site_id: site.id }
+        });
+      });
+      log('debug', `Batch updated ${payload.length} environment variables.`);
+      return;
+    }
+
+    log(
+      'debug',
+      `Splitting large batch of ${payload.length} variables into smaller chunks of ${maxBatchSize}`
+    );
+
+    for (let i = 0; i < payload.length; i += maxBatchSize) {
+      const chunk = payload.slice(i, i + maxBatchSize);
+      log(
+        'debug',
+        `Processing update chunk ${Math.floor(i / maxBatchSize) + 1}/${Math.ceil(
+          payload.length / maxBatchSize
+        )}`
+      );
+
+      await withRateLimitRetry(async () => {
+        await axios.post(url, chunk, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': netlifyToken
@@ -281,49 +322,39 @@ async function batchUpdateNetlifyEnvironmentVariables(site, netlifyToken, variab
         });
       });
 
-      log('debug', `Batch updated ${variablesArray.length} environment variables.`);
-    } else {
-      // Large batch, split into chunks
-      log(
-        'debug',
-        `Splitting large batch of ${variablesArray.length} variables into smaller chunks of ${maxBatchSize}`
-      );
-
-      for (let i = 0; i < variablesArray.length; i += maxBatchSize) {
-        const chunk = variablesArray.slice(i, i + maxBatchSize);
-        log(
-          'debug',
-          `Processing update chunk ${Math.floor(i / maxBatchSize) + 1}/${Math.ceil(
-            variablesArray.length / maxBatchSize
-          )}`
-        );
-
-        await withRateLimitRetry(async () => {
-          await axios.post(url, chunk, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': netlifyToken
-            },
-            params: { site_id: site.id }
-          });
-        });
-
-        // Add a delay between chunks to avoid rate limiting
-        if (i + maxBatchSize < variablesArray.length) {
-          log('debug', 'Adding delay between update batches to avoid rate limiting');
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+      if (i + maxBatchSize < payload.length) {
+        log('debug', 'Adding delay between update batches to avoid rate limiting');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-
-      log(
-        'debug',
-        `Completed update of all ${variablesArray.length} environment variables in chunks.`
-      );
     }
+
+    log('debug', `Completed update of all ${payload.length} environment variables in chunks.`);
+  }
+
+  const hadGranularScopes = variablesArray.some(
+    (v) => Array.isArray(v.scopes) && v.scopes.length > 0
+  );
+
+  try {
+    await postBatches(variablesArray);
   } catch (error) {
+    if (hadGranularScopes && shouldRetryNetlifyEnvBatchWithoutScopes(error)) {
+      log(
+        'warn',
+        'Netlify rejected granular env `scopes` (often Free tier / plan limits). Retrying without `scopes` (all scopes).'
+      );
+      try {
+        await postBatches(netlifyEnvVarsWithoutScopes(variablesArray));
+        return;
+      } catch (retryError) {
+        log('error', `Batch update failed: ${retryError.message}`);
+        log('error', `Critical Error: Failed to update Netlify environment variables`);
+        process.exit(1);
+      }
+    }
     log('error', `Batch update failed: ${error.message}`);
     log('error', `Critical Error: Failed to update Netlify environment variables`);
-    process.exit(1); // Immediately exit with error code
+    process.exit(1);
   }
 }
 

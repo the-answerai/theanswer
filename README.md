@@ -498,34 +498,43 @@ This project uses [BWS Secure](https://github.com/last-rev-llc/bws-secure) for m
 
 ⚠️ **5.** Never commit this token to version control
 
-### 🎯 Token Usage Options:
+### 🎯 Token and project options
 
-- **BWS_ACCESS_TOKEN**: Loads ALL projects associated with that token (recommended for multi-project setups)
-- **BWS_PROJECT_ID**: Loads only a specific project (use for single-project or testing scenarios)
+- **BWS_ACCESS_TOKEN**: Required to load secrets from Bitwarden (scoped to your machine account).
+- **BWS_PROJECT_ID** (optional): Restrict to one or more BWS **project UUIDs**. Use a **single** UUID, or **comma-separated UUIDs** to merge projects (later IDs win when the same key exists in more than one project). Omit to use `bwsconfig.json` / project selection. Fully backward compatible with single-UUID setups.
 
-**Example for single project:**
+**Single project:**
 ```
 BWS_PROJECT_ID=00000000-0000-0000-0000-000000000001
 ```
 
-The project ID can be found in the Bitwarden Secrets Manager, within the list of projects.
+**Multiple projects (optional):**
+```
+BWS_PROJECT_ID=00000000-0000-0000-0000-000000000001, 11111111-1111-1111-1111-111111111111
+```
 
-### 🔧 Common Issues & Troubleshooting:
+More detail: [Multi-project ID guide](https://github.com/last-rev-llc/bws-secure/blob/main/guides/MULTI_PROJECT_ID_GUIDE.md).
+
+### Transient `.env.secure` files
+
+Encrypted `.env.secure` / `.env.secure.*` files in the repo root are **removed when each run finishes** (after your command runs; secrets are already in the process environment). Set **`BWS_KEEP_SECURE_FILES=true`** only when you need to inspect those files.
+
+### 🔧 Common Issues & Troubleshooting
 
 - **"No projects found"**: Verify your token has project access permissions in Bitwarden
-- **"Access denied"**: Check that the Machine Account has read permissions for the target projects  
+- **"Access denied"**: Check that the Machine Account has read permissions for the target projects
 - **Token not working**: Ensure no extra spaces when copying from Bitwarden
-- **Multiple projects loading**: This is normal with BWS_ACCESS_TOKEN - use BWS_PROJECT_ID for single project
+- **Multiple projects / overlays**: Order matters for duplicate keys—see the multi-project guide above
 
 ### Updating BWS Secure
 
 To update BWS Secure to the latest version, you can use the convenient script that was added to your package.json:
 
 ```bash
-npm run bws-update  # Or use your project's package manager: yarn bws-update, pnpm bws-update
+npm run bws-update  # Or: yarn bws-update, pnpm bws-update
 ```
 
-Alternatively, you can run the following command manually from your project root:
+Alternatively, from your project root:
 
 ```bash
 rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh
