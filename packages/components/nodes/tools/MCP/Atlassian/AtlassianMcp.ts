@@ -9,6 +9,9 @@
  * - Handles token refresh automatically before MCP initialization
  * - Connects to Atlassian's remote MCP server via SSE transport
  * - Supports both JIRA and Confluence through single integration
+ * - Pre-fetches get_accessible_resources at init time and injects cloudId context
+ *   into the description of every tool that requires it, so the LLM never has to
+ *   guess or discover the cloudId with a separate round-trip
  *
  * Required environment variables:
  * - ATLASSIAN_CLIENT_ID
@@ -22,6 +25,13 @@ import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from 
 import { MCPToolkit } from '../core'
 import { getCredentialData } from '../../../../src/utils'
 import { ATLASSIAN_MCP_SERVER_URL } from '../../../../src/constants'
+
+interface AtlassianCloudResource {
+    id: string
+    url: string
+    name: string
+    scopes?: string[]
+}
 
 class Atlassian_MCP implements INode {
     label: string
@@ -41,7 +51,7 @@ class Atlassian_MCP implements INode {
     constructor() {
         this.label = 'Atlassian MCP'
         this.name = 'atlassianMcp'
-        this.version = 1.0
+        this.version = 1.1
         this.type = 'Atlassian MCP Tool'
         this.icon = 'atlassian.svg'
         this.category = 'Tools (MCP)'
@@ -71,7 +81,6 @@ class Atlassian_MCP implements INode {
     loadMethods = {
         listActions: async (nodeData: INodeData, options: ICommonObject): Promise<INodeOptionsValue[]> => {
             try {
-                // Check if credential exists first
                 if (!nodeData.credential) {
                     return [
                         {
@@ -108,7 +117,7 @@ class Atlassian_MCP implements INode {
         const tools = await this.getTools(nodeData, options)
 
         const _mcpActions = nodeData.inputs?.mcpActions
-        let mcpActions = []
+        let mcpActions: string[] = []
         if (_mcpActions) {
             try {
                 mcpActions = typeof _mcpActions === 'string' ? JSON.parse(_mcpActions) : _mcpActions
@@ -121,8 +130,6 @@ class Atlassian_MCP implements INode {
     }
 
     async getTools(nodeData: INodeData, options: ICommonObject): Promise<Tool[]> {
-        // Token refresh is handled automatically by server before node initialization
-        // So we can directly use the access token from credential data
         const credentialData = await getCredentialData(nodeData.credential || '', options)
 
         if (!credentialData.access_token) {
@@ -139,7 +146,61 @@ class Atlassian_MCP implements INode {
 
         const tools = toolkit.tools ?? []
 
+        // Pre-fetch accessible cloud resources and inject cloudId context into
+        // the description of every tool that declares a cloudId parameter.
+        // This prevents the LLM from passing null/undefined and eliminates the
+        // need for a discovery round-trip during the actual conversation.
+        const getResourcesTool = tools.find((t) => t.name === 'get_accessible_resources')
+        if (getResourcesTool) {
+            const cloudResources = await this.fetchCloudResources(getResourcesTool)
+            if (cloudResources.length > 0) {
+                this.enrichToolsWithCloudContext(tools, cloudResources)
+            }
+        }
+
         return tools
+    }
+
+    /**
+     * Calls get_accessible_resources via its existing MCP tool and returns the
+     * parsed list of Atlassian cloud sites available to the authenticated user.
+     * Returns an empty array on any error so the caller degrades gracefully.
+     */
+    private async fetchCloudResources(getResourcesTool: Tool): Promise<AtlassianCloudResource[]> {
+        try {
+            // tool.invoke({}) returns JSON.stringify(res.content) from the MCP server,
+            // which is an array of content blocks, e.g.:
+            // [{"type":"text","text":"[{\"id\":\"...\",\"url\":\"...\",\"name\":\"...\"}]"}]
+            const rawResult = await getResourcesTool.invoke({})
+            const contentBlocks = JSON.parse(rawResult)
+            const textBlock = Array.isArray(contentBlocks) ? contentBlocks.find((c: any) => c.type === 'text') : null
+            if (!textBlock?.text) return []
+
+            const resources = JSON.parse(textBlock.text)
+            return Array.isArray(resources) ? resources.filter((r: any) => r.id && r.url) : []
+        } catch (err) {
+            console.warn('[Atlassian MCP] Could not pre-fetch cloud resources — cloudId context will not be injected:', err)
+            return []
+        }
+    }
+
+    /**
+     * Appends a human-readable cloudId hint to the description of every tool
+     * that declares a `cloudId` parameter in its zod schema. Mutates in-place.
+     * The LLM sees this hint in the tool description before choosing arguments.
+     */
+    private enrichToolsWithCloudContext(tools: Tool[], resources: AtlassianCloudResource[]): void {
+        const cloudNote =
+            resources.length === 1
+                ? ` [cloudId for this Atlassian site: "${resources[0].id}" (${resources[0].name} — ${resources[0].url})]`
+                : ` [Available Atlassian cloudIds: ${resources.map((r) => `"${r.id}" → ${r.name} (${r.url})`).join(', ')}]`
+
+        for (const t of tools) {
+            const shape = (t as any).schema?.shape
+            if (shape && 'cloudId' in shape) {
+                t.description = `${t.description}${cloudNote}`
+            }
+        }
     }
 }
 
