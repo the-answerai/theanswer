@@ -34,7 +34,7 @@ const getAdminChatflows = (filter, type = 'CHATFLOW') => {
 
 const getDefaultChatflowTemplate = () => client.get('/admin/chatflows/default-template')
 
-const bulkUpdateChatflows = (chatflowIds) => client.put('/admin/chatflows/bulk-update', { chatflowIds })
+const bulkUpdateChatflows = (chatflowIds, options) => client.put('/admin/chatflows/bulk-update', { chatflowIds, options })
 
 // Versioning API methods
 const getChatflowVersions = (id) => client.get(`/admin/chatflows/${id}/versions`)
