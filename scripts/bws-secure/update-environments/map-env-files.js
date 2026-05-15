@@ -23,6 +23,7 @@ import { hideBin } from 'yargs/helpers';
 import dotenv from 'dotenv';
 import crypto from 'node:crypto';
 import { log } from './utils.js';
+import { parseProjectIds } from '../bws-env-utils.js';
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -107,18 +108,22 @@ async function mapEnvironmentFiles() {
     const currentProject = config.projects.find((p) => p.projectName === process.env.BWS_PROJECT);
     if (!currentProject) {
       // Handle direct BWS_PROJECT_ID usage for debug display only
-      if (
-        process.env.BWS_PROJECT_ID &&
-        process.env.BWS_PROJECT_ID.match(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-        ) &&
-        process.env.DEBUG === 'true' &&
-        process.env.SHOW_DECRYPTED === 'true' &&
-        process.env.BWS_EPHEMERAL_KEY
-      ) {
-        const sourceFile = `.env.secure.${process.env.BWS_PROJECT_ID}`;
-        if (fs.existsSync(sourceFile)) {
-          displayDecryptedContent(sourceFile, process.env.BWS_EPHEMERAL_KEY);
+      if (process.env.BWS_PROJECT_ID) {
+        const projectIds = parseProjectIds(process.env.BWS_PROJECT_ID);
+
+        if (
+          projectIds.length > 0 &&
+          process.env.DEBUG === 'true' &&
+          process.env.SHOW_DECRYPTED === 'true' &&
+          process.env.BWS_EPHEMERAL_KEY
+        ) {
+          // For multi-project IDs, display each project's secrets
+          for (const projectId of projectIds) {
+            const sourceFile = `.env.secure.${projectId}`;
+            if (fs.existsSync(sourceFile)) {
+              displayDecryptedContent(sourceFile, process.env.BWS_EPHEMERAL_KEY);
+            }
+          }
         }
       }
       log('warn', `Project ${process.env.BWS_PROJECT} not found in config`);
@@ -126,9 +131,30 @@ async function mapEnvironmentFiles() {
     }
 
     const env = process.env.BWS_ENV || 'local';
-    const projectId = currentProject.bwsProjectIds[env];
-    const sourceFile = `.env.secure.${projectId}`;
+    const projectIdString = currentProject.bwsProjectIds[env];
+    const projectIds = parseProjectIds(projectIdString);
+
+    // Determine source file based on single vs multi-project setup
+    let sourceFile;
     const target = `.env.secure.${currentProject.projectName}.${env}`;
+
+    // For multi-project IDs, use the merged environment file created by secureRun.js
+    // For single project ID, use the direct project file
+    if (projectIds.length > 1) {
+      // Multi-project: Use merged environment file
+      sourceFile = `.env.secure.${env}`;
+      log(
+        'debug',
+        `Using merged environment file for ${projectIds.length} projects: ${sourceFile}`
+      );
+    } else if (projectIds.length === 1) {
+      // Single project: Use direct project file (backward compatible)
+      sourceFile = `.env.secure.${projectIds[0]}`;
+      log('debug', `Using single project file: ${sourceFile}`);
+    } else {
+      log('warn', `No valid project IDs found for environment ${env}`);
+      return;
+    }
 
     // Create symlink for current environment
     if (fs.existsSync(sourceFile)) {
@@ -142,12 +168,21 @@ async function mapEnvironmentFiles() {
 
     // Create symlinks for other environments (needed for platform deployments)
     if (currentProject) {
-      Object.entries(currentProject.bwsProjectIds).forEach(([envName, id]) => {
+      Object.entries(currentProject.bwsProjectIds).forEach(([envName, projectIdString]) => {
         const env = process.env.BWS_ENV || 'local';
         if (envName !== env) {
-          const otherSource = `.env.secure.${id}`;
+          const envProjectIds = parseProjectIds(projectIdString);
+          let otherSource;
+
+          // Use merged file for multi-project, direct file for single project
+          if (envProjectIds.length > 1) {
+            otherSource = `.env.secure.${envName}`;
+          } else if (envProjectIds.length === 1) {
+            otherSource = `.env.secure.${envProjectIds[0]}`;
+          }
+
           const otherTarget = `.env.secure.${currentProject.projectName}.${envName}`;
-          if (fs.existsSync(otherSource)) {
+          if (otherSource && fs.existsSync(otherSource)) {
             createSymlink(otherSource, otherTarget);
           }
         }

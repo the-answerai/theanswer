@@ -1,8 +1,44 @@
 # BWS Secure Tests
 
-This directory contains various test scripts for the BWS Secure environment management system.
+This directory contains test scripts for the BWS Secure environment management system.
 
-## Available Tests
+## Automated tests (node --test)
+
+Run from the repo root:
+
+```bash
+npm run test:bws-env    # unit tests for parsing / serialization
+npm run test:e2e        # full end-to-end runs of secureRun.js
+npm test                # both suites (14 tests)
+```
+
+### `bws-env-utils.test.mjs` (unit)
+
+Covers `parseProjectIds`, UUID validation / dedupe / invalid segments, and the multiline-safe
+`serializeEnvRecordToPlaintext` <-> `parseEnvironmentOutput` round-trip used by the encrypted
+`.env.secure.*` files.
+
+### `e2e/secureRun.e2e.test.mjs` (end-to-end, Unix-only)
+
+Spawns the real `secureRun.js` against a fake `bws` CLI in a simulated consumer repo
+(`<tmp>/scripts/bws-secure/` + `<tmp>/node_modules/.bin/bws` shim + `<tmp>/.env`).
+Scenarios covered:
+
+- single UUID direct `BWS_PROJECT_ID` bypass (backward compat)
+- multi-UUID direct bypass with overlay order (later wins) and `BWS_PROJECT_IDS` exposed
+- invalid UUID segments skipped, valid UUIDs still load
+- duplicate UUIDs deduped (case-insensitive)
+- cleanup: `.env.secure*` files removed after a successful run
+- `BWS_KEEP_SECURE_FILES=true` preserves `.env.secure*`
+- `BWS_MULTI_PROJECT_FAIL_FAST=true` exits non-zero on partial failure
+- multiline secret (private-key style) round-trips through the merge unchanged
+
+Cross-platform: on Unix the fake `bws` is a `#!/usr/bin/env node` shebang script; on Windows
+a `bws.cmd` wrapper is generated alongside a placeholder `bws` file (so
+`ensureBwsInstalled()`'s existence check passes and `cmd.exe` resolves the explicit path via
+`PATHEXT`). Set `E2E_DISABLE_WINDOWS=1` to skip the suite on Windows if a host misbehaves.
+
+## Available Tests (manual integration)
 
 ### Vercel API Test
 

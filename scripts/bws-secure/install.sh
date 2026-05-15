@@ -105,7 +105,7 @@ if [ "$NODE_VERSION" -lt "20" ]; then
           packageJson.dependencies.yargs = '^18.0.0';
         }
         if (packageJson.dependencies && packageJson.dependencies.glob) {
-          packageJson.dependencies.glob = '^11.1.0';
+          packageJson.dependencies.glob = '^13.0.6';
         }
       } else {
         // For Node.js < 20, use compatible versions
@@ -359,7 +359,7 @@ try {
 
   // Add dependencies if they don't exist
   packageJson.devDependencies = packageJson.devDependencies || {};
-  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.2.4';
+  packageJson.devDependencies['dotenv'] = packageJson.devDependencies['dotenv'] || '^17.4.2';
   packageJson.devDependencies['dotenv-cli'] = packageJson.devDependencies['dotenv-cli'] || '^11.0.0';
   
   // Check Node.js version and apply appropriate versions
@@ -368,14 +368,14 @@ try {
   if (nodeVersionNum >= 20) {
     // For Node.js 20+, use newer versions
     packageJson.devDependencies['yargs'] = packageJson.devDependencies['yargs'] || '^18.0.0';
-    packageJson.devDependencies['glob'] = '^11.1.0';
+    packageJson.devDependencies['glob'] = '^13.0.6';
   } else {
     // For Node.js < 20, use compatible versions
     packageJson.devDependencies['yargs'] = packageJson.devDependencies['yargs'] || '^17.7.2';
     packageJson.devDependencies['glob'] = '^10.3.10';
   }
   
-  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.13.5';
+  packageJson.devDependencies['axios'] = packageJson.devDependencies['axios'] || '^1.15.1';
 
   // Detect existing indentation or use prettier config
   const originalContent = fs.readFileSync(packageJsonPath, 'utf8');
@@ -575,8 +575,9 @@ README_FILES=("README.md" "Readme.md" "readme.md")
 README_FOUND=false
 echo "Looking for README files in: $(pwd)"
 
-# Define the BWS Secure documentation content
-BWS_DOC_CONTENT="<!-- BWS-SECURE-DOCS-START -->
+# Define the BWS Secure documentation content (injected into the monorepo README on install/update)
+read -r -d '' BWS_DOC_CONTENT << 'BWS_DOC_EOF' || true
+<!-- BWS-SECURE-DOCS-START -->
 ## 🔒 BWS Secure Environmental Variable Integration
 
 This project uses [BWS Secure](https://github.com/last-rev-llc/bws-secure) for managing environment variables across different environments.
@@ -589,53 +590,63 @@ This project uses [BWS Secure](https://github.com/last-rev-llc/bws-secure) for m
 
 🖱️ **2.** Navigate to the Machine Accounts section, and follow these steps:
    - Select the appropriate Client/Set of Machine Accounts from the list
-   - Click on the \"Access Tokens\" tab
-   - Click \"+ New Access Token\" button
-   - Give the token a meaningful name (e.g., \"Your Name - Local Development\")
-   - Click \"Save\" to generate the token
+   - Click on the "Access Tokens" tab
+   - Click "+ New Access Token" button
+   - Give the token a meaningful name (e.g., "Your Name - Local Development")
+   - Click "Save" to generate the token
 
 📋 **3.** Copy the displayed token (you won't be able to see it again after closing)
 
 💾 **4.** Add it to your .env file in your project root:
-   \`\`\`
+   ```
    BWS_ACCESS_TOKEN=your_token_here
-   \`\`\`
+   ```
 
 ⚠️ **5.** Never commit this token to version control
 
-### 🎯 Token Usage Options:
+### 🎯 Token and project options
 
-- **BWS_ACCESS_TOKEN**: Loads ALL projects associated with that token (recommended for multi-project setups)
-- **BWS_PROJECT_ID**: Loads only a specific project (use for single-project or testing scenarios)
+- **BWS_ACCESS_TOKEN**: Required to load secrets from Bitwarden (scoped to your machine account).
+- **BWS_PROJECT_ID** (optional): Restrict to one or more BWS **project UUIDs**. Use a **single** UUID, or **comma-separated UUIDs** to merge projects (later IDs win when the same key exists in more than one project). Omit to use `bwsconfig.json` / project selection. Fully backward compatible with single-UUID setups.
 
-**Example for single project:**
-\`\`\`
+**Single project:**
+```
 BWS_PROJECT_ID=00000000-0000-0000-0000-000000000001
-\`\`\`
+```
 
-The project ID can be found in the Bitwarden Secrets Manager, within the list of projects.
+**Multiple projects (optional):**
+```
+BWS_PROJECT_ID=00000000-0000-0000-0000-000000000001, 11111111-1111-1111-1111-111111111111
+```
 
-### 🔧 Common Issues & Troubleshooting:
+More detail: [Multi-project ID guide](https://github.com/last-rev-llc/bws-secure/blob/main/guides/MULTI_PROJECT_ID_GUIDE.md).
 
-- **\"No projects found\"**: Verify your token has project access permissions in Bitwarden
-- **\"Access denied\"**: Check that the Machine Account has read permissions for the target projects  
+### Transient `.env.secure` files
+
+Encrypted `.env.secure` / `.env.secure.*` files in the repo root are **removed when each run finishes** (after your command runs; secrets are already in the process environment). Set **`BWS_KEEP_SECURE_FILES=true`** only when you need to inspect those files.
+
+### 🔧 Common Issues & Troubleshooting
+
+- **"No projects found"**: Verify your token has project access permissions in Bitwarden
+- **"Access denied"**: Check that the Machine Account has read permissions for the target projects
 - **Token not working**: Ensure no extra spaces when copying from Bitwarden
-- **Multiple projects loading**: This is normal with BWS_ACCESS_TOKEN - use BWS_PROJECT_ID for single project
+- **Multiple projects / overlays**: Order matters for duplicate keys—see the multi-project guide above
 
 ### Updating BWS Secure
 
 To update BWS Secure to the latest version, you can use the convenient script that was added to your package.json:
 
-\`\`\`bash
-npm run bws-update  # Or use your project's package manager: yarn bws-update, pnpm bws-update
-\`\`\`
+```bash
+npm run bws-update  # Or: yarn bws-update, pnpm bws-update
+```
 
-Alternatively, you can run the following command manually from your project root:
+Alternatively, from your project root:
 
-\`\`\`bash
+```bash
 rm -rf scripts/bws-secure && git clone git@github.com:last-rev-llc/bws-secure.git scripts/bws-secure && rm -rf scripts/bws-secure/.git && bash scripts/bws-secure/install.sh
-\`\`\`
-<!-- BWS-SECURE-DOCS-END -->"
+```
+<!-- BWS-SECURE-DOCS-END -->
+BWS_DOC_EOF
 
 for README_FILE in "${README_FILES[@]}"; do
   echo "Checking for $README_FILE..."

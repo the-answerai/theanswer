@@ -68,7 +68,10 @@ const defaultDirs = [
   'api',
   'apps/web/src',
   'packages',
-  'src'
+  'src',
+  'sanity',
+  'studio',
+  'app'
 ];
 
 /**

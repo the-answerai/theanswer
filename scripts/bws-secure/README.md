@@ -171,7 +171,10 @@ Optional variables:
 - `DEBUG=true`: Enable detailed logging
 - `VERBOSE=true`: Show additional debug information
 - `BWS_ENV`: Force specific environment (prod/dev/local)
-- `BWS_PROJECT_ID`: Directly specify a BWS project UUID to bypass project configuration (e.g., `4ba4dc04-091f-4bf9-ba82-b2f900ee7d2a`)
+- `BWS_PROJECT_ID`: One BWS project UUID, or **comma-separated UUIDs** to merge multiple projects (later IDs override earlier for duplicate keys). Bypasses `bwsconfig.json` when set. See [guides/MULTI_PROJECT_ID_GUIDE.md](guides/MULTI_PROJECT_ID_GUIDE.md).
+- `BWS_PROJECT_IDS`: When multiple projects are loaded, the full ordered list may be exposed for tooling; the **first** UUID is always in `BWS_PROJECT_ID` for child processes.
+- `BWS_KEEP_SECURE_FILES=true`: Keep encrypted `.env.secure*` files after a run (default: they are deleted when the run finishes).
+- `BWS_MULTI_PROJECT_FAIL_FAST=true`: Exit on the first failed project load when multiple `BWS_PROJECT_ID` values are configured (default: continue with warnings).
 - `BWS_NO_OVERRIDE=true`: Prevent automatic updates to local `bwsconfig.json` from BWS secrets (useful in CI/CD or when you want to preserve local configuration)
 - `BWS_SUPPRESS_ALL=true`: Suppress all secure-run output while preserving wrapped command output (errors remain visible)
 - `BWS_SUPPRESS_MISSING=true`: Suppress missing environment variable warnings during validation
@@ -672,6 +675,8 @@ The system creates several types of environment files:
    - Global platform tokens
    - Shared across projects
    - Platform-specific settings
+
+Transient `.env.secure` and `.env.secure.*` files are removed when `secureRun` finishes (after your wrapped command exits), so the host repo root does not accumulate encrypted artifacts. To keep them for debugging, set **`BWS_KEEP_SECURE_FILES=true`**.
 
 ## Secret Management
 

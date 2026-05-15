@@ -7,38 +7,18 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import logger from './logger.js';
 import { execBwsCommandWithRetrySync } from './bws-retry-utils.js';
+import {
+  parseProjectIdsDetailed,
+  parseEnvironmentOutput,
+  serializeEnvRecordToPlaintext
+} from './bws-env-utils.js';
 
-// Helper function to properly parse multiline environment variables from BWS output
-function parseEnvironmentOutput(output) {
-  const result = {};
-  const lines = output.split('\n');
-  let currentKey = null;
-  let currentValue = '';
+const debugMode = () => process.env.DEBUG === 'true';
 
-  for (const line of lines) {
-    // Check if this line starts a new variable (has = and doesn't start with whitespace)
-    if (line.includes('=') && !line.startsWith(' ') && !line.startsWith('\t')) {
-      // Save previous variable if exists
-      if (currentKey !== null) {
-        result[currentKey] = currentValue;
-      }
-
-      // Start new variable
-      const equalIndex = line.indexOf('=');
-      currentKey = line.substring(0, equalIndex).trim();
-      currentValue = line.substring(equalIndex + 1);
-    } else if (currentKey !== null) {
-      // This is a continuation line for the current variable (preserve empty lines too)
-      currentValue += '\n' + line;
-    }
+function logDebug(...args) {
+  if (debugMode()) {
+    console.log(...args);
   }
-
-  // Don't forget the last variable
-  if (currentKey !== null) {
-    result[currentKey] = currentValue;
-  }
-
-  return result;
 }
 
 // Helper function to get BWS organization ID with fallback
@@ -144,7 +124,7 @@ function loadBwsSecrets(encryptionKey) {
 
     // First, try to load global secrets (auth tokens)
     try {
-      console.log('Debug: Loading global secrets...');
+      logDebug('Debug: Loading global secrets...');
 
       const output = execBwsCommandWithRetrySync(
         `./node_modules/.bin/bws secret list -t ${process.env.BWS_ACCESS_TOKEN} -o env`,
@@ -160,7 +140,7 @@ function loadBwsSecrets(encryptionKey) {
       for (const [key, value] of Object.entries(globalSecrets)) {
         if (key === 'NETLIFY_AUTH_TOKEN' || key === 'VERCEL_AUTH_TOKEN') {
           mergedVariables[key] = value;
-          console.log('Debug: Found auth token:', key);
+          logDebug('Debug: Found auth token:', key);
         }
       }
     } catch (globalError) {
@@ -168,41 +148,76 @@ function loadBwsSecrets(encryptionKey) {
     }
 
     // Then, if we have a project ID, load project-specific secrets
+    // Support both single and comma-separated multiple project IDs
     if (process.env.BWS_PROJECT_ID) {
-      try {
-        console.log('Debug: Loading project secrets for:', process.env.BWS_PROJECT_ID);
-        // NOSONAR: BWS CLI execution with system-controlled variables - no user input
-        /* sonar-disable-next-line sonar:S4721 */
-        const projectOutput = execBwsCommandWithRetrySync(
-          `./node_modules/.bin/bws secret list ${process.env.BWS_PROJECT_ID} -t ${process.env.BWS_ACCESS_TOKEN} -o env`,
-          { encoding: 'utf-8' },
-          `Loading project secrets for ${process.env.BWS_PROJECT_ID}`
+      const parsed = parseProjectIdsDetailed(process.env.BWS_PROJECT_ID);
+      const projectIds = parsed.ids;
+
+      if (parsed.skippedInvalid.length > 0) {
+        console.warn(
+          'Warning: BWS_PROJECT_ID contained non-UUID segments (skipped):',
+          parsed.skippedInvalid.join(', ')
         );
+      }
+      if (parsed.skippedDuplicates.length > 0) {
+        console.warn(
+          'Warning: BWS_PROJECT_ID contained duplicate UUIDs (skipped):',
+          parsed.skippedDuplicates.join(', ')
+        );
+      }
 
-        const projectSecrets = parseEnvironmentOutput(projectOutput);
+      if (projectIds.length === 0) {
+        console.warn('Warning: BWS_PROJECT_ID is set but no valid UUIDs found');
+      }
 
-        // More data processing
-        for (const [key, value] of Object.entries(projectSecrets)) {
-          if (key && value) {
-            mergedVariables[key] = value;
+      for (const [index, projectId] of projectIds.entries()) {
+        try {
+          const isMultiple = projectIds.length > 1;
+          const logPrefix = isMultiple ? `[${index + 1}/${projectIds.length}]` : '';
+          logDebug(`Debug: ${logPrefix} Loading project secrets for:`, projectId);
+
+          // NOSONAR: BWS CLI execution with system-controlled variables - no user input
+          /* sonar-disable-next-line sonar:S4721 */
+          const projectOutput = execBwsCommandWithRetrySync(
+            `./node_modules/.bin/bws secret list ${projectId} -t ${process.env.BWS_ACCESS_TOKEN} -o env`,
+            { encoding: 'utf-8' },
+            `Loading project secrets for ${projectId}`
+          );
+
+          const projectSecrets = parseEnvironmentOutput(projectOutput);
+
+          // Merge with overlay strategy - later project IDs override earlier ones
+          for (const [key, value] of Object.entries(projectSecrets)) {
+            if (key) {
+              mergedVariables[key] = value === undefined || value === null ? '' : value;
+            }
           }
+          logDebug(
+            `Debug: ${logPrefix} Loaded ${
+              Object.keys(projectSecrets).length
+            } keys from project ${projectId}`
+          );
+        } catch (projectError) {
+          console.warn(
+            `Warning: Failed to load project secrets for ${projectId}:`,
+            projectError.message
+          );
         }
-        console.log('Debug: Loaded project secrets:', Object.keys(mergedVariables).length);
-      } catch (projectError) {
-        console.warn('Warning: Failed to load project secrets:', projectError.message);
+      }
+
+      if (projectIds.length > 0) {
+        logDebug('Debug: Total merged keys:', Object.keys(mergedVariables).length);
       }
     }
 
-    const environmentContent = Object.entries(mergedVariables)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
+    const environmentContent = serializeEnvRecordToPlaintext(mergedVariables);
 
     // Only create .env.secure if we have content
     if (encryptionKey && environmentContent) {
       try {
         const cipherText = encryptContent(environmentContent, encryptionKey);
         fs.writeFileSync('.env.secure', cipherText, { encoding: 'utf-8' });
-        console.log('Debug: Created .env.secure file');
+        logDebug('Debug: Created .env.secure file');
 
         // Add decryption output if debug and show_decrypted are enabled
         if (process.env.DEBUG === 'true' && process.env.SHOW_DECRYPTED === 'true') {
