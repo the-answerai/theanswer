@@ -98,6 +98,7 @@ import { UpdateFiddlerCredentialsVisibility1768413137117 } from './aai/176841313
 import { MoveDefaultChatflowsToPersonalWorkspace1770000000000 } from './aai/1770000000000-MoveDefaultChatflowsToPersonalWorkspace'
 import { NormalizeLegacyCredentialNames1770000000001 } from './aai/1770000000001-NormalizeLegacyCredentialNames'
 import { FixBulkUpdateChatflowWorkspace1770000000002 } from './aai/1770000000002-FixBulkUpdateChatflowWorkspace'
+import { FixTemplateSourceChatflowWorkspace1770000000003 } from './aai/1770000000003-FixTemplateSourceChatflowWorkspace'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -199,5 +200,7 @@ export const postgresMigrations = [
     // AAI: Normalize legacy credential names in chat_flow.flowData and credential rows (e.g. JiraApi -> jiraApi)
     NormalizeLegacyCredentialNames1770000000001,
     // AAI: Fix chatflows re-assigned to Default Workspace by bulkUpdateChatflows workspace leak
-    FixBulkUpdateChatflowWorkspace1770000000002
+    FixBulkUpdateChatflowWorkspace1770000000002,
+    // AAI: Move INITIAL_CHATFLOW_IDS source templates to Default Workspace for consistent admin access
+    FixTemplateSourceChatflowWorkspace1770000000003
 ]
