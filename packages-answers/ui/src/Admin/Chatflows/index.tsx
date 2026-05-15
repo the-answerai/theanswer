@@ -463,26 +463,58 @@ const AdminChatflows = () => {
                     const fullDefaultTemplate = chatflowsData.find((chatflow: any) => chatflow.id === defaultTemplateData.id)
                     if (!fullDefaultTemplate) return false
 
+                    const hasOutdated = chatflowsData.some((cf: any) => cf.templateStatus === 'outdated')
+                    const bc = hasOutdated
+                        ? {
+                              bg: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.08)',
+                              border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                              text: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
+                              textMuted: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                              iconMain: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b',
+                              iconColor: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
+                              iconBg: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
+                              iconHoverColor: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
+                              iconHoverBg: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
+                              iconHoverBorder: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914',
+                              badgeBg: isDarkMode ? 'rgba(255, 193, 7, 0.3)' : 'rgba(184, 134, 11, 0.15)',
+                              badgeBorder: isDarkMode ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid #b8860b',
+                              chipBg: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
+                              chipBorder: isDarkMode ? '1px solid rgba(255, 193, 7, 0.4)' : '1px solid #b8860b'
+                          }
+                        : {
+                              bg: isDarkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)',
+                              border: isDarkMode ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid #388e3c',
+                              text: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
+                              textMuted: isDarkMode ? 'rgba(76, 175, 80, 0.7)' : '#2e7d32',
+                              iconMain: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#388e3c',
+                              iconColor: isDarkMode ? 'rgba(76, 175, 80, 0.8)' : '#2e7d32',
+                              iconBg: isDarkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(56, 142, 60, 0.1)',
+                              iconHoverColor: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#1b5e20',
+                              iconHoverBg: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(56, 142, 60, 0.2)',
+                              iconHoverBorder: isDarkMode ? 'rgba(76, 175, 80, 0.5)' : '#388e3c',
+                              badgeBg: isDarkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(56, 142, 60, 0.15)',
+                              badgeBorder: isDarkMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid #388e3c',
+                              chipBg: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(56, 142, 60, 0.15)',
+                              chipBorder: isDarkMode ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid #388e3c'
+                          }
+
                     return (
                         <Box sx={{ mb: 3 }}>
                             <Box
                                 sx={{
                                     p: 3,
-                                    border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                                    border: bc.border,
                                     borderRadius: '12px',
-                                    bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.08)',
+                                    bgcolor: bc.bg,
                                     backdropFilter: 'blur(20px)'
                                 }}
                             >
                                 {/* Header Section */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <TemplateIcon sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b', fontSize: '2rem' }} />
+                                        <TemplateIcon sx={{ color: bc.iconMain, fontSize: '2rem' }} />
                                         <Box>
-                                            <Typography
-                                                variant='h6'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914', fontWeight: 600, mb: 0.5 }}
-                                            >
+                                            <Typography variant='h6' sx={{ color: bc.text, fontWeight: 600, mb: 0.5 }}>
                                                 Organization Default Template
                                             </Typography>
                                             <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
@@ -493,9 +525,9 @@ const AdminChatflows = () => {
                                     <Chip
                                         label='DEFAULT TEMPLATE'
                                         sx={{
-                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.3)' : 'rgba(184, 134, 11, 0.15)',
-                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
-                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid #b8860b',
+                                            bgcolor: bc.badgeBg,
+                                            color: bc.text,
+                                            border: bc.badgeBorder,
                                             fontSize: '0.75rem',
                                             fontWeight: 600
                                         }}
@@ -511,7 +543,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -529,7 +561,7 @@ const AdminChatflows = () => {
                                                 <Typography
                                                     variant='body2'
                                                     sx={{
-                                                        color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                        color: bc.textMuted,
                                                         fontSize: '0.75rem',
                                                         mb: 0.5
                                                     }}
@@ -547,7 +579,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -565,11 +597,9 @@ const AdminChatflows = () => {
                                                             sx={{
                                                                 height: 20,
                                                                 fontSize: '0.65rem',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
-                                                                border: isDarkMode
-                                                                    ? '1px solid rgba(255, 193, 7, 0.4)'
-                                                                    : '1px solid #b8860b',
+                                                                bgcolor: bc.chipBg,
+                                                                color: bc.text,
+                                                                border: bc.chipBorder,
                                                                 '& .MuiChip-label': {
                                                                     px: 0.75,
                                                                     py: 0.25
@@ -585,7 +615,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -609,7 +639,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -628,7 +658,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -647,7 +677,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 0.5
                                                 }}
@@ -664,7 +694,7 @@ const AdminChatflows = () => {
                                             <Typography
                                                 variant='body2'
                                                 sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                    color: bc.textMuted,
                                                     fontSize: '0.75rem',
                                                     mb: 1
                                                 }}
@@ -677,13 +707,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => window.open(getCanvasFullUrl(fullDefaultTemplate), '_blank')}
                                                         sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                                                            color: bc.iconColor,
+                                                            bgcolor: bc.iconBg,
+                                                            border: bc.border,
                                                             '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
+                                                                color: bc.iconHoverColor,
+                                                                bgcolor: bc.iconHoverBg,
+                                                                borderColor: bc.iconHoverBorder
                                                             }
                                                         }}
                                                     >
@@ -695,13 +725,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => handleOpenMetrics(fullDefaultTemplate.id)}
                                                         sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                                                            color: bc.iconColor,
+                                                            bgcolor: bc.iconBg,
+                                                            border: bc.border,
                                                             '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
+                                                                color: bc.iconHoverColor,
+                                                                bgcolor: bc.iconHoverBg,
+                                                                borderColor: bc.iconHoverBorder
                                                             }
                                                         }}
                                                     >
@@ -713,13 +743,13 @@ const AdminChatflows = () => {
                                                         size='small'
                                                         onClick={() => handleOpenVersions(fullDefaultTemplate.id)}
                                                         sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                                                            color: bc.iconColor,
+                                                            bgcolor: bc.iconBg,
+                                                            border: bc.border,
                                                             '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
+                                                                color: bc.iconHoverColor,
+                                                                bgcolor: bc.iconHoverBg,
+                                                                borderColor: bc.iconHoverBorder
                                                             }
                                                         }}
                                                     >
