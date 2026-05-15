@@ -129,10 +129,17 @@ const getChatflowById = async (req: Request, res: Response, next: NextFunction) 
             throw new InternalFlowiseError(StatusCodes.PRECONDITION_FAILED, `Error: chatflowsController.getChatflowById - id not provided!`)
         }
         const apiResponse = await chatflowsService.getChatflowById(req.params.id)
+        const isAdmin = req.user?.roles?.includes('Admin') || req.user?.permissions?.includes('org:manage')
         const assignedWorkspaces = (req.user as { assignedWorkspaces?: Array<{ id: string }> } | undefined)?.assignedWorkspaces || []
-        const hasWorkspaceAccess = apiResponse.workspaceId
+
+        // Admins can access any chatflow within their organization regardless of workspace membership.
+        // Non-admins must have explicit workspace_user membership for the chatflow's workspace.
+        const hasWorkspaceAccess = isAdmin
+            ? apiResponse.organizationId === req.user?.activeOrganizationId
+            : apiResponse.workspaceId
             ? assignedWorkspaces.some((ws: { id: string }) => ws.id === apiResponse.workspaceId)
             : false
+
         if (!hasWorkspaceAccess) {
             throw new InternalFlowiseError(
                 StatusCodes.NOT_FOUND,
