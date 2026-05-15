@@ -1,54 +1,18 @@
 import { Request, Response, NextFunction } from 'express'
 import { InternalFlowiseError } from '../../errors/internalFlowiseError'
 import { StatusCodes } from 'http-status-codes'
-import passport from 'passport'
-import { registerOAuthClient } from '../../utils'
+import { registerOAuthClient, exchangeCodeForTokens, createCompleteCredentialData, clearPendingRegistration } from '../../utils'
 
-// MCP OAuth controller - uses centralized OAuth utilities
-
-const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        passport.authenticate('atlassian-dynamic')(req, res, next)
-    } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log('Error: Atlassian MCP authController.authenticate', error)
-        next(error)
-    }
-}
-
-const atlassianAuthCallback = async (req: Request, res: Response) => {
-    try {
-        if (!req.user) {
-            throw new InternalFlowiseError(StatusCodes.UNAUTHORIZED, 'Error: Atlassian authController.callback - Authentication failed')
-        }
-
+const atlassianAuthCallback = async (req: Request, res: Response, next: NextFunction) => {
+    const sendPopupMessage = (payload: object) => {
+        const json = JSON.stringify(payload)
         res.setHeader('Content-Type', 'text/html')
         res.send(`
             <html>
               <body>
                 <script>
                   if (window.opener) {
-                    window.opener.postMessage({ 
-                      type: 'AUTH_SUCCESS',
-                      user: ${JSON.stringify(req.user)}
-                    }, '*');
-                    window.close();
-                  }
-                </script>
-              </body>
-            </html>
-        `)
-    } catch (error) {
-        console.error('Atlassian auth callback error:', error)
-        res.send(`
-            <html>
-              <body>
-                <script>
-                  if (window.opener) {
-                    window.opener.postMessage({
-                      type: 'AUTH_ERROR',
-                      error: ${JSON.stringify(error)}
-                    }, '*');
+                    window.opener.postMessage(${json}, '*');
                     window.close();
                   }
                 </script>
@@ -56,9 +20,37 @@ const atlassianAuthCallback = async (req: Request, res: Response) => {
             </html>
         `)
     }
+
+    try {
+        const code = req.query?.code as string
+        const state = req.query?.state as string
+        const error = req.query?.error as string
+
+        if (error) {
+            return sendPopupMessage({ type: 'AUTH_ERROR', error: `OAuth error: ${error}` })
+        }
+
+        if (!code) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: atlassianAuthController.callback - authorization code missing')
+        }
+
+        if (!state) {
+            throw new InternalFlowiseError(StatusCodes.BAD_REQUEST, 'Error: atlassianAuthController.callback - state parameter missing')
+        }
+
+        const redirectUri = `${process.env.API_HOST}/api/v1/atlassian-auth/callback`
+        const tokens = await exchangeCodeForTokens(state, code, redirectUri)
+        const credential = createCompleteCredentialData(state, tokens, {})
+        clearPendingRegistration(state)
+
+        return sendPopupMessage({ type: 'AUTH_SUCCESS', user: credential })
+    } catch (error) {
+        console.error('Atlassian auth callback error:', error)
+        next(error)
+    }
 }
 
-const mcpInitialize = async (req: Request, res: Response) => {
+const mcpInitialize = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const redirectUri = `${process.env.API_HOST}/api/v1/atlassian-auth/callback`
 
@@ -82,7 +74,6 @@ const mcpInitialize = async (req: Request, res: Response) => {
 }
 
 export default {
-    authenticate,
     atlassianAuthCallback,
     mcpInitialize
 }

@@ -33,6 +33,7 @@ import FilterListIcon from '@mui/icons-material/FilterList'
 import TemplateIcon from '@mui/icons-material/AccountTree'
 import HistoryIcon from '@mui/icons-material/History'
 import RestoreIcon from '@mui/icons-material/Restore'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import chatflowsApi from '@/api/chatflows'
 import useApi from '@ui/hooks/useApi'
 import { format } from 'date-fns'
@@ -87,6 +88,23 @@ const AdminChatflows = () => {
     const [showTemplateOnly, setShowTemplateOnly] = useState(false)
     const [templateStatusFilter, setTemplateStatusFilter] = useState<string[]>([])
     const [selectedForUpdate, setSelectedForUpdate] = useState<string[]>([])
+
+    // Bulk update confirmation dialog state
+    const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false)
+    const [bulkUpdateIncludeName, setBulkUpdateIncludeName] = useState(false)
+    const [bulkUpdateInProgress, setBulkUpdateInProgress] = useState(false)
+
+    // Template banner collapse — smart default: open when outdated, closed when all current
+    const [templateBannerExpanded, setTemplateBannerExpanded] = useState<boolean>(
+        localStorage.getItem('adminTemplateBannerExpanded') !== null
+            ? localStorage.getItem('adminTemplateBannerExpanded') !== 'false'
+            : true
+    )
+    const toggleTemplateBanner = () => {
+        const next = !templateBannerExpanded
+        setTemplateBannerExpanded(next)
+        localStorage.setItem('adminTemplateBannerExpanded', String(next))
+    }
 
     // Versioning state
     const [versionModalOpen, setVersionModalOpen] = useState(false)
@@ -458,26 +476,81 @@ const AdminChatflows = () => {
                     const fullDefaultTemplate = chatflowsData.find((chatflow: any) => chatflow.id === defaultTemplateData.id)
                     if (!fullDefaultTemplate) return false
 
+                    const hasOutdated = chatflowsData.some((cf: any) => cf.templateStatus === 'outdated')
+                    const bc = hasOutdated
+                        ? {
+                              bg: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.08)',
+                              border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                              text: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
+                              textMuted: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                              iconMain: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b',
+                              iconColor: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
+                              iconBg: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
+                              iconHoverColor: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
+                              iconHoverBg: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
+                              iconHoverBorder: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914',
+                              badgeBg: isDarkMode ? 'rgba(255, 193, 7, 0.3)' : 'rgba(184, 134, 11, 0.15)',
+                              badgeBorder: isDarkMode ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid #b8860b',
+                              chipBg: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
+                              chipBorder: isDarkMode ? '1px solid rgba(255, 193, 7, 0.4)' : '1px solid #b8860b',
+                              countBg: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
+                              countBorder: isDarkMode ? '1px solid rgba(255, 193, 7, 0.4)' : '1px solid #b8860b',
+                              countText: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914'
+                          }
+                        : {
+                              bg: isDarkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)',
+                              border: isDarkMode ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid #388e3c',
+                              text: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
+                              textMuted: isDarkMode ? 'rgba(76, 175, 80, 0.7)' : '#2e7d32',
+                              iconMain: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#388e3c',
+                              iconColor: isDarkMode ? 'rgba(76, 175, 80, 0.8)' : '#2e7d32',
+                              iconBg: isDarkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(56, 142, 60, 0.1)',
+                              iconHoverColor: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#1b5e20',
+                              iconHoverBg: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(56, 142, 60, 0.2)',
+                              iconHoverBorder: isDarkMode ? 'rgba(76, 175, 80, 0.5)' : '#388e3c',
+                              badgeBg: isDarkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(56, 142, 60, 0.15)',
+                              badgeBorder: isDarkMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid #388e3c',
+                              chipBg: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(56, 142, 60, 0.15)',
+                              chipBorder: isDarkMode ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid #388e3c',
+                              countBg: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(56, 142, 60, 0.15)',
+                              countBorder: isDarkMode ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid #388e3c',
+                              countText: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32'
+                          }
+
+                    const outdatedCount = chatflowsData.filter((cf: any) => cf.templateStatus === 'outdated').length
+                    const bannerOpen = localStorage.getItem('adminTemplateBannerExpanded') !== null ? templateBannerExpanded : hasOutdated
+                    const greenBadge = {
+                        bgcolor: isDarkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(56, 142, 60, 0.15)',
+                        color: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
+                        border: isDarkMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid #388e3c'
+                    }
+
                     return (
                         <Box sx={{ mb: 3 }}>
                             <Box
                                 sx={{
                                     p: 3,
-                                    border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
+                                    border: bc.border,
                                     borderRadius: '12px',
-                                    bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.08)',
+                                    bgcolor: bc.bg,
                                     backdropFilter: 'blur(20px)'
                                 }}
                             >
-                                {/* Header Section */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                                {/* Header — always visible, click to toggle */}
+                                <Box
+                                    onClick={toggleTemplateBanner}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer',
+                                        mb: bannerOpen ? 3 : 0
+                                    }}
+                                >
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <TemplateIcon sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#b8860b', fontSize: '2rem' }} />
+                                        <TemplateIcon sx={{ color: bc.iconMain, fontSize: '2rem' }} />
                                         <Box>
-                                            <Typography
-                                                variant='h6'
-                                                sx={{ color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914', fontWeight: 600, mb: 0.5 }}
-                                            >
+                                            <Typography variant='h6' sx={{ color: bc.text, fontWeight: 600, mb: 0.5 }}>
                                                 Organization Default Template
                                             </Typography>
                                             <Typography variant='body2' sx={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
@@ -485,246 +558,275 @@ const AdminChatflows = () => {
                                             </Typography>
                                         </Box>
                                     </Box>
-                                    <Chip
-                                        label='DEFAULT TEMPLATE'
-                                        sx={{
-                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.3)' : 'rgba(184, 134, 11, 0.15)',
-                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
-                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid #b8860b',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600
-                                        }}
-                                    />
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Chip
+                                            label={hasOutdated ? `${outdatedCount} outdated` : 'All current'}
+                                            size='small'
+                                            sx={{
+                                                bgcolor: bc.countBg,
+                                                color: bc.countText,
+                                                border: bc.countBorder,
+                                                fontSize: '0.7rem',
+                                                fontWeight: 600,
+                                                height: '22px'
+                                            }}
+                                        />
+                                        <Chip label='DEFAULT TEMPLATE' sx={{ ...greenBadge, fontSize: '0.75rem', fontWeight: 600 }} />
+                                        <KeyboardArrowDownIcon
+                                            sx={{
+                                                color: bc.text,
+                                                fontSize: '1.5rem',
+                                                transition: 'transform 0.3s ease',
+                                                transform: bannerOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                            }}
+                                        />
+                                    </Box>
                                 </Box>
-
-                                {/* Template Details Grid */}
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, mb: 3 }}>
-                                    {/* Left Column */}
-                                    <Box>
-                                        {/* Name */}
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                NAME
-                                            </Typography>
-                                            <Typography variant='body1' sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
-                                                {fullDefaultTemplate.name}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Description */}
-                                        {fullDefaultTemplate.description && (
+                                {/* Collapsible details */}
+                                <Box
+                                    sx={{
+                                        maxHeight: bannerOpen ? '600px' : '0px',
+                                        overflow: 'hidden',
+                                        transition: 'max-height 0.3s ease-in-out'
+                                    }}
+                                >
+                                    {/* Template Details Grid */}
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, mb: 3 }}>
+                                        {/* Left Column */}
+                                        <Box>
+                                            {/* Name */}
                                             <Box sx={{ mb: 2 }}>
                                                 <Typography
                                                     variant='body2'
                                                     sx={{
-                                                        color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
+                                                        color: bc.textMuted,
                                                         fontSize: '0.75rem',
                                                         mb: 0.5
                                                     }}
                                                 >
-                                                    DESCRIPTION
+                                                    NAME
+                                                </Typography>
+                                                <Typography variant='body1' sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
+                                                    {fullDefaultTemplate.name}
+                                                </Typography>
+                                            </Box>
+
+                                            {/* Description */}
+                                            {fullDefaultTemplate.description && (
+                                                <Box sx={{ mb: 2 }}>
+                                                    <Typography
+                                                        variant='body2'
+                                                        sx={{
+                                                            color: bc.textMuted,
+                                                            fontSize: '0.75rem',
+                                                            mb: 0.5
+                                                        }}
+                                                    >
+                                                        DESCRIPTION
+                                                    </Typography>
+                                                    <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
+                                                        {fullDefaultTemplate.description}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+
+                                            {/* Category */}
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    CATEGORY
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                                    {(fullDefaultTemplate.category || 'Uncategorized')
+                                                        .split(';')
+                                                        .map((category: string, index: number) => (
+                                                            <Chip
+                                                                key={index}
+                                                                label={category.trim()}
+                                                                size='small'
+                                                                sx={{
+                                                                    height: 20,
+                                                                    fontSize: '0.65rem',
+                                                                    bgcolor: bc.chipBg,
+                                                                    color: bc.text,
+                                                                    border: bc.chipBorder,
+                                                                    '& .MuiChip-label': {
+                                                                        px: 0.75,
+                                                                        py: 0.25
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ))}
+                                                </Box>
+                                            </Box>
+
+                                            {/* Owner */}
+                                            <Box>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    OWNER
                                                 </Typography>
                                                 <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
-                                                    {fullDefaultTemplate.description}
+                                                    {fullDefaultTemplate.isOwner
+                                                        ? 'Me'
+                                                        : fullDefaultTemplate.user?.name ||
+                                                          fullDefaultTemplate.user?.email ||
+                                                          fullDefaultTemplate.userId}
                                                 </Typography>
                                             </Box>
-                                        )}
+                                        </Box>
 
-                                        {/* Category */}
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                CATEGORY
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                                {(fullDefaultTemplate.category || 'Uncategorized')
-                                                    .split(';')
-                                                    .map((category: string, index: number) => (
-                                                        <Chip
-                                                            key={index}
-                                                            label={category.trim()}
+                                        {/* Right Column */}
+                                        <Box>
+                                            {/* Created Date */}
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    CREATED
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
+                                                    {fullDefaultTemplate.createdDate
+                                                        ? format(new Date(fullDefaultTemplate.createdDate), 'MMM d, yyyy h:mm a')
+                                                        : 'N/A'}
+                                                </Typography>
+                                            </Box>
+
+                                            {/* Updated Date */}
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    UPDATED
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
+                                                    {fullDefaultTemplate.updatedDate
+                                                        ? format(new Date(fullDefaultTemplate.updatedDate), 'MMM d, yyyy h:mm a')
+                                                        : 'N/A'}
+                                                </Typography>
+                                            </Box>
+
+                                            {/* Version */}
+                                            <Box sx={{ mb: 2 }}>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 0.5
+                                                    }}
+                                                >
+                                                    VERSION
+                                                </Typography>
+                                                <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
+                                                    v{fullDefaultTemplate.currentVersion || 1}
+                                                </Typography>
+                                            </Box>
+
+                                            {/* Actions */}
+                                            <Box>
+                                                <Typography
+                                                    variant='body2'
+                                                    sx={{
+                                                        color: bc.textMuted,
+                                                        fontSize: '0.75rem',
+                                                        mb: 1
+                                                    }}
+                                                >
+                                                    ACTIONS
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title='View Template' placement='top'>
+                                                        <IconButton
                                                             size='small'
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                window.open(getCanvasFullUrl(fullDefaultTemplate), '_blank')
+                                                            }}
                                                             sx={{
-                                                                height: 20,
-                                                                fontSize: '0.65rem',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.15)',
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#8b6914',
-                                                                border: isDarkMode
-                                                                    ? '1px solid rgba(255, 193, 7, 0.4)'
-                                                                    : '1px solid #b8860b',
-                                                                '& .MuiChip-label': {
-                                                                    px: 0.75,
-                                                                    py: 0.25
+                                                                color: bc.iconColor,
+                                                                bgcolor: bc.iconBg,
+                                                                border: bc.border,
+                                                                '&:hover': {
+                                                                    color: bc.iconHoverColor,
+                                                                    bgcolor: bc.iconHoverBg,
+                                                                    borderColor: bc.iconHoverBorder
                                                                 }
                                                             }}
-                                                        />
-                                                    ))}
-                                            </Box>
-                                        </Box>
-
-                                        {/* Owner */}
-                                        <Box>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                OWNER
-                                            </Typography>
-                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
-                                                {fullDefaultTemplate.isOwner
-                                                    ? 'Me'
-                                                    : fullDefaultTemplate.user?.name ||
-                                                      fullDefaultTemplate.user?.email ||
-                                                      fullDefaultTemplate.userId}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {/* Right Column */}
-                                    <Box>
-                                        {/* Created Date */}
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                CREATED
-                                            </Typography>
-                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
-                                                {fullDefaultTemplate.createdDate
-                                                    ? format(new Date(fullDefaultTemplate.createdDate), 'MMM d, yyyy h:mm a')
-                                                    : 'N/A'}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Updated Date */}
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                UPDATED
-                                            </Typography>
-                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
-                                                {fullDefaultTemplate.updatedDate
-                                                    ? format(new Date(fullDefaultTemplate.updatedDate), 'MMM d, yyyy h:mm a')
-                                                    : 'N/A'}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Version */}
-                                        <Box sx={{ mb: 2 }}>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                VERSION
-                                            </Typography>
-                                            <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
-                                                v{fullDefaultTemplate.currentVersion || 1}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Actions */}
-                                        <Box>
-                                            <Typography
-                                                variant='body2'
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 193, 7, 0.7)' : '#8b6914',
-                                                    fontSize: '0.75rem',
-                                                    mb: 1
-                                                }}
-                                            >
-                                                ACTIONS
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title='View Template' placement='top'>
-                                                    <IconButton
-                                                        size='small'
-                                                        onClick={() => window.open(getCanvasFullUrl(fullDefaultTemplate), '_blank')}
-                                                        sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
-                                                            '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <VisibilityIcon fontSize='small' />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title='View Metrics' placement='top'>
-                                                    <IconButton
-                                                        size='small'
-                                                        onClick={() => handleOpenMetrics(fullDefaultTemplate.id)}
-                                                        sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
-                                                            '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <BarChartIcon fontSize='small' />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title='Version History' placement='top'>
-                                                    <IconButton
-                                                        size='small'
-                                                        onClick={() => handleOpenVersions(fullDefaultTemplate.id)}
-                                                        sx={{
-                                                            color: isDarkMode ? 'rgba(255, 193, 7, 0.8)' : '#8b6914',
-                                                            bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(184, 134, 11, 0.1)',
-                                                            border: isDarkMode ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid #b8860b',
-                                                            '&:hover': {
-                                                                color: isDarkMode ? 'rgba(255, 193, 7, 0.9)' : '#6b5210',
-                                                                bgcolor: isDarkMode ? 'rgba(255, 193, 7, 0.2)' : 'rgba(184, 134, 11, 0.2)',
-                                                                borderColor: isDarkMode ? 'rgba(255, 193, 7, 0.5)' : '#8b6914'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <HistoryIcon fontSize='small' />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                        >
+                                                            <VisibilityIcon fontSize='small' />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title='View Metrics' placement='top'>
+                                                        <IconButton
+                                                            size='small'
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                handleOpenMetrics(fullDefaultTemplate.id)
+                                                            }}
+                                                            sx={{
+                                                                color: bc.iconColor,
+                                                                bgcolor: bc.iconBg,
+                                                                border: bc.border,
+                                                                '&:hover': {
+                                                                    color: bc.iconHoverColor,
+                                                                    bgcolor: bc.iconHoverBg,
+                                                                    borderColor: bc.iconHoverBorder
+                                                                }
+                                                            }}
+                                                        >
+                                                            <BarChartIcon fontSize='small' />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title='Version History' placement='top'>
+                                                        <IconButton
+                                                            size='small'
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                handleOpenVersions(fullDefaultTemplate.id)
+                                                            }}
+                                                            sx={{
+                                                                color: bc.iconColor,
+                                                                bgcolor: bc.iconBg,
+                                                                border: bc.border,
+                                                                '&:hover': {
+                                                                    color: bc.iconHoverColor,
+                                                                    bgcolor: bc.iconHoverBg,
+                                                                    borderColor: bc.iconHoverBorder
+                                                                }
+                                                            }}
+                                                        >
+                                                            <HistoryIcon fontSize='small' />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
                                             </Box>
                                         </Box>
                                     </Box>
-                                </Box>
+                                </Box>{' '}
+                                {/* end collapsible */}
                             </Box>
                         </Box>
                     )
@@ -1026,23 +1128,10 @@ const AdminChatflows = () => {
                                 <Button
                                     variant='contained'
                                     size='small'
-                                    disabled={selectedForUpdate.length === 0}
-                                    onClick={async () => {
-                                        try {
-                                            const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate)
-
-                                            // Show success message and refresh data
-                                            if (response.updated > 0) {
-                                                // Refresh the chatflows data
-                                                window.location.reload() // Simple refresh for now
-                                            }
-
-                                            // Clear selections
-                                            setSelectedForUpdate([])
-                                        } catch (error) {
-                                            console.error('Bulk update failed:', error)
-                                            // TODO: Show error message to user
-                                        }
+                                    disabled={selectedForUpdate.length === 0 || bulkUpdateInProgress}
+                                    onClick={() => {
+                                        setBulkUpdateIncludeName(false)
+                                        setBulkUpdateDialogOpen(true)
                                     }}
                                     sx={{
                                         bgcolor: alpha(theme.palette.warning.main, 0.8),
@@ -1056,10 +1145,74 @@ const AdminChatflows = () => {
                                         }
                                     }}
                                 >
-                                    Update Selected ({selectedForUpdate.length})
+                                    {bulkUpdateInProgress
+                                        ? `Updating ${selectedForUpdate.length}…`
+                                        : `Update Selected (${selectedForUpdate.length})`}
                                 </Button>
                             </Box>
                         </Box>
+
+                        {/* Bulk update confirmation dialog */}
+                        <Dialog open={bulkUpdateDialogOpen} onClose={() => setBulkUpdateDialogOpen(false)} maxWidth='sm' fullWidth>
+                            <DialogTitle sx={{ fontWeight: 600 }}>Confirm Template Update</DialogTitle>
+                            <DialogContent>
+                                <Typography variant='body2' sx={{ mb: 2, color: theme.palette.text.secondary }}>
+                                    You are about to push the latest template to <strong>{selectedForUpdate.length}</strong> chatflow
+                                    {selectedForUpdate.length !== 1 ? 's' : ''}. This will overwrite their flow configuration with the
+                                    current template version.
+                                </Typography>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={bulkUpdateIncludeName}
+                                            onChange={(e) => setBulkUpdateIncludeName(e.target.checked)}
+                                            color='warning'
+                                        />
+                                    }
+                                    label={
+                                        <Box>
+                                            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                                Also update chatflow name to match template
+                                            </Typography>
+                                            <Typography variant='caption' sx={{ color: theme.palette.text.secondary }}>
+                                                Overwrites each user&apos;s chatflow name with the template name
+                                            </Typography>
+                                        </Box>
+                                    }
+                                />
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+                                <Button variant='outlined' onClick={() => setBulkUpdateDialogOpen(false)}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant='contained'
+                                    disabled={bulkUpdateInProgress}
+                                    onClick={async () => {
+                                        setBulkUpdateDialogOpen(false)
+                                        setBulkUpdateInProgress(true)
+                                        try {
+                                            await chatflowsApi.bulkUpdateChatflows(selectedForUpdate, {
+                                                updateName: bulkUpdateIncludeName
+                                            })
+                                            window.location.reload()
+                                        } catch (error) {
+                                            console.error('Bulk update failed:', error)
+                                            setBulkUpdateInProgress(false)
+                                        }
+                                    }}
+                                    sx={{
+                                        bgcolor: alpha(theme.palette.warning.main, 0.8),
+                                        color: theme.palette.common.white,
+                                        '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.9) }
+                                    }}
+                                >
+                                    {bulkUpdateInProgress
+                                        ? `Updating ${selectedForUpdate.length} Chatflow${selectedForUpdate.length !== 1 ? 's' : ''}…`
+                                        : `Update ${selectedForUpdate.length} Chatflow${selectedForUpdate.length !== 1 ? 's' : ''}`}
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
 
                         {selectedForUpdate.length > 0 && (
                             <Box sx={{ p: 2, bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: '4px' }}>
@@ -1071,7 +1224,9 @@ const AdminChatflows = () => {
                                     <br />
                                     • API settings, starter prompts, and system configuration will be updated
                                     <br />
-                                    • Name, description, owner, and organization will remain unchanged
+                                    • Description, owner, workspace, and organization will remain unchanged
+                                    <br />
+                                    • Chatflow name is preserved unless &quot;Also update name&quot; is checked
                                     <br />• User customizations in flow logic may be overwritten
                                 </Typography>
                             </Box>
@@ -1260,9 +1415,13 @@ const AdminChatflows = () => {
                                                                 label='DEFAULT TEMPLATE'
                                                                 size='small'
                                                                 sx={{
-                                                                    bgcolor: 'rgba(255, 193, 7, 0.2)',
-                                                                    color: 'rgba(255, 193, 7, 0.9)',
-                                                                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                                                                    bgcolor: isDarkMode
+                                                                        ? 'rgba(76, 175, 80, 0.2)'
+                                                                        : 'rgba(56, 142, 60, 0.15)',
+                                                                    color: isDarkMode ? 'rgba(76, 175, 80, 0.9)' : '#2e7d32',
+                                                                    border: isDarkMode
+                                                                        ? '1px solid rgba(76, 175, 80, 0.3)'
+                                                                        : '1px solid #388e3c',
                                                                     fontSize: '0.65rem',
                                                                     height: '18px',
                                                                     fontWeight: 600

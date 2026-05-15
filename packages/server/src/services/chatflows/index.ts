@@ -608,7 +608,11 @@ const getDefaultChatflowTemplate = async (): Promise<{ id: string; name: string 
     }
 }
 
-const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<{ updated: number; errors: string[] }> => {
+const bulkUpdateChatflows = async (
+    chatflowIds: string[],
+    user: IUser,
+    options?: { updateName?: boolean }
+): Promise<{ updated: number; errors: string[] }> => {
     try {
         const appServer = getRunningExpressApp()
         const { id: _userId, organizationId } = user
@@ -657,10 +661,12 @@ const bulkUpdateChatflows = async (chatflowIds: string[], user: IUser): Promise<
                     const updatedChatflow = {
                         ...templateChatflow,
                         id: targetChatflow.id,
-                        name: targetChatflow.name, // Preserve original name
+                        // Only propagate template name when explicitly requested by admin
+                        name: options?.updateName ? templateChatflow.name : targetChatflow.name,
                         description: targetChatflow.description, // Preserve original description
                         userId: targetChatflow.userId, // Preserve original owner
                         organizationId: targetChatflow.organizationId, // Preserve original organization
+                        workspaceId: targetChatflow.workspaceId, // Preserve original workspace (bug fix: was leaking template's workspaceId)
                         parentChatflowId: targetChatflow.parentChatflowId, // Preserve parent relationship
                         createdDate: targetChatflow.createdDate, // Preserve creation date
                         currentVersion: (targetChatflow.currentVersion || 1) + 1, // Increment version
