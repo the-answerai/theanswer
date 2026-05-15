@@ -91,6 +91,7 @@ const AdminChatflows = () => {
     // Bulk update confirmation dialog state
     const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false)
     const [bulkUpdateIncludeName, setBulkUpdateIncludeName] = useState(false)
+    const [bulkUpdateInProgress, setBulkUpdateInProgress] = useState(false)
 
     // Versioning state
     const [versionModalOpen, setVersionModalOpen] = useState(false)
@@ -1030,7 +1031,7 @@ const AdminChatflows = () => {
                                 <Button
                                     variant='contained'
                                     size='small'
-                                    disabled={selectedForUpdate.length === 0}
+                                    disabled={selectedForUpdate.length === 0 || bulkUpdateInProgress}
                                     onClick={() => {
                                         setBulkUpdateIncludeName(false)
                                         setBulkUpdateDialogOpen(true)
@@ -1047,7 +1048,9 @@ const AdminChatflows = () => {
                                         }
                                     }}
                                 >
-                                    Update Selected ({selectedForUpdate.length})
+                                    {bulkUpdateInProgress
+                                        ? `Updating ${selectedForUpdate.length}…`
+                                        : `Update Selected (${selectedForUpdate.length})`}
                                 </Button>
                             </Box>
                         </Box>
@@ -1087,18 +1090,18 @@ const AdminChatflows = () => {
                                 </Button>
                                 <Button
                                     variant='contained'
+                                    disabled={bulkUpdateInProgress}
                                     onClick={async () => {
                                         setBulkUpdateDialogOpen(false)
+                                        setBulkUpdateInProgress(true)
                                         try {
-                                            const response = await chatflowsApi.bulkUpdateChatflows(selectedForUpdate, {
+                                            await chatflowsApi.bulkUpdateChatflows(selectedForUpdate, {
                                                 updateName: bulkUpdateIncludeName
                                             })
-                                            if (response.updated > 0) {
-                                                window.location.reload()
-                                            }
-                                            setSelectedForUpdate([])
+                                            window.location.reload()
                                         } catch (error) {
                                             console.error('Bulk update failed:', error)
+                                            setBulkUpdateInProgress(false)
                                         }
                                     }}
                                     sx={{
@@ -1107,7 +1110,9 @@ const AdminChatflows = () => {
                                         '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.9) }
                                     }}
                                 >
-                                    Update {selectedForUpdate.length} Chatflow{selectedForUpdate.length !== 1 ? 's' : ''}
+                                    {bulkUpdateInProgress
+                                        ? `Updating ${selectedForUpdate.length} Chatflow${selectedForUpdate.length !== 1 ? 's' : ''}…`
+                                        : `Update ${selectedForUpdate.length} Chatflow${selectedForUpdate.length !== 1 ? 's' : ''}`}
                                 </Button>
                             </DialogActions>
                         </Dialog>
