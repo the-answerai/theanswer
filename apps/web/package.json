@@ -46,7 +46,7 @@
         "encoding": "^0.1.13",
         "experimental-prisma-webpack-plugin": "workspace:*",
         "flowise-ui": "workspace:*",
-        "handlebars": "^4.7.8",
+        "handlebars": "^4.7.9",
         "inngest": "^1.10.1",
         "ioredis": "^5.7.0",
         "jose": "^5.10.0",
