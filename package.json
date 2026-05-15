@@ -124,6 +124,7 @@
             "@prisma/client",
             "@prisma/engines",
             "@swc/core",
+            "aws-crt",
             "bufferutil",
             "cypress",
             "esbuild",

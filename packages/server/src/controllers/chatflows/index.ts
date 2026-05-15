@@ -211,7 +211,9 @@ const updateChatflow = async (req: Request, res: Response, next: NextFunction) =
                 `Error: chatflowsController.saveChatflow - workspace ${workspaceId} not found!`
             )
         }
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, workspaceId)
+        // Admins can update chatflows across their org regardless of active workspace
+        const isAdmin = req.user?.roles?.includes('Admin') || req.user?.permissions?.includes('org:manage')
+        const chatflow = await chatflowsService.getChatflowById(req.params.id, isAdmin ? undefined : workspaceId)
         if (!chatflow) {
             return res.status(404).send(`Chatflow ${req.params.id} not found`)
         }
