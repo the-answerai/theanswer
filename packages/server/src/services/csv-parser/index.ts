@@ -79,13 +79,23 @@ const createCsvParseRun = async (user: IUser, body: any) => {
             const fileBuffer = Buffer.from(base64Data, 'base64')
 
             // Upload file to S3
-            const s3 = new S3Client({
-                region: process.env.S3_STORAGE_REGION ?? 'us-east-1',
-                credentials: {
-                    accessKeyId: process.env.S3_STORAGE_ACCESS_KEY_ID ?? '',
-                    secretAccessKey: process.env.S3_STORAGE_SECRET_ACCESS_KEY ?? ''
+            const s3Config: any = {
+                region: process.env.S3_STORAGE_REGION ?? 'us-east-1'
+            }
+            // Only set explicit credentials when present — otherwise the AWS SDK
+            // falls through to the default credential chain (IAM roles, ECS task
+            // roles, Copilot-injected env, etc.)
+            if (process.env.S3_STORAGE_ACCESS_KEY_ID && process.env.S3_STORAGE_SECRET_ACCESS_KEY) {
+                s3Config.credentials = {
+                    accessKeyId: process.env.S3_STORAGE_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.S3_STORAGE_SECRET_ACCESS_KEY
                 }
-            })
+            }
+            if (process.env.S3_ENDPOINT_URL) {
+                s3Config.endpoint = process.env.S3_ENDPOINT_URL
+                s3Config.forcePathStyle = true
+            }
+            const s3 = new S3Client(s3Config)
             await s3.send(
                 new PutObjectCommand({
                     Bucket: process.env.S3_STORAGE_BUCKET_NAME ?? '',
