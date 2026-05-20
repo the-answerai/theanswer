@@ -320,10 +320,10 @@ export const processDocument: EventVersionHandler<{
 
         const s3Client = new S3Client({
             region: AWS_S3_REGION,
-            credentials: {
-                accessKeyId: S3_STORAGE_ACCESS_KEY_ID,
-                secretAccessKey: S3_STORAGE_SECRET_ACCESS_KEY
-            }
+            credentials:
+                S3_STORAGE_ACCESS_KEY_ID && S3_STORAGE_SECRET_ACCESS_KEY
+                    ? { accessKeyId: S3_STORAGE_ACCESS_KEY_ID, secretAccessKey: S3_STORAGE_SECRET_ACCESS_KEY }
+                    : undefined
         })
 
         const command = new GetObjectCommand({

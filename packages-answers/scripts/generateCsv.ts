@@ -4,13 +4,16 @@ import { parse } from 'csv-parse/sync'
 import { AppCsvParseRuns } from '../db/generated/prisma-client'
 import { prisma } from '../db/src/client'
 
-const s3 = new S3({
-    region: process.env.S3_STORAGE_REGION ?? 'us-east-1',
-    credentials: {
-        accessKeyId: process.env.S3_STORAGE_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.S3_STORAGE_SECRET_ACCESS_KEY ?? ''
+const s3Config: any = {
+    region: process.env.S3_STORAGE_REGION ?? 'us-east-1'
+}
+if (process.env.S3_STORAGE_ACCESS_KEY_ID && process.env.S3_STORAGE_SECRET_ACCESS_KEY) {
+    s3Config.credentials = {
+        accessKeyId: process.env.S3_STORAGE_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_STORAGE_SECRET_ACCESS_KEY
     }
-})
+}
+const s3 = new S3(s3Config)
 
 function collectAllColumnKeys(rows: Array<Record<string, unknown>>): string[] {
     const seen = new Set<string>()
