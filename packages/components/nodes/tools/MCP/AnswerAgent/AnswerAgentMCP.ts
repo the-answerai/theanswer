@@ -132,7 +132,9 @@ class AnswerAgent_MCP implements INode {
             args: [packagePath],
             env: {
                 ANSWERAGENT_AI_API_BASE_URL: apiHost,
-                ANSWERAGENT_AI_API_TOKEN: apiKey
+                ANSWERAGENT_AI_API_TOKEN: apiKey,
+                // Subprocess does not inherit process.env; without this the axios client defaults to a 5s timeout
+                API_TIMEOUT: process.env.ANSWERAGENT_MCP_API_TIMEOUT || '30000'
             }
         }
 
