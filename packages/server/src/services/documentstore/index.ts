@@ -1989,12 +1989,18 @@ const queryVectorStore = async (data: ICommonObject, workspaceId: string) => {
                 id: uuidv4()
             }
         })
-        // query our document store chunk with the storeId and pageContent
-        for (const doc of docs) {
-            const documentStoreChunk = await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).findOneBy({
-                storeId: data.storeId,
-                pageContent: doc.pageContent
+        // Backfill chunk id/chunkNo with a single batched query instead of one lookup per doc
+        const chunkByContent = new Map<string, DocumentStoreFileChunk>()
+        if (docs.length > 0) {
+            const documentStoreChunks = await appServer.AppDataSource.getRepository(DocumentStoreFileChunk).find({
+                where: { storeId: data.storeId, pageContent: In(docs.map((doc: any) => doc.pageContent)) }
             })
+            for (const chunk of documentStoreChunks) {
+                if (!chunkByContent.has(chunk.pageContent)) chunkByContent.set(chunk.pageContent, chunk)
+            }
+        }
+        for (const doc of docs) {
+            const documentStoreChunk = chunkByContent.get(doc.pageContent)
             if (documentStoreChunk) {
                 doc.id = documentStoreChunk.id
                 doc.chunkNo = documentStoreChunk.chunkNo
