@@ -27,6 +27,19 @@
             ]
         }
     ],
+    "redirects": [
+        {
+            "source": "/",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "docs.theanswer.ai"
+                }
+            ],
+            "destination": "https://docs.theanswer.ai/docs/intro",
+            "statusCode": 301
+        }
+    ],
     "rewrites": [
         {
             "source": "/sitemap.xml",
