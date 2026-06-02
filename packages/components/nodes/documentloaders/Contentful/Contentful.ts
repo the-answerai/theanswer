@@ -548,8 +548,14 @@ class ContentfulLoader extends BaseDocumentLoader {
     private async runQuery(): Promise<Document[]> {
         let query: any = this.metadata || {}
 
-        // Explicitly exclude archived entries
-        query['sys.archivedAt[exists]'] = false
+        // sys.archivedAt is only a valid query property on the Preview API.
+        // The Delivery (CDN) API rejects it with a 400 because published entries
+        // can never be archived, so only apply the filter for preview requests.
+        // (Archived entries are never returned by the Delivery API anyway, and the
+        // post-fetch sys.archivedVersion filter below remains as a safety net.)
+        if (this.host === 'preview.contentful.com') {
+            query['sys.archivedAt[exists]'] = false
+        }
 
         if (this.limit) {
             query.limit = this.limit
