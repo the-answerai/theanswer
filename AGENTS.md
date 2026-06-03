@@ -1,5 +1,18 @@
 # AGENTS.md - TheAnswer Codebase Guide
 
+## Index
+
+| Key | Purpose |
+|-----|---------|
+| `CLAUDE.md` | Root workflow, safety requirements, daily commands |
+| `packages/components/CLAUDE.md` | Flowise node/component patterns |
+| `packages/server/CLAUDE.md` | API/controller/service/entity patterns |
+| `apps/web/CLAUDE.md` | Next.js, Auth0, frontend patterns |
+| `.claude/commands/*.md` | Slash commands (`/ticket-start`, `/push`, etc.) |
+| `.claude/agents/*.md` | Specialized agents (Linear, Git, Fleet) |
+| `.claude/skills/*.md` | Reusable workflows and guardrails |
+| `.claude/rules/*.md` | Path-based coding constraints |
+
 ## Overview
 
 TheAnswer is a comprehensive AI-powered productivity suite built on top of Flowise, an open-source tool for creating customized LLM flows. This codebase extends Flowise's capabilities with additional services, UI components, and enterprise features.
