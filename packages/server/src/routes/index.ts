@@ -88,6 +88,7 @@ import pricingRouter from './pricing'
 import { createAuth0Router } from '../aai/routes/auth0'
 import { createAuthMeRouter } from '../aai/routes/auth-me'
 import { createCredentialsRefreshRouter } from '../aai/routes/credentials-refresh'
+import { createInternalProvisionRouter } from '../aai/routes/internal-provision'
 
 import organizationsRouter from './organizations'
 import guardrailsRouter from './guardrails'
@@ -190,4 +191,4 @@ router.use('/guardrails', guardrailsRouter)
 export default router
 
 // Export router factories for use in index.ts where AppDataSource is available
-export { createAuth0Router, createAuthMeRouter, createCredentialsRefreshRouter }
+export { createAuth0Router, createAuthMeRouter, createCredentialsRefreshRouter, createInternalProvisionRouter }
