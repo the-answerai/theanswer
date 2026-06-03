@@ -132,7 +132,11 @@ function APIKeyRow(props) {
                         </IconButton>
                     )}
                 </StyledTableCell>
-                <StyledTableCell>{moment(props.apiKey.createdAt).format('MMMM Do, YYYY')}</StyledTableCell>
+                <StyledTableCell>{props.apiKey.usageCount ?? 0}</StyledTableCell>
+                <StyledTableCell>
+                    {props.apiKey.lastUsedAt ? moment(props.apiKey.lastUsedAt).format('MMMM Do, YYYY') : 'Never'}
+                </StyledTableCell>
+                <StyledTableCell>{props.apiKey.createdAt ? moment(props.apiKey.createdAt).format('MMMM Do, YYYY') : '-'}</StyledTableCell>
                 <Available permission={'apikeys:update,apikeys:create'}>
                     <StyledTableCell>
                         <IconButton title='Edit' color='primary' onClick={props.onEditClick}>
@@ -150,7 +154,7 @@ function APIKeyRow(props) {
             </TableRow>
             {open && (
                 <TableRow sx={{ '& td': { border: 0 } }}>
-                    <StyledTableCell sx={{ p: 2 }} colSpan={6}>
+                    <StyledTableCell sx={{ p: 2 }} colSpan={8}>
                         <Collapse in={open} timeout='auto' unmountOnExit>
                             <Box sx={{ borderRadius: 2, border: 1, borderColor: theme.palette.grey[900] + 25, overflow: 'hidden' }}>
                                 <Table aria-label='chatflow table'>
@@ -445,8 +449,10 @@ const APIKey = () => {
                                             <TableRow>
                                                 <StyledTableCell>Key Name</StyledTableCell>
                                                 <StyledTableCell>API Key</StyledTableCell>
-                                                <StyledTableCell>Usage</StyledTableCell>
-                                                <StyledTableCell>Updated</StyledTableCell>
+                                                <StyledTableCell>Connected</StyledTableCell>
+                                                <StyledTableCell>API Calls</StyledTableCell>
+                                                <StyledTableCell>Last Used</StyledTableCell>
+                                                <StyledTableCell>Created</StyledTableCell>
                                                 <Available permission={'apikeys:update,apikeys:create'}>
                                                     <StyledTableCell> </StyledTableCell>
                                                 </Available>
@@ -471,6 +477,12 @@ const APIKey = () => {
                                                         <StyledTableCell>
                                                             <Skeleton variant='text' />
                                                         </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
                                                         <Available permission={'apikeys:update,apikeys:create'}>
                                                             <StyledTableCell> </StyledTableCell>
                                                         </Available>
@@ -479,6 +491,12 @@ const APIKey = () => {
                                                         </Available>
                                                     </StyledTableRow>
                                                     <StyledTableRow>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            <Skeleton variant='text' />
+                                                        </StyledTableCell>
                                                         <StyledTableCell>
                                                             <Skeleton variant='text' />
                                                         </StyledTableCell>

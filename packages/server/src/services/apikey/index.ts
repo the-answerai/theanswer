@@ -206,6 +206,7 @@ const importKeys = async (body: any) => {
                         currentKey.workspaceId = workspaceId
                         currentKey.organizationId = organizationId
                         currentKey.userId = userId
+                        if (key.createdAt) currentKey.createdAt = new Date(key.createdAt)
                         await appServer.AppDataSource.getRepository(ApiKey).save(currentKey)
                         break
                     }
@@ -230,6 +231,7 @@ const importKeys = async (body: any) => {
                 newKey.workspaceId = workspaceId
                 newKey.organizationId = organizationId
                 newKey.userId = userId
+                if (key.createdAt) newKey.createdAt = new Date(key.createdAt)
                 const newKeyEntity = appServer.AppDataSource.getRepository(ApiKey).create(newKey)
                 await appServer.AppDataSource.getRepository(ApiKey).save(newKeyEntity)
             }
@@ -237,6 +239,25 @@ const importKeys = async (body: any) => {
         return await getAllApiKeysFromDB(workspaceId)
     } catch (error) {
         throw new InternalFlowiseError(StatusCodes.INTERNAL_SERVER_ERROR, `Error: apikeyService.importKeys - ${getErrorMessage(error)}`)
+    }
+}
+
+// Record a single use of an API key: increment usage counter and update lastUsedAt.
+// Intended to be called fire-and-forget from the auth middleware so it never adds request latency.
+const recordApiKeyUsage = async (id: string): Promise<void> => {
+    try {
+        const appServer = getRunningExpressApp()
+        await appServer.AppDataSource.getRepository(ApiKey)
+            .createQueryBuilder()
+            .update(ApiKey)
+            .set({ usageCount: () => '"usageCount" + 1', lastUsedAt: () => 'now()' })
+            .where('id = :id', { id })
+            .execute()
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: apikeyService.recordApiKeyUsage - ${getErrorMessage(error)}`
+        )
     }
 }
 
@@ -269,6 +290,7 @@ export default {
     getAllApiKeys,
     updateApiKey,
     verifyApiKey,
+    recordApiKeyUsage,
     getApiKey,
     getApiKeyById,
     importKeys

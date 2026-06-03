@@ -107,6 +107,11 @@ const tryApiKeyAuth = async (
         return null
     }
 
+    // Record usage (increment usageCount + set lastUsedAt) without blocking the request
+    apikeyService.recordApiKeyUsage(apiKeyData.id).catch((error) => {
+        console.error('[Auth] Failed to record API key usage:', error instanceof Error ? error.message : error)
+    })
+
     // Return user with API key's org/workspace context (may differ from user's current org)
     return {
         user,
