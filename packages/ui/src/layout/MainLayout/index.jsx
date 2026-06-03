@@ -8,7 +8,6 @@ import { styled, useTheme } from '@mui/material/styles'
 import { AppBar, Box, CssBaseline, useMediaQuery } from '@mui/material'
 
 // project imports
-import { drawerWidth } from '@/store/constant'
 import { SET_MENU } from '@/store/actions'
 import PropTypes from 'prop-types'
 
@@ -23,21 +22,16 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen
         }),
+        // The in-layout <Sidebar /> drawer is not rendered (the studio uses its own AppDrawer),
+        // so do not offset the content by drawerWidth here or it overflows / shifts off-screen.
+        marginLeft: 0,
         marginRight: 0,
-        [theme.breakpoints.up('md')]: {
-            marginLeft: -drawerWidth,
-            width: `calc(100% - ${drawerWidth}px)`
-        },
+        width: '100%',
         [theme.breakpoints.down('md')]: {
-            marginLeft: '20px',
-            width: `calc(100% - ${drawerWidth}px)`,
             padding: '16px'
         },
         [theme.breakpoints.down('sm')]: {
-            marginLeft: '10px',
-            width: `calc(100% - ${drawerWidth}px)`,
-            padding: '16px',
-            marginRight: '10px'
+            padding: '16px'
         }
     }),
     ...(open && {
