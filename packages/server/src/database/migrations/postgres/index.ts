@@ -99,6 +99,7 @@ import { MoveDefaultChatflowsToPersonalWorkspace1770000000000 } from './aai/1770
 import { NormalizeLegacyCredentialNames1770000000001 } from './aai/1770000000001-NormalizeLegacyCredentialNames'
 import { FixBulkUpdateChatflowWorkspace1770000000002 } from './aai/1770000000002-FixBulkUpdateChatflowWorkspace'
 import { FixTemplateSourceChatflowWorkspace1770000000003 } from './aai/1770000000003-FixTemplateSourceChatflowWorkspace'
+import { AddApiKeyUsageTracking1770000000004 } from './aai/1770000000004-AddApiKeyUsageTracking'
 
 export const postgresMigrations = [
     Init1693891895163,
@@ -202,5 +203,7 @@ export const postgresMigrations = [
     // AAI: Fix chatflows re-assigned to Default Workspace by bulkUpdateChatflows workspace leak
     FixBulkUpdateChatflowWorkspace1770000000002,
     // AAI: Move INITIAL_CHATFLOW_IDS source templates to Default Workspace for consistent admin access
-    FixTemplateSourceChatflowWorkspace1770000000003
+    FixTemplateSourceChatflowWorkspace1770000000003,
+    // AAI: Track per-key API usage (usageCount, lastUsedAt) and add createdAt to apikey
+    AddApiKeyUsageTracking1770000000004
 ]

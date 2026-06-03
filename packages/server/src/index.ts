@@ -34,6 +34,7 @@ import { Workspace } from './enterprise/database/entities/workspace.entity'
 import { Organization } from './enterprise/database/entities/organization.entity'
 import { GeneralRole, Role } from './enterprise/database/entities/role.entity'
 import { migrateApiKeysFromJsonToDb } from './utils/apiKey'
+import apikeyService from './services/apikey'
 import { ExpressAdapter } from '@bull-board/express'
 
 import { createRedisStore } from './AppConfig'
@@ -278,6 +279,11 @@ export class App {
                 if (!isValid || !apiKey) {
                     return res.status(401).json({ error: 'Unauthorized Access' })
                 }
+
+                // Record usage (increment usageCount + set lastUsedAt) without blocking the request
+                apikeyService.recordApiKeyUsage(apiKey.id).catch((error: unknown) => {
+                    logger.error(`[server]: Failed to record API key usage: ${error instanceof Error ? error.message : error}`)
+                })
 
                 // Find workspace
                 const workspace = await this.AppDataSource.getRepository(Workspace).findOne({
