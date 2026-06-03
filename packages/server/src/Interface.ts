@@ -513,7 +513,9 @@ export interface IApiKey {
     keyName: string
     apiKey: string
     apiSecret: string
+    createdAt?: Date
     updatedDate: Date
+    usageCount?: number
     organizationId: string
     userId: string
     lastUsedAt?: Date
