@@ -25,9 +25,9 @@ const createPrediction = async (req: Request, res: Response, next: NextFunction)
                 `Error: predictionsController.createPrediction - body not provided!`
             )
         }
-        const workspaceId = req.user?.activeWorkspaceId
-
-        const chatflow = await chatflowsService.getChatflowById(req.params.id, workspaceId)
+        // Not scoped by req.user.activeWorkspaceId (upstream #5228): this route is public, so the filter
+        // guards nothing, and it 404s chatflows in the caller's other workspaces. Same fix as 3cddc905c.
+        const chatflow = await chatflowsService.getChatflowById(req.params.id)
         if (!chatflow) {
             throw new InternalFlowiseError(StatusCodes.NOT_FOUND, `Chatflow ${req.params.id} not found`)
         }
