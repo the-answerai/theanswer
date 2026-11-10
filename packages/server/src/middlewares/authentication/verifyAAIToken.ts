@@ -38,8 +38,18 @@ const jwtCheck = auth({
     tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALG ?? 'RS256'
 })
 
-export const verifyAAIToken = (AppDataSource: DataSource) => {
+export const isBearerJWT = (req: Request): boolean => {
+    const authHeader = req.headers.authorization as string | undefined
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
+    return token ? token.split('.').length === 3 : false
+}
+
+// optional: for public routes (/prediction). Identifies the caller when a valid Auth0 JWT is sent,
+// otherwise continues anonymous; never sends a response.
+export const verifyAAIToken = (AppDataSource: DataSource, opts: { optional?: boolean } = {}) => {
     return async (req: Request, res: Response, next: NextFunction) => {
+        if (opts.optional && (req.user || !isBearerJWT(req))) return next()
+
         // STEP 1: Try Auth0 RS256 verification first
         jwtCheck(req, res, async (auth0Err?: any) => {
             if (!auth0Err) {
@@ -52,6 +62,10 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                         const isValidOrg = userOrgId && process.env.AUTH0_ORGANIZATION_ID?.split(',')?.includes(userOrgId)
 
                         if (!isValidOrg) {
+                            if (opts.optional) {
+                                console.warn(`[verifyAAIToken] optional: org '${userOrgId}' not allowed, continuing anonymous`)
+                                return next()
+                            }
                             console.warn(`[verifyAAIToken] User ${authPayload.email} from org '${userOrgId}' - not in allowed orgs`)
                             return res.status(401).json({ message: "Unauthorized: Organization doesn't match" })
                         }
@@ -162,6 +176,11 @@ export const verifyAAIToken = (AppDataSource: DataSource) => {
                     console.error('[verifyAAIToken] Auth0 user sync error:', error)
                     // Fall through to try enterprise passport
                 }
+            }
+
+            if (opts.optional) {
+                console.warn('[verifyAAIToken] optional: continuing anonymous', auth0Err?.message)
+                return next()
             }
 
             // STEP 2: Auth0 failed - try enterprise passport (HS256)

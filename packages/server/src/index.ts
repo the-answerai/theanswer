@@ -39,7 +39,7 @@ import { ExpressAdapter } from '@bull-board/express'
 
 import { createRedisStore } from './AppConfig'
 import { aaiPostAuthMiddleware } from './middlewares/authentication/aaiPostAuthMiddleware'
-import { verifyAAIToken } from './middlewares/authentication/verifyAAIToken'
+import { verifyAAIToken, isBearerJWT } from './middlewares/authentication/verifyAAIToken'
 import { populateWorkspaceData } from './middlewares/authentication/populateWorkspaceData'
 import { User } from './database/entities/User'
 import { initAAI } from './aai/repository'
@@ -259,13 +259,6 @@ export class App {
         await initializeJwtCookieMiddleware(this.app, this.identityManager)
 
         this.app.use(async (req, res, next) => {
-            // Helper to detect JWT tokens (three dot-separated base64 segments)
-            const looksLikeJWT = (): boolean => {
-                const authHeader = req.headers.authorization as string | undefined
-                const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
-                return token ? token.split('.').length === 3 : false
-            }
-
             // Helper for API key authentication (used as primary or fallback)
             const handleApiKeyAuth = async () => {
                 // Only check license validity for non-open-source platforms
@@ -359,7 +352,7 @@ export class App {
                     const isWhitelisted = whitelistURLs.some((url) => req.path.startsWith(url))
                     if (isWhitelisted) {
                         next()
-                    } else if (req.headers['x-request-from'] === 'aai' || looksLikeJWT()) {
+                    } else if (req.headers['x-request-from'] === 'aai' || isBearerJWT(req)) {
                         // AAI requests OR auto-detected JWT tokens: Auth0 RS256 JWT (primary) with enterprise HS256 fallback
                         // If JWT fails, fall through to API key validation
                         verifyAAIToken(this.AppDataSource)(req, res, (err?: any) => {
