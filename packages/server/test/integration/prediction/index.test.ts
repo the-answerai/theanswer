@@ -12,11 +12,10 @@
  * NODE_OPTIONS is needed because langfuse-core (loaded through flowise-components) runs a dynamic import() at load.
  */
 import crypto from 'node:crypto'
-import http from 'node:http'
-import { AddressInfo } from 'node:net'
 import express from 'express'
 import supertest from 'supertest'
 import { DataSource } from 'typeorm'
+import { ORG, setupAuth0AndDb } from '../auth0Fixture'
 
 const mockApp: { AppDataSource?: DataSource } = {}
 jest.mock('../../../src/utils/getRunningExpressApp', () => ({
@@ -31,30 +30,17 @@ jest.mock('../../../src/services/predictions', () => ({
 const PG = process.env.TEST_PG_URL
 const d = PG ? describe : describe.skip
 
-const AUDIENCE = 'https://api.test.local'
-const ORG = 'org_ias'
-const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url')
-
 d('POST /api/v1/prediction (integration)', () => {
     jest.setTimeout(180000)
 
-    const keys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 })
-    const otherKeys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 })
-    let issuer = ''
-    let issuerServer: http.Server
     let ds: DataSource
     let app: express.Express
     let entities: { User: any; Organization: any; Workspace: any; WorkspaceUser: any; ChatFlow: any }
     let userId = ''
     let chatflowId = ''
+    let fx: Awaited<ReturnType<typeof setupAuth0AndDb>>
+    const sign = (claims: Record<string, any>, key?: crypto.KeyObject) => fx.sign(claims, key)
 
-    const sign = (claims: Record<string, any>, key = keys.privateKey) => {
-        const now = Math.floor(Date.now() / 1000)
-        const head = b64({ alg: 'RS256', typ: 'JWT', kid: 'k1' })
-        const body = b64({ iss: issuer, aud: AUDIENCE, iat: now, exp: now + 600, ...claims })
-        const sig = crypto.sign('sha256', Buffer.from(`${head}.${body}`), key).toString('base64url')
-        return `${head}.${body}.${sig}`
-    }
     const alice = (extra: Record<string, any> = {}) =>
         sign({ sub: 'auth0|alice', email: 'alice@test.local', name: 'Alice', org_id: ORG, ...extra })
 
@@ -73,37 +59,9 @@ d('POST /api/v1/prediction (integration)', () => {
     })
 
     beforeAll(async () => {
-        const jwk = { ...keys.publicKey.export({ format: 'jwk' }), kid: 'k1', alg: 'RS256', use: 'sig' }
-        issuerServer = http.createServer((req, res) => {
-            res.setHeader('Content-Type', 'application/json')
-            if (req.url === '/.well-known/openid-configuration') return res.end(JSON.stringify({ issuer, jwks_uri: `${issuer}jwks` }))
-            if (req.url === '/jwks') return res.end(JSON.stringify({ keys: [jwk] }))
-            res.statusCode = 404
-            res.end('{}')
-        })
-        await new Promise<void>((resolve) => issuerServer.listen(0, '127.0.0.1', resolve))
-        issuer = `http://127.0.0.1:${(issuerServer.address() as AddressInfo).port}/`
-
-        const url = new URL(PG!)
-        Object.assign(process.env, {
-            AUTH0_ISSUER_BASE_URL: issuer,
-            AUTH0_AUDIENCE: AUDIENCE,
-            AUTH0_ORGANIZATION_ID: ORG,
-            DATABASE_TYPE: 'postgres',
-            DATABASE_HOST: url.hostname,
-            DATABASE_PORT: url.port,
-            DATABASE_USER: decodeURIComponent(url.username),
-            DATABASE_PASSWORD: decodeURIComponent(url.password),
-            DATABASE_NAME: url.pathname.slice(1)
-        })
-
-        // Imported after env is set: jwtCheck reads AUTH0_* at module load.
-        const dsModule = await import('../../../src/DataSource')
-        await dsModule.init()
-        ds = dsModule.getDataSource()
-        await ds.initialize()
-        await ds.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public; CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
-        await ds.runMigrations({ transaction: 'each' })
+        // Before any import that reads AUTH0_* at module load (jwtCheck).
+        fx = await setupAuth0AndDb(PG!)
+        ds = fx.ds
         mockApp.AppDataSource = ds
 
         entities = {
@@ -150,8 +108,7 @@ d('POST /api/v1/prediction (integration)', () => {
     })
 
     afterAll(async () => {
-        await ds?.destroy()
-        await new Promise((resolve) => issuerServer?.close(resolve))
+        await fx?.close()
     })
 
     beforeEach(() => {
@@ -192,7 +149,7 @@ d('POST /api/v1/prediction (integration)', () => {
     })
 
     it('forged token stays anonymous', async () => {
-        const forged = sign({ sub: 'auth0|alice', email: 'alice@test.local', org_id: ORG }, otherKeys.privateKey)
+        const forged = sign({ sub: 'auth0|alice', email: 'alice@test.local', org_id: ORG }, fx.otherKey)
         await post(chatflowId, `Bearer ${forged}`).then(ok)
         expect(seenUser).toBeUndefined()
     })

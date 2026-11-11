@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { rateLimit, RateLimitRequestHandler } from 'express-rate-limit'
+import { Options, rateLimit, RateLimitRequestHandler } from 'express-rate-limit'
 import { IChatFlow, MODE } from '../Interface'
 import { Mutex } from 'async-mutex'
 import { RedisStore } from 'rate-limit-redis'
@@ -12,9 +12,17 @@ interface CustomListener extends QueueEventsListener {
 
 const QUEUE_NAME = 'ratelimit'
 const QUEUE_EVENT_NAME = 'updateRateLimiter'
+const DEFAULT_LIMIT_MESSAGE = 'Too many requests, please try again later.'
+
+// Default limiter key: per chatflow, per identified user (so people behind one office IP don't share a bucket), else per IP.
+export const rateLimitKey = (req: Request): string => {
+    const id = req.params.id ?? ''
+    return req.user?.id ? `${id}:user:${req.user.id}` : `${id}:ip:${req.ip}`
+}
 
 export class RateLimiterManager {
     private rateLimiters: Record<string, RateLimitRequestHandler> = {}
+    private defaultLimiter?: RateLimitRequestHandler
     private rateLimiterMutex: Mutex = new Mutex()
     private redisClient: Redis
     private static instance: RateLimiterManager
@@ -53,6 +61,36 @@ export class RateLimiterManager {
             this.queueEventsProducer = new QueueEventsProducer(QUEUE_NAME, { connection: this.getConnection() })
             this.queueEvents = new QueueEvents(QUEUE_NAME, { connection: this.getConnection() })
         }
+
+        // Opt-in: off unless DEFAULT_RATE_LIMIT_MAX is set, so a release changes nothing for deployments that don't set it.
+        const max = Number(process.env.DEFAULT_RATE_LIMIT_MAX)
+        if (Number.isInteger(max) && max > 0) {
+            const windowSeconds = Number(process.env.DEFAULT_RATE_LIMIT_WINDOW_SECONDS) || 60
+            this.defaultLimiter = this.createLimiter('rl:default:', windowSeconds * 1000, max, DEFAULT_LIMIT_MESSAGE, {
+                keyGenerator: rateLimitKey,
+                standardHeaders: true,
+                legacyHeaders: false
+            })
+        }
+    }
+
+    private createLimiter(prefix: string, windowMs: number, max: number, message: string, extra: Partial<Options> = {}) {
+        if (process.env.MODE === MODE.QUEUE) {
+            return rateLimit({
+                windowMs,
+                max,
+                standardHeaders: true,
+                legacyHeaders: false,
+                message,
+                store: new RedisStore({
+                    prefix,
+                    // @ts-expect-error - Known issue: the `call` function is not present in @types/ioredis
+                    sendCommand: (...args: string[]) => this.redisClient.call(...args)
+                }),
+                ...extra
+            })
+        }
+        return rateLimit({ windowMs, max, message, ...extra })
     }
 
     getConnection() {
@@ -94,26 +132,7 @@ export class RateLimiterManager {
     public async addRateLimiter(id: string, duration: number, limit: number, message: string): Promise<void> {
         const release = await this.rateLimiterMutex.acquire()
         try {
-            if (process.env.MODE === MODE.QUEUE) {
-                this.rateLimiters[id] = rateLimit({
-                    windowMs: duration * 1000,
-                    max: limit,
-                    standardHeaders: true,
-                    legacyHeaders: false,
-                    message,
-                    store: new RedisStore({
-                        prefix: `rl:${id}`,
-                        // @ts-expect-error - Known issue: the `call` function is not present in @types/ioredis
-                        sendCommand: (...args: string[]) => this.redisClient.call(...args)
-                    })
-                })
-            } else {
-                this.rateLimiters[id] = rateLimit({
-                    windowMs: duration * 1000,
-                    max: limit,
-                    message
-                })
-            }
+            this.rateLimiters[id] = this.createLimiter(`rl:${id}`, duration * 1000, limit, message)
         } finally {
             release()
         }
@@ -125,12 +144,11 @@ export class RateLimiterManager {
         }
     }
 
-    public getRateLimiter(): (req: Request, res: Response, next: NextFunction) => void {
+    public getRateLimiter(opts: { withDefault?: boolean } = {}): (req: Request, res: Response, next: NextFunction) => void {
         return (req: Request, res: Response, next: NextFunction) => {
-            const id = req.params.id
-            if (!this.rateLimiters[id]) return next()
-            const idRateLimiter = this.rateLimiters[id]
-            return idRateLimiter(req, res, next)
+            const limiter = this.rateLimiters[req.params.id] ?? (opts.withDefault ? this.defaultLimiter : undefined)
+            if (!limiter) return next()
+            return limiter(req, res, next)
         }
     }
 
