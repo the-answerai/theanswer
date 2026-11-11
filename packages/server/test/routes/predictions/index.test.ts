@@ -29,8 +29,17 @@ jest.mock('../../../src/middlewares/authentication/populateWorkspaceData', () =>
 jest.mock('../../../src/utils', () => ({
     getMulterStorage: () => ({ array: () => (_req: any, _res: any, next: any) => next() })
 }))
+const mockLimiter: { opts?: any; seenUser?: any } = {}
 jest.mock('../../../src/utils/rateLimit', () => ({
-    RateLimiterManager: { getInstance: () => ({ getRateLimiter: () => (_req: any, _res: any, next: any) => next() }) }
+    RateLimiterManager: {
+        getInstance: () => ({
+            getRateLimiter: (opts: any) => (req: any, _res: any, next: any) => {
+                mockLimiter.opts = opts
+                mockLimiter.seenUser = req.user
+                next()
+            }
+        })
+    }
 }))
 jest.mock('../../../src/utils/getRunningExpressApp', () => ({
     getRunningExpressApp: () => ({
@@ -81,6 +90,17 @@ describe('POST /api/v1/prediction/:id', () => {
         expect(seenUser.id).toBe('user-1')
         expect(chatflowsService.getChatflowById).toHaveBeenCalledWith('cf-1')
         expect((chatflowsService.getChatflowById as jest.Mock).mock.calls[0]).toHaveLength(1)
+    })
+
+    it('runs optional auth before the rate limiter', async () => {
+        mockJwtMiddleware.mockImplementation((req: any, _res: any, next: any) => {
+            req.auth = { payload: { sub: 'auth0|u1', email: 'a@b.c', org_id: 'org_valid123' } }
+            next()
+        })
+        mockLimiter.seenUser = 'not-called'
+        await supertest(app).post('/api/v1/prediction/cf-1').set('Authorization', 'Bearer a.b.c').send({ question: 'hi' }).expect(200)
+        expect(mockLimiter.seenUser?.id).toBe('user-1')
+        expect(mockLimiter.opts).toEqual({ withDefault: true })
     })
 
     it('no header stays anonymous', async () => {

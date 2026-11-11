@@ -104,7 +104,7 @@ const createPrediction = async (req: Request, res: Response, next: NextFunction)
 
 const getRateLimiterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        return RateLimiterManager.getInstance().getRateLimiter()(req, res, next)
+        return RateLimiterManager.getInstance().getRateLimiter({ withDefault: true })(req, res, next)
     } catch (error) {
         next(error)
     }

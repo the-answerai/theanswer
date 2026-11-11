@@ -8,6 +8,7 @@ const router = express.Router()
 
 // /prediction is whitelisted, so the global auth never reads the token. Identify Auth0 callers
 // (browser extension) here; anonymous callers pass through. The data source exists only at request time.
+// It runs before the rate limiter so the default limit can count per user, not per office IP.
 const optionalAAIAuth = (req: Request, res: Response, next: NextFunction) =>
     verifyAAIToken(getRunningExpressApp().AppDataSource, { optional: true })(req, res, next)
 
@@ -17,8 +18,8 @@ const optionalAAIAuth = (req: Request, res: Response, next: NextFunction) =>
 router.post(
     ['/', '/:id'],
     getMulterStorage().array('files'),
-    predictionsController.getRateLimiterMiddleware,
     optionalAAIAuth,
+    predictionsController.getRateLimiterMiddleware,
     predictionsController.createPrediction
 )
 
