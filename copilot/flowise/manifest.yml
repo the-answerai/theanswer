@@ -68,6 +68,9 @@ variables: # Pass environment variables as key value pairs.
     NODE_ENV: 'production'
     PORT: '4000'
     NUMBER_OF_PROXIES: '1'
+    # Since Flowise 3.0.11 the server reads TRUST_PROXY, not NUMBER_OF_PROXIES; unset means `true`, which lets callers
+    # pick their IP with X-Forwarded-For and bypass rate limits. 1 = the ALB is the only proxy in front.
+    TRUST_PROXY: '1'
     STORAGE_TYPE: 's3'
     S3_STORAGE_BUCKET_NAME:
         from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-theansweraiserverstorageBucketName
